@@ -45,6 +45,7 @@ public:
 	void operator = ( XSQLVAR *var )
 	{
 		*(QUAD*)this = *(QUAD*)var;
+		varOrg = var;
 	}
 
 	short			sqltype;			/* datatype of field */
@@ -52,6 +53,8 @@ public:
 	short			sqlsubtype;			/* datatype subtype - BLOBs & Text types only */
 	short			sqllen;				/* length of data area */
 	CAttrArray		*array;
+	XSQLVAR			*varOrg;
+	bool			replaceForParamArray;
 };
 
 class Value;

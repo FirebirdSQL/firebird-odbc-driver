@@ -25,6 +25,8 @@
 #if !defined(_ISCHEADSQLVAR_H_)
 #define _ISCHEADSQLVAR_H_
 
+#include "Sqlda.h"
+
 namespace IscDbcLibrary {
 
 #define MAKEHEAD(a, b, c, d)  *(QUAD*)sqlvar = ((QUAD)(((long) ((long)(((short)(a+1)) | ((unsigned long)((short)(b))) << 16)) ) | ((UQUAD)((long) ((long)(((short)(c)) | ((unsigned long)((short)(d))) << 16)) )) << 32))
@@ -34,10 +36,17 @@ class IscHeadSqlVar : public HeadSqlVar
 	XSQLVAR		*sqlvar;
 	char		*saveSqldata;
 	short		*saveSqlind;
+	bool		replaceForParamArray;
 
 public:
 
-	IscHeadSqlVar( XSQLVAR *var ) : sqlvar(var),saveSqldata(var->sqldata),saveSqlind(var->sqlind) {}
+	IscHeadSqlVar( CAttrSqlVar *attrVar )
+	{
+		sqlvar = attrVar->varOrg;
+		saveSqldata = sqlvar->sqldata;
+		saveSqlind = sqlvar->sqlind;
+		replaceForParamArray = attrVar->replaceForParamArray;
+	}
 
 	void		setTypeText()		{ MAKEHEAD(SQL_TEXT, 0, 0, 0); }
 	void		setTypeVarying()	{ MAKEHEAD(SQL_VARYING, 0, 0, 0); }
@@ -63,6 +72,8 @@ public:
 	short *		getSqlInd() { return sqlvar->sqlind; }
 	void		setSqlData( char *data ) { sqlvar->sqldata = data; }
 	void		setSqlInd( short *ind ) { sqlvar->sqlind = ind; }
+
+	bool		isReplaceForParamArray () { return replaceForParamArray; }
 
 	void		release() { delete this; }
 	void		restoreOrgPtrSqlData() { sqlvar->sqldata = saveSqldata;	sqlvar->sqlind = saveSqlind; }

@@ -393,6 +393,8 @@ public:
 	virtual void		setSqlData( char *data ) = 0;
 	virtual void		setSqlInd( short *ind ) = 0;
 
+	virtual bool		isReplaceForParamArray () = 0;
+
 	virtual void		release() = 0;
 	virtual void		restoreOrgPtrSqlData() = 0;
 };

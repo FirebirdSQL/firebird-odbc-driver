@@ -514,111 +514,152 @@ void IscArray::convStringToArray( char *data, long length )
 	char *ptCh, *ptSrc = data, *ptEnd = data + length;
 	char * ptDst = (char*)arrBufData;
 	int i=0;
+	char delimiter;
+	char * pt;
+	int len,lenSrc;
+	bool nextElement = false;
 
 	memset ( arrBufData, 0, arrBufDataSize);
 
-	while( ptSrc < ptEnd && i<arrCountElement)
+	SKIP_WHITE ( ptSrc );
+	if ( *ptSrc=='{' )
+		ptSrc++;
+
+	while( ptSrc < ptEnd && i<arrCountElement && *ptSrc != '}' )
 	{
-		if(*ptSrc=='{' || *ptSrc=='}' || *ptSrc==',')
+		if ( *ptSrc == ',' )
 		{
 			ptSrc++;
+
+			if ( !nextElement )
+			{
+				if ( arrTypeElement == blr_text )
+					memset ( ptDst, ' ', arrSizeElement );
+
+				ptDst += arrSizeElement;
+				i++;
+			}
+			else
+				nextElement = false;
+
 			continue;
 		}
 
-		ptCh=ptSrc;
+		ptCh = ptSrc;
 		SKIP_WHITE(ptCh);
 
-		if(*ptCh=='\'')
+		if ( *ptCh == '\'' )
 		{
-			char * pt;
-			int len,lenSrc;
-			++ptCh;
-			while(*ptCh && *ptCh!='\'')
-				ptCh++;
-			if(*ptCh!='\'')
+			delimiter = *ptCh;
+			++ptCh; // '\''
+			ptSrc = ptCh;
+			while ( *ptCh )
+			{
+				if ( *ptCh == delimiter )
+				{
+					if ( *(ptCh+1) == delimiter )
+					{
+						ptCh += 2;
+						continue;
+					}
+					break;
+				}
+				++ptCh;
+			}
+
+			if ( *ptCh && *ptCh != delimiter && *ptCh != ',' )
 				break;
-			else
+
+			if ( *ptCh != ',' )
+				nextElement = true;
+
+			lenSrc = ptCh - ptSrc;
+		}
+		else
+		{
+			delimiter = ',';
+			ptSrc = ptCh;
+			while ( *ptCh && *ptCh != delimiter )
 				++ptCh;
 
-			lenSrc=ptCh-ptSrc-2; // 2 is this ''
+			if ( *ptCh && *ptCh != delimiter )
+				break;
+
+			nextElement = false;
+			lenSrc = ptCh - ptSrc;
+			*ptCh = '\0';
+		}
+
+		if( ptCh == ptSrc )
+			ptSrc++;
+		else
+		{
 			switch(arrTypeElement)
 			{
 			case blr_varying: 
-				len = arrSizeElement-2;
+				len = arrSizeElement - sizeof(short);
 				if(lenSrc > len)
-					lenSrc=len;
+					lenSrc = len;
 				if(lenSrc > 0)
 				{
-					pt=ptDst;
-					++ptSrc; // >> first '
+					pt = ptDst;
 					do
-						*pt++=*ptSrc++;
-					while(--lenSrc);
-					*pt='\0';
+						*pt++ = *ptSrc++;
+					while ( --lenSrc );
 				}
 				else 
-					*ptDst='\0';
+					*(short*)ptDst = 0;
+				*pt = '\0';
 				break;
+
 			case blr_text:
 				len = arrSizeElement;
 				if(lenSrc > len)
-					lenSrc=len;
-				pt=ptDst;
-				if(lenSrc > 0)
+					lenSrc = len;
+				pt = ptDst;
+				if ( lenSrc > 0 )
 				{
-					++ptSrc; // >> first '
 					do
-						*pt++=*ptSrc++;
-					while(--lenSrc);
+						*pt++ = *ptSrc++;
+					while ( --lenSrc );
 				}
 
-				lenSrc=len-(pt-ptDst);
+				lenSrc = len - ( pt - ptDst );
 
-				for(;lenSrc;--lenSrc)
-					*pt++=' ';
+				for ( ; lenSrc; --lenSrc )
+					*pt++ = ' ';
+				break;
 
-				ptDst += arrSizeElement;
-				ptSrc=ptCh+1;
-				i++;
-				continue;
-			}
-		}
-
-		while(*ptCh && (isdigit(*ptCh) || *ptCh=='.'))
-			ptCh++;
-
-		if( ptCh != ptSrc )
-		{
-			*ptCh='\0';
-
-			switch (arrTypeElement)
-			{
 			case blr_short :
 				*(short*)ptDst = (short)atoi(ptSrc);
 				break;
+
 			case blr_long :
 				*(long*)ptDst = atol(ptSrc);
 				break;
+
 			case blr_quad :
 			case blr_int64 :
 				*(__int64*)ptDst = (__int64)atol(ptSrc);
 				break;
+
 			case blr_float :
 				*(float*)ptDst = (float)atof(ptSrc);
 				break;
+
 			case blr_double :
 				*(double*)ptDst = (double)atof(ptSrc);
 				break;
 			}
 
 			ptDst += arrSizeElement;
-			ptSrc=ptCh+1;
+			ptSrc = ptCh + 1;
 			i++;
 		}
-		else
-			ptSrc++;
-
 	}
+
+	if ( arrTypeElement == blr_text && i < arrCountElement )
+		memset ( ptDst, ' ', arrSizeElement * ( arrCountElement - i) );
 }
 
 void IscArray::writeStringHexToBlob(char * sqldata, char *data, long length)

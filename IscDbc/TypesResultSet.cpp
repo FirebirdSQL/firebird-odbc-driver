@@ -184,7 +184,7 @@ TypesResultSet::TypesResultSet(int dataType) : IscResultSet (NULL)
 
 	for( ; i-- ; ++var, ++orgvar, ++ind )
 	{
-		*(QUAD*)orgvar = *(QUAD*)var;
+		*orgvar = var;
 		var->sqlind = ind;
 	}
 }

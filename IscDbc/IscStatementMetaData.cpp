@@ -182,7 +182,7 @@ void IscStatementMetaData::createBlobDataTransfer(int index, Blob *& ptDataBlob)
 
 void IscStatementMetaData::getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar *& ptHeadSqlVar)
 {
-	XSQLVAR *var = sqlda->Var(index);
+	CAttrSqlVar *var = sqlda->orgVar(index);
 
 	if ( ptHeadSqlVar )
 		ptHeadSqlVar->release();

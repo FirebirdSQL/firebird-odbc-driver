@@ -86,6 +86,32 @@ void IscOdbcStatement::prepareStatement(const char * sqlString)
 {
 	IscStatement::prepareStatement (sqlString);
 	getInputParameters();
+
+	char * tempSql = NULL;
+	int * labelParamArray = NULL;
+	int replaceParamArray;
+
+	if ( (replaceParamArray = replacementArrayParamForStmtUpdate( tempSql, labelParamArray )) )
+	{
+		freeStatementHandle();
+		IscStatement::prepareStatement ( (const char*)tempSql );
+		getInputParameters();
+	}
+
+	inputSqlda.allocBuffer(connection);
+
+	if ( replaceParamArray )
+	{
+		int * label = labelParamArray;
+		while ( replaceParamArray-- )
+		{
+			CAttrSqlVar *var = inputSqlda.orgVar ( *label++ );
+			var->replaceForParamArray = true;
+		}
+
+		free ( tempSql );
+		free ( labelParamArray );
+	}
 }
 
 void IscOdbcStatement::getInputParameters()
@@ -104,9 +130,6 @@ void IscOdbcStatement::getInputParameters()
 		if (statusVector [1])
 			THROW_ISC_EXCEPTION (connection, statusVector);
 	}
-
-	bindArrayParamForStmtUpdate();
-	inputSqlda.allocBuffer(connection);
 }
 
 int IscOdbcStatement::getNumParams()
@@ -144,12 +167,14 @@ StatementMetaData* IscOdbcStatement::getStatementMetaDataIRD()
 //		set attributes(relname,sqlname) of param 2 to param 5
 //			and param 3 to param 6
 // 
-void IscOdbcStatement::bindArrayParamForStmtUpdate()
+int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *& labelParamArray )
 {
 	const char *strSql = sql, *ch;
 	int numberColumns = inputSqlda.sqlda->sqld;
 	XSQLVAR *var = inputSqlda.sqlda->sqlvar;
 	int *offsetParam = NULL;
+	int *offsetNameParam = NULL;
+	int countDefined = 0;
 
 	for (int n = 0; n < numberColumns; ++n, ++var)
 	{
@@ -161,6 +186,9 @@ void IscOdbcStatement::bindArrayParamForStmtUpdate()
 				if ( !offsetParam )
 				{
 					offsetParam = new int[numberColumns];
+					offsetNameParam = new int[numberColumns];
+			        memset ( offsetNameParam, 0, sizeof(int) * numberColumns );
+
 					int *param = offsetParam;
 
 					ch = strSql;
@@ -207,6 +235,12 @@ void IscOdbcStatement::bindArrayParamForStmtUpdate()
 						var->sqlname_length = len;
 						memcpy ( var->relname, varIn->relname, varIn->relname_length );
 						var->relname_length = varIn->relname_length;
+						offsetNameParam[n] = end - strSql;
+
+						if ( delimiter == '"' )
+							offsetNameParam[n]++;
+
+						countDefined++;
 						break;
 					}
 				}
@@ -216,12 +250,50 @@ void IscOdbcStatement::bindArrayParamForStmtUpdate()
 		}
 	}
 
-	delete [] offsetParam;
+	if ( countDefined )
+	{
+		int lenOldSql = strlen(strSql);
+		tempSql = (char *)malloc ( countDefined * 3 + lenOldSql + 1);
+		labelParamArray = (int *)malloc ( countDefined * sizeof(int) );
+		int n, offset = 0;
+		int * label = labelParamArray;
+
+		ch = strSql;
+	
+		for ( n = 0; n < numberColumns; ++n, ++var)
+		{
+			int &offsetEndName = offsetNameParam[n];
+
+			if ( offsetEndName )
+			{
+				memcpy ( &tempSql[offset], ch, offsetEndName - offset );
+				ch += offsetEndName;
+				offset += offsetEndName;
+				memcpy ( &tempSql[offset], "[1]", 3 );
+				offset += 3;
+				*label++ = n + 1;
+			}
+		}
+		
+		n = lenOldSql - ( ch - strSql );
+
+		if ( n != 0 )
+		{
+			memcpy ( &tempSql[offset], ch, n );
+			offset += n;
+		}
+
+		tempSql[offset] = '\0';
+		delete [] offsetParam;
+		delete [] offsetNameParam;
+		return countDefined;
+	}
+	return 0;
 }
 
 int IscOdbcStatement::objectVersion()
 {
-	return PREPAREDSTATEMENT_VERSION;
+	return INTERNALSTATEMENT_VERSION;
 }
 
 }; // end namespace IscDbcLibrary

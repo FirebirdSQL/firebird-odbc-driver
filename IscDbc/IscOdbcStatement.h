@@ -86,7 +86,7 @@ public:
 //}}} end class Statement without specification jdbc
 
 protected:
-	void				bindArrayParamForStmtUpdate();
+	int					replacementArrayParamForStmtUpdate( char *& tempSql, int *& labelParamArray );
 
 public:
 	IscOdbcStatement(IscConnection *connect);
