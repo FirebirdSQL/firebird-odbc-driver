@@ -28,6 +28,18 @@ namespace OdbcJdbcSetupLibrary {
 
 using namespace classJString;
 
+struct TranslateString 
+{
+	int		userLCID;
+	struct 
+	{
+		int		id;
+		char	*string;
+	} table[43];
+};
+
+#define _TR( id, msg ) ( currentCP == -1 ? msg : translate[currentCP].table[id].string )
+
 /////////////////////////////////////////////////////////////////////////////
 // CDsnDialog dialog
 

@@ -31,6 +31,45 @@ extern HINSTANCE m_hInstance;
 
 namespace OdbcJdbcLibrary {
 
+int currentCP;
+
+#define _TR( id, msg ) ( currentCP == -1 ? msg : translate[currentCP].table[id].string )
+
+struct TranslateString 
+{
+	int		userLCID;
+	struct 
+	{
+		int		id;
+		char	*string;
+	} table[6];
+};
+
+TranslateString translate[] = 
+{
+	#include "Res/resource.en"
+,	
+	#include "Res/resource.ru"
+,	
+	#include "Res/resource.uk"
+,	
+	#include "Res/resource.es"
+};
+
+void initCodePageTranslate( int userLCID )
+{
+	int i;
+	int count = sizeof ( translate ) / sizeof ( *translate );
+
+	for( currentCP = -1, i = 0; i < count; i++ )
+		if ( translate[i].userLCID == userLCID )
+		{
+			currentCP = i;
+			break;
+		}
+//	currentCP = 3;
+}
+
 CConnectDialog * m_ptConnectDialog = NULL;
 
 int DialogBoxDynamicConnect();
