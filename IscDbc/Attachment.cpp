@@ -201,11 +201,12 @@ int Attachment::getDatabaseDialect()
 void Attachment::checkAdmin()
 {
 	char temp [256];
-	QUAD adm = (QUAD)71752869960019.0;
+	QUAD adm1 = (QUAD)71752869960019.0;
+	QUAD adm2 = (QUAD)107075219978611.0;
 	QUAD user = (QUAD)0;
 	memcpy((void *)&user,(const char *)userName,6);
 
-	admin = user == adm;
+	admin = user == adm1 || user == adm2;
 
 	if ( admin )
 		userAccess = "";
