@@ -45,6 +45,14 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+TimeStamp TimeStamp::convert(const char * string, int length)
+{
+	TimeStamp timestamp;
+	timestamp.date = 0;
+	timestamp.nanos = 0;
+	return timestamp;
+}
+
 int TimeStamp::getTimeString(int length, char * buffer)
 {
 	struct tm tmTemp;

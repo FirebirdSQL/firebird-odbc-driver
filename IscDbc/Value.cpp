@@ -763,14 +763,45 @@ DateTime Value::getDate()
 
 TimeStamp Value::getTimestamp()
 {
-	if (type == Timestamp)
+	switch (type)
+	{
+	case Null:
+		{
+		TimeStamp timestamp;
+		timestamp.date = 0;
+		timestamp.nanos = 0;
+		return timestamp;
+		}
+
+	case Char:
+	case String:
+	case Varchar:
+		break;
+
+	case Date:
+		{
+		TimeStamp timestamp;
+		timestamp.date = getDate().date;
+		timestamp.nanos = 0;
+		return timestamp;
+		}
+
+	case TimeType:
+		{
+		TimeStamp timestamp;
+		timestamp.date = 0;
+		timestamp.nanos = getTime().timeValue;
+		return timestamp;
+		}
+
+	case Timestamp:
 		return data.timestamp;
 
-	TimeStamp timestamp;
-	timestamp.date = getDate().date;
-	timestamp.nanos = 0;
+	default:
+		NOT_YET_IMPLEMENTED;
+	}
 
-	return timestamp;
+	return TimeStamp::convert (data.string.string, data.string.length);
 }
 
 void Value::setValue(DateTime value)

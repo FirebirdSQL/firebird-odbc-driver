@@ -36,6 +36,7 @@
 class TimeStamp : public DateTime
 {
 public:
+	static TimeStamp convert (const char *string, int length);
 	int getTimeString(int length, char * buffer);
 	int decodeTime (long nanos, struct tm * times);
 

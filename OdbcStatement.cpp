@@ -1255,7 +1255,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 			long minutes = sqlTime.timeValue / (ISC_TIME_SECONDS_PRECISION * 60);
 			var->hour = (SQLUSMALLINT)(minutes / 60);
 			var->minute = (SQLUSMALLINT)(minutes % 60);
-			var->second = (short)(sqlTime.timeValue / ISC_TIME_SECONDS_PRECISION) % 60;
+			var->second = (short)((sqlTime.timeValue / ISC_TIME_SECONDS_PRECISION) % 60);
 			length = sizeof (tagTIME_STRUCT);
 			}
 			break;
@@ -1397,7 +1397,7 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 					retinfo = SQL_SUCCESS_WITH_INFO;
 					binding->dataOffset += len;
 				}
-				else if (binding->bufferLength && len < binding->bufferLength)
+				else if (binding->bufferLength && len <= binding->bufferLength)
 					binding->dataOffset += len;
 					
 				length = dataRemaining;
@@ -1472,7 +1472,7 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 			long minutes = sqlTime.timeValue / (ISC_TIME_SECONDS_PRECISION * 60);
 			var->hour = (SQLUSMALLINT)(minutes / 60);
 			var->minute = (SQLUSMALLINT)(minutes % 60);
-			var->second = (short)(sqlTime.timeValue / ISC_TIME_SECONDS_PRECISION) % 60;
+			var->second = (short)((sqlTime.timeValue / ISC_TIME_SECONDS_PRECISION) % 60);
 			length = sizeof (tagTIME_STRUCT);
 			}
 			break;
