@@ -54,6 +54,8 @@ public:
 	void removeBufData();
 	void getBytesFromArray();
 	void fetchArrayToString();
+	void writeBlob(char * sqldata);
+	void writeBlob(char * sqldata, char *data, long length);
 	void writeArray(Value * value);
 
 	void bind(IscConnection	*parentConnection,XSQLVAR *var);

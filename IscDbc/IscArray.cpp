@@ -292,6 +292,37 @@ void IscArray::fetchArrayToString()
 	free(buf);
 }
 
+void IscArray::writeBlob(char * sqldata)
+{
+	ISC_STATUS statusVector [20];
+	CFbDll * GDS = connection->GDS;
+	void *transactionHandle = connection->startTransaction();
+
+	arrayId = *(ISC_QUAD*)sqldata;
+	memset( &arrayId, 0, sizeof(arrayId) );
+
+	long len = getSegmentLength(0);
+	GDS->_array_put_slice ( statusVector, &connection->databaseHandle, &transactionHandle,
+			&arrayId, &arrDesc, (char*) Stream::getSegment(0), &len );
+	if ( statusVector [1] )
+		THROW_ISC_EXCEPTION (connection, statusVector);
+}
+
+void IscArray::writeBlob(char * sqldata, char *data, long length)
+{
+	ISC_STATUS statusVector [20];
+	CFbDll * GDS = connection->GDS;
+	void *transactionHandle = connection->startTransaction();
+
+	arrayId = *(ISC_QUAD*)sqldata;
+	memset(&arrayId,0,sizeof(arrayId));
+
+	GDS->_array_put_slice ( statusVector, &connection->databaseHandle, &transactionHandle,
+		&arrayId, &arrDesc, data, &length );
+	if ( statusVector [1] )
+		THROW_ISC_EXCEPTION (connection, statusVector);
+}
+
 void IscArray::writeArray(Value * value)
 {
 	int i,offset;

@@ -43,7 +43,9 @@ public:
 	void putSegment (Blob *blob);
 	virtual void* getSegment (int pos);
 	virtual int	  getSegment (int offset, int length, void* address);
-	virtual int getSegmentLength (int pos);
+	virtual int	  getSegmentLength (int pos);
+	virtual void  writeBlob(char * sqldata) {};
+	virtual void  writeBlob(char * sqldata, char *data, long length) {};
 	void putSegment (int length, const char *data, bool copyFlag);
 	int length();
 	void getHexString(long pos, long length, void * address);

@@ -46,6 +46,8 @@ public:
 	void setType(short sqlsubtype);
 	void fetchBlob();
 	virtual int getSegment (int offset, int length, void *address);
+	void writeBlob(char * sqldata);
+	void writeBlob(char * sqldata, char *data, long length);
 	virtual int length();
 	IscBlob();
 	IscBlob(IscConnection *connect, XSQLVAR *var);

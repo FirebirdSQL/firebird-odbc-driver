@@ -158,4 +158,74 @@ void* IscBlob::getSegment(int pos)
 	return BinaryBlob::getSegment (pos);
 }
 
+void IscBlob::writeBlob(char * sqldata)
+{
+	ISC_STATUS statusVector [20];
+	CFbDll * GDS = connection->GDS;
+	isc_blob_handle blobHandle = NULL;
+	isc_tr_handle transactionHandle = connection->startTransaction();
+	GDS->_create_blob2 ( statusVector, 
+					  &connection->databaseHandle,
+					  &transactionHandle,
+					  &blobHandle,
+					  (ISC_QUAD*) sqldata,
+					  0, NULL);
+
+	if ( statusVector [1] )
+		THROW_ISC_EXCEPTION (connection, statusVector);
+
+	for ( int len, offset = 0; len = getSegmentLength (offset); offset += len )
+	{
+		GDS->_put_segment ( statusVector, &blobHandle, len, (char*) getSegment (offset));
+		if ( statusVector [1] )
+			THROW_ISC_EXCEPTION (connection, statusVector);
+	}
+
+	GDS->_close_blob ( statusVector, &blobHandle);
+	if ( statusVector [1] )
+		THROW_ISC_EXCEPTION (connection, statusVector);
+}
+
+void IscBlob::writeBlob(char * sqldata, char *data, long length)
+{
+	ISC_STATUS statusVector [20];
+	CFbDll * GDS = connection->GDS;
+	isc_blob_handle blobHandle = NULL;
+	isc_tr_handle transactionHandle = connection->startTransaction();
+	GDS->_create_blob2 ( statusVector, 
+					  &connection->databaseHandle,
+					  &transactionHandle,
+					  &blobHandle,
+					  (ISC_QUAD*) sqldata,
+					  0, NULL );
+
+	if ( statusVector [1] )
+		THROW_ISC_EXCEPTION (connection, statusVector);
+
+	if ( length )
+	{
+		int post = DEFAULT_BLOB_BUFFER_LENGTH;
+
+		while ( length > post )
+		{
+			GDS->_put_segment ( statusVector, &blobHandle, post, data);
+			if ( statusVector [1] )
+				THROW_ISC_EXCEPTION ( connection, statusVector );
+			data += post;
+			length -= post;
+		}
+
+		if ( length > 0 )
+		{
+			GDS->_put_segment ( statusVector, &blobHandle, (unsigned short)length, data);
+			if ( statusVector [1] )
+				THROW_ISC_EXCEPTION (connection, statusVector);
+		}
+	}
+
+	GDS->_close_blob ( statusVector, &blobHandle);
+	if ( statusVector [1] )
+		THROW_ISC_EXCEPTION ( connection, statusVector);
+}
+
 }; // end namespace IscDbcLibrary
