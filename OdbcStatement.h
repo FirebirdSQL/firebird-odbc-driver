@@ -127,6 +127,7 @@ public:
 	inline RETCODE transferDataToBlobParam ( DescRecord *record );
 	void bindInputOutputParam(int param, DescRecord * recordApp);
 	void bindOutputColumn(int column, DescRecord * recordApp);
+	operator Statement* () { return statement->getStatement(); }
 
 	OdbcConnection		*connection;
 	OdbcDesc			*applicationRowDescriptor;

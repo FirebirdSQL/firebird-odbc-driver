@@ -713,6 +713,7 @@ public:
 						getStatementMetaDataIRD() = 0;
 	virtual int			getNumParams() = 0;
 	virtual void		drop() = 0;
+	virtual Statement*	getStatement() = 0;
 	virtual int			objectVersion() = 0;
 };
 

@@ -1570,10 +1570,11 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 
 	char * ptBlob = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	Blob *& blob = from->dataBlobPtr;
-	long length = 0;
+	int dataRemaining = 0;
 
 	if ( blob )
 	{
+		bool directOpen = false;
 		bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
 
 		if ( !fetched || !from->dataOffset )
@@ -1583,23 +1584,23 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 			{
 				if ( parentStmt->isStaticCursor() )
 					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
-				else if ( blob->isArray() )
-					blob->bind ( parentStmt->statement, ptBlob );
+				else if ( blob->isArray() || !statusReturnData )
+					blob->bind ( *parentStmt, ptBlob );
 				else
+				{
 					blob->directOpenBlob ( ptBlob );
+					directOpen = true;
+				}
 			}
 			from->currentFetched = parentStmt->getCurrentFetched();
 		}
 
-		length = blob->length();
-		
-		int dataRemaining = length - from->dataOffset;
+		dataRemaining = blob->length() - from->dataOffset;
 
 		if ( !to->length )
-			length = dataRemaining;
+			;
 		else if (!dataRemaining && from->dataOffset)
 		{
-			blob->directCloseBlob();
 			from->dataOffset = 0;
 			ret = SQL_NO_DATA;
 		}
@@ -1608,40 +1609,35 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 			int len = MIN(dataRemaining, MAX(0, (long)to->length));
 			int lenRead;
 			 
-			if ( !pointer )
-				length = dataRemaining;
-			else
+			if ( pointer )
 			{
 				if ( len > 0 ) 
 				{
 					if ( blob->isArray() )
 						blob->getBinary (from->dataOffset, len, pointer);
-					else
-					{
-						if ( parentStmt->isStaticCursor() )
-							blob->getBytes (from->dataOffset, len, pointer);
-						else
-							blob->directFetchBlob((char*)pointer, len, lenRead);
-					}
+					else if ( directOpen )
+						blob->directFetchBlob((char*)pointer, len, lenRead);
+					else 
+						blob->getBytes (from->dataOffset, len, pointer);
 				}
 
 				if ( !statusReturnData )
 					from->dataOffset += len;
-				else
-					blob->directCloseBlob();
 
 				if ( len && len < dataRemaining )
 				{
 					OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
 					ret = SQL_SUCCESS_WITH_INFO;
 				}
-				length = dataRemaining;
 			}
 		}
+
+		if ( directOpen )
+			blob->directCloseBlob();
 	}
 
 	if ( indicatorTo )
-		*indicatorTo = length;
+		*indicatorTo = dataRemaining;
 
 	return ret;
 }
@@ -1661,6 +1657,7 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 
 	if ( blob )
 	{
+		bool directOpen = false;
 		bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
 
 		if ( !fetched || !from->dataOffset )
@@ -1670,10 +1667,13 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 			{
 				if ( parentStmt->isStaticCursor() )
 					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
-				else if ( blob->isArray() )
-					blob->bind ( parentStmt->statement, ptBlob );
+				else if ( blob->isArray() || !statusReturnData )
+					blob->bind ( *parentStmt, ptBlob );
 				else
+				{
 					blob->directOpenBlob ( ptBlob );
+					directOpen = true;
+				}
 			}
 			from->currentFetched = parentStmt->getCurrentFetched();
 		}
@@ -1684,7 +1684,6 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 			;
 		else if (!dataRemaining && from->dataOffset)
 		{
-			blob->directCloseBlob();
 			from->dataOffset = 0;
 			ret = SQL_NO_DATA;
 		}
@@ -1695,16 +1694,14 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 		 
 			if ( len > 0 ) 
 			{
-				if ( blob->isArray() || parentStmt->isStaticCursor() )
-					blob->getBinary (from->dataOffset, len, pointer);
-				else
+				if ( directOpen )
 					blob->directFetchBlob((char*)pointer, len, lenRead);
+				else
+					blob->getBinary (from->dataOffset, len, pointer);
 			}
 
 			if ( !statusReturnData )
 				from->dataOffset += len;
-			else
-				blob->directCloseBlob();
 
 			if ( len && len < dataRemaining )
 			{
@@ -1712,6 +1709,9 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 				ret = SQL_SUCCESS_WITH_INFO;
 			}
 		}
+
+		if ( directOpen )
+			blob->directCloseBlob();
 	}
 
 	if ( indicatorTo )
@@ -1731,10 +1731,11 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 
 	char * ptBlob = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	Blob *& blob = from->dataBlobPtr;
-	long length = 0;
+	int dataRemaining = 0;
 
 	if ( blob )
 	{
+		bool directOpen = false;
 		bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
 
 		if ( !fetched || !from->dataOffset )
@@ -1744,13 +1745,18 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 			{
 				if ( parentStmt->isStaticCursor() )
 					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
-				else if ( blob->isArray() )
-					blob->bind ( parentStmt->statement, ptBlob );
+				else if ( blob->isArray() || !statusReturnData )
+					blob->bind ( *parentStmt, ptBlob );
 				else
+				{
 					blob->directOpenBlob ( ptBlob );
+					directOpen = true;
+				}
 			}
 			from->currentFetched = parentStmt->getCurrentFetched();
 		}
+
+		int length;
 
 		if ( blob->isArray() )
 			length = ((BinaryBlob*)blob)->getLength();
@@ -1762,13 +1768,12 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 				length *= 2;
 		}
 
-		int dataRemaining = length - from->dataOffset;
+		dataRemaining = length - from->dataOffset;
 
 		if ( !to->length )
-			length = dataRemaining;
+			;
 		else if (!dataRemaining && from->dataOffset)
 		{
-			blob->directCloseBlob();
 			from->dataOffset = 0;
 			ret = SQL_NO_DATA;
 		}
@@ -1777,13 +1782,11 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 			int len = MIN(dataRemaining, MAX(0, (long)to->length-1));
 			int lenRead;
 			 
-			if ( !pointer )
-				length = dataRemaining;
-			else
+			if ( pointer )
 			{
 				if ( len > 0 ) 
 				{
-					if ( parentStmt->isStaticCursor() )
+					if ( !directOpen )
 					{
 						if ( blob->isBlob() )
 							blob->getHexString (from->dataOffset/2, len/2, pointer);
@@ -1794,8 +1797,6 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 					{
 						if ( blob->isBlob() )
 							blob->directGetSegmentToHexStr((char*)pointer, len/2, lenRead);
-						else if ( blob->isArray() )
-							blob->getBytes (from->dataOffset, len, pointer);
 						else
 							blob->directFetchBlob((char*)pointer, len, lenRead);
 					}
@@ -1805,22 +1806,21 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 
 				if ( !statusReturnData )
 					from->dataOffset += len;
-				else
-					blob->directCloseBlob();
 
 				if ( len && len < dataRemaining )
 				{
 					OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
 					ret = SQL_SUCCESS_WITH_INFO;
 				}
-					
-				length = dataRemaining;
 			}
 		}
+
+		if ( directOpen )
+			blob->directCloseBlob();
 	}
 
 	if ( indicatorTo )
-		*indicatorTo = length;
+		*indicatorTo = dataRemaining;
 
 	return ret;
 }

@@ -94,6 +94,7 @@ public:
 	IscOdbcStatement(IscConnection *connect);
 	virtual ~IscOdbcStatement();
 
+	virtual Statement*	getStatement() { return (IscStatement*)this; }
 	virtual ResultSet*	executeQuery();
 	virtual void		executeMetaDataQuery();
 	void				getInputParameters();
