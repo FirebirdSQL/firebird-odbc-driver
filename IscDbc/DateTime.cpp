@@ -441,7 +441,6 @@ signed long DateTime::encodeDate (struct tm	*times)
 
 
 signed long DateTime::yday (struct tm	*times)
-
 {
 /**************************************
  *
