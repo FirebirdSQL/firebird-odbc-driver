@@ -31,7 +31,7 @@ enum SqlCode {
 	APPLICATION_ERROR = -12,
 	SECURITY_ERROR = -13,
 	UNSUPPORTED_DATATYPE = -14,
-	NO_RECORDS_FOR_FETCH = -508, // No current record for fetch operation 335544348L
+	NO_RECORDS_FOR_FETCH = -508 // No current record for fetch operation 335544348L
 	};
 
 class DllExport SQLException {
