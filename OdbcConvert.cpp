@@ -837,7 +837,7 @@ int OdbcConvert::convBigintToTagNumeric(DescRecord * from, DescRecord * to)
 		*pointer++=1;
 
 	if ( indicatorPointer )
-		*indicatorPointer = 0;
+		*indicatorPointer = sizeof(tagSQL_NUMERIC_STRUCT);
 
 	return SQL_SUCCESS;
 }
@@ -871,7 +871,7 @@ int OdbcConvert::convNumericToTagNumeric(DescRecord * from, DescRecord * to)
 		*pointer++=1;
 
 	if ( indicatorPointer )
-		*indicatorPointer = 0;
+		*indicatorPointer = sizeof(tagSQL_NUMERIC_STRUCT);
 
 	return SQL_SUCCESS;
 }
@@ -911,7 +911,7 @@ int OdbcConvert::convDateToString(DescRecord * from, DescRecord * to)
 	SQLSMALLINT year;
 
 	decode_sql_date(*(long*)getAdressBindDataFrom((char*)from->dataPtr), mday, month, year);
-	int len, outlen = to->length-1;
+	int len, outlen = to->length;
 
 	len = snprintf(pointer, outlen, "%04d-%02d-%02d",year,month,mday);
 
@@ -980,7 +980,7 @@ int OdbcConvert::convTimeToString(DescRecord * from, DescRecord * to)
 
 	decode_sql_time(ntime, hour, minute, second);
 
-	int len, outlen = to->length-1;
+	int len, outlen = to->length;
 
 	if ( nnano )
 		len = snprintf(pointer, outlen, "%02d:%02d:%02d.%lu",hour, minute, second, nnano);
@@ -1056,7 +1056,7 @@ int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 
 	decode_sql_date(ndate, mday, month, year);
 	decode_sql_time(ntime, hour, minute, second);
-	int len, outlen = to->length-1;
+	int len, outlen = to->length;
 
 	if ( nnano )
 		len = snprintf(pointer, outlen, "%04d-%02d-%02d %02d:%02d:%02d.%lu",year,month,mday,hour, minute, second, nnano);
@@ -1395,8 +1395,8 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 	ODBCCONVERT_CHECKNULL;
 	
 	RETCODE ret = SQL_SUCCESS;
-	unsigned short &lenVar = *(unsigned short*)pointerFrom;
-	int len = MIN(*(short*)pointerFrom, (int)to->length);
+	unsigned short lenVar = *(unsigned short*)pointerFrom;
+	int len = MIN(lenVar, MAX(0,(int)to->length-1));
 	
 	if( len > 0 )
 		memcpy (pointer, (char*)pointerFrom + 2, len);
