@@ -239,7 +239,7 @@ long MList<T>::SearchAndInsert(const void * klych,long (*Cmp)(const void *,const
 template <class T>
 long MList<T>::Search(const void * klych,long (*Cmp)(const void *,const void *))
 {
-	register long cmp=1,i,l=0,u=m_nCount-1;
+	register long cmp=1,i=0,l=0,u=m_nCount-1;
 	T * buf=m_Root;
 	while(u>=l)
 	{

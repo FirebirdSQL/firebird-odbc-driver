@@ -30,9 +30,9 @@ CFbDll* CFbDll::LoadDll(void)
 		Dll->_CFbDllVersion = 10;
 
 #ifdef _WIN32
-#define __ENTRYPOINT(X) Dll->_##X = (##X*)GetProcAddress(Dll->_Handle, "isc_"#X)
+#define __ENTRYPOINT(X) Dll->_##X = (X*)GetProcAddress(Dll->_Handle, "isc_"#X)
 #else
-#define __ENTRYPOINT(X) Dll->_##X = (##X*)isc_##X 
+#define __ENTRYPOINT(X) Dll->_##X = (X*)isc_##X 
 #endif					
 
 		__ENTRYPOINT(create_database);

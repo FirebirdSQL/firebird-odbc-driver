@@ -403,9 +403,9 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 																							\
 	ODBCCONVERT_CHECKNULL;																	\
 																							\
-	*(##C_TYPE_TO*)pointer = (##C_TYPE_TO)*(##C_TYPE_FROM*)from->dataPtr;					\
+	*(C_TYPE_TO*)pointer = (C_TYPE_TO)*(C_TYPE_FROM*)from->dataPtr;							\
 	if ( indicatorPointer )																	\
-		*indicatorPointer = sizeof(##C_TYPE_TO);											\
+		*indicatorPointer = sizeof(C_TYPE_TO);												\
 																							\
 	return 0;																				\
 }																							\
@@ -418,7 +418,7 @@ int OdbcConvert::conv##TYPE_FROM##ToTagNumeric(DescRecord * from, DescRecord * t
 																							\
 	ODBCCONVERT_CHECKNULL;																	\
 																							\
-	QUAD &number = *(QUAD*)(pointer+3) = (QUAD)*(##C_TYPE_FROM*)from->dataPtr;				\
+	QUAD &number = *(QUAD*)(pointer+3) = (QUAD)*(C_TYPE_FROM*)from->dataPtr;				\
 	*pointer++=(char)from->precision;														\
 	*pointer++=(char)from->scale;															\
 																							\
@@ -429,7 +429,7 @@ int OdbcConvert::conv##TYPE_FROM##ToTagNumeric(DescRecord * from, DescRecord * t
 		*pointer++=1;																		\
 																							\
 	if ( from->scale )																		\
-		number *= (QUAD)listScale[from->scale];													\
+		number *= (QUAD)listScale[from->scale];												\
 																							\
 	if ( indicatorPointer )																	\
 		*indicatorPointer = 0;																\
@@ -445,13 +445,13 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 																							\
 	ODBCCONVERT_CHECKNULL;																	\
 																							\
-	##C_TYPE_FROM valFrom = *(##C_TYPE_FROM*)from->dataPtr;									\
+	C_TYPE_FROM valFrom = *(C_TYPE_FROM*)from->dataPtr;										\
 	if ( valFrom < 0 )valFrom -= 0.5;														\
 	else valFrom += 0.5;																	\
 																							\
-	*(##C_TYPE_TO*)pointer = (##C_TYPE_TO)valFrom;											\
+	*(C_TYPE_TO*)pointer = (C_TYPE_TO)valFrom;												\
 	if ( indicatorPointer )																	\
-		*indicatorPointer = sizeof(##C_TYPE_TO);											\
+		*indicatorPointer = sizeof(C_TYPE_TO);												\
 																							\
 	return 0;																				\
 }																							\
@@ -470,13 +470,13 @@ int OdbcConvert::conv##TYPE_FROM##ToString(DescRecord * from, DescRecord * to)		
 		*(char*)to->dataPtr = 0;															\
 	else																					\
 	{	/* Original source from IscDbc/Value.cpp */											\
-		##C_TYPE_FROM number = *(##C_TYPE_FROM*)from->dataPtr;								\
+		C_TYPE_FROM number = *(C_TYPE_FROM*)from->dataPtr;									\
 		char *string = (char*)pointer;														\
 		int scale = from->scale;															\
 																							\
 		if (number == 0)																	\
 			strcpy (string, "0");															\
-		else if (scale < -##DEF_SCALE)														\
+		else if (scale < -DEF_SCALE)														\
 			strcpy (string, "***");															\
 		else																				\
 		{																					\
@@ -834,12 +834,12 @@ int OdbcConvert::convStringTo##TYPE_TO(DescRecord * from, DescRecord * to)						
 	}																							\
 																								\
 	if (divisor == 1)																			\
-		*(##C_TYPE_TO*)pointer = (##C_TYPE_TO)number;											\
+		*(C_TYPE_TO*)pointer = (C_TYPE_TO)number;												\
 	else																						\
-		*(##C_TYPE_TO*)pointer = (##C_TYPE_TO)(number / divisor);								\
+		*(C_TYPE_TO*)pointer = (C_TYPE_TO)(number / divisor);									\
 																								\
 	if ( indicatorPointer )																		\
-		*indicatorPointer = sizeof(##C_TYPE_TO);												\
+		*indicatorPointer = sizeof(C_TYPE_TO);													\
 																								\
 	return 0;																					\
 }																								\

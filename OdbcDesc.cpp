@@ -791,7 +791,7 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 #pragma FB_COMPILER_MESSAGE("If modify value realized ReAlloc FIXME!")
-				headCount = (SQLSMALLINT)value;
+				headCount = (SQLSMALLINT)(int)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -861,7 +861,7 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->type = (SQLSMALLINT)value;
+					record->type = (SQLSMALLINT)(int)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -877,7 +877,7 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->datetimeIntervalCode = (SQLSMALLINT)value;
+					record->datetimeIntervalCode = (SQLSMALLINT)(int)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -892,7 +892,7 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->conciseType = (SQLSMALLINT)value;
+					record->conciseType = (SQLSMALLINT)(int)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -976,7 +976,7 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 			if(headType == odtImplementationParameter)
 			{
 				if (record)
-					record->parameterType = (SQLSMALLINT)value;
+					record->parameterType = (SQLSMALLINT)(int)value;
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -990,7 +990,7 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->precision = (SQLSMALLINT)value;
+					record->precision = (SQLSMALLINT)(int)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1005,7 +1005,7 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->scale = (SQLSMALLINT)value;
+					record->scale = (SQLSMALLINT)(int)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1030,7 +1030,7 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 			if(headType == odtImplementationParameter)
 			{
 				if (record)
-					record->unNamed = (SQLSMALLINT)value;
+					record->unNamed = (SQLSMALLINT)(int)value;
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
