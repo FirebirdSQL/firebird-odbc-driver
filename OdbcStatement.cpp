@@ -2777,7 +2777,7 @@ RETCODE OdbcStatement::executeStatement()
 
 	getResultSet();
 
-	if ( isStaticCursor() )
+	if ( statement->isActiveSelect() && isStaticCursor() )
 	{
 		resultSet->readStaticCursor(); 
 		setCursorRowCount(resultSet->getCountRowsStaticCursor());
