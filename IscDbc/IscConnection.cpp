@@ -100,6 +100,7 @@ void IscConnection::init()
 	shareConnected = false;
 	attachment = NULL;
 	transactionExtInit = 0;
+	useAppOdbcVersion = 3; // SQL_OV_ODBC3
 }
 
 IscConnection::~IscConnection()

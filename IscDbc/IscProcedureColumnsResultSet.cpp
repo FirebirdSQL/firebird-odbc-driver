@@ -80,6 +80,7 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 													   const char * procedureNamePattern, 
 													   const char * columnNamePattern)
 {
+	int appOdbcVersion = metaData->connection->getUseAppOdbcVersion(); // SQL_OV_ODBC2 or SQL_OV_ODBC3
 	char sql[4096] =
 		"select cast (NULL as varchar(7)) as procedure_cat,\n"		// 1
 				"\tcast (NULL as varchar(7)) as procedure_schem,\n"	// 2
@@ -106,6 +107,9 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 
 	char * ptFirst = sql + strlen(sql);
 
+	if ( appOdbcVersion == 2 ) // SQL_OV_ODBC2
+		addString(ptFirst, " and pp.rdb$parameter_type = 0\n" );
+
 	if (procedureNamePattern && *procedureNamePattern)
 		expandPattern (ptFirst, " and ","pp.rdb$procedure_name", procedureNamePattern);
 
@@ -117,7 +121,11 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 
 	addString(ptFirst, " order by pp.rdb$procedure_name, pp.rdb$parameter_type, pp.rdb$parameter_number");
 	prepareStatement (sql);
-	numberColumns = 19;
+
+	if ( appOdbcVersion == 2 ) // SQL_OV_ODBC2
+		numberColumns = 13;
+	else
+		numberColumns = 19;
 }
 
 bool IscProcedureColumnsResultSet::next()

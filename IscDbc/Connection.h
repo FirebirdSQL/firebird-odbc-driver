@@ -138,6 +138,8 @@ public:
 	virtual EnvironmentShare* getEnvironmentShare() = 0;
 	virtual void		connectionToEnvShare() = 0;
 	virtual void		connectionFromEnvShare() = 0;
+	virtual int			getUseAppOdbcVersion () = 0;
+	virtual void		setUseAppOdbcVersion ( int appOdbcVersion ) = 0;
 
 	virtual void		addRef() = 0;
 	virtual int			release() = 0;

@@ -76,6 +76,8 @@ public:
 	EnvironmentShare* getEnvironmentShare();
 	virtual void connectionToEnvShare();
 	virtual void connectionFromEnvShare();
+	int	getUseAppOdbcVersion () { return useAppOdbcVersion; }
+	void setUseAppOdbcVersion ( int appOdbcVersion ) { useAppOdbcVersion = appOdbcVersion; }
 	virtual int	getDriverBuildKey();
 	void init();
 	IscConnection (IscConnection *source);
@@ -118,6 +120,7 @@ public:
 	bool			autoCommit;
 	bool			transactionPending;
 	bool			shareConnected;
+	int				useAppOdbcVersion;
 	int				useCount;
 };
 

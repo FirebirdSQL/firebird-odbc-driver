@@ -1520,6 +1520,7 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 		connection->setAutoCommit( autoCommit );
 		connection->setTransactionIsolation( transactionIsolation );
 		connection->setExtInitTransaction( optTpb );
+		connection->setUseAppOdbcVersion( env->useAppOdbcVersion );
 	}
 	catch (SQLException& exception)
 	{

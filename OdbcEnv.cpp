@@ -54,6 +54,8 @@ OdbcEnv::OdbcEnv()
 	libraryHandle = NULL;
 	envShare = NULL;
 	connections = NULL;
+	useAppOdbcVersion = SQL_OV_ODBC3;
+
 #ifdef _WIN32
 	activeDrv = NULL;
 	endDrv = NULL;
@@ -212,12 +214,15 @@ SQLRETURN OdbcEnv::sqlSetEnvAttr(int attribute, SQLPOINTER value, int length)
 	{
 		switch (attribute)
 		{
-			case SQL_ATTR_OUTPUT_NTS:
-			case SQL_ATTR_ODBC_VERSION:
-				break;
+		case SQL_ATTR_OUTPUT_NTS:
+			break;
 
-			default:
-				return sqlReturn (SQL_ERROR, "HYC00", "Optional feature not implemented");
+		case SQL_ATTR_ODBC_VERSION:
+			useAppOdbcVersion = (int)value;
+			break;
+
+		default:
+			return sqlReturn (SQL_ERROR, "HYC00", "Optional feature not implemented");
 		}
 	}
 	catch (SQLException& exception)
