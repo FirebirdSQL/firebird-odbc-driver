@@ -45,7 +45,7 @@ public:
 	int			recordNumber;
 	int			dataTypes;
 	Sqlda		outputSqlda;
-	short		*indicators;
+	long		*indicators;
 };
 
 }; // end namespace IscDbcLibrary

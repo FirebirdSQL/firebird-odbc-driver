@@ -100,7 +100,7 @@ public:
 		ptSqlda = sqlda;
 		offsetSqldata = ptOffsetSqldata;
 		lenRow = lnRow;
-		indicatorsOffset = lenRow - ptSqlda->sqld*sizeof(int);
+		indicatorsOffset = lenRow - ptSqlda->sqld * sizeof(long);
 		nMAXROWBLOCK = 65535l/lnRow;
 		
 		if ( nMAXROWBLOCK < 40 )
@@ -123,7 +123,7 @@ public:
 		countColumnBlob = 0;
 		char * ptRow = ptRowBlock;
 		int	*offset = offsetSqldata;
-		int *indicators = (int*) (ptRow + indicatorsOffset);
+		long *indicators = (long*)( ptRow + indicatorsOffset );
 
 		for (n = 0; n < numberColumns; ++n)
 		{
@@ -137,6 +137,7 @@ public:
 				break;
 			}
 			var->sqldata = ptRow + *offset++;
+			*indicators = 0;
 			(var++)->sqlind = (short*)indicators++;
 		}
 		if ( !bYesBlob )
@@ -228,12 +229,13 @@ public:
 		XSQLVAR * var = ptSqlda->sqlvar;
 		char * ptRow = ptRowBlock;
 		int	*offset = offsetSqldata;
-		int *indicators = (int*) (ptRow + indicatorsOffset);
+		long *indicators = (long*)( ptRow + indicatorsOffset );
 		int n = ptSqlda->sqld;
 
 		while ( n-- )
 		{
 			var->sqldata = ptRow + *offset++;
+			*indicators = 0;
 			(var++)->sqlind = (short*)indicators++;
 		}
 
@@ -245,7 +247,7 @@ public:
 		XSQLVAR * var = ptSqlda->sqlvar;
 		char * ptRow = ptOrgRowBlock;
 		int	*offset = offsetSqldata;
-		int *indicators = (int*) (ptRow + indicatorsOffset);
+		long *indicators = (long*)( ptRow + indicatorsOffset );
 		int n = ptSqlda->sqld;
 
 		while ( n-- )
@@ -279,7 +281,7 @@ public:
 	{
 		char * ptRow = ptRowBlock + lenRow;
 		sqldata = ptRow + offsetSqldata[--column];
-		sqlind = (short*)(ptRow + indicatorsOffset + column * sizeof(int));
+		sqlind = (short*)( ptRow + indicatorsOffset + column * sizeof(long) );
 	}
 
 	char * nextPosition()
@@ -484,11 +486,11 @@ void Sqlda::allocBuffer ( IscStatement *stmt )
 
 	offset = ROUNDUP (offset, sizeof (int));
 	indicatorsOffset = offset;
-	offset += sizeof (int) * numberColumns;
+	offset += sizeof(long) * numberColumns;
 	buffer = new char [offset];
 	memset (buffer, 0, sizeof(char) * offset);
 	lengthBufferRows = offset;
-	int *indicators = (int*) (buffer + indicatorsOffset);
+	long *indicators = (long*)( buffer + indicatorsOffset );
 	var = sqlda->sqlvar;
 
 	for (n = 0; n < numberColumns; ++n, ++var)

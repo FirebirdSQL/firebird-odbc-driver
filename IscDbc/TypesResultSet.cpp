@@ -153,7 +153,7 @@ TypesResultSet::TypesResultSet(int dataType) : IscResultSet (NULL)
 	values.alloc (numberColumns);
 	allocConversions();
 
-	indicators = (short*)calloc(1,sizeof(short)*numberColumns);
+	indicators = (long*)calloc( 1, sizeof(long) * numberColumns );
 	sqlda = &outputSqlda;
 	((XSQLDA*)*sqlda)->sqld = numberColumns;
 	sqldataOffsetPtr = (unsigned long)types - sizeof (*types);
@@ -182,12 +182,12 @@ TypesResultSet::TypesResultSet(int dataType) : IscResultSet (NULL)
 
 	int i = numberColumns;
 	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar;
-	short *ind = indicators;
+	long *ind = indicators;
 
-	for( ; i-- ; ++var, ++orgvar, ++ind )
+	while ( i-- )
 	{
-		*orgvar = var;
-		var->sqlind = ind;
+		*orgvar++ = var;
+		(var++)->sqlind = (short*)ind++;
 	}
 }
 
