@@ -20,6 +20,11 @@
  *
  *	ChangeLog
  *
+ *	2002-11-25	Values.cpp
+ *				Contributed by C. G. Alvarez
+ *				Minor adjustment to improve handling of 
+ *				NUMERIC and DECIMAL
+ *
  *	2002-11-24	Values.cpp
  *				Contributed by C. G. Alvarez
  *				Improved handling of TIME datatype
@@ -949,7 +954,7 @@ void Value::convert(QUAD value, int scale, char *string)
 		*p++ = '0' + (char) (number % 10);
 		}
 
-	if (scale < n)
+	if (scale <= n)
 		{
 		for (; n > scale; --n)
 			*p++ = '0';

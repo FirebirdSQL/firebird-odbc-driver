@@ -17,6 +17,10 @@
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
  *
+ *  2002-11-25	Sqlda.cpp
+ *				Contributed by C. G. Alvarez
+ *				Changes to support better handling of 
+ *				NUMERIC and DECIMAL
  *
  *  2002-10-11	Sqlda.cpp
  *				Contributed by C. G. Alvarez
@@ -266,12 +270,12 @@ int Sqlda::getDisplaySize(int index)
 		{
 		case SQL_SHORT:
 			if ( var->sqlscale < 0 )
-				return MAX_DECIMAL_LENGTH + 2;
+				return MAX_NUMERIC_LENGTH + 2;
 			return MAX_SMALLINT_LENGTH + 1;
 			
 		case SQL_LONG:
 			if ( var->sqlscale < 0 )
-				return MAX_DECIMAL_LENGTH + 2;
+				return MAX_NUMERIC_LENGTH + 2;
 			return MAX_INT_LENGTH + 1;
 
 		case SQL_FLOAT:
@@ -279,13 +283,13 @@ int Sqlda::getDisplaySize(int index)
 
 		case SQL_DOUBLE:
 			if ( var->sqlscale < 0 )
-				return MAX_DECIMAL_LENGTH + 2;
+				return MAX_NUMERIC_LENGTH + 2;
 			return MAX_DOUBLE_LENGTH + 4;			
 
 		case SQL_QUAD:
 		case SQL_INT64:
 			if ( var->sqlscale < 0 )
-				return MAX_DECIMAL_LENGTH + 2;
+				return MAX_NUMERIC_LENGTH + 2;
 			return MAX_QUAD_LENGTH + 1;
 			
 		case SQL_ARRAY:
@@ -331,12 +335,12 @@ int Sqlda::getPrecision(int index)
 		{
 		case SQL_SHORT:
 			if ( var->sqlscale < 0 )
-				return MAX_DECIMAL_LENGTH;
+				return MAX_NUMERIC_LENGTH;
 			return MAX_SMALLINT_LENGTH;
 
 		case SQL_LONG:
 			if ( var->sqlscale < 0 )
-				return MAX_DECIMAL_LENGTH;
+				return MAX_NUMERIC_LENGTH;
 			return MAX_INT_LENGTH;
 
 		case SQL_FLOAT:
@@ -344,13 +348,13 @@ int Sqlda::getPrecision(int index)
 
 		case SQL_DOUBLE:
 			if ( var->sqlscale < 0 )
-				return MAX_DECIMAL_LENGTH;
+				return MAX_NUMERIC_LENGTH;
 			return MAX_DOUBLE_LENGTH;
 
 		case SQL_QUAD:
 		case SQL_INT64:
 			if ( var->sqlscale < 0 )
-				return MAX_DECIMAL_LENGTH;
+				return MAX_NUMERIC_LENGTH;
 			return MAX_QUAD_LENGTH;
 
 		case SQL_ARRAY:		
@@ -419,21 +423,47 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale)
 
 		case SQL_SHORT:
 			if ( sqlScale < 0 )
-				return JDBC_DECIMAL;
+			{
+				if(subType == 2)
+				{
+					return JDBC_DECIMAL;
+				}
+				else
+				{
+					return JDBC_NUMERIC;
+				}
+			}
 			return JDBC_SMALLINT;
 
 		case SQL_LONG:
 			if ( sqlScale < 0 )
-				return JDBC_DECIMAL;
+			{
+				if(subType == 2)
+				{
+					return JDBC_DECIMAL;
+				}
+				else
+				{
+					return JDBC_NUMERIC;
+				}
+			}
 			return JDBC_INTEGER;
 
 		case SQL_FLOAT:
 			return JDBC_FLOAT;
-			// return JDBC_REAL;
 
 		case SQL_DOUBLE:
 			if ( sqlScale < 0 )
-				return JDBC_DECIMAL;
+			{
+				if(subType == 2)
+				{
+					return JDBC_DECIMAL;
+				}
+				else
+				{
+					return JDBC_NUMERIC;
+				}
+			}
 			return JDBC_DOUBLE;
 
 		case SQL_QUAD:
@@ -441,7 +471,16 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale)
 
 		case SQL_INT64:
 			if ( sqlScale < 0 )
-				return JDBC_DECIMAL;
+			{
+				if(subType == 2)
+				{
+					return JDBC_DECIMAL;
+				}
+				else
+				{
+					return JDBC_NUMERIC;
+				}
+			}
 			return JDBC_BIGINT;
 
 		case SQL_BLOB:
@@ -477,21 +516,47 @@ const char* Sqlda::getSqlTypeName(int iscType, int subType, int sqlScale)
 
 		case SQL_SHORT:
 			if ( sqlScale < 0 )
-				return "DECIMAL";
+			{
+				if(subType == 2)
+				{
+					return "DECIMAL";
+				}
+				else
+				{
+					return "NUMERIC";
+				}
+			}
 			return "SMALLINT";
 
 		case SQL_LONG:
 			if ( sqlScale < 0 )
-				return "DECIMAL";
+			{
+				if(subType == 2)
+				{
+					return "DECIMAL";
+				}
+				else
+				{
+					return "NUMERIC";
+				}
+			}
 			return "INTEGER";
 
 		case SQL_FLOAT:
 			return "FLOAT";
-			// return "REAL";
 
 		case SQL_DOUBLE:
 			if ( sqlScale < 0 )
-				return "DECIMAL";
+			{
+				if(subType == 2)
+				{
+					return "DECIMAL";
+				}
+				else
+				{
+					return "NUMERIC";
+				}
+			}
 			return "DOUBLE PRECISION";
 
 		case SQL_QUAD:
@@ -499,7 +564,16 @@ const char* Sqlda::getSqlTypeName(int iscType, int subType, int sqlScale)
 
 		case SQL_INT64:
 			if ( sqlScale < 0 )
-				return "DECIMAL";
+			{
+				if(subType == 2)
+				{
+					return "DECIMAL";
+				}
+				else
+				{
+					return "NUMERIC";
+				}
+			}
 			return "BIGINT";
 
 		case SQL_BLOB:
