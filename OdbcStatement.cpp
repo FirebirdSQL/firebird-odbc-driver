@@ -1507,7 +1507,7 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 					retinfo = SQL_SUCCESS_WITH_INFO;
 					binding->dataOffset += len;
 				}
-				else if (binding->bufferLength && len < binding->bufferLength)
+				else if (binding->bufferLength && len <= binding->bufferLength)
 					binding->dataOffset += len;
 					
 				length = dataRemaining;
@@ -1897,7 +1897,7 @@ RETCODE OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int buffer
 
 	try
 	{
-		if (retcode = setValue (binding, column),retcode)
+		if ((retcode = setValue (binding, column)))
 		{
 			if ( retcode == SQL_NO_DATA )
 				return SQL_NO_DATA;
@@ -2716,7 +2716,8 @@ RETCODE OdbcStatement::executeStatement()
 
 					return SQL_NEED_DATA;
 				}
-				else if( record->dataPtr )
+				else if( record->dataPtr || 
+						 (record->indicatorPtr && *record->indicatorPtr == SQL_NULL_DATA) )
 					setParameter (record, n);
 			}
 		}

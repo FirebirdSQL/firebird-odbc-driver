@@ -37,6 +37,8 @@
 #include "IscStatement.h"
 #include "Values.h"
 
+#define DEFAULT_BLOB_BUFFER_LENGTH 16384
+
 class IscConnection;
 class IscStatementMetaData;
 //Added by RM

@@ -141,9 +141,15 @@ int IscPreparedStatement::executeUpdate()
 
 void IscPreparedStatement::setBytes(int index, int length, const void* bytes)
 {
+	char *idx = (char*)bytes;
 	BinaryBlob *blob = new BinaryBlob();
 	getParameter (index - 1)->setValue (blob);
-	blob->putSegment (length, (char*) bytes, true);
+	while (length >= DEFAULT_BLOB_BUFFER_LENGTH) {
+		blob->putSegment(DEFAULT_BLOB_BUFFER_LENGTH, idx, true);
+		idx += DEFAULT_BLOB_BUFFER_LENGTH;
+		length -= DEFAULT_BLOB_BUFFER_LENGTH;
+	}
+	if (length)	blob->putSegment(length, idx, true);
 }
 
 //Added by RM 2002-06-04
