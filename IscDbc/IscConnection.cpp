@@ -57,7 +57,7 @@
 #include "Attachment.h"
 #include "Mlist.h"
 #include "SupportFunctions.h"
-#include "SetupAttributes.h"
+#include "../SetupAttributes.h"
 
 namespace IscDbcLibrary {
 
