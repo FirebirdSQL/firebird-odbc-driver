@@ -1,0 +1,230 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: IscDbc - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP6B.tmp" with contents
+[
+/nologo /MT /W3 /GX /O2 /I "c:\Program Files\Interbase\SDK\include" /I ".." /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fp"Release/IscDbc.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\OdbcJdbc\IscDbc\AsciiBlob.cpp"
+"C:\OdbcJdbc\IscDbc\Attachment.cpp"
+"C:\OdbcJdbc\IscDbc\BinaryBlob.cpp"
+"C:\OdbcJdbc\IscDbc\Blob.cpp"
+"C:\OdbcJdbc\IscDbc\DateTime.cpp"
+"C:\OdbcJdbc\IscDbc\Error.cpp"
+"C:\OdbcJdbc\IscDbc\IscBlob.cpp"
+"C:\OdbcJdbc\IscDbc\IscCallableStatement.cpp"
+"C:\OdbcJdbc\IscDbc\IscColumnsResultSet.cpp"
+"C:\OdbcJdbc\IscDbc\IscConnection.cpp"
+"C:\OdbcJdbc\IscDbc\IscCrossReferenceResultSet.cpp"
+"C:\OdbcJdbc\IscDbc\IscDatabaseMetaData.cpp"
+"C:\OdbcJdbc\IscDbc\IscIndexInfoResultSet.cpp"
+"C:\OdbcJdbc\IscDbc\IscMetaDataResultSet.cpp"
+"C:\OdbcJdbc\IscDbc\IscPreparedStatement.cpp"
+"C:\OdbcJdbc\IscDbc\IscPrimaryKeysResultSet.cpp"
+"C:\OdbcJdbc\IscDbc\IscProcedureColumnsResultSet.cpp"
+"C:\OdbcJdbc\IscDbc\IscProceduresResultSet.cpp"
+"C:\OdbcJdbc\IscDbc\IscResultSet.cpp"
+"C:\OdbcJdbc\IscDbc\IscResultSetMetaData.cpp"
+"C:\OdbcJdbc\IscDbc\IscSqlType.cpp"
+"C:\OdbcJdbc\IscDbc\IscStatement.cpp"
+"C:\OdbcJdbc\IscDbc\IscStatementMetaData.cpp"
+"C:\OdbcJdbc\IscDbc\IscTablesResultSet.cpp"
+"C:\OdbcJdbc\IscDbc\JString.cpp"
+"C:\OdbcJdbc\IscDbc\LinkedList.cpp"
+"C:\OdbcJdbc\IscDbc\Lock.cpp"
+"C:\OdbcJdbc\IscDbc\Mutex.cpp"
+"C:\OdbcJdbc\IscDbc\Parameter.cpp"
+"C:\OdbcJdbc\IscDbc\Parameters.cpp"
+"C:\OdbcJdbc\IscDbc\Sqlda.cpp"
+"C:\OdbcJdbc\IscDbc\SQLError.cpp"
+"C:\OdbcJdbc\IscDbc\Stream.cpp"
+"C:\OdbcJdbc\IscDbc\TimeStamp.cpp"
+"C:\OdbcJdbc\IscDbc\TypesResultSet.cpp"
+"C:\OdbcJdbc\IscDbc\Value.cpp"
+"C:\OdbcJdbc\IscDbc\Values.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP6B.tmp" 
+Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP6C.tmp" with contents
+[
+gds32_ms.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"Release/IscDbc.pdb" /machine:I386 /def:".\IscDbc.def" /out:"..\Release/IscDbc.dll" /implib:"Release/IscDbc.lib" /libpath:"c:\Program Files\Interbase\SDK\lib_ms" 
+.\Release\AsciiBlob.obj
+.\Release\Attachment.obj
+.\Release\BinaryBlob.obj
+.\Release\Blob.obj
+.\Release\DateTime.obj
+.\Release\Error.obj
+.\Release\IscBlob.obj
+.\Release\IscCallableStatement.obj
+.\Release\IscColumnsResultSet.obj
+.\Release\IscConnection.obj
+.\Release\IscCrossReferenceResultSet.obj
+.\Release\IscDatabaseMetaData.obj
+.\Release\IscIndexInfoResultSet.obj
+.\Release\IscMetaDataResultSet.obj
+.\Release\IscPreparedStatement.obj
+.\Release\IscPrimaryKeysResultSet.obj
+.\Release\IscProcedureColumnsResultSet.obj
+.\Release\IscProceduresResultSet.obj
+.\Release\IscResultSet.obj
+.\Release\IscResultSetMetaData.obj
+.\Release\IscSqlType.obj
+.\Release\IscStatement.obj
+.\Release\IscStatementMetaData.obj
+.\Release\IscTablesResultSet.obj
+.\Release\JString.obj
+.\Release\LinkedList.obj
+.\Release\Lock.obj
+.\Release\Mutex.obj
+.\Release\Parameter.obj
+.\Release\Parameters.obj
+.\Release\Sqlda.obj
+.\Release\SQLError.obj
+.\Release\Stream.obj
+.\Release\TimeStamp.obj
+.\Release\TypesResultSet.obj
+.\Release\Value.obj
+.\Release\Values.obj
+]
+Creating command line "link.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP6C.tmp"
+<h3>Output Window</h3>
+Compiling...
+AsciiBlob.cpp
+Attachment.cpp
+BinaryBlob.cpp
+Blob.cpp
+DateTime.cpp
+Error.cpp
+IscBlob.cpp
+IscCallableStatement.cpp
+IscColumnsResultSet.cpp
+IscConnection.cpp
+IscCrossReferenceResultSet.cpp
+IscDatabaseMetaData.cpp
+IscIndexInfoResultSet.cpp
+IscMetaDataResultSet.cpp
+IscPreparedStatement.cpp
+IscPrimaryKeysResultSet.cpp
+IscProcedureColumnsResultSet.cpp
+IscProceduresResultSet.cpp
+IscResultSet.cpp
+IscResultSetMetaData.cpp
+IscSqlType.cpp
+IscStatement.cpp
+IscStatementMetaData.cpp
+IscTablesResultSet.cpp
+JString.cpp
+LinkedList.cpp
+Lock.cpp
+Mutex.cpp
+Parameter.cpp
+Parameters.cpp
+Sqlda.cpp
+SQLError.cpp
+Stream.cpp
+TimeStamp.cpp
+TypesResultSet.cpp
+Value.cpp
+Values.cpp
+Linking...
+   Creating library Release/IscDbc.lib and object Release/IscDbc.exp
+<h3>
+--------------------Configuration: OdbcJdbc - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP70.tmp" with contents
+[
+/nologo /MT /W3 /GX /O2 /I "IscDbc" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fp"Release/OdbcJdbc.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\OdbcJdbc\DescRecord.cpp"
+"C:\OdbcJdbc\IscDbc\JString.cpp"
+"C:\OdbcJdbc\Main.cpp"
+"C:\OdbcJdbc\OdbcConnection.cpp"
+"C:\OdbcJdbc\OdbcDesc.cpp"
+"C:\OdbcJdbc\OdbcEnv.cpp"
+"C:\OdbcJdbc\OdbcError.cpp"
+"C:\OdbcJdbc\OdbcObject.cpp"
+"C:\OdbcJdbc\OdbcStatement.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP70.tmp" 
+Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP71.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"Release/OdbcJdbc.pdb" /machine:I386 /def:".\OdbcJdbc.def" /out:"Release/OdbcJdbc.dll" /implib:"Release/OdbcJdbc.lib" 
+.\Release\DescRecord.obj
+.\Release\JString.obj
+.\Release\Main.obj
+.\Release\OdbcConnection.obj
+.\Release\OdbcDesc.obj
+.\Release\OdbcEnv.obj
+.\Release\OdbcError.obj
+.\Release\OdbcObject.obj
+.\Release\OdbcStatement.obj
+.\IscDbc\Release\IscDbc.lib
+]
+Creating command line "link.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP71.tmp"
+<h3>Output Window</h3>
+Compiling...
+DescRecord.cpp
+JString.cpp
+Main.cpp
+OdbcConnection.cpp
+OdbcDesc.cpp
+OdbcEnv.cpp
+OdbcError.cpp
+OdbcObject.cpp
+OdbcStatement.cpp
+Linking...
+   Creating library Release/OdbcJdbc.lib and object Release/OdbcJdbc.exp
+<h3>
+--------------------Configuration: OdbcJdbcSetup - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Release/OdbcJdbcSetup.res" /d "NDEBUG" "C:\OdbcJdbc\OdbcJdbcSetup\OdbcJdbcSetup.rc"" 
+Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP75.tmp" with contents
+[
+/nologo /MT /W3 /GX /O2 /I ".." /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /Fp"Release/OdbcJdbcSetup.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\OdbcJdbc\OdbcJdbcSetup\DsnDialog.cpp"
+"C:\OdbcJdbc\OdbcJdbcSetup\OdbcJdbcSetup.cpp"
+"C:\OdbcJdbc\OdbcJdbcSetup\Setup.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP75.tmp" 
+Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP76.tmp" with contents
+[
+/nologo /MT /W3 /GX /O2 /I ".." /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /Fp"Release/OdbcJdbcSetup.pch" /Yc"stdafx.h" /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\OdbcJdbc\OdbcJdbcSetup\StdAfx.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP76.tmp" 
+Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP77.tmp" with contents
+[
+/nologo /subsystem:windows /dll /incremental:no /pdb:"Release/OdbcJdbcSetup.pdb" /machine:I386 /def:".\OdbcJdbcSetup.def" /out:"..\Release/OdbcJdbcSetup.dll" /implib:"Release/OdbcJdbcSetup.lib" 
+.\Release\DsnDialog.obj
+.\Release\OdbcJdbcSetup.obj
+.\Release\Setup.obj
+.\Release\StdAfx.obj
+.\Release\OdbcJdbcSetup.res
+\OdbcJdbc\IscDbc\Release\IscDbc.lib
+\OdbcJdbc\Release\OdbcJdbc.lib
+]
+Creating command line "link.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP77.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+StdAfx.cpp
+Compiling...
+DsnDialog.cpp
+OdbcJdbcSetup.cpp
+Setup.cpp
+Linking...
+.\OdbcJdbcSetup.def : warning LNK4104: export of symbol "DllRegisterServer" should be PRIVATE
+   Creating library Release/OdbcJdbcSetup.lib and object Release/OdbcJdbcSetup.exp
+LINK : warning LNK4089: all references to "SHELL32.dll" discarded by /OPT:REF
+
+
+
+<h3>Results</h3>
+OdbcJdbcSetup.dll - 0 error(s), 2 warning(s)
+</pre>
+</body>
+</html>
