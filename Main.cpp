@@ -1235,6 +1235,9 @@ SQLRETURN SQL_API SQLGetStmtAttr( SQLHSTMT hStmt,
 	TRACE ("SQLGetStmtAttr");
 	GUARD_HSTMT( hStmt );
 
+	if ( bufferLength <= SQL_LEN_BINARY_ATTR_OFFSET )
+		bufferLength = -bufferLength + SQL_LEN_BINARY_ATTR_OFFSET;
+
 	return ((OdbcStatement*) hStmt)->sqlGetStmtAttr( attribute, value,
 													bufferLength, stringLength );
 }
@@ -1246,6 +1249,9 @@ SQLRETURN SQL_API SQLSetConnectAttr( SQLHDBC hDbc, SQLINTEGER attribute,
 {
 	TRACE ("SQLSetConnectAttr");
 	GUARD_HDBC( hDbc );
+
+	if ( stringLength <= SQL_LEN_BINARY_ATTR_OFFSET )
+		stringLength = -stringLength + SQL_LEN_BINARY_ATTR_OFFSET;
 
 	return ((OdbcConnection*) hDbc)->sqlSetConnectAttr( attribute, value, stringLength );
 }
