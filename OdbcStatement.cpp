@@ -208,6 +208,7 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	enFetch = NoneFetch;
     parameterNeedData = 0;	
 	numberGetDataBindings = 0;	//added by RM
+	columnPrevGetDataBinding = -1;
 	maxRows = 0;
 	maxLength = 0;
 	applicationRowDescriptor = connection->allocDescriptor (odtApplicationRow);
@@ -469,6 +470,7 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 			case SQL_C_TIME:
 			case SQL_C_TIMESTAMP:
 			case SQL_C_NUMERIC:
+			case SQL_DECIMAL:
 			case SQL_TYPE_DATE:
 			case SQL_TYPE_TIME:
 			case SQL_TYPE_TIMESTAMP:
@@ -552,7 +554,13 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 			binding->pointer = targetValuePtr;
 			binding->bufferLength = bufferLength;
 			binding->indicatorPointer = indPtr;
-			if ( metaData &&
+
+			if(	columnPrevGetDataBinding != column )
+			{
+				binding->dataOffset	= 0;
+				columnPrevGetDataBinding = column;
+			}
+			else if ( metaData &&
 				 ( metaData->getColumnType (column) == SQL_CHAR || 
 				   metaData->getColumnType (column) == SQL_VARCHAR ))
 				binding->dataOffset			= 0;
@@ -609,6 +617,7 @@ RETCODE OdbcStatement::sqlFetch()
 	return returnData();
 }
 
+#ifdef DEBUG
 char *strDebOrientFetch[]=
 {
 	"",
@@ -622,6 +631,7 @@ char *strDebOrientFetch[]=
 	"SQL_FETCH_BOOKMARK",
 	""
 };
+#endif
 
 RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 {
@@ -969,18 +979,35 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 
 }
 
+#ifdef DEBUG
+char *strDebOrientSetPos[]=
+{
+	"SQL_POSITION",
+	"SQL_REFRESH",
+	"SQL_UPDATE",
+	"SQL_DELETE"
+};
+#endif
+
 RETCODE OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQLUSMALLINT lockType)
 {
+#ifdef DEBUG
+	char strTmp[128];
+	sprintf(strTmp,"\t%s : row %i : current bookmark %i\n",strDebOrientSetPos[operation],row,
+								fetchBookmarkPtr ? *(long*)fetchBookmarkPtr : 0);
+	OutputDebugString(strTmp); 
+#endif
 
 	switch ( operation )
 	{
 	case SQL_POSITION:
 		if( fetchBookmarkPtr )
-			rowNumber = *(long*)fetchBookmarkPtr - 1;
+			rowNumber = (*(long*)fetchBookmarkPtr - 1) + row - 1;
 		else
 			rowNumber = row - 1;
 		if( resultSet )
 			resultSet->setPosRowInSet(rowNumber);
+		fetched = true;
 		break;
 	case SQL_REFRESH:
 		break;
@@ -1034,7 +1061,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 			const char *string = RESULTS (getString (column));
 
 			int dataRemaining = strlen(string) - dataOffset;
-			int len = MIN(dataRemaining, (long)bufferLength);
+			int len = MIN(dataRemaining, (long)bufferLength - (bufferLength?1:0));
 			 
 			//Added by PR. If len is negative we get an AV
 			//Added by NOMEY. and empty strings have len = 0
@@ -1158,6 +1185,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 			}
 			break;	
 
+		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			{
 				char *var = (char*) pointer;
@@ -1235,7 +1263,7 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 			}
 			else
 			{
-				int len = MIN(dataRemaining, binding->bufferLength);
+				int len = MIN(dataRemaining, binding->bufferLength - (binding->bufferLength?1:0));
 				 
 				if ( len > 0 ) 
 				{
@@ -1249,6 +1277,8 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 					retinfo = SQL_SUCCESS_WITH_INFO;
 					binding->dataOffset += len;
 				}
+				else if (binding->bufferLength && len < binding->bufferLength)
+					binding->dataOffset += len;
 					
 				length = dataRemaining;
 				}
@@ -1358,12 +1388,15 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 					retinfo = SQL_SUCCESS_WITH_INFO;
 					binding->dataOffset += len;
 				}
+				else if (binding->bufferLength && len < binding->bufferLength)
+					binding->dataOffset += len;
 					
 				length = dataRemaining;
 			}
 			}
 			break;	
 
+		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			{
 				char *var = (char*) binding->pointer;
@@ -1510,6 +1543,7 @@ void OdbcStatement::releaseBindings()
 	implementationRowDescriptor->delAllBindColumn();
 //Added by RM
 	numberGetDataBindings = 0;
+	columnPrevGetDataBinding = -1;
 
 	if (getDataBindings)
 		{
@@ -1709,6 +1743,14 @@ RETCODE OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int buffer
 
 	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
 		return retcode;
+
+#pragma FB_COMPILER_MESSAGE("sqlBindCol - to use when this column was not connected; FIXME!")
+// Problem with length of a line StaticCursor
+// When blob a line is output to string
+// If cType is SQL_ARD_TYPE, the driver uses the type identifier 
+// specified in the SQL_DESC_CONCISE_TYPE field of the ARD. 
+// If it is SQL_C_DEFAULT, the driver selects the default C data 
+// type based upon the SQL data type of the source.
 
 	Binding* binding = getDataBindings + column;
 
@@ -1919,6 +1961,7 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 		case SQL_C_TYPE_TIME:
 		case SQL_C_TYPE_TIMESTAMP:
 		case SQL_C_NUMERIC:
+		case SQL_DECIMAL:
 		//case SQL_C_BOOKMARK:
 		//case SQL_C_VARBOOKMARK:
 		//case SQL_C_GUID:
@@ -2122,6 +2165,7 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 
 			case SQL_C_BIT:
 			case SQL_C_NUMERIC:
+			case SQL_DECIMAL:
 			//case SQL_C_BOOKMARK:
 			//case SQL_C_VARBOOKMARK:
 			//case SQL_C_GUID:
@@ -2265,6 +2309,7 @@ void OdbcStatement::setParameter(DescRecord *record,int parameter)
 
 		case SQL_C_BIT:
 		case SQL_C_NUMERIC:
+		case SQL_DECIMAL:
 		//case SQL_C_BOOKMARK:
 		//case SQL_C_VARBOOKMARK:
 		//case SQL_C_GUID:

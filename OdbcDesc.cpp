@@ -27,8 +27,9 @@
 // OdbcDesc.cpp: implementation of the OdbcDesc class.
 //
 //////////////////////////////////////////////////////////////////////
-
 #include <memory.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "OdbcJdbc.h"
 #include "OdbcDesc.h"
 #include "OdbcConnection.h"
@@ -729,8 +730,46 @@ RETCODE OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, in
 	return sqlSuccess();
 }
 
+#ifdef DEBUG
+#define __DebSetDescField(X) X,#X
+struct infoDebSetDescField
+{
+	int kod;
+	char * name;
+} debSetDescField[]=
+{
+	__DebSetDescField(SQL_ERROR),
+	__DebSetDescField(SQL_DESC_COUNT),
+	__DebSetDescField(SQL_DESC_TYPE),
+	__DebSetDescField(SQL_DESC_LENGTH),
+	__DebSetDescField(SQL_DESC_OCTET_LENGTH_PTR),
+	__DebSetDescField(SQL_DESC_PRECISION),
+	__DebSetDescField(SQL_DESC_SCALE),
+	__DebSetDescField(SQL_DESC_DATETIME_INTERVAL_CODE),
+	__DebSetDescField(SQL_DESC_NULLABLE),
+	__DebSetDescField(SQL_DESC_INDICATOR_PTR),
+	__DebSetDescField(SQL_DESC_DATA_PTR),
+	__DebSetDescField(SQL_DESC_NAME),
+	__DebSetDescField(SQL_DESC_UNNAMED),
+	__DebSetDescField(SQL_DESC_OCTET_LENGTH),
+	__DebSetDescField(SQL_DESC_ALLOC_TYPE)
+};
+#endif
+
 RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, int length)
 {
+#ifdef DEBUG
+	char strTmp[128];
+	int i;
+	for(i=0;i<sizeof(debSetDescField)/sizeof(*debSetDescField);++i)
+		if(debSetDescField[i].kod == fieldId)
+			break;
+	if(i==sizeof(debSetDescField)/sizeof(*debSetDescField))
+		i=0;
+	sprintf(strTmp,"\tid %4i - %s : recNumber %i : value %i\n",fieldId,debSetDescField[i].name,
+								recNumber, value ? (int)value : 0);
+	OutputDebugString(strTmp); 
+#endif
 	clearErrors();
 	DescRecord *record = NULL;
 

@@ -145,6 +145,7 @@ public:
 //Added 2002-06-04	RM
     int                 parameterNeedData;
  	int					numberGetDataBindings;
+ 	int					columnPrevGetDataBinding;
 	Binding				*getDataBindings;
 	bool				eof;
 	bool				cancel;
