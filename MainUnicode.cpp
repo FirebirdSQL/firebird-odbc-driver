@@ -1124,6 +1124,9 @@ SQLRETURN SQL_API SQLSetConnectAttrW( SQLHDBC hDbc, SQLINTEGER attribute,
 		}
 	}
 
+	if ( stringLength <= SQL_LEN_BINARY_ATTR_OFFSET )
+		stringLength = -stringLength + SQL_LEN_BINARY_ATTR_OFFSET;
+
 	return ((OdbcConnection*) hDbc)->sqlSetConnectAttr( attribute, value, stringLength );
 }
 
