@@ -42,6 +42,7 @@ public:
 
 	virtual bool nextFetch();
 	virtual bool next();
+	virtual void setMaxNumberBindColumns(int countBind);
 	int findType();
 
 	int			recordNumber;

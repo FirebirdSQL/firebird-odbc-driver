@@ -174,6 +174,7 @@ public:
 	virtual bool		readStaticCursor();
 	virtual bool		readFromSystemCatalog();
 	virtual bool		nextFetch();
+	virtual void		setMaxNumberBindColumns(int countBind);
 	virtual bool		setCurrentRowInBufferStaticCursor(int nRow);
 	virtual void		copyNextSqldaInBufferStaticCursor();
 	virtual void		copyNextSqldaFromBufferStaticCursor();

@@ -138,18 +138,24 @@ TypesResultSet::TypesResultSet(int dataType) : IscResultSet (NULL)
 
 	switch( dataTypes )
 	{
-		case 9:
-			dataTypes = JDBC_DATE;
-			break;
+	case JDBC_SQL_DATE:
+		dataTypes = JDBC_DATE;
+		break;
 
-		case 10:
-			dataTypes = JDBC_TIME;
-			break;
+	case JDBC_SQL_TIME:
+		dataTypes = JDBC_TIME;
+		break;
 
-		case 11:
-			dataTypes = JDBC_TIMESTAMP;
-			break;
+	case JDBC_SQL_TIMESTAMP:
+		dataTypes = JDBC_TIMESTAMP;
+		break;
 	}
+
+	int endRow = sizeof (types) / sizeof (types [0]);
+
+	types[--endRow].typeType = JDBC_TIMESTAMP;
+	types[--endRow].typeType = JDBC_TIME;
+	types[--endRow].typeType = JDBC_DATE;
 
 	recordNumber = 0;
 	numberColumns = 19;
@@ -265,6 +271,19 @@ bool TypesResultSet::next()
 		statement->setValue (value, var);
 
 	return true;
+}
+
+void TypesResultSet::setMaxNumberBindColumns( int countBind )
+{
+	// for compatibility ODBC 2.0
+	if ( countBind && countBind <= 15 )
+	{
+		int endRow = sizeof (types) / sizeof (types [0]);
+
+		types[--endRow].typeType = JDBC_SQL_TIMESTAMP;
+		types[--endRow].typeType = JDBC_SQL_TIME;
+		types[--endRow].typeType = JDBC_SQL_DATE;
+	}
 }
 
 int TypesResultSet::findType()

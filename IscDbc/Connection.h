@@ -559,6 +559,7 @@ public:
 	virtual long*		getSqlDataOffsetPtr() = 0;
 	virtual bool		readStaticCursor() = 0;
 	virtual bool		nextFetch() = 0;
+	virtual void		setMaxNumberBindColumns(int countBind) = 0;
 	virtual bool		setCurrentRowInBufferStaticCursor(int nRow) = 0;
 	virtual void		copyNextSqldaInBufferStaticCursor() = 0;
 	virtual void		copyNextSqldaFromBufferStaticCursor() = 0;
