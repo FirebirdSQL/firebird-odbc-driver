@@ -1061,7 +1061,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 			const char *string = RESULTS (getString (column));
 
 			int dataRemaining = strlen(string) - dataOffset;
-			int len = MIN(dataRemaining, (long)bufferLength - (bufferLength?1:0));
+			int len = MIN(dataRemaining, (long)MAX(0, bufferLength-1));
 			 
 			//Added by PR. If len is negative we get an AV
 			//Added by NOMEY. and empty strings have len = 0
@@ -1263,7 +1263,7 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 			}
 			else
 			{
-				int len = MIN(dataRemaining, binding->bufferLength - (binding->bufferLength?1:0));
+				int len = MIN(dataRemaining, MAX(0, binding->bufferLength-1));
 				 
 				if ( len > 0 ) 
 				{
