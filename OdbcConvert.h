@@ -54,6 +54,7 @@ private:
 	void decode_sql_date(signed long nday, SQLUSMALLINT &mday, SQLUSMALLINT &month, SQLSMALLINT &year);
 	signed long encode_sql_time(SQLUSMALLINT hour, SQLUSMALLINT minute, SQLUSMALLINT second);
 	void decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMALLINT &minute, SQLUSMALLINT &second);
+	inline void roundStringNumber ( char *& strNumber, int numDigits, int &realDigits );
 	void convertFloatToString(double value, char *string, int size, int *length, int precision = 15, char POINT_DIV = '.');
 	void convertStringDateTimeToServerStringDateTime (char *& string, int &len);
 	void getFirstElementFromArrayString(char * string, char *& firstChar, int &len);

@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "OdbcJdbc.h"
 #include "OdbcEnv.h"
 #include "OdbcDesc.h"
@@ -2511,14 +2512,45 @@ void OdbcConvert::decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMA
 	second = (SQLUSMALLINT)((ntime / ISC_TIME_SECONDS_PRECISION) % 60);
 }
 
+void OdbcConvert::roundStringNumber ( char *& strNumber, int numDigits, int &realDigits )
+{
+	char * &chBeg = strNumber;
+	char * chEnd = chBeg + numDigits;
+
+	if ( *chEnd >= '5' ) 
+	{
+		++*--chEnd;
+
+		while ( *chEnd > '9' ) 
+		{
+			*chEnd = '0';
+			if ( chEnd > chBeg )
+				++*--chEnd;
+			else
+			{
+				*--chBeg = '1';
+				++realDigits;
+			}
+		}
+	}
+}
+
 void OdbcConvert::convertFloatToString(double value, char *string, int size, int *length, int digit, char POINT_DIV)
 {
+#define MAXDIGITS 512
+	const int maxDecimalExponent = 308;
 	char temp[64];
-	char * dst = temp;
-	int  decimal, sign;
+	char *dst = temp;
+	int numDigits = digit - 1;
+	int realDigits;
+	double valInt, valFract;
+	char *pt, *pt1;
+	char buf[MAXDIGITS];
+	int sign;
 	bool copy = false;
-	char * strCvt = fcvt( value, digit, &decimal, &sign );
-	int len = strlen( strCvt );
+	int &len = *length;
+
+	len = 0;
 
 	if ( !size )
 		return;
@@ -2528,129 +2560,217 @@ void OdbcConvert::convertFloatToString(double value, char *string, int size, int
 	else
 		copy = true;
 
-	if ( !*strCvt )
+	realDigits = 0;
+	sign = 0;
+
+	if ( value < 0 )
 	{
-		len = strlen( gcvt( value, digit, dst) );
-		char * end = dst + len - 1;
-		if ( *end == '.' )
-			*end = '\0',--len;
+		sign = 1;
+		value = -value;
 	}
-	else if ( !len )
+
+	value = modf ( value, &valInt );
+
+	if ( valInt != 0 )
 	{
-		*dst++ = '0';
-		*dst = '\0';
-		len = 1;
-	}
-	else
-	{
-		char strF[20];
-		char * src = strF, * end, * begin = dst;
+		pt = pt1 = &buf[MAXDIGITS - numDigits - 1];
+		char * end = buf + 1;
+
+		while ( valInt != 0 )
+		{
+			valFract = modf ( valInt / 10, &valInt );
+			*--pt1 = (int)( ( valFract + 0.03 ) * 10 ) + '0';
+			realDigits++;
+
+			if ( realDigits > maxDecimalExponent )
+			{
+				*pt1 = '1';
+				break;
+			}
+		}
+
+		if ( realDigits > numDigits ) // big number
+		{
+			roundStringNumber ( pt1, numDigits, realDigits );
+
+			int ndig = numDigits;
+
+			pt = dst;
+
+			if ( sign )
+				*pt++ = '-';
+			
+			*pt++ = *pt1++;
+			*pt++ = POINT_DIV;
+
+			while ( --ndig )
+				*pt++ = *pt1++;
+
+			end = pt - 1;
+			while ( *end == '0' ) --end;
+			
+			if ( *end == POINT_DIV )
+				pt = end;
+			else
+				pt = end + 1;
+
+			*pt++ = 'e';
+			*pt = '+';
+
+			ndig = realDigits - 1;
+
+			int n;
+			for ( n = 3, pt += n; ndig; ndig /= 10, --n)
+				*pt-- = '0' + (char) (ndig % 10);
+
+			while ( n-- )
+				*pt-- = '0';
+
+			pt += 4;
+			*pt = '\0';
+
+			len = pt - dst;
+			return;
+		}
+
+		// normal number
+		end = pt1 + numDigits;
+		
+		while ( pt <= end )
+		{
+			value *= 10;
+			value = modf ( value, &valFract );
+			*pt++ = (int)valFract + '0';
+		}
+
+		*pt = '\0';
+
+		roundStringNumber ( pt1, numDigits, realDigits );
+
+		*(pt-1) = '\0';
+		pt = dst;
 
 		if ( sign )
-			*dst++ = '-';
+			*pt++ = '-';
 
-		if ( len < digit + 1 )
+		int n = realDigits;
+
+		while ( n-- )
+			*pt++ = *pt1++;
+
+		n = numDigits - realDigits;
+		end = pt1 + (n - 1);
+
+		while ( n > 0 && *end == '0' ) --end, --n;
+
+		if ( !n )
+			*pt = '\0';
+		else
 		{
-			char * ch = strCvt;
-			end = strF;
-			while ( (*end++ = *ch++) );
-			end -= 2;
+			*(end + 1) = '\0';
+			*pt++ = POINT_DIV;
+			while ( (*pt++ = *pt1++) );
+		}
+	} 
+	else if ( value > 0 ) 
+	{   // shift to left number 0.0000122 to 0.122
+		while ( ( valFract = value * 10 ) < 1 ) 
+		{
+			value = valFract;
+			realDigits--;
+		}
+
+		char * beg = buf + 1;
+		pt1 = buf + numDigits + 1;
+		pt = buf + 1;
+		
+		while ( pt <= pt1 )
+		{
+			value *= 10;
+			value = modf ( value, &valFract );
+			*pt++ = (int)valFract + '0';
+		}
+
+		*pt = '\0';
+
+		roundStringNumber ( beg, numDigits, realDigits );
+
+		*--pt = '\0';
+		--pt;
+
+		while ( pt > beg && *pt == '0' ) 
+			*pt-- = '\0';
+
+		pt = dst;
+
+		if ( sign )
+			*pt++ = '-';
+
+		if ( realDigits == 1 )
+		{
+			while ( (*pt++ = *beg++) );
+		}
+		else if ( realDigits >= -3 )
+		{
+			*pt++ = '0';
+
+			if ( *beg > '0' )
+			{
+				int n = realDigits;
+
+				*pt++ = POINT_DIV;
+
+				while ( n++ )
+					*pt++ = '0';
+
+				while ( (*pt++ = *beg++) );
+			}
+			else
+				*pt = '\0';
 		}
 		else
 		{
-			char * ch = strCvt;
-			char * chEnd = strCvt + digit;
-			end = strF;
+			*pt++ = *beg++;
 
-			if ( *(strCvt + digit) < '5' )
+			if ( *beg )
 			{
-				while ( ch < chEnd )
-					*end++ = *ch++;
-				*end-- = '\0';
+				*pt++ = POINT_DIV;
+
+				while ( *beg )
+					*pt++ = *beg++;
 			}
-			else
-			{
-				*strF = '0';
-				end++;
-				while ( ch < chEnd )
-					*end++ = *ch++;
-				*end-- = '\0';
-				chEnd = end;
 
-				while ( chEnd > strF && *chEnd + 1 > '9' )
-					*chEnd-- = '0';
+			*pt++ = 'e';
+			*pt = '-';
 
-				++(*chEnd);
+			int ndig = -realDigits + 1;
+			int n;
 
-				if ( chEnd > strF )
-					src++;
-			}
+			for ( n = 3, pt += n; ndig; ndig /= 10, --n)
+				*pt-- = '0' + (char) (ndig % 10);
+
+			while ( n-- )
+				*pt-- = '0';
+
+			pt += 4;
+			*pt = '\0';
 		}
-
-		if ( decimal <= 0 )
-		{
-			int dec = decimal;
-
-			while ( end > src && *end == '0' )
-				*end-- = '\0';
-
-			if ( end >= src )
-			{
-				*dst++ = '0';
-				*dst++ = POINT_DIV;
-
-				while ( dec++ )
-					*dst++ = '0';
-
-				while ( (*dst++ = *src++) );
-				--dst;
-			}
-			else // if ( *end == '0' )
-			{
-				dst = begin;
-				*dst++ = '0';
-				*dst = '\0';
-			}
-		}			
-		else if ( decimal > 0 )
-		{
-			int dec = decimal;
-			while ( *src )
-			{
-				*dst++ = *src++;
-				if (--dec == 0)
-				{
-					if ( *src && decimal < digit )
-						*dst++ = POINT_DIV;
-					else
-						break;
-				}
-			}
-
-			if ( dec > 0 )
-				while ( dec-- )
-					*dst++ = '0';
-			else
-			{
-				--dst;
-				while ( *dst == '0' )
-					*dst-- = '\0';
-
-				if ( *dst == POINT_DIV )
-					*dst-- = '\0';
-				++dst;
-			}
-			*dst = '\0';
-		}
-		len = dst - begin;
 	}
+	else
+	{
+		pt = dst;
+		*pt++ = '0';
+		*pt = '\0';
+	}
+
+	len = pt - dst;
+
 	if ( copy )
 	{
-		len = MIN( len, size - 1 );
-		memcpy( string, temp, len );
+		len = MIN ( len, size - 1 );
+		memcpy ( string, temp, len );
 		string[len] = '\0';
 	}
-	*length = len;
 }
 
 void OdbcConvert::convertStringDateTimeToServerStringDateTime (char *& string, int &len)
