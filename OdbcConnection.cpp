@@ -400,7 +400,7 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 
 	int length = stringLength (connectString, connectStringLength);
 	const char *end = (const char*) connectString + length;
-	JString driver = DRIVER_NAME;
+	JString driver = DRIVER_FULL_NAME;
 
 	for (const char *p = (const char*) connectString; p < end;)
 	{
@@ -565,12 +565,6 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 
 	if ( outConnectBuffer && connectBufferLength )
 	{
-		if (!account.IsEmpty())
-		{
-			r = appendString (r, ";"KEY_DSN_UID"=");
-			r = appendString (r, account);
-		}
-
 		if (!password.IsEmpty())
 		{
 			char buffer[256];
@@ -580,11 +574,19 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 			r = appendString (r, buffer);
 		}
 
+		if (!account.IsEmpty())
+		{
+			r = appendString (r, ";"KEY_DSN_UID"=");
+			r = appendString (r, account);
+		}
+
 		if (!role.IsEmpty())
 		{
 			r = appendString (r, ";"SETUP_ROLE"=");
 			r = appendString (r, role);
 		}
+
+		*r = '\0';
 
 		if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
 			postError ("01004", "String data, right truncated");
@@ -611,7 +613,7 @@ SQLRETURN OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMAL
 
 	int length = stringLength (inConnectionString, stringLength1);
 	const char *end = (const char*) inConnectionString + length;
-	JString driver = DRIVER_NAME;
+	JString driver = DRIVER_FULL_NAME;
 
 	levelBrowseConnect = 0;
 
