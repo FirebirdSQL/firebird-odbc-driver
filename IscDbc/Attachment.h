@@ -48,6 +48,7 @@ public:
 	JString		databaseName;
 	JString		userName;
 	JString		serverVersion;
+	int			pageSize;
 	int			serverBaseLevel;	
 	int			databaseDialect;
 	bool		quotedIdentifiers;

@@ -16,6 +16,13 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *  2002-10-11	Attachment.cpp
+ *				Contributed by C. G. Alvarez
+ *				Added isc_info_page_size
+ *              to openDatabase()
+ *
+ *
  */
 
 // Attachment.cpp: implementation of the Attachment class.
@@ -34,6 +41,7 @@ static char databaseInfoItems [] = {
 	isc_info_base_level,
 	isc_info_ods_version,
 	isc_info_version, 
+	isc_info_page_size,
 	isc_info_end 
 	};
 
@@ -124,6 +132,10 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 
 				case isc_info_version:
 					serverVersion = JString (p + 2, p [1]);
+					break;
+
+				case isc_info_page_size:
+					pageSize = isc_vax_integer (p, length);
 					break;
 				}
 			p += length;

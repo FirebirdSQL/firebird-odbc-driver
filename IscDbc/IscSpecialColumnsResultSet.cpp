@@ -1,6 +1,27 @@
+/*
+ *  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/idpl.html. 
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by James A. Starkey for IBPhoenix.
+ *
+ *  Copyright (c) 1999, 2000, 2001 James A. Starkey
+ *  All Rights Reserved.
+ */
+
 // IscSpecialColumnsResultSet.cpp: implementation of the IscSpecialColumnsResultSet class.
 //
 //////////////////////////////////////////////////////////////////////
+
 #include <stdio.h>
 #include <string.h>
 #include "IscDbc.h"
@@ -34,16 +55,19 @@ IscSpecialColumnsResultSet::~IscSpecialColumnsResultSet()
 void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const char * schema, const char * table, int scope, int nullable)
 {
 	JString sql = 
-		"select 1 as scope,\n"			// 1 scope is always transaction for us
-				"\trfr.rdb$field_name as column_name, \n"		// 2
-				"\tf.rdb$field_type as data_type,\n"		// 3
-				"\tf.rdb$field_sub_type as type_name,\n"	// 4
-				"\tf.rdb$character_length as column_size,\n"	// 5
-				"\tf.rdb$field_length as buffer_length,\n"	// 6
-				"\t(f.rdb$field_scale * -1) as decimal_digits,\n"	// 7
-				"\t1 as pseudo_column,\n"	// 8
-				"\trel.rdb$constraint_type,\n"	// 9
-				"\ti.rdb$index_id\n"						//10
+		"select f.rdb$field_type as scope,\n"						// 1 
+				"\trfr.rdb$field_name as column_name, \n"			// 2
+				"\tf.rdb$field_type as data_type,\n"				// 3
+				"\tf.rdb$field_sub_type as type_name,\n"			// 4
+				"\t0 as column_size,\n"								// 5
+				"\t0 as buffer_length,\n"							// 6
+				"\t0 as decimal_digits,\n"							// 7
+				"\tf.rdb$field_type as pseudo_column,\n"			// 8
+				"\trel.rdb$constraint_type,\n"						// 9
+				"\ti.rdb$index_id,\n"								//10
+				"\tf.rdb$field_length as column_length,\n"			//11
+				"\tf.rdb$field_scale as column_digits,\n"			//12
+				"\tf.rdb$field_precision as column_precision\n"		//13
 		"from rdb$fields f\n"
 			"\tjoin rdb$relation_fields rfr\n" 
 				"\t\ton rfr.rdb$field_source = f.rdb$field_name\n"
@@ -60,7 +84,7 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 	sql += " order by rel.rdb$constraint_type, rdb$index_name, rdb$field_position";
 
 	prepareStatement (sql);
-	numberColumns = 9;
+	numberColumns = 8;
 	index_id = -1;
 
 }
@@ -70,6 +94,8 @@ bool IscSpecialColumnsResultSet::next ()
 
 	if (!resultSet->next())
 		return false;
+
+	resultSet->setValue(1,1);	//scope is always transaction for us
 
 	int	idx_id = resultSet->getInt (10);
 	if (index_id == -1) 
@@ -82,10 +108,11 @@ bool IscSpecialColumnsResultSet::next ()
 	//translate to the SQL type information
 	int blrType = resultSet->getInt (3);	// field type
 	int subType = resultSet->getInt (4);
-	int length = resultSet->getInt (6);
+	int length = resultSet->getInt (11);
+	int precision = resultSet->getInt (13);
 
 	int dialect = resultSet->statement->connection->getDatabaseDialect();
-	IscSqlType sqlType (blrType, subType, length, dialect);
+	IscSqlType sqlType (blrType, subType, length, length, dialect, precision);
 
 	char *type, t[50];
 	type = t;
@@ -96,8 +123,12 @@ bool IscSpecialColumnsResultSet::next ()
 
 	setCharLen (5, 6, sqlType);
 
-	adjustResults (sqlType);
+	int scale = resultSet->getInt(12)*-1;
+	resultSet->setValue(7,scale);
 
+	resultSet->setValue(8,1);
+
+	adjustResults (sqlType);
 
 	return true;
 }
@@ -141,7 +172,6 @@ void IscSpecialColumnsResultSet::setCharLen (int charLenInd,
 								      int fldLenInd, 
 									  IscSqlType sqlType)
 {
-
 	int fldLen = resultSet->getInt (fldLenInd);
 	int charLen = resultSet->getInt (charLenInd);
 	if (resultSet->valueWasNull)
@@ -149,13 +179,15 @@ void IscSpecialColumnsResultSet::setCharLen (int charLenInd,
 
 	if (sqlType.type != JDBC_VARCHAR &&
 		sqlType.type != JDBC_CHAR)
+	{
 		charLen = sqlType.length;
+		fldLen  = sqlType.bufferLength;
+	}
 	
 	if (sqlType.type == JDBC_VARCHAR)
 		resultSet->setValue (fldLenInd, fldLen + 2);
 	else
 		resultSet->setValue (fldLenInd, fldLen);
-
 
 	if (!charLen)
 		resultSet->setNull (charLenInd);

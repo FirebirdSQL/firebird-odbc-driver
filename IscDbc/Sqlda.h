@@ -59,6 +59,7 @@ public:
 	const char* getColumnName (int index);
 	int getDisplaySize (int index);
 	int getColumnType (int index);
+	const char* getColumnTypeName (int index);
 	void print();
 	int getColumnCount();
 	void allocBuffer();

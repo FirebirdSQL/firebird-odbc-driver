@@ -179,7 +179,7 @@ int OdbcDateTime::convert (TimeStamp *timeStampIn, tagTIMESTAMP_STRUCT * tagTime
 //signed long OdbcDateTime::ndate (signed long nday, tm	*times)
 //From B. Schulte
 // this function got a new parameter (nsec) .. because the days won't fit otherweise
-signed long OdbcDateTime::ndate (signed long nday, signed long nsec, tm        *times)
+signed long OdbcDateTime::ndate (signed long nday, signed long nsec, tm *times)
 
 {
 /**************************************

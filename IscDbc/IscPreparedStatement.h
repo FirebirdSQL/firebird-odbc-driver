@@ -41,6 +41,7 @@ class IscConnection;
 class IscStatementMetaData;
 //Added by RM
 class BinaryBlob;
+class AsciiBlob;
 
 class IscPreparedStatement : public IscStatement, public PreparedStatement
 {
@@ -66,9 +67,13 @@ public:
     virtual void        setString(int index, const char * string, int length);
 	virtual void		setByte (int index, char value);
 //Added by RM
-    virtual void        beginDataTransfer(int index);
-    virtual void        putSegmentData (int length, const void *bytes);
-    virtual void        endDataTransfer();
+    virtual void        beginBlobDataTransfer(int index);
+    virtual void        putBlobSegmentData (int length, const void *bytes);
+    virtual void        endBlobDataTransfer();	
+
+    virtual void        beginClobDataTransfer(int index);
+    virtual void        putClobSegmentData (int length, const void *bytes);
+    virtual void        endClobDataTransfer();
 
 	virtual void		setShort (int index, short value);
 	virtual void		setInt (int index, long value);
@@ -86,6 +91,7 @@ public:
 	virtual ResultSet*	executeQuery();
 
 	void				getInputParameters();
+	virtual int			getNumParams();
 	virtual void		prepare (const char *sqlString);
 	IscPreparedStatement(IscConnection *connect);
 	Value* getParameter (int index);
@@ -93,7 +99,7 @@ public:
 	Values				parameters;
 	IscStatementMetaData	*statementMetaData;
     BinaryBlob              *segmentBlob;
-
+	AsciiBlob				*segmentClob;
 };
 
 #endif // !defined(AFX_ISCPREPAREDSTATEMENT_H__C19738B9_1C87_11D4_98DF_0000C01D2301__INCLUDED_)

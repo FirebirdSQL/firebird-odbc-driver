@@ -1,3 +1,24 @@
+/*
+ *  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/idpl.html. 
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by James A. Starkey for IBPhoenix.
+ *
+ *  Copyright (c) 1999, 2000, 2001 James A. Starkey
+ *  All Rights Reserved.
+ *
+ */
+
 // TypesResultSet.h: interface for the TypesResultSet class.
 //
 //////////////////////////////////////////////////////////////////////
@@ -21,10 +42,12 @@ public:
 	virtual int getColumnType(int index);
 	virtual const char* getColumnName(int index);
 	virtual bool next();
-	TypesResultSet();
+	TypesResultSet(int dataType);
 	virtual ~TypesResultSet();
+	int findType();
 
 	int			recordNumber;
+	int			dataTypes;
 };
 
 #endif // !defined(AFX_TYPESRESULTSET_H__F0866333_9646_11D4_98F5_0000C01D2301__INCLUDED_)

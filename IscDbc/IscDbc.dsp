@@ -169,6 +169,10 @@ SOURCE=.\IscCallableStatement.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\IscColumnPrivilegesResultSet.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\IscColumnsResultSet.cpp
 # End Source File
 # Begin Source File
@@ -302,6 +306,14 @@ SOURCE=.\IscStatementMetaData.cpp
 # Begin Source File
 
 SOURCE=.\IscStatementMetaData.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\IscTablePrivilegesResultSet.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\IscTablePrivilegesResultSet.h
 # End Source File
 # Begin Source File
 

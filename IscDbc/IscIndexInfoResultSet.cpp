@@ -60,36 +60,38 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 										 bool unique, bool approximate)
 {
 	const char *v6 = 
-		"select NULL as table_cat,\n"						// 1
-				"\tNULL as table_schem,\n"					// 2
-				"\tidx.rdb$relation_name as table_name,\n"		// 3
-				"\tidx.rdb$unique_flag as non_unique,\n"	    // 4
-				"\tNULL as index_qualifier,\n"				// 5
-				"\tidx.rdb$index_name as index_name,\n"			// 6
-				"\t(3) as \"TYPE\",\n"						  // 7 (SQL_INDEX_OTHER)
-				"\tseg.rdb$field_position as ordinal_position,\n" // 8
-				"\tseg.rdb$field_name as column_name,\n"		  // 9
-				"\tidx.rdb$index_type as asc_or_desc,\n"		  // 10
-				"\tidx.rdb$statistics as cardinality,\n"		  // 11
-				"\tNULL as \"PAGES\",\n"					  // 12
-				"\tNULL as filter_condition\n"				  // 13
+		"select NULL as table_cat,\n"								// 1
+				"\tNULL as table_schem,\n"							// 2
+				"\tidx.rdb$relation_name as table_name,\n"			// 3
+				"\tidx.rdb$unique_flag as non_unique,\n"			// 4
+				"\tidx.rdb$index_name as index_qualifier,\n"		// 5
+				"\tidx.rdb$index_name as index_name,\n"				// 6
+				"\tseg.rdb$field_position as \"TYPE\",\n"			// 7 (SQL_INDEX_OTHER)
+				"\tseg.rdb$field_position as ordinal_position,\n"	// 8
+				"\tseg.rdb$field_name as column_name,\n"			// 9
+				"\tNULL as asc_or_desc,\n"							// 10
+				"\tNULL as cardinality,\n"							// 11
+				"\tNULL as \"PAGES\",\n"							// 12
+				"\tNULL as filter_condition,\n"						// 13
+				"\tidx.rdb$index_type as index_type\n"				// 14
 		"from rdb$indices idx, rdb$index_segments seg\n"
 		" where idx.rdb$index_name = seg.rdb$index_name\n";
 
 	const char *preV6 = 
-		"select NULL as table_cat,\n"						// 1
-				"\tNULL as table_schem,\n"					// 2
-				"\tidx.rdb$relation_name as table_name,\n"		// 3
-				"\tidx.rdb$unique_flag as non_unique,\n"	    // 4
-				"\tNULL as index_qualifier,\n"				// 5
-				"\tidx.rdb$index_name as index_name,\n"			// 6
-				"\t(3) as odbc_type,\n"						  // 7 (SQL_INDEX_OTHER)
-				"\tseg.rdb$field_position as ordinal_position,\n" // 8
-				"\tseg.rdb$field_name as column_name,\n"		  // 9
-				"\tidx.rdb$index_type as asc_or_desc,\n"		  // 10
-				"\tidx.rdb$statistics as cardinality,\n"		  // 11
-				"\tNULL as odbc_pages,\n"					  // 12
-				"\tNULL as filter_condition\n"				  // 13
+		"select NULL as table_cat,\n"								// 1
+				"\tNULL as table_schem,\n"							// 2
+				"\tidx.rdb$relation_name as table_name,\n"			// 3
+				"\tidx.rdb$unique_flag as non_unique,\n"			// 4
+				"\tidx.rdb$index_name as index_qualifier,\n"		// 5
+				"\tidx.rdb$index_name as index_name,\n"				// 6
+				"\tseg.rdb$field_position as odbc_type,\n"			// 7 (SQL_INDEX_OTHER)
+				"\tseg.rdb$field_position as ordinal_position,\n"	// 8
+				"\tseg.rdb$field_name as column_name,\n"			// 9				
+				"\tNULL as asc_or_desc,\n"							// 10
+				"\t0 as cardinality,\n"								// 11
+				"\t0 as odbc_pages,\n"								// 12
+				"\tNULL as filter_condition,\n"						// 13
+				"\tidx.rdb$index_type as index_type\n"				// 14
 		"from rdb$indices idx, rdb$index_segments seg\n"
 		" where idx.rdb$index_name = seg.rdb$index_name\n";
 
@@ -101,8 +103,8 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 	if (unique)
 		sql += " and idx.rdb$unique_flag = 1";
 
-	sql += " order by idx.rdb$relation_name, idx.rdb$unique_flag, idx.rdb$index_name, seg.rdb$field_position";
-//	printf ("%s\n", sql);
+	sql += " order by idx.rdb$unique_flag desc, idx.rdb$index_name, seg.rdb$field_position";
+
 	prepareStatement (sql);
 	numberColumns = 13;
 }
@@ -112,15 +114,22 @@ bool IscIndexInfoResultSet::next()
 	if (!resultSet->next())
 		return false;
 
-	int type = resultSet->getInt (10);
-	resultSet->setValue (10, (type) ? "D" : "A");
+	trimBlanks (3);				// table name
+	trimBlanks (5);				// qualifier name
+	trimBlanks (6);				// index name
+	trimBlanks (9);				// field name
+	trimBlanks (10);			// asc or desc
 
 	int uniqueFlag = resultSet->getInt (4);
 	resultSet->setValue (4, (uniqueFlag) ? 0 : 1);
 
-	trimBlanks (3);				// table name
-	trimBlanks (6);				// index name
-	trimBlanks (9);				// field name
+	resultSet->setValue( 7, (short)3 );
+
+	int position = resultSet->getInt(8);
+	resultSet->setValue(8,position+1);
+
+	int type = resultSet->getInt (14);
+	resultSet->setValue (10, (type) ? "D" : "A");	
 
 	return true;
 }

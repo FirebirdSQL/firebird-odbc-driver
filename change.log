@@ -5,6 +5,127 @@ Changes made to OdbcJdbc codebase
 !!  using the format below and then paste them into this document. 
 
 
+ *  2002-10-11  
+ *				Contributed by C. G. Alvarez
+ *              Extensive modifications to all classes 
+ *              that query database metadata and return 
+ *              result sets based on those queries.
+ 
+ *  2002-10-11	Sqlda.cpp
+ *				Contributed by C. G. Alvarez
+ *              Extensive modifications to getDisplaySixe()
+ *              and getPrecision() to take advantage of MAX_****
+ *              constants. Other mods. to getSqlType()
+
+ *  2002-10-11  IscSqlType.cpp
+ *              Contributed by C G Alvarez
+ *              Extensive modifications to the getType()
+ *              that take advantage of the new MAX_***** 
+ *              constants in IscDbc.h
+
+ *  2002-10-11  IscDbc.h
+ *              Contributed by C G Alvarez
+ *              Added MAX_***** constants that simplify
+ *              much coding in other classes.
+
+ *	2002-10-11	IscPreparedStatement.cpp
+ *	            Contributed by C. G. Alvarez
+ *              Added/modified Blob/Clob support
+
+ *	2002-10-11	IscDatabaseMetaData.cpp
+ *				Contributed by C. G. Alvarez
+ *				Implemented full list of keywords
+ *              Implemented getSearchStringEscape()
+ *              Implemented getExtraNameCharacters()
+ *              Implemented supportsConvert()
+
+ *  2002-10-11	IscCallableStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Implemented new Blob and Clob support
+
+ *  2002-10-11	Attachment.cpp
+ *				Contributed by C. G. Alvarez
+ *				Added isc_info_page_size
+ *              to openDatabase()
+
+ *  2002-10-11	OdbcStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Extensive modifications to blob reading and writing
+
+ *  2002-10-11	OdbcStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Added sqlNumParams()
+
+ *	2002-10-11	OdbcDesc.cpp
+ *              Contributed by C G Alvarez
+ *              Added sqlGetDescField()
+
+ *	2002-10-11	main.cpp
+ *				Contributed by C G Alvarez
+ *              Implement SQLNumParams()
+ 
+ *	2002-10-11	main.cpp
+ *				Contributed by C G Alvarez
+ *              Implement SQLTablePrivileges()
+ 
+ *  2002-10-11  main.cpp
+ *				Contributed by C G Alvarez
+ *				Implement SQLColumnPrivileges()
+ 
+ *	2002-10-11	main.cpp
+ *				Contributed by C G Alvarez
+ *              Implement SQLGetDescField()
+
+ *	2002-10-10	InfoItems.h
+ *				Contributed by C. G. Alvarez
+ *              Extensive changes to the return types
+
+ *  2002-08-14	OdbcStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Minor enhancements to sqlGetSmtAttr and sqlSetStmtAttr.
+
+ *  2002-08-12	IscTablePrivilegesResultSet.h,.cpp created 
+ *				Changed Main.cpp, OdbcStatement.cpp, IscDatabaseMetadata.cpp
+ *				Implement sqlTablePrivileges()
+ *				Contributed by Carlos G. Alvarez
+
+ *	2002-08-12	OdbcStatement.cpp
+ *				IscResultSetMetaData.cpp
+ *				IscMetaDataResultSet.cpp
+ *				Added changes from C. G. Alvarez to so that
+ *				SQLColAttributes() called with SQL_COLUMN_TYPE_NAME returns 
+ *				the name of the type instead of the number of the type.
+ *				Similarly, sqlColAttribute() will return string for 
+ *				SQL_DESC_TYPE_NAME.
+ *				
+ *				Added sqlTablePrivileges()
+
+
+ *  2002-08-12	Sqlda.cpp
+ *				Contributed by C. G. Alvarez
+ *				Added getColumnTypeName()
+
+ *	2002-08-12	IscDbc.h
+ *				Contributed by C. G. Alvarez
+ *				Define some maximum values
+ *
+
+ *	2002-08-12	Types.h
+ *				Contributed by C. G. Alvarez
+ *				Cleanup some redundant declarations.
+
+ *	2002-08-12	OdbcConnection.cpp 
+ *				Contributed by C. G. Alvarez
+ *				Added SQL_API_SQLGETCONNECTOPTION to list of 
+ *				supported functions
+ *
+ *				Added more items to sqlGetInfo()
+
+ *	2002-08-12	IscStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Added more graceful detection of statements that do
+ *				not return a result set.	
+
  *  2002-08-02	Sqlda.cpp
  *				Contributed by C. G. Alvarez
  *				Change getColumnType to pass var->sqlscale to getSQLType.   

@@ -17,6 +17,23 @@
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
  *
+ *
+ *	2002-10-11	main.cpp
+ *				Contributed by C G Alvarez
+ *              Implement SQLNumParams()
+ *
+ *	2002-10-11	main.cpp
+ *				Contributed by C G Alvarez
+ *              Implement SQLTablePrivileges()
+ *
+ *  2002-10-11  main.cpp
+ *				Contributed by C G Alvarez
+ *				Implement SQLColumnPrivileges()
+ *
+ *	2002-10-11	main.cpp
+ *				Contributed by C G Alvarez
+ *              Implement SQLGetDescField()
+ *
  *  2002-08-02  main.cpp
  *				Contributed by C G Alvarez
  *				Implement SQLGetEnvAttr()
@@ -116,7 +133,7 @@ static RETCODE SQL_API __SQLAllocHandle  (SQLSMALLINT arg0,
 	return object->allocHandle (arg0, arg2);
 }
 
-///// SQLAllocConnect /////
+///// SQLAllocConnect /////	ODBC 1.0	///// Deprecated
 
 RETCODE SQL_API SQLAllocConnect  (HENV arg0,
 			 HDBC * arg1)
@@ -126,7 +143,7 @@ RETCODE SQL_API SQLAllocConnect  (HENV arg0,
 	return __SQLAllocHandle (SQL_HANDLE_DBC, arg0, arg1);
 }
 
-///// SQLAllocEnv /////
+///// SQLAllocEnv /////		ODBC 1.0	///// Deprecated
 
 RETCODE SQL_API SQLAllocEnv  (HENV * arg0)
 {
@@ -135,7 +152,7 @@ RETCODE SQL_API SQLAllocEnv  (HENV * arg0)
 	return __SQLAllocHandle (SQL_HANDLE_ENV, SQL_NULL_HANDLE, arg0);
 }
 
-///// SQLAllocStmt /////
+///// SQLAllocStmt /////	ODBC 1.0	///// Deprecated
 
 RETCODE SQL_API SQLAllocStmt  (HDBC arg0,
 		 HSTMT * arg1)
@@ -145,7 +162,7 @@ RETCODE SQL_API SQLAllocStmt  (HDBC arg0,
 	return __SQLAllocHandle (SQL_HANDLE_STMT, arg0, arg1);
 }
 
-///// SQLBindCol /////
+///// SQLBindCol /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLBindCol  (HSTMT arg0,
 			UWORD arg1,
@@ -159,7 +176,7 @@ RETCODE SQL_API SQLBindCol  (HSTMT arg0,
 	return ((OdbcStatement*) arg0)->sqlBindCol (arg1, arg2, arg3, arg4, arg5);
 }
 
-///// SQLCancel /////
+///// SQLCancel /////	ODBC 1.0	///// Deprecated
 
 RETCODE SQL_API SQLCancel  (HSTMT arg0)
 {
@@ -168,7 +185,7 @@ RETCODE SQL_API SQLCancel  (HSTMT arg0)
 	return ((OdbcStatement*) arg0)->sqlCancel ();
 }
 
-///// SQLColAttributes /////
+///// SQLColAttributes /////	ODBC 1.0	///// Deprecated
 
 RETCODE SQL_API SQLColAttributes  (HSTMT arg0,
 		 UWORD arg1,
@@ -183,7 +200,7 @@ RETCODE SQL_API SQLColAttributes  (HSTMT arg0,
 	return ((OdbcStatement*) arg0)->sqlColAttributes (arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
-///// SQLConnect /////
+///// SQLConnect /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLConnect  (HDBC arg0,
 		 UCHAR * arg1,
@@ -201,7 +218,7 @@ RETCODE SQL_API SQLConnect  (HDBC arg0,
 	return ((OdbcConnection*) arg0)->sqlConnect (arg1, arg2, arg3, arg4, arg5, arg6, role, 0);
 }
 
-///// SQLDescribeCol /////
+///// SQLDescribeCol /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLDescribeCol  (HSTMT arg0,
 		 UWORD arg1,
@@ -218,7 +235,7 @@ RETCODE SQL_API SQLDescribeCol  (HSTMT arg0,
 	return ((OdbcStatement*) arg0)->sqlDescribeCol (arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
 
-///// SQLDisconnect /////
+///// SQLDisconnect /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLDisconnect  (HDBC arg0)
 {
@@ -231,7 +248,7 @@ RETCODE SQL_API SQLDisconnect  (HDBC arg0)
 	return ((OdbcConnection*) arg0)->sqlDisconnect();
 }
 
-///// SQLError /////
+///// SQLError /////	ODBC 1.0	///// Deprecated
 
 RETCODE SQL_API SQLError  (OdbcEnv *env,
 		 OdbcConnection *connection,
@@ -256,7 +273,7 @@ RETCODE SQL_API SQLError  (OdbcEnv *env,
 	return SQL_ERROR;
 }
 
-///// SQLExecDirect /////
+///// SQLExecDirect /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLExecDirect  (HSTMT arg0,
 		 UCHAR * arg1,
@@ -267,7 +284,7 @@ RETCODE SQL_API SQLExecDirect  (HSTMT arg0,
 	return ((OdbcStatement*) arg0)->sqlExecuteDirect(arg1, arg2);
 }
 
-///// SQLExecute /////
+///// SQLExecute /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLExecute  (HSTMT arg0)
 {
@@ -276,7 +293,7 @@ RETCODE SQL_API SQLExecute  (HSTMT arg0)
 	return ((OdbcStatement*) arg0)->sqlExecute();
 }
 
-///// SQLFetch /////
+///// SQLFetch /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLFetch  (HSTMT arg0)
 {
@@ -285,7 +302,7 @@ RETCODE SQL_API SQLFetch  (HSTMT arg0)
 	return ((OdbcStatement*) arg0)->sqlFetch();
 }
 
-///// SQLFreeConnect /////
+///// SQLFreeConnect /////	ODBC 1.0	///// Deprecated
 
 RETCODE SQL_API SQLFreeConnect  (HDBC arg0)
 {
@@ -294,7 +311,7 @@ RETCODE SQL_API SQLFreeConnect  (HDBC arg0)
 	return SQLFreeHandle (SQL_HANDLE_DBC, arg0);
 }
 
-///// SQLFreeEnv /////
+///// SQLFreeEnv /////	ODBC 3.0	///// ISO 92
 
 RETCODE SQL_API SQLFreeEnv  (HENV arg0)
 {
@@ -303,7 +320,7 @@ RETCODE SQL_API SQLFreeEnv  (HENV arg0)
 	return SQLFreeHandle (SQL_HANDLE_ENV, arg0);
 }
 
-///// SQLFreeStmt /////
+///// SQLFreeStmt /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLFreeStmt  (HSTMT arg0,
 		 UWORD arg1)
@@ -316,7 +333,7 @@ RETCODE SQL_API SQLFreeStmt  (HSTMT arg0,
 	return ((OdbcStatement*) arg0)->sqlFreeStmt (arg1);
 }
 
-///// SQLGetCursorName /////
+///// SQLGetCursorName /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLGetCursorName  (HSTMT arg0,
 		 UCHAR * arg1,
@@ -328,7 +345,7 @@ RETCODE SQL_API SQLGetCursorName  (HSTMT arg0,
 	return ((OdbcStatement*) arg0)->sqlGetCursorName (arg1, arg2, arg3);
 }
 
-///// SQLNumResultCols /////
+///// SQLNumResultCols /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLNumResultCols  (HSTMT arg0, SWORD * arg1)
 {
@@ -337,7 +354,7 @@ RETCODE SQL_API SQLNumResultCols  (HSTMT arg0, SWORD * arg1)
 	return ((OdbcStatement*) arg0)->sqlNumResultCols (arg1);
 }
 
-///// SQLPrepare /////
+///// SQLPrepare /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLPrepare  (HSTMT arg0,
 		 UCHAR * arg1,
@@ -348,7 +365,7 @@ RETCODE SQL_API SQLPrepare  (HSTMT arg0,
 	return ((OdbcStatement*) arg0)->sqlPrepare (arg1, arg2);
 }
 
-///// SQLRowCount /////
+///// SQLRowCount /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLRowCount  (HSTMT arg0, SDWORD * arg1)
 {
@@ -357,7 +374,7 @@ RETCODE SQL_API SQLRowCount  (HSTMT arg0, SDWORD * arg1)
 	return ((OdbcStatement*) arg0)->sqlRowCount (arg1);
 }
 
-///// SQLSetCursorName /////
+///// SQLSetCursorName /////	ODBC 1.0	///// ISO 92
 
 RETCODE SQL_API SQLSetCursorName  (HSTMT arg0,
 		 UCHAR * arg1,
@@ -380,6 +397,7 @@ RETCODE SQL_API SQLSetParam  (HSTMT arg0,
 		 SDWORD * arg7)
 {
 	TRACE ("SQLSetParam");
+
 	return ((OdbcStatement*) arg0)->sqlSetParam (arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
 
@@ -410,6 +428,7 @@ RETCODE SQL_API SQLColumns  (HSTMT arg0,
 		 SWORD arg8)
 {
 	TRACE ("SQLColumns");
+
 	return ((OdbcStatement*) arg0)->sqlColumns (arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
 
@@ -461,7 +480,7 @@ RETCODE SQL_API SQLDriverConnect  (HDBC arg0,
 	***/
 }
 
-///// SQLGetConnectOption /////  Level 1
+///// SQLGetConnectOption /////  Level 1	///// Deprecated
 
 RETCODE SQL_API SQLGetConnectOption  (HDBC arg0,
 		 UWORD arg1,
@@ -472,7 +491,8 @@ RETCODE SQL_API SQLGetConnectOption  (HDBC arg0,
 	return(SQL_SUCCESS);
 */
 //Added by C. G. A.
-    TRACE ("SQLGetConnectOption");
+	TRACE ("SQLGetConnectOption");
+
 	return SQLGetConnectAttr (arg0, arg1, arg2, 0, NULL);
 
 }
@@ -521,11 +541,11 @@ RETCODE SQL_API SQLGetStmtOption  (HSTMT arg0,
 		 UWORD arg1,
 		 PTR arg2)
 {
-/*
+	/*
 	notYetImplemented("SQLGetStmtOption called\n");
 	return(SQL_SUCCESS);
- */
-
+	*/
+	
 	TRACE ("SQLGetStmtOption");
 	return ((OdbcStatement*) arg0)->sqlGetStmtAttr (arg1, arg2, 0, NULL);
 
@@ -561,29 +581,19 @@ RETCODE SQL_API SQLPutData  (HSTMT arg0,
 	return ((OdbcStatement*) arg0)->sqlPutData (arg1, arg2);
 }
 
-///// SQLSetConnectOption ///// Deprecated
 
-/*RETCODE SQL_API SQLSetConnectOption  (HDBC arg0,
-		 UWORD arg1,
-		 SQLPOINTER arg2)
-{
-	TRACE ("SQLSetConnectOption");
+///// SQLSetConnectOption /////  Level 1	///// Deprecated
 
-	return SQLSetConnectAttr (arg0, arg1, arg2, 0);
-}
-*/
 //Proposed by Carlos Guzmn lvarez 2002-04-30
 RETCODE SQL_API SQLSetConnectOption  (HDBC arg0,
                  SQLUSMALLINT arg1,
                  SQLUINTEGER arg2)
 {
-        TRACE ("SQLSetConnectOption");
+	TRACE ("SQLSetConnectOption");
 
-//        return SQLSetConnectAttr (arg0, arg1, (SQLPOINTER *)arg2, 0);
-		return SQLSetConnectAttr (arg0, arg1, (SQLPOINTER)arg2, 0);
+	return SQLSetConnectAttr (arg0, arg1, (SQLPOINTER)arg2, 0);
 
 }
-
 
 
 ///// SQLSetStmtOption ///// Deprecated
@@ -592,11 +602,6 @@ RETCODE SQL_API SQLSetStmtOption  (HSTMT arg0,
 		 UWORD arg1,
 		 UDWORD arg2)
 {
-/*
-	notYetImplemented("SQLSetStmtOption called\n");
-	return(SQL_SUCCESS);
-*/
-	//Suggested by CGA - map calls to sqlSetStmtAttr
 	TRACE ("SQLSetStmtOption");
 	return ((OdbcStatement*) arg0)->sqlSetStmtAttr (arg1, (SQLPOINTER) arg2, 0);
 
@@ -663,22 +668,6 @@ RETCODE SQL_API SQLBrowseConnect  (HDBC arg0,
 		 SWORD * arg5)
 {
 	notYetImplemented("SQLBrowseConnect called\n");
-	return(SQL_SUCCESS);
-}
-
-///// SQLColumnPrivileges /////
-
-RETCODE SQL_API SQLColumnPrivileges  (HSTMT arg0,
-		 UCHAR * arg1,
-		 SWORD arg2,
-		 UCHAR * arg3,
-		 SWORD arg4,
-		 UCHAR * arg5,
-		 SWORD arg6,
-		 UCHAR * arg7,
-		 SWORD arg8)
-{
-	notYetImplemented("SQLColumnPrivileges called\n");
 	return(SQL_SUCCESS);
 }
 
@@ -765,7 +754,7 @@ RETCODE SQL_API SQLNativeSql  (HDBC arg0,
 		 SDWORD arg4,
 		 SDWORD * arg5)
 {
-	notYetImplemented("SQLNumParams called\n");
+	notYetImplemented("SQLNativeSql called\n");
 	return(SQL_SUCCESS);
 }
 
@@ -774,8 +763,14 @@ RETCODE SQL_API SQLNativeSql  (HDBC arg0,
 RETCODE SQL_API SQLNumParams  (HSTMT arg0,
 		 SWORD * arg1)
 {
+	/*
 	notYetImplemented("SQLNumParams called\n");
 	return(SQL_SUCCESS);
+	*/
+	
+	TRACE("SQLMoreResults");
+
+	return ((OdbcStatement*) arg0)->sqlNumParams(arg1);		
 }
 
 ///// SQLParamOptions /////
@@ -859,7 +854,8 @@ RETCODE SQL_API SQLSetScrollOptions  (HSTMT arg0,
 
 ///// SQLTablePrivileges /////
 
-RETCODE SQL_API SQLTablePrivileges  (HSTMT arg0,
+RETCODE SQL_API SQLTablePrivileges  (
+		 HSTMT arg0,
 		 UCHAR * arg1,
 		 SWORD arg2,
 		 UCHAR * arg3,
@@ -867,8 +863,34 @@ RETCODE SQL_API SQLTablePrivileges  (HSTMT arg0,
 		 UCHAR * arg5,
 		 SWORD arg6)
 {
+	/*
 	notYetImplemented("SQLTablePrivileges called\n");
 	return(SQL_SUCCESS);
+	*/
+
+	TRACE ("SQLTablePrivileges");
+	return ((OdbcStatement*) arg0)->sqlTablePrivileges (arg1,arg2,arg3,arg4,arg5,arg6);
+}
+
+///// SQLColumnPrivileges /////
+
+RETCODE SQL_API SQLColumnPrivileges  (HSTMT arg0,
+		 UCHAR * arg1,
+		 SWORD arg2,
+		 UCHAR * arg3,
+		 SWORD arg4,
+		 UCHAR * arg5,
+		 SWORD arg6,
+		 UCHAR * arg7,
+		 SWORD arg8)
+{
+	/*
+	notYetImplemented("SQLColumnPrivileges called\n");
+	return(SQL_SUCCESS);
+	*/
+
+	TRACE ("SQLColumnPrivileges");
+	return ((OdbcStatement*) arg0)->sqlColumnPrivileges (arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
 
 ///// SQLDrivers /////
@@ -897,7 +919,7 @@ RETCODE SQL_API SQLBindParameter  (HSTMT arg0,
 		 SWORD arg6,
 		 PTR arg7,
 		 SDWORD arg8,
-			SDWORD * arg9)
+		 SDWORD * arg9)
 {
 	TRACE ("SQLBindParameter");
 
@@ -938,7 +960,7 @@ RETCODE SQL_API SQLCloseCursor  (SQLHSTMT arg0)
 	return ((OdbcStatement*) arg0)->sqlCloseCursor();
 }
 
-///// SQLColAttribute /////
+///// SQLColAttribute ///// ODBC 3.0 ///// ISO 92
 
 RETCODE SQL_API SQLColAttribute  (SQLHSTMT arg0,
 		 SQLUSMALLINT arg1,
@@ -962,7 +984,7 @@ RETCODE SQL_API SQLCopyDesc  (SQLHDESC arg0,
 	return(SQL_SUCCESS);
 }
 
-///// SQLEndTran /////
+///// SQLEndTran ///// ODBC 3.0 ///// ISO 92
 
 RETCODE SQL_API SQLEndTran  (SQLSMALLINT arg0,
 		 SQLHANDLE arg1,
@@ -1046,8 +1068,14 @@ RETCODE SQL_API SQLGetDescField  (SQLHDESC arg0,
 		 SQLINTEGER arg4,
 		 SQLINTEGER * arg5)
 {
+	/*
 	notYetImplemented("SQLGetDescField called\n");
 	return(SQL_SUCCESS);
+	*/
+
+	TRACE ("SQLSetDescField");
+
+	return ((OdbcDesc*) arg0)->sqlGetDescField (arg1, arg2, arg3, arg4, arg5);
 }
 
 ///// SQLGetDescRec /////
@@ -1107,14 +1135,14 @@ RETCODE SQL_API SQLGetEnvAttr  (SQLHENV arg0,
 		 SQLINTEGER arg3,
 		 SQLINTEGER * arg4)
 {
-    /*
-    notYetImplemented("SQLGetEnvAttr called\n");
-    return(SQL_SUCCESS);
-    */
+	/*
+	notYetImplemented("SQLGetEnvAttr called\n");
+	return(SQL_SUCCESS);
+	*/
 
-    TRACE ("SQLGetEnvAttr");
+	TRACE ("SQLGetEnvAttr");
 
-    return ((OdbcEnv*) arg0)->sqlGetEnvAttr (arg1, arg2, arg3, arg4);
+	return ((OdbcEnv*) arg0)->sqlGetEnvAttr (arg1, arg2, arg3, arg4);
 }
 
 ///// SQLGetStmtAttr /////

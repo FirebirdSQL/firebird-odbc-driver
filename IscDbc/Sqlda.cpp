@@ -18,6 +18,16 @@
  *  All Rights Reserved.
  *
  *
+ *  2002-10-11	Sqlda.cpp
+ *				Contributed by C. G. Alvarez
+ *              Extensive modifications to getDisplaySixe()
+ *              and getPrecision() to take advantage of MAX_****
+ *              constants. Other mods. to getSqlType()
+ *
+ *  2002-08-12	Sqlda.cpp
+ *				Contributed by C. G. Alvarez
+ *				Added getColumnTypeName()
+ *
  *  2002-08-02	Sqlda.cpp
  *				Contributed by C. G. Alvarez
  *				Change getColumnType to pass var->sqlscale to getSQLType.   
@@ -248,14 +258,6 @@ void Sqlda::print()
 		}
 }
 
-int Sqlda::getColumnType(int index)
-{
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
-
-//	return getSqlType (var->sqltype, var->sqlsubtype);
-	return getSqlType (var->sqltype, var->sqlsubtype, var->sqlscale);
-}
-
 int Sqlda::getDisplaySize(int index)
 {
 	XSQLVAR *var = sqlda->sqlvar + index - 1;
@@ -263,40 +265,49 @@ int Sqlda::getDisplaySize(int index)
 	switch (var->sqltype & ~1)
 		{
 		case SQL_SHORT:
-			return 6;
-
+			if ( var->sqlscale < 0 )
+				return MAX_DECIMAL_LENGTH + 2;
+			return MAX_SMALLINT_LENGTH + 1;
+			
 		case SQL_LONG:
-			return 11;
+			if ( var->sqlscale < 0 )
+				return MAX_DECIMAL_LENGTH + 2;
+			return MAX_INT_LENGTH + 1;
 
 		case SQL_FLOAT:
-			return 22;
+			return MAX_FLOAT_LENGTH + 4;			
 
 		case SQL_DOUBLE:
-			return 22;
+			if ( var->sqlscale < 0 )
+				return MAX_DECIMAL_LENGTH + 2;
+			return MAX_DOUBLE_LENGTH + 4;			
 
 		case SQL_QUAD:
 		case SQL_INT64:
-			return 20;
-
+			if ( var->sqlscale < 0 )
+				return MAX_DECIMAL_LENGTH + 2;
+			return MAX_QUAD_LENGTH + 1;
+			
 		case SQL_ARRAY:
+			return MAX_ARRAY_LENGTH;
+
 		case SQL_BLOB:
-			return 100000000;
+			return MAX_BLOB_LENGTH;
 
 		case SQL_TYPE_TIME:
-			return 8;
+			return MAX_TIME_LENGTH;
 
 		case SQL_TYPE_DATE:
-			return 10;
+			return MAX_DATE_LENGTH;
 
 		case SQL_TIMESTAMP:
-			return 19;
+			return MAX_TIMESTAMP_LENGTH;
         
         case SQL_TEXT: 
             return var->sqllen-1; 
 
         case SQL_VARYING: 
             return var->sqllen-2;
-
 		}
 
 	return var->sqllen;
@@ -319,33 +330,43 @@ int Sqlda::getPrecision(int index)
 	switch (var->sqltype & ~1)
 		{
 		case SQL_SHORT:
-			return 5;
+			if ( var->sqlscale < 0 )
+				return MAX_DECIMAL_LENGTH;
+			return MAX_SMALLINT_LENGTH;
 
 		case SQL_LONG:
-			return 10;
+			if ( var->sqlscale < 0 )
+				return MAX_DECIMAL_LENGTH;
+			return MAX_INT_LENGTH;
 
 		case SQL_FLOAT:
-			return 15;
+			return MAX_FLOAT_LENGTH;
 
 		case SQL_DOUBLE:
-			return 15;
+			if ( var->sqlscale < 0 )
+				return MAX_DECIMAL_LENGTH;
+			return MAX_DOUBLE_LENGTH;
 
 		case SQL_QUAD:
 		case SQL_INT64:
-			return 19;
+			if ( var->sqlscale < 0 )
+				return MAX_DECIMAL_LENGTH;
+			return MAX_QUAD_LENGTH;
 
-		case SQL_BLOB:
-		case SQL_ARRAY:
-			return 100000000;
+		case SQL_ARRAY:		
+			return MAX_ARRAY_LENGTH;
+		
+		case SQL_BLOB:		
+			return MAX_BLOB_LENGTH;
 
 		case SQL_TYPE_TIME:
-			return 8;
+			return MAX_TIME_LENGTH;
 
 		case SQL_TYPE_DATE:
-			return 10;
+			return MAX_DATE_LENGTH;
 
 		case SQL_TIMESTAMP:
-			return 19;
+			return MAX_TIMESTAMP_LENGTH;
 
         case SQL_TEXT: 
             return var->sqllen-1; 
@@ -372,8 +393,21 @@ bool Sqlda::isNullable(int index)
 	return (var->sqltype & 1) ? true : false;
 }
 
+int Sqlda::getColumnType(int index)
+{
+	XSQLVAR *var = sqlda->sqlvar + index - 1;
 
-/*int Sqlda::getSqlType(int iscType, int subType)
+	return getSqlType (var->sqltype, var->sqlsubtype, var->sqlscale);
+}
+
+const char* Sqlda::getColumnTypeName(int index)
+{
+	XSQLVAR *var = sqlda->sqlvar + index - 1;
+
+	return getSqlTypeName (var->sqltype, var->sqlsubtype, var->sqlscale);
+}
+
+int Sqlda::getSqlType(int iscType, int subType, int sqlScale)
 {
 	switch (iscType & ~1)
 		{
@@ -384,19 +418,30 @@ bool Sqlda::isNullable(int index)
 			return JDBC_VARCHAR;
 
 		case SQL_SHORT:
+			if ( sqlScale < 0 )
+				return JDBC_DECIMAL;
 			return JDBC_SMALLINT;
 
 		case SQL_LONG:
+			if ( sqlScale < 0 )
+				return JDBC_DECIMAL;
 			return JDBC_INTEGER;
 
 		case SQL_FLOAT:
-			return JDBC_REAL;
+			return JDBC_FLOAT;
+			// return JDBC_REAL;
 
 		case SQL_DOUBLE:
+			if ( sqlScale < 0 )
+				return JDBC_DECIMAL;
 			return JDBC_DOUBLE;
 
 		case SQL_QUAD:
+			return JDBC_BIGINT;
+
 		case SQL_INT64:
+			if ( sqlScale < 0 )
+				return JDBC_DECIMAL;
 			return JDBC_BIGINT;
 
 		case SQL_BLOB:
@@ -408,10 +453,10 @@ bool Sqlda::isNullable(int index)
 			return JDBC_TIMESTAMP;
 
 		case SQL_TYPE_TIME:
-			return TIME;
+			return JDBC_TIME;
 
 		case SQL_TYPE_DATE:
-			return jdbcDATE;
+			return JDBC_DATE;
 
 		case SQL_ARRAY:
 			NOT_SUPPORTED("array", 0, "", 0, "");
@@ -419,65 +464,8 @@ bool Sqlda::isNullable(int index)
 
 	return 0;
 }
-*/
-int Sqlda::getSqlType(int iscType, int subType, int sqlScale)
-{
-  switch (iscType & ~1)
-  {
-       case SQL_TEXT:
-           return JDBC_CHAR;
 
-       case SQL_VARYING:
-           return JDBC_VARCHAR;
-
-       case SQL_SHORT:
-           if ( sqlScale < 0 )
-               return JDBC_DECIMAL;
-           return JDBC_SMALLINT;
-
-       case SQL_LONG:
-           if ( sqlScale < 0 )
-               return JDBC_DECIMAL;
-           return JDBC_INTEGER;
-
-       case SQL_INT64:
-           if ( sqlScale < 0 )
-               return JDBC_DECIMAL;
-           return JDBC_BIGINT;
-
-       case SQL_QUAD:
-           return JDBC_BIGINT;
-
-       case SQL_FLOAT:
-           return JDBC_REAL;
-
-       case SQL_DOUBLE:
-           if ( sqlScale < 0 )
-               return JDBC_DECIMAL;
-           return JDBC_DOUBLE;
-
-       case SQL_TIMESTAMP:
-           return JDBC_TIMESTAMP;
-
-       case SQL_TYPE_TIME:
-           return TIME;
-
-       case SQL_TYPE_DATE:
-           return jdbcDATE;
-
-       case SQL_BLOB:
-           if (subType == 1)
-               return JDBC_LONGVARCHAR;
-           return JDBC_LONGVARBINARY;
-
-       case SQL_ARRAY:
-           NOT_SUPPORTED("array", 0, "", 0, "");
-   }
-
-   return 0;
-}
-
-/*const char* Sqlda::getSqlTypeName(int iscType, int subType)
+const char* Sqlda::getSqlTypeName(int iscType, int subType, int sqlScale)
 {
 	switch (iscType & ~1)
 		{
@@ -488,19 +476,30 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale)
 			return "VARCHAR";
 
 		case SQL_SHORT:
+			if ( sqlScale < 0 )
+				return "DECIMAL";
 			return "SMALLINT";
 
 		case SQL_LONG:
+			if ( sqlScale < 0 )
+				return "DECIMAL";
 			return "INTEGER";
 
 		case SQL_FLOAT:
-			return "REAL";
+			return "FLOAT";
+			// return "REAL";
 
 		case SQL_DOUBLE:
+			if ( sqlScale < 0 )
+				return "DECIMAL";
 			return "DOUBLE PRECISION";
 
 		case SQL_QUAD:
+			return "BIGINT";
+
 		case SQL_INT64:
+			if ( sqlScale < 0 )
+				return "DECIMAL";
 			return "BIGINT";
 
 		case SQL_BLOB:
@@ -526,68 +525,6 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale)
 
 	return "*unknown type*";
 }
-*/
-
-const char* Sqlda::getSqlTypeName(int iscType, int subType, int sqlScale)
-{
-   switch (iscType & ~1)
-       {
-       case SQL_TEXT:
-           return "CHAR";
-
-       case SQL_VARYING:
-           return "VARCHAR";
-
-       case SQL_SHORT:
-           if ( sqlScale < 0 )
-               return "DECIMAL";
-           return "SMALLINT";
-
-       case SQL_LONG:
-           if ( sqlScale < 0 )
-               return "DECIMAL";
-           return "INTEGER";
-
-       case SQL_INT64:
-           if ( sqlScale < 0 )
-               return "DECIMAL";
-           return "BIGINT";
-
-       case SQL_FLOAT:
-           return "REAL";
-
-       case SQL_DOUBLE:
-           if ( sqlScale < 0 )
-               return "DECIMAL";
-           return "DOUBLE PRECISION";
-
-       case SQL_QUAD:
-           return "BIGINT";
-
-       case SQL_BLOB:
-           if (subType == 1)
-               return "LONG VARCHAR";
-           return "LONG VARBINARY";
-
-       case SQL_TIMESTAMP:
-           return "TIMESTAMP";
-
-       case SQL_TYPE_TIME:
-           return "TIME";
-
-       case SQL_TYPE_DATE:
-           return "DATE";
-
-       case SQL_ARRAY:
-           return "ARRAY";
-
-       default:
-           NOT_YET_IMPLEMENTED;
-       }
-
-   return "*unknown type*";
-}
-
 
 const char* Sqlda::getTableName(int index)
 {

@@ -18,6 +18,12 @@
  *  All Rights Reserved.
  *
  *
+ *	2002-08-12	IscStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Added more graceful detection of statements that do
+ *				not return a result set.	
+ *				
+ *	
  *	2002-06-04	IscStatement.cpp
  *				Amended setValue() again. (RM)
  *				Hopefully this means that we finally 
@@ -164,8 +170,9 @@ ResultSet* IscStatement::getResultSet()
 	if (!statementHandle)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "no active statement");
 
-	if (outputSqlda.sqlda->sqld < 1)
-		throw SQLEXCEPTION (RUNTIME_ERROR, "current statement doesn't return results");
+    if (!selectActive)
+				if (outputSqlda.sqlda->sqld < 1)
+		            throw SQLEXCEPTION (RUNTIME_ERROR, "current statement doesn't return results");
 	
 	return createResultSet();
 }
@@ -266,6 +273,8 @@ void IscStatement::prepareStatement(const char * sqlString)
 			THROW_ISC_EXCEPTION (statusVector);
 		}
 
+	int statementType	= getUpdateCounts();
+	
 	numberColumns = outputSqlda.getColumnCount();
 	XSQLVAR *var = outputSqlda.sqlda->sqlvar;
 	insertCount = deleteCount = updateCount = 0;
@@ -277,7 +286,6 @@ bool IscStatement::execute()
 		clearSelect();
 
 	// Make sure there is a transaction
-
 	ISC_STATUS statusVector [20];
 	void *transHandle = connection->startTransaction();
 
@@ -298,11 +306,14 @@ bool IscStatement::execute()
 	switch (statementType)
 		{
 		case isc_info_sql_stmt_ddl:
+			{
 			clearSelect();
 			connection->commit();
 			freeStatementHandle();
+			}
 			break;
 
+		//case isc_info_sql_stmt_exec_procedure:
 		case isc_info_sql_stmt_select:
 		case isc_info_sql_stmt_select_for_upd:
 			selectActive = true;
@@ -426,7 +437,6 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 					}
 				else
 					value->setString (length, data, false);
-				//printf ("%d '%*s'\n", n, length, data);
 				}
 				break;
 

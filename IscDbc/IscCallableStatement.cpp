@@ -18,6 +18,10 @@
  *  All Rights Reserved.
  *
  *
+ *  2002-10-11	IscCallableStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Implemented new Blob and Clob support
+ *
  *	2002-06-17	Submitted by C. G. Alvarez
  *				Overloaded SetString with a length parameter.
  *
@@ -145,12 +149,12 @@ bool IscCallableStatement::execute()
 	for (n = 0; n < numberParameters; ++n)
 		inputSqlda.setValue (n, parameters.values + n, connection);
 
-	int dialog = connection->getDatabaseDialect();
+	int dialect = connection->getDatabaseDialect();
 	if (isc_dsql_execute2 (statusVector, &transHandle, &statementHandle,
-						  dialog, inputSqlda, outputSqlda))
+						  dialect, inputSqlda, outputSqlda))
 		THROW_ISC_EXCEPTION (statusVector);
 
-	resultsCount = 1;
+	resultsCount	= 1;
 	resultsSequence = 0;
 	getUpdateCounts();
 
@@ -169,22 +173,41 @@ int IscCallableStatement::executeUpdate()
 }
 
 // Added by RM 2002-06-04
-void IscCallableStatement::beginDataTransfer(int index)
+void IscCallableStatement::beginBlobDataTransfer(int index)
 {
-    Parent::beginDataTransfer(index);
+    Parent::beginBlobDataTransfer(index);
 }
 
 // Added by RM 2002-06-04
-void IscCallableStatement::putSegmentData (int length, const void *bytes)
+void IscCallableStatement::putBlobSegmentData (int length, const void *bytes)
 {
-    Parent::putSegmentData(length, bytes);
+    Parent::putBlobSegmentData(length, bytes);
 }
 
 // Added by RM 2002-06-04
-void IscCallableStatement::endDataTransfer()
+void IscCallableStatement::endBlobDataTransfer()
 {
-    Parent::endDataTransfer();
+    Parent::endBlobDataTransfer();
 }
+
+// Carlos G.A.
+void IscCallableStatement::beginClobDataTransfer(int index)
+{
+    Parent::beginClobDataTransfer(index);
+}
+
+// Carlos G.A.
+void IscCallableStatement::putClobSegmentData (int length, const void *bytes)
+{
+    Parent::putClobSegmentData(length, bytes);
+}
+
+// Carlos G.A.
+void IscCallableStatement::endClobDataTransfer()
+{
+    Parent::endClobDataTransfer();
+}
+
 
 void IscCallableStatement::setBytes(int index, int length, const void* bytes)
 {
@@ -389,6 +412,11 @@ void IscCallableStatement::prepare(const char * originalSql)
 	const char *sql = rewriteSql (originalSql, buffer, sizeof (buffer));
 
 	Parent::prepare (sql);
+}
+
+int	IscCallableStatement::getNumParams()
+{
+	return Parent::getNumParams();
 }
 
 const char* IscCallableStatement::rewriteSql(const char *originalSql, char *buffer, int length)

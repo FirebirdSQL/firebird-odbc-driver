@@ -68,6 +68,7 @@ public:
 	virtual const char* getColumnName (int index);
 	virtual int getColumnDisplaySize (int index);
 	virtual int getColumnType (int index);
+	virtual const char* getColumnTypeName (int index); 
 	virtual int getColumnCount();
 
 	//MetaData*	checkIndex(int index);

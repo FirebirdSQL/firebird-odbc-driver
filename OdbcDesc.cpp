@@ -16,6 +16,12 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	2002-10-11	OdbcDesc.cpp
+ *              Contributed by C G Alvarez
+ *              Added sqlGetDescField()
+ *
  */
 
 // OdbcDesc.cpp: implementation of the OdbcDesc class.
@@ -60,6 +66,93 @@ OdbcObjectType OdbcDesc::getType()
 	return odbcTypeDescriptor;
 }
 
+RETCODE OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
+{
+    clearErrors();
+	long value;
+	char *string;
+	DescRecord *record = NULL;
+
+	if (recNumber)
+		record = getDescRecord (recNumber);
+
+	try
+	{
+	switch (fieldId)
+		{
+		case SQL_DESC_OCTET_LENGTH:
+			if (record)
+				value = *record->octetLengthPtr;
+			break;
+			
+		case SQL_DESC_INDICATOR_PTR:
+			if (record)
+				value = *record->indicatorPtr;
+			break;
+
+		case SQL_DESC_TYPE_NAME:
+			if (record)
+				string = (char*)record->name.getString();
+			break;
+
+		case SQL_DESC_TYPE:
+			if (record)
+				value = record->type;
+			break;
+
+		case SQL_DESC_PRECISION:
+			if (record)
+				value = record->precision;
+			break;
+
+		case SQL_DESC_SCALE:
+			if (record)
+				value = record->scale;
+			break;
+
+		case SQL_DESC_NULLABLE:
+			if (record)
+				value = record->nullable;
+			break;
+
+		/***
+		case SQL_DESC_COUNT                  1001
+		case SQL_DESC_TYPE                   1002
+		case SQL_DESC_LENGTH                 1003
+		case SQL_DESC_OCTET_LENGTH_PTR       1004
+		case SQL_DESC_PRECISION              1005
+		case SQL_DESC_SCALE                  1006
+		case SQL_DESC_DATETIME_INTERVAL_CODE 1007
+		case SQL_DESC_NULLABLE               1008
+		case SQL_DESC_INDICATOR_PTR          1009
+		case SQL_DESC_DATA_PTR               1010
+		case SQL_DESC_NAME                   1011
+		case SQL_DESC_UNNAMED                1012
+		case SQL_DESC_OCTET_LENGTH           1013
+		case SQL_DESC_ALLOC_TYPE             1099
+		***/
+		default:
+			return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
+		}
+
+		if (string)
+			return returnStringInfo (ptr, bufferLength, lengthPtr, string);
+
+		if (ptr)
+			*(long*) ptr = value;
+
+		if (lengthPtr)
+			*lengthPtr = sizeof (long);
+	}
+	catch (SQLException& exception)
+		{
+		postError ("HY000", exception);
+		return SQL_ERROR;
+		}
+
+	return sqlSuccess();
+}
+
 RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, int length)
 {
 	clearErrors();
@@ -79,7 +172,7 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 			if (record)
 				record->indicatorPtr = (SQLINTEGER*) value;
 			break;
-			
+		
 		case SQL_DESC_DATA_PTR:
 			if (record)
 				{
@@ -87,7 +180,7 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 				record->dataPtr = value;
 				}
 			break;
-			
+
 		/***
 		case SQL_DESC_COUNT                  1001
 		case SQL_DESC_TYPE                   1002

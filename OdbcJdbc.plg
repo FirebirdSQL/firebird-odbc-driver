@@ -6,7 +6,54 @@
 --------------------Configuration: IscDbc - Win32 Debug--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating temporary file "w:\TEMP\RSP1AC.tmp" with contents
+Creating command line "rc.exe /l 0x409 /fo"../debug/IscDbc.res" /d "_DEBUG" "H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscDbc.rc"" 
+Creating temporary file "m:\TEMP\RSP26.tmp" with contents
+[
+/nologo /MTd /W3 /Gm /GX /Zi /Od /I "c:\Program Files\Interbase\SDK\include" /I ".." /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FR"../debug/" /Fp"../debug/IscDbc.pch" /YX /Fo"../debug/" /Fd"../debug/" /FD /c 
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\AsciiBlob.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\Attachment.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\BinaryBlob.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\Blob.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\DateTime.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\Error.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscBlob.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscCallableStatement.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscColumnPrivilegesResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscColumnsResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscConnection.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscCrossReferenceResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscDatabaseMetaData.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscIndexInfoResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscMetaDataResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscPreparedStatement.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscPrimaryKeysResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscProcedureColumnsResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscProceduresResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscResultSetMetaData.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscSpecialColumnsResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscSqlType.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscStatement.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscStatementMetaData.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscTablePrivilegesResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\IscTablesResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\JString.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\LinkedList.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\Lock.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\Mutex.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\Parameter.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\Parameters.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\Sqlda.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\SQLError.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\SqlTime.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\Stream.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\TimeStamp.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\TypesResultSet.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\Value.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\Values.cpp"
+]
+Creating command line "cl.exe @m:\TEMP\RSP26.tmp" 
+Creating temporary file "m:\TEMP\RSP27.tmp" with contents
 [
 gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"../debug/IscDbc.pdb" /debug /machine:I386 /def:".\IscDbc.def" /out:"../debug/IscDbc.dll" /implib:"../debug/IscDbc.lib" /pdbtype:sept /libpath:"c:\Program Files\Interbase\SDK\lib_ms" 
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\AsciiBlob.obj
@@ -17,6 +64,7 @@ gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"../debug/Isc
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\Error.obj
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscBlob.obj
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscCallableStatement.obj
+\Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscColumnPrivilegesResultSet.obj
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscColumnsResultSet.obj
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscConnection.obj
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscCrossReferenceResultSet.obj
@@ -33,6 +81,7 @@ gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"../debug/Isc
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscSqlType.obj
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscStatement.obj
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscStatementMetaData.obj
+\Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscTablePrivilegesResultSet.obj
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscTablesResultSet.obj
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\JString.obj
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\LinkedList.obj
@@ -50,10 +99,54 @@ gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"../debug/Isc
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\Values.obj
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscDbc.res
 ]
-Creating command line "link.exe @w:\TEMP\RSP1AC.tmp"
+Creating command line "link.exe @m:\TEMP\RSP27.tmp"
 <h3>Output Window</h3>
+Compiling resources...
+Compiling...
+AsciiBlob.cpp
+Attachment.cpp
+BinaryBlob.cpp
+Blob.cpp
+DateTime.cpp
+Error.cpp
+IscBlob.cpp
+IscCallableStatement.cpp
+IscColumnPrivilegesResultSet.cpp
+IscColumnsResultSet.cpp
+IscConnection.cpp
+IscCrossReferenceResultSet.cpp
+IscDatabaseMetaData.cpp
+IscIndexInfoResultSet.cpp
+IscMetaDataResultSet.cpp
+IscPreparedStatement.cpp
+IscPrimaryKeysResultSet.cpp
+IscProcedureColumnsResultSet.cpp
+IscProceduresResultSet.cpp
+IscResultSet.cpp
+IscResultSetMetaData.cpp
+IscSpecialColumnsResultSet.cpp
+IscSqlType.cpp
+IscStatement.cpp
+IscStatementMetaData.cpp
+IscTablePrivilegesResultSet.cpp
+IscTablesResultSet.cpp
+JString.cpp
+LinkedList.cpp
+Lock.cpp
+Mutex.cpp
+Parameter.cpp
+Parameters.cpp
+Sqlda.cpp
+SQLError.cpp
+SqlTime.cpp
+Stream.cpp
+TimeStamp.cpp
+TypesResultSet.cpp
+Value.cpp
+Values.cpp
 Linking...
-Creating temporary file "w:\TEMP\RSP1AD.tmp" with contents
+   Creating library ../debug/IscDbc.lib and object ../debug/IscDbc.exp
+Creating temporary file "m:\TEMP\RSP2B.tmp" with contents
 [
 /nologo /o"../debug/IscDbc.bsc" 
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\AsciiBlob.sbr
@@ -64,6 +157,7 @@ Creating temporary file "w:\TEMP\RSP1AD.tmp" with contents
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\Error.sbr
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscBlob.sbr
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscCallableStatement.sbr
+\Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscColumnPrivilegesResultSet.sbr
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscColumnsResultSet.sbr
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscConnection.sbr
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscCrossReferenceResultSet.sbr
@@ -80,6 +174,7 @@ Creating temporary file "w:\TEMP\RSP1AD.tmp" with contents
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscSqlType.sbr
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscStatement.sbr
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscStatementMetaData.sbr
+\Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscTablePrivilegesResultSet.sbr
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\IscTablesResultSet.sbr
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\JString.sbr
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\LinkedList.sbr
@@ -95,13 +190,77 @@ Creating temporary file "w:\TEMP\RSP1AD.tmp" with contents
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\TypesResultSet.sbr
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\Value.sbr
 \Firebird_build\ODBC\20020802\OdbcJdbc\debug\Values.sbr]
-Creating command line "bscmake.exe @w:\TEMP\RSP1AD.tmp"
+Creating command line "bscmake.exe @m:\TEMP\RSP2B.tmp"
 Creating browse info file...
 <h3>Output Window</h3>
 <h3>
 --------------------Configuration: OdbcJdbc - Win32 Debug--------------------
 </h3>
 <h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Debug/ODbcJdbc.res" /d "_DEBUG" "H:\Firebird_build\ODBC\20020802\OdbcJdbc\ODbcJdbc.rc"" 
+Creating temporary file "m:\TEMP\RSP2C.tmp" with contents
+[
+/nologo /MTd /W3 /Gm /GX /Zi /Od /I "IscDbc" /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "DEBUG" /D "LOGGING" /FR"Debug/" /Fp"Debug/OdbcJdbc.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /c 
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\DescRecord.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\IscDbc\JString.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\Main.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\OdbcConnection.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\OdbcDateTime.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\OdbcDesc.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\OdbcEnv.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\OdbcError.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\OdbcObject.cpp"
+"H:\Firebird_build\ODBC\20020802\OdbcJdbc\OdbcStatement.cpp"
+]
+Creating command line "cl.exe @m:\TEMP\RSP2C.tmp" 
+Creating temporary file "m:\TEMP\RSP2D.tmp" with contents
+[
+IscDbc.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"Debug/OdbcJdbc.pdb" /debug /machine:I386 /def:".\OdbcJdbc.def" /out:"Debug/OdbcJdbc.dll" /implib:"Debug/OdbcJdbc.lib" /pdbtype:sept /libpath:"debug" 
+.\Debug\DescRecord.obj
+.\debug\JString.obj
+.\Debug\Main.obj
+.\Debug\OdbcConnection.obj
+.\Debug\OdbcDateTime.obj
+.\Debug\OdbcDesc.obj
+.\Debug\OdbcEnv.obj
+.\Debug\OdbcError.obj
+.\Debug\OdbcObject.obj
+.\Debug\OdbcStatement.obj
+.\Debug\ODbcJdbc.res
+.\debug\IscDbc.lib
+]
+Creating command line "link.exe @m:\TEMP\RSP2D.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+DescRecord.cpp
+JString.cpp
+Main.cpp
+OdbcConnection.cpp
+OdbcDateTime.cpp
+OdbcDesc.cpp
+OdbcEnv.cpp
+OdbcError.cpp
+OdbcObject.cpp
+OdbcStatement.cpp
+Linking...
+   Creating library Debug/OdbcJdbc.lib and object Debug/OdbcJdbc.exp
+Creating temporary file "m:\TEMP\RSP31.tmp" with contents
+[
+/nologo /o"Debug/OdbcJdbc.bsc" 
+.\Debug\DescRecord.sbr
+.\debug\JString.sbr
+.\Debug\Main.sbr
+.\Debug\OdbcConnection.sbr
+.\Debug\OdbcDateTime.sbr
+.\Debug\OdbcDesc.sbr
+.\Debug\OdbcEnv.sbr
+.\Debug\OdbcError.sbr
+.\Debug\OdbcObject.sbr
+.\Debug\OdbcStatement.sbr]
+Creating command line "bscmake.exe @m:\TEMP\RSP31.tmp"
+Creating browse info file...
+<h3>Output Window</h3>
 
 
 

@@ -98,9 +98,13 @@ public:
 	virtual void		setBytes (int index, int length, const void *bytes);
 
 //Added by RM 2002-06-04
-    virtual void        beginDataTransfer(int index);
-    virtual void        putSegmentData (int length, const void *bytes);
-    virtual void        endDataTransfer();
+    virtual void        beginBlobDataTransfer(int index);
+    virtual void        putBlobSegmentData (int length, const void *bytes);
+    virtual void        endBlobDataTransfer();
+	
+    virtual void        beginClobDataTransfer(int index);
+    virtual void        putClobSegmentData (int length, const void *bytes);
+    virtual void        endClobDataTransfer();
 
 	virtual int			executeUpdate();
 	virtual bool		execute();
@@ -108,6 +112,7 @@ public:
 
 	Value*				getValue (int index);
 	virtual void		prepare (const char *sql);
+	virtual	int			getNumParams();
 
 	Values			values;
 	bool			valueWasNull;

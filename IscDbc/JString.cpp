@@ -75,7 +75,7 @@ JString::JString (const char *stuff)
 string = NULL;
 setString (stuff);
 }
-
+
 JString::JString (const JString& source)
 {
 /**************************************
@@ -92,7 +92,7 @@ JString::JString (const JString& source)
 if ((string = source.string))
 	++(string [-1]);
 }
-
+
 JString::~JString ()
 {
 /**************************************
@@ -108,7 +108,7 @@ JString::~JString ()
 
 release();
 }
-
+
 void JString::append (const char* stuff)
 {
 /**************************************
@@ -160,7 +160,7 @@ if (stuff)
 else
 	release();
 }
-
+
 void JString::Format (const char* stuff, ...)
 {
 /**************************************
@@ -180,7 +180,7 @@ char	temp [1024];
 vsprintf (temp, stuff, args);
 setString (temp);
 }
-
+
 const char* JString::getString()
 {
 /**************************************
@@ -196,7 +196,7 @@ const char* JString::getString()
 
 return (string) ? string : "";
 }
-
+
 JString::operator const char* ()
 {
 /**************************************
@@ -212,7 +212,7 @@ JString::operator const char* ()
 
 return (string) ? string : "";
 }
-
+
 JString& JString::operator = (const char *stuff)
 {
 /**************************************
@@ -230,7 +230,7 @@ setString (stuff);
 
 return *this;
 }
-
+
 JString& JString::operator = (const JString& source)
 {
 /**************************************
@@ -252,7 +252,7 @@ if ((string = source.string))
 
 return *this;
 }
-
+
 JString& JString::operator+= (const char *stuff)
 {
 /**************************************
@@ -270,7 +270,7 @@ append (stuff);
 
 return *this;
 }
-
+
 JString& JString::operator+= (const JString& string)
 {
 /**************************************
@@ -288,7 +288,7 @@ append (string.string);
 
 return *this;
 }
-
+
 JString operator + (const JString& string1, const char *string2)
 {
 /**************************************
@@ -307,7 +307,7 @@ s.append (string2);
 
 return s;
 }
-
+
 void JString::release ()
 {
 /**************************************

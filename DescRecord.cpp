@@ -31,6 +31,7 @@
 
 DescRecord::DescRecord()
 {
+	type = SQL_C_DEFAULT;
 	dataPtr = 0;
 	octetLengthPtr = 0;
 	indicatorPtr = 0;

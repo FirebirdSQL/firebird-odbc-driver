@@ -42,11 +42,11 @@
 
 IscResultSet::IscResultSet(IscStatement *iscStatement)
 {
-	useCount = 1;
-	statement = iscStatement;
-	metaData = NULL;
+	useCount	= 1;
+	statement	= iscStatement;
+	metaData	= NULL;
 	conversions = NULL;
-	sqlda = NULL;
+	sqlda		= NULL;
 
 	if (iscStatement)
 		numberColumns = statement->numberColumns;
@@ -87,6 +87,7 @@ bool IscResultSet::next()
 
 	deleteBlobs();
 	reset();
+	allocConversions();
 	ISC_STATUS statusVector [20];
 
 	int dialect = statement->connection->getDatabaseDialect ();
@@ -102,7 +103,6 @@ bool IscResultSet::next()
 		THROW_ISC_EXCEPTION (statusVector);
 		}
 
-//	sqlda->print();
 	XSQLVAR *var = sqlda->sqlda->sqlvar;
     Value *value = values.values;
 
@@ -117,8 +117,8 @@ const char* IscResultSet::getString(int id)
 	if (id < 1 || id > numberColumns)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 
-	if (conversions [id - 1])
-		return conversions [id - 1];
+	/*if (conversions [id - 1])
+		return conversions [id - 1];*/
 
 	return getValue (id)->getString(conversions + id - 1);
 }
@@ -157,6 +157,8 @@ Value* IscResultSet::getValue(const char * columnName)
 
 void IscResultSet::close()
 {
+	reset();
+
 	if (statement)
 		{
 		statement->deleteResultSet (this);
@@ -381,6 +383,11 @@ const char* IscResultSet::getColumnName(int index)
 const char* IscResultSet::getTableName(int index)
 {
 	return sqlda->getTableName (index);
+}
+
+const char* IscResultSet::getColumnTypeName(int index)
+{
+	return sqlda->getColumnTypeName (index);
 }
 
 int IscResultSet::getPrecision(int index)

@@ -17,6 +17,9 @@
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
  *
+ *	2002-10-11	IscPreparedStatement.cpp
+ *	            Contributed by C. G. Alvarez
+ *              Added/modified Blob/Clob support
  *
  *	2002-06-17	Submitted by C. G. Alvarez
  *				Overloaded SetString with a length parameter.
@@ -54,6 +57,7 @@ IscPreparedStatement::IscPreparedStatement(IscConnection *connection) : IscState
 	statementMetaData = NULL;
 //Added by RM 2002-06-04
     segmentBlob = NULL;
+	segmentClob = NULL;
 }
 
 IscPreparedStatement::~IscPreparedStatement()
@@ -138,27 +142,57 @@ void IscPreparedStatement::setBytes(int index, int length, const void* bytes)
 }
 
 //Added by RM 2002-06-04
-void IscPreparedStatement::beginDataTransfer(int index)
+void IscPreparedStatement::beginBlobDataTransfer(int index)
 {
     if (segmentBlob)
-        endDataTransfer();
+        endBlobDataTransfer();
 
     segmentBlob = new BinaryBlob();
-    segmentBlob->addRef();
-    getParameter (index - 1)->setValue (segmentBlob);
+	getParameter (index - 1)->setValue (segmentBlob);
 }
 
 //Added by RM 2002-06-04
-void IscPreparedStatement::putSegmentData(int length, const void* bytes)
+void IscPreparedStatement::putBlobSegmentData(int length, const void* bytes)
 {
-    segmentBlob->putSegment (length, (char*) bytes, true);
+	if (segmentBlob)
+		segmentBlob->putSegment (length, (char*) bytes, true);
 }
 
 //Added by RM 2002-06-04
-void IscPreparedStatement::endDataTransfer()
+void IscPreparedStatement::endBlobDataTransfer()
+{
+	if (segmentBlob)
 {
     segmentBlob->release();
     segmentBlob = NULL;
+}
+}
+
+// Carlos G.A.
+void IscPreparedStatement::beginClobDataTransfer(int index)
+{
+	if (segmentClob)
+        endClobDataTransfer();
+
+    segmentClob = new AsciiBlob();
+	getParameter (index - 1)->setValue (segmentClob);
+}
+
+// Carlos G.A.
+void IscPreparedStatement::putClobSegmentData(int length, const void* bytes)
+{
+	if( segmentClob )
+		segmentClob->putSegment (length, (char*) bytes, true);
+}
+
+// Carlos G.A.
+void IscPreparedStatement::endClobDataTransfer()
+{
+	if( segmentClob )
+	{
+		segmentClob->release();
+		segmentClob = NULL;
+	}
 }
 
 bool IscPreparedStatement::execute (const char *sqlString)
@@ -242,7 +276,14 @@ void IscPreparedStatement::getInputParameters()
 
 	parameters.alloc (inputSqlda.getColumnCount());
 	inputSqlda.allocBuffer();
+	
 }
+
+int IscPreparedStatement::getNumParams()
+{
+	return parameters.count;
+}
+
 
 StatementMetaData* IscPreparedStatement::getStatementMetaData()
 {

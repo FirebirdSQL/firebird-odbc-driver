@@ -17,6 +17,14 @@
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
  *
+ *	2002-10-11	IscDatabaseMetaData.cpp
+ *				Contributed by C. G. Alvarez
+ *				Implemented full list of keywords
+ *
+ *	2002-08-12	IscDatabaseMetaData.cpp
+ *				Contributed by C. G. Alvarez
+ *				Implemented getTablePrivileges()
+ *
  *
  *	2002-07-02	IscDatabaseMetaData.cpp
  *				C. G.Alvarez
@@ -42,6 +50,7 @@
 #include "SQLError.h"
 #include "IscResultSet.h"
 #include "IscTablesResultSet.h"
+#include "IscColumnPrivilegesResultSet.h"
 #include "IscColumnsResultSet.h"
 #include "IscIndexInfoResultSet.h"
 #include "IscPrimaryKeysResultSet.h"
@@ -50,6 +59,7 @@
 #include "IscProcedureColumnsResultSet.h"
 #include "TypesResultSet.h"
 #include "IscSpecialColumnsResultSet.h"
+#include "IscTablePrivilegesResultSet.h" 
 
 #define DRIVER_VERSION	"T1.0A"
 #define MAJOR_VERSION	1
@@ -278,6 +288,11 @@ const char* IscDatabaseMetaData::getDatabaseProductVersion()
 	return connection->attachment->serverVersion;
 	}
 
+int IscDatabaseMetaData::getDatabasePageSize()
+	{
+	return connection->attachment->pageSize;
+	}
+
 const char* IscDatabaseMetaData::getDriverName()
 	{
 	return "IscDbc";
@@ -355,7 +370,38 @@ const char* IscDatabaseMetaData::getIdentifierQuoteString()
 
 const char* IscDatabaseMetaData::getSQLKeywords()
 	{
-	return "WEEKDAY,YEARDAY,SQL,TRIGGER";
+	// return "WEEKDAY,YEARDAY,SQL,TRIGGER";
+
+	return  "ACTION,ACTIVE,ADD,ADMIN,AFTER,ALL,ALTER,AND,ANY,AS,ASC,ASCENDING,AT,"
+			"AUTO,AUTODDL,AVG,BASED,BASENAME,BASE_NAME,BEFORE,BEGIN,BETWEEN,BLOB,"
+			"BLOBEDIT,BUFFER,BY,CACHE,CASCADE,CAST,CHAR,CHARACTER,CHARACTER_LENGTH,"
+			"CHAR_LENGTH,CHECK,CHECK_POINT_LEN,CHECK_POINT_LENGTH,COLLATE,COLLATION,"
+			"COLUMN,COMMIT,COMMITTED,COMPILETIME,COMPUTED,CLOSE,CONDITIONAL,CONNECT,"
+			"CONSTRAINT,CONTAINING,CONTINUE,COUNT,CREATE,CSTRING,CURRENT,CURRENT_DATE,"
+			"CURRENT_TIME,CURRENT_TIMESTAMP,CURSOR,DATABASE,DATE,DAY,DB_KEY,DEBUG,DEC,"
+			"DECIMAL,DECLARE,DEFAULT,DELETE,DESC,DESCENDING,DESCRIBE,DESCRIPTOR,"
+			"DISCONNECT,DISPLAY,DISTINCT,DO,DOMAIN,DOUBLE,DROP,ECHO,EDIT,ELSE,END,"
+			"ENTRY_POINT,ESCAPE,EVENT,EXCEPTION,EXECUTE,EXISTS,EXIT,EXTERN,EXTERNAL,"
+			"EXTRACT,FETCH,FILE,FILTER,FLOAT,FOR,FOREIGN,FOUND,FREE_IT,FROM,FULL,FUNCTION,"
+			"GDSCODE,GENERATOR,GEN_ID,GLOBAL,GOTO,GRANT,GROUP,GROUP_COMMIT_WAIT,"
+			"GROUP_COMMIT_,WAIT_TIME,HAVING,HELP,HOUR,IF,IMMEDIATE,IN,INACTIVE,INDEX,"
+			"INDICATOR,INIT,INNER,INPUT,INPUT_TYPE,INSERT,INT,INTEGER,INTO,IS,ISOLATION,"
+			"ISQL,JOIN,KEY,LC_MESSAGES,LC_TYPE,LEFT,LENGTH,LEV,LEVEL,LIKE,LOGFILE,"
+			"LOG_BUFFER_SIZE,LOG_BUF_SIZE,LONG,MANUAL,MAX,MAXIMUM,MAXIMUM_SEGMENT,"
+			"MAX_SEGMENT,MERGE,MESSAGE,MIN,MINIMUM,MINUTE,MODULE_NAME,MONTH,NAMES,"
+			"NATIONAL,NATURAL,NCHAR,NO,NOAUTO,NOT,NULL,NUMERIC,NUM_LOG_BUFS,"
+			"NUM_LOG_BUFFERS,OCTET_LENGTH,OF,ON,ONLY,OPEN,OPTION,OR,ORDER,OUTER,OUTPUT,"
+			"OUTPUT_TYPE,OVERFLOW,PAGE,PAGELENGTH,PAGES,PAGE_SIZE,PARAMETER,PASSWORD,"
+			"PLAN,POSITION,POST_EVENT,PRECISION,PREPARE,PROCEDURE,PROTECTED,PRIMARY,"
+			"PRIVILEGES,PUBLIC,QUIT,RAW_PARTITIONS,RDB$DB_KEY,READ,REAL,RECORD_VERSION,"
+			"REFERENCES,RELEASE,RESERV,RESERVING,RESTRICT,RETAIN,RETURN,RETURNING_VALUES,"
+			"RETURNS,REVOKE,RIGHT,ROLE,ROLLBACK,RUNTIME,SCHEMA,SECOND,SEGMENT,SELECT,SET,"
+			"SHADOW,SHARED,SHELL,SHOW,SINGULAR,SIZE,SMALLINT,SNAPSHOT,SOME,SORT,SQLCODE,"
+			"SQLERROR,SQLWARNING,STABILITY,STARTING,STARTS,STATEMENT,STATIC,STATISTICS,"
+			"SUB_TYPE,SUM,SUSPEND,TABLE,TERMINATOR,THEN,TIME,TIMESTAMP,TO,TRANSACTION,"
+			"TRANSLATE,TRANSLATION,TRIGGER,TRIM,TYPE,UNCOMMITTED,UNION,UNIQUE,UPDATE,"
+			"UPPER,USER,USING,VALUE,VALUES,VARCHAR,VARIABLE,VARYING,VERSION,VIEW,WAIT,"
+			"WEEKDAY,WHEN,WHENEVER,WHERE,WHILE,WITH,WORK,WRITE,YEAR,YEARDAY";
 	}
 
 const char* IscDatabaseMetaData::getNumericFunctions()
@@ -384,14 +430,12 @@ const char* IscDatabaseMetaData::getTimeDateFunctions()
 
 const char* IscDatabaseMetaData::getSearchStringEscape()
 	{
-	NOT_YET_IMPLEMENTED;
 	return 0;
 	}
 
 const char* IscDatabaseMetaData::getExtraNameCharacters()
 	{
-	NOT_YET_IMPLEMENTED;
-	return 0;
+	return "$";	
 	}
 
 bool IscDatabaseMetaData::supportsAlterTableWithAddColumn()
@@ -421,8 +465,40 @@ bool IscDatabaseMetaData::supportsConvert()
 
 bool IscDatabaseMetaData::supportsConvert(int fromType, int toType)
 	{
-	NOT_YET_IMPLEMENTED;
-	return 0;
+	if ( fromType == JDBC_NUMERIC )
+		if ( toType == JDBC_CHAR || toType == JDBC_VARCHAR || toType == JDBC_DATE ||
+			 toType == JDBC_TIME || toType == JDBC_TIMESTAMP )
+			return true;
+		else
+			return false;
+
+	if ( fromType == JDBC_CHAR || fromType == JDBC_VARCHAR )
+		if ( toType == JDBC_NUMERIC || toType == JDBC_DATE ||
+			toType == JDBC_TIME || toType == JDBC_TIMESTAMP )
+			return true;
+		else
+			return false;
+
+	if ( fromType == JDBC_DATE )
+		if ( toType == JDBC_CHAR || toType == JDBC_VARCHAR || toType == JDBC_TIMESTAMP )
+			return true;
+		else
+			return false;
+
+	if ( fromType == JDBC_TIME )
+		if ( toType == JDBC_CHAR || toType == JDBC_VARCHAR || toType == JDBC_TIMESTAMP )
+			return true;
+		else
+			return false;
+
+	if ( fromType == JDBC_TIMESTAMP )
+		if ( toType == JDBC_CHAR || toType == JDBC_VARCHAR || toType == JDBC_DATE || 
+			 toType == JDBC_TIME )
+			return true;
+		else
+			return false;
+
+	return false;
 	}
 
 bool IscDatabaseMetaData::supportsTableCorrelationNames()
@@ -907,17 +983,39 @@ ResultSet* IscDatabaseMetaData::getTableTypes()
 ResultSet* IscDatabaseMetaData::getColumnPrivileges(const char* catalog, const char* schema,
 	const char* table, const char* columnNamePattern)
 	{
-	NOT_YET_IMPLEMENTED;
-	return 0;
+	IscColumnPrivilegesResultSet *resultSet = new IscColumnPrivilegesResultSet (this);
+
+	try
+		{
+		resultSet->getColumnPrivileges (catalog, schema, table, columnNamePattern);
+		}
+	catch (...)
+		{
+		delete resultSet;
+		throw;
+		}
+
+	return resultSet;
 	}
 
 
 ResultSet* IscDatabaseMetaData::getTablePrivileges(const char* catalog, const char* schemaPattern,
-			const char* tableNamePattern)
-	{
-	NOT_YET_IMPLEMENTED;
-	return 0;
-	}
+            const char* tableNamePattern)
+    {
+    IscTablePrivilegesResultSet *resultSet = new IscTablePrivilegesResultSet (this);
+
+    try
+        {
+        resultSet->getTablePrivileges (catalog, schemaPattern, tableNamePattern);
+        }
+    catch (...)
+        {
+        delete resultSet;
+        throw;
+        }
+
+    return resultSet;
+    }
 
 
 ResultSet* IscDatabaseMetaData::getBestRowIdentifier(const char* catalog, const char* schema,
@@ -965,9 +1063,9 @@ ResultSet* IscDatabaseMetaData::getCrossReference(
 	return resultSet;
 	}
 
-ResultSet* IscDatabaseMetaData::getTypeInfo()
+ResultSet* IscDatabaseMetaData::getTypeInfo(int dataType)
 	{
-	return new TypesResultSet();
+	return new TypesResultSet(dataType);
 	}
 
 bool IscDatabaseMetaData::supportsResultSetConcurrency(int type, int concurrency)

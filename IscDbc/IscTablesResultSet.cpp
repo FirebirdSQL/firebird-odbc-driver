@@ -97,7 +97,8 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 		sql += ")\n";
 		}
 
-	sql += " order by rdb$owner_name, rdb$relation_name";
+	sql += " order by rdb$system_flag desc, rdb$owner_name, rdb$relation_name";
+	
 	prepareStatement (sql);
 	numberColumns = 5;
 }

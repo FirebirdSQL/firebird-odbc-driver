@@ -16,6 +16,13 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	2002-08-12	IscMetaDataResultSet.cpp
+ *				Added changes from C. G. Alvarez to so that
+ *				SQLColAttributes() called with SQL_COLUMN_TYPE_NAME returns 
+ *				the name of the type instead of the number of the type
+ *
  */
 
 // IscMetaDataResultSet.cpp: implementation of the IscMetaDataResultSet class.
@@ -107,6 +114,11 @@ JString IscMetaDataResultSet::expandPattern(const char * string, const char * pa
 int IscMetaDataResultSet::getColumnType(int index)
 {
 	return resultSet->getColumnType (index);
+}
+
+const char* IscMetaDataResultSet::getColumnTypeName(int index)
+{
+    return resultSet->getColumnTypeName (index);
 }
 
 int IscMetaDataResultSet::getColumnDisplaySize(int index)

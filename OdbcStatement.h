@@ -42,9 +42,11 @@ struct Binding {
 	int			cType;
 	int			sqlType;
 	void		*pointer;
-	int			bufferLength;
+	SQLINTEGER	bufferLength;
 //Suggested by R. Milharcic
-	int			dataOffset;
+	SQLINTEGER	dataOffset;
+	bool		startedTransfer;		// Carlos G.A.
+	bool		data_at_exec;
 	SQLINTEGER	*indicatorPointer;
 	};
     
@@ -66,11 +68,12 @@ public:
 	RETCODE sqlColAttributes (int column, int descType, SQLPOINTER buffer, int bufferSize, SWORD *length, SDWORD *value);
 	RETCODE sqlRowCount (SQLINTEGER *rowCount);
 	RETCODE sqlSetStmtAttr (int attribute, SQLPOINTER ptr, int length);
-	RETCODE sqlParamData (SQLPOINTER ptr);
+	RETCODE sqlParamData(SQLPOINTER *ptr);	// Carlos Guzmán Álvarez
+	RETCODE	sqlPutData (SQLPOINTER value, SQLINTEGER valueSize);
 	RETCODE sqlGetTypeInfo (int dataType);
 	Binding* allocBindings (int count, int oldCount, Binding *oldBindings);
-	RETCODE setParameters();	//Added 2002-06-04 RM
-	void executeSQL();			//Added 2002-06-04 RM
+//	RETCODE setParameters();	//Added 2002-06-04 RM
+//	void executeSQL();			//Added 2002-06-04 RM
 	RETCODE executeStatement();	//Changed return type 2002-06-04 RM 
 	char* getToken (const char** ptr, char *token);
 	bool isStoredProcedureEscape (const char *sqlString);
@@ -81,17 +84,17 @@ public:
 	RETCODE sqlProcedureColumns(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength, SQLCHAR*col,int colLength);
 	RETCODE sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength);
 	RETCODE sqlCancel();
-//Changed return data type. 2002-06-04 RM
-//	void setParameter (Binding *binding, int parameter);
-	RETCODE setParameter (Binding *binding, int parameter);
+	void setParameter (Binding *binding, int parameter);
 	RETCODE sqlBindParameter (int parameter, int type, int cType, int sqlType, int precision, int scale, PTR ptr, int bufferLength, SDWORD *length);
 	RETCODE sqlDescribeParam (int parameter, SWORD* sqlType, UDWORD*precision, SWORD*scale,SWORD*nullable);
+	RETCODE OdbcStatement::formatParameter( int parameter );
 	ResultSet* getResultSet();
 	RETCODE sqlExecuteDirect (SQLCHAR * sql, int sqlLength);
 	RETCODE sqlExecute();
 	RETCODE sqlGetData (int column, int cType, PTR value, int bufferLength, SDWORD *length);
 	RETCODE sqlDescribeCol (int col, SQLCHAR *colName, int nameSize, SWORD *nameLength,SWORD*sqlType,UDWORD*precision,SWORD*scale,SWORD *nullable);
 	RETCODE sqlNumResultCols (SWORD *columns);
+	RETCODE sqlNumParams (SWORD *params);
 	RETCODE sqlForeignKeys (SQLCHAR *pkCatalog, int pkCatLength, SQLCHAR*pkSchema, int pkSchemaLength,SQLCHAR*pkTable,int pkTableLength, SQLCHAR* fkCatalog,int fkCatalogLength, SQLCHAR*fkSchema, int fkSchemaLength,SQLCHAR*fkTable,int fkTableLength);
 	RETCODE sqlPrimaryKeys (SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength);
 	RETCODE sqlStatistics (SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, int unique, int reservedSic);
@@ -108,9 +111,10 @@ public:
 	RETCODE sqlPrepare (SQLCHAR *sql, int sqlLength);
 	RETCODE sqlColumns (SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, SQLCHAR *column, int columnLength);
 	RETCODE sqlTables (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength, SQLCHAR *type, int typeLength);
+	RETCODE sqlTablePrivileges (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength);
+	RETCODE sqlColumnPrivileges (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength, SQLCHAR * column, int columnLength);
 	RETCODE sqlSpecialColumns(unsigned short rowId, SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, unsigned short scope, unsigned short nullable);
 	RETCODE sqlSetParam (int parameter, int cType, int sqlType, int precision, int scale, PTR ptr, SDWORD * length);
-	RETCODE	sqlPutData (SQLPOINTER value, int valueSize);
 	virtual OdbcObjectType getType();
 	OdbcStatement(OdbcConnection *connect, int statementNumber);
 	virtual ~OdbcStatement();

@@ -106,11 +106,13 @@ void IscConnection::close()
 PreparedStatement* IscConnection::prepareStatement(const char * sqlString)
 {
 	IscPreparedStatement *statement = NULL;
+	IscPreparedStatement *statementSearch = NULL;
+	bool found = false;
 
 	try
 		{
-		statement = new IscPreparedStatement (this);
-		statement->prepare (sqlString);
+			statement = new IscPreparedStatement (this);
+			statement->prepare (sqlString);
 		}
 	catch (...)
 		{

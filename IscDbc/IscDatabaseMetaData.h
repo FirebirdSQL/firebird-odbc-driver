@@ -64,6 +64,7 @@ public:
     virtual const char* getDatabaseServerName();    
 	virtual const char* getDatabaseProductName();
 	virtual const char* getDatabaseProductVersion();
+	virtual int getDatabasePageSize();
 	virtual const char* getDriverName();
 	virtual const char* getDriverVersion();
 	virtual int getDriverMajorVersion();
@@ -201,7 +202,7 @@ public:
 		const char* foreignCatalog, const char* foreignSchema, const char* foreignTable
 		);
 
-	virtual ResultSet* getTypeInfo();
+	virtual ResultSet* getTypeInfo(int dataType);
 	virtual bool supportsResultSetConcurrency(int type, int concurrency);
 	virtual bool ownUpdatesAreVisible(int type);
 	virtual bool ownDeletesAreVisible(int type);

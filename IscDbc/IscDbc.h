@@ -16,6 +16,13 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *  2002-10-11  IscDbc.h
+ *              Contributed by C G Alvarez
+ *              Added MAX_***** constants that simplify
+ *              much coding in other classes.
+ *
+ *
  */
 
 #ifndef __ISCDBC_H_
@@ -56,6 +63,8 @@ typedef unsigned __int64			UQUAD;
  *		Sql types (actually from java.sql.types)
  */
 
+#define JDBC_NULL		   0 
+
 #define JDBC_BIT 		  -7
 #define JDBC_TINYINT 	  -6
 #define JDBC_SMALLINT	   5
@@ -80,5 +89,20 @@ typedef unsigned __int64			UQUAD;
 #define JDBC_BINARY		  -2
 #define JDBC_VARBINARY 	  -3
 #define JDBC_LONGVARBINARY 	  -4
+
+#define MAX_ARRAY_LENGTH		100000000
+#define MAX_BLOB_LENGTH			2147483647
+#define MAX_CHAR_LENGTH			32767
+#define MAX_VARCHAR_LENGTH		32765
+#define MAX_NUMERIC_LENGTH		18
+#define MAX_DECIMAL_LENGTH		18
+#define MAX_SMALLINT_LENGTH		5
+#define MAX_INT_LENGTH			10
+#define MAX_FLOAT_LENGTH		24
+#define MAX_DOUBLE_LENGTH		53
+#define MAX_DATE_LENGTH			10
+#define MAX_TIME_LENGTH			8
+#define MAX_TIMESTAMP_LENGTH	19
+#define MAX_QUAD_LENGTH			19
 
 #endif

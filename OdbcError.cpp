@@ -201,7 +201,7 @@ RETCODE OdbcError::sqlGetDiagField(int diagId, SQLPOINTER ptr, int msgBufferLeng
 		case SQL_DIAG_COLUMN_NUMBER:
 			value = columnNumber;
 			break;
-				
+
 		default:
 			return SQL_ERROR;
 		}

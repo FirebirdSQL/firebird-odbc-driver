@@ -45,6 +45,7 @@ class OdbcDesc : public OdbcObject
 {
 public:
 	DescRecord* getDescRecord (int number);
+	RETCODE sqlGetDescField(int recNumber, int fieldId, SQLPOINTER value, int length, SQLINTEGER *lengthPtr);
 	RETCODE sqlSetDescField (int recNumber, int fieldId, SQLPOINTER value, int length);
 	virtual OdbcObjectType getType();
 	OdbcDesc(OdbcDescType type, OdbcConnection *connect);

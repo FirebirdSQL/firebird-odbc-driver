@@ -23,6 +23,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+
 #include <stdio.h>
 #include <string.h>
 #include "IscDbc.h"
@@ -58,38 +59,42 @@ IscColumnsResultSet::~IscColumnsResultSet()
 void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern)
 {
 	JString sql = 
-		"select NULL as table_cat,\n"						// 1
-				"\tNULL as table_schem,\n"				// 2
-				"\trdb$relation_name as table_name,"	// 3
-				"\trfr.rdb$field_name as column_name,\n"// 4
-				"\trdb$field_type as data_type,\n"		// 5
-				"\trdb$field_sub_type as type_name,\n"	// 6
-				"\trdb$field_length as column_size,\n"	// 7
-				"\trdb$field_length as buffer_length,\n"			// 8
-				"\trdb$field_scale as decimal_digits,\n"// 9
-				"\t10 as num_prec_radix,\n"				// 10
-				"\trfr.rdb$null_flag as nullable,\n"		// 11
-				"\trfr.rdb$description as remarks,\n"	// 12
-				"\trfr.rdb$default_value as column_def,\n"	// 13
-				"\trdb$field_type as SQL_DATA_TYPE,\n"			// 14
-				"\trdb$field_sub_type as SQL_DATETIME_SUB,\n"			// 15
-				"\trdb$field_length as CHAR_OCTET_LENGTH,\n"// 16
-				"\trdb$field_position as ordinal_position,\n"	// 17
-				"\t'YES' as IS_NULLABLE,\n"				// 18
-				"\tfld.rdb$character_length as char_len,\n"	//19
-				"\tfld.rdb$default_value as f_def_val,\n"	//20
-				"\tfld.rdb$dimensions as array_dim\n,"	//21
-				"\tfld.rdb$null_flag as null_flag\n"	//22				
+		"select NULL as table_cat,\n"								// 1 - VARCHAR
+				"\tNULL as table_schem,\n"							// 2 - VARCHAR
+				"\trfr.rdb$relation_name as table_name,"			// 3 - VARCHAR NOT NULL
+				"\trfr.rdb$field_name as column_name,\n"			// 4 - VARCHAR NOT NULL
+				"\tfld.rdb$field_type as data_type,\n"				// 5 - SMALLINT NOT NULL
+				"\tfld.rdb$field_sub_type as type_name,\n"			// 6 - VARCHAR NOT NULL
+				"\t10 as column_size,\n"							// 7 - INTEGER
+				"\t10 as buffer_length,\n"							// 8 - INTEGER
+				"\tfld.rdb$field_scale as decimal_digits,\n"		// 9 - SMALLINT
+				"\tfld.rdb$field_scale as num_prec_radix,\n"		// 10 - SMALLINT
+				"\trfr.rdb$null_flag as nullable,\n"				// 11 - SMALLINT NOT NULL
+				"\tNULL as remarks,\n"								// 12 - VARCHAR
+				"\trfr.rdb$default_value as column_def,\n"			// 13 - VARCHAR
+				"\tfld.rdb$field_type as SQL_DATA_TYPE,\n"			// 14 - SMALLINT NOT NULL
+				"\tfld.rdb$field_sub_type as SQL_DATETIME_SUB,\n"	// 15 - SMALLINT
+				"\t10 as CHAR_OCTET_LENGTH,\n"						// 16 - INTEGER
+				"\t10 as ordinal_position,\n"						// 17 - INTEGER NOT NULL
+				"\t'YES' as IS_NULLABLE,\n"							// 18 - VARCHAR
+				"\tfld.rdb$character_length as char_len,\n"			// 19
+				"\tfld.rdb$default_value as f_def_val,\n"			// 20
+				"\tfld.rdb$dimensions as array_dim,\n"				// 21
+				"\tfld.rdb$null_flag as null_flag,\n"				// 22
+				"\trfr.rdb$field_position as column_position,\n"	// 23
+				"\tfld.rdb$field_length as column_length,\n"		// 24
+				"\tfld.rdb$field_precision as column_precision\n"	// 25
 		"from rdb$relation_fields rfr, rdb$fields fld\n"
 		" where rfr.rdb$field_source = fld.rdb$field_name\n";
 
 	if (tableNamePattern)
-		sql += expandPattern (" and rdb$relation_name %s '%s'", tableNamePattern);
+		sql += expandPattern (" and rfr.rdb$relation_name %s '%s'", tableNamePattern);
 
 	if (fieldNamePattern)
 		sql += expandPattern (" and rfr.rdb$field_name %s '%s'", fieldNamePattern);
 
-	sql += " order by rdb$relation_name, rfr.rdb$field_position";
+	sql += " order by rfr.rdb$relation_name, rfr.rdb$field_position";
+	
 	prepareStatement (sql);
 	numberColumns = 18;
 }
@@ -102,16 +107,26 @@ bool IscColumnsResultSet::next()
 	trimBlanks (3);							// table name
 	trimBlanks (4);							// field name
 
+	int len = resultSet->getInt (24);
+
+	resultSet->setValue (7, len);						// COLUMN_SIZE
+	resultSet->setValue (8, len);						// BUFFER_LENGTH
+	resultSet->setValue (10, 10);						// NUM_PREC_RADIX
+	resultSet->setValue (16, len);						// CHAR_OCTET_LENGTH
+	resultSet->setValue (17, resultSet->getInt (23)+1);	// ORDINAL_POSITION
+	
 	//translate to the SQL type information
-	int blrType = resultSet->getInt (5);	// field type
-	int subType = resultSet->getInt (6);
-	int length = resultSet->getInt (7);
-	int array = resultSet->getInt (21);
+	int blrType = resultSet->getInt (5);	// DATA_TYPE
+	int subType = resultSet->getInt (6);	// SUB_TYPE
+	int length = resultSet->getInt (7);		// COLUMN_SIZE
+	int array = resultSet->getInt (21);		// ARRAY_DIMENSION
+	int precision = resultSet->getInt (25);	// COLUMN_PRECISION
+
 	if (resultSet->valueWasNull)
 		array = 0;
 
 	int dialect = resultSet->statement->connection->getDatabaseDialect();
-	IscSqlType sqlType (blrType, subType, length, dialect);
+	IscSqlType sqlType (blrType, subType, length, length, dialect, precision);
 
 	JString type;
 	type.Format ("%s%s", (array) ? "ARRAY OF " : "", sqlType.typeName);
@@ -119,7 +134,7 @@ bool IscColumnsResultSet::next()
 	resultSet->setValue (5, sqlType.type);
 	resultSet->setValue (6, type);
 
-	setCharLen (19, 7, sqlType);
+	setCharLen (7, 8, sqlType);
 
 	adjustResults (sqlType);
 
@@ -321,19 +336,27 @@ void IscColumnsResultSet::setCharLen (int charLenInd,
 								      int fldLenInd, 
 									  IscSqlType sqlType)
 {
-
+	int fldLen = resultSet->getInt (fldLenInd);
 	int charLen = resultSet->getInt (charLenInd);
 	if (resultSet->valueWasNull)
-		charLen = resultSet->getInt (fldLenInd);
+		charLen = fldLen;
+
 	if (sqlType.type != JDBC_VARCHAR &&
 		sqlType.type != JDBC_CHAR)
+	{
 		charLen = sqlType.length;
+		fldLen  = sqlType.bufferLength;
+	}
 	
-	if (!charLen)
-		resultSet->setNull (fldLenInd);
+	if (sqlType.type == JDBC_VARCHAR)
+		resultSet->setValue (fldLenInd, fldLen + 2);
 	else
-		resultSet->setValue (fldLenInd, charLen);
-}
+		resultSet->setValue (fldLenInd, fldLen);
+
+	if (!charLen)
+		resultSet->setNull (charLenInd);
+	else
+		resultSet->setValue (charLenInd, charLen);}
 
 void IscColumnsResultSet::checkQuotes (IscSqlType sqlType, JString stringVal)
 {
@@ -371,6 +394,17 @@ void IscColumnsResultSet::checkQuotes (IscSqlType sqlType, JString stringVal)
 void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 
 {
+	// Data source–dependent data type name
+	switch (sqlType.type)
+		{
+		case JDBC_LONGVARCHAR:
+			resultSet->setValue (6, "BLOB SUB_TYPE 1");
+			break;
+		case JDBC_LONGVARBINARY:
+			resultSet->setValue (6, "BLOB");
+			break;
+		} 
+
 	// adjust the storage length for VARCHAR
 	if (sqlType.type == JDBC_VARCHAR)
 		resultSet->setValue (8, (resultSet->getInt (8)) + 2);
@@ -379,6 +413,10 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 	// radix - doesn't mean much for some colums either
 	switch (sqlType.type)
 		{
+		case JDBC_NUMERIC:
+		case JDBC_DECIMAL:			
+			resultSet->setValue (9, resultSet->getInt(9)*-1); 	// Scale > 0
+			break;
 		case JDBC_CHAR:
 		case JDBC_VARCHAR:
 		case JDBC_LONGVARCHAR:

@@ -132,6 +132,7 @@ public:
 	virtual bool nullsAreSortedAtEnd() = 0;
 	virtual const char* getDatabaseProductName() = 0;
 	virtual const char* getDatabaseProductVersion() = 0;
+	virtual int getDatabasePageSize() = 0;
 	virtual const char* getDriverName() = 0;
 	virtual const char* getDriverVersion() = 0;
 	virtual int getDriverMajorVersion() = 0;
@@ -269,7 +270,7 @@ public:
 		const char* foreignCatalog, const char* foreignSchema, const char* foreignTable
 		) = 0;
 
-	virtual ResultSet* getTypeInfo() = 0;
+	virtual ResultSet* getTypeInfo(int dataType) = 0;
 	virtual bool supportsResultSetConcurrency(int type, int concurrency) = 0;
 	virtual bool ownUpdatesAreVisible(int type) = 0;
 	virtual bool ownDeletesAreVisible(int type) = 0;
@@ -335,9 +336,13 @@ public:
 	virtual void		setLong (int index, QUAD value) = 0;
 	virtual void		setBytes (int index, int length, const void *bytes) = 0;
 //Next three lines added by RM 2002-06-4
-    virtual void        beginDataTransfer(int index) = 0;
-    virtual void        putSegmentData (int length, const void *bytes) = 0;
-    virtual void        endDataTransfer() = 0;
+    virtual void        beginBlobDataTransfer(int index) = 0;
+    virtual void        putBlobSegmentData (int length, const void *bytes) = 0;
+    virtual void        endBlobDataTransfer() = 0;
+
+    virtual void        beginClobDataTransfer(int index) = 0;
+    virtual void        putClobSegmentData (int length, const void *bytes) = 0;
+    virtual void        endClobDataTransfer() = 0;
 
 	virtual void		setFloat (int index, float value) = 0;
 	virtual void		setDouble (int index, double value) = 0;
@@ -349,6 +354,7 @@ public:
 	virtual void		setClob (int index, Clob *value) = 0;
 	virtual StatementMetaData*
 						getStatementMetaData() = 0;
+	virtual	int			getNumParams() = 0;
 	virtual int			objectVersion() = 0;
 };
 
@@ -457,6 +463,7 @@ public:
 	virtual const char*	getColumnName (int index) = 0;
 	virtual int			getColumnDisplaySize (int index) = 0;
 	virtual int			getColumnType (int index) = 0;
+	virtual const char*	getColumnTypeName (int index) = 0;
 	virtual int			getColumnCount() = 0;
 	virtual int			getPrecision(int index) = 0;
 	virtual int			getScale(int index) = 0;
