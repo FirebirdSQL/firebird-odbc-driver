@@ -202,6 +202,9 @@ int init ()
 	return 0;
 }
 
+//	Bound Address + Binding Offset + ((Row Number – 1) x Element Size)
+//	*ptr = binding->pointer + bindOffsetPtr + ((1 – 1) * rowBindType); // <-- for single row
+#define GETBOUNDADDRESS(binding)	(unsigned long)binding->dataPtr + (unsigned long)bindOffsetPtr; 
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -2830,9 +2833,7 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 
 	DescRecord *binding = applicationParamDescriptor->getDescRecord ( parameterNeedData );
 
-//	Bound Address + Binding Offset + ((Row Number – 1) x Element Size)
-//	*ptr = binding->pointer + bindOffsetPtr + ((1 – 1) * rowBindType);
-	*(unsigned long*)ptr = (unsigned long)binding->dataPtr + (unsigned long)bindOffsetPtr; // for single row
+	*(unsigned long*)ptr = GETBOUNDADDRESS(binding);
 
 	if( binding->indicatorPtr && binding->data_at_exec )
 	{
@@ -2867,7 +2868,15 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 	
 	try
 	{
+		int saveParameter = parameterNeedData;
+
 		retcode = executeStatement();
+		
+		if ( retcode == SQL_NEED_DATA && saveParameter != parameterNeedData )
+		{
+			binding = applicationParamDescriptor->getDescRecord ( parameterNeedData );
+			*(unsigned long*)ptr = GETBOUNDADDRESS(binding);
+		}
 	}
 	catch (SQLException& exception)
 	{
