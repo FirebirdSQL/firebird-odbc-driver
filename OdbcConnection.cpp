@@ -145,7 +145,6 @@ static const int supportedFunctions [] = {
             SQL_API_SQLNUMRESULTCOLS,
             SQL_API_SQLDRIVERS,
             SQL_API_SQLPARAMDATA,
-//            SQL_API_SQLENDTRAN,
             SQL_API_SQLPREPARE,
             SQL_API_SQLEXECDIRECT,
             SQL_API_SQLPUTDATA,

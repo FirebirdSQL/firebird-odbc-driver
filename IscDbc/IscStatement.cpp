@@ -508,7 +508,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 			case SQL_TIMESTAMP:
 				{
 				ISC_TIMESTAMP *date = (ISC_TIMESTAMP*) var->sqldata;
-				long days = date->timestamp_date - baseDate;
+				long days = date->timestamp_date;
 
 //Orig.
 // B. Schulte comments:
@@ -526,10 +526,6 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				long        zeit;
 				zeit = (date->timestamp_time / 10000);
 
-				// Just what do we do here? A patch from Vladimir Tcvigyn 
-				// suggests we should multiply days by the number of 
-				// seconds in a day.
-				timestamp=days * 24 * 60 * 60;
 				timestamp=days;
 				timestamp.nanos = (zeit) ;
 
@@ -540,7 +536,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 			case SQL_TYPE_DATE:
 				{
 				ISC_DATE date = *(ISC_DATE*) var->sqldata;
-				long days = date - baseDate;
+				long days = date;
 				DateTime dateTime;
 //				dateTime = (long) (days * 24 * 60 * 60);//NOMEY -
 				dateTime = days; //NOMEY +
