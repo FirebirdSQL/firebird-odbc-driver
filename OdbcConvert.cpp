@@ -1913,11 +1913,9 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 	if ( scale )																				\
 	{																							\
 		if (scale < 0)																			\
-			for (; scale; ++scale)																\
-				divisor /= 10;																	\
-		else if (scale > 0)																		\
-			for (; scale; --scale)																\
-				divisor *= 10;																	\
+			divisor /= (QUAD)listScale[-scale];													\
+		else /* if (scale > 0)	*/																\
+			divisor *= (QUAD)listScale[scale];													\
 	}																							\
 																								\
 	if (divisor == 1)																			\
