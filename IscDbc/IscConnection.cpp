@@ -336,8 +336,62 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 		
 		while( *ptIn == ' ' )ptIn++;
 
-		if ( *(long*)ptIn == 0x6c6c6163 || *(long*)ptIn == 0x4c4c4143 )
-			++ignoreBracket; // { call }
+//	On a note		++ignoreBracket; // ignored { }
+		if ( *ptIn == '?' || *(long*)ptIn == 0x6c6c6163 || *(long*)ptIn == 0x4c4c4143 )
+		{	// Check '?' or 'call' or 'CALL'
+			if ( *ptIn == '?' )
+			{
+				ptIn++;
+				while( *ptIn == ' ' )ptIn++;
+
+				if(*ptIn != '=')
+					return false;
+
+				ptIn++; // '='
+				while( *ptIn == ' ' )ptIn++;
+			}
+
+			if ( *(long*)ptIn != 0x6c6c6163 && *(long*)ptIn != 0x4c4c4143 )
+				return false;
+
+			ptIn += 4; // 'call'
+
+			while( *ptIn == ' ' )ptIn++;
+
+			ptOut = ptEndBracket;
+			int ignoreBr = ignoreBracket;
+
+#define LENSTR_EXECUTE_PROCEDURE 18 
+
+			int offset = LENSTR_EXECUTE_PROCEDURE - ( ptIn - ptOut );
+
+			memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
+			memcpy(ptOut, "execute procedure ", LENSTR_EXECUTE_PROCEDURE);
+
+			ptIn += offset; 
+			ptOut += LENSTR_EXECUTE_PROCEDURE;
+
+			do
+			{
+				while( *ptIn && *ptIn != '}' )
+					*ptOut++ = *ptIn++;
+
+				if( ignoreBr )
+					*ptOut++ = *ptIn++;
+
+			}while ( ignoreBr-- );
+
+			if(*ptIn != '}')
+				return false;
+
+			ptIn++; // '}'
+
+			while( *ptIn )
+				*ptOut++ = *ptIn++;
+
+			*ptOut = '\0';
+			bModify = true;
+		}
 		else
 		{
 			// Check 'oj' or 'OJ'
