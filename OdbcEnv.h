@@ -30,6 +30,7 @@
 #endif // _MSC_VER >= 1000
 
 #include "OdbcObject.h"
+#include "IscDbc/Mutex.h"
 
 class OdbcConnection;
 
@@ -47,10 +48,13 @@ public:
 	BOOL getDataSources(UWORD wConfigMode);
 #endif
 	virtual RETCODE allocHandle (int handleType, SQLHANDLE *outputHandle);
+	void LockEnv();
+	void UnLockEnv();
 	virtual OdbcObjectType getType();
 	OdbcEnv();
 	virtual ~OdbcEnv();
 
+	Mutex			mutex;
 	OdbcConnection	*connections;
 	const char		*odbcIniFileName;
 	const char		*odbcInctFileName;
@@ -64,6 +68,27 @@ public:
 	char			*activeDrv;
 	char			*endDrv;
 #endif
+};
+
+class SafeEnvThread
+{
+	OdbcEnv * env;
+public:
+	SafeEnvThread(OdbcEnv * ptEnv)
+	{
+		if( ptEnv )
+		{
+			env = ptEnv;
+			env->LockEnv();
+		}
+		else 
+			env = NULL;
+	}
+	virtual ~SafeEnvThread()
+	{
+		if(env)
+			env->UnLockEnv();
+	}
 };
 
 #endif // !defined(AFX_ODBCENV_H__ED260D95_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)

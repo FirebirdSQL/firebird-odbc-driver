@@ -127,6 +127,10 @@ SOURCE=..\..\Main.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\Mutex.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\OdbcConnection.cpp
 # End Source File
 # Begin Source File

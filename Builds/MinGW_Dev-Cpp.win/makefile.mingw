@@ -101,7 +101,7 @@ $(ISCDBCDLL) : $(LIST_ISCDBCOBJ) $(BUILDDIR)/IscDbc.res
 	$(LD) $(LINKFLAGS) --implib $(ISCDBCLIB) $(LIST_ISCDBCOBJ) $(BUILDDIR)/IscDbc.res -lstdc++ --def $(ISCDBCDEFFILE) -o $(ISCDBCDLL)
 #
 $(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ) $(BUILDDIR)/OdbcJdbc.res
-	$(LD) $(LINKFLAGS) --implib $(ODBCJDBCLIB) $(BUILDDIR)/JString.o $(LIST_ODBCJDBCOBJ) $(BUILDDIR)/OdbcJdbc.res -lodbccp32 -lstdc++ --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
+	$(LD) $(LINKFLAGS) --implib $(ODBCJDBCLIB) $(BUILDDIR)/JString.o $(BUILDDIR)/Mutex.o $(LIST_ODBCJDBCOBJ) $(BUILDDIR)/OdbcJdbc.res -lodbccp32 -lstdc++ --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
 #
 $(ODBCJDBCSDLL) : $(LIST_ODBCJDBCSOBJ) $(BUILDDIR)/OdbcJdbcSetup.res
 	$(LD) $(LINKFLAGS) --implib $(ODBCJDBCSLIB) $(BUILDDIR)/JString.o $(LIST_ODBCJDBCSOBJ) $(BUILDDIR)/OdbcJdbcSetup.res -luser32 -lcomdlg32 -lodbccp32 -lstdc++ --def $(ODBCJDBCSDEFFILE) -o $(ODBCJDBCSDLL)

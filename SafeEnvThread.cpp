@@ -7,7 +7,12 @@
 
 #if(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_ENV || DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_CONNECT)
 
-void * MutexEnvThread::mutexLockedLevelEnv = NULL;
+#ifdef _WIN32
+void * MutexEnvThread::mutexLockedLevelDll = NULL;
+#endif
+#ifdef _PTHREADS
+pthread_mutex_t	MutexEnvThread::mutexLockedLevelDll;
+#endif
 
 MutexEnvThread iniMutexEnv;
 

@@ -69,6 +69,16 @@ OdbcEnv::~OdbcEnv()
 
 }
 
+void OdbcEnv::LockEnv()
+{
+	mutex.lock();
+}
+
+void OdbcEnv::UnLockEnv()
+{
+	mutex.release();
+}
+
 OdbcObjectType OdbcEnv::getType()
 {
 	return odbcTypeEnv;

@@ -7,55 +7,62 @@
 
 #if(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_ENV || DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_CONNECT)
 
+#ifdef _PTHREADS
+#include <pthread.h>
+#endif
+
 class MutexEnvThread
 {
 public:
-	static void * mutexLockedLevelEnv;
+#ifdef _WIN32
+	static void * mutexLockedLevelDll;
+#endif
+#ifdef _PTHREADS
+	static pthread_mutex_t	mutexLockedLevelDll;
+#endif
 
 public:
 	MutexEnvThread()
 	{
 #ifdef _WIN32
-		mutexLockedLevelEnv = CreateMutex (NULL, false, NULL);
+		mutexLockedLevelDll = CreateMutex (NULL, false, NULL);
 #endif
 #ifdef _PTHREADS
-		int ret = pthread_mutex_init (&mutexLockedLevelEnv, NULL);
+		int ret = pthread_mutex_init (&mutexLockedLevelDll, NULL);
 #endif
 	}
 
 	~MutexEnvThread()
 	{
-		if(mutexLockedLevelEnv)
-		{
 #ifdef _WIN32
-			CloseHandle (mutexLockedLevelEnv);
+		if(mutexLockedLevelDll)
+			CloseHandle (mutexLockedLevelDll);
 #endif
 #ifdef _PTHREADS
-			int ret = pthread_mutex_destroy (&mutexLockedLevelEnv);
+		int ret = pthread_mutex_destroy (&mutexLockedLevelDll);
 #endif 
-		}
 	}
 };
 
-class SafeEnvThread
+class SafeDllThread
 {
 public:
-	SafeEnvThread()
+	SafeDllThread()
 	{
 #ifdef _WIN32
-		WaitForSingleObject (MutexEnvThread::mutexLockedLevelEnv, INFINITE);
+		WaitForSingleObject (MutexEnvThread::mutexLockedLevelDll, INFINITE);
 #endif
 #ifdef _PTHREADS
-		pthread_mutex_lock (&MutexEnvThread::mutexLockedLevelEnv);
+		pthread_mutex_lock (&MutexEnvThread::mutexLockedLevelDll);
 #endif 
 	}
-	virtual ~SafeEnvThread()
+	virtual ~SafeDllThread()
 	{
 #ifdef _WIN32
-		ReleaseMutex (MutexEnvThread::mutexLockedLevelEnv);
+		ReleaseMutex (MutexEnvThread::mutexLockedLevelDll);
 #endif
 #ifdef _PTHREADS
-		pthread_mutex_unlock (&MutexEnvThread::mutexLockedLevelEnv);
+		pthread_mutex_unlock (&MutexEnvThread::mutexLockedLevelDll);
 #endif 
 	}
 };

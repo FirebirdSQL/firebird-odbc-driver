@@ -98,15 +98,17 @@ extern "C"
 
 #if(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_ENV)
 
-#define GUARD_ENV				SafeEnvThread wt
-#define GUARD_HSTMT(arg)		GUARD_ENV
-#define GUARD_HDBC(arg)			GUARD_ENV
-#define GUARD_HDESC(arg)		GUARD_ENV
-#define GUARD_HTYPE(arg1,arg2)	GUARD_ENV
+#define GUARD					SafeDllThread wt
+#define GUARD_ENV(arg)			GUARD
+#define GUARD_HSTMT(arg)		GUARD
+#define GUARD_HDBC(arg)			GUARD
+#define GUARD_HDESC(arg)		GUARD
+#define GUARD_HTYPE(arg1,arg2)	GUARD
 
 #elif(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_CONNECT)
 
-#define GUARD_ENV				SafeEnvThread wt
+#define GUARD					SafeDllThread wt
+#define GUARD_ENV(arg)			SafeEnvThread wt((OdbcEnv*)arg)
 #define GUARD_HSTMT(arg)		SafeConnectThread wt(((OdbcStatement*)arg)->connection)
 #define GUARD_HDBC(arg) 		SafeConnectThread wt((OdbcConnection*)arg)
 #define GUARD_HDESC(arg)		SafeConnectThread wt(((OdbcDesc*)arg)->connection)
@@ -117,7 +119,8 @@ extern "C"
 
 #else
 
-#define GUARD_ENV
+#define GUARD
+#define GUARD_ENV(arg)
 #define GUARD_HSTMT(arg)
 #define GUARD_HDBC(arg)
 #define GUARD_HDESC(arg)	
@@ -179,7 +182,7 @@ RETCODE SQL_API SQLAllocConnect  (HENV arg0,
 			 HDBC * arg1)
 {
 	TRACE ("SQLAllocConnect");
-	GUARD_ENV;
+	GUARD_ENV(arg0);
 
 	return __SQLAllocHandle (SQL_HANDLE_DBC, arg0, arg1);
 }
@@ -189,6 +192,7 @@ RETCODE SQL_API SQLAllocConnect  (HENV arg0,
 RETCODE SQL_API SQLAllocEnv  (HENV * arg0)
 {
 	TRACE ("SQLAllocEnv");
+	GUARD;
 
 	return __SQLAllocHandle (SQL_HANDLE_ENV, SQL_NULL_HANDLE, arg0);
 }
@@ -763,7 +767,7 @@ RETCODE SQL_API SQLDataSources  (HENV arg0,
 		 SWORD * arg7)
 {
 	TRACE ("SQLDataSources");
-	GUARD_ENV;
+	GUARD_ENV(arg0);
 
 	return ((OdbcEnv*)arg0)->sqlDataSources (arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
@@ -995,7 +999,7 @@ RETCODE SQL_API SQLDrivers  (HENV arg0,
 		 SWORD * arg7)
 {
 	TRACE ("SQLDrivers");
-	GUARD_ENV;
+	GUARD_ENV(arg0);
 
 	return ((OdbcEnv*)arg0)->sqlDrivers (arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
@@ -1028,11 +1032,14 @@ RETCODE SQL_API SQLAllocHandle (SQLSMALLINT arg0, SQLHANDLE arg1, SQLHANDLE * ar
 	switch( arg0 )
 	{
 	case SQL_HANDLE_ENV:
+		{
+			GUARD;
 			return __SQLAllocHandle (arg0, arg1, arg2);
+		}
 
 	case SQL_HANDLE_DBC:
 		{
-			GUARD_ENV;
+			GUARD_ENV(arg1);
 			return __SQLAllocHandle (arg0, arg1, arg2);
 		}
 
