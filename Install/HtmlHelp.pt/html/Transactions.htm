@@ -1,0 +1,86 @@
+<!--
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  Traduzido e Editado por / Translated and Edited by
+ *  Alexandre Benson Smith
+ *  benson@thorsoftware.com.br
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV = "CONTENT-TYPE" CONTENT = "text/html; charset=windows-1252">
+<TITLE>Transa&ccedil;&otilde;es</TITLE>
+</HEAD>
+
+<BODY BGCOLOR = "#ffffff" TEXT = "#000000">
+
+<P><A NAME = "hid_transactions"></A><H1>Transa&ccedil;&otilde;es</H1></P>
+
+<P>O Firebird permite os seguintes n&iacute;veis de isolamento de transa&ccedil;&otilde;es:</P>
+
+<P>&nbsp;&nbsp;&nbsp;1 (read committed, o padr&atilde;o), <BR>
+&nbsp;&nbsp;&nbsp;3 (serializable) <BR>
+&nbsp;&nbsp;&nbsp;4 (versioning).</P>
+
+<P>O Firebird implementa travamento de registro em todos os casos.</P>
+
+<P>O Firebird executa travamentos otimistas (optimistic locking). Sua 
+transa&ccedil;&atilde;o n&atilde;o tentar&aacute; travar um registro 
+at&eacute; que vc envie um update que afete aquele registro. Isto 
+significa que &eacute; poss&iacute;vel, embora raro, que seu update 
+falhe, pois outro cliente travou o registro, mesmo que voc&ecirc; tenha
+iniciado a transa&ccedil;&atilde;o antes dele.</P>
+
+<P>O Firebird usa um mecanismo &uacute;nico de &ldquo;versionamento&rdquo; 
+(versioning) para atingir um n&iacute;vel de granularidade mais refinado 
+que o permitido pelo m&eacute;todo tradicional de travamento por registro 
+(row-level locking). O mecaniso de versionamento permite que qualquer 
+n&uacute;mero de clientes leiam uma c&oacute;pia consistente de qualquer 
+registro, mesmo que no mesmo momento outro cliente esteja atualizando o 
+mesmo registro. Leitores e gravadores (readers and writers) nunca bloqueiam 
+um ao outro, e o mecanismo do banco de dados Firebird mant&eacute;m
+estas vers&otilde;es de registros de forma transparente at&eacute; onde diz 
+respeito ao cliente.</P>
+
+<P>Tamb&eacute;m existe suporte ao commit-em-duas-fases (two phase commit) 
+entre diferentes bancos de dados Firebird. Existe uma restri&ccedil;&atilde;o 
+de que o m&aacute;ximo de 10 bancos de dados podem ser usados simultaneamente em uma
+transa&ccedil;&atilde;o com commit em duas fases. Se voc&ecirc; precisa usar o 
+commit em duas fases, ent&atilde;o ser&aacute; necess&aacute;rio usar a seguinte 
+chamada:</P>
+
+<UL><B> SQLSetConnectAttr (connection, 4000, (void*) TRUE, 0);</B></UL>
+
+<P>Esta chamada cria uma conex&atilde;o comum, para cancelar a conex&atilde;o comum:</P>
+
+<UL><B>SQLSetConnectAttr (connection, 4000, (void*) FALSE, 0);</B></UL>
+
+<P>O Driver ODBC do Firebird por padr&atilde;o usa uma transa&ccedil;&atilde;o 
+por conex&atilde;o, entretanto, de forma program&aacute;tica, voc&ecirc; pode 
+usar uma estrutura de transa&ccedil;&otilde;es mais flex&iacute;vel. Por exemplo,
+voc&ecirc; pode usar multiplas transa&ccedil;&otilde;es dentro de uma conex&atilde;o, 
+onde uma conex&atilde;o pode estar usando uma s&eacute;rie de transa&ccedil;&otilde;es 
+de leitura/escrita. &Eacute; tamb&eacute;m poss&iacute;vel que se use conex&otilde;es 
+independentes a diferentes bancos de dados Firebird para conduzir os commits em duas 
+fases entre multiplos bancos de dados.</P>
+
+<P>Para maiores detalhes de como fazer isso e para outros t&oacute;picos 
+avan&ccedil;ados, por favor, olhe nos exemplos.</P>
+
+</BODY>
+</HTML>

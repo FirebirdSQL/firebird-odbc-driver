@@ -1,0 +1,243 @@
+<!--
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  Traduzido e Editado por / Translated and Edited by
+ *  Alexandre Benson Smith
+ *  benson@thorsoftware.com.br
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV = "CONTENT-TYPE" CONTENT = "text/html; charset=windows-1252">
+<TITLE> Exemplos de conex&otilde;es</TITLE>
+</HEAD>
+
+<BODY BGCOLOR = "#ffffff" TEXT = "#000000">
+            
+<P><A NAME = "hid_connection_examples"></A><h1>Exemplos de Conex&otilde;es</H1></P>
+
+<P>Exemplos de strings de conex&atilde;o para aplica&ccedil;&otilde;es que utililizam 
+a fun&ccedil;&atilde;o ODBC <B>SQLDriverConnect</B>:</P>
+
+<P>1. Open("<B>DSN</B>=myDb;")</P>
+
+<P>2. Open("<B>DSN</B>=myDb; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite;")</P>
+
+<P>3. Open("<B>DSN</B>=myDb; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=172.17.2.10:/usr/local/db/myDb.fdb;")</P>
+
+<P>4. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>DBNAME</B>=172.17.2.10:/usr/local/db/myDb.fdb;")</P>
+
+<P>5. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=172.17.2.10:/usr/local/db/myDb.fdb;")</P>
+
+<P>também</P>
+
+<P>6. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=dummy;")</P>
+
+<P>dummy &ndash; &eacute; um alias derivado do arquivo do Firebird
+<B>aliases.conf</B> . Se as vari&aacute;veis de ambiente (environment variables) <B>ISC_PASSWORD</B> e
+<B>ISC_USER</B> estiverem definidas ent&atilde;o o driver as usar&aacute;.</P>
+
+<BR>
+    <A name = IND_DBNAME></A>
+
+<table width = "100%" cellspacing=0 cellpadding=6 border=1 cols=2>
+  <tr>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+        <B>DBNAME</B> String para conex&atilde;o remota
+    </td>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+        <B>Coment&aacute;rios</B>
+    </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	Utilizando o endere&ccedil;o de IP do servidor, com o nome de arquivo seguindo 
+	a nota&ccedil;&atilde;o Unix
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	Utilizando o nome do servidor, com o nome de arquivo seguindo 
+	a nota&ccedil;&atilde;o Unix
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10/3051:/usr/local/db/myDb.fdb</B>
+    </td>
+    <td>
+	Utilizando o endere&ccedil;o de IP do servidor e uma porta alternativa 
+	para conex&atilde;o, com o nome de arquivo seguindo a nota&ccedil;&atilde;o Unix
+    </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver/3051:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	Utilizando o nome do servidor e uma porta alternativa 
+	para conex&atilde;o, com o nome de arquivo seguindo a nota&ccedil;&atilde;o Unix
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	Utilizando o endere&ccedil;o de IP do servidor, com o nome de arquivo seguindo 
+	a nota&ccedil;&atilde;o Windows
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	Utilizando o nome do servidor, com o nome de arquivo seguindo 
+	a nota&ccedil;&atilde;o Windows
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10/3051:c:\db\myDb.fdb</B>
+    </td>
+    <td>
+	Utilizando o endere&ccedil;o de IP do servidor e uma porta alternativa 
+	para conex&atilde;o, com o nome de arquivo seguindo a nota&ccedil;&atilde;o Windows
+    </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver/3051:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	Utilizando o nome do servidor e uma porta alternativa 
+	para conex&atilde;o, com o nome de arquivo seguindo a nota&ccedil;&atilde;o Windows
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>127.0.0.1:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	Usando a interface local (loopback), com o nome do arquivo seguindo a nota&ccedil;&atilde;o Unix
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>localhost:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	Usando a interface local (loopback), com o nome do arquivo seguindo a nota&ccedil;&atilde;o Unix
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>127.0.0.1:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	Usando a interface local (loopback), com o nome do arquivo seguindo a nota&ccedil;&atilde;o Windows
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>localhost:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	Usando a interface local (loopback), com o nome do arquivo seguindo a nota&ccedil;&atilde;o Windows
+      </td>
+  </tr>
+</table>
+
+
+<table width="100%" cellspacing=0 cellpadding=6 border=1 cols=2>
+  <tr>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+      	<B>DBNAME</B> String para conex&atilde;o local
+    </td>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+	<B>Coment&aacute;rios</B>
+    </td>
+  </tr>
+  <tr>
+    <td>
+	<B>C:\db\myDb.fdb</B>
+      </td>
+    <td>
+        Conex&atilde;o local em um servidor Windows
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+        Conex&atilde;o local em um servidor Unix
+      </td>
+  </tr>
+</table>
+
+<P>Alias (apelido): Usando o arquivo de alias do Firebird (aliases.conf) com as seguintes defini&ccedil;&otilde;es:
+        <UL><B>
+        dummy = c:\data\myDb.fdb</B><BR>
+        ou<BR><B>
+        dummy = /usr/local/db/myDb.fdb
+        </B></UL></P>
+
+<P> </P>
+
+<table width="100%" cellspacing=0 cellpadding=6 border=1 cols=2>
+  <tr>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+      	<B>DBNAME</B> String de conex&atilde;o usando um alias
+    </td>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+	<B>Coment&aacute;rios</B>
+    </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10:dummy</B>
+      </td>
+    <td>
+        Conex&atilde;o remota usando o endere&ccedil;o de IP do servidor e um alias
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver:dummy</B>
+      </td>
+    <td>
+        Conex&atilde;o remota usando o nome do servidor e um alias
+      </td>
+  </tr>
+</table>
+
+<P>Veja que n&atilde;o faz diferen&ccedil;a para o cliente se o 
+servidor &eacute; Unix ou Windows, s&oacute; &eacute; preciso 
+especificar o nome do alias, e no arquivo aliases.conf ser&aacute; 
+definido o nome real do arquivo do banco de dados.</P>
+
+</BODY>
+</HTML>

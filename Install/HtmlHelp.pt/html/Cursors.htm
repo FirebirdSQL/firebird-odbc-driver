@@ -1,0 +1,51 @@
+<!--
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  Traduzido e Editado por / Translated and Edited by
+ *  Alexandre Benson Smith
+ *  benson@thorsoftware.com.br
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV = "CONTENT-TYPE" CONTENT = "text/html; charset=windows-1252">
+<TITLE>Cursores</TITLE>
+</HEAD>
+
+<BODY BGCOLOR = "#ffffff" TEXT = "#000000">
+
+<P><A NAME = "hid_cursors"></A><H1>Cursores</H1></P>
+
+<P>Atualmente no driver ODBC Firebird, os cursores do tipo &ldquo;Dynamic&rdquo; 
+e &ldquo;Keyset&rdquo; s&atilde;o convertidos para cursores &ldquo;Static&rdquo;. 
+Pois n&atilde;o &eacute; poss&iacute;vel atualizar conjuntos (sets).</P>
+
+<P>Para melhor performance, use cursores &ldquo;ForwardOnly&rdquo;.</P>
+
+<P>Os operadores de leitura: (SQLFetch, SQLExtendedFetch, SQLScrollFetch), 
+use SQL_ROWSET_SIZE e SQL_ATTR_ROW_ARRAY_SIZE.</P>
+
+<P>Para uma melhor performance quando usar campos do tipo blob, use o operador 
+SQLBindParameter (independente do tamanho do campo blob), pois ser&aacute; muito 
+mais r&aacute;pido que usar SQLPutData/SQLGetData.</P>
+
+<P>Para maiores detalhes de como fazer isso e para outros t&oacute;picos 
+avan&ccedil;ados, por favor, olhe nos exemplos.</P>
+
+</BODY>
+</HTML>

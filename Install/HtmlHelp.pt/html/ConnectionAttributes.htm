@@ -1,0 +1,194 @@
+<!--
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  Traduzido e Editado por / Translated and Edited by
+ *  Alexandre Benson Smith
+ *  benson@thorsoftware.com.br
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV = "CONTENT-TYPE" CONTENT = "text/html; charset=windows-1252">
+<TITLE> Atributos da Conex&atilde;o</TITLE>
+</HEAD>
+
+<BODY BGCOLOR = "#FFFFFF" TEXT = "#000000">
+
+<P><A NAME = "hid_connection_parameters"></A><h1>Atributos da Conex&atilde;o</H1></P>
+
+<P>Os par&acirc;metros da conex&atilde;o s&atilde;o strings utilizadas
+para definir como se conectar ao mecanismo (engine) do banco de dados
+ou ao servidor de rede. A string &eacute; uma lista de defini&ccedil;&otilde;es
+de par&acirc;metros na forma KEYWORD=value, separadas por ponto-e-virgula (;).</P>
+
+<P>As palavras-chaves (keywords) s&atilde;o definidas na tabela abaixo:</P>
+
+<table width = "60%" cellspacing = 0 cellpadding = 2 border = 1 cols=2>
+  <tr>
+    <td width="40%" bgcolor="d5d5d5" align="center">
+       <B>Keyword (forma longa)</B>
+    </td>
+    <td width="60%" bgcolor="d5d5d5" align="center">
+       <B>Forma Curta</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Database Account
+    </td>
+    <td>&nbsp;
+                <B>UID</B> or <B>USER</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Password
+    </td>
+    <td>&nbsp;
+                <B>PWD</B> or <B>PASSWORD</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Role
+    </td>
+    <td>&nbsp;
+                <B>ROLE</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Data Source Name
+    </td>
+    <td>&nbsp;
+                <B>DSN</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Driver
+    </td>
+    <td>&nbsp;
+                <B>PWD</B> or <B>DRIVER</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Database
+    </td>
+    <td>&nbsp;
+                <B>DBNAME</B> or <B>DATABASE</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Client
+    </td>
+    <td>&nbsp;
+                <B>CLIENT</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Character Set
+    </td>
+    <td>&nbsp;
+                <B>CHARSET</B> or <B>CHARACTERSET</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Set Read Only
+    </td>
+    <td>&nbsp;
+                <B>READONLY</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Set nowait
+    </td>
+    <td>&nbsp;
+                <B>NOWAIT</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Dialect
+    </td>
+    <td>&nbsp;
+                <B>DIALECT</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Set quoted identifier
+    </td>
+    <td>&nbsp;
+                <B>QUOTED</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Set sensitive identifier
+    </td>
+    <td>&nbsp;
+                <B>SENSITIVE</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Set auto quoted identifier
+    </td>
+    <td>&nbsp;
+                <B>AUTOQUOTED</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+File DSN
+    </td>
+    <td>&nbsp;
+                <B>FILEDSN</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Save DSN
+    </td>
+    <td>&nbsp;
+                <B>SAVEDSN</B>
+    </td>
+  </tr>
+</table>
+
+<P>A fun&ccedil;&atilde;o ODBC SQLDriverConnect usa estas palavras-chaves
+na seguinte ordem, primeiro utilizando os atributos definidos, depois os
+especificados na string de conex&atilde;o, e ent&atilde;o buscando as
+informa&ccedil;&otilde;es que faltam especificadas em <B>NFD de Arquivo</B> ou
+<B>NFD</B> (<B>FILE DSN</B> ou <B>DSN)</B>.</P>
+
+<P>Se o par&acirc;metro <B>SAVEDSN</B>, for especificado na string de
+conex&atilde;o, ent&atilde;o os par&acirc;metros, que foram informados por uma
+conex&atilde;o de sucesso ser&atilde;o salvos. <B>Nota</B> a senha &eacute; salva
+em um formato <B>criptografado</B>.</P>
+
+<P>veja<A HREF = "ConnectionExamples.htm"> exemplos de conex&otilde;es</A></P>
+
+</BODY>
+</HTML>
