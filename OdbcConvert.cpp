@@ -2231,30 +2231,51 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL;
-	
+
+	if ( from->currentFetched != parentStmt->getCurrentFetched() )
+	{ // new row read
+		from->dataOffset = 0;
+		from->currentFetched = parentStmt->getCurrentFetched();
+	}
+
 	RETCODE ret = SQL_SUCCESS;
-	unsigned short lenVar = *(unsigned short*)pointerFrom;
-	int len;
+	int length = *(unsigned short*)pointerFrom;
+	int dataRemaining = length - from->dataOffset;
 
-	char * src = pointerFrom + 2;
-
-	len = MIN(lenVar, MAX(0,(int)to->length-1));
-
-	if( len > 0 )
-		memcpy (pointerTo, src, len);
-
-	pointerTo[len] = 0;
-
-	if (len && (long)len > (long)to->length)
+	if ( !to->length )
+		length = dataRemaining;
+	else if (!dataRemaining && from->dataOffset)
 	{
-		OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
-//		if (error)
-//			error->setColumnNumber (column, rowNumber);
-		ret = SQL_SUCCESS_WITH_INFO;
+		from->dataOffset = 0;
+		ret = SQL_NO_DATA;
+	}
+	else
+	{
+		int len = MIN(dataRemaining, MAX(0, (long)to->length-1));
+		 
+		if ( !pointerTo )
+			length = dataRemaining;
+		else
+		{
+			pointerFrom += sizeof( short );
+			if( len > 0 )
+				memcpy ( pointerTo, pointerFrom + from->dataOffset, len );
+
+			pointerTo[ len ] = '\0';
+			from->dataOffset += len;
+
+			if ( len && len < dataRemaining )
+			{
+				OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
+				ret = SQL_SUCCESS_WITH_INFO;
+			}
+				
+			length = dataRemaining;
+		}
 	}
 
 	if ( indicatorTo )
-		*indicatorTo = lenVar;
+		*indicatorTo = length;
 
 	return ret;
 }
