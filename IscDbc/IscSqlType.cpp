@@ -147,7 +147,10 @@ void IscSqlType::buildType ()
 
 		case blr_sql_date:
 			{
-			type = JDBC_DATE;
+			if ( appOdbcVersion == 2 ) // SQL_OV_ODBC2
+				type = JDBC_SQL_DATE;
+			else
+				type = JDBC_DATE;
 			typeName = "DATE";
 			length = MAX_DATE_LENGTH;
 			bufferLength = 6; // sizeof(tagDATE_STRUCT); 
@@ -156,7 +159,10 @@ void IscSqlType::buildType ()
 
 		case blr_sql_time:
 			{
-			type = JDBC_TIME;
+			if ( appOdbcVersion == 2 ) // SQL_OV_ODBC2
+				type = JDBC_SQL_TIME;
+			else
+				type = JDBC_TIME;
 			typeName = "TIME";
 			length = MAX_TIME_LENGTH;
 			bufferLength = 6; // sizeof(tagTIME_STRUCT); 
@@ -165,7 +171,10 @@ void IscSqlType::buildType ()
 
 		case blr_timestamp:
 			{
-			type = JDBC_TIMESTAMP;
+			if ( appOdbcVersion == 2 ) // SQL_OV_ODBC2
+				type = JDBC_SQL_TIMESTAMP;
+			else
+				type = JDBC_TIMESTAMP;
 			typeName = "TIMESTAMP";
 			length = MAX_TIMESTAMP_LENGTH;
 			bufferLength = 16; // sizeof(tagTIMESTAMP_STRUCT); 
