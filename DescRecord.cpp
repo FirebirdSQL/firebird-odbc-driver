@@ -97,6 +97,10 @@ bool DescRecord::operator =(DescRecord *rec)
 	type = rec->type;
 	datetimeIntervalCode = rec->datetimeIntervalCode;
 	conciseType = rec->conciseType;
+
+	if ( type != SQL_C_DEFAULT && conciseType == SQL_C_DEFAULT )
+		conciseType = type;
+
 	autoUniqueValue = rec->autoUniqueValue;
 	caseSensitive = rec->caseSensitive;
 	datetimeIntervalPrecision = rec->datetimeIntervalPrecision;

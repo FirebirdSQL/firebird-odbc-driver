@@ -637,8 +637,6 @@ RETCODE OdbcStatement::sqlFetch()
 	if( enFetch == NoneFetch )
 		enFetch = Fetch;
 
-	++countFetched;
-
 	SQLINTEGER	*bindOffsetPtrSave = bindOffsetPtr;
 
 	try
@@ -661,6 +659,7 @@ RETCODE OdbcStatement::sqlFetch()
 				implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
 				while ( nRow < nCountRow && resultSet->next() )
 				{
+					++countFetched;
 					++rowNumber;
 					implementationRowDescriptor->returnData(); 
 					
@@ -707,6 +706,7 @@ RETCODE OdbcStatement::sqlFetch()
 				return SQL_NO_DATA;
 			}
 			
+			++countFetched;
 			++rowNumber;
 			implementationRowDescriptor->returnData(); 
 
@@ -938,8 +938,6 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 	if( enFetch == NoneFetch )
 		enFetch = FetchScroll;
 
-	++countFetched;
-
 	if (!resultSet)
 		return sqlReturn (SQL_ERROR, "24000", "Invalid cursor state");
 
@@ -972,6 +970,7 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 				implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
 				while ( nRow < nCountRow && resultSet->next() )
 				{
+					++countFetched;
 					++rowNumber; // Should stand only here!!!
 					implementationRowDescriptor->returnData(); 
 					
@@ -1023,6 +1022,7 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 			if( implementationRowDescriptor->headArrayStatusPtr )
 				implementationRowDescriptor->headArrayStatusPtr[0] = SQL_ROW_SUCCESS;
 
+			++countFetched;
 			++rowNumber;
 			implementationRowDescriptor->returnData(); 
 
@@ -1059,8 +1059,6 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 	if( enFetch == NoneFetch )
 		enFetch = ExtendedFetch;
 
-	++countFetched;
-
 	SQLINTEGER	*bindOffsetPtrSave = bindOffsetPtr;
 
 	try
@@ -1068,29 +1066,66 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 		if ( rowArraySize > 1 )
 		{
 			int i;
-			SQLINTEGER	bindOffsetPtrData = 0;
-			SQLINTEGER	bindOffsetPtrInd = 0;
-			SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
-			bindOffsetPtr = &bindOffsetPtrTmp;
-			implementationRowDescriptor->setBindOffsetPtrTo(&bindOffsetPtrData, &bindOffsetPtrInd);
 
-			for ( i = 0; !eof && i < rowArraySize ; ++i )
+			if( rowBindType ) // mixed call
 			{
-				if ( resultSet->next() )
+				SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
+				bindOffsetPtr = &bindOffsetPtrTmp;
+				implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
+
+				for ( i = 0; !eof && i < rowArraySize ; ++i )
 				{
-					if(rowStatusArray)
-						rowStatusArray[i] = SQL_ROW_SUCCESS;
-					++rowNumber;
-					implementationRowDescriptor->returnDataFromExtededFetch();
-					bindOffsetPtrInd += sizeof(SQLINTEGER);
-					++bindOffsetPtrTmp;
-				}
-				else
-				{
-					eof = true;
-					break;
+					if ( resultSet->next() )
+					{
+						++countFetched;
+						++rowNumber;
+						
+						implementationRowDescriptor->returnData();
+						
+						if(rowStatusArray)
+							rowStatusArray[i] = SQL_ROW_SUCCESS;
+
+						bindOffsetPtrTmp += rowBindType;
+					}
+					else
+					{
+						eof = true;
+						break;
+					}
 				}
 			}
+			else
+			{
+				SQLINTEGER	bindOffsetPtrData = 0;
+				SQLINTEGER	bindOffsetPtrInd = 0;
+				SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
+				bindOffsetPtr = &bindOffsetPtrTmp;
+				implementationRowDescriptor->setBindOffsetPtrTo(&bindOffsetPtrData, &bindOffsetPtrInd);
+
+				for ( i = 0; !eof && i < rowArraySize ; ++i )
+				{
+					if ( resultSet->next() )
+					{
+						++countFetched;
+						++rowNumber;
+
+						implementationRowDescriptor->returnDataFromExtededFetch();
+
+						if(rowStatusArray)
+							rowStatusArray[i] = SQL_ROW_SUCCESS;
+
+						bindOffsetPtrInd += sizeof(SQLINTEGER);
+						++bindOffsetPtrTmp;
+					}
+					else
+					{
+						eof = true;
+						break;
+					}
+				}
+			}
+
+			bindOffsetPtr = bindOffsetPtrSave;
 
 			if(rowCountPointer)
 				*rowCountPointer = i;
@@ -1101,8 +1136,6 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 			if ( rowStatusArray && i < rowArraySize )
 				for ( ; i < rowArraySize ; ++i )
 					rowStatusArray[i] = SQL_ROW_NOROW;
-
-			bindOffsetPtr = bindOffsetPtrSave;
 		}
 		else
 		{
@@ -1117,15 +1150,19 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 			if (eof || !resultSet->next())
 			{
 				eof = true;
+
 				if(rowCountPointer)
 					*rowCountPointer = 0;
+
  				if(rowStatusArray)
  					rowStatusArray[0] = SQL_ROW_NOROW;
+
 				return SQL_NO_DATA;
 			}
 			else if(rowStatusArray)
 				rowStatusArray[0] = SQL_ROW_SUCCESS;
 
+			++countFetched;
 			++rowNumber;
 			implementationRowDescriptor->returnData(); 
 			bindOffsetPtr = bindOffsetPtrSave;
@@ -1768,7 +1805,7 @@ RETCODE OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int buffer
 		if ( cType == SQL_ARD_TYPE )
 		{
 			DescRecord *recordArd = applicationRowDescriptor->getDescRecord (column);
-			*record = *recordArd;
+			*record = recordArd;
 		}
 		else
 		{
