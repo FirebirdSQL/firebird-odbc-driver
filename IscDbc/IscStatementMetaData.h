@@ -56,6 +56,7 @@ public:
 	virtual bool isCaseSensitive (int index);
 	virtual bool isAutoIncrement (int index);
 	virtual bool isSearchable (int index);
+	virtual int	 isBlobOrArray(int index);
 	virtual const char*	getSchemaName (int index);
 	virtual const char*	getCatalogName (int index);
 	virtual void getSqlData(int index, char *& ptData, short *& ptIndData);

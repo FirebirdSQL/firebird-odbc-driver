@@ -550,6 +550,11 @@ bool IscResultSet::isSearchable(int index)
 	return type != JDBC_LONGVARCHAR && type != JDBC_LONGVARBINARY;
 }
 
+int IscResultSet::isBlobOrArray(int index)
+{
+	return sqlda->isBlobOrArray(index);
+}
+
 const char* IscResultSet::getSchemaName(int index)
 {
 	if (index < 1 || index > sqlda->getColumnCount())

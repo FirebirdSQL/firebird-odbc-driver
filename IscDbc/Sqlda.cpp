@@ -1170,3 +1170,19 @@ void Sqlda::deleteTemps()
 		temps = NULL;
 		}
 }
+
+int Sqlda::isBlobOrArray(int index)
+{
+	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	int type = var->sqltype & ~1;
+
+	switch (type)
+	{
+	case SQL_BLOB:		// 520
+	case SQL_ARRAY:		// 540
+		return type;
+	}
+
+	return 0;
+}
+

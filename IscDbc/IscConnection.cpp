@@ -273,7 +273,7 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 {
 	char * ptStart;
 
-	if ( ptStart = strchr(inStatementText, '{'), !ptStart )
+	if ( ptStart = strchr((char*)inStatementText, '{'), !ptStart )
 		return false;
 
 #pragma FB_COMPILER_MESSAGE("IscConnection::getNativeSql - The temporary decision; FIXME!")

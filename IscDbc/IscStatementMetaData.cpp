@@ -140,6 +140,11 @@ bool IscStatementMetaData::isSearchable(int index)
 	return type != JDBC_LONGVARCHAR && type != JDBC_LONGVARBINARY;
 }
 
+int IscStatementMetaData::isBlobOrArray(int index)
+{
+	return sqlda->isBlobOrArray(index);
+}
+
 const char* IscStatementMetaData::getSchemaName(int index)
 {
 	return sqlda->getOwnerName (index);;

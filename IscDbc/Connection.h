@@ -354,6 +354,7 @@ public:
 	virtual bool		isSearchable (int index) = 0;
 	virtual const char*	getSchemaName (int index) = 0;
 	virtual const char*	getCatalogName (int index) = 0;
+	virtual int			isBlobOrArray(int index) = 0;
 
 	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData) = 0;
 	virtual void		setSqlData(int index, long ptData, long ptIndData) = 0;

@@ -82,6 +82,8 @@ public:
 	Sqlda();
 	virtual ~Sqlda();
 
+	int isBlobOrArray(int index);
+
 	CDataStaticCursor * dataStaticCursor;
 	int			lengthBufferRows;
 	int			*offsetSqldata;
