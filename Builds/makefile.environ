@@ -1,0 +1,4 @@
+#
+FBINCDIR	= d:/Firebird/include
+FBLIBDIR	= d:/Firebird/lib
+#

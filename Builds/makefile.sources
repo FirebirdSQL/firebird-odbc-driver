@@ -1,0 +1,61 @@
+ISCDBCDIR = ../../IscDbc
+ODBCJDBCDIR = ../..
+
+ISCDBCSRC = \
+	$(ISCDBCDIR)/Attachment.cpp \
+	$(ISCDBCDIR)/BinaryBlob.cpp \
+	$(ISCDBCDIR)/Blob.cpp \
+	$(ISCDBCDIR)/DateTime.cpp \
+	$(ISCDBCDIR)/Error.cpp \
+	$(ISCDBCDIR)/extodbc.cpp \
+	$(ISCDBCDIR)/IscArray.cpp \
+	$(ISCDBCDIR)/IscBlob.cpp \
+	$(ISCDBCDIR)/IscCallableStatement.cpp \
+	$(ISCDBCDIR)/IscColumnPrivilegesResultSet.cpp \
+	$(ISCDBCDIR)/IscColumnsResultSet.cpp \
+	$(ISCDBCDIR)/IscConnection.cpp \
+	$(ISCDBCDIR)/IscCrossReferenceResultSet.cpp \
+	$(ISCDBCDIR)/IscDatabaseMetaData.cpp \
+	$(ISCDBCDIR)/IscIndexInfoResultSet.cpp \
+	$(ISCDBCDIR)/IscMetaDataResultSet.cpp \
+	$(ISCDBCDIR)/IscPreparedStatement.cpp \
+	$(ISCDBCDIR)/IscPrimaryKeysResultSet.cpp \
+	$(ISCDBCDIR)/IscProcedureColumnsResultSet.cpp \
+	$(ISCDBCDIR)/IscProceduresResultSet.cpp \
+	$(ISCDBCDIR)/IscResultSet.cpp \
+	$(ISCDBCDIR)/IscResultSetMetaData.cpp \
+	$(ISCDBCDIR)/IscSpecialColumnsResultSet.cpp \
+	$(ISCDBCDIR)/IscSqlType.cpp \
+	$(ISCDBCDIR)/IscStatement.cpp \
+	$(ISCDBCDIR)/IscStatementMetaData.cpp \
+	$(ISCDBCDIR)/IscTablePrivilegesResultSet.cpp \
+	$(ISCDBCDIR)/IscTablesResultSet.cpp \
+	$(ISCDBCDIR)/JString.cpp \
+	$(ISCDBCDIR)/LinkedList.cpp \
+	$(ISCDBCDIR)/LoadFbClientDll.cpp \
+	$(ISCDBCDIR)/Lock.cpp \
+	$(ISCDBCDIR)/Mutex.cpp \
+	$(ISCDBCDIR)/Parameter.cpp \
+	$(ISCDBCDIR)/Parameters.cpp \
+	$(ISCDBCDIR)/Sqlda.cpp \
+	$(ISCDBCDIR)/SQLError.cpp \
+	$(ISCDBCDIR)/SqlTime.cpp \
+	$(ISCDBCDIR)/Stream.cpp \
+	$(ISCDBCDIR)/TimeStamp.cpp \
+	$(ISCDBCDIR)/TypesResultSet.cpp \
+	$(ISCDBCDIR)/Value.cpp \
+	$(ISCDBCDIR)/Values.cpp
+
+ODBCJDBCSRC = \
+	$(ODBCJDBCDIR)/Attributes.cpp \
+	$(ODBCJDBCDIR)/DescRecord.cpp \
+	$(ODBCJDBCDIR)/Main.cpp \
+	$(ODBCJDBCDIR)/OdbcConnection.cpp \
+	$(ODBCJDBCDIR)/OdbcConvert.cpp \
+	$(ODBCJDBCDIR)/OdbcDateTime.cpp \
+	$(ODBCJDBCDIR)/OdbcDesc.cpp \
+	$(ODBCJDBCDIR)/OdbcEnv.cpp \
+	$(ODBCJDBCDIR)/OdbcError.cpp \
+	$(ODBCJDBCDIR)/OdbcObject.cpp \
+	$(ODBCJDBCDIR)/OdbcStatement.cpp
+
