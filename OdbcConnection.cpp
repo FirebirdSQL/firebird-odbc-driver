@@ -326,7 +326,7 @@ OdbcObjectType OdbcConnection::getType()
 	return odbcTypeConnection;
 }
 
-RETCODE OdbcConnection::sqlSetConnectAttr (SQLINTEGER attribute, SQLPOINTER value, SQLINTEGER stringLength)
+SQLRETURN OdbcConnection::sqlSetConnectAttr( SQLINTEGER attribute, SQLPOINTER value, SQLINTEGER stringLength )
 {
 	clearErrors();
 
@@ -376,7 +376,7 @@ RETCODE OdbcConnection::sqlSetConnectAttr (SQLINTEGER attribute, SQLPOINTER valu
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectString, int connectStringLength, SQLCHAR * outConnectBuffer, int connectBufferLength, SQLSMALLINT * outStringLength, int driverCompletion)
+SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectString, int connectStringLength, SQLCHAR * outConnectBuffer, int connectBufferLength, SQLSMALLINT * outStringLength, int driverCompletion)
 {
 	clearErrors();
 
@@ -555,7 +555,7 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 	}
 #endif // _WIN32
 
-	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
+	SQLRETURN ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
 	if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
 		return ret;
@@ -596,7 +596,7 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, 
+SQLRETURN OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, 
 										 SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, 
 										 SQLSMALLINT * stringLength2Ptr)
 {
@@ -791,7 +791,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 		return SQL_NEED_DATA;
 	else
 	{
-		RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
+		SQLRETURN ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
 		if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
 			return ret;
@@ -800,7 +800,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::sqlNativeSql( SQLCHAR * inStatementText, SQLINTEGER textLength1,
+SQLRETURN OdbcConnection::sqlNativeSql( SQLCHAR * inStatementText, SQLINTEGER textLength1,
 										SQLCHAR * outStatementText, SQLINTEGER bufferLength,
 										SQLINTEGER * textLength2Ptr )
 {
@@ -817,7 +817,7 @@ RETCODE OdbcConnection::sqlNativeSql( SQLCHAR * inStatementText, SQLINTEGER text
 	JString tempNative;
 	long textLength = textLength1 + 4096;
 	const char * outText;
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 
 	if ( !connection->getNativeSql( (const char *)inStatementText, textLength1, 
 						tempNative.getBuffer ( textLength ), textLength, &textLength ) )
@@ -872,7 +872,7 @@ void OdbcConnection::writeAttributeFileDSN(const char * attribute, const char * 
 	SQLWriteFileDSN (savedsn, "ODBC", attribute, value);
 }
 
-RETCODE OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * supportedPtr)
+SQLRETURN OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * supportedPtr)
 {
 	clearErrors();
 
@@ -897,7 +897,7 @@ RETCODE OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * 
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::sqlDisconnect()
+SQLRETURN OdbcConnection::sqlDisconnect()
 {
 	if (!connected)
 	{
@@ -930,7 +930,7 @@ RETCODE OdbcConnection::sqlDisconnect()
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * actualLength)
+SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT * actualLength )
 {
 
 	clearErrors();
@@ -1347,7 +1347,7 @@ char* OdbcConnection::appendString(char * ptr, const char * string)
 	return ptr;
 }
 
-RETCODE OdbcConnection::allocHandle(int handleType, SQLHANDLE * outputHandle)
+SQLRETURN OdbcConnection::allocHandle(int handleType, SQLHANDLE * outputHandle)
 {
 	clearErrors();
 	if ( handleType == SQL_HANDLE_DESC )
@@ -1387,7 +1387,7 @@ void OdbcConnection::UnLock()
 	connection->getMetaData()->UnLockThread();
 }
 
-RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQLCHAR *uid, int uidLength, SQLCHAR * passwd, int passwdLength)
+SQLRETURN OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQLCHAR *uid, int uidLength, SQLCHAR * passwd, int passwdLength)
 {
 	clearErrors();
 
@@ -1402,7 +1402,7 @@ RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQ
 	role = "";
 	charset = "";
 	expandConnectParameters();
-	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
+	SQLRETURN ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
 	if (ret != SQL_SUCCESS)
 		return ret;
@@ -1413,7 +1413,7 @@ RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQ
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * databaseName, const char * account, const char * password, const char * role, const char * charset)
+SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databaseName, const char * account, const char * password, const char * role, const char * charset)
 {
 	Properties *properties = NULL;
 
@@ -1536,7 +1536,7 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 	return SQL_SUCCESS;
 }
 
-RETCODE OdbcConnection::sqlEndTran(int operation)
+SQLRETURN OdbcConnection::sqlEndTran(int operation)
 {
 	clearErrors();
 
@@ -1795,7 +1795,7 @@ void OdbcConnection::descriptorDeleted(OdbcDesc * descriptor)
 		}
 }
 
-RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
+SQLRETURN OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
 {
 	clearErrors();
 	long value;

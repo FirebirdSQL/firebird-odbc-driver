@@ -36,8 +36,8 @@ class OdbcError
 public:
 	void setColumnNumber (int column, int row);
 	void setRowNumber (int number);
-	RETCODE sqlGetDiagField (int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
-	RETCODE sqlGetDiagRec (UCHAR *stateBuffer, SDWORD *nativeCode, UCHAR *msgBuffer, int msgBufferLength, SWORD *msgLength);
+	SQLRETURN sqlGetDiagField (int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
+	SQLRETURN sqlGetDiagRec (UCHAR *stateBuffer, SDWORD *nativeCode, UCHAR *msgBuffer, int msgBufferLength, SWORD *msgLength);
 	OdbcError(int code, const char *state, JString errorMsg);
 	~OdbcError();
 

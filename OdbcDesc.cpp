@@ -191,7 +191,7 @@ void OdbcDesc::clearDefined()
 	bDefined = false;
 }
 
-RETCODE OdbcDesc::operator =(OdbcDesc &sour)
+SQLRETURN OdbcDesc::operator =(OdbcDesc &sour)
 {
 	if( headType == odtImplementationRow )
 		return sqlReturn (SQL_ERROR, "HY016", "Cannot modify an implementation row descriptor");
@@ -309,7 +309,7 @@ OdbcObjectType OdbcDesc::getType()
 	return odbcTypeDescriptor;
 }
 
-RETCODE OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
+SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
 {
     clearErrors();
 	long size = 0;
@@ -818,7 +818,7 @@ struct infoDebSetDescField
 };
 #endif
 
-RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, int length)
+SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, int length)
 {
 #ifdef DEBUG
 	char strTmp[128];
@@ -1135,7 +1135,7 @@ void OdbcDesc::allocBookmarkField()
 	getDescRecord(0);
 }
 
-RETCODE OdbcDesc::sqlGetDescRec(	SQLSMALLINT recNumber, 
+SQLRETURN OdbcDesc::sqlGetDescRec(	SQLSMALLINT recNumber, 
 									SQLCHAR *name, 
 									SQLSMALLINT bufferLength,
 									SQLSMALLINT *stringLengthPtr, 
@@ -1146,7 +1146,7 @@ RETCODE OdbcDesc::sqlGetDescRec(	SQLSMALLINT recNumber,
 									SQLSMALLINT *scalePtr, 
 									SQLSMALLINT *nullablePtr)
 {
-	RETCODE rc;
+	SQLRETURN rc;
     clearErrors();
 	DescRecord *record = NULL;
 
@@ -1183,7 +1183,7 @@ RETCODE OdbcDesc::sqlGetDescRec(	SQLSMALLINT recNumber,
 	return sqlSuccess();
 }
 
-RETCODE OdbcDesc::sqlSetDescRec(	SQLSMALLINT	recNumber,
+SQLRETURN OdbcDesc::sqlSetDescRec(	SQLSMALLINT	recNumber,
 									SQLSMALLINT	type,
 									SQLSMALLINT	subType,
 									SQLINTEGER	length,

@@ -250,7 +250,7 @@ inline void OdbcStatement::clearErrors()
 		OdbcObject::clearErrors();
 }
 
-RETCODE OdbcStatement::sqlTables(SQLCHAR * catalog, int catLength, 
+SQLRETURN OdbcStatement::sqlTables(SQLCHAR * catalog, int catLength, 
 								 SQLCHAR * schema, int schemaLength, 
 								 SQLCHAR * table, int tableLength, 
 								 SQLCHAR * type, int typeLength)
@@ -300,7 +300,7 @@ RETCODE OdbcStatement::sqlTables(SQLCHAR * catalog, int catLength,
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlTablePrivileges(SQLCHAR * catalog, int catLength, 
+SQLRETURN OdbcStatement::sqlTablePrivileges(SQLCHAR * catalog, int catLength, 
 								 SQLCHAR * schema, int schemaLength, 
 								 SQLCHAR * table, int tableLength)
 {
@@ -326,7 +326,7 @@ RETCODE OdbcStatement::sqlTablePrivileges(SQLCHAR * catalog, int catLength,
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlColumnPrivileges(SQLCHAR * catalog, int catLength, 
+SQLRETURN OdbcStatement::sqlColumnPrivileges(SQLCHAR * catalog, int catLength, 
 								 SQLCHAR * schema, int schemaLength, 
 								 SQLCHAR * table, int tableLength,
 								 SQLCHAR * column, int columnLength)
@@ -354,7 +354,7 @@ RETCODE OdbcStatement::sqlColumnPrivileges(SQLCHAR * catalog, int catLength,
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
+SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 {
 	clearErrors();
 	releaseStatement();
@@ -547,7 +547,7 @@ void OdbcStatement::delBindColumn(int column)
 {
 }
 
-RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER * indPtr)
+SQLRETURN OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER * indPtr)
 {
 	clearErrors();
 
@@ -642,7 +642,7 @@ void OdbcStatement::setZeroColumn(int column)
 }
 
 inline
-RETCODE OdbcStatement::fetchData()
+SQLRETURN OdbcStatement::fetchData()
 {
 	SQLUINTEGER rowCount = 0;
 	SQLUINTEGER *rowCountPt = implementationRowDescriptor->headRowsProcessedPtr ? implementationRowDescriptor->headRowsProcessedPtr
@@ -732,7 +732,7 @@ RETCODE OdbcStatement::fetchData()
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlFetch()
+SQLRETURN OdbcStatement::sqlFetch()
 {
 	clearErrors();
 
@@ -776,7 +776,7 @@ char *strDebOrientFetch[]=
 };
 #endif
 
-RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
+SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 {
 	int rowsetSize = applicationRowDescriptor->headArraySize;
 	SQLUINTEGER rowCount = 0;
@@ -995,7 +995,7 @@ RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
+SQLRETURN OdbcStatement::sqlFetchScroll(int orientation, int offset)
 {
 #ifdef DEBUG
 	char strTmp[128];
@@ -1031,7 +1031,7 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 	return fetchData();
 }
 
-RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray)
+SQLRETURN OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray)
 {
 	clearErrors();
 
@@ -1075,7 +1075,7 @@ char *strDebOrientSetPos[]=
 };
 #endif
 
-RETCODE OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQLUSMALLINT lockType)
+SQLRETURN OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQLUSMALLINT lockType)
 {
 #ifdef DEBUG
 	char strTmp[128];
@@ -1106,10 +1106,10 @@ RETCODE OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQLU
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGER crowKeyset, SQLUSMALLINT crowRowset)
+SQLRETURN OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGER crowKeyset, SQLUSMALLINT crowRowset)
 {
 	bool bOk;
-    UWORD InfoType, InfoValuePtr;
+    SQLUSMALLINT InfoType, InfoValuePtr;
 
     switch( crowKeyset )
     {
@@ -1177,7 +1177,7 @@ RETCODE OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGE
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlColumns(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, SQLCHAR * column, int columnLength)
+SQLRETURN OdbcStatement::sqlColumns(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, SQLCHAR * column, int columnLength)
 {
 	clearErrors();
 	releaseStatement();
@@ -1202,7 +1202,7 @@ RETCODE OdbcStatement::sqlColumns(SQLCHAR * catalog, int catLength, SQLCHAR * sc
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlFreeStmt(int option)
+SQLRETURN OdbcStatement::sqlFreeStmt(int option)
 {
 	clearErrors();
 	convert->setBindOffsetPtrFrom(NULL, NULL);
@@ -1272,7 +1272,7 @@ void OdbcStatement::releaseParameters()
 	paramsProcessedPtr = NULL;
 }
 
-RETCODE OdbcStatement::sqlStatistics(SQLCHAR * catalog, int catLength, 
+SQLRETURN OdbcStatement::sqlStatistics(SQLCHAR * catalog, int catLength, 
 									 SQLCHAR * schema, int schemaLength, 
 									 SQLCHAR * table, int tableLength, 
 									 int unique, int reservedSic)
@@ -1301,7 +1301,7 @@ RETCODE OdbcStatement::sqlStatistics(SQLCHAR * catalog, int catLength,
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlPrimaryKeys(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength)
+SQLRETURN OdbcStatement::sqlPrimaryKeys(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength)
 {
 	clearErrors();
 	releaseStatement();
@@ -1325,7 +1325,7 @@ RETCODE OdbcStatement::sqlPrimaryKeys(SQLCHAR * catalog, int catLength, SQLCHAR 
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlForeignKeys (SQLCHAR * pkCatalog, int pkCatLength, 
+SQLRETURN OdbcStatement::sqlForeignKeys (SQLCHAR * pkCatalog, int pkCatLength, 
 								       SQLCHAR * pkSchema, int pkSchemaLength, 
 									   SQLCHAR * pkTable, int pkTableLength, 
 									   SQLCHAR * fkCatalog, int fkCatalogLength, 
@@ -1357,7 +1357,7 @@ RETCODE OdbcStatement::sqlForeignKeys (SQLCHAR * pkCatalog, int pkCatLength,
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlNumResultCols(SWORD * columns)
+SQLRETURN OdbcStatement::sqlNumResultCols(SWORD * columns)
 {
 	clearErrors();
 
@@ -1367,7 +1367,7 @@ RETCODE OdbcStatement::sqlNumResultCols(SWORD * columns)
 	return SQL_SUCCESS;
 }
 
-RETCODE OdbcStatement::sqlNumParams(SWORD * params)
+SQLRETURN OdbcStatement::sqlNumParams(SWORD * params)
 {
 	clearErrors();
 	
@@ -1388,7 +1388,7 @@ RETCODE OdbcStatement::sqlNumParams(SWORD * params)
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlDescribeCol(int col, 
+SQLRETURN OdbcStatement::sqlDescribeCol(int col, 
 									  SQLCHAR * colName, int nameSize, SWORD * nameLength, 
 									  SWORD * sqlType, 
 									  UDWORD * precision, 
@@ -1432,7 +1432,7 @@ RETCODE OdbcStatement::sqlDescribeCol(int col,
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::prepareGetData(int column, DescRecord *recordARD)
+SQLRETURN OdbcStatement::prepareGetData(int column, DescRecord *recordARD)
 {
 	DescRecord *recordIRD = implementationRowDescriptor->getDescRecord(column);
 
@@ -1461,7 +1461,7 @@ RETCODE OdbcStatement::prepareGetData(int column, DescRecord *recordARD)
 	return SQL_SUCCESS;
 }
 
-RETCODE OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int bufferLength, SDWORD * indicatorPointer)
+SQLRETURN OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int bufferLength, SDWORD * indicatorPointer)
 {
 	clearErrors();
 
@@ -1540,7 +1540,7 @@ RETCODE OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int buffer
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlExecute()
+SQLRETURN OdbcStatement::sqlExecute()
 {
 	clearErrors();
 	int retcode;
@@ -1564,7 +1564,7 @@ RETCODE OdbcStatement::sqlExecute()
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlExecuteDirect(SQLCHAR * sql, int sqlLength)
+SQLRETURN OdbcStatement::sqlExecuteDirect(SQLCHAR * sql, int sqlLength)
 {
 	int retcode = sqlPrepare (sql, sqlLength);
 	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
@@ -1629,7 +1629,7 @@ void OdbcStatement::delBindParam(int param)
 
 }
 
-RETCODE OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, UDWORD * precision, SWORD * scale, SWORD * nullable)
+SQLRETURN OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, UDWORD * precision, SWORD * scale, SWORD * nullable)
 {
 	clearErrors();
 
@@ -1676,12 +1676,12 @@ RETCODE OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, UDWORD *
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlSetParam (int parameter, int cType, int sqlType, int precision, int scale, PTR ptr, SDWORD * length)
+SQLRETURN OdbcStatement::sqlSetParam (int parameter, int cType, int sqlType, int precision, int scale, PTR ptr, SDWORD * length)
 {	
 	return sqlBindParameter (parameter, SQL_PARAM_INPUT_OUTPUT, cType, sqlType, precision, scale, ptr, SQL_SETPARAM_VALUE_MAX, length);
 }
 
-RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType, 
+SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType, 
 										int sqlType, int precision, int scale, 
 										PTR ptr, int bufferLength, SDWORD * length)
 {
@@ -1862,7 +1862,7 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlCancel()
+SQLRETURN OdbcStatement::sqlCancel()
 {
 	try
 	{
@@ -1877,7 +1877,7 @@ RETCODE OdbcStatement::sqlCancel()
 	return SQL_SUCCESS;
 }
 
-RETCODE OdbcStatement::sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength)
+SQLRETURN OdbcStatement::sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength)
 {
 	try
 		{
@@ -1901,7 +1901,7 @@ RETCODE OdbcStatement::sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR *
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlProcedureColumns(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength, SQLCHAR * col, int colLength)
+SQLRETURN OdbcStatement::sqlProcedureColumns(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength, SQLCHAR * col, int colLength)
 {
 	clearErrors();
 	releaseStatement();
@@ -1926,7 +1926,7 @@ RETCODE OdbcStatement::sqlProcedureColumns(SQLCHAR * catalog, int catLength, SQL
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlSetCursorName(SQLCHAR * name, int nameLength)
+SQLRETURN OdbcStatement::sqlSetCursorName(SQLCHAR * name, int nameLength)
 {
 	clearErrors();
 	char temp [1024], *p = temp;
@@ -1952,7 +1952,7 @@ RETCODE OdbcStatement::sqlSetCursorName(SQLCHAR * name, int nameLength)
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlCloseCursor()
+SQLRETURN OdbcStatement::sqlCloseCursor()
 {
 	clearErrors();
 
@@ -1970,7 +1970,7 @@ RETCODE OdbcStatement::sqlCloseCursor()
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER * lengthPtr)
+SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER * lengthPtr)
 {
 	clearErrors();
 	long value;
@@ -2126,7 +2126,7 @@ RETCODE OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferL
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlGetCursorName(SQLCHAR *name, int bufferLength, SQLSMALLINT *nameLength)
+SQLRETURN OdbcStatement::sqlGetCursorName(SQLCHAR *name, int bufferLength, SQLSMALLINT *nameLength)
 {
 	clearErrors();
 	try
@@ -2142,9 +2142,9 @@ RETCODE OdbcStatement::sqlGetCursorName(SQLCHAR *name, int bufferLength, SQLSMAL
 }
 
 inline
-RETCODE OdbcStatement::transferDataToBlobParam ( DescRecord *recordApp )
+SQLRETURN OdbcStatement::transferDataToBlobParam ( DescRecord *recordApp )
 {
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 	recordApp->endBlobDataTransfer();
 	CBindColumn &bindCol = (*listBindIn)[ parameterNeedData - 1 ];
 	switch (recordApp->conciseType)
@@ -2268,7 +2268,7 @@ bool OdbcStatement::registerOutParameter()
 	return true;
 }
 
-RETCODE OdbcStatement::inputParam()
+SQLRETURN OdbcStatement::inputParam()
 {
 	StatementMetaData *metaData = statement->getStatementMetaDataIPD();
 	int nInputParam = metaData->getColumnCount();
@@ -2333,7 +2333,7 @@ RETCODE OdbcStatement::inputParam()
 					 (record->indicatorPtr && *record->indicatorPtr == SQL_NULL_DATA) )
 			{
 				CBindColumn &bindCol = (*listBindIn)[n-1];
-				RETCODE ret = (convert->*bindCol.appRecord->fnConv)(bindCol.appRecord,bindCol.impRecord);
+				SQLRETURN ret = (convert->*bindCol.appRecord->fnConv)(bindCol.appRecord,bindCol.impRecord);
 			}
 		}
 	}
@@ -2341,9 +2341,9 @@ RETCODE OdbcStatement::inputParam()
 	return SQL_SUCCESS;
 }
 
-RETCODE OdbcStatement::executeStatement()
+SQLRETURN OdbcStatement::executeStatement()
 {
-	RETCODE ret;
+	SQLRETURN ret;
 
 	if ( (ret = inputParam()) )
 		return ret;
@@ -2362,9 +2362,9 @@ RETCODE OdbcStatement::executeStatement()
 	return SQL_SUCCESS;
 }
 
-RETCODE OdbcStatement::executeStatementParamArray()
+SQLRETURN OdbcStatement::executeStatementParamArray()
 {
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 	SQLUINTEGER rowCount = 0;
 	SQLUINTEGER *rowCountPt = applicationParamDescriptor->headRowsProcessedPtr ? applicationParamDescriptor->headRowsProcessedPtr
 								: &rowCount;
@@ -2404,9 +2404,9 @@ RETCODE OdbcStatement::executeStatementParamArray()
 	return ret;
 }
 
-RETCODE OdbcStatement::executeProcedure()
+SQLRETURN OdbcStatement::executeProcedure()
 {
-	RETCODE ret;
+	SQLRETURN ret;
 
 	if ( (ret = inputParam()) )
 		return ret;
@@ -2419,7 +2419,7 @@ RETCODE OdbcStatement::executeProcedure()
 	{
 		if ( isRegistrationOutParameter )
 		{
-			RETCODE retCode;
+			SQLRETURN retCode;
 
 			++countFetched;
 			convert->statusReturnData = true;
@@ -2454,7 +2454,7 @@ RETCODE OdbcStatement::executeProcedure()
 	return ret;
 }
 
-RETCODE OdbcStatement::sqlGetTypeInfo(int dataType)
+SQLRETURN OdbcStatement::sqlGetTypeInfo(int dataType)
 {
 	clearErrors();
 	releaseStatement();
@@ -2473,9 +2473,9 @@ RETCODE OdbcStatement::sqlGetTypeInfo(int dataType)
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
+SQLRETURN OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 {	
-	RETCODE retcode = sqlSuccess();
+	SQLRETURN retcode = sqlSuccess();
 
 	clearErrors();
 
@@ -2548,7 +2548,7 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
+SQLRETURN OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 {
 	if (parameterNeedData == 0)
 		return sqlReturn (SQL_ERROR, "HY010", "Function sequence error :: OdbcStatement::sqlPutData");
@@ -2606,9 +2606,9 @@ RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 }
 
 inline
-RETCODE OdbcStatement::returnData()
+SQLRETURN OdbcStatement::returnData()
 {
-	RETCODE retCode, ret = SQL_SUCCESS;
+	SQLRETURN retCode, ret = SQL_SUCCESS;
 	int count = listBindOut->GetCount();
 	convert->statusReturnData = true;
 
@@ -2637,9 +2637,9 @@ RETCODE OdbcStatement::returnData()
 }
 
 inline
-RETCODE OdbcStatement::returnDataFromExtendedFetch()
+SQLRETURN OdbcStatement::returnDataFromExtendedFetch()
 {
-	RETCODE retCode, ret = SQL_SUCCESS;
+	SQLRETURN retCode, ret = SQL_SUCCESS;
 	SQLINTEGER	&bindOffsetPtrTo = convert->getBindOffsetPtrTo();
 	SQLINTEGER	&currentRow = *bindOffsetPtr;
 	int count = listBindOut->GetCount();
@@ -2671,7 +2671,7 @@ RETCODE OdbcStatement::returnDataFromExtendedFetch()
 	return ret;
 }
 
-RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
+SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 {
 	clearErrors();
 
@@ -2906,7 +2906,7 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlRowCount(SQLINTEGER *rowCount)
+SQLRETURN OdbcStatement::sqlRowCount(SQLINTEGER *rowCount)
 {
 	clearErrors();
 
@@ -2937,12 +2937,7 @@ RETCODE OdbcStatement::sqlRowCount(SQLINTEGER *rowCount)
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlColAttributes(int column, int descType, SQLPOINTER buffer, int bufferSize, SWORD *length, SDWORD *valuePtr)
-{
-	return sqlColAttribute(column, descType, buffer, bufferSize, length, valuePtr);
-}
-
-RETCODE OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT *strLengthPtr, SQLPOINTER numericAttributePtr)
+SQLRETURN OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT *strLengthPtr, SQLPOINTER numericAttributePtr)
 {
 	clearErrors();
 	int value;
@@ -3067,7 +3062,7 @@ RETCODE OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attri
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlMoreResults()
+SQLRETURN OdbcStatement::sqlMoreResults()
 {
 	clearErrors();
 
@@ -3078,7 +3073,7 @@ RETCODE OdbcStatement::sqlMoreResults()
 }
 
 
-RETCODE OdbcStatement::sqlSpecialColumns(unsigned short rowId, SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, unsigned short scope, unsigned short nullable)
+SQLRETURN OdbcStatement::sqlSpecialColumns(unsigned short rowId, SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, unsigned short scope, unsigned short nullable)
 {
 	clearErrors();
 	releaseStatement();

@@ -47,31 +47,31 @@ class OdbcConnection : public OdbcObject
 
 public:
 	void transactionStarted();
-	RETCODE sqlGetConnectAttr (int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER * lengthPtr);
+	SQLRETURN sqlGetConnectAttr (int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER * lengthPtr);
 	void descriptorDeleted (OdbcDesc* descriptor);
 	OdbcDesc* allocDescriptor(OdbcDescType type);
 	void expandConnectParameters();
 	void saveConnectParameters();
 	void statementDeleted (OdbcStatement *statement);
-	RETCODE sqlEndTran (int operation);
-	RETCODE connect (const char *sharedLibrary, const char *databaseName, const char *account, const char *password, const char *role, const char *charset);
-	RETCODE sqlConnect (const SQLCHAR *dsn, int dsnLength, SQLCHAR*UID,int uidLength,SQLCHAR*password,int passwordLength);
+	SQLRETURN sqlEndTran (int operation);
+	SQLRETURN connect (const char *sharedLibrary, const char *databaseName, const char *account, const char *password, const char *role, const char *charset);
+	SQLRETURN sqlConnect (const SQLCHAR *dsn, int dsnLength, SQLCHAR*UID,int uidLength,SQLCHAR*password,int passwordLength);
 	DatabaseMetaData* getMetaData();
-	virtual RETCODE allocHandle (int handleType, SQLHANDLE *outputHandle);
+	virtual SQLRETURN allocHandle (int handleType, SQLHANDLE *outputHandle);
 	char* appendString (char *ptr, const char *string);
-	RETCODE sqlGetInfo (UWORD type, PTR ptr, int maxLength, SWORD *actualLength);
-	RETCODE sqlDisconnect();
-	RETCODE sqlGetFunctions (SQLUSMALLINT functionId, SQLUSMALLINT *supportedPtr);
+	SQLRETURN sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT * actualLength );
+	SQLRETURN sqlDisconnect();
+	SQLRETURN sqlGetFunctions (SQLUSMALLINT functionId, SQLUSMALLINT *supportedPtr);
 	JString readAttribute (const char *attribute);
 	JString readAttributeFileDSN (const char * attribute);
 	void writeAttributeFileDSN (const char * attribute, const char * value);
-	RETCODE sqlDriverConnect (SQLHWND hWnd, 
+	SQLRETURN sqlDriverConnect (SQLHWND hWnd, 
 						   const SQLCHAR *connectString, int connectStringLength, 
 						   SQLCHAR *outConnectBuffer, int connectBufferLength, SQLSMALLINT *outStringLength, 
 						   int driverCompletion);
-	RETCODE sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, SQLSMALLINT * stringLength2Ptr);
-	RETCODE sqlNativeSql(SQLCHAR * inStatementText, SQLINTEGER textLength1,	SQLCHAR * outStatementText, SQLINTEGER bufferLength, SQLINTEGER * textLength2Ptr);
-	RETCODE sqlSetConnectAttr (SQLINTEGER arg1, SQLPOINTER arg2, SQLINTEGER stringLength);
+	SQLRETURN sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, SQLSMALLINT * stringLength2Ptr);
+	SQLRETURN sqlNativeSql(SQLCHAR * inStatementText, SQLINTEGER textLength1,	SQLCHAR * outStatementText, SQLINTEGER bufferLength, SQLINTEGER * textLength2Ptr);
+	SQLRETURN sqlSetConnectAttr( SQLINTEGER attribute, SQLPOINTER value, SQLINTEGER stringLength );
 	virtual OdbcObjectType getType();
 	OdbcConnection(OdbcEnv *parent);
 	~OdbcConnection();

@@ -47,25 +47,25 @@ class OdbcObject
 {
 public:
 	void setCursorRowCount (int count);
-	virtual RETCODE sqlGetDiagField (int recNumber, int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
-	RETCODE returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLINTEGER* returnLength, const char * value);
-	RETCODE sqlGetDiagRec (int handleType, int recNumber, SQLCHAR*sqlState,SQLINTEGER*nativeErrorPtr,SQLCHAR*messageText,int bufferLength,SQLSMALLINT*textLengthPtr);
+	virtual SQLRETURN sqlGetDiagField (int recNumber, int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
+	SQLRETURN returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLINTEGER* returnLength, const char * value);
+	SQLRETURN sqlGetDiagRec (int handleType, int recNumber, SQLCHAR*sqlState,SQLINTEGER*nativeErrorPtr,SQLCHAR*messageText,int bufferLength,SQLSMALLINT*textLengthPtr);
 	OdbcError* postError (const char *state, JString msg);
 	const char * getString (char **temp, const UCHAR *string, int length, const char *defaultValue);
 	OdbcError* postError (const char *sqlState, SQLException& exception);
 	void clearErrors();
 	OdbcError* postError (OdbcError *error);
-	virtual RETCODE sqlError (UCHAR *stateBuffer, SDWORD *nativeCode, UCHAR *msgBuffer, int msgBufferLength, SWORD *msgLength);
+	virtual SQLRETURN sqlError (UCHAR *stateBuffer, SDWORD *nativeCode, UCHAR *msgBuffer, int msgBufferLength, SWORD *msgLength);
 	bool appendString(const char * string, int stringLength, SQLCHAR * target, int targetSize, SQLSMALLINT * targetLength);
 	bool setString(const char * string, SQLCHAR * target, int targetSize, SQLSMALLINT * targetLength);
 	bool setString (const SQLCHAR *string, int stringLength, SQLCHAR *target, int targetSize, SQLSMALLINT *targetLength);
 	int stringLength (const SQLCHAR *string, int givenLength);
 	void notYetImplemented (const char *msg);
-	virtual RETCODE allocHandle (int handleType, SQLHANDLE *outputHandle);
+	virtual SQLRETURN allocHandle (int handleType, SQLHANDLE *outputHandle);
 	int sqlSuccess();
 	virtual OdbcObjectType getType() = 0;
 	int sqlReturn (int code, const char *state, const char *text, int nativeCode = 0);
-	RETCODE returnStringInfo (SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT* returnLength, const char * value);
+	SQLRETURN returnStringInfo (SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT* returnLength, const char * value);
 	OdbcObject();
 	~OdbcObject();
 

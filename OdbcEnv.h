@@ -39,17 +39,17 @@ class OdbcConnection;
 class OdbcEnv : public OdbcObject  
 {
 public:
-	RETCODE sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr);
-	RETCODE sqlSetEnvAttr (int attribute, SQLPOINTER value, int length);
+	SQLRETURN sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr);
+	SQLRETURN sqlSetEnvAttr (int attribute, SQLPOINTER value, int length);
 	void connectionClosed (OdbcConnection *connection);
-	RETCODE sqlEndTran(int operation);
-	RETCODE sqlDrivers( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
-	RETCODE sqlDataSources( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
+	SQLRETURN sqlEndTran(int operation);
+	SQLRETURN sqlDrivers( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
+	SQLRETURN sqlDataSources( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
 #ifdef _WIN32
 	BOOL getDrivers();
-	BOOL getDataSources(UWORD wConfigMode);
+	bool getDataSources( SQLUSMALLINT wConfigMode );
 #endif
-	virtual RETCODE allocHandle (int handleType, SQLHANDLE *outputHandle);
+	virtual SQLRETURN allocHandle (int handleType, SQLHANDLE *outputHandle);
 	void LockEnv();
 	void UnLockEnv();
 	virtual OdbcObjectType getType();

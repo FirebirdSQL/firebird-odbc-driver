@@ -87,12 +87,12 @@ class OdbcDesc : public OdbcObject
 {
 public:
 	inline DescRecord*	getDescRecord(int number, bool bCashe = true);
-	RETCODE sqlGetDescField(int recNumber, int fieldId, SQLPOINTER value, int length, SQLINTEGER *lengthPtr);
-	RETCODE sqlSetDescField (int recNumber, int fieldId, SQLPOINTER value, int length);
-	RETCODE sqlGetDescRec(SQLSMALLINT recNumber, SQLCHAR *Name, SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, 
+	SQLRETURN sqlGetDescField(int recNumber, int fieldId, SQLPOINTER value, int length, SQLINTEGER *lengthPtr);
+	SQLRETURN sqlSetDescField (int recNumber, int fieldId, SQLPOINTER value, int length);
+	SQLRETURN sqlGetDescRec(SQLSMALLINT recNumber, SQLCHAR *Name, SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, 
 							SQLSMALLINT *TypePtr, SQLSMALLINT *SubTypePtr, SQLINTEGER *LengthPtr, SQLSMALLINT *PrecisionPtr, 
 							SQLSMALLINT *ScalePtr, SQLSMALLINT *NullablePtr);
-	RETCODE sqlSetDescRec( SQLSMALLINT recNumber, SQLSMALLINT type, SQLSMALLINT subType, SQLINTEGER length,
+	SQLRETURN sqlSetDescRec( SQLSMALLINT recNumber, SQLSMALLINT type, SQLSMALLINT subType, SQLINTEGER length,
 							SQLSMALLINT	precision, SQLSMALLINT scale, SQLPOINTER dataPtr, 
 							SQLINTEGER *stringLengthPtr, SQLINTEGER *indicatorPtr);
 
@@ -110,7 +110,7 @@ public:
 	void removeRecords();
 	void setDefaultImplDesc (StatementMetaData * ptMetaDataOut, StatementMetaData * ptMetaDataIn = NULL);
 	void allocBookmarkField();
-	RETCODE operator =(OdbcDesc &sour);
+	SQLRETURN operator =(OdbcDesc &sour);
 	void defFromMetaDataIn(int recNumber, DescRecord * record);
 	void defFromMetaDataOut(int recNumber, DescRecord * record);
 	int getConciseType(int type);

@@ -1587,7 +1587,7 @@ ODBCCONVERT_TEMP_CONV(Blob,Bigint,QUAD);
 
 int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 {
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
 	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
@@ -1670,7 +1670,7 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 
 int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 {
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
 	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
@@ -1748,7 +1748,7 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 
 int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 {
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
 	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
@@ -1862,7 +1862,7 @@ int OdbcConvert::convBinaryToBlob(DescRecord * from, DescRecord * to)
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 	int len;
 
 	GET_LEN_FROM_OCTETLENGTHPTR;
@@ -1977,7 +1977,7 @@ int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
 		from->currentFetched = parentStmt->getCurrentFetched();
 	}
 
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 	int length = from->length;
 	int dataRemaining = length - from->dataOffset;
 
@@ -2032,7 +2032,7 @@ int OdbcConvert::convStringToVarString(DescRecord * from, DescRecord * to)
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 	unsigned short &lenVar = *(unsigned short*)pointerTo;
 	int len;
 
@@ -2069,7 +2069,7 @@ int OdbcConvert::convStringToBlob(DescRecord * from, DescRecord * to)
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 	int len;
 
 	GET_LEN_FROM_OCTETLENGTHPTR;
@@ -2215,7 +2215,7 @@ int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 
 	int len;
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 
 	GET_LEN_FROM_OCTETLENGTHPTR;
 
@@ -2346,7 +2346,7 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 		from->currentFetched = parentStmt->getCurrentFetched();
 	}
 
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 	int length = *(unsigned short*)pointerFrom;
 	int dataRemaining = length - from->dataOffset;
 
@@ -2399,7 +2399,7 @@ int OdbcConvert::convVarStringSystemToString(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL;
 	
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 	unsigned short lenVar = *(unsigned short*)pointerFrom;
 	int len;
 
