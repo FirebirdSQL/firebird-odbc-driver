@@ -26,7 +26,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <stdio.h>
-#include "Engine.h"
+#include "IscDbc.h"
 #include "Stream.h"
 #include "SQLError.h"
 #include "Blob.h"

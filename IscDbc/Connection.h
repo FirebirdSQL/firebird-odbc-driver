@@ -60,6 +60,9 @@ typedef __int64			QUAD;
 typedef unsigned __int64			UQUAD;
 #endif
 
+#define ISC_TIME_SECONDS_PRECISION          10000L
+#define ISC_TIME_SECONDS_PRECISION_SCALE    (-4)
+
 /* values for tra_flags */
 #define TRA_ro			1
 #define TRA_nw			2
@@ -116,15 +119,9 @@ public:
 class DatabaseMetaData 
 {
 public:
-//////////////////////////////////???
-//////////////////////////////////???
-//////////////////////////////////???
 	virtual short getSqlStrPageSizeBd(const void * info_buffer, int bufferLength,short *lengthPtr) = 0;
 	virtual short getSqlStrWalInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr) = 0;
 	virtual short getStrStatInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr) = 0;
-//////////////////////////////////???
-//////////////////////////////////???
-//////////////////////////////////???
 	virtual ResultSet* getIndexInfo (const char * catalog, const char * schemaPattern, const char * tableNamePattern, bool unique, bool approximate) = 0;
 	virtual ResultSet* getImportedKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern) = 0;
 	virtual ResultSet* getPrimaryKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern) = 0;

@@ -21,7 +21,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include "Engine.h"
+#include "IscDbc.h"
 #include "SQLError.h"
 #include "Stream.h"
 

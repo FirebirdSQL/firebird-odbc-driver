@@ -53,8 +53,6 @@
 #include "TimeStamp.h"
 
 
-#define SECONDS_PRECISION          10000L
-#define SECONDS_PRECISION_SCALE    -4
 typedef signed long		INTERNAL_DATE;
 typedef __int64			SINT64;
 
@@ -174,7 +172,7 @@ int OdbcDateTime::convert (TimeStamp *timeStampIn, tagTIMESTAMP_STRUCT * tagTime
 	tagTimeStampOut->hour = times->tm_hour;
 	tagTimeStampOut->minute = times->tm_min;
 	tagTimeStampOut->second = times->tm_sec;
-	tagTimeStampOut->fraction = timeStampIn->nanos * 10;
+	tagTimeStampOut->fraction = timeStampIn->nanos % ISC_TIME_SECONDS_PRECISION;
 	return true;
 }
 
@@ -216,14 +214,7 @@ signed long OdbcDateTime::ndate (signed long nday, signed long nsec, tm *times)
  **************************************/
 	SLONG	year, month, day;
 	SLONG	century;
-	SLONG	seconds;
-
-/*  Orig.
-	seconds = nday % (60 * 60 * 24);
-	nday = nday / (60 * 60 * 24);
-*/
-// From B. Schulte:
-	seconds = nsec;
+	SLONG	minutes;
 
 //	nday -= 1721119 - 2400001;
 	nday += 678882;
@@ -253,9 +244,12 @@ signed long OdbcDateTime::ndate (signed long nday, signed long nsec, tm *times)
 	times->tm_mday = (int) day;
 	times->tm_mon = (int) month - 1;
 	times->tm_year = (int) year - 1900;
-	times->tm_hour = (int) seconds / (60 * 60);
-	times->tm_min = (int) (seconds / 60) - ((times->tm_hour) * 60);
-	times->tm_sec = (int) (seconds - ((times->tm_hour*60)+times->tm_min)*60);
+
+	minutes = nsec / (ISC_TIME_SECONDS_PRECISION * 60);
+	times->tm_hour = minutes / 60;
+	times->tm_min = minutes % 60;
+	times->tm_sec = (nsec / ISC_TIME_SECONDS_PRECISION) % 60;
+
 	return true;
 }
 

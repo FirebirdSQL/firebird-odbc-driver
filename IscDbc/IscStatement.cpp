@@ -97,8 +97,7 @@ static char requestInfo [] = { isc_info_sql_records,
 							   isc_info_end };
 
 static int init();
-static struct tm baseTm = { 0, 0, 0, 1, 0, 70 };
-static long baseDate = init();
+static int foo = init();
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -106,11 +105,8 @@ static long baseDate = init();
 
 int init()
 {
-	ISC_QUAD baseDate;
 	initDll();
-	GDS->_encode_date (&baseTm, &baseDate);
-
-	return baseDate.gds_quad_high;
+	return 0;
 }
 
 IscStatement::IscStatement(IscConnection *connect)
@@ -508,7 +504,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 			case SQL_TIMESTAMP:
 				{
 				ISC_TIMESTAMP *date = (ISC_TIMESTAMP*) var->sqldata;
-				long days = date->timestamp_date;
+//				long days = date->timestamp_date;
 
 //Orig.
 // B. Schulte comments:
@@ -523,11 +519,11 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				timestamp.nanos = (date->timestamp_time / 10000) * 100;
 */
 //From B. Schulte
-				long        zeit;
-				zeit = (date->timestamp_time / 10000);
+//				long        zeit;
+//				zeit = (date->timestamp_time / 10000);
 
-				timestamp=days;
-				timestamp.nanos = (zeit) ;
+				timestamp = date->timestamp_date;
+				timestamp.nanos = date->timestamp_time;
 
 				value->setValue (timestamp);
 				}
@@ -548,7 +544,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				{
 				ISC_TIME data = *(ISC_TIME*) var->sqldata;
 				SqlTime time;
-				time = data / ISC_TIME_SECONDS_PRECISION;
+				time = data;
 				value->setValue (time);
 				}
 				break;
@@ -579,7 +575,7 @@ ISC_TIMESTAMP IscStatement::getIscTimeStamp(TimeStamp value)
 */
 //From B. Schulte
 	date.timestamp_date = value.date ;
-	date.timestamp_time =  value.nanos *10000;
+	date.timestamp_time =  value.nanos * ISC_TIME_SECONDS_PRECISION;
 
 	return date;
 }

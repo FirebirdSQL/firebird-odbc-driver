@@ -1210,9 +1210,10 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 			{
 			SqlTime sqlTime = RESULTS (getTime (column));
 			tagTIME_STRUCT *var = (tagTIME_STRUCT*) pointer;
-			var->hour = (unsigned short) (sqlTime.timeValue / (60 * 60)) % 24;
-			var->minute = (unsigned short) (sqlTime.timeValue / 60) % 60;
-			var->second = (unsigned short) (sqlTime.timeValue % 60);
+			long minutes = sqlTime.timeValue / (ISC_TIME_SECONDS_PRECISION * 60);
+			var->hour = minutes / 60;
+			var->minute = minutes % 60;
+			var->second = (short)(sqlTime.timeValue / ISC_TIME_SECONDS_PRECISION) % 60;
 			length = sizeof (tagTIME_STRUCT);
 			}
 			break;
@@ -2183,6 +2184,7 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 				tagTIME_STRUCT *var = (tagTIME_STRUCT*) binding->pointer;
 				SqlTime dateTime;
 				dateTime.timeValue = var->hour * 60 * 60 + var->minute * 60 + var->second;
+				dateTime.timeValue *= ISC_TIME_SECONDS_PRECISION;
 				statement->setTime (parameter, dateTime);
 				}
 				break;

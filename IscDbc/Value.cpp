@@ -50,7 +50,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "Engine.h"
+#include "IscDbc.h"
 #include "Value.h"
 #include "SQLError.h"
 #include "BinaryBlob.h"

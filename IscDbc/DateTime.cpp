@@ -26,7 +26,7 @@
 #include <memory.h>
 #include <string.h>
 #include <stdlib.h>
-#include "Engine.h"
+#include "IscDbc.h"
 #include "DateTime.h"
 #include "SQLError.h"
 
