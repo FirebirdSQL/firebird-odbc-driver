@@ -68,8 +68,10 @@ public:
 			unicodeString = wcString;
 			if ( length == SQL_NTS )
 				lengthString = 0;
-			else
+			else if ( retCountOfBytes )
 				lengthString = length / 2;
+			else
+				lengthString = length;
 		}
 		else
 			isWhy = NONE;
@@ -365,7 +367,7 @@ SQLRETURN SQL_API SQLErrorW( SQLHENV hEnv,
 	TRACE("SQLErrorW");
 
 	ConvertingString<> State( 12, sqlState );
-	ConvertingString<> Buffer( msgBufferLength, msgBuffer, msgLength );
+	ConvertingString<> Buffer( msgBufferLength, msgBuffer, msgLength, false );
 
 	if ( hStmt )
 	{
@@ -471,7 +473,7 @@ SQLRETURN SQL_API SQLDriverConnectW( SQLHDBC hDbc, SQLHWND hWnd, SQLWCHAR *szCon
 	GUARD_HDBC( hDbc );
 
 	ConvertingString<> ConnStrIn( szConnStrIn, cbConnStrIn );
-	ConvertingString<> ConnStrOut( cbConnStrOutMax * 2, szConnStrOut, pcbConnStrOut, false );
+	ConvertingString<> ConnStrOut( cbConnStrOutMax, szConnStrOut, pcbConnStrOut, false );
 
 	return ((OdbcConnection*) hDbc)->sqlDriverConnect( hWnd, ConnStrIn, ConnStrIn,
 													ConnStrOut, ConnStrOut, pcbConnStrOut,
