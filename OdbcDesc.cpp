@@ -1426,10 +1426,14 @@ int OdbcDesc::getConciseSize(int type, int length)
 		return length;
 
 	case SQL_C_DATE:
-	case SQL_C_TIME:
-	case SQL_C_TIMESTAMP:
 	case SQL_TYPE_DATE:
+		return sizeof(DATE_STRUCT);
+
+	case SQL_C_TIME:
 	case SQL_TYPE_TIME:
+		return sizeof(TIME_STRUCT);
+
+	case SQL_C_TIMESTAMP:
 	case SQL_TYPE_TIMESTAMP:
 		return sizeof(TIMESTAMP_STRUCT);
 
