@@ -79,9 +79,9 @@ void IscProceduresResultSet::getProcedures(const char * catalog, const char * sc
 	numberColumns = 8;
 }
 
-bool IscProceduresResultSet::next()
+bool IscProceduresResultSet::nextFetch()
 {
-	if (!IscResultSet::next())
+	if (!IscResultSet::nextFetch())
 		return false;
 
 	if ( sqlda->isNull(4) )

@@ -80,9 +80,9 @@ void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, con
 	numberColumns = 8;
 }
 
-bool IscColumnPrivilegesResultSet::next()
+bool IscColumnPrivilegesResultSet::nextFetch()
 {
-	if (!IscResultSet::next())
+	if (!IscResultSet::nextFetch())
 		return false;
 
 	int len1, len2;

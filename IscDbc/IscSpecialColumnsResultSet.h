@@ -35,7 +35,7 @@ class IscSpecialColumnsResultSet : public IscMetaDataResultSet
 public:
 	IscSpecialColumnsResultSet(IscDatabaseMetaData *metaData);
 	virtual void specialColumns (const char * catalog, const char * schema, const char * table, int scope, int nullable);
-	bool next();
+	virtual bool nextFetch();
 
 private:
 	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType &sqlType);

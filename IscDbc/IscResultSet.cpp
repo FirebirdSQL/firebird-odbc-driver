@@ -110,7 +110,7 @@ bool IscResultSet::readForwardCursor()
 	return true;
 }
 
-bool IscResultSet::next()
+bool IscResultSet::nextFetch()
 {
 	if (!statement)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
@@ -133,11 +133,10 @@ bool IscResultSet::next()
 	return true;
 }
 
-bool IscResultSet::nextFetch()
+bool IscResultSet::next()
 {
 	if (!statement)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
-
 
 	deleteBlobs();
 	reset();
@@ -178,7 +177,7 @@ bool IscResultSet::readFromSystemCatalog()
 
 	sqlda->initStaticCursor ( statement );
 	
-	while( next() )
+	while( nextFetch() )
 		sqlda->addRowSqldaInBufferStaticCursor();
 
 	sqlda->restoreOrgAdressFieldsStaticCursor();

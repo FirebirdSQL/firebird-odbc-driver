@@ -81,9 +81,9 @@ void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const
     numberColumns = 7;
 }
 
-bool IscTablePrivilegesResultSet::next()
+bool IscTablePrivilegesResultSet::nextFetch()
 {
-    if (!IscResultSet::next())
+    if (!IscResultSet::nextFetch())
         return false;
 
 	int len1, len2;

@@ -33,7 +33,7 @@ namespace IscDbcLibrary {
 class IscProcedureColumnsResultSet : public IscMetaDataResultSet  
 {
 public:
-	virtual bool next();
+	virtual bool nextFetch();
 	void getProcedureColumns (const char *catalog, 
 							  const char *schemaPattern, 
 							  const char *procedureNamePattern, 

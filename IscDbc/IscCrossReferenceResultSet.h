@@ -34,7 +34,7 @@ class IscCrossReferenceResultSet : public IscMetaDataResultSet
 public:
 	bool stringEqual (const char *p1, const char *p2);
 	int getRule (const char *rule);
-	virtual bool next();
+	virtual bool nextFetch();
 	void getCrossReference(const char* primaryCatalog, const char* primarySchema, const char* primaryTable,const char* foreignCatalog, const char* foreignSchema, const char* foreignTable);
 	IscCrossReferenceResultSet(IscDatabaseMetaData *metaData);
 };

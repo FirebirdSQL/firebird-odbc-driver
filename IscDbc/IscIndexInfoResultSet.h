@@ -33,7 +33,7 @@ class IscIndexInfoResultSet : public IscMetaDataResultSet
 {
 public:
 	void getIndexInfo(const char * catalog, const char * schemaPattern, const char * tableNamePattern, bool unique, bool approximate);
-	virtual bool next();
+	virtual bool nextFetch();
 	IscIndexInfoResultSet(IscDatabaseMetaData *metaData);
 };
 

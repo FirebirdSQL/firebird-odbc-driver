@@ -35,7 +35,7 @@ namespace IscDbcLibrary {
 class IscColumnsResultSet : public IscMetaDataResultSet  
 {
 public:
-	virtual bool next();
+	virtual bool nextFetch();
 	void getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern);
 	IscColumnsResultSet(IscDatabaseMetaData *metaData);
 	void initResultSet(IscStatement *stmt);

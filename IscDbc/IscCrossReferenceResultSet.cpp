@@ -27,11 +27,11 @@
 #include "IscCrossReferenceResultSet.h"
 #include "IscDatabaseMetaData.h"
 
-#define SQL_CASCADE                      0
-#define SQL_RESTRICT                     1
-#define SQL_SET_NULL                     2
-#define SQL_NO_ACTION			 3
-#define SQL_SET_DEFAULT			 4
+#define SQL_CASCADE				0
+#define SQL_RESTRICT			1
+#define SQL_SET_NULL			2
+#define SQL_NO_ACTION			3
+#define SQL_SET_DEFAULT			4
 
 #define UPD_RULE		10
 #define DEL_RULE		11
@@ -107,9 +107,9 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 	numberColumns = 14;
 }
 
-bool IscCrossReferenceResultSet::next()
+bool IscCrossReferenceResultSet::nextFetch()
 {
-	if (!IscResultSet::next())
+	if (!IscResultSet::nextFetch())
 		return false;
 
 	int len;

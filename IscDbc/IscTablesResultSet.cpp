@@ -107,9 +107,9 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 	numberColumns = 5;
 }
 
-bool IscTablesResultSet::next()
+bool IscTablesResultSet::nextFetch()
 {
-	if (!IscResultSet::next())
+	if (!IscResultSet::nextFetch())
 		return false;
 
 	if ( sqlda->getShort (6) )

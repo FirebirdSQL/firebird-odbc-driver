@@ -134,9 +134,9 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 	numberColumns = 13; 
 }
 
-bool IscIndexInfoResultSet::next()
+bool IscIndexInfoResultSet::nextFetch()
 {
-	if (!IscResultSet::next())
+	if (!IscResultSet::nextFetch())
 		return false;
 
 	short type = sqlda->getShort(7);

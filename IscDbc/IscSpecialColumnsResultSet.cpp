@@ -101,9 +101,9 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 	numberColumns = 8;
 }
 
-bool IscSpecialColumnsResultSet::next ()
+bool IscSpecialColumnsResultSet::nextFetch()
 {
-	if (!IscResultSet::next())
+	if (!IscResultSet::nextFetch())
 		return false;
 
 	sqlda->updateShort (1,2);	//scope is always transaction for us

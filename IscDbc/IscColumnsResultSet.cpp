@@ -132,9 +132,9 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 	numberColumns = 18;
 }
 
-bool IscColumnsResultSet::next()
+bool IscColumnsResultSet::nextFetch()
 {
-	if (!IscResultSet::next())
+	if (!IscResultSet::nextFetch())
 	{
 		blob.clear();
 		return false;

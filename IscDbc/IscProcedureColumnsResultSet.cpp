@@ -129,9 +129,9 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 		numberColumns = 19;
 }
 
-bool IscProcedureColumnsResultSet::next()
+bool IscProcedureColumnsResultSet::nextFetch()
 {
-	if (!IscResultSet::next())
+	if (!IscResultSet::nextFetch())
 		return false;
 
 	int parameterType = sqlda->getShort (5);

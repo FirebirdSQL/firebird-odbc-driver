@@ -32,7 +32,7 @@ namespace IscDbcLibrary {
 class IscTablesResultSet : public IscMetaDataResultSet  
 {
 public:
-	virtual bool next();
+	virtual bool nextFetch();
 	void getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char **types);
 	IscTablesResultSet(IscDatabaseMetaData *metaData);
 };

@@ -39,6 +39,7 @@
 #include "SQLError.h"
 #include "IscConnection.h"
 #include "IscBlob.h"
+#include "Value.h"
 
 namespace IscDbcLibrary {
 
@@ -62,6 +63,29 @@ void IscMetaDataResultSet::prepareStatement(const char * sql)
 	IscStatement *saveStatement = statement;
 	readFromSystemCatalog();
 	statement = saveStatement;
+}
+
+bool IscMetaDataResultSet::next()
+{
+	deleteBlobs();
+	reset();
+	allocConversions();
+
+	if ( !(activePosRowInSet >= 0 && activePosRowInSet < sqlda->getCountRowsStaticCursor()) )
+		return false;
+
+	if ( activePosRowInSet )
+		copyNextSqldaFromBufferStaticCursor();
+
+	++activePosRowInSet;
+
+	XSQLVAR *var = sqlda->sqlda->sqlvar;
+    Value *value = values.values;
+
+	for (int n = 0; n < sqlda->sqlda->sqld; ++n, ++var, ++value)
+		statement->setValue (value, var);
+
+	return true;
 }
 
 bool IscMetaDataResultSet::isWildcarded(const char * pattern)

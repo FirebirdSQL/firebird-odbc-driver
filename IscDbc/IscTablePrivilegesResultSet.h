@@ -33,7 +33,7 @@ namespace IscDbcLibrary {
 class IscTablePrivilegesResultSet : public IscMetaDataResultSet
 {
 public:
-    virtual bool next();
+	virtual bool nextFetch();
     void getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern);
     IscTablePrivilegesResultSet(IscDatabaseMetaData *metaData);
 };
