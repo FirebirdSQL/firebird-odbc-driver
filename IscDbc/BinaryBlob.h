@@ -52,6 +52,7 @@ public:
 	BinaryBlob();
 	virtual ~BinaryBlob();
 	virtual int release();
+	virtual void clear();
 	virtual void addRef();
 	void populate();
 	virtual void bind(Connection *connect, char * sqldata);

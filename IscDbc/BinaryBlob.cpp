@@ -83,6 +83,10 @@ int BinaryBlob::release()
 	return useCount;
 }
 
+void BinaryBlob::clear()
+{
+	Stream::clear();
+}
 /***
 bool BinaryBlob::write(const char * filename)
 {
