@@ -20,6 +20,8 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <wchar.h>
 #endif
 
 #include <odbcinst.h>
@@ -195,8 +197,12 @@ public:
 		case WIDECHARS:
 			if ( byteString )
 			{
-				int len = WideCharToMultiByte( codePage, 0, unicodeString, -1,
+#ifdef _WIN32
+				size_t len = WideCharToMultiByte( codePage, 0, unicodeString, -1,
 										(LPSTR)byteString, lengthString, NULL, NULL );
+#else
+				size_t len = wcstombs( (LPSTR)byteString, (const wchar_t*)unicodeString, lengthString );
+#endif
 				if ( len > 0 )
 				{
 					len--;
@@ -213,11 +219,17 @@ public:
 		case BYTESCHARS:
 			if ( unicodeString )
 			{
-				int len = MultiByteToWideChar( codePage, 0, (const char*)byteString, -1,
+#ifdef _WIN32
+				size_t len = MultiByteToWideChar( codePage, 0, (const char*)byteString, -1,
 											  unicodeString, lengthString );
+#else
+				size_t len = mbstowcs( (wchar_t*)unicodeString, (const char*)byteString, lengthString );
+#endif
 				if ( len > 0 )
 				{
+#ifdef _WIN32
 					len--;
+#endif
 					*(LPWSTR)(unicodeString + len) = L'\0';
 
 					if ( realLength )
@@ -243,12 +255,28 @@ public:
 	SQLCHAR * convUnicodeToString( SQLWCHAR *wcString, int length )
 	{
 		if ( length == SQL_NTS )
-			length = wcslen( wcString );
+			length = wcslen( (const wchar_t*)wcString );
 
-		int bytesNeeded = WideCharToMultiByte( codePage, 0, wcString, length, NULL, 0, NULL, NULL );
+#ifdef _WIN32
+		size_t bytesNeeded = WideCharToMultiByte( codePage, 0, wcString, length, NULL, 0, NULL, NULL );
+#else
+		size_t bytesNeeded;
+		{
+#pragma FB_COMPILER_MESSAGE("Check up this moment for Linux. FIXME!")
+			wchar_t save = wcString[length];
+			wcString[length] = L'\0';
+			bytesNeeded = wcstombs( NULL, (const wchar_t*)wcString, length );
+			wcString[length] = save;
+		}
+#endif
+
 		byteString = new SQLCHAR[ bytesNeeded + 2 ];
 
+#ifdef _WIN32
 		WideCharToMultiByte( codePage, 0, wcString, length, (LPSTR)byteString, bytesNeeded, NULL, NULL );
+#else
+		wcstombs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
+#endif
 
 		byteString[ bytesNeeded ] = '\0';
 		lengthString = bytesNeeded;
@@ -261,11 +289,20 @@ public:
 		if ( length == SQL_NTS )
 			length = strlen( (char*)mbString );
 		
-		int nWCharNeeded = MultiByteToWideChar( codePage, MB_PRECOMPOSED, (const char*)mbString, length, NULL, 0 );
+#ifdef _WIN32
+		size_t nWCharNeeded = MultiByteToWideChar( codePage, MB_PRECOMPOSED, (const char*)mbString, length, NULL, 0 );
+#else
+		size_t nWCharNeeded = mbstowcs( NULL, (const char*)mbString, length );
+#endif
+
 		unicodeString = new SQLWCHAR[ ( nWCharNeeded + 1 ) * 2 ];
 
+#ifdef _WIN32
 		nWCharNeeded = MultiByteToWideChar( codePage, MB_PRECOMPOSED, (const char*)mbString, length,
 						 unicodeString, nWCharNeeded );
+#else
+		nWCharNeeded = mbstowcs( (wchar_t*)unicodeString, (const char*)mbString, nWCharNeeded );
+#endif
 
 		*(LPWSTR)(unicodeString + nWCharNeeded) = L'\0';
 		lengthString = nWCharNeeded * 2;
@@ -773,7 +810,7 @@ SQLRETURN SQL_API SQLNativeSqlW( SQLHDBC hDbc,
 	GUARD_HDBC( hDbc );
 
 	if ( cbSqlStrIn == SQL_NTS )
-		cbSqlStrIn = wcslen( szSqlStrIn );
+		cbSqlStrIn = wcslen( (const wchar_t*)szSqlStrIn );
 	
 	bool isByte = !( cbSqlStrIn % 2 );
 
@@ -1164,7 +1201,7 @@ SQLRETURN SQL_API SQLSetDescFieldW( SQLHDESC hDesc,
 			int len;
 			
 			if ( bufferLength == SQL_NTS )
-				len = wcslen( (SQLWCHAR *)value );
+				len = wcslen( (const wchar_t*)value );
 			else
 				len = bufferLength / 2;
 
