@@ -63,9 +63,9 @@ public:
 	void setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd);
 	ADRESS_FUNCTION getAdresFunction(DescRecord * from, DescRecord * to);
 	inline SQLPOINTER getAdressBindDataFrom(char * pointer);
-	inline SQLPOINTER getAdressBindIndFrom(char * pointer);
+	inline SQLINTEGER *getAdressBindIndFrom(char * pointer);
 	inline SQLPOINTER getAdressBindDataTo(char * pointer);
-	inline SQLPOINTER getAdressBindIndTo(char * pointer);
+	inline SQLINTEGER *getAdressBindIndTo(char * pointer);
 
 public:
 	bool isIdentity(){ return bIdentity; }
@@ -82,6 +82,7 @@ public:
 	int convTinyIntToTagNumeric(DescRecord * from, DescRecord * to);
 
 // Short
+	int convShortToTinyInt(DescRecord * from, DescRecord * to);
 	int convShortToShort(DescRecord * from, DescRecord * to);
 	int convShortToLong(DescRecord * from, DescRecord * to);
 	int convShortToFloat(DescRecord * from, DescRecord * to);
@@ -92,6 +93,7 @@ public:
 
 // Long
 	int convLongToLong(DescRecord * from, DescRecord * to);
+	int convLongToTinyInt(DescRecord * from, DescRecord * to);
 	int convLongToShort(DescRecord * from, DescRecord * to);
 	int convLongToFloat(DescRecord * from, DescRecord * to);
 	int convLongToDouble(DescRecord * from, DescRecord * to);
@@ -101,6 +103,7 @@ public:
 
 // Float
 	int convFloatToLong(DescRecord * from, DescRecord * to);
+	int convFloatToTinyInt(DescRecord * from, DescRecord * to);
 	int convFloatToShort(DescRecord * from, DescRecord * to);
 	int convFloatToFloat(DescRecord * from, DescRecord * to);
 	int convFloatToDouble(DescRecord * from, DescRecord * to);
@@ -109,6 +112,7 @@ public:
 
 // Double
 	int convDoubleToLong(DescRecord * from, DescRecord * to);
+	int convDoubleToTinyInt(DescRecord * from, DescRecord * to);
 	int convDoubleToShort(DescRecord * from, DescRecord * to);
 	int convDoubleToFloat(DescRecord * from, DescRecord * to);
 	int convDoubleToDouble(DescRecord * from, DescRecord * to);
@@ -118,6 +122,7 @@ public:
 
 // Bigint
 	int convBigintToLong(DescRecord * from, DescRecord * to);
+	int convBigintToTinyInt(DescRecord * from, DescRecord * to);
 	int convBigintToShort(DescRecord * from, DescRecord * to);
 	int convBigintToFloat(DescRecord * from, DescRecord * to);
 	int convBigintToDouble(DescRecord * from, DescRecord * to);
@@ -128,11 +133,20 @@ public:
 
 // Numeric, Decimal
 	int convNumericToLong(DescRecord * from, DescRecord * to);
+	int convNumericToTinyInt(DescRecord * from, DescRecord * to);
 	int convNumericToShort(DescRecord * from, DescRecord * to);
 	int convNumericToFloat(DescRecord * from, DescRecord * to);
 	int convNumericToDouble(DescRecord * from, DescRecord * to);
 	int convNumericToBigint(DescRecord * from, DescRecord * to);
 	int convNumericToTagNumeric(DescRecord * from, DescRecord * to);
+
+// TagNumeric
+	int convTagNumericToLong(DescRecord * from, DescRecord * to);
+	int convTagNumericToTinyInt(DescRecord * from, DescRecord * to);
+	int convTagNumericToShort(DescRecord * from, DescRecord * to);
+	int convTagNumericToFloat(DescRecord * from, DescRecord * to);
+	int convTagNumericToDouble(DescRecord * from, DescRecord * to);
+	int convTagNumericToBigint(DescRecord * from, DescRecord * to);
 
 // Date
 	int convDateToLong(DescRecord * from, DescRecord * to);
@@ -143,6 +157,8 @@ public:
 	int convDateToTagTimestamp(DescRecord * from, DescRecord * to);
 	int convDateToString(DescRecord * from, DescRecord * to);
 
+	int transferTagDateToDate(DescRecord * from, DescRecord * to);
+
 // Time
 	int convTimeToLong(DescRecord * from, DescRecord * to);
 	int convTimeToFloat(DescRecord * from, DescRecord * to);
@@ -152,11 +168,19 @@ public:
 	int convTimeToTagTimestamp(DescRecord * from, DescRecord * to);
 	int convTimeToString(DescRecord * from, DescRecord * to);
 
+	int transferTagTimeToTime(DescRecord * from, DescRecord * to);
+
 // DateTime
 	int convDateTimeToDouble(DescRecord * from, DescRecord * to);
 	int convDateTimeToBigint(DescRecord * from, DescRecord * to);
+	int convDateTimeToTagDate(DescRecord * from, DescRecord * to);
+	int convDateTimeToTagTime(DescRecord * from, DescRecord * to);
 	int convDateTimeToTagDateTime(DescRecord * from, DescRecord * to);
 	int convDateTimeToString(DescRecord * from, DescRecord * to);
+
+	int transferTagDateTimeToDate(DescRecord * from, DescRecord * to);
+	int transferTagDateTimeToTime(DescRecord * from, DescRecord * to);
+	int transferTagDateTimeToDateTime(DescRecord * from, DescRecord * to);
 
 // Blob
 	int convBlobToLong(DescRecord * from, DescRecord * to);
@@ -182,10 +206,12 @@ public:
 	int transferStringToTinyInt(DescRecord * from, DescRecord * to);
 	int transferStringToDateTime(DescRecord * from, DescRecord * to);
 	int transferStringToAllowedType(DescRecord * from, DescRecord * to);
+	int transferBinaryStringToAllowedType(DescRecord * from, DescRecord * to);
 	int convStreamHexStringToBlob(DescRecord * from, DescRecord * to);
 
 // Varying
 	int convVarStringToLong(DescRecord * from, DescRecord * to);
+	int convVarStringToTinyInt(DescRecord * from, DescRecord * to);
 	int convVarStringToShort(DescRecord * from, DescRecord * to);
 	int convVarStringToFloat(DescRecord * from, DescRecord * to);
 	int convVarStringToDouble(DescRecord * from, DescRecord * to);
