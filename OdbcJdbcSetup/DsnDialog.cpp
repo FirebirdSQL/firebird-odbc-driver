@@ -27,9 +27,70 @@
 #include "DsnDialog.h"
 #include "../SetupAttributes.h"
 
-extern HINSTANCE m_hInstance;
-
 namespace OdbcJdbcSetupLibrary {
+
+extern HINSTANCE m_hInstance;
+int currentCP;
+
+TranslateString translate[] = 
+{
+	#include "res/resource.en"
+,	
+	#include "res/resource.ru"
+,	
+	#include "res/resource.uk"
+,	
+	#include "res/resource.es"
+,	
+	#include "res/resource.it"
+};
+
+int selectUserLCID( int userLCID )
+{
+	switch ( userLCID )
+	{
+	case 0x080a: //     esmx      // Spanish(Mexican)               //
+ 	case 0x0c0a: //     es        // Spanish(Spain - Modern Sort)   //
+ 	case 0x100a: //     esgt      // Spanish(Guatemala)             //
+ 	case 0x140a: //     escr      // Spanish(Costa Rica)            //
+ 	case 0x180a: //     espa      // Spanish(Panama)                //
+ 	case 0x1c0a: //     esdo      // Spanish(Dominican Republic)    //
+ 	case 0x200a: //     esve      // Spanish(Venezuela)             //
+ 	case 0x240a: //     esco      // Spanish(Colombia)              //
+ 	case 0x280a: //     espe      // Spanish(Peru)                  //
+ 	case 0x2c0a: //     esar      // Spanish(Argentina)             //
+ 	case 0x300a: //     esec      // Spanish(Ecuador)               //
+ 	case 0x340a: //     escl      // Spanish(Chile)                 //
+ 	case 0x380a: //     esuy      // Spanish(Uruguay)               //
+ 	case 0x3c0a: //     espy      // Spanish(Paraguay)              //
+ 	case 0x400a: //     esbo      // Spanish(Bolivia)               //
+ 	case 0x440a: //     essv      // Spanish(El Salvador)           //
+ 	case 0x480a: //     eshn      // Spanish(Honduras)              //
+ 	case 0x4c0a: //     esni      // Spanish(Nicaragua)             //
+ 	case 0x500a: //     espr      // Spanish(Puerto Rico)           //
+			return 0x040a; // es  // Spanish(Spain-Traditional Sort)//
+
+	case 0x0810: //     itch	  // Italian(Swiss)                 //
+			return 0x0410; // it  // Italian(Standard)              //
+	}
+
+	return userLCID;
+}
+
+void initCodePageTranslate( int userLCID )
+{
+	int i;
+	int count = sizeof ( translate ) / sizeof ( *translate );
+
+	userLCID = selectUserLCID( userLCID );
+
+	for( currentCP = -1, i = 0; i < count; i++ )
+		if ( translate[i].userLCID == userLCID )
+		{
+			currentCP = i;
+			break;
+		}
+}
 
 using namespace classJString;
 using namespace IscDbcLibrary;
@@ -302,7 +363,7 @@ BOOL CDsnDialog::OnFindFile()
     ofn.lpstrFileTitle = achPathFileName;    // return final elem of name here
     ofn.nMaxFileTitle = sizeof(achPathFileName);
     ofn.lpstrInitialDir = NULL;
-    ofn.lpstrTitle = "Select Firebird database";
+    ofn.lpstrTitle = _TR( IDS_DLG_TITLE_FINDFILE_DATABASE, "Select Firebird database" );
     ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
     ofn.lpstrDefExt = "*.fdb";
     ofn.nFileOffset = 0;
@@ -352,7 +413,7 @@ BOOL CDsnDialog::OnFindFileClient()
     ofn.lpstrFileTitle = achPathFileName;    // return final elem of name here
     ofn.nMaxFileTitle = sizeof(achPathFileName);
     ofn.lpstrInitialDir = NULL;
-    ofn.lpstrTitle = "Select Firebird client";
+    ofn.lpstrTitle = _TR( IDS_DLG_TITLE_FINDFILE_CLIENT, "Select Firebird client" );
     ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
     ofn.lpstrDefExt = "*.dll";
     ofn.nFileOffset = 0;
@@ -370,17 +431,11 @@ BOOL CDsnDialog::OnFindFileClient()
 	return TRUE;
 }
 
-#ifdef __MINGW32__
 int DialogBoxDynamic();
-#endif
 
 int CDsnDialog::DoModal()
 {
-#ifdef __MINGW32__
 	return DialogBoxDynamic();
-#else
-	return DialogBox(m_hInstance, MAKEINTRESOURCE(IDD), NULL, (DLGPROC)wndprocDsnDialog);
-#endif
 }
 
 BOOL CDsnDialog::OnInitDialog(HWND hDlg) 
@@ -570,7 +625,7 @@ void CDsnDialog::OnTestConnection(HWND hDlg)
 		if ( !libraryHandle )
 		{
 			JString text;
-			text.Format ("Unable to connect to data source: library '%s' failed to load", (const char *)m_driver);
+			text.Format ( _TR( IDS_ERROR_MESSAGE_01, "Unable to connect to data source: library '%s' failed to load" ), (const char *)m_driver);
 			MessageBox(hDlg, text, TEXT(strHeadDlg), MB_ICONERROR|MB_OK);
 			return;
 		}
@@ -582,7 +637,7 @@ void CDsnDialog::OnTestConnection(HWND hDlg)
 		if (!fn)
 		{
 			JString text;
-			text.Format ("Unable to connect to data source %s: can't find entrypoint 'createConnection'");
+			text.Format ( _TR( IDS_ERROR_MESSAGE_02, "Unable to connect to data source %s: can't find entrypoint 'createConnection'" ) );
 			MessageBox(hDlg, text, TEXT(strHeadDlg), MB_ICONERROR|MB_OK);
 			return;
 		}
@@ -598,8 +653,8 @@ void CDsnDialog::OnTestConnection(HWND hDlg)
 			libraryHandle = NULL;
 
 			JString text;
-			text.Format (" Unable to load %s Library : can't find ver. %s ", (const char *)m_driver, DRIVER_VERSION);
-			MessageBox(hDlg, "Connection failed!", (const char*)text, MB_ICONINFORMATION|MB_OK);
+			text.Format ( _TR( IDS_ERROR_MESSAGE_03, " Unable to load %s Library : can't find ver. %s " ), (const char *)m_driver, DRIVER_VERSION);
+			MessageBox(hDlg, (const char*)text, _TR( IDS_MESSAGE_02, "Connection failed!" ), MB_ICONINFORMATION|MB_OK);
 			return;
 		}
 
@@ -619,7 +674,7 @@ void CDsnDialog::OnTestConnection(HWND hDlg)
 		properties->release();
 		connection->close();
 		connection = NULL;
-		MessageBox(hDlg, "Connection successful!", TEXT(strHeadDlg), MB_ICONINFORMATION|MB_OK);
+		MessageBox(hDlg, _TR( IDS_MESSAGE_01, "Connection successful!" ), TEXT(strHeadDlg), MB_ICONINFORMATION|MB_OK);
 	}
 	catch (SQLException& exception)
 	{
@@ -630,7 +685,7 @@ void CDsnDialog::OnTestConnection(HWND hDlg)
 		if ( connection )
 			connection->close();
 
-		strcpy ( buffer, (const char*)text );
+		sprintf( buffer, "%s\n%s", _TR( IDS_MESSAGE_02, "Connection failed!" ), (const char*)text );
 		removeNameFileDBfromMessage ( buffer );
 
 		MessageBox(hDlg, TEXT(buffer), TEXT(strHeadDlg), MB_ICONERROR|MB_OK);
@@ -681,14 +736,9 @@ void ProcessCDError(DWORD dwErrorCode, HWND hWnd)
 		stringID="Unknown error.";
 	}
 
-	MessageBox(hWnd, stringID, TEXT("FireBird ODBC Setup"), MB_OK);
+	MessageBox( hWnd, stringID, TEXT( _TR( IDS_DLG_TITLE_SETUP, "FireBird ODBC Setup" ) ), MB_OK );
 }
 
-// Temporarily!
-// After assembly from MinGW LoadString and LoadResurse does not work!!!
-// To me these magic switchs for dllwrap.exe are unknown ;-(
-// 
-#ifdef __MINGW32__
 int nCopyAnsiToWideChar (LPWORD lpWCStr, LPSTR lpAnsiIn)
 {
   int cchAnsi = lstrlen(lpAnsiIn);
@@ -786,58 +836,57 @@ int DialogBoxDynamic()
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
-	*p++ = 237;        // cx
-	*p++ = 202;        // cy
+	*p++ = 310;        // cx
+	*p++ = 221;        // cy
 	*p++ = 0;          // Menu
 	*p++ = 0;          // Class
 
 	/* copy the title of the dialog */
-	nchar = nCopyAnsiToWideChar (p, TEXT("FireBird ODBC Setup"));
+	nchar = nCopyAnsiToWideChar (p, TEXT( _TR( IDS_DLG_TITLE_SETUP, "FireBird ODBC Setup" ) ) );
 	p += nchar;
 
 	*p++ = 8;          // FontSize
 	nchar = nCopyAnsiToWideChar (p, TEXT("MS Sans Serif"));
 	p += nchar;
 
-    TMP_EDITTEXT      ( IDC_NAME,7,12,112,12,ES_AUTOHSCROLL )
-    TMP_COMBOBOX      ( IDC_DRIVER,123,12,107,47,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
-    TMP_EDITTEXT      ( IDC_DATABASE,7,37,181,12,ES_AUTOHSCROLL )
-    TMP_PUSHBUTTON    ( "Browse",IDC_FIND_FILE,194,36,36,14 )
-    TMP_EDITTEXT      ( IDC_CLIENT,7,62,182,12,ES_AUTOHSCROLL )
-    TMP_PUSHBUTTON    ( "Browse",IDC_FIND_FILE_CLIENT,194,61,36,14 )
-    TMP_EDITTEXT      ( IDC_USER,7,89,66,12,ES_UPPERCASE | ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_PASSWORD,77,89,73,12,ES_PASSWORD | ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_ROLE,154,89,76,12,ES_AUTOHSCROLL )
-    TMP_COMBOBOX      ( IDC_CHARSET,53,109,114,120,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
-    TMP_BUTTONCONTROL ( "read (default write)",IDC_CHECK_READ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,148,69,10 )
-    TMP_BUTTONCONTROL ( "nowait (default wait)",IDC_CHECK_NOWAIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,158,72,10 )
-    TMP_DEFPUSHBUTTON ( "OK",IDOK,85,183,50,14 )
-    TMP_PUSHBUTTON    ( "Cancel",IDCANCEL,143,183,50,14 )
-    TMP_LTEXT         ( "Data Source Name (DSN)",IDC_STATIC,7,2,83,8 )
-    TMP_LTEXT         ( "Database",IDC_STATIC,7,27,32,8 )
-    TMP_LTEXT         ( "Database Account",IDC_STATIC,7,78,60,8 )
-    TMP_LTEXT         ( "Password",IDC_STATIC,80,78,32,8 )
-    TMP_LTEXT         ( "Driver",IDC_STATIC,123,2,20,8 )
-    TMP_LTEXT         ( "Role",IDC_STATIC,155,78,16,8 )
-    TMP_LTEXT         ( "Character Set",IDC_STATIC,7,112,44,8 )
-    TMP_GROUPBOX      ( "Options",IDC_STATIC,7,128,223,52 )
-    TMP_GROUPBOX      ( "Initializing transaction",IDC_STATIC,11,139,81,33 )
-    TMP_LTEXT         ( "Client",IDC_STATIC,7,52,32,8 )
-    TMP_GROUPBOX      ( "Dialect",IDC_STATIC,95,139,31,33 )
-    TMP_RADIOCONTROL  ( "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,103,148,16,10 )
-    TMP_RADIOCONTROL  ( "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,103,158,16,10 )
-    TMP_GROUPBOX      ( "Extend property identifier",IDC_STATIC,129,134,97,43 )
-    TMP_BUTTONCONTROL ( "quoted identifiers",IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,143,67,9 )
-    TMP_BUTTONCONTROL ( "sensitive identifier",IDC_CHECK_SENSITIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,154,74,9 )
-    TMP_BUTTONCONTROL ( "autoquoted identifier",IDC_CHECK_AUTOQUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,165,77,9 )
-    TMP_PUSHBUTTON    ( "Test connection",IDC_TEST_CONNECTION,172,108,58,14 )
-    TMP_PUSHBUTTON    ( "Help",IDC_HELP_ODBC,27,183,50,14 )
+    TMP_EDITTEXT      ( IDC_NAME,7,12,184,12,ES_AUTOHSCROLL )
+    TMP_COMBOBOX      ( IDC_DRIVER,196,12,107,47,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
+    TMP_EDITTEXT      ( IDC_DATABASE,7,37,231,12,ES_AUTOHSCROLL )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_FIND_FILE, "Browse" ), IDC_FIND_FILE,243,36,60,14 )
+    TMP_EDITTEXT      ( IDC_CLIENT,7,62,231,12,ES_AUTOHSCROLL )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_FIND_FILE, "Browse" ), IDC_FIND_FILE_CLIENT,243,61,60,14 )
+    TMP_EDITTEXT      ( IDC_USER,7,87,107,12,ES_UPPERCASE | ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_PASSWORD,118,87,74,12,ES_PASSWORD | ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_ROLE,196,87,107,12,ES_AUTOHSCROLL )
+    TMP_COMBOBOX      ( IDC_CHARSET,7,112,100,120,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_READ, "read (default write)" ), IDC_CHECK_READ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,144,136,10 )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_NOWAIT, "nowait (default wait)" ), IDC_CHECK_NOWAIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,154,136,10 )
+    TMP_DEFPUSHBUTTON ( _TR( IDS_BUTTON_OK, "OK" ), IDOK,125,200,60,14 )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_CANCEL, "Cancel" ), IDCANCEL,192,200,60,14 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_DSN, "Data Source Name (DSN)" ), IDC_STATIC,7,2,167,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_DATABASE, "Database" ), IDC_STATIC,7,27,218,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_ACCOUNT, "Database Account" ), IDC_STATIC,7,77,107,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_PASSWORD, "Password" ), IDC_STATIC,119,77,72,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_DRIVER, "Driver" ), IDC_STATIC,197,2,103,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_ROLE, "Role" ), IDC_STATIC,197,77,105,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_CHARSET, "Character Set" ), IDC_STATIC,7,102,98,8 )
+    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_OPTIONS, "Options" ), IDC_STATIC,7,127,296,68 )
+    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_INIT_TRANSACTION, "Transaction" ), IDC_STATIC,10,135,142,33 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_CLIENT, "Client" ), IDC_STATIC,7,52,218,8 )
+    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_DIALECT, "Dialect" ), IDC_STATIC,10,169,142,20 )
+    TMP_RADIOCONTROL  ( "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,61,177,16,10 )
+    TMP_RADIOCONTROL  ( "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,91,177,16,10 )
+    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_EXT_PROPERTY, "Extended identifier properties" ), IDC_STATIC,154,135,146,54 )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_QUOTED, "quoted identifiers" ), IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,146,139,9 )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_SENSITIVE, "sensitive identifier" ), IDC_CHECK_SENSITIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,160,139,9 )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_AUTOQUOTED, "autoquoted identifier" ), IDC_CHECK_AUTOQUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,175,139,9 )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_TEST_CONNECTION, "Test connection" ), IDC_TEST_CONNECTION,206,106,97,18 )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_HELP_ODBC, "Help" ), IDC_HELP_ODBC,58,200,60,14 )
 
 	int nRet = DialogBoxIndirect(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hwnd, (DLGPROC)wndprocDsnDialog);
 	LocalFree (LocalHandle (pdlgtemplate));
 
 	return nRet;
 }
-#endif // __MINGW32__
 
 }; // end namespace OdbcJdbcSetupLibrary

@@ -30,12 +30,22 @@ static char THIS_FILE[] = __FILE__;
 //
 // DllMain should return a value of 1 if
 //
+namespace OdbcJdbcSetupLibrary {
+
 HINSTANCE m_hInstance = NULL;
+void initCodePageTranslate(  int userLCID );
+
+};
+
+using namespace OdbcJdbcSetupLibrary;
 
 BOOL APIENTRY DllMain(  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID )
 {
 	if ( fdwReason == DLL_PROCESS_ATTACH )
+	{
 		m_hInstance = hinstDLL;
+		initCodePageTranslate( GetUserDefaultLCID() );
+	}
 
     return TRUE;
 }
