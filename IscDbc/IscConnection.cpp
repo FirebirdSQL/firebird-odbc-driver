@@ -47,6 +47,7 @@
 #include <time.h>
 #include <string.h>
 #include "IscDbc.h"
+#include "EnvShare.h"
 #include "IscConnection.h"
 #include "IscProceduresResultSet.h"
 #include "SQLError.h"
@@ -69,6 +70,8 @@ extern char charTable [];
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+extern EnvShare environmentShare;
+
 extern "C" Connection* createConnection()
 {
 	return new IscConnection;
@@ -78,7 +81,6 @@ IscConnection::IscConnection()
 {
 	init();
 }
-
 
 IscConnection::IscConnection(IscConnection * source)
 {
@@ -95,6 +97,7 @@ void IscConnection::init()
 	transactionIsolation = 0;
 	transactionPending = false;
 	autoCommit = true;
+	shareConnected = false;
 	attachment = NULL;
 	transactionExtInit = 0;
 }
@@ -120,6 +123,9 @@ void IscConnection::close()
 		statement->freeStatementHandle();
 		statement->connection = NULL; // NOMEY
 	END_FOR;
+
+	if ( shareConnected )
+		connectionFromEnvShare();
 
 	delete this;
 }
@@ -190,6 +196,14 @@ void* IscConnection::getHandleDb()
 
 void* IscConnection::startTransaction()
 {
+	if ( shareConnected )
+	{
+		if ( !attachment->transactionHandle )
+			environmentShare.startTransaction();
+
+		return attachment->transactionHandle;
+	}
+
     if (transactionHandle)
         return transactionHandle;
 
@@ -841,6 +855,22 @@ const char*	IscConnection::nativeSQL(const char *sqlString)
 void IscConnection::setExtInitTransaction(int optTpb)
 {
 	transactionExtInit = optTpb;
+}
+
+EnvironmentShare* IscConnection::getEnvironmentShare()
+{
+	return (EnvironmentShare*)&environmentShare;
+}
+
+void IscConnection::connectionToEnvShare()
+{
+	shareConnected = environmentShare.addConnection (this);
+}
+
+void IscConnection::connectionFromEnvShare()
+{
+	environmentShare.removeConnection (this);
+	shareConnected = false;
 }
 
 int	IscConnection::getDriverBuildKey()

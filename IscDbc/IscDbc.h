@@ -100,6 +100,8 @@ typedef unsigned __int64			UQUAD;
 #include "Connection.h"
 #include "IscConnection.h"
 
+#define MAX_COUNT_DBC_SHARE			10
+
 #define DEFAULT_BLOB_BUFFER_LENGTH	16384
 
 #define MAX_ARRAY_LENGTH			100000000

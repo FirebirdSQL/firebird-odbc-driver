@@ -26,6 +26,7 @@
 #define _ODBCENV_H_
 
 #include "OdbcObject.h"
+#include "IscDbc/Connection.h"
 #include "IscDbc/Mutex.h"
 
 namespace OdbcJdbcLibrary {
@@ -62,6 +63,7 @@ public:
 #endif
 
 	Mutex			mutex;
+	EnvironmentShare *envShare;
 	OdbcConnection	*connections;
 	const char		*odbcIniFileName;
 	const char		*odbcInctFileName;

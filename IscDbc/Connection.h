@@ -82,6 +82,13 @@ class StatementMetaData;
 
 #define CONNECTION_VERSION	1
 
+class EnvironmentShare
+{
+public:
+	virtual int			getCountConnection () = 0;
+	virtual void		sqlEndTran(int operation) = 0;
+};
+
 class Connection  
 {
 public:
@@ -128,6 +135,9 @@ public:
 	virtual bool		getTransactionPending() = 0;
 	virtual void		setExtInitTransaction (int optTpb) = 0;
 	virtual int			getDriverBuildKey() = 0;
+	virtual EnvironmentShare* getEnvironmentShare() = 0;
+	virtual void		connectionToEnvShare() = 0;
+	virtual void		connectionFromEnvShare() = 0;
 
 	virtual void		addRef() = 0;
 	virtual int			release() = 0;

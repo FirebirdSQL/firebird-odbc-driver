@@ -52,6 +52,7 @@ namespace OdbcJdbcLibrary {
 OdbcEnv::OdbcEnv()
 {
 	libraryHandle = NULL;
+	envShare = NULL;
 	connections = NULL;
 #ifdef _WIN32
 	activeDrv = NULL;
@@ -115,12 +116,23 @@ RETCODE OdbcEnv::sqlEndTran(int operation)
 	clearErrors();
 	RETCODE ret = SQL_SUCCESS;
 
-	for (OdbcConnection *connection = connections; connection;
-		 connection = (OdbcConnection*) connection->next)
+	if ( !envShare->getCountConnection() )
+		for (OdbcConnection *connection = connections; connection;
+			 connection = (OdbcConnection*) connection->next)
+			{
+			RETCODE retcode = connection->sqlEndTran (operation);
+			if (retcode != SQL_SUCCESS)
+				ret = retcode;
+			}
+	else
+		try
 		{
-		RETCODE retcode = connection->sqlEndTran (operation);
-		if (retcode != SQL_SUCCESS)
-			ret = retcode;
+			envShare->sqlEndTran (operation);
+		}
+		catch (SQLException& exception)
+		{
+			postError ("HY000", exception);
+			return SQL_ERROR;
 		}
 
 	return ret;
@@ -139,6 +151,8 @@ void OdbcEnv::connectionClosed(OdbcConnection * connection)
 
 	if( !connections )
 	{
+		envShare = NULL;
+
 		if ( libraryHandle )
 #ifdef _WIN32
 			FreeLibrary(libraryHandle);

@@ -327,6 +327,16 @@ RETCODE OdbcConnection::sqlSetConnectAttr (SQLINTEGER attribute, SQLPOINTER valu
 
 	switch (attribute)
 	{
+	case SQL_ATTR_HANDLE_DBC_SHARE: // 4000
+		if (connection)
+		{
+			if ( (int) value )
+				connection->connectionToEnvShare();
+			else
+				connection->connectionFromEnvShare();
+		}
+		break;
+
 	case SQL_ATTR_LOGIN_TIMEOUT:
 		connectionTimeout = (int) value;
 		break;
@@ -1380,6 +1390,7 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 		{
 			connection->close();
 			connection = NULL;
+			env->envShare = NULL;
 
 #ifdef _WIN32
 			FreeLibrary(env->libraryHandle);
@@ -1414,6 +1425,8 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 		connection->openDatabase (databaseName, properties);
 		properties->release();
 
+		env->envShare = connection->getEnvironmentShare();
+
 		// Next two lines added by CA
 		connection->setAutoCommit( autoCommit );
 		connection->setTransactionIsolation( transactionIsolation );
@@ -1421,6 +1434,8 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 	}
 	catch (SQLException& exception)
 	{
+		if ( env->envShare )
+			env->envShare = NULL;
 		if (properties)
 			properties->release();
 		JString text = exception.getText();

@@ -73,6 +73,9 @@ public:
 	virtual int release();
 	virtual void addRef();
 	virtual void setExtInitTransaction (int optTpb);
+	EnvironmentShare* getEnvironmentShare();
+	virtual void connectionToEnvShare();
+	virtual void connectionFromEnvShare();
 	virtual int	getDriverBuildKey();
 	void init();
 	IscConnection (IscConnection *source);
@@ -114,6 +117,7 @@ public:
 	int				transactionExtInit;
 	bool			autoCommit;
 	bool			transactionPending;
+	bool			shareConnected;
 	int				useCount;
 };
 
