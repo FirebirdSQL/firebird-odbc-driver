@@ -89,7 +89,7 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 	if (fieldNamePattern)
 		sql += expandPattern (" and rfr.rdb$field_name %s '%s'", fieldNamePattern);
 
-	sql += " order by rdb$relation_name, rfr.rdb$field_name";
+	sql += " order by rdb$relation_name, rfr.rdb$field_position";
 	prepareStatement (sql);
 	numberColumns = 18;
 }
