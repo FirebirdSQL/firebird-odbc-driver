@@ -49,6 +49,7 @@ public:
 public:
 	int DoModal();
 
+	BOOL IsLocalhost(char * fullPathFileName, int &nSme);
 	BOOL OnFindFile();
 	void UpdateData(HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	BOOL OnInitDialog(HWND hDlg);

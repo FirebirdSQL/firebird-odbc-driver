@@ -28,6 +28,7 @@ extern HINSTANCE m_hInstance;
 CDsnDialog * m_ptDsnDialog = NULL;
 
 BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam);
+void ProcessCDError(DWORD dwErrorCode, HWND hWnd);
 
 CDsnDialog::CDsnDialog(const char **jdbcDrivers)
 {
@@ -95,8 +96,40 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 /////////////////////////////////////////////////////////////////////////////
 // CDsnDialog message handlers
 
+BOOL CDsnDialog::IsLocalhost(char * fullPathFileName, int &nSme)
+{
+	char * ptStr = fullPathFileName;
+	if(!ptStr)
+		return FALSE;
+
+	int nOk = FALSE;
+	nSme = 0;
+
+	while(*ptStr && *ptStr == ' ')ptStr++;
+    if(!memicmp(ptStr,"localhost",9))
+	{
+		ptStr += 9;
+		while(*ptStr && *ptStr == ' ')ptStr++;
+		if( *ptStr == ':' )
+		{
+			nSme = ptStr - fullPathFileName + 1;
+			nOk = TRUE;
+		}
+	}
+
+	while( *ptStr )
+	{
+		if ( *ptStr == '/')*ptStr = '\\';
+		++ptStr;
+	}
+
+	return nOk;
+}
+
 BOOL CDsnDialog::OnFindFile()
 {
+	int nSme;
+	BOOL bLocalhost;
     OPENFILENAME ofn;
     char strFullPathFileName[256];
     char achPathFileName[256];
@@ -105,6 +138,12 @@ BOOL CDsnDialog::OnFindFile()
 							"\0";
 
 	strcpy(strFullPathFileName,(const char*)m_database);
+
+	if ( (bLocalhost = IsLocalhost(strFullPathFileName,nSme)),bLocalhost )
+	{
+		memmove(strFullPathFileName,&strFullPathFileName[nSme],strlen(strFullPathFileName) - nSme + 1);
+	}
+
     ofn.lStructSize = sizeof(OPENFILENAME);
     ofn.hwndOwner = NULL;
     ofn.hInstance = NULL;
@@ -125,16 +164,33 @@ BOOL CDsnDialog::OnFindFile()
     ofn.lCustData = 0;
 
     if (!GetOpenFileName(&ofn))
-        return FALSE;
+	{
+		ProcessCDError(CommDlgExtendedError(), NULL );
+		return FALSE;
+	}
 
-	m_database = strFullPathFileName;
+	if ( bLocalhost )
+	{
+		m_database = "localhost:";
+		m_database += strFullPathFileName;
+	}
+	else
+		m_database = strFullPathFileName;
 
 	return TRUE;
 }
 
+#ifdef __MINGW32__
+int DialogBoxDynamic();
+#endif
+
 int CDsnDialog::DoModal()
 {
+#ifdef __MINGW32__
+	return DialogBoxDynamic();
+#else
 	return DialogBox(m_hInstance, MAKEINTRESOURCE(IDD), NULL, (DLGPROC)wndprocDsnDialog);
+#endif
 }
 
 BOOL CDsnDialog::OnInitDialog(HWND hDlg) 
@@ -182,3 +238,185 @@ BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam
 	}
     return FALSE ;
 }
+
+void ProcessCDError(DWORD dwErrorCode, HWND hWnd)
+{
+	LPCTSTR  stringID;
+
+	switch(dwErrorCode)
+	{
+	case CDERR_DIALOGFAILURE:   stringID="Creation of 'CD' failed on call to DialogBox()";   break;
+	case CDERR_STRUCTSIZE:      stringID="Invalid structure size passed to CD";      break;
+	case CDERR_INITIALIZATION:  stringID="Failure initializing CD.  Possibly\n\r do to insufficient memory.";  break;
+	case CDERR_NOTEMPLATE:      stringID="Failure finding custom template for CD";      break;
+	case CDERR_NOHINSTANCE:     stringID="Instance handle not passed to CD";     break;
+	case CDERR_LOADSTRFAILURE:  stringID="Failure loading specified string";  break;
+	case CDERR_FINDRESFAILURE:  stringID="Failure finding specified resource";  break;
+	case CDERR_LOADRESFAILURE:  stringID="Failure loading specified resource";  break;
+	case CDERR_LOCKRESFAILURE:  stringID="Failure locking specified resource";  break;
+	case CDERR_MEMALLOCFAILURE: stringID="Failure allocating memory for internal CD structure"; break;
+	case CDERR_MEMLOCKFAILURE:  stringID="Failure locking memory for internal CD structure";  break;
+	case CDERR_NOHOOK:          stringID="No hook function passed to CD but ENABLEHOOK\n\r was passed as a flag";          break;
+	case PDERR_SETUPFAILURE:    stringID="Failure setting up resources for CD";    break;
+	case PDERR_PARSEFAILURE:    stringID="Failure parsing strings in [devices]\n\rsection of WIN.INI";    break;
+	case PDERR_RETDEFFAILURE:   stringID="PD_RETURNDEFAULT flag was set but either the \n\rhDevMode or hDevNames field was nonzero";   break;
+	case PDERR_LOADDRVFAILURE:  stringID="Failure loading the printers device driver";  break;
+	case PDERR_GETDEVMODEFAIL:  stringID="The printer driver failed to initialize a DEVMODE data structure";  break;
+	case PDERR_INITFAILURE:     stringID="Print CD failed during initialization";     break;
+	case PDERR_NODEVICES:       stringID="No printer device drivers were found";       break;
+	case PDERR_NODEFAULTPRN:    stringID="No default printer was found";    break;
+	case PDERR_DNDMMISMATCH:    stringID="Data in DEVMODE contradicts data in DEVNAMES";    break;
+	case PDERR_CREATEICFAILURE: stringID="Failure creating an IC"; break;
+	case PDERR_PRINTERNOTFOUND: stringID="Printer not found"; break;
+	case CFERR_NOFONTS:         stringID="No fonts exist";         break;
+	case FNERR_SUBCLASSFAILURE: stringID="Failure subclassing during initialization of CD"; break;
+	case FNERR_INVALIDFILENAME: stringID="Invalide filename passed to FileOpen"; break;
+	case FNERR_BUFFERTOOSMALL:  stringID="Buffer passed to CD too small to accomodate string";  break;
+
+	case 0:   //User may have hit CANCEL or we got a *very* random error
+		return;
+
+	default:
+		stringID="Unknown error.";
+	}
+
+	MessageBox(hWnd, stringID, TEXT("FireBird ODBC Setup"), MB_OK);
+}
+
+// Temporarily!
+// After assembly from MinGW LoadString and LoadResurse does not work!!!
+// To me these magic switchs for dllwrap.exe are unknown ;-(
+// 
+#ifdef __MINGW32__
+int nCopyAnsiToWideChar (LPWORD lpWCStr, LPSTR lpAnsiIn)
+{
+  int cchAnsi = lstrlen(lpAnsiIn);
+  return MultiByteToWideChar(GetACP(), MB_PRECOMPOSED, lpAnsiIn, cchAnsi,(LPWSTR) lpWCStr, cchAnsi) + 1;
+}
+
+LPWORD lpwAlign ( LPWORD lpIn)
+{
+  ULONG ul;
+
+  ul = (ULONG) lpIn;
+  ul +=3;
+  ul >>=2;
+  ul <<=2;
+  return (LPWORD) ul;
+}
+
+
+#define TMP_COMTROL(CONTROL,STRTEXT,CTRL_ID,X,Y,CX,CY,STYLE)	\
+	p = lpwAlign (p);											\
+																\
+	lStyle = STYLE;												\
+	*p++ = LOWORD (lStyle);										\
+	*p++ = HIWORD (lStyle);										\
+	*p++ = 0;			/* LOWORD (lExtendedStyle) */			\
+	*p++ = 0;			/* HIWORD (lExtendedStyle) */			\
+	*p++ = X;			/* x  */								\
+	*p++ = Y;			/* y  */								\
+	*p++ = CX;			/* cx */								\
+	*p++ = CY;			/* cy */								\
+	*p++ = CTRL_ID;		/* ID */								\
+																\
+	*p++ = (WORD)0xffff;										\
+	*p++ = (WORD)CONTROL;										\
+																\
+	/* copy the text of the item */								\
+	nchar = nCopyAnsiToWideChar (p, TEXT(STRTEXT));				\
+	p += nchar;													\
+																\
+	*p++ = 0;  /* advance pointer over nExtraStuff WORD	*/		\
+
+
+//    PUSHBUTTON      "Browse",IDC_FIND_FILE,189,42,36,14
+#define TMP_PUSHBUTTON(STRTEXT,ID,X,Y,CX,CY) \
+	TMP_COMTROL(0x0080,STRTEXT,ID,X,Y,CX,CY, (BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | WS_TABSTOP) )
+
+#define TMP_DEFPUSHBUTTON(STRTEXT,ID,X,Y,CX,CY)	\
+	TMP_COMTROL(0x0080,STRTEXT,ID,X,Y,CX,CY, (BS_DEFPUSHBUTTON | WS_VISIBLE | WS_CHILD | WS_TABSTOP) )
+
+//    EDITTEXT        IDC_NAME,7,17,102,12,ES_AUTOHSCROLL
+#define TMP_EDITTEXT(ID,X,Y,CX,CY,STYLE) \
+	TMP_COMTROL(0x0081,"",ID,X,Y,CX,CY, 0x50810080 )
+
+//    COMBOBOX        IDC_DRIVER,123,17,102,47,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+#define TMP_COMBOBOX(ID,X,Y,CX,CY,STYLE) \
+	TMP_COMTROL(0x0085,"",ID,X,Y,CX,CY, (STYLE | WS_VISIBLE | WS_CHILD ) )
+
+//    LTEXT           "Data Source Name (DSN)",IDC_STATIC,7,7,83,8
+#define TMP_LTEXT(STRTEXT,ID,X,Y,CX,CY)	\
+	TMP_COMTROL(0x0082,STRTEXT,(short)ID,X,Y,CX,CY, ( WS_VISIBLE | WS_CHILD ) )
+
+//    GROUPBOX        "Options",IDC_STATIC,7,111,223,49
+#define TMP_GROUPBOX(STRTEXT,ID,X,Y,CX,CY) \
+	TMP_COMTROL(0x0080,STRTEXT,(short)ID,X,Y,CX,CY, (BS_GROUPBOX | WS_VISIBLE | WS_CHILD | WS_TABSTOP) )
+
+//    CONTROL         "read (default write)",IDC_CHECK_READ,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,18,129,69,10
+#define TMP_BUTTONCONTROL(STRTEXT,ID,NAME_CTRL,STYLE,X,Y,CX,CY) \
+	TMP_COMTROL(0x0080,STRTEXT,ID,X,Y,CX,CY, 0x50010003 )
+
+//IDD_DSN_PROPERTIES DIALOG DISCARDABLE  0, 0, 237, 186
+//STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+//CAPTION "FireBird ODBC Setup"
+//FONT 8, "MS Sans Serif"
+
+int DialogBoxDynamic()
+{
+	HWND hwnd = NULL;
+	WORD  *p, *pdlgtemplate;
+	int   nchar;
+	DWORD lStyle;
+
+	pdlgtemplate = p = (PWORD) LocalAlloc (LPTR, 4096);
+	lStyle = DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE;
+
+	*p++ = LOWORD (lStyle);
+	*p++ = HIWORD (lStyle);
+	*p++ = 0;          // LOWORD (lExtendedStyle)
+	*p++ = 0;          // HIWORD (lExtendedStyle)
+
+	*p++ = 19;          // NumberOfItems
+
+	*p++ = 0;          // x
+	*p++ = 0;          // y
+	*p++ = 237;        // cx
+	*p++ = 186;        // cy
+	*p++ = 0;          // Menu
+	*p++ = 0;          // Class
+
+	/* copy the title of the dialog */
+	nchar = nCopyAnsiToWideChar (p, TEXT("FireBird ODBC Setup"));
+	p += nchar;
+
+	*p++ = 8;          // FontSize
+	nchar = nCopyAnsiToWideChar (p, TEXT("MS Sans Serif"));
+	p += nchar;
+
+	TMP_EDITTEXT      ( IDC_NAME,7,17,102,12,ES_AUTOHSCROLL )
+	TMP_COMBOBOX      ( IDC_DRIVER,123,17,102,47,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
+    TMP_EDITTEXT      ( IDC_DATABASE,7,42,176,12,ES_AUTOHSCROLL )
+    TMP_PUSHBUTTON    ( "Browse",IDC_FIND_FILE,189,42,36,14 )
+    TMP_EDITTEXT      ( IDC_USER,7,70,65,14,ES_UPPERCASE | ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_PASSWORD,80,70,70,14,ES_PASSWORD | ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_ROLE,155,70,70,14,ES_AUTOHSCROLL )
+    TMP_LTEXT         ( "Data Source Name (DSN)",IDC_STATIC,7,7,83,8 )
+    TMP_LTEXT         ( "Database",IDC_STATIC,7,33,32,8 )
+    TMP_LTEXT         ( "Database Account",IDC_STATIC,7,59,60,8 )
+    TMP_LTEXT         ( "Password",IDC_STATIC,80,59,32,8 )
+    TMP_LTEXT         ( "Driver",IDC_STATIC,123,7,20,8 )
+    TMP_LTEXT         ( "Role",IDC_STATIC,155,59,16,8 )
+    TMP_GROUPBOX      ( "Options",IDC_STATIC,7,111,223,49 )
+	TMP_BUTTONCONTROL ( "read (default write)",IDC_CHECK_READ,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,18,129,69,10 )
+	TMP_BUTTONCONTROL ( "nowait (default wait)",IDC_CHECK_NOWAIT,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,18,139,72,10 )
+    TMP_GROUPBOX      ( "Initializing transaction",IDC_STATIC,14,120,79,33 )
+	TMP_DEFPUSHBUTTON ( "OK",IDOK,43,165,50,14	)
+	TMP_PUSHBUTTON    ( "Cancel",IDCANCEL,143,165,50,14 )
+
+	int nRet = DialogBoxIndirect(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hwnd, (DLGPROC)wndprocDsnDialog);
+	LocalFree (LocalHandle (pdlgtemplate));
+
+	return nRet;
+}
+#endif // __MINGW32__
