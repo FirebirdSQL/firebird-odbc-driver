@@ -4,6 +4,18 @@ Changes made to OdbcJdbc codebase
 !!  First, document the changes in the source code header template 
 !!  using the format below and then paste them into this document. 
 
+
+ *  2002-08-02	Sqlda.cpp
+ *				Contributed by C. G. Alvarez
+ *				Change getColumnType to pass var->sqlscale to getSQLType.   
+ *				Change getSQLTypeName to keep in sync with this. 
+ *				The purpose is to allow return of DECIMAL as JDBC_DECIMAL 
+ *				instead of JDBC_BIGINT.
+
+ *  2002-08-02  main.cpp, OdbcEnv.cpp
+ *				Contributed by C G Alvarez
+ *				Implement SQLGetEnvAttr()
+
  *	2002-07-08	OdbcStatement.cpp
  *				Added changes from C. G. Alvarez to return
  *				SQL_DESC_UNNAMED and SQL_DESC_BASE_TABLE_NAME

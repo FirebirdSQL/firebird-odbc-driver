@@ -17,6 +17,11 @@
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
  *
+ *  2002-08-02  main.cpp
+ *				Contributed by C G Alvarez
+ *				Implement SQLGetEnvAttr()
+ *
+ *
  *	2002-07-02	main.cpp
  *				Contributed by C G Alvarez
  *				Mapped calls to SQLGetConnectOption to SQLGetConnectAttr
@@ -1102,8 +1107,14 @@ RETCODE SQL_API SQLGetEnvAttr  (SQLHENV arg0,
 		 SQLINTEGER arg3,
 		 SQLINTEGER * arg4)
 {
-	notYetImplemented("SQLGetEnvAttr called\n");
-	return(SQL_SUCCESS);
+    /*
+    notYetImplemented("SQLGetEnvAttr called\n");
+    return(SQL_SUCCESS);
+    */
+
+    TRACE ("SQLGetEnvAttr");
+
+    return ((OdbcEnv*) arg0)->sqlGetEnvAttr (arg1, arg2, arg3, arg4);
 }
 
 ///// SQLGetStmtAttr /////

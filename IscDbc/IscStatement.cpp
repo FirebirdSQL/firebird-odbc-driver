@@ -20,8 +20,8 @@
  *
  *	2002-06-04	IscStatement.cpp
  *				Amended setValue() again. (RM)
- *					Hopefully this means that we finally 
- *					have got SQL_CHAR and SQL_VARYING right.
+ *				Hopefully this means that we finally 
+ *				have got SQL_CHAR and SQL_VARYING right.
  *
  *	2002-05-20	Added suggestion from Bernhard Schulte
  *				o	IscStatement::setValue() amended to 

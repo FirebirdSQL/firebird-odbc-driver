@@ -36,6 +36,7 @@ class OdbcConnection;
 class OdbcEnv : public OdbcObject  
 {
 public:
+	RETCODE sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr);
 	RETCODE sqlSetEnvAttr (int attribute, SQLPOINTER value, int length);
 	void connectionClosed (OdbcConnection *connection);
 	RETCODE sqlEndTran(int operation);

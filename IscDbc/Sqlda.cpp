@@ -18,6 +18,13 @@
  *  All Rights Reserved.
  *
  *
+ *  2002-08-02	Sqlda.cpp
+ *				Contributed by C. G. Alvarez
+ *				Change getColumnType to pass var->sqlscale to getSQLType.   
+ *				Change getSQLTypeName to keep in sync with this. 
+ *				The purpose is to allow return of DECIMAL as JDBC_DECIMAL 
+ *				instead of JDBC_BIGINT.
+ *
  *	2002-06-04	Sqlda.cpp
  *				Contributed by Robert Milharcic
  *				Amended getDisplaySize() and getPrecision()
@@ -245,7 +252,8 @@ int Sqlda::getColumnType(int index)
 {
 	XSQLVAR *var = sqlda->sqlvar + index - 1;
 
-	return getSqlType (var->sqltype, var->sqlsubtype);
+//	return getSqlType (var->sqltype, var->sqlsubtype);
+	return getSqlType (var->sqltype, var->sqlsubtype, var->sqlscale);
 }
 
 int Sqlda::getDisplaySize(int index)
@@ -365,7 +373,7 @@ bool Sqlda::isNullable(int index)
 }
 
 
-int Sqlda::getSqlType(int iscType, int subType)
+/*int Sqlda::getSqlType(int iscType, int subType)
 {
 	switch (iscType & ~1)
 		{
@@ -411,8 +419,65 @@ int Sqlda::getSqlType(int iscType, int subType)
 
 	return 0;
 }
+*/
+int Sqlda::getSqlType(int iscType, int subType, int sqlScale)
+{
+  switch (iscType & ~1)
+  {
+       case SQL_TEXT:
+           return JDBC_CHAR;
 
-const char* Sqlda::getSqlTypeName(int iscType, int subType)
+       case SQL_VARYING:
+           return JDBC_VARCHAR;
+
+       case SQL_SHORT:
+           if ( sqlScale < 0 )
+               return JDBC_DECIMAL;
+           return JDBC_SMALLINT;
+
+       case SQL_LONG:
+           if ( sqlScale < 0 )
+               return JDBC_DECIMAL;
+           return JDBC_INTEGER;
+
+       case SQL_INT64:
+           if ( sqlScale < 0 )
+               return JDBC_DECIMAL;
+           return JDBC_BIGINT;
+
+       case SQL_QUAD:
+           return JDBC_BIGINT;
+
+       case SQL_FLOAT:
+           return JDBC_REAL;
+
+       case SQL_DOUBLE:
+           if ( sqlScale < 0 )
+               return JDBC_DECIMAL;
+           return JDBC_DOUBLE;
+
+       case SQL_TIMESTAMP:
+           return JDBC_TIMESTAMP;
+
+       case SQL_TYPE_TIME:
+           return TIME;
+
+       case SQL_TYPE_DATE:
+           return jdbcDATE;
+
+       case SQL_BLOB:
+           if (subType == 1)
+               return JDBC_LONGVARCHAR;
+           return JDBC_LONGVARBINARY;
+
+       case SQL_ARRAY:
+           NOT_SUPPORTED("array", 0, "", 0, "");
+   }
+
+   return 0;
+}
+
+/*const char* Sqlda::getSqlTypeName(int iscType, int subType)
 {
 	switch (iscType & ~1)
 		{
@@ -461,6 +526,68 @@ const char* Sqlda::getSqlTypeName(int iscType, int subType)
 
 	return "*unknown type*";
 }
+*/
+
+const char* Sqlda::getSqlTypeName(int iscType, int subType, int sqlScale)
+{
+   switch (iscType & ~1)
+       {
+       case SQL_TEXT:
+           return "CHAR";
+
+       case SQL_VARYING:
+           return "VARCHAR";
+
+       case SQL_SHORT:
+           if ( sqlScale < 0 )
+               return "DECIMAL";
+           return "SMALLINT";
+
+       case SQL_LONG:
+           if ( sqlScale < 0 )
+               return "DECIMAL";
+           return "INTEGER";
+
+       case SQL_INT64:
+           if ( sqlScale < 0 )
+               return "DECIMAL";
+           return "BIGINT";
+
+       case SQL_FLOAT:
+           return "REAL";
+
+       case SQL_DOUBLE:
+           if ( sqlScale < 0 )
+               return "DECIMAL";
+           return "DOUBLE PRECISION";
+
+       case SQL_QUAD:
+           return "BIGINT";
+
+       case SQL_BLOB:
+           if (subType == 1)
+               return "LONG VARCHAR";
+           return "LONG VARBINARY";
+
+       case SQL_TIMESTAMP:
+           return "TIMESTAMP";
+
+       case SQL_TYPE_TIME:
+           return "TIME";
+
+       case SQL_TYPE_DATE:
+           return "DATE";
+
+       case SQL_ARRAY:
+           return "ARRAY";
+
+       default:
+           NOT_YET_IMPLEMENTED;
+       }
+
+   return "*unknown type*";
+}
+
 
 const char* Sqlda::getTableName(int index)
 {

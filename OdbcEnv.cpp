@@ -19,6 +19,10 @@
  *
  *	Changes
  *
+ *  2002-08-02  OdbcEnv.cpp
+ *				Contributed by C G Alvarez
+ *				Implement SQLGetEnvAttr()
+ *
  *	2002-05-20	OdbcEnv.cpp
  *
  *				Contributed by Robert Milharcic
@@ -106,9 +110,71 @@ void OdbcEnv::connectionClosed(OdbcConnection * connection)
 			}
 }
 
+RETCODE OdbcEnv::sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
+{
+    clearErrors();
+    long value;
+    char *string = NULL;
+
+    try
+    {
+        switch (attribute)
+            {
+            case SQL_ATTR_ODBC_VERSION:
+                value = SQL_OV_ODBC3;
+                break;
+            case SQL_ATTR_OUTPUT_NTS:
+                value = SQL_TRUE;
+                break;
+
+            default:
+                return sqlReturn (SQL_ERROR, "HYC00", "Optional feature not implemented");
+            }
+
+        if (string)
+            return returnStringInfo (ptr, bufferLength, lengthPtr, string);
+
+        if (ptr)
+            *(long*) ptr = value;
+
+        if (lengthPtr)
+            *lengthPtr = sizeof (long);
+    }
+    catch (SQLException& exception)
+    {
+        postError ("HY000", exception);
+        return SQL_ERROR;
+    }
+
+    return sqlSuccess();
+}
+
+//Change implementation of SQLSetEnvattr. 
+
 RETCODE OdbcEnv::sqlSetEnvAttr(int attribute, SQLPOINTER value, int length)
 {
-	clearErrors();
+    clearErrors();
 
-	return sqlSuccess();
+    try
+    {
+        switch (attribute)
+        {
+            case SQL_ATTR_OUTPUT_NTS:
+            case SQL_ATTR_ODBC_VERSION:
+                break;
+
+            default:
+                return sqlReturn (SQL_ERROR, "HYC00", "Optional feature not implemented");
+        }
+    }
+    catch (SQLException& exception)
+    {
+        postError ("HY000", exception);
+        return SQL_ERROR;
+    }
+
+    return sqlSuccess();
 }
+
+
+
