@@ -95,10 +95,9 @@ void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaDataOut, StatementM
 		if(	metaDataOut == NULL )
 			return;
 
-		bDefined = true;
-
 		headCount = metaDataOut->getColumnCount();
 		getDescRecord (headCount);
+		bDefined = headCount > 0;
 	}
 }
 
