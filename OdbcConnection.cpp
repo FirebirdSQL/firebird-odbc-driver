@@ -1691,7 +1691,7 @@ RETCODE OdbcConnection::sqlEndTran(int operation)
 			switch (operation)
 			{
 			case SQL_COMMIT:
-				connection->commit();
+				connection->commitAuto();
 				break;
 
 			case SQL_ROLLBACK:
