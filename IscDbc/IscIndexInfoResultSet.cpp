@@ -150,14 +150,19 @@ bool IscIndexInfoResultSet::next()
 	trimBlanks (6);				// index name
 	trimBlanks (9);				// field name
 
-	int uniqueFlag = resultSet->getInt (4);
-	resultSet->setValue (4, (uniqueFlag) ? 0 : 1);
+	int type = resultSet->getInt(7);
 
-	int position = resultSet->getInt(8);
-	resultSet->setValue(8,position+1);
+	if( type != 0 ) // #define SQL_TABLE_STAT 0
+	{
+		int uniqueFlag = resultSet->getInt (4);
+		resultSet->setValue (4, (uniqueFlag) ? 0 : 1);
 
-	int type = resultSet->getInt (14);
-	resultSet->setValue (10, (type) ? "D" : "A");	
+		int position = resultSet->getInt(8);
+		resultSet->setValue(8,position+1);
+
+		int type = resultSet->getInt (14);
+		resultSet->setValue (10, (type) ? "D" : "A");	
+	}
 
 	return true;
 }
@@ -192,8 +197,10 @@ int IscIndexInfoResultSet::getPrecision(int index)
 	switch (index)
 		{
 		case ASC_DSC:					//	currently 10
-			return 1;
+			return 10;
+		default:
+			return 31;
 		}
 
-	return Parent::getPrecision (index);
+//	return Parent::getPrecision (index);
 }
