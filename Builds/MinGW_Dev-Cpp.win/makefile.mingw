@@ -1,0 +1,87 @@
+#
+.PHONY: all createdirs IscDbc OdbcJdbc clean
+#
+#    Init variables for compile MinGW
+#
+MINGWDIR	= C:/MinGw
+COMPDIR		= D:/Dev-Cpp
+#
+# Start build
+#
+include ../makefile.sources
+include ../makefile.environ
+#
+COMPDIRBIN	= $(COMPDIR)/bin
+COMPDIRLIB	= $(COMPDIR)/lib
+#
+ifdef DEBUG
+TARGETDIR	= Debug
+else
+TARGETDIR	= Release
+endif
+#
+BUILDDIR 	= $(TARGETDIR)/obj
+#
+LIST_ISCDBCSRC 	=   $(addprefix $(ISCDBCDIR)/, $(ISCDBCSRC))
+LIST_ISCDBCOBJ 	=   $(addprefix $(BUILDDIR)/, $(ISCDBCSRC:.cpp=.o))
+LIST_ODBCJDBCSRC=   $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSRC))
+LIST_ODBCJDBCOBJ=   $(addprefix $(BUILDDIR)/, $(ODBCJDBCSRC:.cpp=.o))
+#
+COMPFLAGS	= -I"$(MINGWDIR)/include/c++" -I"$(MINGWDIR)/include/c++/mingw32" \
+		  -I"$(MINGWDIR)/include/c++/backward" -I"$(MINGWDIR)/include" \
+		  -I$(ISCDBCDIR) -I$(ODBCJDBCDIR) -I$(FBINCDIR) \
+		  -D__GNUWIN32__ -W -DWIN32 -D_WINDOWS
+#
+LINKFLAGS	= --add-stdcall-alias -L"$(MINGWDIR)/lib" 
+#
+LD		= $(COMPDIRBIN)/dllwrap.exe
+GCC		= $(COMPDIRBIN)/g++.exe
+WINDRES		= $(COMPDIRBIN)/windres.exe
+#
+ISCDBCDLL       = $(TARGETDIR)/IscDbc.dll
+ODBCJDBCDLL     = $(TARGETDIR)/OdbcJdbc.dll
+ISCDBCDEFFILE	= $(ISCDBCDIR)/IscDbc.def
+ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)/OdbcJdbc.def
+#
+ifdef DEBUG
+DEBUGFLAGS	= -D_DEBUG -DDEBUG -DLOGGING -fexceptions 
+else
+DEBUGFLAGS	= -DNDEBUG
+endif
+#
+.res.rc  :
+	@$(WINDRES) -i $*.rc -I rc -o $*.res -O coff 
+#
+$(BUILDDIR)/%.o: $(ISCDBCDIR)/%.cpp
+	$(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
+#
+$(BUILDDIR)/%.o: $(ODBCJDBCDIR)/%.cpp
+	$(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
+#
+ISCDBCLIB       = $(ISCDBCDLL:.dll=.a)
+ODBCJDBCLIB     = $(ODBCJDBCDLL:.dll=.a)
+#
+all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL)
+#
+# Silently creates the target and build directories
+createdirs :
+	@-mkdir $(TARGETDIR) > nul
+	@-mkdir $(BUILDDIR) > nul
+#
+# Silently cleanup and deletes the target and build directories
+clean :
+	@-rm -fr $(TARGETDIR)
+#
+IscDbc : $(ISCDBCDLL)
+OdbcJdbc : $(ODBCJDBCDLL)
+#
+# Build the library from the object modules
+#
+$(ISCDBCDLL) : $(LIST_ISCDBCOBJ)
+	$(LD) $(LINKFLAGS) --implib $(ISCDBCLIB) $(LIST_ISCDBCOBJ) --def $(ISCDBCDEFFILE) -o $(ISCDBCDLL)
+#
+$(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ)
+	$(LD) $(LINKFLAGS) --implib $(ODBCJDBCLIB) $(BUILDDIR)/JString.o $(LIST_ODBCJDBCOBJ) -lodbccp32 --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
+#
+# End
+#
