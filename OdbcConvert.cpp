@@ -35,6 +35,8 @@
 #define LO_LONG(l)           ((long)(l))
 #define HI_LONG(l)           ((long)(((UQUAD)(l) >> 32) & 0xFFFFFFFF))
 
+namespace OdbcJdbcLibrary {
+
 #ifdef __GNUWIN32__
 double listScale[] =
 {
@@ -1219,3 +1221,5 @@ void OdbcConvert::convertFloatToString(double value, char *string, int size, int
 	}
 	*length = len;
 }
+
+}; // end namespace OdbcJdbcLibrary

@@ -27,6 +27,8 @@
 #include "OdbcError.h"
 #include "IscDbc/SQLException.h"
 
+namespace OdbcJdbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -398,3 +400,5 @@ void OdbcObject::setCursorRowCount(int count)
 {
 	sqlDiagCursorRowCount = count;
 }
+
+}; // end namespace OdbcJdbcLibrary

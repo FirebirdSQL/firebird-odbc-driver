@@ -30,12 +30,12 @@
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "OdbcJdbc.h"
-#include "OdbcDesc.h"
 #include "OdbcConnection.h"
-#include "IscDbc/Connection.h"
 #include "DescRecord.h"
-#include "IscDbc/SQLException.h"
+
+namespace OdbcJdbcLibrary {
+
+using namespace IscDbcLibrary;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -1334,3 +1334,5 @@ int OdbcDesc::getConciseSize(int type, int length)
 
 	return type;
 }
+
+}; // end namespace OdbcJdbcLibrary

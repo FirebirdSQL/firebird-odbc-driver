@@ -29,7 +29,11 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#include "IscDbc/Connection.h"
 #include "OdbcObject.h"
+#include "Mlist.h"
+
+namespace OdbcJdbcLibrary {
 
 enum OdbcDescType {
 	odtApplication,
@@ -40,11 +44,8 @@ enum OdbcDescType {
 	};
 
 class OdbcConnection;
-class StatementMetaData;
 class DescRecord;
 class OdbcConvert;
-
-#include "Mlist.h"
 
 class CBindColumn
 {
@@ -136,5 +137,7 @@ public:
 	OdbcConvert			*convert;
 	ListBindColumn		*listBind;
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(AFX_ODBCDESC_H__73DA784A_3271_11D4_98E1_0000C01D2301__INCLUDED_)

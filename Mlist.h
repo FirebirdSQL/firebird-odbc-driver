@@ -27,6 +27,8 @@
 
 #include <stdlib.h>
 
+namespace OdbcJdbcLibrary {
+
 // Template for default value comparsion
 template <typename T>
 class DefaultComparator 
@@ -217,5 +219,7 @@ public:
 		countCache = numberStartCache;
 	}
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(_MLIST_H_)

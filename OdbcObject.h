@@ -31,6 +31,12 @@
 
 #include "OdbcJdbc.h"
 #include "IscDbc/JString.h"
+#include "IscDbc/SQLException.h"
+
+namespace OdbcJdbcLibrary {
+
+using namespace classJString;
+using namespace IscDbcLibrary;
 
 enum OdbcObjectType {
     odbcTypeEnv,
@@ -40,7 +46,6 @@ enum OdbcObjectType {
 	};
 
 class OdbcError;
-class SQLException;
 
 class OdbcObject  
 {
@@ -80,5 +85,7 @@ public:
 	SQLRETURN	sqlDiagReturnCode;				// SQL_DIAG_RETURNCODE
 	SQLINTEGER	sqlDiagRowCount;				// SQL_DIAG_ROW_COUNT
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(AFX_ODBCOBJECT_H__ED260D94_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)

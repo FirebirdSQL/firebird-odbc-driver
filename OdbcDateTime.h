@@ -45,6 +45,8 @@
 struct tagTIMESTAMP_STRUCT;
 struct tagDATE_STRUCT;
 
+namespace OdbcJdbcLibrary {
+
 class OdbcDateTime  
 {
 public:
@@ -65,5 +67,7 @@ private:
 	signed long yday (tm *times);
 
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(AFX_ODBCDATETIME_H__9DD752F8_BEC1_41C9_B27B_1AA040E944E7__INCLUDED_)

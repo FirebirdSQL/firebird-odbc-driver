@@ -25,6 +25,8 @@
 #include "OdbcDesc.h"
 #include "DescRecord.h"
 
+namespace OdbcJdbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -107,3 +109,5 @@ bool DescRecord::operator =(DescRecord *rec)
 	dataPtr = rec->dataPtr;
 	return true;
 }
+
+}; // end namespace OdbcJdbcLibrary

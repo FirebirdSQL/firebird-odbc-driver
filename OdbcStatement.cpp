@@ -127,12 +127,12 @@
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "IscDbc/Connection.h"
+#include "IscDbc/SQLException.h"
 #include "OdbcStatement.h"
 #include "OdbcConnection.h"
 #include "OdbcError.h"
-#include "IscDbc/Connection.h"
 #include "DescRecord.h"
-#include "IscDbc/SQLException.h"
 #include "OdbcDateTime.h"
 
 #ifdef DEBUG                               
@@ -156,6 +156,10 @@
 				binding->dataOffset = 0;					\
 		}													\
 	}														\
+
+namespace OdbcJdbcLibrary {
+
+using namespace IscDbcLibrary;
 
 void TraceOutput(char * msg,long val)
 {
@@ -3794,3 +3798,4 @@ RETCODE OdbcStatement::sqlSpecialColumns(unsigned short rowId, SQLCHAR * catalog
 	return sqlSuccess();
 }
 
+}; // end namespace OdbcJdbcLibrary

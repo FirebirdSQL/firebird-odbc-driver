@@ -32,11 +32,12 @@
 #include "OdbcDesc.h"
 #include "IscDbc/JString.h"	// Added by ClassView
 
-class OdbcEnv;
-class Connection;
-class DatabaseMetaData;
-class OdbcStatement;
+namespace OdbcJdbcLibrary {
 
+using namespace IscDbcLibrary;
+
+class OdbcEnv;
+class OdbcStatement;
 
 class OdbcConnection : public OdbcObject  
 {
@@ -117,5 +118,6 @@ public:
 	}
 };
 
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(AFX_ODBCCONNECTION_H__ED260D96_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)

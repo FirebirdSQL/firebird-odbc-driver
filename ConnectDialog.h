@@ -27,6 +27,8 @@
 //
 #include "resource.h"
 
+namespace OdbcJdbcLibrary {
+
 /////////////////////////////////////////////////////////////////////////////
 // CConnectDialog dialog
 
@@ -49,6 +51,8 @@ public:
 	void UpdateData(HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	BOOL OnInitDialog(HWND hDlg);
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // _WIN32
 

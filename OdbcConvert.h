@@ -29,6 +29,8 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+namespace OdbcJdbcLibrary {
+
 class DescRecord;
 class OdbcConvert;
 
@@ -150,5 +152,7 @@ public:
 	int convStringToString(DescRecord * from, DescRecord * to);
 	int convVarStringToString(DescRecord * from, DescRecord * to);
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(_OdbcConvert__INCLUDED_)

@@ -31,6 +31,10 @@
 
 #include "IscDbc/JString.h"
 
+namespace OdbcJdbcLibrary {
+
+using namespace classJString;
+
 class OdbcError  
 {
 public:
@@ -48,5 +52,7 @@ public:
 	int				rowNumber;
 	int				columnNumber;
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(AFX_ODBCERROR_H__C19738BE_1C87_11D4_98DF_0000C01D2301__INCLUDED_)

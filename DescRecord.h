@@ -32,6 +32,8 @@
 
 #include "OdbcConvert.h"
 
+namespace OdbcJdbcLibrary {
+
 class DescRecord
 {
 public:
@@ -83,5 +85,7 @@ public:
 
 	ADRESS_FUNCTION fnConv;
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(AFX_DESCRECORD_H__F3F1D3A4_4083_11D4_98E8_0000C01D2301__INCLUDED_)

@@ -24,6 +24,10 @@
 // DsnDialog.h : header file
 //
 
+namespace OdbcJdbcSetupLibrary {
+
+using namespace classJString;
+
 /////////////////////////////////////////////////////////////////////////////
 // CDsnDialog dialog
 
@@ -63,5 +67,7 @@ public:
 	void OnTestConnection(HWND hDlg);
 #endif
 };
+
+}; // end namespace OdbcJdbcSetupLibrary
 
 #endif // !defined(_DSNDIALOG_H_INCLUDED_)

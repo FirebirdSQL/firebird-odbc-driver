@@ -27,6 +27,9 @@
 #include "ConnectDialog.h"
 
 extern HINSTANCE m_hInstance;
+
+namespace OdbcJdbcLibrary {
+
 CConnectDialog * m_ptConnectDialog = NULL;
 
 int DialogBoxDynamicConnect();
@@ -239,5 +242,7 @@ int DialogBoxDynamicConnect()
 	return nRet;
 }
 #endif // __MINGW32__
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // _WIN32

@@ -31,6 +31,10 @@
 #define CODE(code)		{code, 0},
 #define HASH_SIZE		101
 
+namespace OdbcJdbcLibrary {
+
+using namespace classJString;
+
 struct Hash {
 	const char	*string;
 	Hash		*collision;
@@ -253,3 +257,5 @@ void OdbcError::setColumnNumber(int column, int row)
 	columnNumber = column;
 	rowNumber = row;
 }
+
+}; // end namespace OdbcJdbcLibrary

@@ -32,6 +32,10 @@
 #include "Setup.h"
 #include "../SetupAttributes.h"
 
+extern HINSTANCE m_hInstance;
+
+namespace OdbcJdbcSetupLibrary {
+
 const char *driverInfo =
 	DRIVER_FULL_NAME"\0"
 	"Driver=OdbcJdbc.dll\0"
@@ -52,7 +56,6 @@ static const char *fileNames [] = {
 	};
 
 static const char *drivers [] = { "IscDbc", NULL };
-extern HINSTANCE m_hInstance;
 void MessageBoxError(char * stageExecuted, char * pathFile);
 void MessageBoxInstallerError(char * stageExecuted, char * pathOut);
 
@@ -64,7 +67,7 @@ void MessageBoxInstallerError(char * stageExecuted, char * pathOut);
  *		shell32.dll,Control_RunDLL odbccp32.cpl,,1
  *	4/ Set breakpoints as desired and hit the run button
  */
-#ifdef __BORLANDC__
+#if defined __BORLANDC__ || defined __MINGW32__
 extern "C" __declspec( dllexport ) BOOL INSTAPI ConfigDSN(HWND		hWnd,
 #else
 BOOL INSTAPI ConfigDSN(HWND		hWnd,
@@ -426,3 +429,5 @@ JString Setup::readAttribute (const char * attribute)
 
 	return JString (buffer, ret);
 }
+
+}; // end namespace OdbcJdbcSetupLibrary

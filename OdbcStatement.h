@@ -37,6 +37,11 @@
 
 #include "OdbcObject.h"
 
+namespace OdbcJdbcLibrary {
+
+using namespace classJString;
+using namespace IscDbcLibrary;
+
 struct Binding {
 	int			type;
 	int			cType;
@@ -54,10 +59,6 @@ struct Binding {
 class OdbcConnection;
 class OdbcDesc;
 class DescRecord;
-class ResultSet;
-class StatementMetaData;
-class PreparedStatement;
-class CallableStatement;
 
 enum enFetchType { NoneFetch, Fetch, ExtendedFetch, FetchScroll };
 
@@ -174,5 +175,7 @@ public:
 	int					maxRows;
 	int					maxLength;
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(AFX_ODBCSTATEMENT_H__ED260D97_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
