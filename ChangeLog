@@ -1,405 +1,615 @@
+2003-01-29  paul_reeves
+	* Attributes.cpp:
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscDbc.h:
+	* IscDbc/IscSqlType.cpp:
+	* JdbcTest/JdbcTest.dsp:
+	* JdbcTest/Test.cpp:
+	* OdbcConnection.cpp:
+	* OdbcDesc.cpp:
+	* OdbcEnv.cpp:
+	* makefile:
+		makefile for Linux from Ostash
+
+2002-12-05  paul_reeves
+	* InfoItems.h:
+	* OdbcConnection.cpp:
+	* OdbcConnection.h:
+	* OdbcJdbc.opt:
+	* OdbcStatement.cpp:
+	* change.log:
+		Added some minor changes from C. Guzman Alvarez. See change.log
+		for more details.
+
+2002-11-25  paul_reeves
+	* IscDbc/Sqlda.cpp:
+	* IscDbc/Value.cpp:
+	* change.log:
+		Small improvement to treatment of DECIMAL and NUMERIC. With
+		thanks to Carlos Alvarez.
+
+	* OdbcJdbcSetup/res/OdbcJdbcSetup.rc2:
+		A little something to stop MSVC complaining.
+
+	* IscDbc/IscDbc.rc:
+	* OdbcJdbc.rc:
+	* OdbcJdbcSetup/OdbcJdbcSetup.rc:
+		Update version resources.
+
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscDbc.dsp:
+	* IscDbc/IscProcedureColumnsResultSet.cpp:
+	* IscDbc/IscSpecialColumnsResultSet.cpp:
+	* IscDbc/IscSqlType.cpp:
+	* IscDbc/IscSqlType.h:
+	* IscDbc/Types.h:
+	* IscDbc/Value.cpp:
+	* OdbcError.cpp:
+	* OdbcJdbc.dsp:
+	* OdbcJdbc.opt:
+	* OdbcStatement.cpp:
+	* change.log:
+		Patches from Carlos Alvarez to improve handling of TIME and
+		NUMERIC/DECIMAL. Re-organise the project files.
+
+2002-11-22  paul_reeves
+	* IscDbc/IscDatabaseMetaData.cpp:
+	* IscDbc/IscDbc.dsp:
+	* IscDbc/IscDbc.h:
+	* IscDbc/IscSqlType.cpp:
+	* OdbcJdbc.opt:
+	* OdbcStatement.cpp:
+	* change.log:
+		Improve handling of date and time datatypes. Add better support
+		for Dialect 1 databases with MSACCESS.
+
+2002-11-21  paul_reeves
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscDbc.dsp:
+	* IscDbc/IscIndexInfoResultSet.cpp:
+	* OdbcConnection.cpp:
+	* OdbcJdbc.dsp:
+	* OdbcJdbc.dsw:
+	* OdbcJdbc.opt:
+	* OdbcJdbcSetup/OdbcJdbcsetup.dsp:
+	* OdbcStatement.cpp:
+	* change.log:
+		Minor modifications. See change.log for details.
+
+2002-10-17  paul_reeves
+	* IscDbc/IscDbc.plg:
+	* JdbcTest/JdbcTest.plg:
+	* OdbcJdbc.plg:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* Test/Test.plg:
+	* TestInstall/TestInstall.plg:
+		Removed plg files
+
+	* IscDbc/IscDatabaseMetaData.cpp:
+	* OdbcConnection.cpp:
+	* OdbcStatement.cpp:
+		Fix a couple of bugs in recent enhancements so that existing
+		functionality works again.
+
+2002-10-11  paul_reeves
+	* DescRecord.cpp:
+	* InfoItems.h:
+	* IscDbc/Attachment.cpp:
+	* IscDbc/Attachment.h:
+	* IscDbc/Connection.h:
+	* IscDbc/IscCallableStatement.cpp:
+	* IscDbc/IscCallableStatement.h:
+	* IscDbc/IscColumnPrivilegesResultSet.cpp:
+	* IscDbc/IscColumnPrivilegesResultSet.h:
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscConnection.cpp:
+	* IscDbc/IscDatabaseMetaData.cpp:
+	* IscDbc/IscDatabaseMetaData.h:
+	* IscDbc/IscDbc.dsp:
+	* IscDbc/IscDbc.h:
+	* IscDbc/IscDbc.plg:
+	* IscDbc/IscDbc.rc:
+	* IscDbc/IscIndexInfoResultSet.cpp:
+	* IscDbc/IscMetaDataResultSet.cpp:
+	* IscDbc/IscMetaDataResultSet.h:
+	* IscDbc/IscPreparedStatement.cpp:
+	* IscDbc/IscPreparedStatement.h:
+	* IscDbc/IscProcedureColumnsResultSet.cpp:
+	* IscDbc/IscResultSet.cpp:
+	* IscDbc/IscResultSet.h:
+	* IscDbc/IscResultSetMetaData.cpp:
+	* IscDbc/IscResultSetMetaData.h:
+	* IscDbc/IscSpecialColumnsResultSet.cpp:
+	* IscDbc/IscSqlType.cpp:
+	* IscDbc/IscSqlType.h:
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/IscTablePrivilegesResultSet.cpp:
+	* IscDbc/IscTablePrivilegesResultSet.h:
+	* IscDbc/IscTablesResultSet.cpp:
+	* IscDbc/JString.cpp:
+	* IscDbc/Sqlda.cpp:
+	* IscDbc/Sqlda.h:
+	* IscDbc/Types.h:
+	* IscDbc/TypesResultSet.cpp:
+	* IscDbc/TypesResultSet.h:
+	* Main.cpp:
+	* OdbcConnection.cpp:
+	* OdbcConnection.h:
+	* OdbcDateTime.cpp:
+	* OdbcDesc.cpp:
+	* OdbcDesc.h:
+	* OdbcEnv.cpp:
+	* OdbcError.cpp:
+	* OdbcJdbc.dsp:
+	* OdbcJdbc.opt:
+	* OdbcJdbc.plg:
+	* OdbcJdbc.rc:
+	* OdbcJdbcSetup/OdbcJdbcSetup.aps:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* OdbcJdbcSetup/OdbcJdbcSetup.rc:
+	* OdbcStatement.cpp:
+	* OdbcStatement.h:
+	* change.log:
+		Added extensive modifications from C G Alvarez.
+
 2002-08-02  paul_reeves
-	* IscDbc/IscStatement.cpp 1.6:
-	* IscDbc/Sqlda.cpp 1.3:
-	* IscDbc/Sqlda.h 1.2:
-	* Main.cpp 1.4:
-	* OdbcEnv.cpp 1.3:
-	* OdbcEnv.h 1.2:
-	* OdbcJdbc.opt 1.11:
-	* OdbcJdbc.plg 1.4:
-	* OdbcJdbcSetup/OdbcJdbcSetup.aps 1.5:
-	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.12:
-	* change.log 1.11:
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/Sqlda.cpp:
+	* IscDbc/Sqlda.h:
+	* Main.cpp:
+	* OdbcEnv.cpp:
+	* OdbcEnv.h:
+	* OdbcJdbc.opt:
+	* OdbcJdbc.plg:
+	* OdbcJdbcSetup/OdbcJdbcSetup.aps:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* change.log:
 		Added some more minor changes. See change.log for more details.
 
 2002-07-08  paul_reeves
-	* OdbcJdbc.opt 1.10:
-	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.10:
-	* OdbcJdbcSetup/OdbcJdbcsetup.dsp 1.6:
-	* OdbcStatement.cpp 1.12:
-	* change.log 1.9:
+	* OdbcJdbc.opt:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* OdbcJdbcSetup/OdbcJdbcsetup.dsp:
+	* OdbcStatement.cpp:
+	* change.log:
 		Added minor changes to sqlColAttributes. See Change Log for
 		more details.
 
-	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.11:
-	* OdbcStatement.cpp 1.13:
-	* change.log 1.10:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* OdbcStatement.cpp:
+	* change.log:
 		Fixed confusion arising from sqlColAttribute() and
 		sqlColAttributes().
 
 2002-07-06  paul_reeves
-	* IscDbc/IscDatabaseMetaData.cpp 1.3:
-	* IscDbc/IscProcedureColumnsResultSet.cpp 1.3:
-	* IscDbc/Types.h 1.2:
-	* IscDbc/TypesResultSet.cpp 1.2:
-	* Main.cpp 1.3:
-	* OdbcConnection.cpp 1.7:
-	* OdbcConnection.h 1.2:
-	* OdbcJdbc.opt 1.9:
-	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.9:
-	* OdbcJdbcSetup/OdbcJdbcsetup.dsp 1.5:
-	* OdbcStatement.cpp 1.11:
-	* change.log 1.8:
+	* IscDbc/IscDatabaseMetaData.cpp:
+	* IscDbc/IscProcedureColumnsResultSet.cpp:
+	* IscDbc/Types.h:
+	* IscDbc/TypesResultSet.cpp:
+	* Main.cpp:
+	* OdbcConnection.cpp:
+	* OdbcConnection.h:
+	* OdbcJdbc.opt:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* OdbcJdbcSetup/OdbcJdbcsetup.dsp:
+	* OdbcStatement.cpp:
+	* change.log:
 		Added latest contributed changes. See Change Log for more
 		details.
 
 2002-06-26  paul_reeves
-	* OdbcConnection.cpp 1.6:
-	* OdbcJdbc.opt 1.8:
-	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.8:
-	* OdbcStatement.cpp 1.10:
-	* OdbcStatement.h 1.4:
-	* change.log 1.7:
+	* OdbcConnection.cpp:
+	* OdbcJdbc.opt:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* OdbcStatement.cpp:
+	* OdbcStatement.h:
+	* change.log:
 		Committed contributed changes. See changelog for more details.
 
 2002-06-25  paul_reeves
-	* InfoItems.h 1.2:
-	* IscDbc/Connection.h 1.7:
-	* IscDbc/IscDatabaseMetaData.cpp 1.2:
-	* IscDbc/IscDatabaseMetaData.h 1.2:
-	* IscDbc/IscPreparedStatement.cpp 1.7:
-	* OdbcConnection.cpp 1.5:
-	* OdbcJdbc.opt 1.7:
-	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.7:
-	* OdbcStatement.cpp 1.9:
-	* change.log 1.6:
+	* InfoItems.h:
+	* IscDbc/Connection.h:
+	* IscDbc/IscDatabaseMetaData.cpp:
+	* IscDbc/IscDatabaseMetaData.h:
+	* IscDbc/IscPreparedStatement.cpp:
+	* OdbcConnection.cpp:
+	* OdbcJdbc.opt:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* OdbcStatement.cpp:
+	* change.log:
 		Committed support for returning server name under OleDB for
 		ODBC / .Net (contributed by C. G. Alvarez)  See changelog for
 		more details.
 
 2002-06-17  paul_reeves
-	* IscDbc/Connection.h 1.6:
-	* IscDbc/IscCallableStatement.cpp 1.5:
-	* IscDbc/IscCallableStatement.h 1.5:
-	* IscDbc/IscPreparedStatement.cpp 1.6:
-	* IscDbc/IscPreparedStatement.h 1.5:
-	* OdbcJdbc.opt 1.6:
-	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.6:
-	* OdbcStatement.cpp 1.8:
-	* change.log 1.5:
+	* IscDbc/Connection.h:
+	* IscDbc/IscCallableStatement.cpp:
+	* IscDbc/IscCallableStatement.h:
+	* IscDbc/IscPreparedStatement.cpp:
+	* IscDbc/IscPreparedStatement.h:
+	* OdbcJdbc.opt:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* OdbcStatement.cpp:
+	* change.log:
 		Added change from C. G. Alvarez for returning strings that are
 		not null-terminated. Code compiles but has not been tested.
 
 2002-06-08  paul_reeves
-	* IscDbc/IscConnection.cpp 1.3:
-	* IscDbc/IscDbc.plg 1.3:
-	* IscDbc/IscPrimaryKeysResultSet.cpp 1.2:
-	* OdbcConnection.cpp 1.4:
-	* OdbcJdbc.opt 1.5:
-	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.5:
-	* change.log 1.4:
+	* IscDbc/IscConnection.cpp:
+	* IscDbc/IscDbc.plg:
+	* IscDbc/IscPrimaryKeysResultSet.cpp:
+	* OdbcConnection.cpp:
+	* OdbcJdbc.opt:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* change.log:
 		Committed enhancements to transaction control from C. Alvarez.
 
-	* OdbcStatement.cpp 1.7:
-	* change.log 1.3:
+	* OdbcStatement.cpp:
+	* change.log:
 		Committed change to support remote views in FoxPro.
 
-	* IscDbc/Connection.h 1.5:
-	* IscDbc/IscCallableStatement.cpp 1.4:
-	* IscDbc/IscCallableStatement.h 1.4:
-	* IscDbc/IscDbc.dsp 1.4:
-	* IscDbc/IscDbc.plg 1.2:
-	* IscDbc/IscPreparedStatement.cpp 1.5:
-	* IscDbc/IscPreparedStatement.h 1.4:
-	* IscDbc/IscStatement.cpp 1.5:
-	* IscDbc/Sqlda.cpp 1.2:
-	* IscDbc/TimeStamp.cpp 1.3:
-	* OdbcConnection.cpp 1.3:
-	* OdbcJdbc.dsp 1.3:
-	* OdbcJdbc.opt 1.4:
-	* OdbcJdbc.plg 1.3:
-	* OdbcJdbcSetup/OdbcJdbcSetup.aps 1.4:
-	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.4:
-	* OdbcJdbcSetup/OdbcJdbcsetup.dsp 1.4:
-	* OdbcJdbcSetup/Setup.cpp 1.3:
-	* OdbcStatement.cpp 1.6:
-	* OdbcStatement.h 1.3:
-	* SetupAttributes.h 1.2:
-	* change.log 1.2:
+	* IscDbc/Connection.h:
+	* IscDbc/IscCallableStatement.cpp:
+	* IscDbc/IscCallableStatement.h:
+	* IscDbc/IscDbc.dsp:
+	* IscDbc/IscDbc.plg:
+	* IscDbc/IscPreparedStatement.cpp:
+	* IscDbc/IscPreparedStatement.h:
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/Sqlda.cpp:
+	* IscDbc/TimeStamp.cpp:
+	* OdbcConnection.cpp:
+	* OdbcJdbc.dsp:
+	* OdbcJdbc.opt:
+	* OdbcJdbc.plg:
+	* OdbcJdbcSetup/OdbcJdbcSetup.aps:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* OdbcJdbcSetup/OdbcJdbcsetup.dsp:
+	* OdbcJdbcSetup/Setup.cpp:
+	* OdbcStatement.cpp:
+	* OdbcStatement.h:
+	* SetupAttributes.h:
+	* change.log:
 		Committed contributed changes. See changelog for more details.
 
 2002-05-23  paul_reeves
-	* OdbcDateTime.cpp 1.6:
+	* OdbcDateTime.cpp:
 		Minor fix to time conversion routine.
 
 2002-05-21  paul_reeves
-	* IscDbc/BinaryBlob.cpp 1.2:
-	* IscDbc/IscConnection.cpp 1.2:
-	* IscDbc/IscDbc.dsp 1.3:
-	* IscDbc/IscDbc.rc 1.1:
-	* IscDbc/IscIndexInfoResultSet.cpp 1.2:
-	* IscDbc/IscProcedureColumnsResultSet.cpp 1.2:
-	* IscDbc/IscStatement.cpp 1.4:
-	* IscDbc/TimeStamp.cpp 1.2:
-	* IscDbc/Value.cpp 1.4:
-	* IscDbc/resource.h 1.1:
-	* Main.cpp 1.2:
-	* OdbcDateTime.cpp 1.5:
-	* OdbcDateTime.h 1.5:
-	* OdbcEnv.cpp 1.2:
-	* OdbcJdbc.dsp 1.2:
-	* OdbcJdbc.h 1.2:
-	* OdbcJdbc.opt 1.3:
-	* OdbcJdbc.plg 1.2:
-	* OdbcJdbc.rc 1.1:
-	* OdbcJdbcSetup/OdbcJdbcSetup.aps 1.3:
-	* OdbcJdbcSetup/OdbcJdbcSetup.clw 1.2:
-	* OdbcJdbcSetup/OdbcJdbcSetup.def 1.2:
-	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.3:
-	* OdbcJdbcSetup/OdbcJdbcSetup.rc 1.3:
-	* OdbcJdbcSetup/OdbcJdbcsetup.dsp 1.3:
-	* OdbcJdbcSetup/Setup.cpp 1.2:
-	* OdbcStatement.cpp 1.5:
-	* OdbcStatement.h 1.2:
-	* change.log 1.1:
-	* resource.h 1.1:
+	* IscDbc/BinaryBlob.cpp:
+	* IscDbc/IscConnection.cpp:
+	* IscDbc/IscDbc.dsp:
+	* IscDbc/IscDbc.rc:
+	* IscDbc/IscIndexInfoResultSet.cpp:
+	* IscDbc/IscProcedureColumnsResultSet.cpp:
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/TimeStamp.cpp:
+	* IscDbc/Value.cpp:
+	* IscDbc/resource.h:
+	* Main.cpp:
+	* OdbcDateTime.cpp:
+	* OdbcDateTime.h:
+	* OdbcEnv.cpp:
+	* OdbcJdbc.dsp:
+	* OdbcJdbc.h:
+	* OdbcJdbc.opt:
+	* OdbcJdbc.plg:
+	* OdbcJdbc.rc:
+	* OdbcJdbcSetup/OdbcJdbcSetup.aps:
+	* OdbcJdbcSetup/OdbcJdbcSetup.clw:
+	* OdbcJdbcSetup/OdbcJdbcSetup.def:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* OdbcJdbcSetup/OdbcJdbcSetup.rc:
+	* OdbcJdbcSetup/OdbcJdbcsetup.dsp:
+	* OdbcJdbcSetup/Setup.cpp:
+	* OdbcStatement.cpp:
+	* OdbcStatement.h:
+	* change.log:
+	* resource.h:
 		Collected all the recent contributions to the ODBC driver. See
 		change.log for full details.
 
 2002-02-20  dimitr
-	* IscDbc/IscColumnsResultSet.cpp 1.5:
+	* IscDbc/IscColumnsResultSet.cpp:
 		Simple change to order columns by their position instead of
 		being ordered alphabetically.
 
 2001-07-26  paul_reeves
-	* OdbcJdbc.ncb 1.2:
+	* OdbcJdbc.ncb:
 		Removing auto-generated MSVC files
 
-	* IscDbc/IscDbc.dsp 1.2:
-	* OdbcJdbc.dsp 1.1:
-	* OdbcJdbc.dsw 1.3:
-	* OdbcJdbc.opt 1.2:
-	* OdbcJdbcSetup/OdbcJdbcSetup.aps 1.2:
-	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.2:
-	* OdbcJdbcSetup/OdbcJdbcSetup.rc 1.2:
-	* OdbcJdbcSetup/OdbcJdbcsetup.dsp 1.2:
+	* IscDbc/IscDbc.dsp:
+	* OdbcJdbc.dsp:
+	* OdbcJdbc.dsw:
+	* OdbcJdbc.opt:
+	* OdbcJdbcSetup/OdbcJdbcSetup.aps:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* OdbcJdbcSetup/OdbcJdbcSetup.rc:
+	* OdbcJdbcSetup/OdbcJdbcsetup.dsp:
 		*** empty log message ***
 
 2001-07-11  awharrison
-	* IscDbc/IscDbc.h 1.3:
+	* IscDbc/IscDbc.h:
 		fix case of JString.h
 
 2001-07-05  awharrison
-	* OdbcJdbcSetup/OdbcJdbcSetup.aps 1.1:
-	* OdbcJdbcSetup/OdbcJdbcSetup.clw 1.1:
-	* OdbcJdbcSetup/OdbcJdbcSetup.def 1.1:
-	* OdbcJdbcSetup/OdbcJdbcSetup.dep 1.1:
-	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.1:
-	* OdbcJdbcSetup/OdbcJdbcsetup.dsp 1.1:
+	* OdbcJdbcSetup/OdbcJdbcSetup.aps:
+	* OdbcJdbcSetup/OdbcJdbcSetup.clw:
+	* OdbcJdbcSetup/OdbcJdbcSetup.def:
+	* OdbcJdbcSetup/OdbcJdbcSetup.dep:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg:
+	* OdbcJdbcSetup/OdbcJdbcsetup.dsp:
 		adding new files
 
-	* JdbcTest/JdbcTest.dsp 1.1:
-	* JdbcTest/JdbcTest.plg 1.1:
+	* JdbcTest/JdbcTest.dsp:
+	* JdbcTest/JdbcTest.plg:
 		adding build files
 
 2001-07-03  awharrison
-	* IscDbc/DateTime.cpp 1.5:
-	* IscDbc/IscColumnsResultSet.cpp 1.4:
-	* IscDbc/IscColumnsResultSet.h 1.2:
-	* IscDbc/IscDbc.h 1.2:
-	* IscDbc/JString.cpp 1.2:
-	* IscDbc/makefile 1.2:
-	* IscDbc/makefile.in 1.2:
-	* OdbcConnection.cpp 1.2:
-	* OdbcStatement.cpp 1.4:
-	* Test/Test.dsp 1.2:
-	* TestInstall/TestInstall.dsp 1.2:
-	* makefile 1.2:
+	* IscDbc/DateTime.cpp:
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscColumnsResultSet.h:
+	* IscDbc/IscDbc.h:
+	* IscDbc/JString.cpp:
+	* IscDbc/makefile:
+	* IscDbc/makefile.in:
+	* OdbcConnection.cpp:
+	* OdbcStatement.cpp:
+	* Test/Test.dsp:
+	* TestInstall/TestInstall.dsp:
+	* makefile:
 		Get rid of gnu compile warnings and update makefile
 
-	* OdbcJdbc.dsw 1.2:
+	* OdbcJdbc.dsw:
 		make it binary
 
-	* IscDbc/IscDbc.def 1.1:
-	* IscDbc/IscDbc.dsp 1.1:
-	* IscDbc/IscDbc.plg 1.1:
-	* OdbcJdbc.def 1.1:
-	* OdbcJdbc.ncb 1.1:
-	* OdbcJdbc.opt 1.1:
-	* OdbcJdbc.plg 1.1:
-	* makefile.in 1.1:
+	* IscDbc/IscDbc.def:
+	* IscDbc/IscDbc.dsp:
+	* IscDbc/IscDbc.plg:
+	* OdbcJdbc.def:
+	* OdbcJdbc.ncb:
+	* OdbcJdbc.opt:
+	* OdbcJdbc.plg:
+	* makefile.in:
 		new file
 
 2001-07-02  awharrison
-	* IscDbc/Blob.cpp 1.2:
-	* IscDbc/Connection.h 1.3:
-	* IscDbc/DateTime.cpp 1.3:
-	* IscDbc/IscCallableStatement.cpp 1.3:
-	* IscDbc/IscCallableStatement.h 1.3:
-	* IscDbc/IscColumnsResultSet.cpp 1.3:
-	* IscDbc/IscPreparedStatement.cpp 1.3:
-	* IscDbc/IscPreparedStatement.h 1.3:
-	* IscDbc/IscResultSet.cpp 1.3:
-	* IscDbc/IscResultSet.h 1.3:
-	* IscDbc/IscStatement.cpp 1.3:
-	* IscDbc/IscStatement.h 1.3:
-	* IscDbc/TimeStamp.h 1.3:
-	* IscDbc/Value.cpp 1.3:
-	* IscDbc/Value.h 1.3:
-	* OdbcDateTime.cpp 1.3:
-	* OdbcDateTime.h 1.3:
-	* OdbcStatement.cpp 1.3:
+	* IscDbc/Blob.cpp:
+	* IscDbc/Connection.h:
+	* IscDbc/DateTime.cpp:
+	* IscDbc/IscCallableStatement.cpp:
+	* IscDbc/IscCallableStatement.h:
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscPreparedStatement.cpp:
+	* IscDbc/IscPreparedStatement.h:
+	* IscDbc/IscResultSet.cpp:
+	* IscDbc/IscResultSet.h:
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/IscStatement.h:
+	* IscDbc/TimeStamp.h:
+	* IscDbc/Value.cpp:
+	* IscDbc/Value.h:
+	* OdbcDateTime.cpp:
+	* OdbcDateTime.h:
+	* OdbcStatement.cpp:
 		change back to the correct license
 
-	* IscDbc/Connection.h 1.4:
+	* IscDbc/Connection.h:
 		typo
 
-	* IscDbc/Connection.h 1.2:
-	* IscDbc/DateTime.cpp 1.2:
-	* IscDbc/IscCallableStatement.cpp 1.2:
-	* IscDbc/IscCallableStatement.h 1.2:
-	* IscDbc/IscColumnsResultSet.cpp 1.2:
-	* IscDbc/IscDbc.mak 1.2:
-	* IscDbc/IscPreparedStatement.cpp 1.2:
-	* IscDbc/IscPreparedStatement.h 1.2:
-	* IscDbc/IscResultSet.cpp 1.2:
-	* IscDbc/IscResultSet.h 1.2:
-	* IscDbc/IscStatement.cpp 1.2:
-	* IscDbc/IscStatement.h 1.2:
-	* IscDbc/TimeStamp.h 1.2:
-	* IscDbc/Value.cpp 1.2:
-	* IscDbc/Value.h 1.2:
-	* OdbcDateTime.cpp 1.2:
-	* OdbcDateTime.h 1.2:
-	* OdbcJdbc.mak 1.2:
-	* OdbcStatement.cpp 1.2:
+	* IscDbc/Connection.h:
+	* IscDbc/DateTime.cpp:
+	* IscDbc/IscCallableStatement.cpp:
+	* IscDbc/IscCallableStatement.h:
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscDbc.mak:
+	* IscDbc/IscPreparedStatement.cpp:
+	* IscDbc/IscPreparedStatement.h:
+	* IscDbc/IscResultSet.cpp:
+	* IscDbc/IscResultSet.h:
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/IscStatement.h:
+	* IscDbc/TimeStamp.h:
+	* IscDbc/Value.cpp:
+	* IscDbc/Value.h:
+	* OdbcDateTime.cpp:
+	* OdbcDateTime.h:
+	* OdbcJdbc.mak:
+	* OdbcStatement.cpp:
 		change time1.* to SqlTime.* to avoid conflicts and names ending
 		in numbersOdbcJdbc
 
-	* IscDbc/Time.h 1.2:
+	* IscDbc/Time.h:
 		get rid of pesky badly named file
 
-	* IscDbc/Time.cpp 1.2:
+	* IscDbc/Time.cpp:
 		Remove a renamed file.
 
-	* IscDbc/Blob.cpp 1.3:
-	* IscDbc/DateTime.cpp 1.4:
-	* IscDbc/IscPreparedStatement.cpp 1.4:
-	* OdbcDateTime.cpp 1.4:
-	* OdbcDateTime.h 1.4:
+	* IscDbc/Blob.cpp:
+	* IscDbc/DateTime.cpp:
+	* IscDbc/IscPreparedStatement.cpp:
+	* OdbcDateTime.cpp:
+	* OdbcDateTime.h:
 		trying one more time to get rid of all the typos
 
-	* IscDbc/SqlTime.cpp 1.1:
-	* IscDbc/SqlTime.h 1.1:
+	* IscDbc/SqlTime.cpp:
+	* IscDbc/SqlTime.h:
 		commit the newish files
 
 2001-05-10  awharrison
-	* .cvsignore 1.1.1.1:
-	* Attributes.cpp 1.1.1.1:
-	* Attributes.h 1.1.1.1:
-	* Date.h 1.1.1.1:
-	* DescRecord.cpp 1.1.1.1:
-	* DescRecord.h 1.1.1.1:
-	* Headers/SQL.H 1.1.1.1:
-	* Headers/SQLEXT.H 1.1.1.1:
-	* InfoItems.h 1.1.1.1:
-	* IscDbc/AsciiBlob.cpp 1.1.1.1:
-	* IscDbc/AsciiBlob.h 1.1.1.1:
-	* IscDbc/Attachment.cpp 1.1.1.1:
-	* IscDbc/Attachment.h 1.1.1.1:
-	* IscDbc/BinaryBlob.cpp 1.1.1.1:
-	* IscDbc/BinaryBlob.h 1.1.1.1:
-	* IscDbc/Blob.cpp 1.1.1.1:
-	* IscDbc/Blob.h 1.1.1.1:
-	* IscDbc/Connection.h 1.1.1.1:
-	* IscDbc/DateTime.cpp 1.1.1.1:
-	* IscDbc/DateTime.h 1.1.1.1:
-	* IscDbc/Engine.h 1.1.1.1:
-	* IscDbc/Error.cpp 1.1.1.1:
-	* IscDbc/Error.h 1.1.1.1:
-	* IscDbc/IscBlob.cpp 1.1.1.1:
-	* IscDbc/IscBlob.h 1.1.1.1:
-	* IscDbc/IscCallableStatement.cpp 1.1.1.1:
-	* IscDbc/IscCallableStatement.h 1.1.1.1:
-	* IscDbc/IscColumnsResultSet.cpp 1.1.1.1:
-	* IscDbc/IscColumnsResultSet.h 1.1.1.1:
-	* IscDbc/IscConnection.cpp 1.1.1.1:
-	* IscDbc/IscConnection.h 1.1.1.1:
-	* IscDbc/IscCrossReferenceResultSet.cpp 1.1.1.1:
-	* IscDbc/IscCrossReferenceResultSet.h 1.1.1.1:
-	* IscDbc/IscDatabaseMetaData.cpp 1.1.1.1:
-	* IscDbc/IscDatabaseMetaData.h 1.1.1.1:
-	* IscDbc/IscDbc.h 1.1.1.1:
-	* IscDbc/IscDbc.mak 1.1.1.1:
-	* IscDbc/IscIndexInfoResultSet.cpp 1.1.1.1:
-	* IscDbc/IscIndexInfoResultSet.h 1.1.1.1:
-	* IscDbc/IscMetaDataResultSet.cpp 1.1.1.1:
-	* IscDbc/IscMetaDataResultSet.h 1.1.1.1:
-	* IscDbc/IscPreparedStatement.cpp 1.1.1.1:
-	* IscDbc/IscPreparedStatement.h 1.1.1.1:
-	* IscDbc/IscPrimaryKeysResultSet.cpp 1.1.1.1:
-	* IscDbc/IscPrimaryKeysResultSet.h 1.1.1.1:
-	* IscDbc/IscProcedureColumnsResultSet.cpp 1.1.1.1:
-	* IscDbc/IscProcedureColumnsResultSet.h 1.1.1.1:
-	* IscDbc/IscProceduresResultSet.cpp 1.1.1.1:
-	* IscDbc/IscProceduresResultSet.h 1.1.1.1:
-	* IscDbc/IscResultSet.cpp 1.1.1.1:
-	* IscDbc/IscResultSet.h 1.1.1.1:
-	* IscDbc/IscResultSetMetaData.cpp 1.1.1.1:
-	* IscDbc/IscResultSetMetaData.h 1.1.1.1:
-	* IscDbc/IscSpecialColumnsResultSet.cpp 1.1.1.1:
-	* IscDbc/IscSpecialColumnsResultSet.h 1.1.1.1:
-	* IscDbc/IscSqlType.cpp 1.1.1.1:
-	* IscDbc/IscSqlType.h 1.1.1.1:
-	* IscDbc/IscStatement.cpp 1.1.1.1:
-	* IscDbc/IscStatement.h 1.1.1.1:
-	* IscDbc/IscStatementMetaData.cpp 1.1.1.1:
-	* IscDbc/IscStatementMetaData.h 1.1.1.1:
-	* IscDbc/IscTablesResultSet.cpp 1.1.1.1:
-	* IscDbc/IscTablesResultSet.h 1.1.1.1:
-	* IscDbc/JString.cpp 1.1.1.1:
-	* IscDbc/JString.h 1.1.1.1:
-	* IscDbc/LinkedList.cpp 1.1.1.1:
-	* IscDbc/LinkedList.h 1.1.1.1:
-	* IscDbc/Lock.cpp 1.1.1.1:
-	* IscDbc/Lock.h 1.1.1.1:
-	* IscDbc/Mutex.cpp 1.1.1.1:
-	* IscDbc/Mutex.h 1.1.1.1:
-	* IscDbc/Parameter.cpp 1.1.1.1:
-	* IscDbc/Parameter.h 1.1.1.1:
-	* IscDbc/Parameters.cpp 1.1.1.1:
-	* IscDbc/Parameters.h 1.1.1.1:
-	* IscDbc/Properties.h 1.1.1.1:
-	* IscDbc/SQLError.cpp 1.1.1.1:
-	* IscDbc/SQLError.h 1.1.1.1:
-	* IscDbc/SQLException.h 1.1.1.1:
-	* IscDbc/Sqlda.cpp 1.1.1.1:
-	* IscDbc/Sqlda.h 1.1.1.1:
-	* IscDbc/Stream.cpp 1.1.1.1:
-	* IscDbc/Stream.h 1.1.1.1:
-	* IscDbc/Time.cpp 1.1.1.1:
-	* IscDbc/Time.h 1.1.1.1:
-	* IscDbc/TimeStamp.cpp 1.1.1.1:
-	* IscDbc/TimeStamp.h 1.1.1.1:
-	* IscDbc/Types.h 1.1.1.1:
-	* IscDbc/TypesResultSet.cpp 1.1.1.1:
-	* IscDbc/TypesResultSet.h 1.1.1.1:
-	* IscDbc/Value.cpp 1.1.1.1:
-	* IscDbc/Value.h 1.1.1.1:
-	* IscDbc/Values.cpp 1.1.1.1:
-	* IscDbc/Values.h 1.1.1.1:
-	* IscDbc/makefile 1.1.1.1:
-	* IscDbc/makefile.in 1.1.1.1:
-	* JdbcTest/Test.cpp 1.1.1.1:
-	* Main.cpp 1.1.1.1:
-	* OdbcConnection.cpp 1.1.1.1:
-	* OdbcConnection.h 1.1.1.1:
-	* OdbcDateTime.cpp 1.1.1.1:
-	* OdbcDateTime.h 1.1.1.1:
-	* OdbcDesc.cpp 1.1.1.1:
-	* OdbcDesc.h 1.1.1.1:
-	* OdbcEnv.cpp 1.1.1.1:
-	* OdbcEnv.h 1.1.1.1:
-	* OdbcError.cpp 1.1.1.1:
-	* OdbcError.h 1.1.1.1:
-	* OdbcJdbc.dsw 1.1.1.1:
-	* OdbcJdbc.h 1.1.1.1:
-	* OdbcJdbc.mak 1.1.1.1:
-	* OdbcJdbcSetup.rc 1.1.1.1:
-	* OdbcJdbcSetup/DsnDialog.cpp 1.1.1.1:
-	* OdbcJdbcSetup/DsnDialog.h 1.1.1.1:
-	* OdbcJdbcSetup/OdbcJdbcSetup.cpp 1.1.1.1:
-	* OdbcJdbcSetup/OdbcJdbcSetup.h 1.1.1.1:
-	* OdbcJdbcSetup/OdbcJdbcSetup.mak 1.1.1.1:
-	* OdbcJdbcSetup/OdbcJdbcSetup.rc 1.1.1.1:
-	* OdbcJdbcSetup/ReadMe.txt 1
+	* .cvsignore:
+	* Attributes.cpp:
+	* Attributes.h:
+	* Date.h:
+	* DescRecord.cpp:
+	* DescRecord.h:
+	* Headers/SQL.H:
+	* Headers/SQLEXT.H:
+	* InfoItems.h:
+	* IscDbc/AsciiBlob.cpp:
+	* IscDbc/AsciiBlob.h:
+	* IscDbc/Attachment.cpp:
+	* IscDbc/Attachment.h:
+	* IscDbc/BinaryBlob.cpp:
+	* IscDbc/BinaryBlob.h:
+	* IscDbc/Blob.cpp:
+	* IscDbc/Blob.h:
+	* IscDbc/Connection.h:
+	* IscDbc/DateTime.cpp:
+	* IscDbc/DateTime.h:
+	* IscDbc/Engine.h:
+	* IscDbc/Error.cpp:
+	* IscDbc/Error.h:
+	* IscDbc/IscBlob.cpp:
+	* IscDbc/IscBlob.h:
+	* IscDbc/IscCallableStatement.cpp:
+	* IscDbc/IscCallableStatement.h:
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscColumnsResultSet.h:
+	* IscDbc/IscConnection.cpp:
+	* IscDbc/IscConnection.h:
+	* IscDbc/IscCrossReferenceResultSet.cpp:
+	* IscDbc/IscCrossReferenceResultSet.h:
+	* IscDbc/IscDatabaseMetaData.cpp:
+	* IscDbc/IscDatabaseMetaData.h:
+	* IscDbc/IscDbc.h:
+	* IscDbc/IscDbc.mak:
+	* IscDbc/IscIndexInfoResultSet.cpp:
+	* IscDbc/IscIndexInfoResultSet.h:
+	* IscDbc/IscMetaDataResultSet.cpp:
+	* IscDbc/IscMetaDataResultSet.h:
+	* IscDbc/IscPreparedStatement.cpp:
+	* IscDbc/IscPreparedStatement.h:
+	* IscDbc/IscPrimaryKeysResultSet.cpp:
+	* IscDbc/IscPrimaryKeysResultSet.h:
+	* IscDbc/IscProcedureColumnsResultSet.cpp:
+	* IscDbc/IscProcedureColumnsResultSet.h:
+	* IscDbc/IscProceduresResultSet.cpp:
+	* IscDbc/IscProceduresResultSet.h:
+	* IscDbc/IscResultSet.cpp:
+	* IscDbc/IscResultSet.h:
+	* IscDbc/IscResultSetMetaData.cpp:
+	* IscDbc/IscResultSetMetaData.h:
+	* IscDbc/IscSpecialColumnsResultSet.cpp:
+	* IscDbc/IscSpecialColumnsResultSet.h:
+	* IscDbc/IscSqlType.cpp:
+	* IscDbc/IscSqlType.h:
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/IscStatement.h:
+	* IscDbc/IscStatementMetaData.cpp:
+	* IscDbc/IscStatementMetaData.h:
+	* IscDbc/IscTablesResultSet.cpp:
+	* IscDbc/IscTablesResultSet.h:
+	* IscDbc/JString.cpp:
+	* IscDbc/JString.h:
+	* IscDbc/LinkedList.cpp:
+	* IscDbc/LinkedList.h:
+	* IscDbc/Lock.cpp:
+	* IscDbc/Lock.h:
+	* IscDbc/Mutex.cpp:
+	* IscDbc/Mutex.h:
+	* IscDbc/Parameter.cpp:
+	* IscDbc/Parameter.h:
+	* IscDbc/Parameters.cpp:
+	* IscDbc/Parameters.h:
+	* IscDbc/Properties.h:
+	* IscDbc/SQLError.cpp:
+	* IscDbc/SQLError.h:
+	* IscDbc/SQLException.h:
+	* IscDbc/Sqlda.cpp:
+	* IscDbc/Sqlda.h:
+	* IscDbc/Stream.cpp:
+	* IscDbc/Stream.h:
+	* IscDbc/Time.cpp:
+	* IscDbc/Time.h:
+	* IscDbc/TimeStamp.cpp:
+	* IscDbc/TimeStamp.h:
+	* IscDbc/Types.h:
+	* IscDbc/TypesResultSet.cpp:
+	* IscDbc/TypesResultSet.h:
+	* IscDbc/Value.cpp:
+	* IscDbc/Value.h:
+	* IscDbc/Values.cpp:
+	* IscDbc/Values.h:
+	* IscDbc/makefile:
+	* IscDbc/makefile.in:
+	* JdbcTest/Test.cpp:
+	* Main.cpp:
+	* OdbcConnection.cpp:
+	* OdbcConnection.h:
+	* OdbcDateTime.cpp:
+	* OdbcDateTime.h:
+	* OdbcDesc.cpp:
+	* OdbcDesc.h:
+	* OdbcEnv.cpp:
+	* OdbcEnv.h:
+	* OdbcError.cpp:
+	* OdbcError.h:
+	* OdbcJdbc.dsw:
+	* OdbcJdbc.h:
+	* OdbcJdbc.mak:
+	* OdbcJdbcSetup.rc:
+	* OdbcJdbcSetup/DsnDialog.cpp:
+	* OdbcJdbcSetup/DsnDialog.h:
+	* OdbcJdbcSetup/OdbcJdbcSetup.cpp:
+	* OdbcJdbcSetup/OdbcJdbcSetup.h:
+	* OdbcJdbcSetup/OdbcJdbcSetup.mak:
+	* OdbcJdbcSetup/OdbcJdbcSetup.rc:
+	* OdbcJdbcSetup/ReadMe.txt:
+	* OdbcJdbcSetup/Setup.cpp:
+	* OdbcJdbcSetup/Setup.h:
+	* OdbcJdbcSetup/StdAfx.cpp:
+	* OdbcJdbcSetup/StdAfx.h:
+	* OdbcJdbcSetup/resource.h:
+	* OdbcObject.cpp:
+	* OdbcObject.h:
+	* OdbcStatement.cpp:
+	* OdbcStatement.h:
+	* SetupAttributes.h:
+	* Test/Constraint.cpp:
+	* Test/Constraint.h:
+	* Test/Database.cpp:
+	* Test/Database.h:
+	* Test/Field.cpp:
+	* Test/Field.h:
+	* Test/Gen.cpp:
+	* Test/Gen.h:
+	* Test/Hash.cpp:
+	* Test/Hash.h:
+	* Test/Index.cpp:
+	* Test/Index.h:
+	* Test/JString.cpp:
+	* Test/JString.h:
+	* Test/LinkedList.cpp:
+	* Test/LinkedList.h:
+	* Test/NetfraDatabase.cpp:
+	* Test/NetfraDatabase.h:
+	* Test/NetfraRemote.lib:
+	* Test/Odbc.cpp:
+	* Test/Odbc.h:
+	* Test/Print.cpp:
+	* Test/Print.h:
+	* Test/RString.cpp:
+	* Test/RString.h:
+	* Test/SimpleTest.cpp:
+	* Test/StdAfx.h:
+	* Test/Table.cpp:
+	* Test/Table.h:
+	* Test/Test.001:
+	* Test/Test.cpp:
+	* Test/Test.dsp:
+	* Test/Test.dsw:
+	* Test/Test.ncb:
+	* Test/Test.opt:
+	* Test/Test.plg:
+	* Test/Type.cpp:
+	* Test/Type.h:
+	* Test/scrambledTest.cpp:
+	* Test/statistics.cpp:
+	* TestInstall/TestInstall.cpp:
+	* TestInstall/TestInstall.dsp:
+	* TestInstall/TestInstall.plg:
+	* makefile:
+		Finally the source of the Starkey ODBC/JDBC driver is released
+
