@@ -100,7 +100,7 @@ public:
 	virtual Blob* genHTML (Properties *context, long genHeaders);
 	virtual bool isConnected();
 	InternalStatement* createInternalStatement();
-	bool getCountInputParamFromProcedure ( const char* procedureName, int &numIn, int &numOut );
+	bool getCountInputParamFromProcedure ( const char* procedureName, int &numIn, int &numOut, bool &canSelect );
 	int buildParamProcedure ( char *& string, int numInputParam );
 	virtual void prepareTransaction();
 	virtual bool getTransactionPending();

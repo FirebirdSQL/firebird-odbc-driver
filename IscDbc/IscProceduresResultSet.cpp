@@ -23,7 +23,11 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "IscDbc.h"
+#include "IscBlob.h"
+#include "IscStatement.h"
 #include "IscProceduresResultSet.h"
 #include "IscDatabaseMetaData.h"
 
@@ -36,7 +40,7 @@ namespace IscDbcLibrary {
 IscProceduresResultSet::IscProceduresResultSet(IscDatabaseMetaData *metaData)
 		: IscMetaDataResultSet(metaData)
 {
-
+	addBlr = false;
 }
 
 void IscProceduresResultSet::getProcedures(const char * catalog, const char * schemaPattern, const char * procedureNamePattern)
@@ -49,11 +53,15 @@ void IscProceduresResultSet::getProcedures(const char * catalog, const char * sc
 				"\tproc.rdb$procedure_outputs as num_output_params,\n"		// 5
 				"\t1 as num_result_sets,\n"									// 6
 				"\tproc.rdb$description as remarks,\n"						// 7
-				"\t1 as procedure_type\n"									// 8 SQL_PT_PROCEDURE
-		"from rdb$procedures proc\n";
+				"\t1 as procedure_type\n";									// 8 SQL_PT_PROCEDURE
 
 	char * ptFirst = sql + strlen(sql);
 	const char *sep = " where ";
+
+	if ( addBlr )
+		addString(ptFirst, ", proc.rdb$procedure_blr\n"); // 9 BLR_PROCEDURE
+
+	addString(ptFirst, "from rdb$procedures proc\n");
 
 	if (procedureNamePattern && *procedureNamePattern)
 	{
@@ -80,6 +88,30 @@ bool IscProceduresResultSet::next()
 		sqlda->updateShort(5, 0);
 
 	return true;
+}
+
+static int gen_blr(int *user_arg, int /*offset*/, char * string)
+{
+	if ( strstr(string,"blr_send") )
+		(*user_arg)++;
+	return 1;
+}
+
+bool IscProceduresResultSet::canSelectFromProcedure()
+{
+	int countSUSPEND = 0;
+	XSQLVAR *var = sqlda->Var(9);
+	IscBlob * blob = (IscBlob *)*(long*)var->sqldata;
+	int length = blob->length();
+	
+	char * buffer = (char*)malloc (length);
+
+	blob->getBytes (0, length, buffer);
+	connection->GDS->_print_blr((char*)buffer,(void (*)())gen_blr, &countSUSPEND,0);
+
+	free(buffer);
+
+	return countSUSPEND > 1;
 }
 
 }; // end namespace IscDbcLibrary

@@ -602,18 +602,19 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 				*end = '\0';
 
 				int numIn, numOut;
+				bool canSelect;
 
-				if ( !getCountInputParamFromProcedure ( procedureName, numIn, numOut ) )
+				if ( !getCountInputParamFromProcedure ( procedureName, numIn, numOut, canSelect ) )
 					return statysModify; // not found
 
 				int ret = buildParamProcedure ( ptIn, numIn );
 				
 				if ( ret == -1 ) 
 					return statysModify;
-				else if ( ret == 1 || !numOut )
-					memcpy(savePtOut, "execute procedure ", 18);
-				else // if ( ret == 2 )
+				else if ( canSelect )
 					memcpy(savePtOut, "select * from ", 14);
+				else
+					memcpy(savePtOut, "execute procedure ", 18);
 
 				ptOut = ptIn;
 
@@ -697,23 +698,22 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 	return statysModify;
 }
 
-bool IscConnection::getCountInputParamFromProcedure ( const char* procedureName, int &numIn, int &numOut )
+bool IscConnection::getCountInputParamFromProcedure ( const char* procedureName, int &numIn, int &numOut, bool &canSelect )
 {
 	bool ret = false; // not found
 	numIn = numOut = 0;
+	canSelect = false;
 
-	IscProceduresResultSet * resultSet = 
-		(IscProceduresResultSet*)getMetaData()->getProcedures ( NULL, NULL, procedureName );
+	IscProceduresResultSet resultSet ( (IscDatabaseMetaData *)getMetaData() );
+	resultSet.addBlr = true;
+	resultSet.getProcedures ( NULL, NULL, procedureName );
 
-	if ( resultSet )
+	if ( resultSet.getCountRowsStaticCursor() )
 	{
-		if ( resultSet->getCountRowsStaticCursor() )
-		{
-			numIn = resultSet->sqlda->getShort(4); // NUM_INPUT_PARAM
-			numOut = resultSet->sqlda->getShort(5); // NUM_OUTPUT_PARAM
-			ret = true;
-		}
-		resultSet->release();
+		numIn = resultSet.sqlda->getShort(4); // NUM_INPUT_PARAM
+		numOut = resultSet.sqlda->getShort(5); // NUM_OUTPUT_PARAM
+		canSelect = resultSet.canSelectFromProcedure();
+		ret = true;
 	}
 
 	return ret;

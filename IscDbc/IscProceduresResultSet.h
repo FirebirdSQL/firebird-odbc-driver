@@ -33,9 +33,12 @@ class IscProceduresResultSet : public IscMetaDataResultSet
 {
 public:
 	virtual bool next();
+	bool canSelectFromProcedure();
 	void getProcedures(const char * catalog, const char * schemaPattern, const char * procedureNamePattern);
+
 	IscProceduresResultSet(IscDatabaseMetaData *metaData);
 
+	bool	addBlr;
 };
 
 }; // end namespace IscDbcLibrary
