@@ -101,7 +101,7 @@ typedef MList<CSupportFunction, CSupportFunctionComparator> ListSupportFunctions
 class SupportFunctions
 {
 public:
-	enum ScalarFunctions { STR_FN, NUM_FN, TD_FN, SYS_FN };
+	enum ScalarFunctions { STR_FN, NUM_FN, TD_FN, SYS_FN, CVT_FN };
 	CSupportFunction * supportFn;
 	int lenSqlFn;
 	int lenFbFn;
@@ -124,36 +124,10 @@ public:
 			*ptOut++ = *src++;
 	}
 
-	void defaultTranslator ( char *&ptIn, char *&ptOut )
-	{
-		int offset = ptIn - ptOut;
-		lenOut = strlen ( ptOut );
-		lenSqlFn = supportFn->lenSqlFn;
-		lenFbFn = supportFn->lenFbFn;
-
-		lenSqlFn += offset;
-		writeResult ( supportFn->nameFbFn, ptOut );
-		ptIn = ptOut;
-	}
-
-	void fullreplaceTranslator ( char *&ptIn, char *&ptOut )
-	{
-		lenFbFn = supportFn->lenFbFn;
-		lenOut = strlen ( ptOut );
-
-		while( *ptIn && *ptIn != ')' && *ptIn != '}' )ptIn++;
-
-		if( *ptIn != ')' && *ptIn != '}' )
-			return;
-
-		lenSqlFn = ptIn - ptOut;
-
-		if( *ptIn == ')' )
-			lenSqlFn++;
-
-		writeResult ( supportFn->nameFbFn, ptOut );
-		ptIn = ptOut;
-	}
+	void defaultTranslator ( char *&ptIn, char *&ptOut );
+	void fullreplaceTranslator ( char *&ptIn, char *&ptOut );
+	void convertTranslator ( char *&ptIn, char *&ptOut );
+	void bracketfromTranslator ( char *&ptIn, char *&ptOut );
 };
 
 }; // end namespace IscDbcLibrary

@@ -107,33 +107,37 @@ SupportFunctions::SupportFunctions()
 
 //	Time and Date functions
 
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURRENT_DATE, 		"CURRENT_DATE", 	"cast('now' as date)",		fullreplaceTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURRENT_TIME, 		"CURRENT_TIME", 	"cast('now' as time)",		fullreplaceTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURRENT_TIMESTAMP, "CURRENT_TIMESTAMP","cast('now' as timestamp)",	fullreplaceTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURDATE, 			"CURDATE", 			"cast('now' as date)",		fullreplaceTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURTIME, 			"CURTIME", 			"cast('now' as time)",		fullreplaceTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYNAME, 			"DAYNAME", 			"DAYNAME",			defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFMONTH, 		"DAYOFMONTH", 		"DAYOFMONTH",		defaultTranslator); 
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFWEEK, 		"DAYOFWEEK", 		"DAYOFWEEK",		defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFYEAR, 		"DAYOFYEAR", 		"DAYOFYEAR",		defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_EXTRACT, 			"EXTRACT", 			"EXTRACT",			defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_HOUR, 				"HOUR", 			"HOUR",				defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_MINUTE, 			"MINUTE", 			"MINUTE",			defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_MONTH, 			"MONTH", 			"MONTH",			defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_MONTHNAME, 		"MONTHNAME", 		"MONTHNAME",		defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_NOW, 				"NOW", 				"NOW",				defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_QUARTER,			"QUARTER",			"QUARTER",			defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_SECOND, 			"SECOND", 			"SECOND",			defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_TIMESTAMPADD, 		"TIMESTAMPADD", 	"TIMESTAMPADD",		defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_TIMESTAMPDIFF, 	"TIMESTAMPDIFF", 	"TIMESTAMPDIFF",	defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_WEEK, 				"WEEK", 			"WEEK",				defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_YEAR, 				"YEAR", 			"YEAR",				defaultTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURRENT_DATE, 		"CURRENT_DATE", 	" CURRENT_DATE ",			fullreplaceTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURRENT_TIME, 		"CURRENT_TIME", 	" CURRENT_TIME ",			fullreplaceTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURRENT_TIMESTAMP, "CURRENT_TIMESTAMP"," CURRENT_TIMESTAMP ",		fullreplaceTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURDATE, 			"CURDATE", 			" cast('now' as date)",		fullreplaceTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURTIME, 			"CURTIME", 			" cast('now' as time)",		fullreplaceTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYNAME, 			"DAYNAME", 			"DAYNAME",				defaultTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFMONTH, 		"DAYOFMONTH", 		" extract(day from ",		bracketfromTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFWEEK, 		"DAYOFWEEK", 		" extract(weekday from ",	bracketfromTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFYEAR, 		"DAYOFYEAR", 		" extract(yearday from ",	bracketfromTranslator);
+//  ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_EXTRACT, 			"EXTRACT", 			"EXTRACT",				defaultTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_HOUR, 				"HOUR", 			" extract(hour from ",		bracketfromTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_MINUTE, 			"MINUTE", 			" extract(minute from ",	bracketfromTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_MONTH, 			"MONTH", 			" extract(month from ",		bracketfromTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_MONTHNAME, 		"MONTHNAME", 		"MONTHNAME",			defaultTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_NOW, 				"NOW", 				" cast('now' as timestamp)",fullreplaceTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_QUARTER,			"QUARTER",			"QUARTER",				defaultTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_SECOND, 			"SECOND", 			" extract(second from ",	bracketfromTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_TIMESTAMPADD, 		"TIMESTAMPADD", 	"TIMESTAMPADD",			defaultTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_TIMESTAMPDIFF, 	"TIMESTAMPDIFF", 	"TIMESTAMPDIFF",		defaultTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_WEEK, 				"WEEK", 			"WEEK",					defaultTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_YEAR, 				"YEAR", 			" extract(year from ",		bracketfromTranslator);
 
 //  System functions
 
     ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_DBNAME, 			"DBNAME", 			"DBNAME",			defaultTranslator);
     ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_IFNULL, 			"IFNULL", 			"IFNULL",			defaultTranslator);
     ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_USERNAME, 		"USER", 			"CURRENT_USER",		fullreplaceTranslator);
+
+//  Convert functions
+
+    ADD_SUPPORT_FN( CVT_FN, SQL_FN_CVT_CONVERT, 		"CONVERT", 			"CONVERT",			convertTranslator);
 }
 
 void SupportFunctions::translateNativeFunction ( char *&ptIn, char *&ptOut )
@@ -154,6 +158,192 @@ void SupportFunctions::translateNativeFunction ( char *&ptIn, char *&ptOut )
 		supportFn = &listSupportFunctions[ ret ];
 		(this->*supportFn->translate)( ptIn, ptOut );
 	}
+}
+
+void SupportFunctions::defaultTranslator ( char *&ptIn, char *&ptOut )
+{
+	int offset = ptIn - ptOut;
+	lenOut = strlen ( ptOut );
+	lenSqlFn = supportFn->lenSqlFn;
+	lenFbFn = supportFn->lenFbFn;
+
+	lenSqlFn += offset;
+	writeResult ( supportFn->nameFbFn, ptOut );
+	ptIn = ptOut;
+}
+
+void SupportFunctions::fullreplaceTranslator ( char *&ptIn, char *&ptOut )
+{
+	lenFbFn = supportFn->lenFbFn;
+	lenOut = strlen ( ptOut );
+
+	while( *ptIn && *ptIn != ')' && *ptIn != '}' )ptIn++;
+
+	if( *ptIn != ')' && *ptIn != '}' )
+		return;
+
+	lenSqlFn = ptIn - ptOut;
+
+	if( *ptIn == ')' )
+		lenSqlFn++;
+
+	writeResult ( supportFn->nameFbFn, ptOut );
+	ptIn = ptOut;
+}
+
+// translate {fn CONVERT(value,SQL_INTEGER) }
+// to cast(value as integer)
+void SupportFunctions::convertTranslator ( char *&ptIn, char *&ptOut )
+{
+	lenFbFn = supportFn->lenFbFn;
+	lenOut = strlen ( ptOut );
+	char * paramSqlType, * paramValue, * end;
+	int lenSqlType, lenValue;
+	const char * type = NULL;
+
+	paramValue = ptIn + supportFn->lenSqlFn;
+
+	while( *paramValue && *paramValue != '(' )
+		paramValue++;
+
+	if ( *paramValue != '(' )
+		return;
+
+	paramValue++; // '('
+
+	while( *paramValue == ' ' )
+		paramValue++;
+
+	end = paramValue;
+
+	while( *end && *end != ',' ) end++;
+
+	if ( *end != ',' )
+		return;
+
+	lenValue = end - paramValue;
+	end++; // ','
+
+	paramSqlType = end;
+
+	while( *paramSqlType == ' ' )
+		paramSqlType++;
+
+	end = paramSqlType;
+
+	while ( *end && *end!=' ' && *end!=')' ) end++;
+
+	lenSqlType = end - paramSqlType;
+
+	switch ( lenSqlType )
+	{
+	case 8:
+		if ( !strncasecmp ( paramSqlType, "SQL_CHAR", lenSqlType) )
+			type = "char";
+		else if ( !strncasecmp ( paramSqlType, "SQL_REAL", lenSqlType) )
+			type = "float";
+		else if ( !strncasecmp ( paramSqlType, "SQL_DATE", lenSqlType) )
+			type = "date";
+		break;
+	case 9:
+		if ( !strncasecmp ( paramSqlType, "SQL_FLOAT", lenSqlType) )
+			type = "double precision";
+		break;
+	case 10:
+		if ( !strncasecmp ( paramSqlType, "SQL_BIGINT", lenSqlType) )
+			type = "bigint";
+		else if ( !strncasecmp ( paramSqlType, "SQL_DOUBLE", lenSqlType) )
+			type = "double precision";
+		else if ( !strncasecmp ( paramSqlType, "SQL_BINARY", lenSqlType) )
+			type = "blob";
+		break;
+	case 11:
+		if ( !strncasecmp ( paramSqlType, "SQL_INTEGER", lenSqlType) )
+			type = "integer";
+		else if ( !strncasecmp ( paramSqlType, "SQL_VARCHAR", lenSqlType) )
+			type = "varchar";
+		else if ( !strncasecmp ( paramSqlType, "SQL_DECIMAL", lenSqlType) )
+			type = "bigint";
+		else if ( !strncasecmp ( paramSqlType, "SQL_NUMERIC", lenSqlType) )
+			type = "bigint";
+		else if ( !strncasecmp ( paramSqlType, "SQL_TINYINT", lenSqlType) )
+			type = "char";
+		break;
+	case 12:
+		if ( !strncasecmp ( paramSqlType, "SQL_SMALLINT", lenSqlType) )
+			type = "smallint";
+		break;
+	case 13:
+		if ( !strncasecmp ( paramSqlType, "SQL_VARBINARY", lenSqlType) )
+			type = "blob";
+		else if ( !strncasecmp ( paramSqlType, "SQL_TYPE_DATE", lenSqlType) )
+			type = "date";
+		else if ( !strncasecmp ( paramSqlType, "SQL_TYPE_TIME", lenSqlType) )
+			type = "time";
+		else if ( !strncasecmp ( paramSqlType, "SQL_TIMESTAMP", lenSqlType) )
+			type = "timestamp";
+		break;
+	case 15:
+		if ( !strncasecmp ( paramSqlType, "SQL_LONGVARCHAR", lenSqlType) )
+			type = "blob sub_type 1";
+		break;
+	case 17:
+		if ( !strncasecmp ( paramSqlType, "SQL_LONGVARBINARY", lenSqlType) )
+			type = "blob";
+		break;
+	case 18:
+		if ( !strncasecmp ( paramSqlType, "SQL_TYPE_TIMESTAMP", lenSqlType) )
+			type = "timestamp";
+		break;
+	default:
+		return;
+	}
+
+	if ( !type )
+		return;
+
+	while( *end && *end != ')' ) end++;
+
+	if ( *end != ')' )
+		return;
+
+	end++; // ')'
+
+	memcpy( ptOut, " cast(", 6 ); ptOut += 6 ;
+	memcpy( ptOut, paramValue, lenValue ); ptOut += lenValue ;
+
+	lenSqlFn = end - ptOut;
+// allSize : ' as ' : lentype : ') '
+//             4   + lentype +  2
+	lenSqlType = strlen(type);
+	lenFbFn = 6 + lenSqlType;
+
+	if ( lenSqlFn > lenFbFn )
+		memmove ( ptOut, ptOut + lenSqlFn - lenFbFn, lenOut + lenFbFn - lenSqlFn + 1 );
+	else if ( lenSqlFn < lenFbFn )
+		memmove ( ptOut - lenSqlFn + lenFbFn, ptOut, lenOut + 1 );
+
+	memcpy( ptOut, " as ", 4 ); ptOut += 4 ;
+	memcpy( ptOut, type, lenSqlType ); ptOut += lenSqlType ;
+	memcpy( ptOut, ") ", 2 ); ptOut += 2 ;
+	ptIn = ptOut;
+}
+
+void SupportFunctions::bracketfromTranslator ( char *&ptIn, char *&ptOut )
+{
+	lenFbFn = supportFn->lenFbFn;
+	lenOut = strlen ( ptOut );
+
+	while( *ptIn && *ptIn != '(' )ptIn++;
+
+	if( *ptIn != '(' )
+		return;
+
+	ptIn++; // '('
+	lenSqlFn = ptIn - ptOut;
+
+	writeResult ( supportFn->nameFbFn, ptOut );
+	ptIn = ptOut;
 }
 
 }; // end namespace IscDbcLibrary
