@@ -27,7 +27,7 @@
 
 #define BUILDTYPE_VERSION 	"WI_T"
 #define MAJOR_VERSION 		1
-#define MINOR_VERSION 		2
+#define MINOR_VERSION 		3
 #define REVNO_VERSION 		0
 
 #define DRIVER_FULL_NAME	"Firebird/InterBase(r) driver"
