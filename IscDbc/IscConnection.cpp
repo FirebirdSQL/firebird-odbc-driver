@@ -314,22 +314,40 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 
 	if ( *ptSrc == '}' )
 	{
-		int i = 0, offset = numInputParam * 2 - 1 + 2;
-		memmove(ptSrc + offset, ptSrc, strlen(ptSrc) + 1 );
-
-		*ptSrc++ = '(';
-		while( i++ < numInputParam )
+		if ( numInputParam )
 		{
-			if ( i > 1 )
-				*ptSrc++ = ',';
-			*ptSrc++ = '?';
+			int i = 0, offset = numInputParam * 2 - 1 + 2;
+			memmove(ptSrc + offset, ptSrc, strlen(ptSrc) + 1 );
+
+			*ptSrc++ = '(';
+			while( i++ < numInputParam )
+			{
+				if ( i > 1 )
+					*ptSrc++ = ',';
+				*ptSrc++ = '?';
+			}
+			*ptSrc++ = ')';
 		}
-		*ptSrc++ = ')';
 		return 0;
 	}
 
 	if ( *ptSrc != '(' )
 		return -1;
+
+	if ( !numInputParam )
+	{
+		char * ptCh = ptSrc++; // '('
+
+		while ( *ptSrc && *ptSrc != ')' )
+			ptSrc++;
+
+		if ( *ptSrc != ')' )
+			return -1;
+
+		ptSrc++; // ')'
+		memmove(ptCh, ptSrc, strlen(ptSrc) + 1 );
+		return 0;
+	}
 
 	ptSrc++; // '('
 
