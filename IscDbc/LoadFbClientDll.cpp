@@ -101,13 +101,16 @@ bool CFbDll::LoadDll (const char * client, const char * clientDef)
 
 void CFbDll::Release(void)
 {
-	if ( _Handle )
-#ifdef _WIN32
-		FreeLibrary(_Handle);
-#endif
-#ifdef ELF
-		dlclose (_Handle);
-#endif
+//  Do not remove the comment!!!
+//  OdbcJdbc this intermediate link
+// 
+// 	if ( _Handle )
+// #ifdef _WIN32
+// 		FreeLibrary(_Handle);
+// #endif
+// #ifdef ELF
+// 		dlclose (_Handle);
+// #endif
 
 	_Handle = NULL;
 }
