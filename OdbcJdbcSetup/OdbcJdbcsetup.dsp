@@ -99,6 +99,15 @@ SOURCE=.\DsnDialog.cpp
 # Begin Source File
 
 SOURCE=..\IscDbc\JString.cpp
+
+!IF  "$(CFG)" == "OdbcJdbcSetup - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "OdbcJdbcSetup - Win32 Debug"
+
+# SUBTRACT CPP /Fr
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 

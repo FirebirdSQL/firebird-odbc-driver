@@ -112,6 +112,15 @@ SOURCE=.\DescRecord.cpp
 # Begin Source File
 
 SOURCE=.\IscDbc\JString.cpp
+
+!IF  "$(CFG)" == "OdbcJdbc - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "OdbcJdbc - Win32 Debug"
+
+# SUBTRACT CPP /Fr
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
