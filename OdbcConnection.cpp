@@ -409,6 +409,8 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 			charset = value;
 		else if (!strcmp (name, "DRIVER"))
 			driver = value;
+		else if (!strcmp (name, "JDBC_DRIVER"))
+			jdbcDriver = value;
 		else if (!strcmp (name, "ODBC"))
 			;
 		else
@@ -546,6 +548,15 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 			if (driver != (const char *)value)
 			{
 				driver = value;
+				levelBrowseConnect = 1;
+				break;
+			}
+		}
+		else if (!strcmp (name, "JDBC_DRIVER"))
+		{
+			if (jdbcDriver != (const char *)value)
+			{
+				jdbcDriver = value;
 				levelBrowseConnect = 1;
 				break;
 			}

@@ -1,9 +1,7 @@
 ISCDBCSRC = \
 	Attachment.cpp \
 	BinaryBlob.cpp \
-	Blob.cpp \
 	DateTime.cpp \
-	Error.cpp \
 	extodbc.cpp \
 	IscArray.cpp \
 	IscBlob.cpp \
