@@ -968,9 +968,9 @@ void OdbcConvert::decode_sql_date(signed long nday, SQLUSMALLINT &mday, SQLUSMAL
 	day = 4 * day + 3 - 1461 * nday;
 	day = (day + 4) / 4;
 
-	month = (5 * day - 3) / 153;
+	month = (SQLUSMALLINT)((5 * day - 3) / 153);
 	day = 5 * day - 3 - 153 * month;
-	mday = (day + 5) / 5;
+	mday = (SQLUSMALLINT)((day + 5) / 5);
 
 	year = (short)(100 * century + nday);
 
@@ -994,7 +994,7 @@ void OdbcConvert::decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMA
 	long minutes;
 
 	minutes = ntime / (ISC_TIME_SECONDS_PRECISION * 60);
-	hour = minutes / 60;
-	minute = minutes % 60;
-	second = (ntime / ISC_TIME_SECONDS_PRECISION) % 60;
+	hour = (SQLUSMALLINT)(minutes / 60);
+	minute = (SQLUSMALLINT)(minutes % 60);
+	second = (SQLUSMALLINT)((ntime / ISC_TIME_SECONDS_PRECISION) % 60);
 }
