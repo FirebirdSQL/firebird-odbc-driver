@@ -1,21 +1,36 @@
 #
-#DEBUG=1
+DEBUG = No
 #
 .PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean postbuild
 #
 GCC		= g++
+ODBCMANAGER	= unixODBC
+#ODBCMANAGER	= iODBC
+FBCLIENT	= gds
+#FBCLIENT	= fbclient
+
 #
 # Start build
 #
 include ../makefile.sources
 include ../makefile.environ
 #
+ifeq (iODBC,$(ODBCMANAGER))
+LIBODBCINST 	= -liodbcinst
+INCLUDEDIR      = -I/usr/local/include \
+                  -I/usr/include
+EXTLIBDIR       = -L/usr/local/lib \
+                  -L/usr/lib
+else
+LIBODBCINST	= -lodbcinst
 INCLUDEDIR      = -I/mnt/third_party/odbc/unixODBC/linux-2.2.7/include \
                   -I/mnt/third_party/interbase/linux-2003-03-10/include
 EXTLIBDIR       = -L/mnt/third_party/interbase/linux-2003-03-10/lib \
                   -L/mnt/third_party/odbc/unixODBC/linux-2.2.7/lib
+endif
 #
-ifdef DEBUG
+
+ifeq (Yes,$(DEBUG))
 TARGETDIR	= Debug
 else
 TARGETDIR	= Release
@@ -34,7 +49,7 @@ COMPFLAGS	= -g -w -D_REENTRANT -D_PTHREADS -DEXTERNAL $(INCLUDEDIR)
 #
 #LINKFLAGS	= -rdynamic -export-dynamic -shared 
 LINKFLAGS	= -shared
-EXTLIBS		= $(EXTLIBDIR) -lcrypt -ldl -lgds
+EXTLIBS		= $(EXTLIBDIR) -lcrypt -ldl
 #
 ISCDBCDLL       = $(TARGETDIR)/IscDbc.so
 ODBCJDBCDLL     = $(TARGETDIR)/OdbcJdbc.so
@@ -43,7 +58,7 @@ ISCDBCDEFFILE	= $(ISCDBCDIR)/IscDbc.def
 ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)/OdbcJdbc.def
 ODBCJDBCSDEFFILE= $(ODBCJDBCSETUPDIR)/OdbcJdbcSetup.def
 #
-ifdef DEBUG
+ifeq (Yes,$(DEBUG))
 DEBUGFLAGS	= -D_DEBUG -DDEBUG -DLOGGING -fexceptions 
 else
 DEBUGFLAGS	= -DNDEBUG
@@ -78,11 +93,11 @@ OdbcJdbcSetup : $(ODBCJDBCSETUPDLL)
 #
 $(ISCDBCDLL) : $(LIST_ISCDBCOBJ)
 	ar crs $(ISCDBCLIB) $(LIST_ISCDBCOBJ)
-	$(GCC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(EXTLIBS) --def $(ISCDBCDEFFILE) -o $(ISCDBCDLL)
+	$(GCC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(EXTLIBS) -l$(FBCLIENT) --def $(ISCDBCDEFFILE) -o $(ISCDBCDLL)
 #
 $(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ)
 	ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCOBJ)
-	$(GCC) $(LINKFLAGS) $(BUILDDIR)/JString.o $(BUILDDIR)/Mutex.o $(LIST_ODBCJDBCOBJ) $(EXTLIBS) -lodbcinst --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
+	$(GCC) $(LINKFLAGS) $(BUILDDIR)/JString.o $(BUILDDIR)/Mutex.o $(LIST_ODBCJDBCOBJ) $(EXTLIBS) $(LIBODBCINST) --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
 #
 $(ODBCJDBCSETUPDLL) : $(LIST_ODBCJDBCSETUPOBJ)
 	ar crs $(ODBCJDBCSETUPLIB) $(LIST_ODBCJDBCSETUPOBJ)
