@@ -2700,11 +2700,11 @@ RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 RETCODE OdbcStatement::returnData()
 {
 	RETCODE retCode, ret = SQL_SUCCESS;
+	convert->statusReturnData = true;
 	CBindColumn * bindCol = listBindOut->GetHeadPosition();
 	while( bindCol )
 	{
 		retCode = (convert->*bindCol->impRecord->fnConv)(bindCol->impRecord,bindCol->appRecord);
-		bindCol->impRecord->dataOffset = 0;
 
 		if ( retCode != SQL_SUCCESS )
 		{
@@ -2715,6 +2715,7 @@ RETCODE OdbcStatement::returnData()
 
 		bindCol = listBindOut->GetNext();
 	}
+	convert->statusReturnData = false;
 	return ret;
 }
 
@@ -2723,6 +2724,7 @@ RETCODE OdbcStatement::returnDataFromExtededFetch()
 	RETCODE retCode, ret = SQL_SUCCESS;
 	SQLINTEGER	&bindOffsetPtrTo = convert->getBindOffsetPtrTo();
 	SQLINTEGER	&currentRow = *bindOffsetPtr;
+	convert->statusReturnData = true;
 
 	CBindColumn * bindCol = listBindOut->GetHeadPosition();
 	while( bindCol )
@@ -2731,7 +2733,6 @@ RETCODE OdbcStatement::returnDataFromExtededFetch()
 		bindOffsetPtrTo = appRecord->sizeColumnExtendedFetch * currentRow;
 
 		retCode = (convert->*bindCol->impRecord->fnConv)(bindCol->impRecord, appRecord);
-		bindCol->impRecord->dataOffset = 0;
 
 		if ( retCode != SQL_SUCCESS )
 		{
@@ -2742,6 +2743,7 @@ RETCODE OdbcStatement::returnDataFromExtededFetch()
 
 		bindCol = listBindOut->GetNext();
 	}
+	convert->statusReturnData = false;
 	return ret;
 }
 
