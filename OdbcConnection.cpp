@@ -855,7 +855,7 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 		break;
 
 	case SQL_CORRELATION_NAME:
-		value = (metaData->supportsTableCorrelationNames()) ? SQL_CL_START : SQL_CL_END;
+		value = (metaData->supportsTableCorrelationNames()) ? SQL_CN_ANY : SQL_CN_NONE;
 		break;
 
 	case SQL_COLUMN_ALIAS:
