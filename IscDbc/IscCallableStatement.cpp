@@ -91,7 +91,6 @@ IscCallableStatement::IscCallableStatement(IscConnection *connection)
 
 bool IscCallableStatement::execute()
 {
-	connection->startTransaction();
 	ISC_STATUS statusVector [20];
 	values.alloc (numberColumns);
 	int numberParameters = inputSqlda.getColumnCount();
@@ -99,7 +98,7 @@ bool IscCallableStatement::execute()
 	int n;
 
 	for (n = 0; n < numberParameters; ++n)
-		inputSqlda.setValue (n, parameters.values + n, connection);
+		inputSqlda.setValue (n, parameters.values + n, this);
 
 	int dialect = connection->getDatabaseDialect();
 

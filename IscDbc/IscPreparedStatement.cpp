@@ -118,7 +118,7 @@ bool IscPreparedStatement::execute()
 	int numberParameters = inputSqlda.getColumnCount();
 
 	for (int n = 0; n < numberParameters; ++n)
-		inputSqlda.setValue (n, parameters.values + n, connection);
+		inputSqlda.setValue (n, parameters.values + n, this);
 
 	return IscStatement::execute();
 }
@@ -171,7 +171,7 @@ void IscPreparedStatement::getInputParameters()
 	}
 
 	parameters.alloc (inputSqlda.getColumnCount());
-	inputSqlda.allocBuffer(connection);
+	inputSqlda.allocBuffer ( this );
 }
 
 int IscPreparedStatement::getNumParams()
@@ -187,7 +187,7 @@ StatementMetaData* IscPreparedStatement::getStatementMetaDataIPD()
 	if (statementMetaDataIPD)
 		return statementMetaDataIPD;
 
-	statementMetaDataIPD = new IscStatementMetaData (connection, &inputSqlda);
+	statementMetaDataIPD = new IscStatementMetaData (this, &inputSqlda);
 
 	return statementMetaDataIPD;
 }
@@ -197,7 +197,7 @@ StatementMetaData* IscPreparedStatement::getStatementMetaDataIRD()
 	if (statementMetaDataIRD)
 		return statementMetaDataIRD;
 
-	statementMetaDataIRD = new IscStatementMetaData (connection, &outputSqlda);
+	statementMetaDataIRD = new IscStatementMetaData (this, &outputSqlda);
 
 	return statementMetaDataIRD;
 }

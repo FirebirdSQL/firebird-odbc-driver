@@ -75,7 +75,6 @@ void IscResultSet::initResultSet(IscStatement *iscStatement)
 	{
 		statement->addRef();
 		sqlda = &statement->outputSqlda;
-		connection = statement->connection;
 		numberColumns = sqlda->getColumnCount();
 		values.alloc (numberColumns);
 		allocConversions();
@@ -177,7 +176,7 @@ bool IscResultSet::readFromSystemCatalog()
 	if (!statement)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
 
-	sqlda->initStaticCursor(statement->connection);
+	sqlda->initStaticCursor ( statement );
 	
 	while( next() )
 		sqlda->addRowSqldaInBufferStaticCursor();
@@ -201,7 +200,7 @@ bool IscResultSet::readStaticCursor()
 	CFbDll * GDS = statement->connection->GDS;
 	int ret;
 
-	sqlda->initStaticCursor(statement->connection);
+	sqlda->initStaticCursor ( statement );
 	
 	while(!(ret = GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda)))
 		sqlda->addRowSqldaInBufferStaticCursor();

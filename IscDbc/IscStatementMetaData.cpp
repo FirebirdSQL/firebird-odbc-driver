@@ -35,9 +35,9 @@ namespace IscDbcLibrary {
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscStatementMetaData::IscStatementMetaData(IscConnection *connect, Sqlda *ptSqlda)
+IscStatementMetaData::IscStatementMetaData(IscStatement *stmt, Sqlda *ptSqlda)
 {
-	connection = connect;
+	statement = stmt;
 	sqlda = ptSqlda;
 }
 
@@ -169,12 +169,12 @@ void IscStatementMetaData::createBlobDataTransfer(int index, Blob *& ptDataBlob)
 		{
 			IscBlob * pt = new IscBlob;
 			pt->setType(sqlda->getSubType(index));
-			pt->connection = connection;
+			pt->statement = statement;
 			ptDataBlob = pt;
 		}
 		else // if ( isRet == SQL_ARRAY )
 		{
-			IscArray * pt = new IscArray(connection, sqlda->Var(index));
+			IscArray * pt = new IscArray(statement, sqlda->Var(index));
 			ptDataBlob = pt;
 		}
 	}

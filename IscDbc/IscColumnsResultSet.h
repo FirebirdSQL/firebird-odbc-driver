@@ -38,6 +38,7 @@ public:
 	virtual bool next();
 	void getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern);
 	IscColumnsResultSet(IscDatabaseMetaData *metaData);
+	void initResultSet(IscStatement *stmt);
 private:
 	virtual bool getDefSource (int indexIn, int indexTarget);
 	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType &sqlType);

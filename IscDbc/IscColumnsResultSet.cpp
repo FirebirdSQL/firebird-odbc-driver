@@ -70,6 +70,12 @@ IscColumnsResultSet::IscColumnsResultSet(IscDatabaseMetaData *metaData)
 
 }
 
+void IscColumnsResultSet::initResultSet(IscStatement *stmt)
+{
+	IscResultSet::initResultSet ( stmt );
+	blob.statement = stmt;
+}
+
 void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern)
 {
 	char sql[4096] =
@@ -118,7 +124,6 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 #ifdef DEBUG
 	OutputDebugString (sql);
 #endif
-	blob.connection = metaData->connection;
 	prepareStatement (sql);
 
 // SELECT returns 26 columns,
@@ -166,7 +171,7 @@ bool IscColumnsResultSet::next()
 		char * field_name = sqlda->getVarying ( 4, len);
 		field_name[len] = '\0';
 
-		arrAttr.loadAttributes ( statement->connection, relation_name, field_name, sqlType.subType );
+		arrAttr.loadAttributes ( statement, relation_name, field_name, sqlType.subType );
 
 		sqlda->updateVarying (6, arrAttr.getFbSqlType());
 		sqlda->updateInt (7, arrAttr.arrOctetLength );

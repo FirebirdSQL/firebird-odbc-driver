@@ -98,7 +98,7 @@ void IscOdbcStatement::prepareStatement(const char * sqlString)
 		getInputParameters();
 	}
 
-	inputSqlda.allocBuffer(connection);
+	inputSqlda.allocBuffer ( this );
 
 	if ( replaceParamArray )
 	{
@@ -145,7 +145,7 @@ StatementMetaData* IscOdbcStatement::getStatementMetaDataIPD()
 	if (statementMetaDataIPD)
 		return statementMetaDataIPD;
 
-	statementMetaDataIPD = new IscStatementMetaData (connection, &inputSqlda);
+	statementMetaDataIPD = new IscStatementMetaData (this, &inputSqlda);
 
 	return statementMetaDataIPD;
 }
@@ -155,7 +155,7 @@ StatementMetaData* IscOdbcStatement::getStatementMetaDataIRD()
 	if (statementMetaDataIRD)
 		return statementMetaDataIRD;
 
-	statementMetaDataIRD = new IscStatementMetaData (connection, &outputSqlda);
+	statementMetaDataIRD = new IscStatementMetaData (this, &outputSqlda);
 
 	return statementMetaDataIRD;
 }

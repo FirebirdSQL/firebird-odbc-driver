@@ -45,7 +45,7 @@ namespace IscDbcLibrary {
 
 IscBlob::IscBlob()
 {
-	connection = NULL;
+	statement = NULL;
 	memset(&blobId,0,sizeof(ISC_QUAD));
 	directBlobHandle = NULL;
 	fetched = false;
@@ -55,10 +55,10 @@ IscBlob::IscBlob()
 	enType = enTypeBlob;
 }
 
-IscBlob::IscBlob(IscConnection *connect, XSQLVAR *var)
+IscBlob::IscBlob(IscStatement *stmt, XSQLVAR *var)
 {
 	directBlob = false;
-	bind(connect, (char*)var->sqldata);
+	bind (stmt, (char*)var->sqldata);
 	setType(var->sqlsubtype);
 }
 
@@ -75,10 +75,10 @@ void IscBlob::setType(short sqlsubtype)
 		enType = enTypeBlob;
 }
 
-void IscBlob::bind(Connection *connect, char * sqldata)
+void IscBlob::bind(Statement *stmt, char * sqldata)
 {
 	clear();
-	connection = (IscConnection *) connect;
+	statement = (IscStatement *) stmt;
 	blobId = *(ISC_QUAD*) sqldata;
 	fetched = false;
 	offset = 0;
@@ -88,7 +88,7 @@ void IscBlob::attach(char * pointBlob, bool bFetched, bool clear)
 {
 	IscBlob * ptBlob = (IscBlob *)*(long*)pointBlob;
 
-	connection = ptBlob->connection;
+	statement = ptBlob->statement;
 	memcpy(&blobId,&ptBlob->blobId, sizeof(blobId));
 	fetched = bFetched;
 	Stream::attach(*((Stream *)((BinaryBlob*)ptBlob)),clear);
@@ -117,6 +117,7 @@ int IscBlob::getSegment(int offset, int length, void * address)
 void IscBlob::fetchBlob()
 {
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = statement->connection;
 	void *transactionHandle = connection->startTransaction();
 	isc_blob_handle blobHandle = NULL;
 
@@ -172,6 +173,7 @@ void* IscBlob::getSegment(int pos)
 void IscBlob::writeBlob(char * sqldata)
 {
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 	isc_blob_handle blobHandle = NULL;
 	isc_tr_handle transactionHandle = connection->startTransaction();
@@ -200,6 +202,7 @@ void IscBlob::writeBlob(char * sqldata)
 void IscBlob::writeStreamHexToBlob(char * sqldata)
 {
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 	isc_blob_handle blobHandle = NULL;
 	isc_tr_handle transactionHandle = connection->startTransaction();
@@ -228,6 +231,7 @@ void IscBlob::writeStreamHexToBlob(char * sqldata)
 void IscBlob::writeBlob(char * sqldata, char *data, long length)
 {
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 	isc_blob_handle blobHandle = NULL;
 	isc_tr_handle transactionHandle = connection->startTransaction();
@@ -286,6 +290,7 @@ extern signed long getVaxInteger(const unsigned char * ptr, signed short length)
 void IscBlob::directOpenBlob( char * sqldata )
 {
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 	fetched = false;
 
@@ -323,6 +328,7 @@ bool IscBlob::directFetchBlob( char * bufData, int lenData, int &lenRead )
 
 	if ( lenData )
 	{
+		IscConnection * connection = statement->connection;
 		CFbDll * GDS = connection->GDS;
 		int post = lenData > DEFAULT_BLOB_BUFFER_LENGTH ? DEFAULT_BLOB_BUFFER_LENGTH : lenData;
 		char *data = bufData;
@@ -361,6 +367,7 @@ bool IscBlob::directGetSegmentToHexStr( char * bufData, int lenData, int &lenRea
 
 	if ( lenData )
 	{
+		IscConnection * connection = statement->connection;
 		CFbDll * GDS = connection->GDS;
 		int post = lenData > DEFAULT_BLOB_BUFFER_LENGTH ? DEFAULT_BLOB_BUFFER_LENGTH : lenData;
 		char *data = bufData;
@@ -403,7 +410,7 @@ void IscBlob::directCloseBlob()
 	if ( directBlobHandle )
 	{
 		ISC_STATUS statusVector [20];
-		connection->GDS->_close_blob (statusVector, &directBlobHandle);
+		statement->connection->GDS->_close_blob (statusVector, &directBlobHandle);
 		directBlobHandle = NULL;
 	}
 	fetched = true;
@@ -416,6 +423,7 @@ void IscBlob::directCloseBlob()
 void IscBlob::directCreateBlob( char * sqldata )
 {
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 
 	if ( directBlobHandle )
@@ -436,6 +444,7 @@ void IscBlob::directCreateBlob( char * sqldata )
 void IscBlob::directWriteBlob( char *data, long length )
 {
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 
 	int post = DEFAULT_BLOB_BUFFER_LENGTH;

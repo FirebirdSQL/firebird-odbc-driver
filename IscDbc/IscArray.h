@@ -40,7 +40,7 @@ class CAttrArray
 {
 public:
 	CAttrArray()	{ memset( this, 0, sizeof ( *this) ); }
-	void			loadAttributes ( IscConnection *connection, char * nameRelation, char * nameFields, int sqlsubtype );
+	void			loadAttributes ( IscStatement *stmt, char * nameRelation, char * nameFields, int sqlsubtype );
 	int				getPrecisionInternal();
 	int				getBufferLength();
 	JString			getFbSqlType();
@@ -75,8 +75,8 @@ public:
 	void writeArray(Value * value);
 
 	void init();
-	void bind(IscConnection	*parentConnection,XSQLVAR *var);
-	void bind(Connection *connect, char * sqldata);
+	void bind(IscStatement *stmt, XSQLVAR *var);
+	void bind(Statement *stmt, char * sqldata);
 	void getBinary(long pos, long length, void * address);
 	int length();
 	int getSegment (int offset, int length, void *address);
@@ -84,10 +84,10 @@ public:
 
 	IscArray();
 	IscArray(CAttrArray * ptArr);
-	IscArray(IscConnection	*parentConnection,XSQLVAR *var);
+	IscArray(IscStatement *stmt, XSQLVAR *var);
 	~IscArray();
 
-	IscConnection	*connection;
+	IscStatement	*statement;
 	ISC_QUAD		arrayId;
 	bool			clearData;
 	bool			fetched;

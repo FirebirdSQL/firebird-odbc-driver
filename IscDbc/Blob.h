@@ -8,7 +8,7 @@
 namespace IscDbcLibrary {
 
 enum enumTypeBlob { enTypeBlob = 1, enTypeClob, enTypeArray };
-class Connection;
+class Statement;
 
 class Blob
 {
@@ -37,7 +37,7 @@ public:
 	virtual void	directCloseBlob() = 0;
 	virtual int		getOffset() = 0;
 
-	virtual void	bind(Connection *connect, char * sqldata) = 0;
+	virtual void	bind(Statement *stmt, char * sqldata) = 0;
 	virtual void	attach(char * pointBlob, bool fetched, bool clear) = 0;
 	virtual bool	isBlob() = 0;
 	virtual bool	isClob() = 0;

@@ -89,13 +89,13 @@ public:
 	int		curRow;
 	short	*numColumnBlob;
 	short	countColumnBlob;
-	IscConnection	*connection;
+	IscStatement	*statement;
 
 public:
 
-	CDataStaticCursor ( IscConnection *connect, XSQLDA * sqlda, int * ptOffsetSqldata, int lnRow)
+	CDataStaticCursor ( IscStatement *stmt, XSQLDA * sqlda, int * ptOffsetSqldata, int lnRow)
 	{
-		connection = connect;
+		statement = stmt;
 		bYesBlob = false;
 		ptSqlda = sqlda;
 		offsetSqldata = ptOffsetSqldata;
@@ -209,14 +209,14 @@ public:
 				else if ( (var->sqltype & ~1) == SQL_ARRAY )
 				{
 					CAttrArray * ptArr = new CAttrArray;
-					IscArray iscArr(connection,var);
+					IscArray iscArr(statement,var);
 					iscArr.getBytesFromArray();
 					iscArr.detach(ptArr);
 					*(long*)var->sqldata = (long)ptArr;
 				}
 				else if ( (var->sqltype & ~1) == SQL_BLOB )
 				{
-					IscBlob * ptBlob = new IscBlob (connection, var);
+					IscBlob * ptBlob = new IscBlob (statement, var);
 					ptBlob->fetchBlob();
 					*(long*)var->sqldata = (long)ptBlob;
 				}
@@ -398,7 +398,7 @@ bool Sqlda::checkOverflow()
 	return true;
 }
 
-void Sqlda::allocBuffer ( IscConnection * connect )
+void Sqlda::allocBuffer ( IscStatement *stmt )
 {
 	//We've already done it,
 	// doing it again lengthens SQL_TEXT areas and causes
@@ -470,7 +470,7 @@ void Sqlda::allocBuffer ( IscConnection * connect )
 
 		case SQL_ARRAY:
 			orgvar->array = new CAttrArray;
-			orgvar->array->loadAttributes ( connect, var->relname, var->sqlname, var->sqlsubtype );
+			orgvar->array->loadAttributes ( stmt, var->relname, var->sqlname, var->sqlsubtype );
 			length = sizeof (ISC_QUAD);
 			boundary = 4;
 			break;
@@ -498,12 +498,12 @@ void Sqlda::allocBuffer ( IscConnection * connect )
 	}
 }
 
-void Sqlda::initStaticCursor(IscConnection *connect)
+void Sqlda::initStaticCursor(IscStatement *stmt)
 {
 	if ( dataStaticCursor )
 		delete 	dataStaticCursor;
 
-	dataStaticCursor = new CDataStaticCursor( connect, sqlda, offsetSqldata, lengthBufferRows );
+	dataStaticCursor = new CDataStaticCursor( stmt, sqlda, offsetSqldata, lengthBufferRows );
 }
 
 void Sqlda::addRowSqldaInBufferStaticCursor()
@@ -891,7 +891,7 @@ const char* Sqlda::getTableName(int index)
 	return var->relname;
 }
 
-void Sqlda::setValue(int slot, Value * value, IscConnection *connection)
+void Sqlda::setValue(int slot, Value * value, IscStatement	*stmt)
 {
 	XSQLVAR *var = sqlda->sqlvar + slot;
 
@@ -901,10 +901,10 @@ void Sqlda::setValue(int slot, Value * value, IscConnection *connection)
 	switch (var->sqltype & ~1)
 		{
 		case SQL_BLOB:	
-			setBlob (var, value, connection);
+			setBlob (var, value, stmt);
 			return;
 		case SQL_ARRAY:	
-			setArray (var, value, connection);
+			setArray (var, value, stmt);
 			return;
 		}
 
@@ -974,7 +974,7 @@ void Sqlda::setValue(int slot, Value * value, IscConnection *connection)
 
 }
 
-void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
+void Sqlda::setBlob(XSQLVAR * var, Value * value, IscStatement *stmt)
 {
 	if (value->type == Null)
 	{
@@ -985,6 +985,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 
 	var->sqltype &= ~1;
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = stmt->connection;
 	CFbDll * GDS = connection->GDS;
 	isc_blob_handle blobHandle = NULL;
 	isc_tr_handle transactionHandle = connection->startTransaction();
@@ -1075,7 +1076,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 
 void WriteToArray(IscConnection *connect,XSQLVAR *var,Value * value);
 
-void Sqlda::setArray(XSQLVAR * var, Value * value, IscConnection *connection)
+void Sqlda::setArray(XSQLVAR * var, Value * value, IscStatement *stmt)
 {
 	if (value->type == Null)
 	{
@@ -1086,7 +1087,7 @@ void Sqlda::setArray(XSQLVAR * var, Value * value, IscConnection *connection)
 
 	var->sqltype &= ~1;
 	
-	IscArray arr(connection,var);
+	IscArray arr(stmt,var);
 	arr.writeArray(value);
 	*(ISC_QUAD*)var->sqldata=arr.arrayId;
 }

@@ -297,7 +297,8 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 			// Close cursors too.
 			ISC_STATUS statusVector [20];
 			connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_close);
-			//FIXME: Test status vector.
+			if (statusVector [1] && statusVector [1] != 335544569)
+				THROW_ISC_EXCEPTION (connection, statusVector);
 		}
 	}
 }
@@ -335,7 +336,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 			THROW_ISC_EXCEPTION (connection, statusVector);
 	}
 	
-	outputSqlda.allocBuffer(connection);
+	outputSqlda.allocBuffer ( this );
 
 	typeStmt			= stmtNone;
 	resultsCount		= 1;
@@ -560,7 +561,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 
 			case SQL_BLOB:
 				{
-				IscBlob* blob = new IscBlob (connection, var);
+				IscBlob* blob = new IscBlob (this, var);
 				value->setValue (blob);
 				blob->release();
 				}
@@ -597,7 +598,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 
 			case SQL_ARRAY:
 				{
-				IscArray* blob = new IscArray (connection, var);
+				IscArray* blob = new IscArray (this, var);
 				value->setValue (blob);
 				blob->release();
 				}

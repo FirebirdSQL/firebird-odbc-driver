@@ -63,16 +63,16 @@ class CDataStaticCursor;
 class Sqlda  
 {
 protected:
-	void initStaticCursor(IscConnection *connect);
+	void initStaticCursor(IscStatement *stmt);
 	void addRowSqldaInBufferStaticCursor();
 	void restoreOrgAdressFieldsStaticCursor();
 
 public:
 	const char* getOwnerName (int index);
 	int findColumn (const char *columnName);
-	void setBlob (XSQLVAR *var, Value *value, IscConnection *connection);
-	void setArray (XSQLVAR *var, Value *value, IscConnection *connection);
-	void setValue (int slot, Value *value, IscConnection *connection);
+	void setBlob (XSQLVAR *var, Value *value, IscStatement *stmt);
+	void setArray (XSQLVAR *var, Value *value, IscStatement *stmt);
+	void setValue (int slot, Value *value, IscStatement	*stmt);
 	const char* getTableName (int index);
 	int getSqlType (CAttrSqlVar *var, int &realSqlType);
 	const char* getSqlTypeName (CAttrSqlVar *var);
@@ -93,7 +93,7 @@ public:
 	int getColumnCount();
 	void init();
 	void remove();
-	void allocBuffer(IscConnection *connect);
+	void allocBuffer(IscStatement *stmt);
 	bool checkOverflow();
 	void deleteSqlda();
 	void clearSqlda();

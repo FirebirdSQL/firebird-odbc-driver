@@ -68,7 +68,7 @@ public:
 	virtual void clear();
 	virtual void addRef();
 	void populate();
-	virtual void bind(Connection *connect, char * sqldata);
+	virtual void bind(Statement *stmt, char * sqldata);
 	void attach(char * pointBlob, bool fetched, bool clear);
 	bool isBlob(){ return enType == enTypeBlob; }
 	bool isClob(){ return enType == enTypeClob; }

@@ -56,7 +56,7 @@ void IscMetaDataResultSet::prepareStatement(const char * sql)
 	statement = new IscStatement ( metaData->connection );
 	statement->prepareStatement (sql);
 	statement->execute();
-	initResultSet((IscStatement*)statement);
+	initResultSet ( statement );
 	readFromSystemCatalog();
 }
 

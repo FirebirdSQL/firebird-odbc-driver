@@ -1584,7 +1584,7 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 				if ( parentStmt->isStaticCursor() )
 					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
 				else if ( blob->isArray() )
-					blob->bind ( parentStmt->connection->connection, ptBlob );
+					blob->bind ( parentStmt->statement, ptBlob );
 				else
 					blob->directOpenBlob ( ptBlob );
 			}
@@ -1671,7 +1671,7 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 				if ( parentStmt->isStaticCursor() )
 					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
 				else if ( blob->isArray() )
-					blob->bind ( parentStmt->connection->connection, ptBlob );
+					blob->bind ( parentStmt->statement, ptBlob );
 				else
 					blob->directOpenBlob ( ptBlob );
 			}
@@ -1745,7 +1745,7 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 				if ( parentStmt->isStaticCursor() )
 					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
 				else if ( blob->isArray() )
-					blob->bind ( parentStmt->connection->connection, ptBlob );
+					blob->bind ( parentStmt->statement, ptBlob );
 				else
 					blob->directOpenBlob ( ptBlob );
 			}

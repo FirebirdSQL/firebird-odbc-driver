@@ -226,7 +226,7 @@ void BinaryBlob::attach(char * pointBlob, bool fetched, bool clear)
 
 }
 
-void BinaryBlob::bind(Connection *connect, char * sqldata)
+void BinaryBlob::bind(Statement *stmt, char * sqldata)
 {
 
 }

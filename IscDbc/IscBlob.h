@@ -41,7 +41,7 @@ public:
 	int getSegmentLength (int pos);
 	char* getString();
 
-	void bind(Connection *connect, char * sqldata);
+	void bind(Statement *stmt, char * sqldata);
 	void attach(char * pointBlob, bool fetched, bool clear);
 	void setType(short sqlsubtype);
 	void fetchBlob();
@@ -52,7 +52,7 @@ public:
 	void  writeStringHexToBlob(char * sqldata, char *data, long length);
 	int length();
 	IscBlob();
-	IscBlob(IscConnection *connect, XSQLVAR *var);
+	IscBlob(IscStatement *stmt, XSQLVAR *var);
 	~IscBlob();
 
 	void directCreateBlob( char * sqldata );
@@ -62,7 +62,7 @@ public:
 	void directWriteBlob( char *data, long length );
 	void directCloseBlob();
 
-	IscConnection	*connection;
+	IscStatement	*statement;
 	ISC_QUAD		blobId;
 	isc_blob_handle directBlobHandle;
 	bool			fetched;

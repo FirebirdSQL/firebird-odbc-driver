@@ -107,7 +107,7 @@ bool IscProceduresResultSet::canSelectFromProcedure()
 	char * buffer = (char*)malloc (length);
 
 	blob->getBytes (0, length, buffer);
-	connection->GDS->_print_blr((char*)buffer,(void (*)())gen_blr, &countSUSPEND,0);
+	metaData->connection->GDS->_print_blr((char*)buffer,(void (*)())gen_blr, &countSUSPEND,0);
 
 	free(buffer);
 

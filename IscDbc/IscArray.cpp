@@ -40,9 +40,10 @@ namespace IscDbcLibrary {
 
 extern char charTable [];
 
-void CAttrArray::loadAttributes ( IscConnection *connection, char * nameRelation, char * nameFields, int sqlsubtype )
+void CAttrArray::loadAttributes ( IscStatement *stmt, char * nameRelation, char * nameFields, int sqlsubtype )
 {
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = stmt->connection;
 	void *transactionHandle = connection->startTransaction();
 
 	if ( !connection->GDS->_array_lookup_bounds(statusVector,&connection->databaseHandle, &transactionHandle,
@@ -262,11 +263,11 @@ IscArray::IscArray ( CAttrArray * ptArr )
 	attach(ptArr);
 }
 
-IscArray::IscArray ( IscConnection *connect, XSQLVAR *var )
+IscArray::IscArray ( IscStatement *stmt, XSQLVAR *var )
 {
 	init();
-	connection = connect;
-	bind(connect, var);
+	statement = stmt;
+	bind(stmt, var);
 }
 
 IscArray::~IscArray()
@@ -278,7 +279,7 @@ void IscArray::init()
 {
 	enType = enTypeArray;
 
-	connection = NULL;
+	statement = NULL;
 	memset ( &arrayId, ~0, sizeof(ISC_QUAD) );
 	clearData = false;
 	fetched = false;
@@ -308,7 +309,7 @@ void IscArray::detach(CAttrArray * arr)
 	clearData = false;
 }
 
-void IscArray::bind(IscConnection *connect,XSQLVAR *var)
+void IscArray::bind(IscStatement *stmt, XSQLVAR *var)
 {
 	if ( !memcmp(&arrayId,&*(ISC_QUAD*) var->sqldata,sizeof(arrayId)) )
 		return;
@@ -317,18 +318,18 @@ void IscArray::bind(IscConnection *connect,XSQLVAR *var)
 	removeBufData();
 
 	clearData = true;
-	connection = connect;
+	statement = stmt;
 	arrayId = *(ISC_QUAD*)var->sqldata;
 	fetched = false;
 	fetchedBinary = false;
 	offset = 0;
 	enType = enTypeArray;
 
-	loadAttributes ( connection, var->relname, var->sqlname, var->sqlsubtype );
+	loadAttributes ( statement, var->relname, var->sqlname, var->sqlsubtype );
 	arrBufData = (void*)malloc(arrBufDataSize);
 }
 
-void IscArray::bind(Connection *connect, char * sqldata)
+void IscArray::bind(Statement *stmt, char * sqldata)
 {
 	clear();
 	clearData = true;
@@ -356,6 +357,7 @@ int IscArray::length()
 void IscArray::getBytesFromArray()
 {
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = statement->connection;
 	void *transactionHandle = connection->startTransaction();
 	long lenbuf = arrBufDataSize;
 
@@ -482,6 +484,7 @@ void IscArray::fetchArrayToString()
 void IscArray::writeBlob(char * sqldata)
 {
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 	void *transactionHandle = connection->startTransaction();
 
@@ -498,6 +501,7 @@ void IscArray::writeBlob(char * sqldata)
 void IscArray::writeBlob(char * sqldata, char *data, long length)
 {
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 	void *transactionHandle = connection->startTransaction();
 
@@ -666,6 +670,7 @@ void IscArray::convStringToArray( char *data, long length )
 void IscArray::writeStringHexToBlob(char * sqldata, char *data, long length)
 {
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 	void *transactionHandle = connection->startTransaction();
 	ISC_QUAD &arrayId = *(ISC_QUAD*)sqldata;
@@ -706,6 +711,7 @@ void IscArray::writeArray(Value * value)
 	} // End switch (value->type)
 
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = statement->connection;
 	void *transactionHandle = connection->startTransaction();
 	long lenbuf = arrBufDataSize;
 

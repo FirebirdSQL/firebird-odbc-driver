@@ -61,9 +61,9 @@ public:
 	virtual void getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar *& ptHeadSqlVar);
 	virtual void createBlobDataTransfer(int index, Blob *& ptDataBlob);
 
-	IscStatementMetaData(IscConnection *connect, Sqlda	* ptSqlda);
+	IscStatementMetaData(IscStatement *stmt, Sqlda *ptSqlda);
 
-	IscConnection	*connection;
+	IscStatement	*statement;
 	Sqlda			*sqlda;
 };
 

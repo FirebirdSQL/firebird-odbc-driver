@@ -95,7 +95,7 @@ public:
 
 	virtual int			objectVersion();
 
-	void				initResultSet(IscStatement *iscStatement);
+	virtual void		initResultSet(IscStatement *iscStatement);
 	void				allocConversions();
 	virtual void		freeHTML(const char *html);
 	virtual const char* genHTML(const char *series, const char *type, Properties *context);
