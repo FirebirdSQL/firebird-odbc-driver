@@ -72,6 +72,7 @@ void IscMetaDataResultSet::prepareStatement(const char * sql)
 {
 	statement = metaData->connection->prepareStatement (sql);
 	resultSet = (IscResultSet*) statement->executeQuery();
+	sqlda = resultSet->sqlda;
 	numberColumns = resultSet->numberColumns;
 	allocConversions();
 }

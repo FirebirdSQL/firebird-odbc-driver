@@ -23,6 +23,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "IscDbc.h"
+#include "IscBlob.h"
+#include "IscArray.h"
 #include "IscStatementMetaData.h"
 #include "Sqlda.h"
 
@@ -40,12 +42,12 @@ IscStatementMetaData::~IscStatementMetaData()
 
 }
 
-int IscStatementMetaData::getCount()
+int IscStatementMetaData::getColumnCount()
 {
 	return sqlda->getColumnCount();
 }
 
-int IscStatementMetaData::getType(int index, int &realSqlType)
+int IscStatementMetaData::getColumnType(int index, int &realSqlType)
 {
 	return sqlda->getColumnType (index, realSqlType);
 }
@@ -65,9 +67,9 @@ bool IscStatementMetaData::isNullable(int index)
 	return sqlda->isNullable (index);
 }
 
-int IscStatementMetaData::getDisplaySize(int index)
+int IscStatementMetaData::getColumnDisplaySize(int index)
 {
-	return sqlda->getDisplaySize(index);
+	return sqlda->getColumnDisplaySize(index);
 }
 
 const char* IscStatementMetaData::getColumnLabel(int index)
@@ -93,6 +95,59 @@ const char* IscStatementMetaData::getTableName(int index)
 const char* IscStatementMetaData::getColumnTypeName(int index)
 {
 	return sqlda->getColumnTypeName(index);
+}
+
+bool IscStatementMetaData::isSigned(int index)
+{
+	return true;
+}
+
+bool IscStatementMetaData::isReadOnly(int index)
+{
+	return false;
+}
+
+bool IscStatementMetaData::isWritable(int index)
+{
+	return true;
+}
+
+bool IscStatementMetaData::isDefinitelyWritable(int index)
+{
+	return false;
+}
+
+bool IscStatementMetaData::isCurrency(int index)
+{
+	return false;
+}
+
+bool IscStatementMetaData::isCaseSensitive(int index)
+{
+	return true;
+}
+
+bool IscStatementMetaData::isAutoIncrement(int index)
+{
+	return false;
+}
+
+bool IscStatementMetaData::isSearchable(int index)
+{
+	int realSqlType;
+	int type = sqlda->getColumnType (index, realSqlType);
+
+	return type != JDBC_LONGVARCHAR && type != JDBC_LONGVARBINARY;
+}
+
+const char* IscStatementMetaData::getSchemaName(int index)
+{
+	return sqlda->getOwnerName (index);;
+}
+
+const char* IscStatementMetaData::getCatalogName(int index)
+{
+	return "";	
 }
 
 void IscStatementMetaData::getSqlData(int index, char *& ptData, short *& ptIndData)

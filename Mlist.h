@@ -81,21 +81,37 @@ public:
 	{
 		OnDelete();
 	}
-	char OnReinit()
+	char OnReinit(int nCneckCount = 0)
 	{
-		if(bOk==false)return false;
+		if( bOk == false )
+			return false;
+
+		if ( nCneckCount && nCneckCount < m_nKolKesh )
+			return true;
+
 		char bRez=false;
 		T * tmp;
-		tmp=(T*)realloc(m_Root,(m_nKolKesh + 50) * sizeof(T));
+
+		if( nCneckCount > m_nKolKesh + 50 )
+			nCneckCount += 50;
+		else
+			nCneckCount = m_nKolKesh + 50;
+
+		tmp=(T*)realloc(m_Root,nCneckCount * sizeof(T));
 		if(tmp)
 		{
-			m_nKolKesh+=50;
+			m_nKolKesh = nCneckCount;
 			m_Root=tmp;
 			bRez=true;
 		}
 		return bRez;
 	}
 	T & operator [](int nPoz){ return  m_Root[nPoz];}
+	T & operator ()(int nPoz)
+	{ 
+		OnReinit(nPoz);
+		return  m_Root[nPoz];
+	}
 	T & GetNode(int nPoz){ return  m_Root[nPoz];}
 	void operator =(MList &Lst)
 	{

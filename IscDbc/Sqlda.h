@@ -59,7 +59,7 @@ public:
 	int getScale (int index);
 	int getPrecision (int index);
 	const char* getColumnName (int index);
-	int getDisplaySize (int index);
+	int getColumnDisplaySize (int index);
 	int getSubType(int index);
 	int getColumnType (int index, int &realSqlType);
 	const char * getColumnTypeName (int index);

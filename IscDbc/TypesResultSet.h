@@ -40,7 +40,11 @@ public:
 	virtual int getScale(int index);
 	int getColumnDisplaySize(int index);
 	virtual int getColumnType(int index, int &realSqlType);
+	virtual const char* getSqlTypeName(int index);
+	virtual const char* getColumnTypeName(int index);
 	virtual const char* getColumnName(int index);
+	virtual const char* getColumnLabel(int index);
+	virtual const char* getTableName(int index);
 	virtual bool next();
 	TypesResultSet(int dataType);
 	virtual ~TypesResultSet();

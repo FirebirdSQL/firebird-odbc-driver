@@ -55,7 +55,7 @@ class OdbcConnection;
 class OdbcDesc;
 class DescRecord;
 class ResultSet;
-class ResultSetMetaData;
+class StatementMetaData;
 class PreparedStatement;
 class CallableStatement;
 
@@ -140,7 +140,7 @@ public:
 	ResultSet			*resultSet;
 	PreparedStatement	*statement;
 	CallableStatement	*callableStatement;
-	ResultSetMetaData	*metaData;
+	StatementMetaData	*metaData;
 	int					numberColumns;
 	int					numberParameters;
 //Added 2002-06-04	RM

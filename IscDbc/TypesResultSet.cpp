@@ -209,9 +209,24 @@ const char* TypesResultSet::getColumnName(int index)
 	return fields [index - 1].name;
 }
 
+const char* TypesResultSet::getColumnTypeName(int index)
+{
+	return fields [index - 1].name;
+}
+
+const char* TypesResultSet::getSqlTypeName(int index)
+{
+	return fields [index - 1].name;
+}
+
 int TypesResultSet::getColumnType(int index, int &realSqlType)
 {
 	return (realSqlType = fields [index - 1].type);
+}
+
+const char* TypesResultSet::getColumnLabel(int index)
+{
+	return fields [index - 1].name;
 }
 
 int TypesResultSet::getColumnDisplaySize(int index)
@@ -232,6 +247,11 @@ int TypesResultSet::getPrecision(int index)
 bool TypesResultSet::isNullable(int index)
 {
 	return true;
+}
+
+const char* TypesResultSet::getTableName(int index)
+{
+	return "";
 }
 
 int TypesResultSet::findType()

@@ -97,7 +97,7 @@ void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaData)
 
 	bDefined = true;
 
-	headCount = metaData->getCount();
+	headCount = metaData->getColumnCount();
 	getDescRecord (headCount);
 }
 
@@ -173,10 +173,10 @@ int OdbcDesc::setConvFn(int recNumber, DescRecord * recordTo)
 		record->caseSensitive = SQL_FALSE;
 		record->catalogName = "";
 		record->datetimeIntervalCode = 0;
-		record->displaySize = metaData->getDisplaySize(recNumber);
+		record->displaySize = metaData->getColumnDisplaySize(recNumber);
 		record->fixedPrecScale = SQL_FALSE;
 		record->label = metaData->getColumnLabel(recNumber);
-		record->length = metaData->getDisplaySize(recNumber);
+		record->length = metaData->getColumnDisplaySize(recNumber);
 		record->literalPrefix = "\"";
 		record->literalSuffix = "\"";
 		record->localTypeName = metaData->getSqlTypeName(recNumber);
@@ -190,7 +190,7 @@ int OdbcDesc::setConvFn(int recNumber, DescRecord * recordTo)
 		record->searchable = SQL_PRED_NONE;
 		record->tableName = metaData->getTableName(recNumber);
 		record->baseTableName = metaData->getTableName(recNumber);
-		record->type = metaData->getType(recNumber, realSqlType);
+		record->type = metaData->getColumnType(recNumber, realSqlType);
 		record->conciseType = getConciseType(realSqlType);
 		record->typeName = metaData->getColumnTypeName(recNumber);
 		record->unNamed = !record->name.IsEmpty() ? SQL_NAMED : SQL_UNNAMED;

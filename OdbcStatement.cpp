@@ -428,6 +428,10 @@ void OdbcStatement::setResultSet(ResultSet * results)
 {
 	resultSet = results;
 	metaData = resultSet->getMetaData();
+	
+	if ( !statement )
+		implementationRowDescriptor->metaData = metaData;
+
 	numberColumns = metaData->getColumnCount();
 	eof = false;
 	cancel = false;
@@ -1123,7 +1127,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 
 	if (type == SQL_C_DEFAULT)
 	{
-		ResultSetMetaData *metaData = resultSet->getMetaData();
+		StatementMetaData *metaData = resultSet->getMetaData();
 		type = getCType (metaData->getColumnType (column, realSqlType), 
 						 metaData->isSigned (column));
 	}
@@ -1333,7 +1337,7 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 
 	if (type == SQL_C_DEFAULT)
 	{
-		ResultSetMetaData *metaData = resultSet->getMetaData();
+		StatementMetaData *metaData = resultSet->getMetaData();
 		type = getCType (metaData->getColumnType (column, realSqlType), 
 						 metaData->isSigned (column));
 	}
@@ -1769,7 +1773,7 @@ RETCODE OdbcStatement::sqlNumResultCols(SWORD * columns)
 	if (resultSet)
 		try
 			{
-			ResultSetMetaData *metaData = resultSet->getMetaData();
+			StatementMetaData *metaData = resultSet->getMetaData();
 			*columns = metaData->getColumnCount();
 			}
 		catch (SQLException& exception)
@@ -1815,7 +1819,7 @@ RETCODE OdbcStatement::sqlDescribeCol(int col,
 	try
 	{
 		int realSqlType;
-		ResultSetMetaData *metaData = resultSet->getMetaData();
+		StatementMetaData *metaData = resultSet->getMetaData();
 		const char *name = metaData->getColumnName (col);
 		setString (name, colName, nameSize, nameLength);
 		if (sqlType)
@@ -1962,7 +1966,7 @@ RETCODE OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, UDWORD *
 	try
 	{
 		if (sqlType)
-			*sqlType = metaData->getType (parameter, realSqlType);
+			*sqlType = metaData->getColumnType (parameter, realSqlType);
 
 		if (precision)
 			*precision = metaData->getPrecision (parameter);
@@ -2801,7 +2805,7 @@ char* OdbcStatement::getToken(const char **ptr, char *token)
 RETCODE OdbcStatement::executeStatement()
 {
 	StatementMetaData *metaData = statement->getStatementMetaDataIPD();
-	int nInputParam = metaData->getCount();
+	int nInputParam = metaData->getColumnCount();
 	if( nInputParam )
 	{
 		if(parameterNeedData == 0)
@@ -3404,7 +3408,7 @@ RETCODE OdbcStatement::sqlColAttributes(int column, int descType, SQLPOINTER buf
 
 	try
 	{
-		ResultSetMetaData *metaData = resultSet->getMetaData();
+		StatementMetaData *metaData = resultSet->getMetaData();
 		switch (descType)
 		{
 		case SQL_COLUMN_LABEL:
@@ -3595,7 +3599,7 @@ RETCODE OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attri
 
 	try
 	{
-		ResultSetMetaData *metaData = resultSet->getMetaData();
+		StatementMetaData *metaData = resultSet->getMetaData();
 		switch (fieldId)
 		{
 		case SQL_DESC_LABEL:

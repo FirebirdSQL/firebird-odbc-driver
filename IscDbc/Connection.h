@@ -73,10 +73,10 @@ class CallableStatement;
 class ResultSet;
 class ResultList;
 class DatabaseMetaData;
-class ResultSetMetaData;
 class DateTime;
 class TimeStamp;
 class SqlTime;
+class StatementMetaData;
 
 #define CONNECTION_VERSION	1
 
@@ -330,17 +330,28 @@ public:
 class StatementMetaData  
 {
 public:
-	virtual int			getCount() = 0;
-	virtual int			getType (int index, int &realSqlType) = 0;
+	virtual int			getColumnCount() = 0;
+	virtual int			getColumnType (int index, int &realSqlType) = 0;
 	virtual int			getPrecision(int index) = 0;
 	virtual int			getScale(int index) = 0;
 	virtual bool		isNullable (int index) = 0;
-	virtual int			getDisplaySize(int index) = 0;
+	virtual int			getColumnDisplaySize(int index) = 0;
 	virtual const char* getColumnLabel(int index) = 0;
 	virtual const char* getSqlTypeName(int index) = 0;
 	virtual const char* getColumnName(int index) = 0;
 	virtual const char* getTableName(int index) = 0;
 	virtual const char* getColumnTypeName(int index) = 0;
+	virtual bool		isSigned (int index) = 0;
+	virtual bool		isReadOnly (int index) = 0;
+	virtual bool		isWritable (int index) = 0;
+	virtual bool		isDefinitelyWritable (int index) = 0;
+	virtual bool		isCurrency (int index) = 0;
+	virtual bool		isCaseSensitive (int index) = 0;
+	virtual bool		isAutoIncrement (int index) = 0;
+	virtual bool		isSearchable (int index) = 0;
+	virtual const char*	getSchemaName (int index) = 0;
+	virtual const char*	getCatalogName (int index) = 0;
+
 	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData) = 0;
 	virtual void		setSqlData(int index, long ptData, long ptIndData) = 0;
 	virtual void		saveSqlData(int index, long ptData, long ptIndData) = 0;
@@ -413,7 +424,7 @@ public:
 	virtual QUAD		getQuad (int id) = 0;
 	virtual QUAD		getQuad (const char *columnName) = 0;
 	virtual int			findColumn (const char *columName) = 0;
-	virtual ResultSetMetaData* getMetaData() = 0;
+	virtual StatementMetaData* getMetaData() = 0;
 	virtual void		close() = 0;
 	virtual void		setPosRowInSet(int posRow) = 0;
 	virtual int			getPosRowInSet() = 0;
@@ -484,34 +495,6 @@ public:
 	virtual void		moveToInsertRow() = 0;
 	virtual void		moveToCurrentRow() = 0;
 	virtual Statement	*getStatement() = 0;
-};
-
-#define RESULTSETMETADATA_VERSION	1
-
-class ResultSetMetaData  
-{
-public:
-	virtual const char*	getTableName (int index) = 0;
-	virtual const char*	getColumnName (int index) = 0;
-	virtual int			getColumnDisplaySize (int index) = 0;
-	virtual int			getColumnType (int index, int &realSqlType) = 0;
-	virtual const char*	getColumnTypeName (int index) = 0;
-	virtual int			getColumnCount() = 0;
-	virtual int			getPrecision(int index) = 0;
-	virtual int			getScale(int index) = 0;
-	virtual bool		isNullable (int index) = 0;
-	virtual int			objectVersion() = 0;
-	virtual const char*	getColumnLabel (int index) = 0;
-	virtual bool		isSigned (int index) = 0;
-	virtual bool		isReadOnly (int index) = 0;
-	virtual bool		isWritable (int index) = 0;
-	virtual bool		isDefinitelyWritable (int index) = 0;
-	virtual bool		isCurrency (int index) = 0;
-	virtual bool		isCaseSensitive (int index) = 0;
-	virtual bool		isAutoIncrement (int index) = 0;
-	virtual bool		isSearchable (int index) = 0;
-	virtual const char*	getSchemaName (int index) = 0;
-	virtual const char*	getCatalogName (int index) = 0;
 };
 
 #define RESULTLIST_VERSION		1

@@ -35,7 +35,6 @@
 #include "IscDbc.h"
 #include "IscResultSet.h"
 #include "IscStatement.h"
-#include "IscResultSetMetaData.h"
 #include "IscArray.h"
 #include "IscBlob.h"
 #include "IscConnection.h"
@@ -47,47 +46,41 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-
 IscResultSet::IscResultSet(IscStatement *iscStatement)
+{
+	initResultSet(iscStatement);
+}
+
+IscResultSet::~IscResultSet()
+{
+	close();
+}
+
+StatementMetaData* IscResultSet::getMetaData()
+{
+	return (StatementMetaData*) this;
+}
+
+void IscResultSet::initResultSet(IscStatement *iscStatement)
 {
 	useCount	= 1;
 	statement	= iscStatement;
-	metaData	= NULL;
 	conversions = NULL;
 	sqlda		= NULL;
-
-	if (iscStatement)
-		numberColumns = statement->numberColumns;
+	numberColumns = 0;
 
 	if (statement)
-		{
+	{
 		statement->addRef();
 		sqlda = &statement->outputSqlda;
 		numberColumns = sqlda->getColumnCount();
 		sqlda->allocBuffer();
 		values.alloc (numberColumns);
 		allocConversions();
-		}
+	}
+
 	activePosRowInSet = 0;
 	statysPositionRow = enBEFORE_FIRST;
-}
-
-IscResultSet::~IscResultSet()
-{
-	close();
-
-	if (metaData)
-		delete metaData;
-}
-
-ResultSetMetaData* IscResultSet::getMetaData()
-{
-	if (metaData)
-		return (ResultSetMetaData*) metaData;
-
-	metaData = new IscResultSetMetaData (this, numberColumns);
-
-	return (ResultSetMetaData*) metaData;
 }
 
 // Is used only for cursors OdbcJdbc
@@ -142,7 +135,7 @@ bool IscResultSet::next()
 	XSQLVAR *var = sqlda->sqlda->sqlvar;
     Value *value = values.values;
 
-	for (int n = 0; n < numberColumns; ++n, ++var, ++value)
+	for (int n = 0; n < sqlda->sqlda->sqld; ++n, ++var, ++value)
 		statement->setValue (value, var);
 
 	return true;
@@ -232,7 +225,7 @@ bool IscResultSet::getDataFromStaticCursor (int column, int cType, void * pointe
 
 const char* IscResultSet::getString(int id)
 {
-	if (id < 1 || id > numberColumns)
+	if (id < 1 || id > getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 
 	/*if (conversions [id - 1])
@@ -258,7 +251,7 @@ long IscResultSet::getInt(const char * columnName)
 
 Value* IscResultSet::getValue(int index)
 {
-	if (index < 1 || index > numberColumns)
+	if (index < 1 || index > getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 
 	Value *value = values.values + index - 1;
@@ -269,7 +262,7 @@ Value* IscResultSet::getValue(int index)
 
 bool IscResultSet::isNull(int index)
 {
-	if (index < 1 || index > numberColumns)
+	if (index < 1 || index > getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 
 	Value *value = values.values + index - 1;
@@ -338,10 +331,10 @@ void IscResultSet::addRef()
 int IscResultSet::release()
 {
 	if (--useCount == 0)
-		{
+	{
 		delete this;
 		return 0;
-		}
+	}
 
 	return useCount;
 }
@@ -352,10 +345,10 @@ void IscResultSet::reset()
 	{
 		for (int n = 0; n < numberColumns; ++n)
 			if (conversions [n])
-				{
+			{
 				delete [] conversions [n];
 				conversions [n] = NULL;
-				}
+			}
 		delete[] conversions;
 		conversions = NULL;
 	}
@@ -387,6 +380,13 @@ bool IscResultSet::wasNull()
 	return valueWasNull;
 }
 
+int IscResultSet::getColumnCount()
+{
+	if ( sqlda )
+		return sqlda->getColumnCount();
+	return numberColumns;
+}
+
 void IscResultSet::allocConversions()
 {
 	conversions = new char* [numberColumns];
@@ -395,21 +395,21 @@ void IscResultSet::allocConversions()
 
 void IscResultSet::setNull(int index)
 {
-	if (index < 1 || index > numberColumns)
+	if (index < 1 || index > getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 	values.values [index - 1].setNull();
 }
 
 void IscResultSet::setValue(int index, const char * value)
 {
-	if (index < 1 || index > numberColumns)
+	if (index < 1 || index > getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 	values.values [index - 1].setString (value, true);
 }
 
 void IscResultSet::setValue(int index, long value)
 {
-	if (index < 1 || index > numberColumns)
+	if (index < 1 || index > getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 	values.values [index - 1].setValue (value, true);
 }
@@ -466,21 +466,33 @@ float IscResultSet::getFloat(const char * columnName)
 
 int IscResultSet::getColumnType(int index, int &realSqlType)
 {
-	if (index < 1 || index > numberColumns)
+	if (index < 1 || index > sqlda->getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 	return sqlda->getColumnType (index, realSqlType);
 }
 
 int IscResultSet::getColumnDisplaySize(int index)
 {
-	if (index < 1 || index > numberColumns)
+	if (index < 1 || index > sqlda->getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->getDisplaySize (index);
+	return sqlda->getColumnDisplaySize (index);
+}
+
+const char* IscResultSet::getColumnLabel(int index)
+{
+	if (index < 1 || index > sqlda->getColumnCount())
+		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
+	return sqlda->getColumnName(index);
+}
+
+const char* IscResultSet::getSqlTypeName(int index)
+{
+	return sqlda->getColumnTypeName(index);
 }
 
 const char* IscResultSet::getColumnName(int index)
 {
-	if (index < 1 || index > numberColumns)
+	if (index < 1 || index > sqlda->getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 	return sqlda->getColumnName (index);
 }
@@ -495,23 +507,103 @@ const char* IscResultSet::getColumnTypeName(int index)
 	return sqlda->getColumnTypeName (index);
 }
 
+bool IscResultSet::isSigned(int index)
+{
+	return true;
+}
+
+bool IscResultSet::isReadOnly(int index)
+{
+	return false;
+}
+
+bool IscResultSet::isWritable(int index)
+{
+	return true;
+}
+
+bool IscResultSet::isDefinitelyWritable(int index)
+{
+	return false;
+}
+
+bool IscResultSet::isCurrency(int index)
+{
+	return false;
+}
+
+bool IscResultSet::isCaseSensitive(int index)
+{
+	return true;
+}
+
+bool IscResultSet::isAutoIncrement(int index)
+{
+	return false;
+}
+
+bool IscResultSet::isSearchable(int index)
+{
+	int realSqlType;
+	int type = sqlda->getColumnType (index, realSqlType);
+
+	return type != JDBC_LONGVARCHAR && type != JDBC_LONGVARBINARY;
+}
+
+const char* IscResultSet::getSchemaName(int index)
+{
+	if (index < 1 || index > sqlda->getColumnCount())
+		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
+	return sqlda->getOwnerName (index);
+}
+
+const char* IscResultSet::getCatalogName(int index)
+{
+	return "";	
+}
+
+void IscResultSet::getSqlData(int index, char *& ptData, short *& ptIndData)
+{
+	if ( !sqlda )
+		return;
+	sqlda->getSqlData(index, ptData, ptIndData);
+}
+
+void IscResultSet::setSqlData(int index, long ptData, long ptIndData)
+{
+	if ( !sqlda )
+		return;
+	sqlda->setSqlData(index, ptData, ptIndData);
+}
+
+void IscResultSet::saveSqlData(int index, long ptData, long ptIndData)
+{
+
+}
+
+void IscResultSet::restoreSqlData(int index)
+{
+
+}
+///////////////////////////////////////
+
 int IscResultSet::getPrecision(int index)
 {
-	if (index < 1 || index > numberColumns)
+	if (index < 1 || index > sqlda->getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 	return sqlda->getPrecision (index);
 }
 
 int IscResultSet::getScale(int index)
 {
-	if (index < 1 || index > numberColumns)
+	if (index < 1 || index > sqlda->getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 	return -sqlda->getScale (index);
 }
 
 bool IscResultSet::isNullable(int index)
 {
-	if (index < 1 || index > numberColumns)
+	if (index < 1 || index > sqlda->getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 	return sqlda->isNullable (index);
 }
@@ -549,13 +641,6 @@ TimeStamp IscResultSet::getTimestamp(const char * columnName)
 int IscResultSet::objectVersion()
 {
 	return RESULTSET_VERSION;
-}
-
-const char* IscResultSet::getSchemaName(int index)
-{
-	if (index < 1 || index > numberColumns)
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->getOwnerName (index);
 }
 
 void IscResultSet::setPosRowInSet(int posRow)

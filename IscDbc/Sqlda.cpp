@@ -591,7 +591,7 @@ void Sqlda::print()
 		}
 }
 
-int Sqlda::getDisplaySize(int index)
+int Sqlda::getColumnDisplaySize(int index)
 {
 	XSQLVAR *var = sqlda->sqlvar + index - 1;
 
