@@ -251,7 +251,6 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 
 OdbcStatement::~OdbcStatement()
 {
-	connection->statementDeleted (this);
 	releaseStatement();
 	releaseBindings();
 	releaseParameters();
@@ -259,6 +258,7 @@ OdbcStatement::~OdbcStatement()
 	delete applicationParamDescriptor;
 	delete implementationRowDescriptor;
 	delete implementationParamDescriptor;
+	connection->statementDeleted (this);
 }
 
 OdbcObjectType OdbcStatement::getType()
