@@ -68,6 +68,8 @@
 
 #define strcasecmp		stricmp
 #define strncasecmp		strnicmp
+#define fcvt			_fcvt
+#define gcvt			_gcvt
 
 #else
 

@@ -48,6 +48,7 @@ private:
 	void decode_sql_date(signed long nday, SQLUSMALLINT &mday, SQLUSMALLINT &month, SQLSMALLINT &year);
 	signed long encode_sql_time(SQLUSMALLINT hour, SQLUSMALLINT minute, SQLUSMALLINT second);
 	void decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMALLINT &minute, SQLUSMALLINT &second);
+	void convertFloatToString(double value, char *string, int size, int *length, int precision = 15, char POINT_DIV = '.');
 
 public:
 

@@ -682,12 +682,15 @@ ODBCCONVERT_CONVROUND(Float,float,Bigint,QUAD);
 
 int OdbcConvert::convFloatToString(DescRecord * from, DescRecord * to)
 {
-	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
+	char * pointerTo = (char *)getAdressBindDataTo((char*)to->dataPtr);
 	SQLINTEGER *indicatorPointer = (SQLINTEGER *)getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL;
-	
-	int len = snprintf((char*)to->dataPtr,to->length,"%f",*(float*)getAdressBindDataFrom((char*)from->dataPtr));
+
+	int len = to->length;
+
+	if ( len )	// MAX_FLOAT_DIGIT_LENGTH = 7
+		convertFloatToString(*(float*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len-1, &len, 7);
 
 	if ( indicatorPointer )
 		*indicatorPointer = len;
@@ -708,12 +711,15 @@ ODBCCONVERT_CONVTAGNUMERIC(Double,double);
 
 int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 {
-	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
+	char * pointerTo = (char *)getAdressBindDataTo((char*)to->dataPtr);
 	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL;
-	
-	int len = snprintf((char*)to->dataPtr,to->length,"%f",*(double*)getAdressBindDataFrom((char*)from->dataPtr));
+
+	int len = to->length;
+
+	if ( len )	// MAX_DOUBLE_DIGIT_LENGTH = 15
+		convertFloatToString(*(double*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len-1, &len);
 
 	if ( indicatorPointer )
 		*indicatorPointer = len;
@@ -1434,4 +1440,146 @@ void OdbcConvert::decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMA
 	hour = (SQLUSMALLINT)(minutes / 60);
 	minute = (SQLUSMALLINT)(minutes % 60);
 	second = (SQLUSMALLINT)((ntime / ISC_TIME_SECONDS_PRECISION) % 60);
+}
+
+void OdbcConvert::convertFloatToString(double value, char *string, int size, int *length, int digit, char POINT_DIV)
+{
+	char temp[64];
+	char * dst = temp;
+	int  decimal, sign;
+	bool copy = false;
+	char * strCvt = fcvt( value, digit, &decimal, &sign );
+	int len = strlen( strCvt );
+
+	if ( !size )
+		return;
+
+	if ( size >= 24 )
+		dst = string;
+	else
+		copy = true;
+
+	if ( !*strCvt )
+	{
+		len = strlen( gcvt( value, digit, dst) );
+		char * end = dst + len - 1;
+		if ( *end == '.' )
+			*end = '\0',--len;
+	}
+	else if ( !len )
+	{
+		*dst++ = '0';
+		*dst = '\0';
+		len = 1;
+	}
+	else
+	{
+		char strF[20];
+		char * src = strF, * end, * begin = dst;
+
+		if ( sign )
+			*dst++ = '-';
+
+		if ( len < digit + 1 )
+		{
+			char * ch = strCvt;
+			end = strF;
+			while ( (*end++ = *ch++) );
+			end -= 2;
+		}
+		else
+		{
+			char * ch = strCvt;
+			char * chEnd = strCvt + digit;
+			end = strF;
+
+			if ( *(strCvt + digit) < '5' )
+			{
+				while ( ch < chEnd )
+					*end++ = *ch++;
+				*end-- = '\0';
+			}
+			else
+			{
+				*strF = '0';
+				end++;
+				while ( ch < chEnd )
+					*end++ = *ch++;
+				*end-- = '\0';
+				chEnd = end;
+
+				while ( chEnd > strF && *chEnd + 1 > '9' )
+					*chEnd-- = '0';
+
+				++(*chEnd);
+
+				if ( chEnd > strF )
+					src++;
+			}
+		}
+
+		if ( decimal <= 0 )
+		{
+			int dec = decimal;
+
+			while ( end > src && *end == '0' )
+				*end-- = '\0';
+
+			if ( end >= src )
+			{
+				*dst++ = '0';
+				*dst++ = POINT_DIV;
+
+				while ( dec++ )
+					*dst++ = '0';
+
+				while ( (*dst++ = *src++) );
+				--dst;
+			}
+			else // if ( *end == '0' )
+			{
+				dst = begin;
+				*dst++ = '0';
+				*dst = '\0';
+			}
+		}			
+		else if ( decimal > 0 )
+		{
+			int dec = decimal;
+			while ( *src )
+			{
+				*dst++ = *src++;
+				if (--dec == 0)
+				{
+					if ( *src && decimal < digit )
+						*dst++ = POINT_DIV;
+					else
+						break;
+				}
+			}
+
+			if ( dec > 0 )
+				while ( dec-- )
+					*dst++ = '0';
+			else
+			{
+				--dst;
+				while ( *dst == '0' )
+					*dst-- = '\0';
+
+				if ( *dst == POINT_DIV )
+					*dst-- = '\0';
+				++dst;
+			}
+			*dst = '\0';
+		}
+		len = dst - begin;
+	}
+	if ( copy )
+	{
+		len = MIN( len, size - 1 );
+		memcpy( string, temp, len );
+		string[len] = '\0';
+	}
+	*length = len;
 }

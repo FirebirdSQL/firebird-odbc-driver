@@ -540,11 +540,8 @@ short Value::getShort(int scale)
 char* Value::getString(char **tempPtr)
 {
 	char	temp [64];
+	int		length;
 
-//	if (tempPtr)         // NOMEY -
-//		*tempPtr = NULL; // NOMEY -
-
- 
 	switch (type)
 		{
 		case Null:
@@ -567,11 +564,11 @@ char* Value::getString(char **tempPtr)
 			break;
 
 		case Float:
-			sprintf (temp, "%f", data.flt);
+			convertFloatToString(data.flt, temp, sizeof(temp), &length, 7);
 			break;
 
 		case Double:
-			sprintf (temp, "%f", data.dbl);
+			convertFloatToString(data.dbl, temp, sizeof(temp), &length);
 			break;
 
 		case Date:
@@ -624,7 +621,7 @@ char* Value::getString(char **tempPtr)
 			NOT_YET_IMPLEMENTED;
 		}
 
-	int length = strlen (temp);
+	length = strlen (temp);
 
 	if (!tempPtr)	//NOMEY +
 		throw SQLEXCEPTION (BUG_CHECK, "NULL-Pointer in Value::getString"); //NOMEY +
@@ -1055,6 +1052,148 @@ void Value::convert(QUAD value, int scale, char *string)
 		*q++ = *--p;
 
 	*q = 0;
+}
+
+void Value::convertFloatToString(double value, char *string, int size, int *length, int digit, char POINT_DIV)
+{
+	char temp[64];
+	char * dst = temp;
+	int  decimal, sign;
+	bool copy = false;
+	char * strCvt = fcvt( value, digit, &decimal, &sign );
+	int len = strlen( strCvt );
+
+	if ( !size )
+		return;
+
+	if ( size >= 24 )
+		dst = string;
+	else
+		copy = true;
+
+	if ( !*strCvt )
+	{
+		len = strlen( gcvt( value, digit, dst) );
+		char * end = dst + len - 1;
+		if ( *end == '.' )
+			*end = '\0',--len;
+	}
+	else if ( !len )
+	{
+		*dst++ = '0';
+		*dst = '\0';
+		len = 1;
+	}
+	else
+	{
+		char strF[20];
+		char * src = strF, * end, * begin = dst;
+
+		if ( sign )
+			*dst++ = '-';
+
+		if ( len < digit + 1 )
+		{
+			char * ch = strCvt;
+			end = strF;
+			while ( (*end++ = *ch++) );
+			end -= 2;
+		}
+		else
+		{
+			char * ch = strCvt;
+			char * chEnd = strCvt + digit;
+			end = strF;
+
+			if ( *(strCvt + digit) < '5' )
+			{
+				while ( ch < chEnd )
+					*end++ = *ch++;
+				*end-- = '\0';
+			}
+			else
+			{
+				*strF = '0';
+				end++;
+				while ( ch < chEnd )
+					*end++ = *ch++;
+				*end-- = '\0';
+				chEnd = end;
+
+				while ( chEnd > strF && *chEnd + 1 > '9' )
+					*chEnd-- = '0';
+
+				++(*chEnd);
+
+				if ( chEnd > strF )
+					src++;
+			}
+		}
+
+		if ( decimal <= 0 )
+		{
+			int dec = decimal;
+
+			while ( end > src && *end == '0' )
+				*end-- = '\0';
+
+			if ( end >= src )
+			{
+				*dst++ = '0';
+				*dst++ = POINT_DIV;
+
+				while ( dec++ )
+					*dst++ = '0';
+
+				while ( (*dst++ = *src++) );
+				--dst;
+			}
+			else // if ( *end == '0' )
+			{
+				dst = begin;
+				*dst++ = '0';
+				*dst = '\0';
+			}
+		}			
+		else if ( decimal > 0 )
+		{
+			int dec = decimal;
+			while ( *src )
+			{
+				*dst++ = *src++;
+				if (--dec == 0)
+				{
+					if ( *src && decimal < digit )
+						*dst++ = POINT_DIV;
+					else
+						break;
+				}
+			}
+
+			if ( dec > 0 )
+				while ( dec-- )
+					*dst++ = '0';
+			else
+			{
+				--dst;
+				while ( *dst == '0' )
+					*dst-- = '\0';
+
+				if ( *dst == POINT_DIV )
+					*dst-- = '\0';
+				++dst;
+			}
+			*dst = '\0';
+		}
+		len = dst - begin;
+	}
+	if ( copy )
+	{
+		len = MIN( len, size - 1 );
+		memcpy( string, temp, len );
+		string[len] = '\0';
+	}
+	*length = len;
 }
 
 void Value::setValue(SqlTime value)
