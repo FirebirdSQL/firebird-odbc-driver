@@ -154,10 +154,12 @@ public:
 		if ( bYesBlob )
 		{
 			XSQLVAR * sqlvar = ptSqlda->sqlvar;
-			int nRow = 0; 
+
 			for ( i = 0; i < countColumnBlob; ++i )
 			{
 				XSQLVAR * var = sqlvar + numColumnBlob[i];
+				int nRow = 0; 
+
 				if ( (var->sqltype & ~1) == SQL_ARRAY )
 				{
 					for (n = 0; n < countBlocks ; ++n)

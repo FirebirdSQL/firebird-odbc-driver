@@ -57,7 +57,10 @@ void IscMetaDataResultSet::prepareStatement(const char * sql)
 	statement->prepareStatement (sql);
 	statement->execute();
 	initResultSet ( statement );
+
+	IscStatement *saveStatement = statement;
 	readFromSystemCatalog();
+	statement = saveStatement;
 }
 
 bool IscMetaDataResultSet::isWildcarded(const char * pattern)

@@ -195,7 +195,6 @@ public:
 	bool			nextSimulateForProcedure;
 	LinkedList		blobs;
 	LinkedList		clobs;
-	IscStatement	*statement;
 	int				activePosRowInSet;
 	long			sqldataOffsetPtr;
 	enStatysActivePositionRow statysPositionRow;
