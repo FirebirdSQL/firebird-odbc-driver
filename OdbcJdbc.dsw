@@ -15,18 +15,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "JdbcTest"=.\JdbcTest\JdbcTest.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "OdbcJdbc"=.\OdbcJdbc.dsp - Package Owner=<4>
 
 Package=<5>
@@ -60,36 +48,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "Test"=.\Test\Test.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name OdbcJdbc
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "TestInstall"=.\TestInstall\TestInstall.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name OdbcJdbcSetup
-    End Project Dependency
-}}}
-
-###############################################################################
-
 Global:
 
 Package=<5>
@@ -98,7 +56,6 @@ Package=<5>
 
 Package=<3>
 {{{
-    {D4A97620-8E8F-11CF-93CD-00AA00C08FDF}
 }}}
 
 ###############################################################################
