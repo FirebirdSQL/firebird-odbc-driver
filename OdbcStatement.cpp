@@ -381,7 +381,7 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength, bool isExecDirec
 
 	if ( noscanSQL == SQL_NOSCAN_OFF )
 	{
-		long lenstrSQL = lstrlen(string);
+		long lenstrSQL = strlen(string);
 		long lennewstrSQL = lenstrSQL + 4096;
 		if ( connection->connection->getNativeSql(string,lenstrSQL,tempNative.getBuffer(lennewstrSQL),lennewstrSQL,&lenstrSQL))
 			string = tempNative;
