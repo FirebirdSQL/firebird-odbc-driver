@@ -210,6 +210,13 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 			*p++ = *q++;
 	}
 
+	const char *property = properties->findValue ("databaseAlways", NULL);
+
+	if ( property && *property == 'Y')
+		databaseAlways = true;
+	else
+		databaseAlways = false;
+
 	int dpbLength = p - dpb;
 	ISC_STATUS statusVector [20];
 
@@ -217,7 +224,16 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 							 dpbLength, dpb))
 	{
 		if ( statusVector [1] == 335544344l )
-			createDatabase( dbName, properties );
+		{
+			if ( databaseAlways )
+				createDatabase( dbName, properties );
+			else
+			{
+				JString text;
+				text.Format ("File Database is used by another process");
+				throw SQLEXCEPTION ( 8002, text );
+			}
+		}
 		else
 			throw SQLEXCEPTION ( statusVector [1], getIscStatusText( statusVector ) );
 	}
@@ -307,7 +323,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	else
 		databaseDialect = SQL_DIALECT_V6;
 
-	const char *property = properties->findValue ("quoted", NULL);
+	property = properties->findValue ("quoted", NULL);
 
 	if ( property && *property == 'Y')
 		quotedIdentifier = true;
@@ -327,13 +343,6 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		autoQuotedIdentifier = true;
 	else
 		autoQuotedIdentifier = false;
-
-	property = properties->findValue ("databaseAlways", NULL);
-
-	if ( property && *property == 'Y')
-		databaseAlways = true;
-	else
-		databaseAlways = false;
 
 	checkAdmin();
 }
