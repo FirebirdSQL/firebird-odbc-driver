@@ -1626,7 +1626,7 @@ RETCODE OdbcConnection::sqlEndTran(int operation)
 				break;
 
 			case SQL_ROLLBACK:
-				connection->rollback();
+				connection->rollbackAuto();
 			}
 		}
 		catch (SQLException& exception)
