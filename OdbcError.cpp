@@ -165,11 +165,27 @@ RETCODE OdbcError::sqlGetDiagField(int diagId, SQLPOINTER ptr, int msgBufferLeng
 			string = CLASS_ODBC;
 			for (Hash *code = hashTable [JString::hash (sqlState, HASH_SIZE)]; code;
 				 code = code->collision)
-				if (!strcmp (sqlState, code->string))
-					{
+				try
+				{
+					//if the server isn't running the code->string var 
+					//will be null which causes unpredictable results.
+					//We should probably present some better info,
+					//or handle this further up the chain
+					//but at least catching the error will stop
+					//some programs from crashing. 
+					strcmp (sqlState, code->string);
+				}
+				catch( ... )
+				{
 					string = CLASS_ODBC;
 					break;
-					}
+				}
+
+//				if (!strcmp (sqlState, code->string))
+//					{
+//					string = CLASS_ODBC;
+//					break;
+//					}
 			}
 			break;
 

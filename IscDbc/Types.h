@@ -1,3 +1,22 @@
+/*
+ *  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/idpl.html. 
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *
+ */
+
+
+
 #ifndef __TYPE_H
 #define __TYPE_H
 
@@ -15,8 +34,8 @@ enum Type {
 	Double,
 
 	Date,
-	Timestamp,
 	TimeType,
+	Timestamp,
 
 	Asciiblob,		// on disk blob
 	Binaryblob,		// on disk blob
@@ -44,8 +63,8 @@ enum TerType {
 	terDouble,
 
 	terDate,
-	terTimestamp,
 	terTime,
+	terTimestamp,
 
 	terBinaryBlob,		// 32 bit length followed by blob
 	};

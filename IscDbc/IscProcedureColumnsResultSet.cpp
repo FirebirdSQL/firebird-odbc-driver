@@ -20,10 +20,15 @@
  *
  *	Changes
  *
-*	2002-07-02	IscProcedureColumnsResultSet.cpp
-*				Contributed by C. G. Alvarez
-*				Fixed invalid table alias in typos in 
-*				getProcedureColumns()
+ *	2002-11-24	IscProcedureColumnsResultSet.cpp
+ *				Contributed by C. G. Alvarez
+ *				Improve handling of NUMERIC and DECIMAL fields
+ *
+ *
+ *	2002-07-02	IscProcedureColumnsResultSet.cpp
+ *				Contributed by C. G. Alvarez
+ *				Fixed invalid table alias in typos in 
+ *				getProcedureColumns()
  *
  *
  *	2002-05-20	IscProcedureColumnsResultSet.cpp
@@ -126,9 +131,10 @@ bool IscProcedureColumnsResultSet::next()
 	int blrType = resultSet->getInt (6);	// field type
 	int subType = resultSet->getInt (7);
 	int length = resultSet->getInt (8);
+	int scale = resultSet->getInt (10);
 	int dialect	= resultSet->statement->connection->getDatabaseDialect();
 	int precision = resultSet->getInt (19);
-	IscSqlType sqlType (blrType, subType, length, length, dialect, precision);
+	IscSqlType sqlType (blrType, subType, length, length, dialect, precision, scale);
 
 	resultSet->setValue (6, sqlType.type);
 	resultSet->setValue (7, sqlType.typeName);

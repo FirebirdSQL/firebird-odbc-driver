@@ -16,6 +16,13 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	2002-11-24	IscSpecialColumnsResultSet.cpp
+ *				Contributed by C. G. Alvarez
+ *				Improve handling of NUMERIC and DECIMAL fields
+ *
+ *
  */
 
 // IscSpecialColumnsResultSet.cpp: implementation of the IscSpecialColumnsResultSet class.
@@ -109,10 +116,11 @@ bool IscSpecialColumnsResultSet::next ()
 	int blrType = resultSet->getInt (3);	// field type
 	int subType = resultSet->getInt (4);
 	int length = resultSet->getInt (11);
+	int scale = resultSet->getInt (12);
 	int precision = resultSet->getInt (13);
 
 	int dialect = resultSet->statement->connection->getDatabaseDialect();
-	IscSqlType sqlType (blrType, subType, length, length, dialect, precision);
+	IscSqlType sqlType (blrType, subType, length, length, dialect, precision, scale);
 
 	char *type, t[50];
 	type = t;
@@ -123,7 +131,7 @@ bool IscSpecialColumnsResultSet::next ()
 
 	setCharLen (5, 6, sqlType);
 
-	int scale = resultSet->getInt(12)*-1;
+	scale = resultSet->getInt(12)*-1;
 	resultSet->setValue(7,scale);
 
 	resultSet->setValue(8,1);

@@ -32,8 +32,8 @@
 class IscSqlType  
 {
 public:
-	void getType (int blrType, int subType, int length, int bufferLen, int dialect, int precision);
-	IscSqlType(int blrType, int subType, int length, int bufferLen, int dialect, int precision);
+	void getType (int blrType, int subType, int length, int bufferLen, int dialect, int precision, int scale);
+	IscSqlType(int blrType, int subType, int length, int bufferLen, int dialect, int precision, int scale);
 	virtual ~IscSqlType();
 
 	int		type;

@@ -16,6 +16,12 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	2002-11-24	IscColumnsResultSet.cpp
+ *				Contributed by C. G. Alvarez
+ *				Improve handling of NUMERIC and DECIMAL fields
+ *
  */
 
 
@@ -124,17 +130,19 @@ bool IscColumnsResultSet::next()
 	resultSet->setValue (17, resultSet->getInt (23)+1);	// ORDINAL_POSITION
 	
 	//translate to the SQL type information
-	int blrType = resultSet->getInt (5);	// DATA_TYPE
-	int subType = resultSet->getInt (6);	// SUB_TYPE
-	int length = resultSet->getInt (7);		// COLUMN_SIZE
-	int array = resultSet->getInt (21);		// ARRAY_DIMENSION
+	int blrType	  = resultSet->getInt (5);	// DATA_TYPE
+	int subType	  = resultSet->getInt (6);	// SUB_TYPE
+	int length	  = resultSet->getInt (7);	// COLUMN_SIZE
+	int scale	  = resultSet->getInt (9);	// DECIMAL_DIGITS
+	int array	  = resultSet->getInt (21);	// ARRAY_DIMENSION
 	int precision = resultSet->getInt (25);	// COLUMN_PRECISION
 
 	if (resultSet->valueWasNull)
 		array = 0;
 
 	int dialect = resultSet->statement->connection->getDatabaseDialect();
-	IscSqlType sqlType (blrType, subType, length, length, dialect, precision);
+//	IscSqlType sqlType (blrType, subType, length, length, dialect, precision);
+	IscSqlType sqlType (blrType, subType, length, length, dialect, precision, scale);
 
 	JString type;
 	type.Format ("%s%s", (array) ? "ARRAY OF " : "", sqlType.typeName);
@@ -422,7 +430,7 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 	switch (sqlType.type)
 		{
 		case JDBC_NUMERIC:
-		case JDBC_DECIMAL:			
+		case JDBC_DECIMAL:
 			resultSet->setValue (9, resultSet->getInt(9)*-1); 	// Scale > 0
 			break;
 		case JDBC_CHAR:

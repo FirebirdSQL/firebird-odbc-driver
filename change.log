@@ -5,6 +5,18 @@ Changes made to OdbcJdbc codebase
 !!  using the format below and then paste them into this document. 
 
 
+ *	2002-11-24	Value.cpp
+ *				OdbcStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Improved handling of TIME datatype
+
+ *	2002-11-24	IscColumnsResultSet.cpp
+ *				IscProcedureColumnsResultSet.cpp
+ *				IscSpecialColumnsResultSet.cpp
+ *				IscSqlType.cpp
+ *				Contributed by C. G. Alvarez
+ *				Improve handling of NUMERIC and DECIMAL fields
+
  *  2002-11-21  IscSqlType.cpp
  *              Contributed by C G Alvarez
  *				Amended DATE/TIME datatypes 

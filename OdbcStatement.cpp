@@ -22,6 +22,10 @@
  *
  *	2002-11-21	OdbcStatement.cpp
  *				Contributed by C. G. Alvarez
+ *				Improved handling of TIME datatype
+ *
+ *	2002-11-21	OdbcStatement.cpp
+ *				Contributed by C. G. Alvarez
  *				Modification to OdbcStatement::sqlExtendedFetch
  *				to support SQL_API_SQLEXTENDEDFETCH
  *
@@ -710,7 +714,8 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 			length = sizeof(QUAD);
 			break;
 
-		case SQL_TYPE_DATE:
+//		case SQL_TYPE_DATE:
+		case SQL_C_TYPE_DATE:
 		case SQL_C_DATE:
 			{
 			OdbcDateTime converter;
@@ -721,7 +726,8 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 			}
 			break;
 
-		case SQL_TYPE_TIMESTAMP:
+//		case SQL_TYPE_TIMESTAMP:
+		case SQL_C_TYPE_TIMESTAMP:
 		case SQL_C_TIMESTAMP:
 			{
 			TimeStamp timestamp = RESULTS (getTimestamp (column));
@@ -1310,6 +1316,15 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 				 case SQL_TIMESTAMP:
 					cType = SQL_C_TIMESTAMP;
 					break;
+				 case SQL_TYPE_DATE:
+					cType = SQL_C_TYPE_DATE;
+					break;
+				 case SQL_TYPE_TIME:
+					cType = SQL_C_TYPE_TIME;
+					break;
+				 case SQL_TYPE_TIMESTAMP:
+					cType = SQL_C_TYPE_TIMESTAMP;
+					break;
 				}
 
 		switch (cType)
@@ -1330,12 +1345,15 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 			case SQL_C_SBIGINT:
 			case SQL_C_UBIGINT:
 			case SQL_C_BINARY:
-			//case SQL_C_BOOKMARK:
-			//case SQL_C_VARBOOKMARK:
+			case SQL_C_DATE:
+			case SQL_C_TIME:
+			case SQL_C_TIMESTAMP:
 			case SQL_C_TYPE_DATE:
 			case SQL_C_TYPE_TIME:
 			case SQL_C_TYPE_TIMESTAMP:
 			case SQL_C_NUMERIC:
+			//case SQL_C_BOOKMARK:
+			//case SQL_C_VARBOOKMARK:
 			//case SQL_C_GUID:
 				break;
 
@@ -1424,6 +1442,7 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 				statement->setLong (parameter, *(QUAD*) binding->pointer);
 				break;
 
+			case SQL_C_TIMESTAMP:
 			case SQL_C_TYPE_TIMESTAMP:
 				{
 				OdbcDateTime converter;
@@ -1442,6 +1461,7 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 				}
 				break;
 
+			case SQL_C_DATE:
 			case SQL_C_TYPE_DATE:
 				{
 				OdbcDateTime converter;
@@ -1452,6 +1472,7 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 				}
 				break;
 
+			case SQL_C_TIME:
 			case SQL_C_TYPE_TIME:
 				{
 				tagTIME_STRUCT *var = (tagTIME_STRUCT*) binding->pointer;
@@ -1467,9 +1488,9 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 				break;
 
 			case SQL_C_BIT:
+			case SQL_C_NUMERIC:
 			//case SQL_C_BOOKMARK:
 			//case SQL_C_VARBOOKMARK:
-			case SQL_C_NUMERIC:
 			//case SQL_C_GUID:
 				//break;
 

@@ -20,6 +20,10 @@
  *
  *	ChangeLog
  *
+ *	2002-11-24	Values.cpp
+ *				Contributed by C. G. Alvarez
+ *				Improved handling of TIME datatype
+ *
  *	2002-05-20	Value.cpp
  *				Contributed by Bernhard Schulte
  *				o Updated setValue() to support changes 
@@ -437,6 +441,17 @@ short Value::getShort(int scale)
 		case Long:
 			return (short) data.integer;
 
+		case Char:
+		case Varchar:
+		case String:
+			{
+			double divisor;
+			QUAD quad = convertToQuad (divisor);
+			if (divisor == 1)
+				return (short) quad;
+			return (short) (quad / divisor);
+			}
+
 		case Quad:
 		default:
 			return (short) getQuad();
@@ -657,8 +672,6 @@ DateTime Value::getDate()
 		case Varchar:
 			break;
 
-		case Date:
-			return data.date;
 
 		case Long:
 			{
@@ -667,6 +680,10 @@ DateTime Value::getDate()
 			return date;
 			}
 
+		case Date:
+			return data.date;
+
+		case TimeType:
 		case Timestamp:
 			return data.timestamp;
 

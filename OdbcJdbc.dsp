@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
 
 !ELSEIF  "$(CFG)" == "OdbcJdbc - Win32 Debug"
 
@@ -79,7 +79,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 IscDbc.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /debugtype:cv /machine:I386 /pdbtype:sept /libpath:"debug"
+# ADD LINK32 IscDbc.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /libpath:"debug"
 # SUBTRACT LINK32 /incremental:no
 # Begin Special Build Tool
 TargetDir=.\Debug
@@ -102,25 +102,16 @@ PostBuild_Cmds=regsvr32 /s $(TargetDir)/OdbcJdbcSetup.dll
 SOURCE=.\ODbcJdbc.rc
 # End Source File
 # End Group
+# Begin Group "Source Files"
+
+# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
 SOURCE=.\DescRecord.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\DescRecord.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\InfoItems.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\IscDbc\JString.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\IscDbc\JString.h
 # End Source File
 # Begin Source File
 
@@ -132,15 +123,7 @@ SOURCE=.\OdbcConnection.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcConnection.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\OdbcDateTime.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\OdbcDateTime.h
 # End Source File
 # Begin Source File
 
@@ -148,15 +131,7 @@ SOURCE=.\OdbcDesc.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcDesc.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\OdbcEnv.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\OdbcEnv.h
 # End Source File
 # Begin Source File
 
@@ -164,15 +139,7 @@ SOURCE=.\OdbcError.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcError.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\OdbcJdbc.def
-# End Source File
-# Begin Source File
-
-SOURCE=.\OdbcJdbc.h
 # End Source File
 # Begin Source File
 
@@ -180,11 +147,51 @@ SOURCE=.\OdbcObject.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcObject.h
+SOURCE=.\OdbcStatement.cpp
+# End Source File
+# End Group
+# Begin Group "Header Files"
+
+# PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=.\DescRecord.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcStatement.cpp
+SOURCE=.\InfoItems.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\IscDbc\JString.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\OdbcConnection.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\OdbcDateTime.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\OdbcDesc.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\OdbcEnv.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\OdbcError.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\OdbcJdbc.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\OdbcObject.h
 # End Source File
 # Begin Source File
 
@@ -193,6 +200,11 @@ SOURCE=.\OdbcStatement.h
 # Begin Source File
 
 SOURCE=.\SetupAttributes.h
+# End Source File
+# End Group
+# Begin Source File
+
+SOURCE=.\IscDbc\TimeStamp.h
 # End Source File
 # End Target
 # End Project

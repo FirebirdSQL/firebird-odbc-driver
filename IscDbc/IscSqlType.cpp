@@ -35,6 +35,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <windows.h>
 #include "IscDbc.h"
 #include "IscSqlType.h"
 
@@ -42,9 +43,9 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscSqlType::IscSqlType(int blrType, int subType, int length, int bufferLen, int dialect, int precision)
+IscSqlType::IscSqlType(int blrType, int subType, int length, int bufferLen, int dialect, int precision, int scale)
 {
-	getType (blrType, subType, length, bufferLen, dialect, precision);
+	getType (blrType, subType, length, bufferLen, dialect, precision, scale);
 }
 
 IscSqlType::~IscSqlType()
@@ -52,7 +53,7 @@ IscSqlType::~IscSqlType()
 
 }
 
-void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int dialect, int precision)
+void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int dialect, int precision, int scale)
 {
 	length = len;
 	bufferLength = bufferLen;
@@ -176,21 +177,25 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 			}
 		}
 
-	if (type == JDBC_SMALLINT || type == JDBC_INTEGER || type == JDBC_BIGINT)
-	{
-		if (subType == 1)
-			{
-			type = JDBC_NUMERIC;
-			typeName = "NUMERIC";
-			length = precision;
-			bufferLength = MAX_DECIMAL_LENGTH + 2;
-			}
-		else if (subType == 2)
-			{
-			type = JDBC_DECIMAL;
-			typeName = "DECIMAL";
-			length = precision;
-			bufferLength = MAX_DECIMAL_LENGTH + 2;
-			}
+	if (type == JDBC_SMALLINT || type == JDBC_INTEGER || 
+		type == JDBC_BIGINT || type == JDBC_DOUBLE)
+	{	
+		if(scale < 0)
+		{
+			if (subType == 2)
+				{
+				type = JDBC_DECIMAL;
+				typeName = "DECIMAL";
+				length = precision;
+				bufferLength = MAX_DECIMAL_LENGTH + 2;
+				}
+			else
+				{
+				type = JDBC_NUMERIC;
+				typeName = "NUMERIC";
+				length = precision;
+				bufferLength = MAX_DECIMAL_LENGTH + 2;
+				}
+		}
 	}
 }
