@@ -488,15 +488,15 @@ void Sqlda::allocBuffer ( IscStatement *stmt )
 	indicatorsOffset = offset;
 	offset += sizeof(long) * numberColumns;
 	buffer = new char [offset];
-	memset (buffer, 0, sizeof(char) * offset);
 	lengthBufferRows = offset;
 	long *indicators = (long*)( buffer + indicatorsOffset );
 	var = sqlda->sqlvar;
 
-	for (n = 0; n < numberColumns; ++n, ++var)
+	for ( n = 0; n < numberColumns; ++n )
 	{
 		var->sqldata = buffer + (long) var->sqldata;
-		var->sqlind = (short*)(indicators + n);
+		(var++)->sqlind = (short*)indicators;
+		*indicators++ = 0;
 	}
 }
 
