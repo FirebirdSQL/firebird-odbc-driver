@@ -829,8 +829,7 @@ JString OdbcConnection::readAttributeFileDSN(const char * attribute)
 
 void OdbcConnection::writeAttributeFileDSN(const char * attribute, const char * value)
 {
-	if ( *value )
-		SQLWriteFileDSN (savedsn, "ODBC", attribute, value);
+	SQLWriteFileDSN (savedsn, "ODBC", attribute, value);
 }
 
 RETCODE OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * supportedPtr)
