@@ -169,23 +169,64 @@ STDMETHODIMP TransactionResourceAsync::PrepareRequest( BOOL fRetaining,
 		setState ( TR_INVALID_STATE );
 
 		hr = enlist->PrepareRequestDone( E_UNEXPECTED, NULL, NULL );
-		if ( S_OK != hr )
-		{
+
+		if ( hr != S_OK )
 			return E_FAIL;
-		}
 
 		return E_UNEXPECTED;
 	}
 
 	setState( TR_PREPARING );
 
-	if ( odbcConnection )
-		odbcConnection->connection->prepareTransaction();
+	if ( fSinglePhase == TRUE )
+	{
+		try
+		{
+			if ( odbcConnection )
+				odbcConnection->connection->commitAuto();
+		}
+		catch (...)
+		{
+			if ( odbcConnection )
+				odbcConnection->connection->rollbackAuto();
+
+			hr = enlist->PrepareRequestDone( E_FAIL, NULL, NULL );
+			_ASSERTE( hr == S_OK );
+
+			setState( TR_INVALID_STATE );
+			return E_FAIL;
+		}
+
+		hr = enlist->PrepareRequestDone( XACT_S_SINGLEPHASE, NULL, NULL );
+
+		if ( hr != S_OK )
+			return E_FAIL;
+
+		return S_OK;
+	}
+
+	try
+	{
+		if ( odbcConnection )
+			odbcConnection->connection->prepareTransaction();
+	}
+	catch (...)
+	{
+		if ( odbcConnection )
+			odbcConnection->connection->rollbackAuto();
+
+		setState( TR_ABORTED );
+
+		hr = enlist->PrepareRequestDone( E_FAIL, NULL, NULL );
+		_ASSERTE( hr == S_OK );
+
+		return E_FAIL;
+	}
 
 	setState( TR_PREPARED );
 
 	hr = enlist->PrepareRequestDone( S_OK, NULL, NULL );
-	_ASSERTE( S_OK == hr );
+	_ASSERTE( hr == S_OK );
 
 	return S_OK;
 }
@@ -200,22 +241,34 @@ STDMETHODIMP TransactionResourceAsync::CommitRequest( DWORD grfRM, XACTUOW *pNew
 		setState ( TR_INVALID_STATE );
 
 		hr = enlist->PrepareRequestDone( E_UNEXPECTED, NULL, NULL );
-		if ( S_OK != hr )
-		{
+
+		if ( hr != S_OK )
 			return E_FAIL;
-		}
 
 		return E_UNEXPECTED;
 	}
 
 	setState( TR_COMMITTING );
 
-	if ( odbcConnection )
-		odbcConnection->connection->commitAuto();
+	try
+	{
+		if ( odbcConnection )
+			odbcConnection->connection->commitAuto();
+	}
+	catch (...)
+	{
+		setState( TR_INVALID_STATE );
+
+		hr = enlist->CommitRequestDone( E_FAIL );
+		_ASSERTE( hr == S_OK );
+
+		return E_FAIL;
+	}
 
 	setState( TR_COMMITTED );
 
 	hr = enlist->CommitRequestDone( S_OK );
+	_ASSERTE( hr == S_OK );
 
 	return S_OK;
 }
@@ -232,22 +285,34 @@ STDMETHODIMP TransactionResourceAsync::AbortRequest( BOID *pboidReason,
 		setState ( TR_INVALID_STATE );
 
 		hr = enlist->PrepareRequestDone( E_UNEXPECTED, NULL, NULL );
-		if ( S_OK != hr )
-		{
+
+		if ( hr != S_OK )
 			return E_FAIL;
-		}
 
 		return E_UNEXPECTED;
 	}
 
 	setState( TR_ABORTING );
 
-	if ( odbcConnection )
-		odbcConnection->connection->rollbackAuto();
+	try
+	{
+		if ( odbcConnection )
+			odbcConnection->connection->rollbackAuto();
+	}
+	catch (...)
+	{
+		setState( TR_INVALID_STATE );
+
+		hr = enlist->AbortRequestDone( E_FAIL );
+		_ASSERTE( hr == S_OK );
+
+		return E_FAIL;
+	}
 
 	setState( TR_ABORTED );
 
 	hr = enlist->AbortRequestDone( S_OK );
+	_ASSERTE( hr == S_OK );
 
 	return  S_OK;
 }
@@ -255,7 +320,7 @@ STDMETHODIMP TransactionResourceAsync::AbortRequest( BOID *pboidReason,
 STDMETHODIMP TransactionResourceAsync::TMDown( void )
 {
 	setState( TR_TMDOWN );
-
+	clearAtlResource();
 	return S_OK;
 }
 
