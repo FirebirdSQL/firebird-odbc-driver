@@ -1160,7 +1160,53 @@ ODBCCONVERT_CONVROUND(Double,double,Long,long);
 ODBCCONVERT_CONV(Double,double,Float,float);
 ODBCCONVERT_CONV(Double,double,Double,double);
 ODBCCONVERT_CONVROUND(Double,double,Bigint,QUAD);
-ODBCCONVERT_CONVTAGNUMERIC(Double,double);
+
+int OdbcConvert::convDoubleToTagNumeric(DescRecord * from, DescRecord * to)
+{
+	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	QUAD *number = (QUAD*)( pointer + 3 );
+	*number = (QUAD)(*(double*)getAdressBindDataFrom( (char*)from->dataPtr ) * (QUAD)listScale[from->scale] );
+
+	if ( to->scale != from->scale )
+	{
+		if ( to->scale > from->scale )
+			*number *= listScale[to->scale-from->scale];
+		else /* if ( to->scale < from->scale )	*/
+		{
+			if ( to->scale )
+			{
+				QUAD round = 5 * listScale[from->scale - to->scale - 1];
+
+				if ( *number > 0 )
+					*number += round;
+				else if ( *number < 0 )
+					*number -= round;
+			}
+			*number /= listScale[from->scale - to->scale];
+		}
+	}
+
+	*pointer++ = (char)to->precision;
+	*pointer++ = (char)to->scale;
+
+	if ( *number < 0 )
+		*number = -*number,
+		*pointer++ = 0;
+	else
+		*pointer++ = 1;
+
+	*++number = 0;
+
+	if ( indicatorTo )
+		*indicatorTo = sizeof ( tagSQL_NUMERIC_STRUCT );
+
+	return SQL_SUCCESS;
+}
 
 int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 {
