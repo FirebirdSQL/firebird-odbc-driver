@@ -81,6 +81,7 @@ public:
 	int		countAllRows;
 	int		curBlock;
 	char	*ptRowBlock;
+	char	*ptOrgRowBlock;
 	int		indicatorsOffset;
 	int		minRow;
 	int		maxRow;
@@ -91,7 +92,7 @@ public:
 
 public:
 
-	CDataStaticCursor(IscConnection *connect, XSQLDA * sqlda,int * ptOffsetSqldata,int lnRow)
+	CDataStaticCursor ( IscConnection *connect, XSQLDA * sqlda, int * ptOffsetSqldata, int lnRow)
 	{
 		connection = connect;
 		bYesBlob = false;
@@ -116,10 +117,14 @@ public:
 
 		int n, numberColumns = ptSqlda->sqld;
 		XSQLVAR * var = ptSqlda->sqlvar;
+		ptOrgRowBlock = var->sqldata;
 		numColumnBlob = (short *)calloc(1,numberColumns*sizeof(*numColumnBlob));
 		countColumnBlob = 0;
+		char * ptRow = ptRowBlock;
+		int	*offset = offsetSqldata;
+		short *indicators = (short*) (ptRow + indicatorsOffset);
 
-		for (n = 0; n < numberColumns; ++n, ++var)
+		for (n = 0; n < numberColumns; ++n)
 		{
 			switch (var->sqltype & ~1)
 			{
@@ -130,6 +135,8 @@ public:
 				numColumnBlob[countColumnBlob++] = n;
 				break;
 			}
+			var->sqldata = ptRow + *offset++;
+			(var++)->sqlind = indicators++;
 		}
 		if ( !bYesBlob )
 			free( numColumnBlob ),
@@ -189,6 +196,66 @@ public:
 			free( numColumnBlob );
 	}
 
+	void addRow ()
+	{
+		if ( bYesBlob )
+		{
+			int n;
+			XSQLVAR * sqlvar = ptSqlda->sqlvar;
+			for ( n = 0; n < countColumnBlob; ++n )
+			{
+				XSQLVAR * var = sqlvar + numColumnBlob[n];
+				if ( *var->sqlind == -1 )
+					*(long*)var->sqldata = (long)0;
+				else if ( (var->sqltype & ~1) == SQL_ARRAY )
+				{
+					SIscArrayData * ptArr = new SIscArrayData;
+					IscArray iscArr(connection,var);
+					iscArr.getBytesFromArray();
+					iscArr.detach(ptArr);
+					*(long*)var->sqldata = (long)ptArr;
+				}
+				else if ( (var->sqltype & ~1) == SQL_BLOB )
+				{
+					IscBlob * ptBlob = new IscBlob (connection, var);
+					ptBlob->fetchBlob();
+					*(long*)var->sqldata = (long)ptBlob;
+				}
+			}
+		}
+
+		nextPosition();
+
+		XSQLVAR * var = ptSqlda->sqlvar;
+		char * ptRow = ptRowBlock;
+		int	*offset = offsetSqldata;
+		short *indicators = (short*) (ptRow + indicatorsOffset);
+		int n = ptSqlda->sqld;
+
+		while ( n-- )
+		{
+			var->sqldata = ptRow + *offset++;
+			(var++)->sqlind = indicators++;
+		}
+
+		++countAllRows;
+	}
+
+	void restoreOriginalAdressFieldsSqlDa()
+	{
+		XSQLVAR * var = ptSqlda->sqlvar;
+		char * ptRow = ptOrgRowBlock;
+		int	*offset = offsetSqldata;
+		short *indicators = (short*) (ptRow + indicatorsOffset);
+		int n = ptSqlda->sqld;
+
+		while ( n-- )
+		{
+			var->sqldata = ptRow + *offset++;
+			(var++)->sqlind = indicators++;
+		}
+	}
+
 	bool current(int nRow)
 	{
 		int i, n;
@@ -216,7 +283,7 @@ public:
 		sqlind = (short*)(ptRow + indicatorsOffset + column * sizeof(short));
 	}
 
-	char * next()
+	char * nextPosition()
 	{
 		if ( ++curRow < maxRow )
 			ptRowBlock += lenRow;
@@ -253,38 +320,12 @@ public:
 
 	void operator << (char * orgBuf)
 	{
-		if ( bYesBlob )
-		{
-			int n;
-			XSQLVAR * sqlvar = ptSqlda->sqlvar;
-			for ( n = 0; n < countColumnBlob; ++n )
-			{
-				XSQLVAR * var = sqlvar + numColumnBlob[n];
-				if ( *var->sqlind == -1 )
-					*(long*)var->sqldata = (long)0;
-				else if ( (var->sqltype & ~1) == SQL_ARRAY )
-				{
-					SIscArrayData * ptArr = new SIscArrayData;
-					IscArray iscArr(connection,var);
-					iscArr.getBytesFromArray();
-					iscArr.detach(ptArr);
-					*(long*)var->sqldata = (long)ptArr;
-				}
-				else if ( (var->sqltype & ~1) == SQL_BLOB )
-				{
-					IscBlob * ptBlob = new IscBlob (connection, var);
-					ptBlob->fetchBlob();
-					*(long*)var->sqldata = (long)ptBlob;
-				}
-			}
-		}
-		memcpy(next(),orgBuf,lenRow);
-		++countAllRows;
+		memcpy(nextPosition(),orgBuf,lenRow);
 	}
 
 	void operator >> (char * orgBuf)
 	{
-		memcpy(orgBuf,next(),lenRow);
+		memcpy(orgBuf,nextPosition(),lenRow);
 	}
 };
 //////////////////////////////////////////////////////////////////////
@@ -458,7 +499,17 @@ void Sqlda::initStaticCursor(IscConnection *connect)
 	if ( dataStaticCursor )
 		delete 	dataStaticCursor;
 
-	dataStaticCursor = new CDataStaticCursor(connect,sqlda,offsetSqldata,lengthBufferRows);
+	dataStaticCursor = new CDataStaticCursor( connect, sqlda, offsetSqldata, lengthBufferRows );
+}
+
+void Sqlda::addRowSqldaInBufferStaticCursor()
+{
+	dataStaticCursor->addRow();
+}
+
+void Sqlda::restoreOrgAdressFieldsStaticCursor()
+{
+	dataStaticCursor->restoreOriginalAdressFieldsSqlDa();
 }
 
 bool Sqlda::setCurrentRowInBufferStaticCursor(int nRow)

@@ -44,6 +44,11 @@ class CDataStaticCursor;
 
 class Sqlda  
 {
+protected:
+	void initStaticCursor(IscConnection *connect);
+	void addRowSqldaInBufferStaticCursor();
+	void restoreOrgAdressFieldsStaticCursor();
+
 public:
 	const char* getOwnerName (int index);
 	int findColumn (const char *columnName);
@@ -62,7 +67,6 @@ public:
 	int getColumnType (int index, int &realSqlType);
 	const char * getColumnTypeName (int index);
 	void print();
-	void initStaticCursor(IscConnection *connect);
 	bool setCurrentRowInBufferStaticCursor(int nRow);
 	void getAdressFieldFromCurrentRowInBufferStaticCursor(int column, char *& sqldata, short *& sqlind);
 	void copyNextSqldaInBufferStaticCursor();
@@ -106,6 +110,8 @@ public:
 	char		*buffer;
 	ORGSQLVAR	*orgsqlvar;
 	bool		needsbuffer;
+
+	friend class IscResultSet;
 };
 
 }; // end namespace IscDbcLibrary

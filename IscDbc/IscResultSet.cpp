@@ -183,9 +183,11 @@ bool IscResultSet::readStaticCursor()
 	int ret;
 
 	sqlda->initStaticCursor(statement->connection);
-	sqlda->setCurrentRowInBufferStaticCursor(0);
+	
 	while(!(ret = GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda)))
-		sqlda->copyNextSqldaInBufferStaticCursor();
+		sqlda->addRowSqldaInBufferStaticCursor();
+
+	sqlda->restoreOrgAdressFieldsStaticCursor();
 
 	if ( ret != 100 )
 		THROW_ISC_EXCEPTION (statement->connection, statusVector);
