@@ -27,7 +27,7 @@
 
 #include <stdlib.h>
 
-namespace OdbcJdbcLibrary {
+namespace IscDbcLibrary {
 
 // Template for default value comparsion
 template <typename T>
@@ -202,6 +202,27 @@ public:
 		return i;
 	}
 
+	int Search(T * key)
+	{
+		register int ret = 1, i, l = 0, u = count - 1;
+		int size = sizeof(T);
+		T * buf = ptRoot;
+
+		while ( u >= l )
+		{
+			i = (l+u) >> 1;
+			if(ret = Cmp::compare(key, &buf[i]), ret < 0)
+				u=i-1;
+			else if ( ret > 0 )
+				l=i+1;
+			else 
+				break;
+		}
+
+		if ( ret ) i = -1;
+		return i;
+	}
+
 	void clear()
 	{
 		if ( ptRoot )
@@ -220,6 +241,6 @@ public:
 	}
 };
 
-}; // end namespace OdbcJdbcLibrary
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_MLIST_H_)
