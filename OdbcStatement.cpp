@@ -2307,7 +2307,13 @@ RETCODE OdbcStatement::inputParam()
 				
 				if ( record->startedTransfer )
 				{
-					transferDataToBlobParam ( record );
+					if ( record->isBlobOrArray )
+						transferDataToBlobParam ( record );
+					else
+					{
+						record->startedTransfer = false;
+						record->dataOffset = 0;
+					}
 					continue;
 				}
 
@@ -2321,7 +2327,6 @@ RETCODE OdbcStatement::inputParam()
 					case SQL_C_BINARY:
 						if ( !record->dataBlobPtr )
 							metaData->createBlobDataTransfer ( parameterNeedData, record->dataBlobPtr );
-						record->beginBlobDataTransfer();
 					}
 				}
 
@@ -2447,7 +2452,7 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 
 	if( binding->indicatorPtr && binding->data_at_exec )
 	{
-		if (*binding->indicatorPtr && binding->startedTransfer)
+		if ( binding->startedTransfer )
 		{
 			; // continue into (this->*execute)();
 		}
@@ -2506,8 +2511,6 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 
 RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 {
-	bool endPutData = false;
-
 	if (parameterNeedData == 0)
 		return sqlReturn (SQL_ERROR, "HY010", "Function sequence error :: OdbcStatement::sqlPutData");
 
@@ -2518,15 +2521,14 @@ RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 
 	if (valueSize == SQL_NULL_DATA)
 	{
-		if (binding->startedTransfer)
-			binding->endBlobDataTransfer();
-
 		binding->setNull();
 		*binding->indicatorPtr = SQL_NULL_DATA;
-		endPutData = true;
 	}
 	else if ( binding->isBlobOrArray )
 	{
+		if ( !binding->startedTransfer )
+			binding->beginBlobDataTransfer();
+
 		switch (binding->conciseType)
 		{
 		case SQL_C_CHAR:
@@ -2536,17 +2538,14 @@ RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 		case SQL_C_BINARY:
 			if( valueSize )
 				binding->putBlobSegmentData (valueSize, value);
-			else // if( valueSize == 0 )
-			{
-				if ( binding->startedTransfer )
-					transferDataToBlobParam ( binding );
-				endPutData = true;
-			}
 			break;
 		}
 	}
 	else
 	{
+		if ( !binding->startedTransfer )
+			binding->startedTransfer = true;
+
 		switch (binding->conciseType)
 		{
 		case SQL_C_CHAR:
@@ -2555,18 +2554,15 @@ RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 		default:
 			{
 				CBindColumn &bindParam = (*listBindIn)[ parameterNeedData - 1 ];
+				SQLPOINTER valueSave = binding->dataPtr;
 				binding->dataPtr = value;
 				*binding->indicatorPtr = valueSize;
 				(convert->*bindParam.appRecord->fnConv)(bindParam.appRecord,bindParam.impRecord);
-				endPutData = true;
+				binding->dataPtr = valueSave;
 			}
 			break;
 		}
 	}
-
-	if ( endPutData )
-		++parameterNeedData;
-
 	return sqlSuccess();
 }
 
@@ -3044,7 +3040,10 @@ RETCODE OdbcStatement::sqlSpecialColumns(unsigned short rowId, SQLCHAR * catalog
 		DatabaseMetaData *metaData = connection->getMetaData();
 		setResultSet (metaData->specialColumns (cat, scheme, tbl, scope, nullable));
 		if ( rowId == SQL_ROWVER )
+		{
+			resultSet->setPosRowInSet(sqlDiagCursorRowCount ? sqlDiagCursorRowCount - 1 : 0);
 			eof = true;
+		}
 	}
 	catch (SQLException& exception)
 	{

@@ -2191,27 +2191,37 @@ int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 
 	int len;
+	RETCODE ret = SQL_SUCCESS;
 
 	GET_LEN_FROM_OCTETLENGTHPTR;
 
-	len = MIN( len, to->octetLength );
-
 	if ( !from->data_at_exec )
 	{
+		len = MIN( len, to->octetLength );
 		to->headSqlVarPtr->setSqlLen( (short)len );
 		to->headSqlVarPtr->setSqlData( pointerFrom );
 	}
 	else
 	{
 		if ( !to->isLocalDataPtr )
+		{
 			to->allocateLocalDataPtr();
+			to->headSqlVarPtr->setSqlData( to->localDataPtr );
+		}
 
-		memcpy(to->localDataPtr, pointerFrom, len);
-		to->headSqlVarPtr->setSqlLen( (short)len );
-		to->headSqlVarPtr->setSqlData( to->localDataPtr );
+		if ( len + from->dataOffset > to->octetLength )
+		{
+			OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
+			ret = SQL_SUCCESS_WITH_INFO;
+		}
+
+		len = MIN( len, MAX( 0, to->octetLength - from->dataOffset) );
+		memcpy(to->localDataPtr + from->dataOffset, pointerFrom, len);
+		from->dataOffset += len;
+		to->headSqlVarPtr->setSqlLen( (short)from->dataOffset );
 	}
 
-	return SQL_SUCCESS;
+	return ret;
 }
 
 // for use App to SqlDa
