@@ -95,6 +95,7 @@ void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaData)
 
 	bDefined = false;
 	removeRecords();
+	delAllBindColumn();
 
 	headAllocType = SQL_DESC_ALLOC_AUTO;
 	headArraySize = 1;

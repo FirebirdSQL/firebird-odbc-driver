@@ -415,7 +415,7 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 
 		implementationRowDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIRD());
 		implementationParamDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIPD());
-		implementationRowDescriptor->delAllBindColumn();
+		rebindColumn();
 		applicationRowDescriptor->clearPrepared();
 
 		if ( setPreCursorName )
@@ -423,8 +423,6 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 			statement->setCursorName (cursorName);
 			setPreCursorName = false;
 		}
-
-		rebindColumn();
 	}
 	catch (SQLException& exception)
 	{
@@ -476,7 +474,12 @@ void OdbcStatement::setResultSet(ResultSet * results)
 	metaData = resultSet->getMetaData();
 	sqldataOutOffsetPtr = resultSet->getSqlDataOffsetPtr();
 
-	if ( !statement )
+	if ( !implementationRowDescriptor->isDefined() )
+	{
+		implementationRowDescriptor->setDefaultImplDesc (metaData);
+		rebindColumn();
+	}
+	else if ( !statement )
 		implementationRowDescriptor->metaData = metaData;
 
 	implementationRowDescriptor->setBindOffsetPtrFrom(sqldataOutOffsetPtr);
@@ -2671,7 +2674,6 @@ RETCODE OdbcStatement::sqlGetTypeInfo(int dataType)
 	{
 		DatabaseMetaData *metaData = connection->getMetaData();
 		setResultSet (metaData->getTypeInfo (dataType));
-		implementationRowDescriptor->setDefaultImplDesc (metaData->getMetaDataTypeInfo(resultSet));
 	}
 	catch (SQLException& exception)
 	{
