@@ -104,6 +104,8 @@ typedef unsigned __int64			UQUAD;
 #define MAX_TIMESTAMP_LENGTH	24
 #define MAX_QUAD_LENGTH			18
 
+namespace IscDbcLibrary 
+{
 int getTypeStatement(IscConnection *connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);
 int getInfoCountRecordsStatement(IscConnection *connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);
 int getPlanStatement(IscConnection *connection, isc_stmt_handle statementHandle,const void * value, int bufferLength,long *lengthPtr);
@@ -112,5 +114,6 @@ int getWalDatabase(IscConnection *connection, const void * info_buffer, int buff
 int strBuildStatInformations(const void * info_buffer, int bufferLength,short *lengthPtr);
 void getStatInformations(IscConnection *connection, char bVanCall);
 int getStatInformations(IscConnection *connection, const void * info_buffer, int bufferLength,short *lengthPtr);
+}; // end namespace IscDbcLibrary
 
 #endif

@@ -37,6 +37,8 @@
 #include "TimeStamp.h"	// Added by ClassView
 #include "JString.h"	// Added by ClassView
 
+namespace IscDbcLibrary {
+
 class IscCallableStatement : public IscPreparedStatement, public CallableStatement  
 {
 public:
@@ -123,5 +125,7 @@ public:
 	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr)
 	{ return getInfoCountRecordsStatement(connection, statementHandle, value,bufferLength,lengthPtr); }  
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCCALLABLESTATEMENT_H_)

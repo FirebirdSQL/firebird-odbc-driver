@@ -58,6 +58,7 @@
 #define DEF_VAL		13
 #define BUFF_LEN	256
 
+namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -470,3 +471,5 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 	// Is Nullable - I'm seeing everything twice
 	sqlda->updateText (18, nullable == 0 ? "NO" : "YES");
 }
+
+}; // end namespace IscDbcLibrary

@@ -63,6 +63,8 @@
 
 #define TYPE_NAME	7
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -143,3 +145,5 @@ bool IscProcedureColumnsResultSet::next()
 
 	return true;
 }
+
+}; // end namespace IscDbcLibrary

@@ -53,6 +53,8 @@
 #include "Parameters.h"
 #include "Attachment.h"
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -594,3 +596,5 @@ void IscConnection::rollbackRetaining()
 	}
 	transactionPending = false;
 }
+
+}; // end namespace IscDbcLibrary

@@ -25,6 +25,12 @@
 #include "DsnDialog.h"
 
 extern HINSTANCE m_hInstance;
+
+namespace OdbcJdbcSetupLibrary {
+
+using namespace classJString;
+using namespace IscDbcLibrary;
+
 CDsnDialog * m_ptDsnDialog = NULL;
 
 BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam);
@@ -642,3 +648,5 @@ int DialogBoxDynamic()
 	return nRet;
 }
 #endif // __MINGW32__
+
+}; // end namespace OdbcJdbcSetupLibrary

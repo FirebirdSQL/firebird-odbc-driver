@@ -96,6 +96,8 @@ static char requestInfo [] = { isc_info_sql_records,
 							   isc_info_sql_stmt_type,
 							   isc_info_end };
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -568,3 +570,5 @@ void IscStatement::freeStatementHandle()
 	ISC_STATUS statusVector [20];
 	connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_drop);
 }
+
+}; // end namespace IscDbcLibrary

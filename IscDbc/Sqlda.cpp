@@ -63,6 +63,8 @@
 #include "IscBlob.h"
 #include "IscArray.h"
 
+namespace IscDbcLibrary {
+
 static short sqlNull = -1;
 
 class CDataStaticCursor
@@ -1297,3 +1299,5 @@ void Sqlda::updateVarying (int index, const char* dst)
 
 	*(unsigned short*)var->sqldata = (unsigned short)(var->sqllen - n - 3);
 }
+
+}; // end namespace IscDbcLibrary

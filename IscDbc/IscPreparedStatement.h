@@ -33,6 +33,8 @@
 #include "IscStatement.h"
 #include "Values.h"
 
+namespace IscDbcLibrary {
+
 #define DEFAULT_BLOB_BUFFER_LENGTH 16384
 
 class IscConnection;
@@ -108,5 +110,7 @@ public:
 	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr)
 	{ return getInfoCountRecordsStatement(connection, statementHandle, value,bufferLength,lengthPtr); }  
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCPREPAREDSTATEMENT_H_)

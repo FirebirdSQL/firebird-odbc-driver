@@ -46,6 +46,8 @@
 #include "Value.h"
 #include "IscStatementMetaData.h"
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -349,3 +351,5 @@ int IscPreparedStatement::objectVersion()
 {
 	return PREPAREDSTATEMENT_VERSION;
 }
+
+}; // end namespace IscDbcLibrary

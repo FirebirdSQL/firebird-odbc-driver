@@ -37,6 +37,8 @@ static char THIS_FILE[]=__FILE__;
 
 #define TODAY	"today"
 
+namespace IscDbcLibrary {
+
 const char *months [] = {
     "January",
 	"February",
@@ -464,3 +466,5 @@ signed long DateTime::yday (struct tm	*times)
 
 	return day - 2;
 }
+
+}; // end namespace IscDbcLibrary

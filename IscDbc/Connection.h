@@ -66,7 +66,10 @@ typedef unsigned __int64			UQUAD;
 #define TRA_ro			1
 #define TRA_nw			2
 
+namespace IscDbcLibrary {
+
 class Statement;
+class InternalStatement;
 class PreparedStatement;
 class CallableStatement;
 class ResultSet;
@@ -554,5 +557,7 @@ extern "C" __declspec( dllexport ) Connection*	createConnection();
 #else
 extern "C" Connection*	createConnection();
 #endif
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_CONNECTION_H_)

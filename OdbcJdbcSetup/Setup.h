@@ -25,6 +25,10 @@
 #if !defined(_SETUP_H_INCLUDED_)
 #define _SETUP_H_INCLUDED_
 
+namespace OdbcJdbcSetupLibrary {
+
+using namespace classJString;
+
 class Setup  
 {
 public:
@@ -38,7 +42,7 @@ public:
 	void addDsn();
 	void configDsn();
 	Setup (HWND windowHandle, const char *drvr, const char *attr);
-	virtual ~Setup();
+	~Setup();
 
 	HWND		hWnd;
 	JString		driver;
@@ -56,5 +60,7 @@ public:
 	JString		dialect;
 	JString		quoted;
 };
+
+}; // end namespace OdbcJdbcSetupLibrary
 
 #endif // !defined(_SETUP_H_INCLUDED_)

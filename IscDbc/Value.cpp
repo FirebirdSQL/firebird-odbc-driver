@@ -65,6 +65,8 @@ static char THIS_FILE[]=__FILE__;
 #undef NOT_YET_IMPLEMENTED
 #define NOT_YET_IMPLEMENTED throw SQLEXCEPTION (FEATURE_NOT_YET_IMPLEMENTED, "conversion is not implemented");
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -1203,3 +1205,4 @@ void Value::setValue(SqlTime value)
 	data.time = value;
 }
 
+}; // end namespace IscDbcLibrary
