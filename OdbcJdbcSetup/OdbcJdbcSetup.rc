@@ -126,9 +126,9 @@ BEGIN
     COMBOBOX        IDC_CHARSET,53,109,114,120,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "read (default write)",IDC_CHECK_READ,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,18,148,69,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,148,69,10
     CONTROL         "nowait (default wait)",IDC_CHECK_NOWAIT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,18,158,72,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,158,72,10
     DEFPUSHBUTTON   "OK",IDOK,85,183,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,143,183,50,14
     LTEXT           "Data Source Name (DSN)",IDC_STATIC,7,2,83,8
@@ -139,20 +139,21 @@ BEGIN
     LTEXT           "Role",IDC_STATIC,155,78,16,8
     LTEXT           "Character Set",IDC_STATIC,7,112,44,8
     GROUPBOX        "Options",IDC_STATIC,7,128,223,52
-    GROUPBOX        "Initializing transaction",IDC_STATIC,14,139,89,33
+    GROUPBOX        "Initializing transaction",IDC_STATIC,11,139,81,33
     LTEXT           "Client",IDC_STATIC,7,52,32,8
-    GROUPBOX        "Dialect",IDC_STATIC,106,139,31,33,WS_GROUP
-    CONTROL         "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,114,148,16,
+    GROUPBOX        "Dialect",IDC_STATIC,95,139,31,33,WS_GROUP
+    CONTROL         "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,103,148,16,
                     10
-    CONTROL         "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,114,158,16,
+    CONTROL         "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,103,158,16,
                     10
-    GROUPBOX        "Extend property identifier",IDC_STATIC,140,134,86,43
+    GROUPBOX        "Extended identifier properties",IDC_STATIC,129,134,97,
+                    43
     CONTROL         "quoted identifier",IDC_CHECK_QUOTED,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,145,143,67,9
+                    BS_AUTOCHECKBOX | WS_TABSTOP,134,143,67,9
     CONTROL         "sensitive identifier",IDC_CHECK_SENSITIVE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,145,154,74,9
+                    BS_AUTOCHECKBOX | WS_TABSTOP,134,154,74,9
     CONTROL         "autoquoted identifier",IDC_CHECK_AUTOQUOTED,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,145,165,77,9
+                    BS_AUTOCHECKBOX | WS_TABSTOP,134,165,77,9
     PUSHBUTTON      "Test connection",IDC_TEST_CONNECTION,172,108,58,14
     PUSHBUTTON      "Help",IDC_HELP_ODBC,27,183,50,14
 END
