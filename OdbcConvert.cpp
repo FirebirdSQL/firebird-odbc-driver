@@ -672,7 +672,6 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 					to->headSqlVarPtr->setTypeText();
 					return &OdbcConvert::transferStringToDateTime;
 				}
-#pragma FB_COMPILER_MESSAGE("Realized convStringToDateTime() FIXME!")
 			default:
 				return &OdbcConvert::notYetImplemented;
 			}
@@ -2795,58 +2794,80 @@ void OdbcConvert::convertStringDateTimeToServerStringDateTime (char *& string, i
 
 	while( *ptBeg == ' ' ) ptBeg++;
 
-	if( *ptBeg != '{' )
-		return;
-
-	while( *++ptBeg == ' ' );
-
 	int offset, offsetPoint;
-	
-	if ( UPPER(*ptBeg) == 'D' )
+
+	if( *ptBeg != '{' )
 	{
-		offsetPoint = 0;
-		offset = 6; // for bad variant '99-1-1'
-	}
-	else if ( UPPER(*ptBeg) == 'T' )
-	{
-		++ptBeg;
-		if ( UPPER(*ptBeg) == 'S' )
+		while ( *ptBeg && !ISDIGIT( *ptBeg ) ) ptBeg++;
+
+		if ( !ISDIGIT( *ptBeg ) )
+			return;
+
+		char * ptEnd = ptBeg + 1;
+
+		while ( *ptEnd )
 		{
-			offsetPoint = 19;
-			offset = 12; // for bad variant '99-1-1 0:0:0'
+			if ( *ptEnd == '.' )
+			{
+				int l = 5;
+				while ( l-- && *++ptEnd );
+				break;
+			}
+			ptEnd++;
 		}
-		else
-		{
-			offsetPoint = 8;
-			offset = 5; // for bad variant '0:0:0'
-		}
+
+		len = ptEnd - ptBeg;
 	}
 	else
-		return;
-
-	while( *ptBeg && *ptBeg != '\'' ) ptBeg++;
-
-	if( *ptBeg != '\'' )
-		return;
-
-	// ASSERT ( ptBeg == '\'' );
-	char * ptEnd = ++ptBeg + offset;
-
-	while( *ptEnd && *ptEnd != '\'' ) ptEnd++;
-
-	if( *ptEnd != '\'' )
-		return;
-
-	len = ptEnd - ptBeg;
-
-	if ( offsetPoint )
 	{
-		ptEnd = ptBeg + offsetPoint;
-		if ( len > offsetPoint && *ptEnd == '.' )
+		while( *++ptBeg == ' ' );
+		
+		if ( UPPER(*ptBeg) == 'D' )
 		{
-			int l = 5;
-			while ( l-- && *++ptEnd !='\'' );
-			len = ptEnd - ptBeg;
+			offsetPoint = 0;
+			offset = 6; // for bad variant '99-1-1'
+		}
+		else if ( UPPER(*ptBeg) == 'T' )
+		{
+			++ptBeg;
+			if ( UPPER(*ptBeg) == 'S' )
+			{
+				offsetPoint = 19;
+				offset = 12; // for bad variant '99-1-1 0:0:0'
+			}
+			else
+			{
+				offsetPoint = 8;
+				offset = 5; // for bad variant '0:0:0'
+			}
+		}
+		else
+			return;
+
+		while( *ptBeg && *ptBeg != '\'' ) ptBeg++;
+
+		if( *ptBeg != '\'' )
+			return;
+
+		// ASSERT ( ptBeg == '\'' );
+		char * ptEnd = ++ptBeg + offset;
+
+		while( *ptEnd && *ptEnd != '\'' ) ptEnd++;
+
+		if( *ptEnd != '\'' )
+			return;
+
+		len = ptEnd - ptBeg;
+
+		if ( offsetPoint )
+		{
+			ptEnd = ptBeg + offsetPoint;
+			if ( len > offsetPoint && *ptEnd == '.' )
+			{
+				int l = 5;
+				while ( l-- && *++ptEnd !='\'' );
+				len = ptEnd - ptBeg;
+			}
 		}
 	}
 
