@@ -370,7 +370,7 @@ int IscStatement::getUpdateCounts()
 						sizeof (buffer), buffer);
 
 	int statementType = 0;
-	int insertCount, updateCount, deleteCount;
+	int insertCount = 0, updateCount = 0, deleteCount = 0;
 
 	for (char *p = buffer; *p != isc_info_end;)
 	{
