@@ -44,7 +44,7 @@ public:
 	int				isBlobOrArray;
 	bool			data_at_exec;
 	bool			startedTransfer;
-
+	int				sizeColumnExtendedFetch;
 
 	SQLSMALLINT		type;
 	SQLSMALLINT		datetimeIntervalCode;

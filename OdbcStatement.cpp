@@ -549,6 +549,7 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 			record->dataPtr = targetValuePtr;
 			record->length = bufferLength;
 			record->indicatorPtr = indPtr;
+			record->sizeColumnExtendedFetch = implementationRowDescriptor->getConciseSize(targetType,bufferLength);
 
 			if ( !column )
 			{
@@ -971,9 +972,9 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 	return returnData();
 }
 
-
 RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray)
 {
+	RETCODE ret = SQL_SUCCESS;
 	clearErrors();
 	if (!resultSet)
 		return sqlReturn (SQL_ERROR, "24000", "Invalid cursor state");
@@ -992,35 +993,73 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 
 	SET_NULL_DATAOFFSET;
 
+	SQLINTEGER	*bindOffsetPtrSave = bindOffsetPtr;
+
 	try
 	{
-		if(rowCountPointer)
-			*rowCountPointer = 1;
-		
-		if (eof || !resultSet->next())
+		if ( rowArraySize > 1 )
 		{
-			eof = true;
+			int i;
+			SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
+			bindOffsetPtr = &bindOffsetPtrTmp;
+
+			for ( i = 0; !eof && i < rowArraySize ; ++i )
+			{
+				if ( resultSet->next() )
+				{
+					if(rowStatusArray)
+						rowStatusArray[i] = SQL_ROW_SUCCESS;
+					returnData();
+					++bindOffsetPtrTmp;
+				}
+				else
+				{
+					eof = true;
+					break;
+				}
+			}
+
 			if(rowCountPointer)
-				*rowCountPointer = 0;
- 			if(rowStatusArray)
- 				rowStatusArray[0] = SQL_ROW_NOROW;
-			return SQL_NO_DATA;
+				*rowCountPointer = i;
+
+			if ( i == 0 )
+				ret = SQL_NO_DATA;
+
+			if ( rowStatusArray && i < rowArraySize )
+				for ( ; i < rowArraySize ; ++i )
+					rowStatusArray[i] = SQL_ROW_NOROW;
+
+			bindOffsetPtr = bindOffsetPtrSave;
 		}
 		else
 		{
-			if(rowStatusArray)
+			if(rowCountPointer)
+				*rowCountPointer = 1;
+			
+			if (eof || !resultSet->next())
+			{
+				eof = true;
+				if(rowCountPointer)
+					*rowCountPointer = 0;
+ 				if(rowStatusArray)
+ 					rowStatusArray[0] = SQL_ROW_NOROW;
+				return SQL_NO_DATA;
+			}
+			else if(rowStatusArray)
 				rowStatusArray[0] = SQL_ROW_SUCCESS;
-		}		
+
+			bindOffsetPtr = bindOffsetPtrSave;
+			return returnData();
+		}
 	}
 	catch (SQLException& exception)
 	{
+		bindOffsetPtr = bindOffsetPtrSave;
 		OdbcError *error = postError ("HY000", exception);
 		error->setRowNumber (rowNumber);
-		return SQL_ERROR;
+		ret = SQL_ERROR;
 	}
-
-	return returnData();
-
+	return ret;
 }
 
 #ifdef DEBUG
@@ -1149,8 +1188,16 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 
 	if ( bindOffsetPtr )
 	{
-		pointer = (SQLPOINTER)((char*)pointer + *bindOffsetPtr);
-		indicatorPointer = (SQLINTEGER *)((char*)indicatorPointer + *bindOffsetPtr);
+		if( enFetch == ExtendedFetch )
+		{
+			pointer = (SQLPOINTER)((char*)pointer + *bindOffsetPtr * record->sizeColumnExtendedFetch);
+			indicatorPointer = (SQLINTEGER *)((char*)indicatorPointer + *bindOffsetPtr * sizeof(SQLINTEGER));
+		}
+		else
+		{
+			pointer = (SQLPOINTER)((char*)pointer + *bindOffsetPtr);
+			indicatorPointer = (SQLINTEGER *)((char*)indicatorPointer + *bindOffsetPtr);
+		}
 	}
 
 	int realSqlType;

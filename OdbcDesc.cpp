@@ -1287,3 +1287,48 @@ int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType)
 	}
 	return cType;
 }
+
+int OdbcDesc::getConciseSize(int type, int length)
+{
+	switch ( type )
+	{
+	case SQL_C_CHAR:
+		return length;
+
+	case SQL_C_SHORT:
+	case SQL_C_SSHORT:
+	case SQL_C_USHORT:
+		return sizeof(short);
+
+	case SQL_C_LONG:
+	case SQL_C_SLONG:
+	case SQL_C_ULONG:
+		return sizeof(long);
+
+	case SQL_C_FLOAT:
+		return sizeof(float);
+
+	case SQL_C_DOUBLE:
+		return sizeof(double);
+
+	case SQL_C_BIT:
+	case SQL_C_SBIGINT:
+	case SQL_C_UBIGINT:
+	case SQL_C_BINARY:
+		return length;
+
+	case SQL_C_DATE:
+	case SQL_C_TIME:
+	case SQL_C_TIMESTAMP:
+	case SQL_TYPE_DATE:
+	case SQL_TYPE_TIME:
+	case SQL_TYPE_TIMESTAMP:
+		return sizeof(TIMESTAMP_STRUCT);
+
+	case SQL_C_NUMERIC:
+	case SQL_DECIMAL:
+		return 8;
+	}
+
+	return type;
+}

@@ -34,6 +34,7 @@ DescRecord::DescRecord()
 	isBlobOrArray = 0;
 	data_at_exec = false;
 	startedTransfer	= false;
+	sizeColumnExtendedFetch = 0;
 
 	type = SQL_C_DEFAULT;
 	datetimeIntervalCode = 0;
