@@ -2,3 +2,7 @@
 FBINCDIR	= d:/Firebird/include
 FBLIBDIR	= d:/Firebird/lib
 #
+ISCDBCDIR 		= ../../IscDbc
+ODBCJDBCDIR 		= ../..
+ODBCJDBCSETUPDIR 	= ../../OdbcJdbcSetup
+#
