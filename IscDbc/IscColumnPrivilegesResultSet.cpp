@@ -60,9 +60,10 @@ void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, con
 
 	if ( !metaData->allTablesAreSelectable() )
 	{
-		char buf[128];
+		char buf[256];
 		int len = sprintf (buf, "and priv.rdb$object_type = 0\n"
-					  "and priv.rdb$user = '%s' and priv.rdb$user_type = %d\n",
+					  "and ( (priv.rdb$user = '%s' and priv.rdb$user_type = %d)\n"
+					  "\tor (priv.rdb$user = 'PUBLIC' and priv.rdb$user_type = 8) )\n",
 						metaData->getUserAccess(),metaData->getUserType());
 		addString(ptFirst, buf, len);
 	}
