@@ -1,0 +1,68 @@
+/*
+ *  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/idpl.html. 
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by James A. Starkey for IBPhoenix.
+ *
+ *  Copyright (c) 1999, 2000, 2001 James A. Starkey
+ *  All Rights Reserved.
+ */
+
+#ifndef __ODBCJDBC_H
+#define __ODBCJDBC_H
+
+
+#ifdef _WIN32
+#include <windows.h>
+#define strcasecmp		stricmp
+#define strncasecmp		strnicmp
+
+#else
+#define OutputDebugString(string)	fputs (string, stdout)
+#endif
+
+#ifdef DEBUG 
+#ifdef LOGGING
+#define LOG_FILE "c:\\harrison\\odbc.log"
+void logMsg (const char *msg);
+#define LOG_MSG(msg)	logMsg (msg)
+
+#else
+#define LOG_MSG(msg)	OutputDebugString (msg)
+#endif
+
+#else
+#define LOG_MSG(msg)
+#endif
+
+#include <sql.h>
+#include <sqlext.h>
+
+#ifndef NULL
+#define NULL				0
+#endif
+
+#ifndef _ASSERT
+#define _ASSERT(what)
+#endif
+
+#undef ASSERT
+#define ASSERT(b)			_ASSERT (b)
+#define MAX(a,b)			((a > b) ? a : b)
+#define MIN(a,b)			((a < b) ? a : b)
+#define ABS(n)				(((n) >= 0) ? (n) : -(n))
+#define MASK(n)				(1 << (n))
+#define ROUNDUP(n,b)		((n + b - 1) & ~(b - 1))
+
+#endif
+
