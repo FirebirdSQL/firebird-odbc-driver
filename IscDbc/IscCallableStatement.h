@@ -62,7 +62,7 @@ public:
 	virtual Clob*		getClob (int id);
 	virtual double		getDouble  (int id);
 	virtual float		getFloat (int id);
-	virtual QUAD		getLong  (int id);
+	virtual QUAD		getQuad(int id);
 	virtual long		getInt (int id);
 	virtual char		getByte  (int id);
 	virtual short		getShort (int id);

@@ -411,12 +411,12 @@ short IscResultSet::getShort(const char * columnName)
 	return getValue (columnName)->getShort();
 }
 
-QUAD IscResultSet::getLong(int id)
+QUAD IscResultSet::getQuad(int id)
 {
 	return getValue (id)->getQuad();
 }
 
-QUAD IscResultSet::getLong(const char * columnName)
+QUAD IscResultSet::getQuad(const char * columnName)
 {
 	return getValue (columnName)->getQuad();
 }

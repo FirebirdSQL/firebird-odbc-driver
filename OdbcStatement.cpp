@@ -1177,7 +1177,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			*((QUAD*) pointer) = RESULTS (getLong (column));
+			*((QUAD*) pointer) = RESULTS (getQuad (column));
 			length = sizeof(QUAD);
 			break;
 
@@ -1241,10 +1241,24 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 			}
 			break;	
 
+		case SQL_C_NUMERIC:
+			{
+				char *var = (char*) pointer;
+				QUAD number = RESULTS (getQuad(column));
+				*var++=(char)metaData->getPrecision (column);
+				*var++=(char)metaData->getScale (column);
+				if ( number < 0 )
+					*var++=0;
+				else
+					*var++=1;
+				*(QUAD*)var = number;
+				length = 0;
+			}
+			break;	
+
 		case SQL_C_BIT:
 		//case SQL_C_BOOKMARK:
 		//case SQL_C_VARBOOKMARK:
-		case SQL_C_NUMERIC:
 		//case SQL_C_GUID:
 			//break;
 
@@ -1381,7 +1395,7 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			*((QUAD*) binding->pointer) = RESULTS (getLong (column));
+			*((QUAD*) binding->pointer) = RESULTS (getQuad (column));
 			length = sizeof(QUAD);
 			break;
 
@@ -1450,10 +1464,24 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 			}
 			break;	
 
+		case SQL_C_NUMERIC:
+			{
+				char *var = (char*) binding->pointer;
+				QUAD number = RESULTS (getQuad(column));
+				*var++=(char)metaData->getPrecision (column);
+				*var++=(char)metaData->getScale (column);
+				if ( number < 0 )
+					*var++=0;
+				else
+					*var++=1;
+				*(QUAD*)var = number;
+				length = 0;
+			}
+			break;	
+
 		case SQL_C_BIT:
 		//case SQL_C_BOOKMARK:
 		//case SQL_C_VARBOOKMARK:
-		case SQL_C_NUMERIC:
 		//case SQL_C_GUID:
 			//break;
 

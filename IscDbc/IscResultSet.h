@@ -98,8 +98,8 @@ public:
 	virtual Blob* getBlob(const char * columnName);
 	virtual double getDouble(const char * columnName);
 	virtual double getDouble (int index);
-	virtual QUAD getLong(const char * columnName);
-	virtual QUAD getLong (int index);
+	virtual QUAD getQuad (int id);
+	virtual QUAD getQuad (const char *columnName);
 	virtual short getShort (const char * columnName);
 	virtual short getShort (int index);
 

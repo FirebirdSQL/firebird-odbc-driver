@@ -394,8 +394,6 @@ public:
 	virtual short		getShort (const char *columnName) = 0;
 	virtual long		getInt (int id) = 0;
 	virtual long		getInt (const char *columnName) = 0;
-	virtual QUAD		getLong (int id) = 0;
-	virtual QUAD		getLong (const char *columnName) = 0;
 	virtual float		getFloat (int id) = 0;
 	virtual float		getFloat (const char *columnName) = 0;
 	virtual double		getDouble (int id) = 0;
@@ -410,6 +408,8 @@ public:
 	virtual Blob*		getBlob (const char *columnName) = 0;
 	virtual Clob*		getClob (int index) = 0;
 	virtual Clob*		getClob (const char *columnName) = 0;
+	virtual QUAD		getQuad (int id) = 0;
+	virtual QUAD		getQuad (const char *columnName) = 0;
 	virtual int			findColumn (const char *columName) = 0;
 	virtual ResultSetMetaData* getMetaData() = 0;
 	virtual void		close() = 0;
@@ -542,13 +542,13 @@ public:
 	virtual char		getByte(int parameterIndex) = 0;
 	virtual short		getShort(int parameterIndex) = 0;
 	virtual long		getInt(int parameterIndex) = 0;
-	virtual QUAD		getLong(int parameterIndex) = 0;
 	virtual float		getFloat(int parameterIndex) = 0;
 	virtual double		getDouble(int parameterIndex) = 0;
 	//virtual byte[]	getBytes(int parameterIndex) = 0;
 	virtual DateTime	getDate(int parameterIndex) = 0;
 	virtual SqlTime		getTime(int parameterIndex) = 0;
 	virtual TimeStamp	getTimestamp(int parameterIndex) = 0;
+	virtual QUAD		getQuad(int parameterIndex) = 0;
 	virtual Blob*		getBlob (int i) = 0;
 	virtual Clob*		getClob (int i) = 0;
     //void		registerOutParameter (int paramIndex, int sqlType, const char* typeName) = 0;

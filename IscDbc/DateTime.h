@@ -48,7 +48,7 @@ public:
 	static DateTime convert (const char *string, int length);
 	static signed long decodeDate (signed long nday, tm *times);
 	static signed long encodeDate (tm *times);
-	static signed long DateTime::yday (struct tm	*times);
+	static signed long yday (struct tm	*times);
 
 	signed long date;
 };
