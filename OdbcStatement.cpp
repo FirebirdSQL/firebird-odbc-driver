@@ -135,7 +135,6 @@
 #include "OdbcStatement.h"
 #include "OdbcError.h"
 #include "DescRecord.h"
-#include "OdbcDateTime.h"
 
 #ifdef DEBUG                               
 #define TRACE(msg)		OutputDebugString(#msg"\n");
