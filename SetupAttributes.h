@@ -38,6 +38,7 @@
 #define SETUP_USER			"User"
 #define SETUP_PASSWORD		"Password"
 #define SETUP_ROLE			"Role"
+#define SETUP_CHARSET		"CharacterSet"
 #define SETUP_JDBC_DRIVER	"JdbcDriver"
 #define SETUP_READONLY_TPB	"ReadOnly"
 #define SETUP_NOWAIT_TPB	"NoWait"

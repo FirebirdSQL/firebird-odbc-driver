@@ -181,24 +181,11 @@ extern "C" __declspec( dllexport ) int DllRegisterServer (void)
 	if (!SQLConfigDriver (
 			NULL,
 			ODBC_INSTALL_DRIVER,
-//			"OdbcJdbc",
-			"Firebird/InterBase(r) driver", 
+			DRIVER_FULL_NAME, 
 			NULL,
-			"Firebird/InterBase(r) driver was installed successfully",
+			DRIVER_FULL_NAME" was installed successfully",
 			64,
 			NULL))
-
-/*		{
-		msg.Format ("Config Install (%s, %s) failed with %d\n", 
-						fileName, pathOut, GetLastError());
-		AfxMessageBox (msg);
-		return FALSE;
-		}
-*/
-/*
- * The original code uses GetLastError() 
- * but this doesn't report the true error.
- */
 	{
         char message [SQL_MAX_MESSAGE_LENGTH];
         WORD        errCodeIn = 1;
@@ -297,6 +284,7 @@ bool Setup::configureDialog()
 	dialog.m_password = password;
 	dialog.m_driver = jdbcDriver;
 	dialog.m_role = role;
+	dialog.m_charset = charset;
 
 	if(*(const char*)readonlyTpb=='Y')	dialog.m_readonly=TRUE;
 	else dialog.m_readonly=FALSE;
@@ -313,6 +301,7 @@ bool Setup::configureDialog()
 	password = dialog.m_password;
 	jdbcDriver = dialog.m_driver;
 	role = dialog.m_role;
+	charset = dialog.m_charset;
 
 	if(dialog.m_readonly)readonlyTpb="Y";
 	else readonlyTpb="N";
@@ -332,6 +321,7 @@ void Setup::writeAttributes()
 	writeAttribute (SETUP_USER, user);
 	writeAttribute (SETUP_PASSWORD, password);
 	writeAttribute (SETUP_ROLE, role);
+	writeAttribute (SETUP_CHARSET, charset);
 	writeAttribute (SETUP_JDBC_DRIVER, jdbcDriver);
 	writeAttribute (SETUP_READONLY_TPB, readonlyTpb);
 	writeAttribute (SETUP_NOWAIT_TPB, nowaitTpb);
@@ -344,6 +334,7 @@ void Setup::readAttributes()
 	password = readAttribute (SETUP_PASSWORD);
 	jdbcDriver = readAttribute (SETUP_JDBC_DRIVER);
 	role = readAttribute (SETUP_ROLE);
+	charset = readAttribute (SETUP_CHARSET);
 	readonlyTpb = readAttribute (SETUP_READONLY_TPB);
 	nowaitTpb = readAttribute (SETUP_NOWAIT_TPB);
 }

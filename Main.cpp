@@ -258,13 +258,10 @@ RETCODE SQL_API SQLConnect  (HDBC arg0,
 		 UCHAR * arg5,
 		 SWORD arg6)
 {
-	unsigned char * role, r[] = "";
-	role = r;
-
 	TRACE ("SQLConnect");
 	GUARD_HDBC(arg0);
 
-	return ((OdbcConnection*) arg0)->sqlConnect (arg1, arg2, arg3, arg4, arg5, arg6, role, 0);
+	return ((OdbcConnection*) arg0)->sqlConnect (arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
 ///// SQLDescribeCol /////	ODBC 1.0	///// ISO 92
@@ -526,35 +523,6 @@ RETCODE SQL_API SQLDriverConnect  (HDBC arg0,
 				hWnd, szConnStrIn, cbConnStrIn,
 				szConnStrOut, cbConnStrOut, pcbConnStrOut,
 				uwMode);
-	/***
-	// This really doesn't show nearly all that you need to know
-	// about driver connect, read the programmer's reference
-
-	notYetImplemented("SQLDriverConnect called\n");
-
-	if ((cbConnStrIn == SQL_NTS) && (szConnStrIn))
-		cbConnStrIn = strlen((char*) szConnStrIn);
-
-	MessageBox(hWnd,
-		   "Connection dialog would go here",
-		   "Sample driver",
-		   MB_OK);
-
-	if ((szConnStrOut) && cbConnStrOut > 0)
-	{
-		strncpy((char*) szConnStrOut,
-		        (char*) szConnStrIn,
-			(cbConnStrIn == SQL_NTS) ? cbConnStrOut - 1 : 
-						min(cbConnStrOut,cbConnStrIn));
-
-		szConnStrOut[cbConnStrOut - 1] = '\0';
-	}
-
-	if (pcbConnStrOut)
-		*pcbConnStrOut = cbConnStrIn;
-
-	return(SQL_SUCCESS);
-	***/
 }
 
 ///// SQLGetConnectOption /////  Level 1	///// Deprecated

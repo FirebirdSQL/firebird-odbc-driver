@@ -43,6 +43,7 @@ public:
 	JString	m_user;
 	JString	m_driver;
 	JString	m_role;
+	JString	m_charset;
 	BOOL	m_readonly;
 	BOOL	m_nowait;
 

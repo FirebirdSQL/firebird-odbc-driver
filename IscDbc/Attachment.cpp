@@ -102,6 +102,16 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 			*p++ = *q++;
 		}
 
+	const char *charset = properties->findValue ("charset", NULL);
+
+	if (charset)
+		{
+		*p++ = isc_dpb_lc_ctype;
+		*p++ = strlen (charset);
+		for (const char *q = charset; *q;)
+			*p++ = *q++;
+		}
+
 	int dpbLength = p - dpb;
 	ISC_STATUS statusVector [20];
 

@@ -48,8 +48,8 @@ public:
 	void expandConnectParameters();
 	void statementDeleted (OdbcStatement *statement);
 	RETCODE sqlEndTran (int operation);
-	RETCODE connect (const char *sharedLibrary, const char *databaseName, const char *account, const char *password, const char *role);
-	RETCODE sqlConnect (const SQLCHAR *dsn, int dsnLength, SQLCHAR*UID,int uidLength,SQLCHAR*password,int passwordLength, SQLCHAR*roleSQL, int roleLength);
+	RETCODE connect (const char *sharedLibrary, const char *databaseName, const char *account, const char *password, const char *role, const char *charset);
+	RETCODE sqlConnect (const SQLCHAR *dsn, int dsnLength, SQLCHAR*UID,int uidLength,SQLCHAR*password,int passwordLength);
 	DatabaseMetaData* getMetaData();
 	virtual RETCODE allocHandle (int handleType, SQLHANDLE *outputHandle);
 	char* appendString (char *ptr, const char *string);
@@ -81,6 +81,7 @@ public:
 	JString		account;
 	JString		password;
 	JString		role;
+	JString		charset;
 	JString		jdbcDriver;
 	int			optTpb;
 	bool		quotedIdentifiers;

@@ -14,3 +14,4 @@
 #define IDC_ROLE                        1007
 #define IDC_CHECK_READ                  1008
 #define IDC_CHECK_NOWAIT                1009
+#define IDC_CHARSET                     1010

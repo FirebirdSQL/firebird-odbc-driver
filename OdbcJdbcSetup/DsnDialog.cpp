@@ -38,6 +38,7 @@ CDsnDialog::CDsnDialog(const char **jdbcDrivers)
 	m_user = "";
 	m_driver = "";
 	m_role = "";
+	m_charset = "";
 	m_readonly = FALSE;
 	m_nowait = FALSE;
 
@@ -70,6 +71,8 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 			GetWindowText(hWnd, m_driver.getBuffer(256), 256+1);
 
 		GetDlgItemText(hDlg, IDC_ROLE, m_role.getBuffer(256), 256);
+		GetDlgItemText(hDlg, IDC_CHARSET, m_charset.getBuffer(256), 256);
+
         m_readonly = SendDlgItemMessage(hDlg, IDC_CHECK_READ, BM_GETCHECK, 0, 0);
         m_nowait = SendDlgItemMessage(hDlg, IDC_CHECK_NOWAIT, BM_GETCHECK, 0, 0);
 	}
@@ -88,6 +91,8 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 		}
 
 		SetDlgItemText(hDlg, IDC_ROLE, (const char *)m_role);
+		SetDlgItemText(hDlg, IDC_CHARSET, (const char *)m_charset);
+
         CheckDlgButton(hDlg, IDC_CHECK_READ, m_readonly);
         CheckDlgButton(hDlg, IDC_CHECK_NOWAIT, m_nowait);
 	}
@@ -377,7 +382,7 @@ int DialogBoxDynamic()
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 19;          // NumberOfItems
+	*p++ = 21;          // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
@@ -398,15 +403,17 @@ int DialogBoxDynamic()
 	TMP_COMBOBOX      ( IDC_DRIVER,123,17,102,47,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
     TMP_EDITTEXT      ( IDC_DATABASE,7,42,176,12,ES_AUTOHSCROLL )
     TMP_PUSHBUTTON    ( "Browse",IDC_FIND_FILE,189,42,36,14 )
-    TMP_EDITTEXT      ( IDC_USER,7,70,65,14,ES_UPPERCASE | ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_PASSWORD,80,70,70,14,ES_PASSWORD | ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_ROLE,155,70,70,14,ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_USER,7,70,65,12,ES_UPPERCASE | ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_PASSWORD,80,70,70,12,ES_PASSWORD | ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_ROLE,155,70,70,12,ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_CHARSET,80,90,70,12,ES_AUTOHSCROLL )
     TMP_LTEXT         ( "Data Source Name (DSN)",IDC_STATIC,7,7,83,8 )
     TMP_LTEXT         ( "Database",IDC_STATIC,7,33,32,8 )
     TMP_LTEXT         ( "Database Account",IDC_STATIC,7,59,60,8 )
     TMP_LTEXT         ( "Password",IDC_STATIC,80,59,32,8 )
     TMP_LTEXT         ( "Driver",IDC_STATIC,123,7,20,8 )
     TMP_LTEXT         ( "Role",IDC_STATIC,155,59,16,8 )
+    TMP_LTEXT         ( "Character Set",IDC_STATIC,13,93,60,8)
     TMP_GROUPBOX      ( "Options",IDC_STATIC,7,111,223,49 )
 	TMP_BUTTONCONTROL ( "read (default write)",IDC_CHECK_READ,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,18,129,69,10 )
 	TMP_BUTTONCONTROL ( "nowait (default wait)",IDC_CHECK_NOWAIT,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,18,139,72,10 )

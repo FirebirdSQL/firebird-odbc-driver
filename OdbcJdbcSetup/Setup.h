@@ -53,6 +53,7 @@ public:
 	JString		password;
 	JString		jdbcDriver;
 	JString		role;
+	JString		charset;
 	JString		readonlyTpb;
 	JString		nowaitTpb;
 };

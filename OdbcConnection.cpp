@@ -406,6 +406,8 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 			password = value;
 		else if (!strcmp (name, "ROLE"))
 			role = value;
+		else if (!strcmp (name, "CHARSET"))
+			charset = value;
 		else if (!strcmp (name, "DRIVER"))
 			driver = value;
 		else if (!strcmp (name, "ODBC"))
@@ -453,10 +455,16 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 		r = appendString (r, role);
 	}
 
+	if (!charset.IsEmpty())
+	{
+		r = appendString (r, ";CHARSET=");
+		r = appendString (r, charset);
+	}
+
 	if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
 		postError ("01004", "String data, right truncated");
 
-	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role);
+	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
 	if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
 		return ret;
@@ -544,6 +552,11 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 			role = value;
 			levelBrowseConnect = 2;
 		}
+		else if (!strcmp (name, "CHARSET"))
+		{
+			charset = value;
+			levelBrowseConnect = 2;
+		}
 		else if (!strcmp (name, "ODBC"))
 			;
 		else
@@ -562,6 +575,12 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 		r = appendString (r, "*ROLE=");
 		if (!role.IsEmpty())
 			r = appendString (r, role);
+		else
+			r = appendString (r, "?");
+
+		r = appendString (r, "*CHARSET=");
+		if (!charset.IsEmpty())
+			r = appendString (r, charset);
 		else
 			r = appendString (r, "?");
 
@@ -606,6 +625,12 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 			r = appendString (r, role);
 		}
 
+		if (!charset.IsEmpty())
+		{
+			r = appendString (r, ";CHARSET=");
+			r = appendString (r, charset);
+		}
+
 		if (!account.IsEmpty())
 		{
 			r = appendString (r, ";UID=");
@@ -636,7 +661,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 		return SQL_NEED_DATA;
 	else
 	{
-		RETCODE ret = connect (jdbcDriver, databaseName, account, password, role);
+		RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
 		if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
 			return ret;
@@ -1514,7 +1539,7 @@ void OdbcConnection::UnLock()
 	connection->getMetaData()->UnLockThread();
 }
 
-RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQLCHAR *uid, int uidLength, SQLCHAR * passwd, int passwdLength, SQLCHAR * roleSQL, int roleLength)
+RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQLCHAR *uid, int uidLength, SQLCHAR * passwd, int passwdLength)
 {
 	clearErrors();
 
@@ -1526,9 +1551,10 @@ RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQ
 	dsn = getString (&p, dataSetName, dsnLength, "");
 	account = getString (&p, uid, uidLength, "");
 	password = getString (&p, passwd, passwdLength, "");
-	role = getString (&p, roleSQL, roleLength, "");
+	role = "";
+	charset = "";
 	expandConnectParameters();
-	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role);
+	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
 	if (ret != SQL_SUCCESS)
 		return ret;
@@ -1539,7 +1565,7 @@ RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQ
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * databaseName, const char * account, const char * password, const char * role)
+RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * databaseName, const char * account, const char * password, const char * role, const char * charset)
 {
 	Properties *properties = NULL;
 
@@ -1597,6 +1623,8 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 			properties->putValue ("password", password);
 		if (role)
 			properties->putValue ("role", role);
+		if (charset)
+			properties->putValue ("charset", charset);
 		connection->openDatabase (databaseName, properties);
 		delete properties;
 		DatabaseMetaData *metaData = connection->getMetaData();
@@ -1680,6 +1708,9 @@ void OdbcConnection::expandConnectParameters()
 
 		if (role.IsEmpty())
 			role = readAttribute(SETUP_ROLE);
+
+		if (charset.IsEmpty())
+			charset = readAttribute(SETUP_CHARSET);
 
 		optTpb = 0;
 		optionsTpb = (const char *)readAttribute(SETUP_READONLY_TPB);
