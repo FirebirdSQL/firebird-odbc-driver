@@ -100,8 +100,10 @@ public:
 
 	bool isDefined() { return bDefined; }
 	void setDefined( bool def ){ bDefined = def; }
-	void updateDefined();
+	void updateDefinedIn();
+	void updateDefinedOut();
 	void clearDefined();
+	void releasePrepared();
 	void clearPrepared();
 	void removeRecords();
 	void setDefaultImplDesc (StatementMetaData * ptMetaDataOut, StatementMetaData * ptMetaDataIn = NULL);

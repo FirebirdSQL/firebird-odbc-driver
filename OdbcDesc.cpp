@@ -77,9 +77,8 @@ void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaDataOut, StatementM
 
 	if( headType == odtImplementationParameter )
 	{
-#pragma FB_COMPILER_MESSAGE("All param count FIXME!")
-//		headCount = metaDataIn->getColumnCount() + metaDataOut->getColumnCount();
-//		getDescRecord (headCount);
+		headCount = metaDataIn->getColumnCount();
+		getDescRecord (headCount);
 	}
 	else
 	{
@@ -116,6 +115,19 @@ void OdbcDesc::removeRecords()
 	recordSlots = 0;
 }
  
+void OdbcDesc::releasePrepared()
+{
+	if (records)
+	{
+		for (int n = 0; n < recordSlots; ++n)
+			if ( records [n] )
+			{
+				records [n]->isPrepared = false;
+				records [n]->releaseAllocMemory();
+			}
+	}
+}
+ 
 void OdbcDesc::clearPrepared()
 {
 	if (records)
@@ -131,21 +143,39 @@ void OdbcDesc::clearPrepared()
 	}
 }
  
-void OdbcDesc::updateDefined()
+void OdbcDesc::updateDefinedIn()
 {
 	if (records)
 	{
-		int countColumn = metaDataOut->getColumnCount();
-		for (int n = 1; n <= countColumn; ++n)
-			if (records [n] && records [n]->isDefined == false )
+		for (int n = 1; n <= metaDataIn->getColumnCount(); n++)
+		{
+			DescRecord * record = records[n];
+			if ( record )
 			{
-				records [n]->freeLocalDataPtr();
-				defFromMetaDataOut(n, records [n]);
+				record->freeLocalDataPtr();
+				defFromMetaDataIn(n, record);
 			}
+		}
+	}
+}
+ 
+void OdbcDesc::updateDefinedOut()
+{
+	if (records)
+	{
+		for (int n = 1; n <= metaDataOut->getColumnCount(); ++n)
+		{
+			DescRecord * record = records[n];
+			if ( record && record->isDefined == false )
+			{
+				record->freeLocalDataPtr();
+				defFromMetaDataOut(n, record );
+			}
+		}
 	}
 	bDefined = true;
 }
- 
+
 void OdbcDesc::clearDefined()
 {
 	if (records)
@@ -156,7 +186,7 @@ void OdbcDesc::clearDefined()
 	}
 	bDefined = false;
 }
- 
+
 RETCODE OdbcDesc::operator =(OdbcDesc &sour)
 {
 	if( headType == odtImplementationRow )
@@ -1297,7 +1327,10 @@ int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType, int bufferLength)
 		cType = SQL_C_SLONG;
 		break;
 	case JDBC_BIGINT:
-		cType = SQL_C_SBIGINT;
+		if ( bufferLength )
+			cType = SQL_C_CHAR;
+		else
+			cType = SQL_C_SBIGINT;
 		break;
 	case JDBC_REAL:
 		cType = SQL_C_FLOAT;

@@ -395,6 +395,8 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 
 	try
 	{
+		implementationParamDescriptor->releasePrepared();
+
 		statement->prepareStatement (string);
 	
 		if ( statement->isActiveProcedure() )
@@ -409,6 +411,8 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 		applicationRowDescriptor->clearPrepared();
 		rebindColumn();
 		numberColumns = statement->getStatementMetaDataIRD()->getColumnCount();
+		implementationParamDescriptor->updateDefinedIn();
+		applicationParamDescriptor->clearPrepared();
 		
 		if ( enableAutoIPD == SQL_TRUE )
 			rebindParam();
@@ -475,7 +479,7 @@ void OdbcStatement::setResultSet(ResultSet * results)
 		rebindColumn();
 	}
 	else
-		implementationRowDescriptor->updateDefined();
+		implementationRowDescriptor->updateDefinedOut();
 
 	convert->setBindOffsetPtrFrom(sqldataOutOffsetPtr, NULL);
 	numberColumns = resultSet->getColumnCount();
@@ -1934,8 +1938,13 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 		record->length = bufferLength;
 		record->octetLengthPtr = length;
 		record->indicatorPtr = length;
-		record->data_at_exec = length && type != SQL_PARAM_OUTPUT 
+
+		if ( applicationParamDescriptor->headBindOffsetPtr )
+			record->data_at_exec = false;
+		else
+			record->data_at_exec = length && type != SQL_PARAM_OUTPUT 
 					&& (*length == SQL_DATA_AT_EXEC || *length <= SQL_LEN_DATA_AT_EXEC_OFFSET );
+
 		record->startedTransfer = false;
 		record->isDefined = true;
 		record->isPrepared = false;
@@ -1945,7 +1954,6 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 		imprec->parameterType = type; // SQL_PARAM_INPUT, SQL_PARAM_OUTPUT, SQL_PARAM_INPUT_OUTPUT
 		imprec->type = sqlType;
 		imprec->conciseType = sqlType;
-		imprec->indicatorPtr = length;
 		imprec->isDefined = false;
 		imprec->isPrepared = false;
 
@@ -1977,7 +1985,8 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 		}
 
 		if ( implementationParamDescriptor->isDefined() )
-			bindInputOutputParam(parameter, record);
+			implementationParamDescriptor->setDefined ( false );
+
 	}
 	catch (SQLException& exception)
 	{
@@ -2367,6 +2376,7 @@ RETCODE OdbcStatement::inputParam()
 				rebindParam();
 			}
 			parameterNeedData = 1;
+			convert->setBindOffsetPtrFrom ( applicationParamDescriptor->headBindOffsetPtr, applicationParamDescriptor->headBindOffsetPtr );
 		}
 
 		for (int n = parameterNeedData; n <= nInputParam; ++n)
@@ -2934,20 +2944,6 @@ RETCODE OdbcStatement::sqlRowCount(SQLINTEGER *rowCount)
 
 RETCODE OdbcStatement::sqlColAttributes(int column, int descType, SQLPOINTER buffer, int bufferSize, SWORD *length, SDWORD *valuePtr)
 {
-	switch (descType)
-	{
-	case SQL_DESC_PRECISION:
-	case SQL_DESC_SCALE:
-	case SQL_DESC_LENGTH:
-	case SQL_DESC_OCTET_LENGTH:
-	case SQL_DESC_UNNAMED:
-	case SQL_DESC_BASE_COLUMN_NAME:
-	case SQL_DESC_LITERAL_PREFIX:
-	case SQL_DESC_LITERAL_SUFFIX:
-	case SQL_DESC_LOCAL_TYPE_NAME:
-		return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
-	}
-
 	return sqlColAttribute(column, descType, buffer, bufferSize, length, valuePtr);
 }
 
