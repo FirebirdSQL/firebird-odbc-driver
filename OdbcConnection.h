@@ -54,6 +54,7 @@ public:
 	void saveConnectParameters();
 	void statementDeleted (OdbcStatement *statement);
 	SQLRETURN sqlEndTran (int operation);
+	SQLRETURN sqlExecuteCreateDatabase(const char * sqlString);
 	SQLRETURN connect (const char *sharedLibrary, const char *databaseName, const char *account, const char *password, const char *role, const char *charset);
 	SQLRETURN sqlConnect (const SQLCHAR *dsn, int dsnLength, SQLCHAR*UID,int uidLength,SQLCHAR*password,int passwordLength);
 	DatabaseMetaData* getMetaData();
@@ -88,12 +89,14 @@ public:
 	JString		filedsn;
 	JString		savedsn;
 	JString		databaseName;
+	bool		databaseAlways;
 	JString		client;
 	JString		account;
 	JString		password;
 	JString		role;
 	JString		charset;
 	JString		jdbcDriver;
+	JString		pageSize;
 	int			optTpb;
 	int			defOptions;
 	bool		quotedIdentifier;

@@ -603,36 +603,52 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 			statysModify = -2;
 		else if ( !strncasecmp (ptOut, "CREATE", 6) || !strncasecmp (ptOut, "ALTER", 5) )
 		{
+			bool bContinue = true;
+
 			if ( UPPER(*ptOut) == 'A' )
 				ptOut += 5;
 			else
+			{
 				ptOut += 6;
 
-			while ( *ptOut )
-			{
+				#define LENSTR_DATABASE 8 
 				SKIP_WHITE ( ptOut );
 
-				if ( *ptOut )
+				if ( !strncasecmp (ptOut, "DATABASE", LENSTR_DATABASE) && IS_END_TOKEN(*(ptOut+LENSTR_DATABASE)) )
 				{
-					#define LENSTR_TINYINT 7 
-
-					if ( !strncasecmp (ptOut, "TINYINT", LENSTR_TINYINT) && IS_END_TOKEN(*(ptOut+LENSTR_TINYINT)) )
-					{
-						const char * nameTinyint = "CHAR CHARACTER SET OCTETS";
-						int lenNameTinyint = 25;
-						int offset = lenNameTinyint - LENSTR_TINYINT;
-
-						memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
-						memcpy(ptOut, nameTinyint, lenNameTinyint);
-						ptOut += lenNameTinyint;
-					}
-					else 
-						SKIP_NO_WHITE ( ptOut );
+					statysModify = -3;
+					bContinue = false;
 				}
 			}
 
-			if ( textLength2Ptr )
-				*textLength2Ptr = ptOut - outStatementText;
+			if ( bContinue )
+			{
+				while ( *ptOut )
+				{
+					SKIP_WHITE ( ptOut );
+
+					if ( *ptOut )
+					{
+						#define LENSTR_TINYINT 7 
+
+						if ( !strncasecmp (ptOut, "TINYINT", LENSTR_TINYINT) && IS_END_TOKEN(*(ptOut+LENSTR_TINYINT)) )
+						{
+							const char * nameTinyint = "CHAR CHARACTER SET OCTETS";
+							int lenNameTinyint = 25;
+							int offset = lenNameTinyint - LENSTR_TINYINT;
+
+							memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
+							memcpy(ptOut, nameTinyint, lenNameTinyint);
+							ptOut += lenNameTinyint;
+						}
+						else 
+							SKIP_NO_WHITE ( ptOut );
+					}
+				}
+
+				if ( textLength2Ptr )
+					*textLength2Ptr = ptOut - outStatementText;
+			}
 		}
 	}
 	else
@@ -915,8 +931,45 @@ void IscConnection::ping()
 {
 }
 
-void IscConnection::createDatabase(const char * host, const char * dbName, Properties * properties)
+void IscConnection::sqlExecuteCreateDatabase(const char * sqlString)
 {
+	isc_db_handle   newdb = NULL;
+	isc_tr_handle   trans = NULL;
+	ISC_STATUS      statusVector[20];
+
+	if ( GDS->_dsql_execute_immediate( statusVector, &newdb, &trans, 0, (char*)sqlString, 3, NULL ) )
+    {
+		if ( statusVector[1] )
+			throw SQLEXCEPTION ( statusVector [1], getIscStatusText( statusVector ) );
+	}
+	
+	GDS->_commit_transaction( statusVector, &trans );
+	GDS->_detach_database( statusVector, &newdb );
+}
+
+void IscConnection::createDatabase(const char * dbName, Properties * properties)
+{
+	try
+	{
+		attachment = new Attachment;
+		attachment->createDatabase( dbName, properties );
+		databaseHandle = attachment->databaseHandle;
+		GDS = attachment->GDS;
+	}
+	catch ( SQLException& exception )
+	{
+		delete attachment;
+		attachment = NULL;
+		GDS = NULL;
+		throw SQLEXCEPTION ( exception.getSqlcode() , exception.getText() );
+	}
+	catch (...)
+	{
+		delete attachment;
+		attachment = NULL;
+		GDS = NULL;
+		throw;
+	}
 }
 
 void IscConnection::openDatabase(const char * dbName, Properties * properties)

@@ -127,8 +127,9 @@ public:
 	virtual InternalStatement* createInternalStatement() = 0;
 	virtual void		ping() = 0;
 	virtual int			hasRole (const char *schemaName, const char *roleName) = 0;
+	virtual void		sqlExecuteCreateDatabase(const char * sqlString) = 0;
 	virtual void		openDatabase (const char *database, Properties *context) = 0;
-	virtual void		createDatabase (const char *host, const char *dbName, Properties *context) = 0;
+	virtual void		createDatabase (const char *dbName, Properties *context) = 0;
 	virtual Properties*	allocProperties() = 0;
 	virtual int			objectVersion() = 0;
 	virtual Connection*	clone() = 0;

@@ -45,6 +45,7 @@ public:
 	JString getIscStatusText (ISC_STATUS *statusVector);
 	int release();
 	void addRef();
+	void createDatabase(const char *dbName, Properties *properties);
 	void openDatabase(const char * dbName, Properties * properties);
 	Attachment();
 	~Attachment();
@@ -64,6 +65,7 @@ public:
 	bool		quotedIdentifier;
 	bool		sensitiveIdentifier;
 	bool		autoQuotedIdentifier;
+	bool		databaseAlways;
 	int			transactionIsolation;
 	int			useCount;
 	bool		admin;

@@ -60,6 +60,7 @@ Attachment::Attachment()
 	useCount = 1;
 	GDS = NULL;
 	databaseHandle = NULL;
+	databaseAlways = false;
 	transactionHandle = NULL;
 	admin = true;
 	isRoles = false;
@@ -77,6 +78,58 @@ Attachment::~Attachment()
 	{
 		delete GDS;
 		GDS = NULL;
+	}
+}
+
+void Attachment::createDatabase(const char *dbName, Properties *properties)
+{
+	char sql[1024];
+	char *p = sql;
+
+	p += sprintf( p, "CREATE DATABASE \'%s\' ", dbName );
+
+	const char *dialect = properties->findValue ("dialect", NULL);
+
+	if ( dialect && *dialect == '1')
+		databaseDialect = SQL_DIALECT_V5;
+	else
+		databaseDialect = SQL_DIALECT_V6;
+
+	const char *user = properties->findValue ("user", NULL);
+
+	if (user && *user)
+		p += sprintf( p, "USER \'%s\' ", user );
+
+	const char *password = properties->findValue ("password", NULL);
+
+	if (password && *password)
+		p += sprintf( p, "PASSWORD \'%s\' ", password );
+
+	const char *pagesize = properties->findValue ("pagesize", NULL);
+
+	if (pagesize && *pagesize)
+		p += sprintf( p, "PAGE_SIZE %s ", pagesize );
+
+	const char *charset = properties->findValue ("charset", NULL);
+
+	if (charset && *charset)
+		p += sprintf( p, "SET NAMES \'%s\' ", charset );
+
+	*p = '\0';
+
+	isc_tr_handle   trans = NULL;
+	ISC_STATUS      statusVector[20];
+
+	if ( GDS->_dsql_execute_immediate( statusVector, &databaseHandle, &trans, 0, (char*)sql, databaseDialect, NULL ) )
+    {
+		if ( statusVector[1] )
+			throw SQLEXCEPTION ( statusVector [1], getIscStatusText( statusVector ) );
+	}
+	
+	if ( trans && GDS->_commit_transaction( statusVector, &trans ) )
+    {
+		if ( statusVector[1] )
+			throw SQLEXCEPTION ( statusVector [1], getIscStatusText( statusVector ) );
 	}
 }
 
@@ -163,8 +216,10 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	if (GDS->_attach_database (statusVector, strlen (dbName), (char*) dbName, &databaseHandle, 
 							 dpbLength, dpb))
 	{
-		JString text = getIscStatusText (statusVector);
-		throw SQLEXCEPTION (statusVector [1], text);
+		if ( statusVector [1] == 335544344l )
+			createDatabase( dbName, properties );
+		else
+			throw SQLEXCEPTION ( statusVector [1], getIscStatusText( statusVector ) );
 	}
 
 	char result [2048];
@@ -272,6 +327,13 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		autoQuotedIdentifier = true;
 	else
 		autoQuotedIdentifier = false;
+
+	property = properties->findValue ("databaseAlways", NULL);
+
+	if ( property && *property == 'Y')
+		databaseAlways = true;
+	else
+		databaseAlways = false;
 
 	checkAdmin();
 }

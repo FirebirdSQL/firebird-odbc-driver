@@ -35,6 +35,7 @@
 
 #define SETUP_DSN			"DSN"
 #define SETUP_DBNAME		"Dbname"
+#define SETUP_DBNAMEALWAYS	"DbnameAlways"
 #define SETUP_CLIENT		"Client"
 #define SETUP_DRIVER		"Driver"
 #define SETUP_USER			"User"
@@ -48,6 +49,7 @@
 #define SETUP_QUOTED		"QuotedIdentifier"
 #define SETUP_SENSITIVE		"SensitiveIdentifier"
 #define SETUP_AUTOQUOTED	"AutoQuotedIdentifier"
+#define SETUP_PAGE_SIZE		"PageSize"
 
 #define KEY_DSN_JDBC_DRIVER	"JDBC_DRIVER"
 #define KEY_FILEDSN			"FILEDSN"

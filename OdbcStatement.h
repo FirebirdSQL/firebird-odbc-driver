@@ -74,6 +74,7 @@ public:
 	SQLRETURN executeProcedure();
 	SQLRETURN executeCommit();
 	SQLRETURN executeRollback();
+	SQLRETURN executeCreateDatabase();
 	SQLRETURN sqlGetCursorName (SQLCHAR *name, int bufferLength, SQLSMALLINT *nameLength);
 	SQLRETURN sqlGetStmtAttr (int attribute, SQLPOINTER value, int bufferLength, SQLINTEGER *lengthPtr);
 	SQLRETURN sqlCloseCursor();
@@ -156,6 +157,7 @@ public:
 	long				countFetched;
 	enFetchType			enFetch;
 	JString				cursorName;
+	JString				sqlPrepareString;
 	bool				setPreCursorName;
 	bool				isResultSetFromSystemCatalog;
 	bool				isFetchStaticCursor;

@@ -398,6 +398,8 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 	}
 #endif
 
+	sqlPrepareString = string;
+
 	try
 	{
 		implementationParamDescriptor->releasePrepared();
@@ -428,10 +430,23 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 			if ( enableAutoIPD == SQL_TRUE )
 				rebindParam();
 		}
-		else if ( retNativeSQL == -1 ) // replace commit
+		else 
+		{
+			switch ( retNativeSQL )
+			{
+			case -1: // replace commit
 				execute = &OdbcStatement::executeCommit;
-		else if ( retNativeSQL == -2 ) // replace rollback
+				break;
+
+			case -2: // replace rollback
 				execute = &OdbcStatement::executeRollback;
+				break;
+
+			case -3: // create database
+				execute = &OdbcStatement::executeCreateDatabase;
+				break;
+			}
+		}
 
 		if ( setPreCursorName )
 		{
@@ -2476,6 +2491,11 @@ SQLRETURN OdbcStatement::executeCommit()
 SQLRETURN OdbcStatement::executeRollback()
 {
 	return connection->sqlEndTran( SQL_ROLLBACK );
+}
+
+SQLRETURN OdbcStatement::executeCreateDatabase()
+{
+	return connection->sqlExecuteCreateDatabase( sqlPrepareString );
 }
 
 SQLRETURN OdbcStatement::sqlGetTypeInfo(int dataType)

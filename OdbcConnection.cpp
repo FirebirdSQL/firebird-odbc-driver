@@ -280,6 +280,7 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	env					= parent;
 	connected			= false;
 	levelBrowseConnect	= 0;
+	databaseAlways		= false;
 	connectionTimeout	= 0;
 	connection			= NULL;
 	statements			= NULL;
@@ -425,6 +426,13 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 		else if (!strncasecmp (name, KEY_DSN_DATABASE, LEN_KEY(KEY_DSN_DATABASE))
 			|| !strncasecmp (name, SETUP_DBNAME, LEN_KEY(SETUP_DBNAME)) )
 			databaseName = value;
+		else if ( !strncasecmp( name, SETUP_DBNAMEALWAYS, LEN_KEY( SETUP_DBNAMEALWAYS ) ) )
+		{
+			databaseName = value;
+			databaseAlways = true;
+		}
+		else if (!strncasecmp (name, SETUP_PAGE_SIZE, LEN_KEY(SETUP_PAGE_SIZE)) )
+			pageSize = value;
 		else if (!strncasecmp (name, SETUP_CLIENT, LEN_KEY(SETUP_CLIENT)) )
 			client = value;
 		else if (!strncasecmp (name, KEY_DSN_UID, LEN_KEY(KEY_DSN_UID))
@@ -1516,6 +1524,10 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 		properties->putValue ("quoted", quotedIdentifier ? "Y" : "N");
 		properties->putValue ("sensitive", sensitiveIdentifier ? "Y" : "N");
 		properties->putValue ("autoQuoted", autoQuotedIdentifier ? "Y" : "N");
+		properties->putValue ("databaseAlways", databaseAlways ? "Y" : "N");
+
+		if (pageSize)
+			properties->putValue ("pagesize", pageSize);
 
 		connection->openDatabase (databaseName, properties);
 		properties->release();
@@ -1567,6 +1579,23 @@ SQLRETURN OdbcConnection::sqlEndTran(int operation)
 			postError ("S1000", exception);
 			return SQL_ERROR;
 		}
+
+	return sqlSuccess();
+}
+
+SQLRETURN OdbcConnection::sqlExecuteCreateDatabase(const char * sqlString)
+{
+	clearErrors();
+
+	try
+	{
+		connection->sqlExecuteCreateDatabase( sqlString );
+	}
+	catch (SQLException& exception)
+	{
+		postError( "HY000", exception );
+		return SQL_ERROR;
+	}
 
 	return sqlSuccess();
 }

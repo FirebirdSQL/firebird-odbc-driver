@@ -95,7 +95,8 @@ public:
 	IscConnection();
 	~IscConnection();
 	virtual void openDatabase (const char *dbName, Properties *properties);
-	virtual void createDatabase (const char *host, const char * dbName, Properties *properties);
+	virtual void createDatabase (const char * dbName, Properties *properties);
+	virtual void sqlExecuteCreateDatabase(const char * sqlString);
 	virtual void ping();
 	virtual int hasRole (const char *schemaName, const char *roleName);
 	//virtual void freeHTML (const char *html);
