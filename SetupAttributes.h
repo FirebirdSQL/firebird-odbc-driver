@@ -22,7 +22,7 @@
 #define __SETUP_ATTRIBUTES_H
 
 
-#include "WriteBuilNo.h"
+#include "WriteBuildNo.h"
 
 
 #define BUILDTYPE_VERSION 	"WI_T"
