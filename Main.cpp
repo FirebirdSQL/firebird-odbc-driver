@@ -85,14 +85,14 @@ extern "C"
 #define __MONITOR_EXECUTING
 
 #ifdef _WIN32
-#define OUTPUT_MONITOR_EXECUTING(msg)  OutputDebugString(msg); 
+#define OUTPUT_MONITOR_EXECUTING(msg)  OutputDebugString(msg"\n");
 #else
 #define OUTPUT_MONITOR_EXECUTING(msg)
 #endif
 //#define DEBUG
 
 #ifdef DEBUG
-#define TRACE(msg)		trace (msg)
+#define TRACE(msg)		trace (msg"\n")
 #else
 #define TRACE(msg)		OUTPUT_MONITOR_EXECUTING(msg)
 #endif
@@ -111,10 +111,10 @@ extern "C"
 #define GUARD_HSTMT(arg)		SafeConnectThread wt(((OdbcStatement*)arg)->connection)
 #define GUARD_HDBC(arg) 		SafeConnectThread wt((OdbcConnection*)arg)
 #define GUARD_HDESC(arg)		SafeConnectThread wt(((OdbcDesc*)arg)->connection)
-#define GUARD_HTYPE(arg,arg1)	SafeConnectThread wt( \
-									arg1==SQL_HANDLE_DBC?(OdbcConnection*)arg: \
-									arg1==SQL_HANDLE_STMT?((OdbcStatement*)arg)->connection: \
-								arg1==SQL_HANDLE_DESC?((OdbcDesc*)arg)->connection:NULL )
+#define GUARD_HTYPE(arg,arg1)	SafeConnectThread wt(												\
+									arg1==SQL_HANDLE_DBC ? (OdbcConnection*)arg:					\
+									arg1==SQL_HANDLE_STMT ? ((OdbcStatement*)arg)->connection:		\
+									arg1==SQL_HANDLE_DESC ? ((OdbcDesc*)arg)->connection : NULL )
 
 #else
 
@@ -151,13 +151,11 @@ void notYetImplemented (const char *msg)
 void trace (const char *msg)
 {
     LOG_MSG(msg);
-    LOG_MSG("\n");	
 }
 
 // __SQLAllocHandle
 // Local variant of call to defeat the dynamic link
 // mechanism.
-
 static RETCODE SQL_API __SQLAllocHandle  (SQLSMALLINT arg0,
 		 SQLHANDLE arg1,
 		 SQLHANDLE * arg2)
