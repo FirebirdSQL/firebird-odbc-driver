@@ -105,7 +105,6 @@ int getInfoDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,
 
 	for(d = buffer, info = info_buf; *d != isc_info_end;) 
 	{
-		value_out = 0;
 		item = *d++;
 		length = GDS->_vax_integer(d, 2);
 		d += 2;
@@ -396,7 +395,7 @@ int strBuildStatInformations(isc_db_handle Db,const void * info_buffer, int buff
 
 	p = (char *)info_buffer;
 
-	while ((c = *string++) && c != '$')
+	while ((c = *string++),c && c != '$')
 	{
 		if (c != '!')
 			*p++ = c;

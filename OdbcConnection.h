@@ -30,7 +30,7 @@
 #endif // _MSC_VER >= 1000
 
 #include "OdbcDesc.h"
-#include "JString.h"	// Added by ClassView
+#include "IscDbc/JString.h"	// Added by ClassView
 
 class OdbcEnv;
 class Connection;

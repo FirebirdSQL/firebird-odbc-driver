@@ -31,39 +31,19 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-
+#ifdef __BORLANDC__
+#include <iostream.h>
+#else
+#include <stdio.h>
+#endif
 #include "IscDbc.h"
 #include "TimeStamp.h"
-#include <stdio.h>
 #include <time.h>
 #include <string.h>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
-
-TimeStamp& TimeStamp::operator =(DateTime value)
-{
-//Orig.
-	date = value.date;
-	nanos = 0;
-
-//From B. Schulte
-// convert DateTime to 'new' TimeStamp
-//    date = value.date / 24/60/60;
-//    nanos = value.date - (date * 24*60*60);
-
-	return *this;
-}
-
-TimeStamp& TimeStamp::operator =(long value)
-{
-	date = value;
-	nanos = 0;
-
-	return *this;
-}
 
 int TimeStamp::getTimeString(int length, char * buffer)
 {

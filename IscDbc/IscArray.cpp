@@ -263,7 +263,7 @@ void IscArray::fetchArrayToString()
 void IscArray::writeArray(Value * value)
 {
 	int i,offset;
-	bool bString;
+//	bool bString;
 	char * ptCh, * ptSrc;
 	char * ptDst = (char*)arrBufData;
 
@@ -273,7 +273,7 @@ void IscArray::writeArray(Value * value)
 		{
 			int len;
 			Blob *blob = value->data.blob;
-			for (offset = 0; len = blob->getSegmentLength (offset); offset += len)
+			for (offset = 0; len = blob->getSegmentLength(offset), len; offset += len)
 				memcpy(&ptDst[offset],(char*) blob->getSegment (offset),len);
 		}
 		break;
@@ -295,7 +295,7 @@ void IscArray::writeArray(Value * value)
 			{
 				char * pt;
 				int len,lenSrc;
-				bString = true;
+//				bString = true;
 				++ptCh;
 				while(*ptCh && *ptCh!='\'')
 					ptCh++;
@@ -347,8 +347,8 @@ void IscArray::writeArray(Value * value)
 					continue;
 				}
 			}
-			else 
-				bString = false;
+//			else 
+//				bString = false;
 //
 			while(*ptCh && (isdigit(*ptCh) || *ptCh=='.'))
 				ptCh++;

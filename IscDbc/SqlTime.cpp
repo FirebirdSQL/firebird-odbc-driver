@@ -26,19 +26,10 @@
 #include <time.h>
 #include <string.h>
 
-SqlTime& SqlTime::operator =(long value)
-{
-	timeValue = value;
-
-	return *this;
-}
-
-
-
 SqlTime SqlTime::convert(const char * string, int length)
 {
 	SqlTime time;
-	time = 0;
+	time.timeValue = 0;
 	return time;
 }
 

@@ -1368,7 +1368,11 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 			text.Format ("Unable to connect to data source: library '%s' failed to load", sharedLibrary);
 			return sqlReturn (SQL_ERROR, "08001", text);
 		}
+#ifdef __BORLANDC__
+		ConnectFn fn = (ConnectFn) GetProcAddress (handle, "_createConnection");
+#else
 		ConnectFn fn = (ConnectFn) GetProcAddress (handle, "createConnection");
+#endif
 		if (!fn)
 		{
 			JString text;
@@ -1475,6 +1479,8 @@ void OdbcConnection::expandConnectParameters()
 {
 	if (!dsn.IsEmpty())
 	{
+		const char * optionsTpb;
+
 		if (databaseName.IsEmpty())
 			databaseName = readAttribute (SETUP_DBNAME);
 
@@ -1491,11 +1497,15 @@ void OdbcConnection::expandConnectParameters()
 			role = readAttribute(SETUP_ROLE);
 
 		optTpb = 0;
+		optionsTpb = (const char *)readAttribute(SETUP_READONLY_TPB);
 
-		JString	optionsTpb = readAttribute(SETUP_READONLY_TPB);
-		if(optionsTpb[0]=='Y')optTpb |=TRA_ro;
-		optionsTpb = readAttribute(SETUP_NOWAIT_TPB);
-		if(optionsTpb[0]=='Y')optTpb |=TRA_nw;
+		if(optionsTpb && *optionsTpb == 'Y')
+			optTpb |=TRA_ro;
+
+		optionsTpb = (const char *)readAttribute(SETUP_NOWAIT_TPB);
+
+		if(optionsTpb && *optionsTpb == 'Y')
+			optTpb |=TRA_nw;
 	}
 
 	if (jdbcDriver.IsEmpty())

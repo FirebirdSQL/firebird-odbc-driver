@@ -33,15 +33,11 @@
 #include "SqlTime.h"
 #include "DateTime.h"
 
-struct tm;
-
 class TimeStamp : public DateTime
 {
 public:
 	int getTimeString(int length, char * buffer);
-	int decodeTime (long nanos, tm * times);
-	TimeStamp& operator = (long value);
-	TimeStamp& operator = (DateTime value);
+	int decodeTime (long nanos, struct tm * times);
 
 	long	nanos;					// nano seconds
 };

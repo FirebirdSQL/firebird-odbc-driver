@@ -29,7 +29,7 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
-#include "JString.h"
+#include "IscDbc/JString.h"
 
 class OdbcError  
 {

@@ -673,7 +673,7 @@ DateTime Value::getDate()
 		case Null:
 			{
 			DateTime date;
-			date = (long) 0;
+			date.date = (long) 0;
 			return date;
 			}
 
@@ -711,7 +711,8 @@ TimeStamp Value::getTimestamp()
 		return data.timestamp;
 
 	TimeStamp timestamp;
-	timestamp = getDate();
+	timestamp.date = getDate().date;
+	timestamp.nanos = 0;
 
 	return timestamp;
 }
@@ -727,7 +728,7 @@ void Value::setDate(long value)
 {
 	clear();
 	type = Date;
-	data.date = value;
+	data.date.date = value;
 }
 
 void Value::allocString(Type typ, int length)
@@ -878,10 +879,7 @@ void Value::setValue(TimeStamp value)
 {
 	clear();
 	type = Timestamp;
-//Orig.
-//	data.timestamp = value;
-//From B. Schulte
-    data.timestamp = value.date;
+    data.timestamp.date = value.date;
     data.timestamp.nanos = value.nanos;
 }
 
@@ -892,7 +890,7 @@ SqlTime Value::getTime()
 		case Null:
 			{
 			SqlTime time ;
-			time = 0;
+			time.timeValue = 0;
 			return time;
 			}
 

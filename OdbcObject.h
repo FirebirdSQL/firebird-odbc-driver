@@ -30,7 +30,7 @@
 #endif // _MSC_VER >= 1000
 
 #include "OdbcJdbc.h"
-#include "JString.h"
+#include "IscDbc/JString.h"
 
 enum OdbcObjectType {
     odbcTypeEnv,

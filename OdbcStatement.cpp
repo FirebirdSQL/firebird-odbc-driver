@@ -2435,15 +2435,12 @@ RETCODE OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferL
 			{
 			case 11999:
 				return statement->getStmtPlan(ptr,bufferLength,lengthPtr);
-				break;
 
 			case 11998:
 				return statement->getStmtType(ptr,bufferLength,lengthPtr);
-				break;
 
 			case 11997:
 				return statement->getStmtInfoCountRecords(ptr,bufferLength,lengthPtr);
-				break;
 
 			case SQL_ATTR_APP_ROW_DESC:
 				value = (long) applicationRowDescriptor;
@@ -2779,7 +2776,6 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 						statement->beginBlobDataTransfer(n+1);
 					}
 					return SQL_NEED_DATA;
-				break;				
 			}
 		}
 		else

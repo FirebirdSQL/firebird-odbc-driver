@@ -108,7 +108,7 @@ DateTime DateTime::convert(const char *dateString, int length)
 	const char *end = dateString + length;
 	char string [100], *q = string;
 	bool numeric = true;
-	bool sign = false;
+//	bool sign = false;
 	int		year = -1;
 	int		month = 0;
 	int		day = 0;
@@ -135,7 +135,7 @@ DateTime DateTime::convert(const char *dateString, int length)
 		switch (c)
 			{
 			case '-':
-				sign = true;
+//				sign = true;
 			case ' ':
 			case ',':
 			case '/':
@@ -196,7 +196,7 @@ DateTime DateTime::convert(const char *dateString, int length)
 					}
 				q = string;
 				numeric = true;
-				sign = false;
+//				sign = false;
 				break;
 
 			case '(':
@@ -216,7 +216,7 @@ DateTime DateTime::convert(const char *dateString, int length)
 				break;
 
 			case '+':
-				sign = true;
+//				sign = true;
 				break;
 
 			default:
@@ -297,19 +297,6 @@ int DateTime::getString (const char * format, int length, char *buffer)
 	decodeDate (date, time);
 	return strftime (buffer, length, format, time);
 	
-}
-DateTime& DateTime::operator =(long value)
-{
-	date = value;
-
-	return *this;
-}
-
-DateTime& DateTime::operator =(QUAD value)
-{
-	date = (long) (value / 1000);
-
-	return *this;
 }
 
 long DateTime::getToday()

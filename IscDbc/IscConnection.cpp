@@ -58,12 +58,13 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-extern "C"
-{
-Connection* createConnection()
+#ifdef __BORLANDC__
+extern "C" __declspec( dllexport ) Connection* createConnection()
+#else
+extern "C" Connection* createConnection()
+#endif
 {
 	return new IscConnection;
-}
 }
 
 IscConnection::IscConnection()

@@ -554,6 +554,10 @@ public:
     //void		registerOutParameter (int paramIndex, int sqlType, const char* typeName) = 0;
 };
 
+#ifdef __BORLANDC__
+extern "C" __declspec( dllexport ) Connection*	createConnection();
+#else
 extern "C" Connection*	createConnection();
+#endif
 
 #endif // !defined(AFX_CONNECTION_H__BD560E62_B194_11D3_AB9F_0000C01D2301__INCLUDED_)

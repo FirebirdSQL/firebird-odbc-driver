@@ -504,27 +504,9 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 			case SQL_TIMESTAMP:
 				{
 				ISC_TIMESTAMP *date = (ISC_TIMESTAMP*) var->sqldata;
-//				long days = date->timestamp_date;
-
-//Orig.
-// B. Schulte comments:
-// 'this is really not needed anymore.... maybe the date gets wrong in stoneage ;-)'
-//                if ((days > 24855) || (days < -24885))
-//					throw SQLEXCEPTION (CONVERSION_ERROR, "date out of range");
-
 				TimeStamp timestamp;
-//Orig.
-/*
-				timestamp = (long) ((days * 24 * 60 * 60) + date->timestamp_time / 10000);
-				timestamp.nanos = (date->timestamp_time / 10000) * 100;
-*/
-//From B. Schulte
-//				long        zeit;
-//				zeit = (date->timestamp_time / 10000);
-
-				timestamp = date->timestamp_date;
+				timestamp.date = date->timestamp_date;
 				timestamp.nanos = date->timestamp_time;
-
 				value->setValue (timestamp);
 				}
 				break;
@@ -534,8 +516,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				ISC_DATE date = *(ISC_DATE*) var->sqldata;
 				long days = date;
 				DateTime dateTime;
-//				dateTime = (long) (days * 24 * 60 * 60);//NOMEY -
-				dateTime = days; //NOMEY +
+				dateTime.date = days; //NOMEY +
 				value->setValue (dateTime);
 				}
 				break;
@@ -544,7 +525,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				{
 				ISC_TIME data = *(ISC_TIME*) var->sqldata;
 				SqlTime time;
-				time = data;
+				time.timeValue = data;
 				value->setValue (time);
 				}
 				break;
