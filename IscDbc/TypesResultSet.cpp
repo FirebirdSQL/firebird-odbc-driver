@@ -202,11 +202,12 @@ bool TypesResultSet::next()
 			return false;
 
 		recordNumber = findType();
-		if( recordNumber == 0 )
+		if( recordNumber == -1 )
 		{
 			recordNumber = 1;
 			return false;
 		}
+		sqldataOffsetPtr = (unsigned long)types + (recordNumber - 1) * sizeof (*types);
 	}
 
 	if (++recordNumber > sizeof (types) / sizeof (types [0]))
@@ -244,7 +245,7 @@ int TypesResultSet::findType()
 		if (types[i].typeType == dataTypes)
 			return i;		
 
-	return 0;
+	return -1;
 }
 
 }; // end namespace IscDbcLibrary
