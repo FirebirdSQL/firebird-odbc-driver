@@ -282,9 +282,9 @@ void MessageBoxInstallerError(char * stageExecuted, char * pathOut)
 	JString msg;
     char message [SQL_MAX_MESSAGE_LENGTH];
     WORD        errCodeIn = 1;
-    DWORD *    errCodeOut = 0L;
+    DWORD	errCodeOut = 0L;
 
-    SQLInstallerError(errCodeIn, errCodeOut, message, sizeof (message) - 1, NULL);
+    SQLInstallerError(errCodeIn, &errCodeOut, message, sizeof (message) - 1, NULL);
 
 	if ( pathOut && *pathOut )
 		msg.Format ("%s (%s, %s) failed with %d\n%s\n",
