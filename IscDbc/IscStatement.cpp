@@ -480,7 +480,11 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				break;
 
 			case SQL_BLOB:
-				value->setValue (new IscBlob (connection, var));
+				{
+				IscBlob* blob = new IscBlob (connection, var);
+				value->setValue (blob);
+				blob->release();
+				}
 				break;
 
 			case SQL_TIMESTAMP:
@@ -513,7 +517,11 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				break;
 
 			case SQL_ARRAY:
-				value->setValue (new IscArray(connection,var));
+				{
+				IscArray* blob = new IscArray (connection, var);
+				value->setValue (blob);
+				blob->release();
+				}
 				break;
 			}
 }
