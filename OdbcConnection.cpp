@@ -586,6 +586,12 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 			r = appendString (r, role);
 		}
 
+		if (!client.IsEmpty())
+		{
+			r = appendString (r, ";"SETUP_CLIENT"=");
+			r = appendString (r, client);
+		}
+
 		*r = '\0';
 
 		if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
