@@ -87,12 +87,6 @@ public:
 	//void*			transactionHandle;
 	Sqlda			inputSqlda;
 	Sqlda			outputSqlda;
-	int				updateCount;
-	int				updateDelta;
-	int				deleteCount;
-	int				deleteDelta;
-	int				insertCount;
-	int				insertDelta;
 	int				summaryUpdateCount;
 	bool			selectActive;
 };

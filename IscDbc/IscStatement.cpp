@@ -115,7 +115,6 @@ IscStatement::IscStatement(IscConnection *connect)
 	useCount = 1;
 	numberColumns = 0;
 	statementHandle = NULL;
-	updateCount = insertCount = deleteCount = 0;
 	selectActive = false;
 }
 
@@ -308,7 +307,6 @@ void IscStatement::prepareStatement(const char * sqlString)
 	
 	numberColumns		= outputSqlda.getColumnCount();
 	XSQLVAR *var		= outputSqlda.sqlda->sqlvar;
-	insertCount			= deleteCount = updateCount = 0;
 
 }
 
@@ -366,7 +364,6 @@ bool IscStatement::execute()
 
 void IscStatement::clearResults()
 {
-	updateCount = insertCount = deleteCount = 0;
 }
 
 int IscStatement::objectVersion()
@@ -383,6 +380,7 @@ int IscStatement::getUpdateCounts()
 					   sizeof (buffer), buffer);
 
 	int statementType = 0;
+	int insertCount, updateCount, deleteCount;
 
 	for (char *p = buffer; *p != isc_info_end;)
 		{
@@ -402,21 +400,15 @@ int IscStatement::getUpdateCounts()
 					switch (item)
 						{
 						case isc_info_req_insert_count:
-							n = GDS->_vax_integer (q, l);
-							insertDelta = n - insertCount;
-							insertCount = n;
+							insertCount = GDS->_vax_integer (q, l);
 							break;
 
 						case isc_info_req_delete_count:
-							n = GDS->_vax_integer (q, l);
-							deleteDelta = n - deleteCount;
-							deleteCount = n;
+							deleteCount = GDS->_vax_integer (q, l);
 							break;
 
 						case isc_info_req_update_count:
-							n = GDS->_vax_integer (q, l);
-							updateDelta = n - updateCount;
-							updateCount = n;
+							updateCount = GDS->_vax_integer (q, l);
 							break;
 						}
 					q += l;
@@ -431,8 +423,8 @@ int IscStatement::getUpdateCounts()
 		p += length;
 		}
 
-	summaryUpdateCount = MAX (insertDelta, deleteDelta);
-	summaryUpdateCount = MAX (summaryUpdateCount, updateDelta);
+	summaryUpdateCount = MAX (insertCount, deleteCount);
+	summaryUpdateCount = MAX (summaryUpdateCount, updateCount);
 
 	return statementType;
 }
