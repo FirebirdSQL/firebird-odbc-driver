@@ -462,7 +462,7 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 
 	if (!driver.IsEmpty())
 	{
-		if ( *r )
+		if ( r > returnString )
 			r = appendString (r, ";DRIVER=");
 		else
 			r = appendString (r, "DRIVER=");
