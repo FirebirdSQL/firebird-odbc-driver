@@ -107,7 +107,7 @@ $(ODBCJDBCDLL) : $(OBJS_ODBCJDBC) $(BUILDDIR)\OdbcJdbc.res
 	@$(LD) $(TARGETDIR)\IscDbc.lib user32.lib odbccp32.lib $(LINKFLAGS) $(BUILDDIR)\JString.obj $(BUILDDIR)\Mutex.obj $(**) /pdb:"$(BUILDDIR)\OdbcJdbc.pdb" /def:"$(ODBCJDBCDEFFILE)" /out:"$(ODBCJDBCDLL)" /implib:"$(ODBCJDBCLIB)" 
 #
 $(ODBCJDBCSDLL) : $(OBJS_ODBCJDBCS) $(BUILDDIR)\OdbcJdbcSetup.res
-	@$(LD) user32.lib comdlg32.lib odbccp32.lib $(LINKFLAGS) /libpath:"$(COMPDIR)\MFC\lib" $(BUILDDIR)\JString.obj $(**) /pdb:"$(BUILDDIR)\OdbcJdbc.pdb" /out:"$(ODBCJDBCSDLL)" /implib:"$(ODBCJDBCSLIB)" /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE
+	@$(LD) user32.lib comdlg32.lib odbccp32.lib $(LINKFLAGS) /libpath:"$(COMPDIR)\MFC\lib" $(BUILDDIR)\JString.obj $(**) /pdb:"$(BUILDDIR)\OdbcJdbc.pdb" /out:"$(ODBCJDBCSDLL)" /implib:"$(ODBCJDBCSLIB)" /EXPORT:ConfigDSN /EXPORT:DllRegisterServer /EXPORT:DllUnregisterServer,PRIVATE
 #
 # End
 #
