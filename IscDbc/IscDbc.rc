@@ -28,8 +28,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,1,2
- PRODUCTVERSION 1,0,1,2
+ FILEVERSION 1,0,1,4
+ PRODUCTVERSION 1,0,1,4
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x21L
@@ -47,14 +47,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "IBPhoenix Inc.\0"
             VALUE "FileDescription", "IscDbc\0"
-            VALUE "FileVersion", "1, 0, 1, 2\0"
+            VALUE "FileVersion", "1, 0, 1, 4\0"
             VALUE "InternalName", "IscDbc\0"
             VALUE "LegalCopyright", "Copyright © 2000- 2002\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "IscDbc.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "IscDbc\0"
-            VALUE "ProductVersion", "1, 0, 1, 2\0"
+            VALUE "ProductVersion", "1, 0, 1, 4\0"
             VALUE "SpecialBuild", "Beta\0"
         END
     END
