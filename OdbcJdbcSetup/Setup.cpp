@@ -26,6 +26,9 @@
  *
  */
 
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "OdbcJdbcSetup.h"
 #include <odbcinst.h>
 #include "DsnDialog.h"
@@ -33,9 +36,11 @@
 #include "../SetupAttributes.h"
 #include "../SecurityPassword.h"
 
-extern HINSTANCE m_hInstance;
-
 namespace OdbcJdbcSetupLibrary {
+
+extern HINSTANCE m_hInstance;
+extern int currentCP;
+extern TranslateString translate[];
 
 using namespace classSecurityPassword;
 
