@@ -35,7 +35,7 @@ DescRecord::DescRecord()
 {
 	isDefined = false;
 	isPrepared = false;
-	callType = SQL_C_DEFAULT;
+	callType = 0;
 
 	isBlobOrArray = 0;
 	data_at_exec = false;
