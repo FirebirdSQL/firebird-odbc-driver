@@ -349,13 +349,13 @@ void IscStatement::prepareStatement(const char * sqlString)
 		typeStmt = stmtDDL;
 		break;
 	case isc_info_sql_stmt_insert:
-		typeStmt = stmtInsert;
+		typeStmt = stmtInsert | stmtModify;
 		break;
 	case isc_info_sql_stmt_update:
-		typeStmt = stmtUpdate;
+		typeStmt = stmtUpdate | stmtModify;
 		break;
 	case isc_info_sql_stmt_delete:
-		typeStmt = stmtDelete;
+		typeStmt = stmtDelete | stmtModify;
 		break;
 	case isc_info_sql_stmt_exec_procedure:
 		typeStmt = stmtProcedure;

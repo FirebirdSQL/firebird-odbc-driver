@@ -37,7 +37,15 @@ class IscResultSet;
 class IscStatement : public Statement  
 {
 public:
-	enum TypeStatement { stmtNone, stmtDDL, stmtSelect, stmtInsert, stmtUpdate, stmtDelete, stmtProcedure };
+	enum TypeStatement {	stmtNone		= 0, 
+							stmtDDL			= 1, 
+							stmtSelect		= 2, 
+							stmtInsert		= 4, 
+							stmtUpdate		= 8, 
+							stmtDelete		= 16, 
+							stmtProcedure	= 32,
+							stmtModify		= 128
+						};
 
 	void freeStatementHandle();
 	void clearSelect();
@@ -79,6 +87,7 @@ public:
 	virtual bool isActiveDDL(){ return typeStmt == stmtDDL; }
 	virtual bool isActiveSelect(){ return typeStmt == stmtSelect; }
 	virtual bool isActiveProcedure(){ return typeStmt == stmtProcedure; }
+	virtual bool isActiveModify(){ return !!(typeStmt & stmtModify); }
 	virtual ~IscStatement();
 
 	virtual int getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
@@ -101,7 +110,7 @@ public:
 	Sqlda			inputSqlda;
 	Sqlda			outputSqlda;
 	int				summaryUpdateCount;
-	TypeStatement	typeStmt;
+	int				typeStmt;
 };
 
 }; // end namespace IscDbcLibrary

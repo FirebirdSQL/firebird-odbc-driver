@@ -403,8 +403,12 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 
 		statement->prepareStatement (string);
 	
-		if ( statement->isActiveProcedure() )
+		if ( statement->isActiveSelect() )
+			execute = &OdbcStatement::executeStatement;
+		else if ( statement->isActiveProcedure() )
 			execute = &OdbcStatement::executeProcedure;
+		else if ( statement->isActiveModify() && applicationParamDescriptor->headArraySize > 1 )
+			execute = &OdbcStatement::executeStatementParamArray;
 		else
 			execute = &OdbcStatement::executeStatement;
 
@@ -2364,6 +2368,48 @@ RETCODE OdbcStatement::executeStatement()
 	return SQL_SUCCESS;
 }
 
+RETCODE OdbcStatement::executeStatementParamArray()
+{
+	RETCODE ret = SQL_SUCCESS;
+	SQLUINTEGER rowCount = 0;
+	SQLUINTEGER *rowCountPt = applicationParamDescriptor->headRowsProcessedPtr ? applicationParamDescriptor->headRowsProcessedPtr
+								: &rowCount;
+	SQLUSMALLINT *statusPtr = applicationParamDescriptor->headArrayStatusPtr ? applicationParamDescriptor->headArrayStatusPtr
+								: NULL;
+	int rowSize = applicationParamDescriptor->headBindType;
+	int nRow = 0;
+	int nCountRow = applicationParamDescriptor->headArraySize;
+	SQLINTEGER	*&headBindOffsetPtr = applicationParamDescriptor->headBindOffsetPtr;
+	SQLINTEGER	*bindOffsetPtrSave = headBindOffsetPtr;
+	SQLINTEGER	bindOffsetPtrTmp = headBindOffsetPtr ? *headBindOffsetPtr : 0;
+
+	headBindOffsetPtr = &bindOffsetPtrTmp;
+
+	while ( nRow < nCountRow )
+	{
+		if ( (ret = inputParam()) )
+		{
+			headBindOffsetPtr = bindOffsetPtrSave;
+			convert->setBindOffsetPtrFrom ( applicationParamDescriptor->headBindOffsetPtr, applicationParamDescriptor->headBindOffsetPtr );
+			return ret;
+		}
+
+		statement->executeStatement();
+
+		bindOffsetPtrTmp += rowSize;
+		parameterNeedData = 1;
+		++nRow;
+	}
+
+	headBindOffsetPtr = bindOffsetPtrSave;
+	convert->setBindOffsetPtrFrom ( applicationParamDescriptor->headBindOffsetPtr, applicationParamDescriptor->headBindOffsetPtr );
+
+	if ( statement->getMoreResults() )
+		setResultSet (statement->getResultSet(), false);
+
+	return ret;
+}
+
 RETCODE OdbcStatement::executeProcedure()
 {
 	RETCODE ret;
@@ -2569,21 +2615,29 @@ inline
 RETCODE OdbcStatement::returnData()
 {
 	RETCODE retCode, ret = SQL_SUCCESS;
+	int count = listBindOut->GetCount();
 	convert->statusReturnData = true;
-	CBindColumn * bindCol = listBindOut->GetHeadPosition();
-	while( bindCol )
+
+	if ( count )
 	{
-		retCode = (convert->*bindCol->impRecord->fnConv)(bindCol->impRecord,bindCol->appRecord);
+		CBindColumn * bindCol = listBindOut->GetRoot();
 
-		if ( retCode != SQL_SUCCESS )
+		while( count-- )
 		{
-			ret = retCode;
-			if ( ret != SQL_SUCCESS_WITH_INFO )
-				break;
-		}
+			DescRecord *& imp = bindCol->impRecord;
 
-		bindCol = listBindOut->GetNext();
+			retCode = (convert->*imp->fnConv)(imp, bindCol->appRecord);
+			if ( retCode != SQL_SUCCESS )
+			{
+				ret = retCode;
+				if ( ret != SQL_SUCCESS_WITH_INFO )
+					break;
+			}
+
+			bindCol++;
+		}
 	}
+
 	convert->statusReturnData = false;
 	return ret;
 }
@@ -2594,25 +2648,31 @@ RETCODE OdbcStatement::returnDataFromExtendedFetch()
 	RETCODE retCode, ret = SQL_SUCCESS;
 	SQLINTEGER	&bindOffsetPtrTo = convert->getBindOffsetPtrTo();
 	SQLINTEGER	&currentRow = *bindOffsetPtr;
+	int count = listBindOut->GetCount();
 	convert->statusReturnData = true;
 
-	CBindColumn * bindCol = listBindOut->GetHeadPosition();
-	while( bindCol )
+	if ( count )
 	{
-		DescRecord *& appRecord = bindCol->appRecord;
-		bindOffsetPtrTo = appRecord->sizeColumnExtendedFetch * currentRow;
+		CBindColumn * bindCol = listBindOut->GetRoot();
 
-		retCode = (convert->*bindCol->impRecord->fnConv)(bindCol->impRecord, appRecord);
-
-		if ( retCode != SQL_SUCCESS )
+		while( count-- )
 		{
-			ret = retCode;
-			if ( ret != SQL_SUCCESS_WITH_INFO )
-				break;
-		}
+			DescRecord *& imp = bindCol->impRecord;
+			DescRecord *& app = bindCol->appRecord;
 
-		bindCol = listBindOut->GetNext();
+			bindOffsetPtrTo = app->sizeColumnExtendedFetch * currentRow;
+			retCode = (convert->*imp->fnConv)(imp, app);
+			if ( retCode != SQL_SUCCESS )
+			{
+				ret = retCode;
+				if ( ret != SQL_SUCCESS_WITH_INFO )
+					break;
+			}
+
+			bindCol++;
+		}
 	}
+
 	convert->statusReturnData = false;
 	return ret;
 }

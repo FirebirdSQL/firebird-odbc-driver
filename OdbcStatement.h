@@ -71,6 +71,7 @@ public:
 	bool 	registerOutParameter();
 	RETCODE inputParam();
 	RETCODE executeStatement();
+	RETCODE executeStatementParamArray();
 	RETCODE executeProcedure();
 	RETCODE sqlGetCursorName (SQLCHAR *name, int bufferLength, SQLSMALLINT *nameLength);
 	RETCODE sqlGetStmtAttr (int attribute, SQLPOINTER value, int bufferLength, SQLINTEGER *lengthPtr);

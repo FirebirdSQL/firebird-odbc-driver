@@ -159,6 +159,10 @@ bool DescRecord::operator =(DescRecord *rec)
 	unSigned = rec->unSigned;
 	updaTable = rec->updaTable;
 	indicatorPtr = rec->indicatorPtr;
+	
+	if ( indicatorPtr && !octetLengthPtr )
+		octetLengthPtr = indicatorPtr;
+
 	unNamed = rec->unNamed;
 	dataPtr = rec->dataPtr;
 	return true;
