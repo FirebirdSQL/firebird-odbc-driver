@@ -274,6 +274,9 @@ double Value::getDouble()
 		case Null:
 			return 0;
 
+		case Float:
+			return (double)data.flt;
+
 		case Double:
 			return data.dbl;
 

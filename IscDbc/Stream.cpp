@@ -24,7 +24,7 @@
 
 #include <memory.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include "IscDbc.h"
 #include "Stream.h"

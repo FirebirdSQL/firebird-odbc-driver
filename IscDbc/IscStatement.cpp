@@ -79,7 +79,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <malloc.h>
+#include <stdlib.h>
 #include <time.h>
 #include "IscDbc.h"
 #include "IscStatement.h"

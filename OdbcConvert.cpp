@@ -58,6 +58,30 @@ double listScale[] =
 	100000000000000000.0,
 	1000000000000000000.0
 };
+#elif defined __FreeBSD__
+unsigned __int64 listScale[] =
+{
+	0x0000000000000001LL,
+	0x000000000000000aLL,
+	0x0000000000000064LL,
+	0x00000000000003e8LL,
+	0x0000000000002710LL,
+	0x00000000000186a0LL,
+	0x00000000000f4240LL,
+	0x0000000000989680LL,
+	0x0000000005f5e100LL,
+	0x000000003b9aca00LL,
+	0x00000002540be400LL,
+	0x000000174876e800LL,
+	0x000000e8d4a51000LL,
+	0x000009184e72a000LL,
+	0x00005af3107a4000LL,
+	0x00038d7ea4c68000LL,
+	0x002386f26fc10000LL,
+	0x016345785d8a0000LL,
+	0x0de0b6b3a7640000LL,
+	0x8ac7230489e80000LL
+};
 #else
 unsigned __int64 listScale[] =
 {
@@ -140,6 +164,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_TIME:
 			break;
 		}
+		break;
 
 	case SQL_C_LONG:
 	case SQL_C_ULONG:
@@ -168,6 +193,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convLongToTagNumeric;
 		}
+		break;
 
 	case SQL_C_FLOAT:
 		switch(to->conciseType)
@@ -191,6 +217,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_CHAR:
 			return &OdbcConvert::convFloatToString;
 		}
+		break;
 
 	case SQL_C_DOUBLE:
 		switch(to->conciseType)
@@ -217,6 +244,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convDoubleToTagNumeric;
 		}
+		break;
 
 	case SQL_C_SBIGINT:
 	case SQL_C_UBIGINT:
@@ -244,6 +272,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convBigintToTagNumeric;
 		}
+		break;
 
 	case SQL_DECIMAL:
 	case SQL_C_NUMERIC:
@@ -269,6 +298,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			bIdentity = true;
 			return &OdbcConvert::convNumericToTagNumeric;
 		}
+		break;
 
 	case SQL_C_DATE:
 	case SQL_C_TYPE_DATE:
@@ -292,6 +322,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateToString;
 		}
+		break;
 
 	case SQL_C_TIME:
 	case SQL_C_TYPE_TIME:
@@ -312,9 +343,13 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_TYPE_TIME:
 			bIdentity = true;
 			return &OdbcConvert::convTimeToTagTime;
+		case SQL_C_TYPE_TIMESTAMP:
+		case SQL_C_TIMESTAMP:
+			return &OdbcConvert::convTimeToTagTimestamp;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convTimeToString;
 		}
+		break;
 
 	case SQL_C_TYPE_TIMESTAMP:
 	case SQL_C_TIMESTAMP:
@@ -332,6 +367,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateTimeToString;
 		}
+		break;
 
 	case SQL_C_BINARY:
 		switch(to->conciseType)
@@ -353,6 +389,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_CHAR:
 			return &OdbcConvert::convBlobToString;
 		}
+		break;
 
 	case SQL_C_CHAR:
 		switch(to->conciseType)
@@ -378,6 +415,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			bIdentity = true;
 			return &OdbcConvert::convStringToString;
 		}
+		break;
 	}
 	return NULL;
 }
@@ -739,6 +777,23 @@ int OdbcConvert::convTimeToTagTime(DescRecord * from, DescRecord * to)
 	return 0;
 }
 
+int OdbcConvert::convTimeToTagTimestamp(DescRecord * from, DescRecord * to)
+{
+	tagTIMESTAMP_STRUCT * tagTs = (tagTIMESTAMP_STRUCT*)getAdressData((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	long ntime = *(long*)from->dataPtr;
+	decode_sql_time(ntime, tagTs->hour, tagTs->minute, tagTs->second);
+	tagTs->day = tagTs->month = tagTs->year = 0;
+	tagTs->fraction = ntime % ISC_TIME_SECONDS_PRECISION;
+
+	if ( indicatorPointer )
+		*indicatorPointer = sizeof(tagTIMESTAMP_STRUCT);
+
+	return SQL_SUCCESS;
+}
 
 ////////////////////////////////////////////////////////////////////////
 // DateTime

@@ -50,10 +50,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <malloc.h>
+#include <stdlib.h>
 #include <memory.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include "IscDbc.h"
 #include "Sqlda.h"

@@ -25,7 +25,7 @@
 #if !defined(_MLIST_H_)
 #define _MLIST_H_
 
-#include <malloc.h>
+#include <stdlib.h>
 
 template <class T>
 class MList

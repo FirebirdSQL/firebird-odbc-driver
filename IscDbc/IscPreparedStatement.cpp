@@ -36,7 +36,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <malloc.h>
+#include <stdlib.h>
 #include "IscDbc.h"
 #include "IscPreparedStatement.h"
 #include "SQLError.h"

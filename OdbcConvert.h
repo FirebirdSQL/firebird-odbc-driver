@@ -122,6 +122,7 @@ public:
 	int convTimeToDouble(DescRecord * from, DescRecord * to);
 	int convTimeToBigint(DescRecord * from, DescRecord * to);
 	int convTimeToTagTime(DescRecord * from, DescRecord * to);
+	int convTimeToTagTimestamp(DescRecord * from, DescRecord * to);
 	int convTimeToString(DescRecord * from, DescRecord * to);
 
 // DateTime
