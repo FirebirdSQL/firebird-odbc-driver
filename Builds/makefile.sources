@@ -62,5 +62,4 @@ ODBCJDBCSETUPSRC_LINUX = \
 ODBCJDBCSETUPSRC = \
 	DsnDialog.cpp \
 	OdbcJdbcSetup.cpp \
-	Setup.cpp \
-	StdAfx.cpp
+	Setup.cpp
