@@ -76,7 +76,6 @@ void IscResultSet::initResultSet(IscStatement *iscStatement)
 		statement->addRef();
 		sqlda = &statement->outputSqlda;
 		numberColumns = sqlda->getColumnCount();
-		sqlda->allocBuffer();
 		values.alloc (numberColumns);
 		allocConversions();
 	}

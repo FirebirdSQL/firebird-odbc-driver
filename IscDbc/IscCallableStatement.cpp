@@ -152,7 +152,6 @@ bool IscCallableStatement::execute()
 {
 	connection->startTransaction();
 	ISC_STATUS statusVector [20];
-	outputSqlda.allocBuffer();
 	values.alloc (numberColumns);
 	int numberParameters = inputSqlda.getColumnCount();
 	void *transHandle = connection->startTransaction();

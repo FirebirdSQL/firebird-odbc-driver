@@ -285,6 +285,8 @@ void IscStatement::prepareStatement(const char * sqlString)
 		if (statusVector [1])
 			THROW_ISC_EXCEPTION (connection, statusVector);
 	}
+	
+	outputSqlda.allocBuffer();
 
 	typeStmt			= stmtNone;
 	resultsCount		= 1;
@@ -295,8 +297,6 @@ void IscStatement::prepareStatement(const char * sqlString)
 		typeStmt = stmtProcedure;
 
 	numberColumns		= outputSqlda.getColumnCount();
-	XSQLVAR *var		= outputSqlda.sqlda->sqlvar;
-
 }
 
 bool IscStatement::execute()
