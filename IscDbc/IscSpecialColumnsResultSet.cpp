@@ -54,11 +54,6 @@ IscSpecialColumnsResultSet::IscSpecialColumnsResultSet(IscDatabaseMetaData *meta
 
 }
 
-IscSpecialColumnsResultSet::~IscSpecialColumnsResultSet()
-{
-
-}
-
 void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const char * schema, const char * table, int scope, int nullable)
 {
 	JString sql = 

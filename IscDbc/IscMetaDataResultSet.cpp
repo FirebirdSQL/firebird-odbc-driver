@@ -51,7 +51,10 @@ IscMetaDataResultSet::IscMetaDataResultSet(IscDatabaseMetaData *meta) : IscResul
 
 IscMetaDataResultSet::~IscMetaDataResultSet()
 {
-
+	if (resultSet)
+		resultSet->release();
+	if (statement)
+		statement->release();
 }
 
 

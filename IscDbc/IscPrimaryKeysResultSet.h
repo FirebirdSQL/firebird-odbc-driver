@@ -37,7 +37,6 @@ public:
 	virtual bool next();
 	void getPrimaryKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern);
 	IscPrimaryKeysResultSet(IscDatabaseMetaData *metaData);
-	virtual ~IscPrimaryKeysResultSet();
 
 };
 

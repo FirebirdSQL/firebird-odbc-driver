@@ -37,11 +37,6 @@ IscProceduresResultSet::IscProceduresResultSet(IscDatabaseMetaData *metaData)
 
 }
 
-IscProceduresResultSet::~IscProceduresResultSet()
-{
-
-}
-
 void IscProceduresResultSet::getProcedures(const char * catalog, const char * schemaPattern, const char * procedureNamePattern)
 {
 	JString sql = 

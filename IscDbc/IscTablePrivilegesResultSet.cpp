@@ -46,12 +46,6 @@ IscTablePrivilegesResultSet::IscTablePrivilegesResultSet(IscDatabaseMetaData *me
     resultSet = NULL;
 }
 
-IscTablePrivilegesResultSet::~IscTablePrivilegesResultSet()
-{
-    if (resultSet)
-        resultSet->release();
-}
-
 void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
 	JString sql = "select NULL as table_cat,"										//1

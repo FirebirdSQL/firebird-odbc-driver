@@ -37,7 +37,6 @@ public:
 	virtual bool next();
 	void getColumnPrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * columnNamePattern);
 	IscColumnPrivilegesResultSet(IscDatabaseMetaData *metaData);
-	virtual ~IscColumnPrivilegesResultSet();
 
 	typedef IscMetaDataResultSet Parent;
 	virtual int getColumnDisplaySize(int index);

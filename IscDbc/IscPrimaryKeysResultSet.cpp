@@ -37,11 +37,6 @@ IscPrimaryKeysResultSet::IscPrimaryKeysResultSet(IscDatabaseMetaData *metaData)
 
 }
 
-IscPrimaryKeysResultSet::~IscPrimaryKeysResultSet()
-{
-
-}
-
 void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
 	JString sql = 

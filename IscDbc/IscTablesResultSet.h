@@ -37,7 +37,6 @@ public:
 	virtual bool next();
 	void getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char **types);
 	IscTablesResultSet(IscDatabaseMetaData *metaData);
-	virtual ~IscTablesResultSet();
 
 	typedef IscMetaDataResultSet Parent;
 	virtual int getColumnDisplaySize(int index);

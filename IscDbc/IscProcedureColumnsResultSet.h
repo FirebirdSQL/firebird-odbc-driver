@@ -45,7 +45,6 @@ public:
 							  const char *procedureNamePattern, 
 							  const char *columnNamePattern);
 	IscProcedureColumnsResultSet(IscDatabaseMetaData *metaData);
-	virtual ~IscProcedureColumnsResultSet();
 
 };
 

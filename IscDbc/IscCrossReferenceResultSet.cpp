@@ -46,11 +46,6 @@ IscCrossReferenceResultSet::IscCrossReferenceResultSet(IscDatabaseMetaData *meta
 
 }
 
-IscCrossReferenceResultSet::~IscCrossReferenceResultSet()
-{
-
-}
-
 void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog, 
 													const char * primarySchema, 
 													const char * primaryTable, 

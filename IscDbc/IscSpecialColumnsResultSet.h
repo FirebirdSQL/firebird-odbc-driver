@@ -36,7 +36,6 @@ class IscSpecialColumnsResultSet : public IscMetaDataResultSet
 {
 public:
 	IscSpecialColumnsResultSet(IscDatabaseMetaData *metaData);
-	virtual ~IscSpecialColumnsResultSet();
 	virtual void specialColumns (const char * catalog, const char * schema, const char * table, int scope, int nullable);
 	bool next();
 	typedef IscMetaDataResultSet Parent;

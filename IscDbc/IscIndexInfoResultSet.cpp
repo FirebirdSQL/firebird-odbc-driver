@@ -55,11 +55,6 @@ IscIndexInfoResultSet::IscIndexInfoResultSet(IscDatabaseMetaData *metaData)
 
 }
 
-IscIndexInfoResultSet::~IscIndexInfoResultSet()
-{
-
-}
-
 void IscIndexInfoResultSet::getIndexInfo(const char * catalog, 
 										 const char * schemaPattern, 
 										 const char * tableNamePattern, 

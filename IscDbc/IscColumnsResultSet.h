@@ -43,7 +43,6 @@ public:
 	virtual bool next();
 	void getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern);
 	IscColumnsResultSet(IscDatabaseMetaData *metaData);
-	virtual ~IscColumnsResultSet();
 private:
 	virtual bool getBLRLiteral (int indexIn, int indexTarget, IscSqlType sqlType);
 	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType sqlType);
