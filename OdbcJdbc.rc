@@ -29,15 +29,15 @@ LANGUAGE 0x09, 0x01
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,1,4
- PRODUCTVERSION 1,0,1,4
+ FILEVERSION 1,1,0,74
+ PRODUCTVERSION 1,1,0,74
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x21L
 #else
  FILEFLAGS 0x20L
 #endif
- FILEOS 0x40004L
+ FILEOS 0x4L
  FILETYPE 0x2L
  FILESUBTYPE 0x0L
 BEGIN
@@ -48,14 +48,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "IBPhoenix Inc\0"
             VALUE "FileDescription", "OdbcJdbc\0"
-            VALUE "FileVersion", "1, 0, 1, 4\0"
+            VALUE "FileVersion", "1, 1, 0,74\0"
             VALUE "InternalName", "OdbcJdbc\0"
-            VALUE "LegalCopyright", "Copyright © 2000 - 2002\0"
+            VALUE "LegalCopyright", "Copyright © 2000 - 2003\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "OdbcJdbc.dll\0"
             VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "OdbcJdbc dll\0"
-            VALUE "ProductVersion", "1, 0, 1, 4\0"
+            VALUE "ProductName", "OdbcJdbc Dynamic Link Library\0"
+            VALUE "ProductVersion", "1, 1, 0,74\0"
             VALUE "SpecialBuild", "Beta\0"
         END
     END
