@@ -48,13 +48,14 @@ IscTablesResultSet::IscTablesResultSet(IscDatabaseMetaData *metaData)
 
 void IscTablesResultSet::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char * * types)
 {
-	char sql[2048] =  "select cast (NULL as varchar(7)) as table_cat,\n"
-			          "cast (NULL as varchar(7)) as table_schem,\n"
-					  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,\n"
-					  "cast( 'TABLE' as varchar(13) ) as table_type,\n"
-					  "tbl.rdb$description as remarks,\n"
-					  "tbl.rdb$system_flag,\n"
-					  "tbl.rdb$view_blr as view_blr\n"
+	char sql[2048] =  "select cast (NULL as varchar(7)) as table_cat,\n"				// 1
+			          "cast (NULL as varchar(7)) as table_schem,\n"						// 2
+					  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
+					  "cast ('TABLE' as varchar(13)) as table_type,\n"					// 4
+					  "cast (NULL as varchar(255)) as remarks,\n"						// 5
+					  "tbl.rdb$system_flag,\n"											// 6
+					  "tbl.rdb$view_blr as view_blr,\n"									// 7
+					  "tbl.rdb$description as remarks_blob\n"							// 8
 					  "from rdb$relations tbl\n";
 
 	char * ptFirst = sql + strlen(sql);
@@ -115,6 +116,9 @@ bool IscTablesResultSet::next()
 		sqlda->updateVarying (4, "SYSTEM TABLE");
 	else if ( !sqlda->isNull(7) )
 		sqlda->updateVarying (4, "VIEW");
+
+	if ( !sqlda->isNull(8) )
+		convertBlobToString( 5, 8 );
 
 	return true;
 }

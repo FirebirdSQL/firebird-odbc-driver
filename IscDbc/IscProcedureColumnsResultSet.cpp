@@ -94,14 +94,15 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 				"\tcast ( f.rdb$field_scale as smallint) as decimal_digits,\n"			// 10
 				"\tcast ( 10 as smallint) as num_prec_radix,\n"		// 11
 				"\tcast ( 1 as smallint) as nullable,\n"			// 12 #define SQL_NULLABLE 1
-				"\tcast (f.rdb$description as varchar(256)) as remarks,\n"				// 13
+				"\tcast ( NULL as varchar(255)) as remarks,\n"		// 13
 				"\tcast (f.rdb$default_value as varchar(512)) as column_def,\n"			// 14
 				"\tf.rdb$field_type as sql_data_type,\n"			// 15 - SMALLINT NOT NULL
 				"\tf.rdb$field_sub_type as sql_datetime_sub,\n"		// 16 - SMALLINT
 				"\tcast ( f.rdb$field_length as integer ) as char_octet_length,\n"		// 17
 				"\tcast ( pp.rdb$parameter_number + 1 as integer) as ordinal_position,\n"// 18
 				"\tcast ('YES' as varchar(3)) as is_nullable,\n"	// 19
-				"\tf.rdb$field_precision as column_precision\n"		// 20
+				"\tf.rdb$field_precision as column_precision,\n"	// 20
+				"\tf.rdb$description as remarks_blob\n"				// 21
 		"from rdb$procedure_parameters pp, rdb$fields f\n"
 		"where pp.rdb$field_source = f.rdb$field_name\n";
 
@@ -162,6 +163,9 @@ bool IscProcedureColumnsResultSet::next()
 	}
 	
 	adjustResults (sqlType);
+
+	if ( !sqlda->isNull(21) )
+		convertBlobToString( 13, 21 );
 
 	return true;
 }

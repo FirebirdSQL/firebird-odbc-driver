@@ -53,14 +53,15 @@ void IscProceduresResultSet::getProcedures(const char * catalog, const char * sc
 				"\tproc.rdb$procedure_inputs as num_input_params,\n"		// 4
 				"\tproc.rdb$procedure_outputs as num_output_params,\n"		// 5
 				"\t1 as num_result_sets,\n"									// 6
-				"\tproc.rdb$description as remarks,\n"						// 7
-				"\t1 as procedure_type\n";									// 8 SQL_PT_PROCEDURE
+				"\tcast (NULL as varchar(255)) as remarks,\n"				// 7
+				"\t1 as procedure_type,\n"									// 8 SQL_PT_PROCEDURE
+				"\tproc.rdb$description as remarks_blob\n";					// 9
 
 	char * ptFirst = sql + strlen(sql);
 	const char *sep = " where ";
 
 	if ( addBlr )
-		addString(ptFirst, ", proc.rdb$procedure_blr\n"); // 9 BLR_PROCEDURE
+		addString(ptFirst, ", proc.rdb$procedure_blr\n"); // 10 BLR_PROCEDURE
 
 	addString(ptFirst, "from rdb$procedures proc\n");
 
@@ -87,6 +88,8 @@ bool IscProceduresResultSet::next()
 		sqlda->updateShort(4, 0);
 	if ( sqlda->isNull(5) )
 		sqlda->updateShort(5, 0);
+	if ( !sqlda->isNull(9) )
+		convertBlobToString(7, 9);
 
 	return true;
 }
@@ -101,7 +104,7 @@ static int gen_blr(int *user_arg, int /*offset*/, char * string)
 bool IscProceduresResultSet::canSelectFromProcedure()
 {
 	int countSUSPEND = 0;
-	XSQLVAR *var = sqlda->Var(9);
+	XSQLVAR *var = sqlda->Var(10);
 	IscBlob * blob = (IscBlob *)*(long*)var->sqldata;
 	int length = blob->length();
 	

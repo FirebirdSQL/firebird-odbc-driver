@@ -38,6 +38,7 @@
 #include "IscStatement.h"
 #include "SQLError.h"
 #include "IscConnection.h"
+#include "IscBlob.h"
 
 namespace IscDbcLibrary {
 
@@ -104,6 +105,29 @@ void IscMetaDataResultSet::addString(char *& stringOut, const char * string, int
 	int len = length ? length : strlen(string);
 	memcpy ( stringOut, string, len);
 	stringOut += len;
+}
+
+void IscMetaDataResultSet::convertBlobToString( int indSrc, int indDst )
+{
+	XSQLVAR *varDst = sqlda->Var( indDst );
+	IscBlob * blob = new IscBlob( statement, varDst );
+	blob->fetchBlob();
+
+	*varDst->sqlind = -1;
+
+	int length = blob->length();
+	XSQLVAR *varSrc = sqlda->Var( indSrc );
+	char * src = varSrc->sqldata + sizeof ( short );
+	int lenSrc = varSrc->sqllen;
+	*varSrc->sqlind = 0;
+
+	if ( length > lenSrc )
+		length = 255;
+
+	blob->getBytes( 0, length, src );
+	delete blob;
+
+	*(unsigned short*)varSrc->sqldata = (unsigned short)length;
 }
 
 }; // end namespace IscDbcLibrary

@@ -37,6 +37,7 @@ class IscMetaDataResultSet : public IscResultSet
 public:
 	void expandPattern(char *& stringOut, const char *prefix, const char * string, const char * pattern);
 	void addString(char *& stringOut, const char * string, int length = 0);
+	void convertBlobToString( int indSrc, int indDst );
 	bool isWildcarded (const char *pattern);
 	virtual void prepareStatement (const char *sql);
 	IscMetaDataResultSet(IscDatabaseMetaData *meta);
