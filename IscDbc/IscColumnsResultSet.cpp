@@ -72,8 +72,8 @@ IscColumnsResultSet::IscColumnsResultSet(IscDatabaseMetaData *metaData)
 void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern)
 {
 	JString sql = 
-		"select NULL as table_cat,\n"								// 1 - VARCHAR
-				"\tNULL as table_schem,\n"							// 2 - VARCHAR
+		"select cast (NULL as char(7)) as table_cat,\n"				// 1 - VARCHAR
+				"\tcast (NULL as char(7)) as table_schem,\n"		// 2 - VARCHAR
 				"\trfr.rdb$relation_name as table_name,\n"			// 3 - VARCHAR NOT NULL
 				"\trfr.rdb$field_name as column_name,\n"			// 4 - VARCHAR NOT NULL
 				"\tfld.rdb$field_type as data_type,\n"				// 5 - SMALLINT NOT NULL
@@ -83,7 +83,7 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 				"\tcast (fld.rdb$field_scale as smallint) as decimal_digits,\n"		// 9 - SMALLINT
 				"\tfld.rdb$field_scale as num_prec_radix,\n"		// 10 - SMALLINT
 				"\trfr.rdb$null_flag as nullable,\n"				// 11 - SMALLINT NOT NULL
-				"\tNULL as remarks,\n"								// 12 - VARCHAR
+				"\tcast (NULL as char(10)) as remarks,\n"			// 12 - VARCHAR
 				"\trfr.rdb$field_name as column_def,\n"				// 13 - VARCHAR
 				"\tfld.rdb$field_type as SQL_DATA_TYPE,\n"			// 14 - SMALLINT NOT NULL
 				"\tfld.rdb$field_sub_type as SQL_DATETIME_SUB,\n"	// 15 - SMALLINT

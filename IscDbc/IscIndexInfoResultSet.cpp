@@ -61,8 +61,8 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 										 bool unique, bool approximate)
 {
 	JString tableStat = 
-		"select cast(NULL as char(31)) as table_cat,\n"							// 1
-				"\tcast(NULL as char(31)) as table_schem,\n"					// 2
+		"select cast(NULL as char(7)) as table_cat,\n"							// 1
+				"\tcast(NULL as char(7)) as table_schem,\n"						// 2
 				"\tcast(rl.rdb$relation_name as char(31)) as table_name,\n"		// 3
 				"\tcast(0 as smallint) as non_unique,\n"						// 4
 				"\tcast(NULL as char(31)) as index_qualifier,\n"				// 5
@@ -78,8 +78,8 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 		"from rdb$relations rl\n";
 
 	JString sql = 
-		"select cast(NULL as char(31)) as table_cat,\n"							// 1
-				"\tcast(NULL as char(31)) as table_schem,\n"					// 2
+		"select cast(NULL as char(7)) as table_cat,\n"							// 1
+				"\tcast(NULL as char(7)) as table_schem,\n"						// 2
 				"\tcast(idx.rdb$relation_name as char(31)) as table_name,\n"	// 3
 				"\tcast((1-idx.rdb$unique_flag) as smallint) as non_unique,\n"	// 4
 				"\tcast(idx.rdb$index_name as char(31)) as index_qualifier,\n"	// 5

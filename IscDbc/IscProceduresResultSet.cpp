@@ -40,8 +40,8 @@ IscProceduresResultSet::IscProceduresResultSet(IscDatabaseMetaData *metaData)
 void IscProceduresResultSet::getProcedures(const char * catalog, const char * schemaPattern, const char * procedureNamePattern)
 {
 	JString sql = 
-		"select NULL as procedure_cat,\n"									// 1
-				"\tNULL as procedure_schem,\n"								// 2
+		"select cast (NULL as char(7)) as procedure_cat,\n"					// 1
+				"\tcast (NULL as char(7)) as procedure_schem,\n"			// 2
 				"\tproc.rdb$procedure_name as procedure_name,\n"			// 3
 				"\tproc.rdb$procedure_inputs as num_input_params,\n"		// 4
 				"\tproc.rdb$procedure_outputs as num_output_params,\n"		// 5

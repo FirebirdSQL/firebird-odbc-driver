@@ -46,8 +46,8 @@ IscTablesResultSet::IscTablesResultSet(IscDatabaseMetaData *metaData)
 
 void IscTablesResultSet::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char * * types)
 {
-	JString sql = "select NULL as table_cat,\n"
-				          "NULL as table_schem,\n"
+	JString sql = "select cast (NULL as char(7)) as table_cat,\n"
+				          "cast (NULL as char(7)) as table_schem,\n"
 						  "tbl.rdb$relation_name as table_name,\n"
 						  "cast( 'TABLE' as char(13) ) as table_type,\n"
 						  "tbl.rdb$description as remarks,\n"

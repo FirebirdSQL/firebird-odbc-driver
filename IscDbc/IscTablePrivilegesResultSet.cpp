@@ -47,8 +47,8 @@ IscTablePrivilegesResultSet::IscTablePrivilegesResultSet(IscDatabaseMetaData *me
 
 void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
-	JString sql = "select NULL as table_cat,"										//1
-				          "NULL as table_schem,"									//2
+	JString sql = "select cast (NULL as char(7)) as table_cat,"										//1
+				          "cast (NULL as char(7)) as table_schem,"									//2
 						  "tbl.rdb$relation_name as table_name,"					//3
 						  "priv.rdb$grantor as grantor,"							//4
 						  "priv.rdb$user as grantee,"								//5

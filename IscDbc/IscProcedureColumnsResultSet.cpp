@@ -79,8 +79,8 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 													   const char * columnNamePattern)
 {
 	JString sql = 
-		"select NULL as procedure_cat,\n"							// 1
-				"\tNULL as procedure_schem,\n"						// 2
+		"select cast (NULL as char(7)) as procedure_cat,\n"			// 1
+				"\tcast (NULL as char(7)) as procedure_schem,\n"	// 2
 				"\tpp.rdb$procedure_name as procedure_name,\n"		// 3
 				"\tpp.rdb$parameter_name as column_name,\n"			// 4
 				"\tpp.rdb$parameter_type as column_type,\n"			// 5
@@ -93,8 +93,8 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 				"\t1 as nullable,\n"								// 12 #define SQL_NULLABLE 1
 				"\tf.rdb$description as remarks,\n"					// 13
 				"\tf.rdb$default_value as column_def,\n"			// 14
-				"\tnull as sql_data_type,\n"						// 15
-				"\tnull as sql_datetime_sub,\n"						// 16
+				"\tcast (NULL as char(7)) as sql_data_type,\n"		// 15
+				"\tcast (NULL as char(7)) as sql_datetime_sub,\n"	// 16
 				"\tf.rdb$field_length as char_octet_length,\n"		// 17
 				"\tpp.rdb$parameter_number as ordinal_position,\n"	// 18
 				"\t'YES' as is_nullable,\n"							// 19

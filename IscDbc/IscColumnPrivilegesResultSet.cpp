@@ -43,8 +43,8 @@ IscColumnPrivilegesResultSet::IscColumnPrivilegesResultSet(IscDatabaseMetaData *
 
 void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * columnNamePattern)
 {
-	JString sql = "select NULL as table_cat,"
-				          "NULL as table_schem,"
+	JString sql = "select cast (NULL as char(7)) as table_cat,"
+				          "cast (NULL as char(7)) as table_schem,"
 						  "tbl.rdb$relation_name as table_name,"
 						  "tbl.rdb$field_name as column_name,"
 						  "priv.rdb$grantor as grantor,"
