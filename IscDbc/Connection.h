@@ -91,6 +91,7 @@ public:
 	virtual void		rollback() = 0;
 	virtual void		commit() = 0;
 	virtual void		commitAuto() = 0;
+	virtual void		rollbackAuto() = 0;
 
 	virtual Blob*		genHTML (Properties *context, long genHeaders) = 0;
 	virtual bool		getNativeSql (const char * inStatementText, long textLength1,

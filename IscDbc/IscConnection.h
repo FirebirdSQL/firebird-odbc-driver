@@ -37,6 +37,7 @@ class IscConnection : public Connection
 {
 public:
 	void commitRetaining();
+	void rollbackRetaining();
 	int getDatabaseDialect();
 	void rollbackAuto();
 	virtual void commitAuto();
