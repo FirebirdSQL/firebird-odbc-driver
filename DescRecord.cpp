@@ -117,3 +117,29 @@ bool DescRecord::operator =(DescRecord *rec)
 	dataPtr = rec->dataPtr;
 	return true;
 }
+
+void DescRecord::setZeroColumn()
+{
+	autoUniqueValue = SQL_FALSE;
+	caseSensitive = SQL_FALSE;
+	catalogName = "";
+	datetimeIntervalCode = 0;
+	displaySize = 8;
+	fixedPrecScale = SQL_FALSE;
+	label = "";
+	literalPrefix = "";
+	literalSuffix = "";
+	localTypeName = "";
+	name = "";
+	nullable = SQL_NO_NULLS;
+	octetLength = 4;
+	precision = 4;
+	scale = 0;
+	schemaName = "";
+	searchable = SQL_PRED_NONE;
+	tableName = "";
+	typeName = "";
+	unNamed = SQL_UNNAMED;
+	unSigned = SQL_FALSE;
+	updaTable = SQL_ATTR_READONLY;
+}
