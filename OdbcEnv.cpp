@@ -16,6 +16,16 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *	Changes
+ *
+ *	2002-05-20	OdbcEnv.cpp
+ *
+ *				Contributed by Robert Milharcic
+ *				o allocHandle() - Fix typo in assignment to connections
+ *	
+ *
+ *
  */
 
 // OdbcEnv.cpp: implementation of the OdbcEnv class.
@@ -61,7 +71,10 @@ RETCODE OdbcEnv::allocHandle(int handleType, SQLHANDLE * outputHandle)
 
 	OdbcConnection *connection = new OdbcConnection (this);
 	connection->next = connections;
-	connections = connections;
+//Orig.
+//	connections = connections;
+//From R. Milharcic
+	connections = connection;
 	*outputHandle = (SQLHANDLE)connection;
 
 	return sqlSuccess();

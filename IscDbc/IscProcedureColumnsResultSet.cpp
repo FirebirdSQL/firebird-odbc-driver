@@ -16,6 +16,16 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	Changes
+ *
+ *	2002-05-20	IscProcedureColumnsResultSet.cpp
+ *
+ *				Contributed by C. G. Alvarez
+ *				o qualify the column names in getProcedureColumns()
+ *				
+ *
  */
 
 // IscProcedureColumnsResultSet.cpp: implementation of the IscProcedureColumnsResultSet class.
@@ -63,33 +73,33 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 	JString sql = 
 		"select NULL as table_cat,\n"								// 1
 				"\tNULL as table_schem,\n"							// 2
-				"\trdb$procedure_name as procedure_name,\n"			// 3
-				"\trdb$parameter_name as column_name,\n"			// 4
-				"\trdb$parameter_type as column_type,\n"			// 5
-				"\trdb$field_type as data_type,\n"					// 5 + 1
-				"\trdb$field_sub_type as type_name,\n"				// 6 + 1
-				"\trdb$field_length as column_size,\n"				// 7 + 1
+				"\tpp.rdb$procedure_name as procedure_name,\n"			// 3
+				"\tpp.rdb$parameter_name as column_name,\n"			// 4
+				"\tpp.rdb$parameter_type as column_type,\n"			// 5
+				"\tpp.rdb$field_type as data_type,\n"					// 5 + 1
+				"\tpp.rdb$field_sub_type as type_name,\n"				// 6 + 1
+				"\tpp.rdb$field_length as column_size,\n"				// 7 + 1
 				"\tnull as buffer_length,\n"						// 8 + 1
-				"\trdb$field_scale as decimal_digits,\n"			// 9 + 1
+				"\tf.rdb$field_scale as decimal_digits,\n"			// 9 + 1
 				"\t10 as num_prec_radix,\n"							// 10 + 1
-				"\trdb$null_flag as nullable,\n"					// 11 + 1
-				"\trdb$description as remarks,\n"					// 12 + 1
-				"\trdb$default_value as column_def,\n"				// 13 + 1
+				"\tf.rdb$null_flag as nullable,\n"					// 11 + 1
+				"\tf.rdb$description as remarks,\n"					// 12 + 1
+				"\tf.rdb$default_value as column_def,\n"				// 13 + 1
 				"\tnull as SQL_DATA_TYPE,\n"						// 14 + 1
 				"\tnull as SQL_DATETIME_SUB,\n"						// 15 + 1
-				"\trdb$field_length as CHAR_OCTET_LENGTH,\n"		// 16 + 1
-				"\trdb$parameter_number as ordinal_position,\n"		// 17 + 1
+				"\tf.rdb$field_length as CHAR_OCTET_LENGTH,\n"		// 16 + 1
+				"\tpp.rdb$parameter_number as ordinal_position,\n"		// 17 + 1
 				"\t'YES' as IS_NULLABLE\n"							// 18 + 1
-		"from rdb$procedure_parameters, rdb$fields\n"
-		"where rdb$field_source = rdb$field_name";
+		"from rdb$procedure_parameters pp, rdb$fields f\n"
+		"where pp.rdb$field_source = f.rdb$field_name";
 
 	if (procedureNamePattern)
-		sql += expandPattern (" and rdb$procedure_name %s '%s'", procedureNamePattern);
+		sql += expandPattern (" and pp.rdb$procedure_name %s '%s'", procedureNamePattern);
 
 	if (columnNamePattern)
-		sql += expandPattern (" and rdb$parameter_name %s '%s'", columnNamePattern);
+		sql += expandPattern (" and pp.rdb$parameter_name %s '%s'", columnNamePattern);
 
-	sql += " order by rdb$procedure_name, rdb$parameter_number";
+	sql += " order by pp.rdb$procedure_name, pp.rdb$parameter_number";
 	prepareStatement (sql);
 	numberColumns = 19;
 }

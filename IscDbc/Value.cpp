@@ -16,6 +16,15 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	ChangeLog
+ *
+ *	2002-05-20	Value.cpp
+ *				Contributed by Bernhard Schulte
+ *				o Updated setValue() to support changes 
+ *				  in timestamp conversion.	
+ *
  */
 
 // Value.cpp: implementation of the Value class.
@@ -842,7 +851,11 @@ void Value::setValue(TimeStamp value)
 {
 	clear();
 	type = Timestamp;
-	data.timestamp = value;
+//Orig.
+//	data.timestamp = value;
+//From B. Schulte
+    data.timestamp = value.date;
+    data.timestamp.nanos = value.nanos;
 }
 
 SqlTime Value::getTime()

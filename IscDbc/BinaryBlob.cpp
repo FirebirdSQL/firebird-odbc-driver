@@ -16,6 +16,17 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	Changes
+ *
+ *	2002-05-21	BinaryBlob.cpp
+ *				Change release() to test useCount <=0
+ *	
+ *	2002-05-20	BinaryBlob.cpp
+ *				Contributed by Robert Milharcic
+ *				o Start with useCount of 0
+ *
  */
 
 // BinaryBlob.cpp: implementation of the BinaryBlob class.
@@ -44,14 +55,14 @@ static char THIS_FILE[]=__FILE__;
 
 BinaryBlob::BinaryBlob()
 {
-	useCount = 1;
+	useCount = 0;
 	offset = 0;
 	populated = true;
 }
 
 BinaryBlob::BinaryBlob(int minSegmentSize) : Stream (minSegmentSize)
 {
-	useCount = 1;
+	useCount = 0;
 	offset = 0;
 	populated = true;
 }
@@ -59,7 +70,7 @@ BinaryBlob::BinaryBlob(int minSegmentSize) : Stream (minSegmentSize)
 #ifdef ENGINE
 BinaryBlob::BinaryBlob(Database * db, long recNumber, long sectId)
 {
-	useCount = 1;
+	useCount = 0;
 	offset = 0;
 	populated = false;
 	database = db;
@@ -70,7 +81,7 @@ BinaryBlob::BinaryBlob(Database * db, long recNumber, long sectId)
 
 BinaryBlob::BinaryBlob(Clob * blob)
 {
-	useCount = 1;
+	useCount = 0;
 	Stream::putSegment (blob);
 }
 
@@ -86,7 +97,7 @@ void BinaryBlob::addRef()
 
 int BinaryBlob::release()
 {
-	if (--useCount == 0)
+	if (--useCount <= 0)
 		{
 		delete this;
 		return 0;

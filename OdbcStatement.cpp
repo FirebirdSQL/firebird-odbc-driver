@@ -16,6 +16,29 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	Changes
+ *
+ *	2002-05-20	Updated OdbcStatement.cpp 
+ *
+ *				Contributed by Pier Alberto GUIDOTTI
+ *				o Use RM's changes to support reading 
+ *				  text blobs too.
+ *
+ *	2002-05-20	Updated OdbcStatement.cpp 
+ *
+ *				Contributed by Robert Milharcic
+ *				o Several changes to allow reading of binary blobs
+ *				  See code commented with //Added by RM or //From RM
+ *
+ *
+ *	2002-05-20	Updated OdbcStatement.cpp 
+ *
+ *				Contributed by Bernhard Schulte 
+ *				o Use TimeStamp instead of DateTime in setParameter().
+ *
+ *
  */
 
 // OdbcStatement.cpp: implementation of the OdbcStatement class.
@@ -83,11 +106,13 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	statement = NULL;
 	callableStatement = NULL;
 	bindings = NULL;
+	getDataBindings = NULL;	//added by RM
 	parameters = NULL;
 	metaData = NULL;
 	cancel = false;
 	numberParameters = 0;
 	numberBindings = 0;
+	numberGetDataBindings = 0;	//added by RM
 	maxRows = 0;
 	applicationRowDescriptor = connection->allocDescriptor (odtApplicationRow);
 	applicationParamDescriptor = connection->allocDescriptor (odtApplicationParameter);
@@ -233,18 +258,34 @@ void OdbcStatement::setResultSet(ResultSet * results)
 	rowNumber = 0;
 }
 
-RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER * indPtr)
+//RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER * indPtr)
+RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER * indPtr, Binding** _bindings, int* _numberBindings)
 {
 	clearErrors();
+
+//Added by RM
+	if (!_bindings)
+		_bindings = &bindings;
+
+	if (!_numberBindings)
+		_numberBindings = &numberBindings;
+
 	int count = MAX (column, numberColumns);
 
 	if (column < 0)
 		return sqlReturn (SQL_ERROR, "07009", "Invalid descriptor index");
 
-	if (count >= numberBindings)
+//Orig
+//	if (count >= numberBindings)
+//		{
+//		bindings = allocBindings (count + 1, numberBindings, bindings);
+//		numberBindings = count + 1;
+//		}
+//Added by RM
+	if (count >= *_numberBindings)
 		{
-		bindings = allocBindings (count + 1, numberBindings, bindings);
-		numberBindings = count + 1;
+		*_bindings = allocBindings (count + 1, *_numberBindings, *_bindings);
+		*_numberBindings = count + 1;
 		}
 
 	try
@@ -292,7 +333,10 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 				}
 			}
 
-		Binding *binding = bindings + column;
+//Orig
+//		Binding *binding = bindings + column;
+//From RM
+		Binding *binding = *_bindings + column;	
 		binding->type = SQL_PARAM_OUTPUT;
 		binding->cType = targetType;
 		binding->pointer = targetValuePtr;
@@ -408,7 +452,8 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 	switch (type)
 		{
 		case SQL_C_CHAR:
-			{
+//Orig
+/*			{
 			int len = length - 1;
 			const char *string = RESULTS (getString (column));
 			length = strlen (string);
@@ -421,6 +466,30 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 				error = postError (new OdbcError (0, "01004", "Data truncated"));
 				info = true;
 				}
+			}
+*/
+//Added by PG
+			{
+
+			const char *string = RESULTS (getString (column));
+
+			int dataRemaining = strlen(string) - binding->dataOffset;
+			int len = MIN(dataRemaining, binding->bufferLength);
+			 
+		    memcpy (binding->pointer, string+binding->dataOffset, len);						
+			((char*) (binding->pointer)) [len] = 0;
+
+			if (len < dataRemaining)
+			{
+				error = postError (new OdbcError (0, "01004", "Data truncated"));
+				info = true;
+			}
+				
+			length = dataRemaining;
+			binding->dataOffset += len;
+
+			if (!info)
+				binding->dataOffset = 0;
 			}
 			break;
 
@@ -498,9 +567,29 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 			{
 			//for now, just get value so the wasNull check will work
 			Blob* blob = RESULTS (getBlob(column));
-			length = blob->length();
+//Orig
+/*			length = blob->length();
 
 			blob->getBytes (0, length, binding->pointer);
+*/
+//From RM
+			int dataRemaining = blob->length() - binding->dataOffset;
+			int len = MIN(dataRemaining, binding->bufferLength);
+			 
+			blob->getBytes (binding->dataOffset, len, binding->pointer);
+
+			if (len < dataRemaining)
+			{
+				error = postError (new OdbcError (0, "01004", "Data truncated"));
+				info = true;
+			}
+				
+			length = dataRemaining;
+			binding->dataOffset += len;
+
+			if (!info)
+				binding->dataOffset = 0;
+
 			break;	
 			}
 
@@ -593,6 +682,15 @@ void OdbcStatement::releaseBindings()
 		delete [] bindings;
 		bindings = NULL;
 		}
+//Added by RM
+	numberGetDataBindings = 0;
+
+	if (getDataBindings)
+		{
+		delete [] getDataBindings;
+		getDataBindings = NULL;
+		}
+
 }
 
 void OdbcStatement::releaseParameters()
@@ -749,15 +847,28 @@ RETCODE OdbcStatement::sqlDescribeCol(int col,
 RETCODE OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int bufferLength, SDWORD * indicatorPointer)
 {
 	clearErrors();
-	Binding binding;
+
+//Orig.
+/*	Binding binding;
 	binding.cType = cType;
 	binding.pointer = pointer;
 	binding.bufferLength = bufferLength;
 	binding.indicatorPointer = indicatorPointer;
+*/
+//From RM
+	int retcode = sqlBindCol(column, cType, pointer, bufferLength, indicatorPointer, &getDataBindings, &numberGetDataBindings);
+
+	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
+		return retcode;
+
+	Binding* binding = getDataBindings + column;
 
 	try
 		{
-		if (setValue (&binding, column))
+//Orig.
+//		if (setValue (&binding, column))
+//From RM
+		if (setValue (binding, column))
 			return SQL_SUCCESS_WITH_INFO;
 		}
 	catch (SQLException& exception)
@@ -1032,9 +1143,17 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 				{
 				OdbcDateTime converter;
 				tagTIMESTAMP_STRUCT *var = (tagTIMESTAMP_STRUCT*) binding->pointer;
+/*	Orig.
+// this is obsolete ... I want more days ;-)
+
 				DateTime dateTime;
 				converter.convert (var, &dateTime);
 				statement->setDate (parameter, dateTime);
+*/
+//From B. Schulte
+				TimeStamp timestamp;
+		        converter.convert (var, &timestamp);
+				statement->setTimestamp ( parameter, timestamp);
 				}
 				break;
 

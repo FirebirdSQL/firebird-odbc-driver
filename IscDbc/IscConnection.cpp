@@ -16,6 +16,15 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	Changes
+ *
+ *	2002-05-20	IscConnection.cpp
+ *		
+ *				Contributed by Robert Milharcic
+ *				o better management of statements variable
+ *
  */
 
 // IscConnection.cpp: implementation of the IscConnection class.
@@ -105,6 +114,9 @@ PreparedStatement* IscConnection::prepareStatement(const char * sqlString)
 			delete statement;
 		throw;
 		}
+
+//From R. Milharcic
+	statements.append (statement);
 
 	return statement;
 }
@@ -219,7 +231,8 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 
 void IscConnection::deleteStatement(IscStatement * statement)
 {
-
+//From R. Milharcic
+ 	statements.deleteItem (statement);
 }
 
 

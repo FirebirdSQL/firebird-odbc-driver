@@ -33,7 +33,7 @@
 
 #ifdef DEBUG 
 #ifdef LOGGING
-#define LOG_FILE "c:\\harrison\\odbc.log"
+#define LOG_FILE "c:\\odbc.log"
 void logMsg (const char *msg);
 #define LOG_MSG(msg)	logMsg (msg)
 

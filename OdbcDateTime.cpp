@@ -16,6 +16,20 @@
  *
  *  Copyright (c) Ann W. Harrison
  *  All Rights Reserved.
+ *
+ *
+ *	Change Log
+ *
+ * 2002-05-20	Updated OdbcDateTime.cpp
+ *
+ *				Contributed by Bernhard Schulte 
+ *				-	improvements to conversion routines
+ *				o	TimeStamp Struct to Timestamp 
+ *				o	DateTime to Date Struct 
+ *				o	TimeStamp to Timestamp Struct
+ *				o	ndate takes a new parameter - seconds, 
+ *					because days won't fit in otherwise.
+ *
  */
 
 /*
@@ -97,8 +111,23 @@ int OdbcDateTime::convert (tagTIMESTAMP_STRUCT * tagTimeStampIn, TimeStamp * tim
 	struct tm timeBuffer;
 	struct tm* times = &timeBuffer;
 
+/*	Original conversion
 	timeStampOut->nanos = ((times->tm_hour * 60 + times->tm_min) * 60 + 
 		times->tm_sec) * SECONDS_PRECISION;
+*/
+//New conversion supplied by Bernard Schulte
+	times->tm_hour = tagTimeStampIn->hour;
+	times->tm_min  = tagTimeStampIn->minute;
+	times->tm_sec  = tagTimeStampIn->second;
+	times->tm_mday = tagTimeStampIn->day;
+	times->tm_mon  = tagTimeStampIn->month-1;
+	times->tm_year = tagTimeStampIn->year-1900;
+
+	timeStampOut->nanos = ((tagTimeStampIn->hour * 60 + tagTimeStampIn->minute) * 60 + 
+		tagTimeStampIn->second) ; 
+
+	timeStampOut->date = nday(times);
+
 	return true;
 }	
 
@@ -110,7 +139,10 @@ int OdbcDateTime::convert (DateTime * dateTimeIn, tagDATE_STRUCT * tagDateOut)
 	struct tm* times = &timeBuffer;
 	memset (times, 0, sizeof (*times));
 
-	ndate (dateTimeIn->date, times);
+//	ndate (dateTimeIn->date, times);
+//	From B. Schulte
+	ndate ((dateTimeIn->date / 24 /60/60),0, times); 
+
 	times->tm_yday = yday (times);
 	if ((times->tm_wday = ((dateTimeIn->date) + 3) % 7) < 0)
     times->tm_wday += 7;
@@ -128,7 +160,11 @@ int OdbcDateTime::convert (TimeStamp *timeStampIn, tagTIMESTAMP_STRUCT * tagTime
 	struct tm timeBuffer;
 	struct tm* times = &timeBuffer;
 	memset (times, 0, sizeof (*times));
-	ndate (timeStampIn->date, times);
+//Orig.
+//	ndate (timeStampIn->date, times);
+//From B. Schulte
+    ndate (timeStampIn->date, timeStampIn->nanos, times);
+
 	tagTimeStampOut->year = times->tm_year + 1900;
 	tagTimeStampOut->month = times->tm_mon + 1;
 	tagTimeStampOut->day = times->tm_mday;
@@ -139,7 +175,12 @@ int OdbcDateTime::convert (TimeStamp *timeStampIn, tagTIMESTAMP_STRUCT * tagTime
 	return true;
 }
 
-signed long OdbcDateTime::ndate (signed long nday, tm	*times)
+//Orig
+//signed long OdbcDateTime::ndate (signed long nday, tm	*times)
+//From B. Schulte
+// this function got a new parameter (nsec) .. because the days won't fit otherweise
+signed long OdbcDateTime::ndate (signed long nday, signed long nsec, tm        *times)
+
 {
 /**************************************
  *
@@ -174,8 +215,12 @@ signed long OdbcDateTime::ndate (signed long nday, tm	*times)
 	SLONG	century;
 	SLONG	seconds;
 
+/*  Orig.
 	seconds = nday % (60 * 60 * 24);
 	nday = nday / (60 * 60 * 24);
+*/
+// From B. Schulte:
+	seconds = nsec;
 	
 
 /*	adjust first from the IB base date to the SQL base date*/

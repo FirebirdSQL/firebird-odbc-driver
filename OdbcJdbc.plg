@@ -3,194 +3,23 @@
 <pre>
 <h1>Build Log</h1>
 <h3>
---------------------Configuration: IscDbc - Win32 Debug--------------------
-</h3>
-<h3>Command Lines</h3>
-Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP2BD.tmp" with contents
-[
-/nologo /MTd /W3 /Gm /GX /Zi /Od /I "c:\Program Files\Interbase\SDK\include" /I ".." /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /Fp"Debug/IscDbc.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /c 
-"C:\OdbcJdbc\IscDbc\AsciiBlob.cpp"
-"C:\OdbcJdbc\IscDbc\Attachment.cpp"
-"C:\OdbcJdbc\IscDbc\BinaryBlob.cpp"
-"C:\OdbcJdbc\IscDbc\Blob.cpp"
-"C:\OdbcJdbc\IscDbc\DateTime.cpp"
-"C:\OdbcJdbc\IscDbc\Error.cpp"
-"C:\OdbcJdbc\IscDbc\IscBlob.cpp"
-"C:\OdbcJdbc\IscDbc\IscCallableStatement.cpp"
-"C:\OdbcJdbc\IscDbc\IscColumnsResultSet.cpp"
-"C:\OdbcJdbc\IscDbc\IscConnection.cpp"
-"C:\OdbcJdbc\IscDbc\IscCrossReferenceResultSet.cpp"
-"C:\OdbcJdbc\IscDbc\IscDatabaseMetaData.cpp"
-"C:\OdbcJdbc\IscDbc\IscIndexInfoResultSet.cpp"
-"C:\OdbcJdbc\IscDbc\IscMetaDataResultSet.cpp"
-"C:\OdbcJdbc\IscDbc\IscPreparedStatement.cpp"
-"C:\OdbcJdbc\IscDbc\IscPrimaryKeysResultSet.cpp"
-"C:\OdbcJdbc\IscDbc\IscProcedureColumnsResultSet.cpp"
-"C:\OdbcJdbc\IscDbc\IscProceduresResultSet.cpp"
-"C:\OdbcJdbc\IscDbc\IscResultSet.cpp"
-"C:\OdbcJdbc\IscDbc\IscResultSetMetaData.cpp"
-"C:\OdbcJdbc\IscDbc\IscSpecialColumnsResultSet.cpp"
-"C:\OdbcJdbc\IscDbc\IscSqlType.cpp"
-"C:\OdbcJdbc\IscDbc\IscStatement.cpp"
-"C:\OdbcJdbc\IscDbc\IscStatementMetaData.cpp"
-"C:\OdbcJdbc\IscDbc\IscTablesResultSet.cpp"
-"C:\OdbcJdbc\IscDbc\JString.cpp"
-"C:\OdbcJdbc\IscDbc\LinkedList.cpp"
-"C:\OdbcJdbc\IscDbc\Lock.cpp"
-"C:\OdbcJdbc\IscDbc\Mutex.cpp"
-"C:\OdbcJdbc\IscDbc\Parameter.cpp"
-"C:\OdbcJdbc\IscDbc\Parameters.cpp"
-"C:\OdbcJdbc\IscDbc\Sqlda.cpp"
-"C:\OdbcJdbc\IscDbc\SQLError.cpp"
-"C:\OdbcJdbc\IscDbc\SqlTime.cpp"
-"C:\OdbcJdbc\IscDbc\Stream.cpp"
-"C:\OdbcJdbc\IscDbc\TimeStamp.cpp"
-"C:\OdbcJdbc\IscDbc\TypesResultSet.cpp"
-"C:\OdbcJdbc\IscDbc\Value.cpp"
-"C:\OdbcJdbc\IscDbc\Values.cpp"
-]
-Creating command line "cl.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP2BD.tmp" 
-Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP2BE.tmp" with contents
-[
-gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"Debug/IscDbc.pdb" /debug /machine:I386 /def:".\IscDbc.def" /out:"..\Debug/IscDbc.dll" /implib:"Debug/IscDbc.lib" /pdbtype:sept /libpath:"c:\Program Files\Interbase\SDK\lib_ms" 
-.\Debug\AsciiBlob.obj
-.\Debug\Attachment.obj
-.\Debug\BinaryBlob.obj
-.\Debug\Blob.obj
-.\Debug\DateTime.obj
-.\Debug\Error.obj
-.\Debug\IscBlob.obj
-.\Debug\IscCallableStatement.obj
-.\Debug\IscColumnsResultSet.obj
-.\Debug\IscConnection.obj
-.\Debug\IscCrossReferenceResultSet.obj
-.\Debug\IscDatabaseMetaData.obj
-.\Debug\IscIndexInfoResultSet.obj
-.\Debug\IscMetaDataResultSet.obj
-.\Debug\IscPreparedStatement.obj
-.\Debug\IscPrimaryKeysResultSet.obj
-.\Debug\IscProcedureColumnsResultSet.obj
-.\Debug\IscProceduresResultSet.obj
-.\Debug\IscResultSet.obj
-.\Debug\IscResultSetMetaData.obj
-.\Debug\IscSpecialColumnsResultSet.obj
-.\Debug\IscSqlType.obj
-.\Debug\IscStatement.obj
-.\Debug\IscStatementMetaData.obj
-.\Debug\IscTablesResultSet.obj
-.\Debug\JString.obj
-.\Debug\LinkedList.obj
-.\Debug\Lock.obj
-.\Debug\Mutex.obj
-.\Debug\Parameter.obj
-.\Debug\Parameters.obj
-.\Debug\Sqlda.obj
-.\Debug\SQLError.obj
-.\Debug\SqlTime.obj
-.\Debug\Stream.obj
-.\Debug\TimeStamp.obj
-.\Debug\TypesResultSet.obj
-.\Debug\Value.obj
-.\Debug\Values.obj
-]
-Creating command line "link.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP2BE.tmp"
-<h3>Output Window</h3>
-Compiling...
-AsciiBlob.cpp
-Attachment.cpp
-BinaryBlob.cpp
-Blob.cpp
-DateTime.cpp
-Error.cpp
-IscBlob.cpp
-IscCallableStatement.cpp
-IscColumnsResultSet.cpp
-IscConnection.cpp
-IscCrossReferenceResultSet.cpp
-IscDatabaseMetaData.cpp
-IscIndexInfoResultSet.cpp
-IscMetaDataResultSet.cpp
-IscPreparedStatement.cpp
-IscPrimaryKeysResultSet.cpp
-IscProcedureColumnsResultSet.cpp
-IscProceduresResultSet.cpp
-IscResultSet.cpp
-IscResultSetMetaData.cpp
-IscSpecialColumnsResultSet.cpp
-IscSqlType.cpp
-IscStatement.cpp
-IscStatementMetaData.cpp
-IscTablesResultSet.cpp
-JString.cpp
-LinkedList.cpp
-Lock.cpp
-Mutex.cpp
-Parameter.cpp
-Parameters.cpp
-Sqlda.cpp
-SQLError.cpp
-SqlTime.cpp
-Stream.cpp
-TimeStamp.cpp
-TypesResultSet.cpp
-Value.cpp
-Values.cpp
-Linking...
-   Creating library Debug/IscDbc.lib and object Debug/IscDbc.exp
-<h3>
 --------------------Configuration: OdbcJdbc - Win32 Debug--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP2C2.tmp" with contents
+Creating temporary file "w:\TEMP\RSP1BE.tmp" with contents
 [
 /nologo /MTd /W3 /Gm /GX /Zi /Od /I "IscDbc" /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "DEBUG" /D "LOGGING" /Fp"Debug/OdbcJdbc.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /c 
-"C:\OdbcJdbc\DescRecord.cpp"
-"C:\OdbcJdbc\IscDbc\JString.cpp"
-"C:\OdbcJdbc\Main.cpp"
-"C:\OdbcJdbc\OdbcConnection.cpp"
-"C:\OdbcJdbc\OdbcDateTime.cpp"
-"C:\OdbcJdbc\OdbcDesc.cpp"
-"C:\OdbcJdbc\OdbcEnv.cpp"
-"C:\OdbcJdbc\OdbcError.cpp"
-"C:\OdbcJdbc\OdbcObject.cpp"
-"C:\OdbcJdbc\OdbcStatement.cpp"
+"H:\Firebird_build\OdbcJdbc_20020430\OdbcStatement.cpp"
 ]
-Creating command line "cl.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP2C2.tmp" 
-Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP2C3.tmp" with contents
-[
-IscDbc.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"Debug/OdbcJdbc.pdb" /debug /machine:I386 /def:".\OdbcJdbc.def" /out:"Debug/OdbcJdbc.dll" /implib:"Debug/OdbcJdbc.lib" /pdbtype:sept /libpath:"IscDbc\Debug" 
-.\Debug\DescRecord.obj
-.\Debug\JString.obj
-.\Debug\Main.obj
-.\Debug\OdbcConnection.obj
-.\Debug\OdbcDateTime.obj
-.\Debug\OdbcDesc.obj
-.\Debug\OdbcEnv.obj
-.\Debug\OdbcError.obj
-.\Debug\OdbcObject.obj
-.\Debug\OdbcStatement.obj
-.\IscDbc\Debug\IscDbc.lib
-]
-Creating command line "link.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP2C3.tmp"
+Creating command line "cl.exe @w:\TEMP\RSP1BE.tmp" 
 <h3>Output Window</h3>
 Compiling...
-DescRecord.cpp
-JString.cpp
-Main.cpp
-OdbcConnection.cpp
-OdbcDateTime.cpp
-OdbcDesc.cpp
-OdbcEnv.cpp
-OdbcError.cpp
-OdbcObject.cpp
 OdbcStatement.cpp
-Linking...
-   Creating library Debug/OdbcJdbc.lib and object Debug/OdbcJdbc.exp
 
 
 
 <h3>Results</h3>
-OdbcJdbc.dll - 0 error(s), 0 warning(s)
+OdbcStatement.obj - 0 error(s), 0 warning(s)
 </pre>
 </body>
 </html>

@@ -147,11 +147,11 @@ SOURCE=.\StdAfx.h
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe"
+# End Group
 # Begin Source File
 
-SOURCE=.\res\OdbcJdbcSetup.rc2
+SOURCE=..\change.log
 # End Source File
-# End Group
 # Begin Source File
 
 SOURCE=.\ReadMe.txt

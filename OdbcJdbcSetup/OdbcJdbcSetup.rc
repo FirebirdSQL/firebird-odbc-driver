@@ -65,13 +65,13 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 1,0,1,1
+ PRODUCTVERSION 1,0,1,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
- FILEFLAGS 0x1L
+ FILEFLAGS 0x21L
 #else
- FILEFLAGS 0x0L
+ FILEFLAGS 0x20L
 #endif
  FILEOS 0x4L
  FILETYPE 0x2L
@@ -82,17 +82,17 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "Comments", "\0"
-            VALUE "CompanyName", "Netfrastructure, Inc.\0"
+            VALUE "CompanyName", "IBPhoenix Inc.\0"
             VALUE "FileDescription", "OdbcJdbcSetup DLL\0"
-            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "FileVersion", "1, 0, 1, 1\0"
             VALUE "InternalName", "OdbcJdbcSetup\0"
-            VALUE "LegalCopyright", "Copyright (C) 2000\0"
+            VALUE "LegalCopyright", "Copyright  © 2000 - 2002\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "OdbcJdbcSetup.DLL\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "OdbcJdbcSetup Dynamic Link Library\0"
-            VALUE "ProductVersion", "1, 0, 0, 1\0"
-            VALUE "SpecialBuild", "\0"
+            VALUE "ProductVersion", "1, 0, 1, 1\0"
+            VALUE "SpecialBuild", "Beta\0"
         END
     END
     BLOCK "VarFileInfo"

@@ -16,6 +16,27 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	2002-05-20	Added suggestion from Bernhard Schulte
+ *				o	IscStatement::setValue() amended to 
+ *					fix problem with trailing blanks.
+ *
+ *				o	Update setValue() to support changes to the 
+ *					OdbcStatement datetime routines.
+ *				
+ *				o	Update getIscTimeStamp() to support changes to the 
+ *					OdbcStatement datetime routines.
+ *
+ *	2002-04-30	Added suggestions from LiWeimin
+ *				o	IscStatement::setValue
+ *					When writing a varchar decrement the sqllen by 2 
+ *					before the test.
+ *
+ *				o	IscStatement::getIscDate
+ *					Don't modify the date returned with this expression
+ *						/ (24 * 60 * 60) + baseDate
+ *					just return the date.
  */
 
 // IscStatement.cpp: implementation of the IscStatement class.
@@ -377,7 +398,11 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				{
 				char *data = (char*) var->sqldata;
 				//printf ("%d '%s'\n", n, data);
-				data [var->sqllen - 1] = 0;
+//Orig.
+//				data [var->sqllen - 1] = 0;
+//From B. Schulte
+// 'this fixes the awful bug with those "my field has a trailing blank" ... a bit'
+				data [var->sqllen ] = 0;    
 				value->setString (data, false);
 				}
 				break;
@@ -386,8 +411,10 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				{
 				int length = *((short*) var->sqldata);
 				char *data = var->sqldata + 2;
-				if (length < var->sqllen)
-					{
+//				if (length < var->sqllen)
+// LiWeimin suggests decrementing the sqllen by 2 before the test.
+				if (length < var->sqllen-2)
+				{
 					data [length] = 0;
 					value->setString (data, false);
 					}
@@ -427,12 +454,24 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				ISC_TIMESTAMP *date = (ISC_TIMESTAMP*) var->sqldata;
 				long days = date->timestamp_date - baseDate;
 
-                                if ((days > 24855) || (days < -24885))
-                                    throw SQLEXCEPTION (CONVERSION_ERROR, "date out of range");
+//Orig.
+// B. Schulte comments:
+// 'this is really not needed anymore.... maybe the date gets wrong in stoneage ;-)'
+//                if ((days > 24855) || (days < -24885))
+//					throw SQLEXCEPTION (CONVERSION_ERROR, "date out of range");
 
 				TimeStamp timestamp;
+//Orig.
+/*
 				timestamp = (long) ((days * 24 * 60 * 60) + date->timestamp_time / 10000);
 				timestamp.nanos = (date->timestamp_time / 10000) * 100;
+*/
+//From B. Schulte
+                long        zeit;
+                zeit = (date->timestamp_time / 10000);
+                timestamp=days;
+                timestamp.nanos = (zeit) ;
+
 				value->setValue (timestamp);
 				}
 				break;
@@ -468,14 +507,21 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 
 ISC_DATE IscStatement::getIscDate(DateTime value)
 {
-	return value.date / (24 * 60 * 60) + baseDate;
+//	return value.date / (24 * 60 * 60) + baseDate;
+//Suggestion from LiWeimin to change this to
+	return value.date;
 }
 
 ISC_TIMESTAMP IscStatement::getIscTimeStamp(TimeStamp value)
 {
 	ISC_TIMESTAMP date;
-	date.timestamp_date = value.date / (24 * 60 * 60) + baseDate;
+//Orig.
+/*	date.timestamp_date = value.date / (24 * 60 * 60) + baseDate;
 	date.timestamp_time = value.date % (24 * 60 * 60) + value.nanos / 100;
+*/
+//From B. Schulte
+	date.timestamp_date = value.date ;
+	date.timestamp_time =  value.nanos *10000;
 
 	return date;
 }

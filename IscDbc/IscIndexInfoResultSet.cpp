@@ -16,6 +16,16 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	Changes
+ *
+ *	2002-05-20	IscIndexInfoResultSet.cpp
+ *
+ *				Contributed by ? 
+ *				o qualify the column names in getIndexInfo()
+ *				
+ *
  */
 
 // IscIndexInfoResultSet.cpp: implementation of the IscIndexInfoResultSet class.
@@ -52,15 +62,15 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 	const char *v6 = 
 		"select NULL as table_cat,\n"						// 1
 				"\tNULL as table_schem,\n"					// 2
-				"\trdb$relation_name as table_name,\n"		// 3
-				"\trdb$unique_flag as non_unique,\n"	    // 4
+				"\tidx.rdb$relation_name as table_name,\n"		// 3
+				"\tidx.rdb$unique_flag as non_unique,\n"	    // 4
 				"\tNULL as index_qualifier,\n"				// 5
-				"\trdb$index_name as index_name,\n"			// 6
+				"\tidx.rdb$index_name as index_name,\n"			// 6
 				"\t(3) as \"TYPE\",\n"						  // 7 (SQL_INDEX_OTHER)
-				"\trdb$field_position as ordinal_position,\n" // 8
-				"\trdb$field_name as column_name,\n"		  // 9
-				"\trdb$index_type as asc_or_desc,\n"		  // 10
-				"\trdb$statistics as cardinality,\n"		  // 11
+				"\tseg.rdb$field_position as ordinal_position,\n" // 8
+				"\tseg.rdb$field_name as column_name,\n"		  // 9
+				"\tidx.rdb$index_type as asc_or_desc,\n"		  // 10
+				"\tidx.rdb$statistics as cardinality,\n"		  // 11
 				"\tNULL as \"PAGES\",\n"					  // 12
 				"\tNULL as filter_condition\n"				  // 13
 		"from rdb$indices idx, rdb$index_segments seg\n"
@@ -69,15 +79,15 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 	const char *preV6 = 
 		"select NULL as table_cat,\n"						// 1
 				"\tNULL as table_schem,\n"					// 2
-				"\trdb$relation_name as table_name,\n"		// 3
-				"\trdb$unique_flag as non_unique,\n"	    // 4
+				"\tidx.rdb$relation_name as table_name,\n"		// 3
+				"\tidx.rdb$unique_flag as non_unique,\n"	    // 4
 				"\tNULL as index_qualifier,\n"				// 5
-				"\trdb$index_name as index_name,\n"			// 6
+				"\tidx.rdb$index_name as index_name,\n"			// 6
 				"\t(3) as odbc_type,\n"						  // 7 (SQL_INDEX_OTHER)
-				"\trdb$field_position as ordinal_position,\n" // 8
-				"\trdb$field_name as column_name,\n"		  // 9
-				"\trdb$index_type as asc_or_desc,\n"		  // 10
-				"\trdb$statistics as cardinality,\n"		  // 11
+				"\tseg.rdb$field_position as ordinal_position,\n" // 8
+				"\tseg.rdb$field_name as column_name,\n"		  // 9
+				"\tidx.rdb$index_type as asc_or_desc,\n"		  // 10
+				"\tidx.rdb$statistics as cardinality,\n"		  // 11
 				"\tNULL as odbc_pages,\n"					  // 12
 				"\tNULL as filter_condition\n"				  // 13
 		"from rdb$indices idx, rdb$index_segments seg\n"
@@ -86,12 +96,12 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 	JString sql = (metaData->storesMixedCaseQuotedIdentifiers()) ? v6 : preV6;
 
 	if (tableNamePattern)
-		sql += expandPattern (" and rdb$relation_name %s '%s'\n", tableNamePattern);
+		sql += expandPattern (" and idx.rdb$relation_name %s '%s'\n", tableNamePattern);
 
 	if (unique)
-		sql += " and rdb$unique_flag = 1";
+		sql += " and idx.rdb$unique_flag = 1";
 
-	sql += " order by rdb$relation_name, rdb$unique_flag, rdb$index_name, rdb$field_position";
+	sql += " order by idx.rdb$relation_name, idx.rdb$unique_flag, idx.rdb$index_name, seg.rdb$field_position";
 //	printf ("%s\n", sql);
 	prepareStatement (sql);
 	numberColumns = 13;

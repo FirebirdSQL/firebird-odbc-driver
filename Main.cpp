@@ -16,6 +16,11 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *	Added suggestions by Carlos G Alvarez 2002-04-30
+ *		o Test for logfile before trying to close it.
+ *		o Changed parameter types for SQLSetConnectOption
+ *	
  */
 
 
@@ -206,7 +211,8 @@ RETCODE SQL_API SQLDisconnect  (HDBC arg0)
 {
 	TRACE ("SQLDisconnect");
 #ifdef LOGGING
-	fclose (logFile);
+	if ( logFile )
+		fclose (logFile);
 #endif
 
 	return ((OdbcConnection*) arg0)->sqlDisconnect();
@@ -532,7 +538,7 @@ RETCODE SQL_API SQLPutData  (HSTMT arg0,
 
 ///// SQLSetConnectOption ///// Deprecated
 
-RETCODE SQL_API SQLSetConnectOption  (HDBC arg0,
+/*RETCODE SQL_API SQLSetConnectOption  (HDBC arg0,
 		 UWORD arg1,
 		 SQLPOINTER arg2)
 {
@@ -540,6 +546,18 @@ RETCODE SQL_API SQLSetConnectOption  (HDBC arg0,
 
 	return SQLSetConnectAttr (arg0, arg1, arg2, 0);
 }
+*/
+//Proposed by Carlos Guzmn lvarez 2002-04-30
+RETCODE SQL_API SQLSetConnectOption  (HDBC arg0,
+                 SQLUSMALLINT arg1,
+                 SQLUINTEGER arg2)
+{
+        TRACE ("SQLSetConnectOption");
+
+        return SQLSetConnectAttr (arg0, arg1, (SQLPOINTER *)arg2, 0);
+}
+
+
 
 ///// SQLSetStmtOption ///// Deprecated
 

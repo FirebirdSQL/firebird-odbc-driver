@@ -16,6 +16,12 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	Changes
+ *
+ *	See OdbcStatement.cpp for details of changes
+ *
  */
 
 // OdbcStatement.h: interface for the OdbcStatement class.
@@ -37,6 +43,8 @@ struct Binding {
 	int			sqlType;
 	void		*pointer;
 	int			bufferLength;
+//Suggested by R. Milharcic
+	int			dataOffset;
 	SQLINTEGER	*indicatorPointer;
 	};
     
@@ -88,7 +96,8 @@ public:
 	RETCODE sqlFreeStmt (int option);
 	bool setValue (Binding *binding, int column);
 	RETCODE sqlFetch();
-	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
+//	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
+	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr, Binding** _bindings = NULL, int* _numberBindings = NULL); //From RM
 	void setResultSet (ResultSet *results);
 	void releaseResultSet();
 	void releaseStatement();
@@ -114,7 +123,9 @@ public:
 	int					numberColumns;
 	int					numberParameters;
 	int					numberBindings;
+ 	int					numberGetDataBindings;
 	Binding				*bindings;
+	Binding				*getDataBindings;
 	Binding				*parameters;
 	bool				eof;
 	bool				cancel;

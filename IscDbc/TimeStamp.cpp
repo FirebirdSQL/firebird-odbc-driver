@@ -16,6 +16,15 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *	Changes
+ *	
+ *	2002-05-20	TimeStamp.cpp
+ *				Contributed by Bernhard Schulte
+ *				o Bring operator() up-to-date with other timestamp changes.
+ *				o ditto decodeTime().
+ *
+ *
  */
 
 // Timestamp.cpp: implementation of the Timestamp class.
@@ -35,8 +44,14 @@
 
 TimeStamp& TimeStamp::operator =(DateTime value)
 {
-	date = value.date;
-	nanos = 0;
+//Orig.
+//	date = value.date;
+//	nanos = 0;
+
+//From B. Schulte
+// convert DateTime to 'new' TimeStamp
+    date = value.date / (24/60/60);
+    nanos = value.date - (date * 24*60*60);
 
 	return *this;
 }
@@ -63,7 +78,11 @@ int TimeStamp::getTimeString(int length, char * buffer)
 
 int TimeStamp::decodeTime (long nanos, tm * times)
 {
-	long seconds = nanos / 100;
+//Orig.
+//	long seconds = nanos / 100;
+//From B. Schulte
+// now the nanos are already the seconds... so kill the "/100"
+    long seconds = nanos ;
 	times->tm_hour = seconds / (60 * 60);
 	seconds -= times->tm_hour * 60 * 60;
 	times->tm_min = seconds / 60;

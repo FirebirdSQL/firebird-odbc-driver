@@ -14,6 +14,8 @@
  *
  *  The Original Code was created by Ann W. Harrison for IBPhoenix.
  *
+ *	See OdbcDateTime.cpp for notes re changes
+ *
  */
 
 /*
@@ -55,7 +57,10 @@ public:
 	int convert (TimeStamp *timeStampIn, tagTIMESTAMP_STRUCT * tagTimeStampOut);
 
 private:
-	static signed long OdbcDateTime::ndate (signed long nday, tm *times);
+//Orig.
+//	static signed long OdbcDateTime::ndate (signed long nday, tm *times);
+//From B. Schulte
+	static signed long OdbcDateTime::ndate (signed long nday,signed long nsec, tm *times);
 	static signed long OdbcDateTime::nday (tm *times);
 	static signed long OdbcDateTime::yday (tm *times);
 

@@ -1,0 +1,100 @@
+Changes made to OdbcJdbc codebase
+
+!!  Add changes in descending date order - ie, newest at the top.
+!!  First, document the changes in the source code header template 
+!!  using the format below and then paste them into this document. 
+
+
+ *	2002-05-21	BinaryBlob.cpp
+ *				Change release() to test useCount <=0
+ *	
+
+ *	2002-05-20	Updated OdbcStatement.cpp 
+ *
+ *				Contributed by Robert Milharcic
+ *				o Several changes to allow reading of binary blobs
+ *				  See code commented with //Added by RM or //From RM
+
+ *	2002-05-20	BinaryBlob.cpp
+ *
+ *				Contributed by Robert Milharcic
+ *				o Start with useCount of 0
+
+ *	2002-05-20	IscConnection.cpp
+ *		
+ *				Contributed by Robert Milharcic
+ *				o better management of statements
+
+ *	2002-05-20	OdbcEnv.cpp
+ *
+ *				Contributed by Robert Milharcic
+ *				o allocHandle() - Fix typo in assignment to connections
+
+ *	2002-05-20	IscProcedureColumnsResultSet.cpp
+ *
+ *				Contributed by C. G. Alvarez
+ *				o qualify the column names in getProcedureColumns()
+
+ *	2002-05-20	IscIndexInfoResultSet.cpp
+ *
+ *				Contributed by ? 
+ *				o qualify the column names in getIndexInfo()
+
+ *	2002-05-20	Value.cpp
+ *				Contributed by Bernhard Schulte
+ *				o Updated setValue() to support changes 
+ *				  in timestamp conversion.	
+
+ *	2002-05-20	TimeStamp.cpp
+ *				Contributed by Bernhard Schulte
+ *				o Bring operator() up-to-date with other timestamp changes.
+ *				o ditto decodeTime().
+
+ *	2002-05-20	IscStatement.cpp
+ *
+ *			    Added contributions from Bernhard Schulte
+ *				o ::setValue() amended to
+ *				  fix problem with trailing blanks.
+ *
+ *				o Update setValue() to support changes to the 
+ *				  OdbcStatement datetime routines.
+
+ *	2002-05-20	Updated OdbcStatement.cpp
+ *
+ *				Contributed by Bernhard Schulte 
+ *				o Use TimeStamp instead of DateTime in setParameter().
+
+ * 2002-05-20	Updated OdbcDateTime.cpp
+ *
+ *				Contributed by Bernhard Schulte 
+ *				- improvements to conversion routines to allow
+ *          			  working with dates outside the range of 1900-2039
+ *				o TimeStamp Struct to Timestamp 
+ *				o DateTime to Date Struct 
+ *				o TimeStamp to Timestamp Struct
+ *				o ndate takes a new parameter - seconds, 
+ *				  because days won't fit in otherwise.
+ 
+ * 2002-04-30  Updated main.cpp
+ *
+ *			    Added suggestions from Carlos G. Alvarez
+ *			    o Test for logfile before trying to close it.
+ *			    o Changed parameter types for SQLSetConnectOption
+
+ * 2002-04-30  Updated IscStatement.cpp
+ *
+ *			    Added suggestions from LiWeimin
+ *			    o IscStatement::setValue
+ *			      When writing a varchar decrement the sqllen by 2
+ *			      before the test.
+ *
+ *			    o IscStatement::getIscDate
+ *			      Don't modify the date returned with this expression
+ *			        / (24 * 60 * 60) + baseDate
+ *			      just return the date.
+
+ * 2002-04-30  Setup.cpp
+ *
+ *				Suggestion from Paul Schmidt
+ *				Add role to Setup::configureDialog()
+

@@ -16,6 +16,10 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *	
+ *  2002-04-30	Added 'role' fix from Paul Schmidt		(PCR)
+ *
  */
 
 //--------------------------------------------------
@@ -154,8 +158,8 @@ STDAPI DllRegisterServer (void)
 			ODBC_INSTALL_DRIVER,
 			"OdbcJdbc",
 			NULL,
-			NULL,
-			NULL,
+			"OdbcJdbc driver was installed successfully",
+			64,
 			NULL))
 		{
 		msg.Format ("Config Install (%s, %s) failed with %d\n", 
@@ -245,6 +249,7 @@ bool Setup::configureDialog()
 	dialog.m_user = user;
 	dialog.m_password = password;
 	dialog.m_driver = jdbcDriver;
+	dialog.m_role = role;
 
 	if (dialog.DoModal() != IDOK)
 		return false;
@@ -254,6 +259,7 @@ bool Setup::configureDialog()
 	user = dialog.m_user;
 	password = dialog.m_password;
 	jdbcDriver = dialog.m_driver;
+	role = dialog.m_role;
 
 	SQLWriteDSNToIni(dialog.m_name, driver);
 	writeAttributes();

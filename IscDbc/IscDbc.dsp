@@ -87,6 +87,14 @@ LINK32=link.exe
 
 # Name "IscDbc - Win32 Release"
 # Name "IscDbc - Win32 Debug"
+# Begin Group "Resource Files"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\IscDbc.rc
+# End Source File
+# End Group
 # Begin Source File
 
 SOURCE=.\AsciiBlob.cpp
