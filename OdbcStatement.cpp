@@ -2179,11 +2179,12 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 					switch( *binding->indicatorPointer )
 					{
 					case SQL_NTS:
+					case SQL_DEFAULT_PARAM:
 						statement->setString (parameter, (char*) binding->pointer );
 						break;
 						
 					default:                       
-						statement->setString (parameter, (char*)binding->pointer, *binding->indicatorPointer );
+						statement->setString (parameter, (char*)binding->pointer, *binding->indicatorPointer < 0 ? strlen((char*)binding->pointer) : *binding->indicatorPointer );
 						break;
 					}
 				}
@@ -2338,11 +2339,12 @@ void OdbcStatement::setParameter(DescRecord *record,int parameter)
 					switch( *indicatorPointer )
 					{
 					case SQL_NTS:
+					case SQL_DEFAULT_PARAM:
 						statement->setString (parameter, pointer );
 						break;
 						
 					default:                       
-						statement->setString (parameter, pointer, *indicatorPointer );
+						statement->setString (parameter, pointer, *indicatorPointer < 0 ? strlen((char*)pointer) : *indicatorPointer );
 						break;
 					}
 				}
