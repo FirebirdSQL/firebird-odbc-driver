@@ -22,7 +22,7 @@ BUILDDIR 	= $(TARGETDIR)\obj
 #
 COMPFLAGS	= -n$(BUILDDIR) \
 		  -w- -a8 -jb -j1 -Hc -H=$(BUILDDIR)\bcc.csm \
-		  -DWIN32 -D_WINDOWS -D$(VER_WINNT) \
+		  -DWIN32 -D_WIN32 -D_WINDOWS -D$(VER_WINNT) \
 		  -I.\ -I$(FBINCDIR) -I$(COMPDIR)\Include -I$(ISCDBCDIR) -I$(ODBCJDBCDIR)
 #		  -w- -a8 -VM -VF -jb -j1 -Hc -H=$(BUILDDIR)\bcc.csm \
 #

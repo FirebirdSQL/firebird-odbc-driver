@@ -22,7 +22,7 @@ BUILDDIR 	= $(TARGETDIR)\obj
 COMPFLAGS	= /nologo /W3 /GX \
 		  /I "$(COMPDIR)\Include" /I "$(COMPDIR)\MFC\Include" \
 		  /I "$(FBINCDIR)" /I "$(ISCDBCDIR)" /I "$(ODBCJDBCDIR)" \
-		  /D "WIN32" /D "_WINDOWS" \
+		  /D "WIN32" /D "_WIN32" /D "_WINDOWS" \
 		  /Fp"$(BUILDDIR)\IscDbc.pch" /YX /Fo"$(BUILDDIR)\\" \
                   /Fd"$(BUILDDIR)\\" /FD /c 
 #
