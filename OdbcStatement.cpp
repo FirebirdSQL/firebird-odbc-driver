@@ -2881,7 +2881,7 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 	//	*ptr = binding->pointer + bindOffsetPtr + ((1 – 1) * rowBindType);
 		*(unsigned long*)ptr = (unsigned long)binding->dataPtr + (unsigned long)bindOffsetPtr; // for single row
  
-		if( binding->indicatorPtr && !binding->startedTransfer && *binding->indicatorPtr < SQL_LEN_DATA_AT_EXEC_OFFSET ) 
+		if( binding->indicatorPtr && !binding->startedTransfer && *binding->indicatorPtr <= SQL_LEN_DATA_AT_EXEC_OFFSET ) 
 		{
 			switch (binding->conciseType)
 			{
@@ -2891,7 +2891,7 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 					{
 						binding->startedTransfer = true;
 						*binding->indicatorPtr = 0;
-						statement->beginBlobDataTransfer(n+1);
+						statement->beginBlobDataTransfer(n);
 					}
 					return SQL_NEED_DATA;
 			}
