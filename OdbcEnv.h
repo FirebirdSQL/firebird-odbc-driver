@@ -53,9 +53,9 @@ public:
 
 	OdbcConnection	*connections;
 	const char		*odbcIniFileName;
-#ifdef _WIN32
 	const char		*odbcInctFileName;
 
+#ifdef _WIN32
 	char			listDSN[1024];
 	char			*activeDSN;
 	char			*endDSN;

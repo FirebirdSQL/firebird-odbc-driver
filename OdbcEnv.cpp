@@ -46,10 +46,12 @@
 OdbcEnv::OdbcEnv()
 {
 	connections = NULL;
+#ifdef _WIN32
 	activeDrv = NULL;
 	endDrv = NULL;
 	activeDSN = NULL;
 	endDSN = NULL;
+#endif
 
 #ifndef _WIN32
 	if (!(odbcIniFileName = getenv ("ODBCINI")))

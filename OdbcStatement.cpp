@@ -1017,7 +1017,7 @@ RETCODE OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQLU
 
 RETCODE OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGER crowKeyset, SQLUSMALLINT crowRowset)
 {
-	BOOL bOk;
+	bool bOk;
     UWORD InfoType, InfoValuePtr;
 
     switch( crowKeyset )
@@ -1048,31 +1048,31 @@ RETCODE OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGE
 
     connection->sqlGetInfo (InfoType, &InfoValuePtr, sizeof(InfoValuePtr), 0);
 
-	bOk = FALSE;
+	bOk = false;
 
 	switch( fConcurrency )
 	{
 	case SQL_CONCUR_READ_ONLY:
 		if ( InfoValuePtr & SQL_CA2_READ_ONLY_CONCURRENCY )
-			bOk = TRUE;
+			bOk = true;
 		break;
 	case SQL_CONCUR_LOCK:
 		if ( InfoValuePtr & SQL_CA2_LOCK_CONCURRENCY )
-			bOk = TRUE;
+			bOk = true;
 		break;
 	case SQL_CONCUR_ROWVER:
 		if ( InfoValuePtr & SQL_CA2_OPT_ROWVER_CONCURRENCY )
-			bOk = TRUE;
+			bOk = true;
 		break;
 	case SQL_CONCUR_VALUES:
 		if ( InfoValuePtr & SQL_CA2_OPT_VALUES_CONCURRENCY )
-			bOk = TRUE;
+			bOk = true;
 		break;
 	default:
 		return sqlReturn (SQL_ERROR, "S1108", "Concurrency option out of range");
 	}
 
-	if ( bOk == FALSE )
+	if ( bOk == false )
 		return sqlReturn (SQL_ERROR, "S1C00", "Driver not capable");
 
 	sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)(int)InfoType, 0);

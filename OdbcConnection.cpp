@@ -471,7 +471,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 										 SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, 
 										 SQLSMALLINT * stringLength2Ptr)
 {
-	BOOL bFullConnectionString = FALSE;
+	bool bFullConnectionString = false;
 	clearErrors();
 
 	if ( !levelBrowseConnect && connected)
@@ -527,7 +527,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 		{
 			levelBrowseConnect = 3;
 			databaseName = value;
-			bFullConnectionString = TRUE;
+			bFullConnectionString = true;
 		}
 		else if (!strcmp (name, "UID"))
 		{
@@ -632,7 +632,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 			postError ("01004", "String data, right truncated");
 	}
 
-	if ( bFullConnectionString == FALSE )
+	if ( bFullConnectionString == false )
 		return SQL_NEED_DATA;
 	else
 	{
