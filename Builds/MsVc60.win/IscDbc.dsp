@@ -126,6 +126,10 @@ SOURCE=..\..\IscDbc\DateTime.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\EnvShare.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\IscArray.h
 # End Source File
 # Begin Source File
@@ -162,11 +166,19 @@ SOURCE=..\..\IscDbc\IscDbc.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\IscHeadSqlVar.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\IscIndexInfoResultSet.h
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\IscDbc\IscMetaDataResultSet.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\IscOdbcStatement.h
 # End Source File
 # Begin Source File
 
@@ -187,6 +199,10 @@ SOURCE=..\..\IscDbc\IscProceduresResultSet.h
 # Begin Source File
 
 SOURCE=..\..\IscDbc\IscResultSet.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\IscResultSetMetaData.h
 # End Source File
 # Begin Source File
 
@@ -234,6 +250,10 @@ SOURCE=..\..\IscDbc\Lock.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\Mlist.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\Mutex.h
 # End Source File
 # Begin Source File
@@ -270,6 +290,10 @@ SOURCE=..\..\IscDbc\Stream.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\SupportFunctions.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\TimeStamp.h
 # End Source File
 # Begin Source File
@@ -303,6 +327,10 @@ SOURCE=..\..\IscDbc\Blob.cpp
 # Begin Source File
 
 SOURCE=..\..\IscDbc\DateTime.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\EnvShare.cpp
 # End Source File
 # Begin Source File
 
@@ -350,6 +378,10 @@ SOURCE=..\..\IscDbc\IscMetaDataResultSet.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\IscOdbcStatement.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\IscPreparedStatement.cpp
 # End Source File
 # Begin Source File
@@ -367,6 +399,10 @@ SOURCE=..\..\IscDbc\IscProceduresResultSet.cpp
 # Begin Source File
 
 SOURCE=..\..\IscDbc\IscResultSet.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\IscResultSetMetaData.cpp
 # End Source File
 # Begin Source File
 
@@ -435,6 +471,10 @@ SOURCE=..\..\IscDbc\SqlTime.cpp
 # Begin Source File
 
 SOURCE=..\..\IscDbc\Stream.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\SupportFunctions.cpp
 # End Source File
 # Begin Source File
 

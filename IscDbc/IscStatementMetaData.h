@@ -22,18 +22,15 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCSTATEMENTMETADATA_H__32C6E496_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
-#define AFX_ISCSTATEMENTMETADATA_H__32C6E496_2C14_11D4_98E0_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCSTATEMENTMETADATA_H_)
+#define _ISCSTATEMENTMETADATA_H_
 
 #include "Connection.h"
 
 namespace IscDbcLibrary {
 
 class Sqlda;
+class IscConnection;
 
 class IscStatementMetaData : public StatementMetaData  
 {
@@ -61,17 +58,15 @@ public:
 	virtual int	 isBlobOrArray(int index);
 	virtual const char*	getSchemaName (int index);
 	virtual const char*	getCatalogName (int index);
-	virtual void getSqlData(int index, char *& ptData, short *& ptIndData);
-	virtual void setSqlData(int index, long ptData, long ptIndData);
-	virtual void saveSqlData(int index, long ptData, long ptIndData);
-	virtual void restoreSqlData(int index);
+	virtual void getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar *& ptHeadSqlVar);
+	virtual void createBlobDataTransfer(int index, Blob *& ptDataBlob);
 
-	IscStatementMetaData(Sqlda	* ptSqlda);
-	~IscStatementMetaData();
+	IscStatementMetaData(IscStatement *stmt, Sqlda *ptSqlda);
 
-	Sqlda					*sqlda;
+	IscStatement	*statement;
+	Sqlda			*sqlda;
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCSTATEMENTMETADATA_H__32C6E496_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCSTATEMENTMETADATA_H_)

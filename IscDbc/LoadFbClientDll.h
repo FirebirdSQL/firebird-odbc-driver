@@ -301,7 +301,7 @@ public:
 	CFbDll();
 	~CFbDll();
 
-	bool LoadDll(const char * client);
+	bool LoadDll(const char * client, const char * clientDef);
 	void Release(void);
 
 #ifdef _WIN32

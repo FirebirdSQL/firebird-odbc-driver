@@ -41,39 +41,29 @@ IscPrimaryKeysResultSet::IscPrimaryKeysResultSet(IscDatabaseMetaData *metaData)
 
 void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
-	JString sql = 
-		"select NULL as table_cat,\n"							// 1
-				"\tNULL as table_schem,\n"						// 2
-				"\trel.rdb$relation_name as table_name,\n"		// 3
-				"\tseg.rdb$field_name as column_name,\n"		// 4
-				"\tseg.rdb$field_position as key_seq,\n"		// 5
-				"\trel.rdb$constraint_name as pk_name\n"		// 6
+	char sql[2048] =
+		"select cast (NULL as varchar(7)) as table_cat,\n"							// 1
+				"\tcast (NULL as varchar(7)) as table_schem,\n"						// 2
+				"\tcast (rel.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
+				"\tcast (seg.rdb$field_name as varchar(31)) as column_name,\n"		// 4
+				"\tcast (seg.rdb$field_position+1 as smallint) as key_seq,\n"							// 5
+				"\tcast (rel.rdb$constraint_name as varchar(31)) as pk_name\n"		// 6
 		"from rdb$relation_constraints rel, rdb$indices idx, rdb$index_segments seg\n"
 		" where rel.rdb$constraint_type = 'PRIMARY KEY'\n"
 			" and rel.rdb$index_name = idx.rdb$index_name\n"
 			" and idx.rdb$index_name = seg.rdb$index_name\n";
 
+	char * ptFirst = sql + strlen(sql);
+
 	if ( !metaData->allTablesAreSelectable() )
-		sql += metaData->existsAccess(" and ", "rel", 0, "\n");
+		metaData->existsAccess(ptFirst, " and ", "rel", 0, "\n");
 
 	if (tableNamePattern && *tableNamePattern)
-		sql += expandPattern (" and ","rel.rdb$relation_name", tableNamePattern);
+		expandPattern (ptFirst, " and ","rel.rdb$relation_name", tableNamePattern);
 
-	sql += " order by rel.rdb$relation_name, idx.rdb$index_name, seg.rdb$field_position";
+	addString(ptFirst, " order by rel.rdb$relation_name, idx.rdb$index_name, seg.rdb$field_position");
 	prepareStatement (sql);
 	numberColumns = 6;
-}
-
-bool IscPrimaryKeysResultSet::next()
-{
-	if (!resultSet->next())
-		return false;
-
-	trimBlanks (3);			// table name
-	trimBlanks (4);			// field name
-	trimBlanks (6);			// index name
-
-	return true;
 }
 
 }; // end namespace IscDbcLibrary

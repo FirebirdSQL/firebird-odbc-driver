@@ -52,6 +52,7 @@ namespace OdbcJdbcLibrary {
 OdbcEnv::OdbcEnv()
 {
 	libraryHandle = NULL;
+	envShare = NULL;
 	connections = NULL;
 #ifdef _WIN32
 	activeDrv = NULL;
@@ -91,7 +92,7 @@ OdbcObjectType OdbcEnv::getType()
 	return odbcTypeEnv;
 }
 
-RETCODE OdbcEnv::allocHandle(int handleType, SQLHANDLE * outputHandle)
+SQLRETURN OdbcEnv::allocHandle(int handleType, SQLHANDLE * outputHandle)
 {
 	clearErrors();
 	*outputHandle = SQL_NULL_HDBC;
@@ -110,17 +111,28 @@ RETCODE OdbcEnv::allocHandle(int handleType, SQLHANDLE * outputHandle)
 	return sqlSuccess();
 }
 
-RETCODE OdbcEnv::sqlEndTran(int operation)
+SQLRETURN OdbcEnv::sqlEndTran(int operation)
 {
 	clearErrors();
-	RETCODE ret = SQL_SUCCESS;
+	SQLRETURN ret = SQL_SUCCESS;
 
-	for (OdbcConnection *connection = connections; connection;
-		 connection = (OdbcConnection*) connection->next)
+	if ( !envShare->getCountConnection() )
+		for (OdbcConnection *connection = connections; connection;
+			 connection = (OdbcConnection*) connection->next)
+			{
+			SQLRETURN retcode = connection->sqlEndTran (operation);
+			if (retcode != SQL_SUCCESS)
+				ret = retcode;
+			}
+	else
+		try
 		{
-		RETCODE retcode = connection->sqlEndTran (operation);
-		if (retcode != SQL_SUCCESS)
-			ret = retcode;
+			envShare->sqlEndTran (operation);
+		}
+		catch (SQLException& exception)
+		{
+			postError ("HY000", exception);
+			return SQL_ERROR;
 		}
 
 	return ret;
@@ -139,6 +151,8 @@ void OdbcEnv::connectionClosed(OdbcConnection * connection)
 
 	if( !connections )
 	{
+		envShare = NULL;
+
 		if ( libraryHandle )
 #ifdef _WIN32
 			FreeLibrary(libraryHandle);
@@ -150,7 +164,7 @@ void OdbcEnv::connectionClosed(OdbcConnection * connection)
 	}
 }
 
-RETCODE OdbcEnv::sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
+SQLRETURN OdbcEnv::sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
 {
 	clearErrors();
 	long value;
@@ -190,7 +204,7 @@ RETCODE OdbcEnv::sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, 
 	return sqlSuccess();
 }
 
-RETCODE OdbcEnv::sqlSetEnvAttr(int attribute, SQLPOINTER value, int length)
+SQLRETURN OdbcEnv::sqlSetEnvAttr(int attribute, SQLPOINTER value, int length)
 {
 	clearErrors();
 
@@ -215,7 +229,7 @@ RETCODE OdbcEnv::sqlSetEnvAttr(int attribute, SQLPOINTER value, int length)
 	return sqlSuccess();
 }
 
-RETCODE OdbcEnv::sqlDrivers(SQLUSMALLINT direction,
+SQLRETURN OdbcEnv::sqlDrivers(SQLUSMALLINT direction,
 							SQLCHAR * serverName,
 							SQLSMALLINT	bufferLength1,
 							SQLSMALLINT * nameLength1Ptr,
@@ -298,7 +312,7 @@ RETCODE OdbcEnv::sqlDrivers(SQLUSMALLINT direction,
 	return sqlSuccess();
 }
 
-RETCODE OdbcEnv::sqlDataSources(SQLUSMALLINT direction,
+SQLRETURN OdbcEnv::sqlDataSources(SQLUSMALLINT direction,
 								SQLCHAR * serverName,
 								SQLSMALLINT	bufferLength1,
 								SQLSMALLINT * nameLength1Ptr,
@@ -428,7 +442,7 @@ BOOL OdbcEnv::getDrivers()
 	return TRUE;
 }
 
-BOOL OdbcEnv::getDataSources(UWORD wConfigMode)
+bool OdbcEnv::getDataSources( SQLUSMALLINT wConfigMode )
 {
 	const char	* odbcDataSources = "ODBC Data Sources";
 	char * ptStr, * ptStrEnd, * ptStrSave;

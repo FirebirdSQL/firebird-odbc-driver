@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCCROSSREFERENCERESULTSET_H__32C6E495_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
-#define AFX_ISCCROSSREFERENCERESULTSET_H__32C6E495_2C14_11D4_98E0_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCCROSSREFERENCERESULTSET_H_)
+#define _ISCCROSSREFERENCERESULTSET_H_
 
 #include "IscMetaDataResultSet.h"
 
@@ -41,14 +37,8 @@ public:
 	virtual bool next();
 	void getCrossReference(const char* primaryCatalog, const char* primarySchema, const char* primaryTable,const char* foreignCatalog, const char* foreignSchema, const char* foreignTable);
 	IscCrossReferenceResultSet(IscDatabaseMetaData *metaData);
-
-	typedef IscMetaDataResultSet Parent;
-	virtual int getPrecision (int index);
-	virtual int getColumnDisplaySize(int index);
-	virtual int getColumnType (int index, int &realSqlType);
-
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCCROSSREFERENCERESULTSET_H__32C6E495_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCCROSSREFERENCERESULTSET_H_)

@@ -22,16 +22,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ODBCDESC_H__73DA784A_3271_11D4_98E1_0000C01D2301__INCLUDED_)
-#define AFX_ODBCDESC_H__73DA784A_3271_11D4_98E1_0000C01D2301__INCLUDED_
+#if !defined(_ODBCDESC_H_)
+#define _ODBCDESC_H_
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
-
+#include <string.h>
 #include "IscDbc/Connection.h"
 #include "OdbcObject.h"
-#include "Mlist.h"
+#include "IscDbc/Mlist.h"
+#include "DescRecord.h"
 
 namespace OdbcJdbcLibrary {
 
@@ -40,12 +38,13 @@ enum OdbcDescType {
 	odtApplicationParameter,
 	odtImplementationParameter,
 	odtApplicationRow,
-	odtImplementationRow
+	odtImplementationRow,
+	odtImplementationGetData
 	};
 
 class OdbcConnection;
 class DescRecord;
-class OdbcConvert;
+class OdbcStatement;
 
 class CBindColumn
 {
@@ -87,16 +86,13 @@ typedef MList<CBindColumn,CBindColumnComparator> ListBindColumn;
 class OdbcDesc : public OdbcObject  
 {
 public:
-	// Use to odtImplementationParameter and odtImplementationRow
-	void setBindOffsetPtr(SQLINTEGER	**ptBindOffsetPtr);
-
-	DescRecord* getDescRecord (int number);
-	RETCODE sqlGetDescField(int recNumber, int fieldId, SQLPOINTER value, int length, SQLINTEGER *lengthPtr);
-	RETCODE sqlSetDescField (int recNumber, int fieldId, SQLPOINTER value, int length);
-	RETCODE sqlGetDescRec(SQLSMALLINT recNumber, SQLCHAR *Name, SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, 
+	inline DescRecord*	getDescRecord(int number, bool bCashe = true);
+	SQLRETURN sqlGetDescField(int recNumber, int fieldId, SQLPOINTER value, int length, SQLINTEGER *lengthPtr);
+	SQLRETURN sqlSetDescField (int recNumber, int fieldId, SQLPOINTER value, int length);
+	SQLRETURN sqlGetDescRec(SQLSMALLINT recNumber, SQLCHAR *Name, SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, 
 							SQLSMALLINT *TypePtr, SQLSMALLINT *SubTypePtr, SQLINTEGER *LengthPtr, SQLSMALLINT *PrecisionPtr, 
 							SQLSMALLINT *ScalePtr, SQLSMALLINT *NullablePtr);
-	RETCODE sqlSetDescRec( SQLSMALLINT recNumber, SQLSMALLINT type, SQLSMALLINT subType, SQLINTEGER length,
+	SQLRETURN sqlSetDescRec( SQLSMALLINT recNumber, SQLSMALLINT type, SQLSMALLINT subType, SQLINTEGER length,
 							SQLSMALLINT	precision, SQLSMALLINT scale, SQLPOINTER dataPtr, 
 							SQLINTEGER *stringLengthPtr, SQLINTEGER *indicatorPtr);
 
@@ -104,18 +100,22 @@ public:
 	OdbcDesc(OdbcDescType type, OdbcConnection *connect);
 	~OdbcDesc();
 
+	bool isDefined() { return bDefined; }
+	void setDefined( bool def ){ bDefined = def; }
+	void updateDefinedIn();
+	void updateDefinedOut();
+	void clearDefined();
+	void releasePrepared();
+	void clearPrepared();
 	void removeRecords();
-	void setDefaultImplDesc (StatementMetaData * ptMetaData);
+	void setDefaultImplDesc (StatementMetaData * ptMetaDataOut, StatementMetaData * ptMetaDataIn = NULL);
 	void allocBookmarkField();
-	RETCODE operator =(OdbcDesc &sour);
-	int setConvFn(int recNumber, DescRecord * recordTo);
+	SQLRETURN operator =(OdbcDesc &sour);
+	void defFromMetaDataIn(int recNumber, DescRecord * record);
+	void defFromMetaDataOut(int recNumber, DescRecord * record);
 	int getConciseType(int type);
 	int getConciseSize(int type, int length);
-	int getDefaultFromSQLToConciseType(int sqlType);
-	void addBindColumn(int recNumber, DescRecord * recordApp);
-	void delBindColumn(int recNumber);
-	void delAllBindColumn();
-	void returnData();
+	int getDefaultFromSQLToConciseType(int sqlType, int bufferLength = 0);
 
 //Head
 	SQLSMALLINT			headAllocType;
@@ -128,16 +128,51 @@ public:
 //
 
 	OdbcConnection		*connection;
-	StatementMetaData	*metaData;
+	StatementMetaData	*metaDataIn;
+	StatementMetaData	*metaDataOut;
 	OdbcDescType		headType;
 	int					recordSlots;
 	DescRecord			**records;
 
 	bool				bDefined;
-	OdbcConvert			*convert;
-	ListBindColumn		*listBind;
 };
+
+inline
+DescRecord* OdbcDesc::getDescRecord(int number, bool bCashe)
+{
+	if (number >= recordSlots)
+	{
+		int oldSlots = recordSlots;
+		DescRecord **oldRecords = records;
+		recordSlots = number + (bCashe ? 20 : 1);
+		records = new DescRecord* [recordSlots];
+		memset (records, 0, sizeof (DescRecord*) * recordSlots);
+		if (oldSlots)
+		{
+			memcpy (records, oldRecords, sizeof (DescRecord*) * oldSlots);
+			delete [] oldRecords;
+		}
+	}
+
+	if (number > headCount)
+		headCount = number;
+
+	DescRecord * &record = records[number];
+
+	if (record == NULL)
+	{
+		record = new DescRecord;
+		switch(headType)
+		{
+		case odtImplementationRow:
+		case odtImplementationParameter:
+			record->isIndicatorSqlDa = true;
+		}
+	}
+
+	return record;		
+}
 
 }; // end namespace OdbcJdbcLibrary
 
-#endif // !defined(AFX_ODBCDESC_H__73DA784A_3271_11D4_98E1_0000C01D2301__INCLUDED_)
+#endif // !defined(_ODBCDESC_H_)

@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCSTATEMENT_H__C19738B8_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCSTATEMENT_H__C19738B8_1C87_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCSTATEMENT_H_)
+#define _ISCSTATEMENT_H_
 
 #include "Connection.h"
 #include "LinkedList.h"
@@ -41,6 +37,16 @@ class IscResultSet;
 class IscStatement : public Statement  
 {
 public:
+	enum TypeStatement {	stmtNone		= 0, 
+							stmtDDL			= 1, 
+							stmtSelect		= 2, 
+							stmtInsert		= 4, 
+							stmtUpdate		= 8, 
+							stmtDelete		= 16, 
+							stmtProcedure	= 32,
+							stmtModify		= 128
+						};
+
 	void freeStatementHandle();
 	void clearSelect();
 	//void rollbackAuto();
@@ -54,21 +60,34 @@ public:
 	virtual int objectVersion();
 	void clearResults();
 	virtual bool execute();
-	void prepareStatement (const char *sqlString);
+	virtual bool executeProcedure();
+	virtual void prepareStatement (const char *sqlString);
 	void deleteResultSet (IscResultSet *resultSet);
 	IscStatement(IscConnection *connect);
 	virtual int getUpdateCount();
 	virtual bool getMoreResults();
 	virtual void setCursorName (const char *name);
+	virtual void setEscapeProcessing(bool enable);
 	virtual ResultSet* executeQuery (const char *sqlString);
 	virtual ResultSet* getResultSet();
 	virtual ResultList* search (const char *searchString);
 	virtual int executeUpdate (const char *sqlString);
+	virtual int	getMaxFieldSize();
+	virtual int	getMaxRows();
+	virtual int	getQueryTimeout();
+	virtual void cancel();
 	virtual bool execute (const char *sqlString);
 	virtual void close();
+	inline virtual void setMaxFieldSize(int max);
+	inline virtual void setMaxRows(int max);
+	inline virtual void setQueryTimeout(int seconds);
+
 	virtual int release();
 	virtual void addRef();
-	virtual bool isActiveSelect(){ return selectActive; }
+	virtual bool isActiveDDL(){ return typeStmt == stmtDDL; }
+	virtual bool isActiveSelect(){ return typeStmt == stmtSelect; }
+	virtual bool isActiveProcedure(){ return typeStmt == stmtProcedure; }
+	virtual bool isActiveModify(){ return !!(typeStmt & stmtModify); }
 	virtual ~IscStatement();
 
 	virtual int getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
@@ -91,9 +110,9 @@ public:
 	Sqlda			inputSqlda;
 	Sqlda			outputSqlda;
 	int				summaryUpdateCount;
-	bool			selectActive;
+	int				typeStmt;
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCSTATEMENT_H__C19738B8_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCSTATEMENT_H_)

@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCINDEXINFORESULTSET_H__32C6E492_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
-#define AFX_ISCINDEXINFORESULTSET_H__32C6E492_2C14_11D4_98E0_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCINDEXINFORESULTSET_H_)
+#define _ISCINDEXINFORESULTSET_H_
 
 #include "IscMetaDataResultSet.h"
 
@@ -39,14 +35,8 @@ public:
 	void getIndexInfo(const char * catalog, const char * schemaPattern, const char * tableNamePattern, bool unique, bool approximate);
 	virtual bool next();
 	IscIndexInfoResultSet(IscDatabaseMetaData *metaData);
-
-	typedef IscMetaDataResultSet Parent;
-	virtual int getColumnDisplaySize(int index);
-	virtual int getColumnType(int index, int &realSqlType);
-	virtual int getPrecision(int index);
-
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCINDEXINFORESULTSET_H__32C6E492_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCINDEXINFORESULTSET_H_)

@@ -25,10 +25,6 @@
 #if !defined(_SETUP_H_INCLUDED_)
 #define _SETUP_H_INCLUDED_
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
-
 namespace OdbcJdbcSetupLibrary {
 
 using namespace classJString;
@@ -50,7 +46,7 @@ public:
 
 	HWND		hWnd;
 	JString		driver;
-	JString		attributes;
+	const char *attributes;
 	JString		dsn;
 	JString		dbName;
 	JString		client;
@@ -63,6 +59,8 @@ public:
 	JString		nowaitTpb;
 	JString		dialect;
 	JString		quoted;
+	JString		sensitive;
+	JString		autoQuoted;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

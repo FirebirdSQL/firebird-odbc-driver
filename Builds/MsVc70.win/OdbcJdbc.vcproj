@@ -222,7 +222,7 @@ copy debug\IscDbc.dll c:\windows\system32\IscDbc.dll
 				RelativePath="..\..\IscDbc\JString.h">
 			</File>
 			<File
-				RelativePath="..\..\Mlist.h">
+				RelativePath="..\..\IscDbc\Mlist.h">
 			</File>
 			<File
 				RelativePath="..\..\OdbcConnection.h">

@@ -39,36 +39,75 @@ static char THIS_FILE[]=__FILE__;
 
 namespace IscDbcLibrary {
 
+char charTableHexToDigit [256] = {0};
+static int initCharHexToDigit();
+static int foo = initCharHexToDigit();
+
+int initCharHexToDigit ()
+{
+	int n;
+
+	for (n = 'a'; n <= 'f'; ++n)
+		charTableHexToDigit [n] = n - 'a' + 10;
+
+	for (n = 'A'; n <= 'F'; ++n)
+		charTableHexToDigit [n] = n - 'A' + 10;
+
+	for (n = '0'; n <= '9'; ++n)
+		charTableHexToDigit [n] = n - '0';
+
+	return 0;
+}
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
 Stream::Stream()
 {
+	bClear = true;
 	segments = NULL;
 	current = NULL;
 	totalLength = 0;
 	minSegment = 0;
+	sizeStructSegment = ROUNDUP (sizeof (struct Segment), BOUNDARY);
+	consecutiveRead = false;
+	currentRead = NULL;
+	currentN = 0;
+	ptFirst = &first;
 }
 
 Stream::Stream(int minSegmentSize)
 {
+	bClear = true;
 	segments = NULL;
 	current = NULL;
 	totalLength = 0;
 	minSegment = minSegmentSize;
+	sizeStructSegment = ROUNDUP (sizeof (struct Segment), BOUNDARY);
+	consecutiveRead = false;
+	currentRead = NULL;
+	currentN = 0;
+	ptFirst = &first;
 }
 
 Stream::~Stream()
 {
-	Segment *segment;
+	clear();
+}
 
-	while (segment = segments)
-		{
-		segments = segment->next;
-		if (segment != &first)
-			free (segment);
-		}
+void Stream::attach(Stream &dst, bool clear)
+{
+	bClear = clear;
+	ptFirst = &dst.first;
+	segments = dst.segments;
+	current = dst.current;
+	totalLength = dst.totalLength;
+	minSegment = dst.minSegment;
+	currentLength = dst.currentLength;
+	decompressedLength = dst.decompressedLength;
+	useCount = dst.useCount;
+	copyFlag = dst.copyFlag;
 }
 
 void Stream::putCharacter(char c)
@@ -83,60 +122,82 @@ void Stream::putCharacter(char c)
 
 void Stream::putSegment(int length, const char *ptr, bool copy)
 {
-	const char *address = (char*) ptr;
+	const char *address = ptr;
 	totalLength += length;
 
 	if (!segments)
+	{
+		if ( (copyFlag = copy),copyFlag )
 		{
-		if (copyFlag = copy)
-			{
 			allocSegment (MAX (length, minSegment));
 			current->length = length;
 			memcpy (current->address, address, length);
-			}
+		}
 		else
-			{
-			//copyFlag = copy;
+		{
+			//copyFlag = false;
 			current = segments = &first;
 			current->length = length;
 			current->address = (char*) address;
 			current->next = NULL;
-			}
 		}
+	}
 	else if (copyFlag)
-		{
+	{
 		int l = currentLength - current->length;
 		if (l > 0)
-			{
+		{
 			int l2 = MIN (l, length);
 			memcpy (current->address + current->length, address, l2);
 			current->length += l2;
 			length -= l2;
 			address += l2;
-			}
+		}
 		if (length)
-			{
+		{
 			allocSegment (MAX (length, minSegment));
 			current->length = length;
 			memcpy (current->address, address, length);
-			}
 		}
+	}
 	else
-		{
+	{
 		allocSegment (0);
 		current->address = (char*) address;
 		current->length = length;
-		}
+	}
 }
 
-int Stream::getSegmentToHexStr(int offset, int len, void * ptr)
+char* Stream::convStrHexToBinary (char * orgptr, int len)
+{
+	char * ptr = orgptr;
+	char * binstr = ptr;
+	int n = len/2;
+
+	while ( n-- )
+		*binstr =	charTableHexToDigit[ *ptr++ ] << 4,
+		*binstr++ += charTableHexToDigit[ *ptr++ ];
+	
+	return orgptr;
+}
+
+int Stream::getSegmentToBinary (int offset, int len, void * ptr)
 {
 	int n = 0;
 	int length = len;
 	short *address = (short*) ptr;
+	Segment *segment;
 
-	for (Segment *segment = segments; segment; n += segment->length, segment = segment->next)
-		if (n + segment->length >= offset)
+	if ( consecutiveRead && currentRead )
+	{
+		segment = currentRead;
+		n = currentN;
+	}
+	else
+		segment = segments;
+
+	for (; segment; n += segment->length, segment = segment->next)
+		if (n + segment->length > offset)
 		{
 			int off = offset - n;
 			int l = MIN (length, segment->length - off);
@@ -145,11 +206,78 @@ int Stream::getSegmentToHexStr(int offset, int len, void * ptr)
 			length -= l;
 			offset += l;
 
-			while( l > 0 )
-				*address++ = conwBinToHexStr[*ptSours++],--l;
+			while( l-- > 0 )
+				*address++ = (short)*ptSours++;
 
 			if (!length)
+			{
+				if ( consecutiveRead )
+				{
+					currentN = n;
+
+					if ( l < segment->length )
+						currentRead = segment;
+					else if ( segment->next )
+					{
+						currentRead = segment->next;
+						currentN += segment->length;
+					}
+					else
+						currentRead = NULL;
+				}
 				break;
+			}
+		}
+
+	return len - length;
+}
+
+int Stream::getSegmentToHexStr(int offset, int len, void * ptr)
+{
+	int n = 0;
+	int length = len;
+	short *address = (short*) ptr;
+	Segment *segment;
+
+	if ( consecutiveRead && currentRead )
+	{
+		segment = currentRead;
+		n = currentN;
+	}
+	else
+		segment = segments;
+
+	for (; segment; n += segment->length, segment = segment->next)
+		if (n + segment->length > offset)
+		{
+			int off = offset - n;
+			int l = MIN (length, segment->length - off);
+			unsigned char * ptSours = (unsigned char *)segment->address + off;
+
+			length -= l;
+			offset += l;
+
+			while( l-- > 0 )
+				*address++ = conwBinToHexStr[*ptSours++];
+
+			if (!length)
+			{
+				if ( consecutiveRead )
+				{
+					currentN = n;
+
+					if ( l < segment->length )
+						currentRead = segment;
+					else if ( segment->next )
+					{
+						currentRead = segment->next;
+						currentN += segment->length;
+					}
+					else
+						currentRead = NULL;
+				}
+				break;
+			}
 		}
 
 	return len - length;
@@ -160,10 +288,19 @@ int Stream::getSegment(int offset, int len, void * ptr)
 	int n = 0;
 	int length = len;
 	char *address = (char*) ptr;
+	Segment *segment;
 
-	for (Segment *segment = segments; segment; n += segment->length, segment = segment->next)
-		if (n + segment->length >= offset)
-			{
+	if ( consecutiveRead && currentRead )
+	{
+		segment = currentRead;
+		n = currentN;
+	}
+	else
+		segment = segments;
+
+	for (; segment; n += segment->length, segment = segment->next)
+		if (n + segment->length > offset)
+		{
 			int off = offset - n;
 			int l = MIN (length, segment->length - off);
 			memcpy (address, segment->address + off, l);
@@ -171,8 +308,24 @@ int Stream::getSegment(int offset, int len, void * ptr)
 			length -= l;
 			offset += l;
 			if (!length)
+			{
+				if ( consecutiveRead )
+				{
+					currentN = n;
+
+					if ( l < segment->length )
+						currentRead = segment;
+					else if ( segment->next )
+					{
+						currentRead = segment->next;
+						currentN += segment->length;
+					}
+					else
+						currentRead = NULL;
+				}
 				break;
 			}
+		}
 
 	return len - length;
 }
@@ -183,10 +336,10 @@ void Stream::setSegment(Segment * segment, int length, void* address)
 	totalLength += length;
 
 	if (copyFlag)
-		{
+	{
 		segment->address = new char [length];
 		memcpy (segment->address, address, length);
-		}
+	}
 	else
 		segment->address = (char*) address;
 }
@@ -209,8 +362,9 @@ void Stream::setMinSegment(int length)
 
 Segment* Stream::allocSegment(int tail)
 {
-	Segment *segment = (Segment*) malloc (sizeof (struct Segment) + tail);
-	segment->address = (char*) segment + sizeof (struct Segment);
+	char *buffer = (char*) malloc (sizeStructSegment + tail);
+	Segment *segment = (Segment*)buffer;
+	segment->address = buffer + sizeStructSegment;
 	segment->next = NULL;
 	segment->length = 0;
 	currentLength = tail;
@@ -231,9 +385,18 @@ int Stream::getSegment(int offset, int len, void * ptr, char delimiter)
 	int n = 0;
 	int length = len;
 	char *address = (char*) ptr;
+	Segment *segment;
 
-	for (Segment *segment = segments; segment; n += segment->length, segment = segment->next)
-		if (n + segment->length >= offset)
+	if ( consecutiveRead && currentRead )
+	{
+		segment = currentRead;
+		n = currentN;
+	}
+	else
+		segment = segments;
+
+	for (; segment; n += segment->length, segment = segment->next)
+		if (n + segment->length > offset)
 			{
 			int off = offset - n;
 			int l = MIN (length, segment->length - off);
@@ -243,10 +406,34 @@ int Stream::getSegment(int offset, int len, void * ptr, char delimiter)
 				char c = *address++ = *p++;
 				--length;
 				if (c == delimiter)
+					{
+					if ( consecutiveRead )
+						{
+						currentRead = segment;
+						currentN = n;
+						}
 					return len - length;
+					}
 				}
+
 			if (!length)
+				{
+				if ( consecutiveRead )
+					{
+					currentN = n;
+
+					if ( l < segment->length )
+						currentRead = segment;
+					else if ( segment->next )
+						{
+						currentRead = segment->next;
+						currentN += segment->length;
+						}
+					else
+						currentRead = NULL;
+					}
 				break;
+				}
 			}
 
 	return len - length;
@@ -385,15 +572,20 @@ void Stream::printShorts(const char * msg, int length, short * data)
 
 void Stream::clear()
 {
+	if ( !bClear )
+		return;
+
 	Segment *segment;
 
-	while (segment = segments)
-		{
+	while ( (segment = segments),segment )
+	{
 		segments = segment->next;
 		if (segment != &first)
 			free (segment);
-		}
+	}
 
+	currentRead = NULL;
+	currentN = 0;
 	current = NULL;
 	totalLength = 0;
 }

@@ -23,7 +23,11 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "IscDbc.h"
+#include "IscBlob.h"
+#include "IscStatement.h"
 #include "IscProceduresResultSet.h"
 #include "IscDatabaseMetaData.h"
 
@@ -36,46 +40,78 @@ namespace IscDbcLibrary {
 IscProceduresResultSet::IscProceduresResultSet(IscDatabaseMetaData *metaData)
 		: IscMetaDataResultSet(metaData)
 {
-
+	addBlr = false;
 }
 
 void IscProceduresResultSet::getProcedures(const char * catalog, const char * schemaPattern, const char * procedureNamePattern)
 {
-	JString sql = 
-		"select NULL as procedure_cat,\n"									// 1
-				"\tNULL as procedure_schem,\n"								// 2
-				"\tproc.rdb$procedure_name as procedure_name,\n"			// 3
+	char sql[2048] =
+		"select cast (NULL as varchar(7)) as procedure_cat,\n"				// 1
+				"\tcast (NULL as varchar(7)) as procedure_schem,\n"			// 2
+				"\tcast (proc.rdb$procedure_name as varchar(31)) as procedure_name,\n"	// 3
 				"\tproc.rdb$procedure_inputs as num_input_params,\n"		// 4
 				"\tproc.rdb$procedure_outputs as num_output_params,\n"		// 5
-				"\t0 as num_result_sets,\n"									// 6
+				"\t1 as num_result_sets,\n"									// 6
 				"\tproc.rdb$description as remarks,\n"						// 7
-				"\t0 as procedure_type\n"									// 8 SQL_PT_UNKNOWN
-		"from rdb$procedures proc\n";
+				"\t1 as procedure_type\n";									// 8 SQL_PT_PROCEDURE
 
+	char * ptFirst = sql + strlen(sql);
 	const char *sep = " where ";
+
+	if ( addBlr )
+		addString(ptFirst, ", proc.rdb$procedure_blr\n"); // 9 BLR_PROCEDURE
+
+	addString(ptFirst, "from rdb$procedures proc\n");
 
 	if (procedureNamePattern && *procedureNamePattern)
 	{
-		sql += expandPattern (sep,"proc.rdb$procedure_name", procedureNamePattern);
+		expandPattern (ptFirst, sep,"proc.rdb$procedure_name", procedureNamePattern);
 		sep = " and ";
 	}
 
 	if ( !metaData->allTablesAreSelectable() )
-		sql += metaData->existsAccess(sep, "proc", 5, "");
+		metaData->existsAccess(ptFirst, sep, "proc", 5, "");
 
-	sql += " order by proc.rdb$procedure_name";
+	addString(ptFirst, " order by proc.rdb$procedure_name");
 	prepareStatement (sql);
 	numberColumns = 8;
 }
 
 bool IscProceduresResultSet::next()
 {
-	if (!resultSet->next())
+	if (!IscResultSet::next())
 		return false;
 
-	trimBlanks (3);							// table name
+	if ( sqlda->isNull(4) )
+		sqlda->updateShort(4, 0);
+	if ( sqlda->isNull(5) )
+		sqlda->updateShort(5, 0);
 
 	return true;
+}
+
+static int gen_blr(int *user_arg, int /*offset*/, char * string)
+{
+	if ( strstr(string,"blr_send") )
+		(*user_arg)++;
+	return 1;
+}
+
+bool IscProceduresResultSet::canSelectFromProcedure()
+{
+	int countSUSPEND = 0;
+	XSQLVAR *var = sqlda->Var(9);
+	IscBlob * blob = (IscBlob *)*(long*)var->sqldata;
+	int length = blob->length();
+	
+	char * buffer = (char*)malloc (length);
+
+	blob->getBytes (0, length, buffer);
+	metaData->connection->GDS->_print_blr((char*)buffer,(void (*)())gen_blr, &countSUSPEND,0);
+
+	free(buffer);
+
+	return countSUSPEND > 1;
 }
 
 }; // end namespace IscDbcLibrary

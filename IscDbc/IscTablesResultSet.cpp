@@ -44,126 +44,79 @@ namespace IscDbcLibrary {
 IscTablesResultSet::IscTablesResultSet(IscDatabaseMetaData *metaData)
 		: IscMetaDataResultSet(metaData)
 {
-	resultSet = NULL;
 }
 
 void IscTablesResultSet::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char * * types)
 {
-	JString sql = "select NULL as table_cat,\n"
-				          "NULL as table_schem,\n"
-						  "tbl.rdb$relation_name as table_name,\n"
-						  "tbl.rdb$view_blr as table_type,\n"
-						  "tbl.rdb$description as remarks,\n"
-						  "tbl.rdb$system_flag\n"
-						  "from rdb$relations tbl\n";
+	char sql[2048] =  "select cast (NULL as varchar(7)) as table_cat,\n"
+			          "cast (NULL as varchar(7)) as table_schem,\n"
+					  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,\n"
+					  "cast( 'TABLE' as varchar(13) ) as table_type,\n"
+					  "tbl.rdb$description as remarks,\n"
+					  "tbl.rdb$system_flag,\n"
+					  "tbl.rdb$view_blr as view_blr\n"
+					  "from rdb$relations tbl\n";
 
+	char * ptFirst = sql + strlen(sql);
 	const char *sep = " where (";
 
 	if (tableNamePattern && *tableNamePattern)
 	{
-		sql += expandPattern (" where ","tbl.rdb$relation_name", tableNamePattern);
+		expandPattern (ptFirst, " where ","tbl.rdb$relation_name", tableNamePattern);
 		sep = " and (";
 	}
 
 	if ( !metaData->allTablesAreSelectable() )
 	{
-		sql += metaData->existsAccess(sep, "tbl", 0, ")\n");
+		metaData->existsAccess(ptFirst, sep, "tbl", 0, ")\n");
 		sep = " and (";
 	}
 
-	JString adjunct;
+	char * pt = ptFirst;
 		
 	for (int n = 0; n < typeCount; ++n)
 		if (!strcmp (types [n], "TABLE"))
 			{
-			adjunct += sep;
-			adjunct += "(rdb$view_blr is null and rdb$system_flag = 0)";
+			addString(pt, sep);
+			addString(pt, "(tbl.rdb$view_blr is null and tbl.rdb$system_flag = 0)");
 			sep = " or ";
 			}
 		else if (!strcmp (types [n], "VIEW"))
 			{
-			adjunct += sep;
-			adjunct += "rdb$view_blr is not null";
+			addString(pt, sep);
+			addString(pt, "tbl.rdb$view_blr is not null");
 			sep = " or ";
 			}
 		else if (!strcmp (types [n], "SYSTEM TABLE"))
 			{
-			adjunct += sep;
-			adjunct += "(rdb$view_blr is null and rdb$system_flag = 1)";
+			addString(pt, sep);
+			addString(pt, "(tbl.rdb$view_blr is null and tbl.rdb$system_flag = 1)");
 			sep = " or ";
 			}
 
-	if (!adjunct.IsEmpty())
+	if ( pt > ptFirst )
 		{
-		sql += adjunct;
-		sql += ")\n";
+		ptFirst = pt;
+		addString(ptFirst, ")\n");
 		}
 
-	sql += " order by rdb$system_flag desc, rdb$owner_name, rdb$relation_name";
-	
+	addString(ptFirst, " order by tbl.rdb$system_flag desc, tbl.rdb$owner_name, tbl.rdb$relation_name");
+
 	prepareStatement (sql);
 	numberColumns = 5;
 }
 
 bool IscTablesResultSet::next()
 {
-	if (!resultSet->next())
+	if (!IscResultSet::next())
 		return false;
 
-	const char *type = "TABLE";
-
-	if (resultSet->getInt (6))
-		type = "SYSTEM TABLE";
-	else
-		{
-		Blob *blob = resultSet->getBlob (4);
-		if (!resultSet->wasNull())
-			type = "VIEW";
-		//blob->release();
-		}
-
-	resultSet->setValue (4, type);
-	trimBlanks (3);
+	if ( sqlda->getShort (6) )
+		sqlda->updateVarying (4, "SYSTEM TABLE");
+	else if ( !sqlda->isNull(7) )
+		sqlda->updateVarying (4, "VIEW");
 
 	return true;
-}
-
-int IscTablesResultSet::getColumnDisplaySize(int index)
-{
-	switch (index)
-		{
-		case TABLE_TYPE:				// change from blob to text
-			return 128;
-		}
-
-	return Parent::getColumnDisplaySize (index);
-}
-
-int IscTablesResultSet::getColumnType(int index, int &realSqlType)
-{
-	switch (index)
-		{
-		case TABLE_TYPE:				// change from blob to text
-			return JDBC_VARCHAR;
-		}
-
-	return Parent::getColumnType (index, realSqlType);
-}
-
-int IscTablesResultSet::getPrecision(int index)
-{
-	switch (index)
-		{
-		case TABLE_TYPE:				// change from blob to text
-			return 12;
-//			return 128;
-		case REMARKS:
-			return 254;
-		default:
-			return 31;
-
-		}
-//	return Parent::getPrecision (index);
 }
 
 }; // end namespace IscDbcLibrary

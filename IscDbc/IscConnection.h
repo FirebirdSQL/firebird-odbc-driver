@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCCONNECTION_H__C19738B7_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCCONNECTION_H__C19738B7_1C87_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCCONNECTION_H_)
+#define _ISCCONNECTION_H_
 
 #include "Connection.h"
 #include "LinkedList.h"
@@ -44,19 +40,43 @@ class Attachment;
 class IscConnection : public Connection  
 {
 public:
+	enum TypeTransaction { TRANSACTION_NONE, TRANSACTION_READ_COMMITTED, TRANSACTION_READ_UNCOMMITTED ,
+							TRANSACTION_REPEATABLE_READ, TRANSACTION_SERIALIZABLE };
+//{{{ specification jdbc
+	virtual void		clearWarnings();
+	virtual void		close();
+	virtual void		commit();
+	virtual Statement*	createStatement();
+	virtual bool		getAutoCommit();
+	virtual const char*	getCatalog();
+	virtual DatabaseMetaData* getMetaData();
+	virtual int			getTransactionIsolation();
+//	virtual void		getWarnings();
+	virtual bool		isClosed();
+	virtual bool		isReadOnly();
+	virtual const char*	nativeSQL(const char* sqlString);
+	virtual CallableStatement* prepareCall (const char *sql);
+	virtual PreparedStatement* prepareStatement (const char *sqlString);
+	virtual void		rollback();
+	virtual void		setAutoCommit (bool setting);
+	virtual void		setCatalog(const char* catalog);
+	virtual void		setReadOnly(bool readOnly);
+	virtual void		setTransactionIsolation (int level);
+//}}} specification jdbc
+
+public:
 	void commitRetaining();
 	void rollbackRetaining();
 	int getDatabaseDialect();
 	void rollbackAuto();
 	virtual void commitAuto();
-	virtual CallableStatement* prepareCall (const char *sql);
 	virtual int release();
 	virtual void addRef();
-	virtual int getTransactionIsolation();
-	virtual void setTransactionIsolation (int level);
 	virtual void setExtInitTransaction (int optTpb);
-	virtual bool getAutoCommit();
-	virtual void setAutoCommit (bool setting);
+	EnvironmentShare* getEnvironmentShare();
+	virtual void connectionToEnvShare();
+	virtual void connectionFromEnvShare();
+	virtual int	getDriverBuildKey();
 	void init();
 	IscConnection (IscConnection *source);
 	virtual Connection* clone();
@@ -65,7 +85,7 @@ public:
 	JString getInfoString (char *buffer, int item, const char *defaultString);
 	int getInfoItem (char *buffer, int item, int defaultValue);
 	JString getIscStatusText (ISC_STATUS *statusVector);
-	virtual bool getNativeSql (const char * inStatementText, long textLength1,
+	virtual int getNativeSql (const char * inStatementText, long textLength1,
 								char * outStatementText, long bufferLength,
 								long * textLength2Ptr);
 	void* startTransaction();
@@ -79,16 +99,14 @@ public:
 	//virtual void freeHTML (const char *html);
 	virtual Blob* genHTML (Properties *context, long genHeaders);
 	virtual bool isConnected();
-	virtual Statement* createStatement();
+	InternalStatement* createInternalStatement();
+	bool getCountInputParamFromProcedure ( const char* procedureName, int &numIn, int &numOut, bool &canSelect );
+	int buildParamProcedure ( char *& string, int numInputParam );
 	virtual void prepareTransaction();
 	virtual bool getTransactionPending();
-	virtual void rollback();
-	virtual void commit();
-	virtual PreparedStatement* prepareStatement (const char *sqlString);
-	virtual void close();
-	virtual DatabaseMetaData* getMetaData();
 	void	*getHandleDb();
 
+public:
 	Attachment		*attachment;
 	CFbDll			*GDS;
 	void			*databaseHandle;
@@ -99,9 +117,10 @@ public:
 	int				transactionExtInit;
 	bool			autoCommit;
 	bool			transactionPending;
+	bool			shareConnected;
 	int				useCount;
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCCONNECTION_H__C19738B7_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCCONNECTION_H_)

@@ -25,12 +25,8 @@
 // copyright (c) 1999 - 2000 by James A. Starkey
 
 
-#if !defined(AFX_VALUE_H__02AD6A4B_A433_11D2_AB5B_0000C01D2301__INCLUDED_)
-#define AFX_VALUE_H__02AD6A4B_A433_11D2_AB5B_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_VALUE_H_INCLUDED_)
+#define _VALUE_H_INCLUDED_
 
 #include "Types.h"
 #include "TimeStamp.h"
@@ -69,6 +65,7 @@ public:
 	void	setString (int length, const char *string, bool copy);
 	void	setString (const char *value, bool copy);
 	void	convertStringData();
+	inline void roundStringNumber ( char *& strNumber, int numDigits, int &realDigits );
 	void	convertFloatToString(double value, char *string, int size, int *length, int precision = 15, char POINT_DIV = '.');
 
 public:	
@@ -134,4 +131,4 @@ public:
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_VALUE_H__02AD6A4B_A433_11D2_AB5B_0000C01D2301__INCLUDED_)
+#endif // !defined(_VALUE_H_INCLUDED_)

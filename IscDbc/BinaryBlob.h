@@ -27,18 +27,13 @@
  */
 
 
-#if !defined(AFX_BINARYBLOB_H__74F68A11_3271_11D4_98E1_0000C01D2301__INCLUDED_)
-#define AFX_BINARYBLOB_H__74F68A11_3271_11D4_98E1_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_BINARYBLOB_H_)
+#define _BINARYBLOB_H_
 
 #include "Blob.h"
 #include "Stream.h"
 
-namespace IscDbcLibrary
-{
+namespace IscDbcLibrary {
 
 class Database;
 
@@ -46,22 +41,38 @@ class BinaryBlob : public Blob, public Stream
 {
 public:
 	void putSegment (Blob *blob);
-#ifdef ENGINE
-	 BinaryBlob (Database *db, long recordNumber, long sectId);
-#endif
 	virtual void* getSegment (int pos);
 	virtual int	  getSegment (int offset, int length, void* address);
-	virtual int getSegmentLength (int pos);
+	virtual int	  getSegmentLength (int pos);
+	virtual void  writeBlob(char * sqldata) {};
+	virtual void  writeStreamHexToBlob(char * sqldata) {};
+	virtual void  writeBlob(char * sqldata, char *data, long length) {};
+	virtual void  writeStringHexToBlob(char * sqldata, char *data, long length) {};
+	virtual void  directCreateBlob( char * sqldata ) {};
+	virtual void  directOpenBlob(char * sqldata ) {};
+	virtual bool  directFetchBlob(char *data, int length, int &lengthRead) { return false; }
+	virtual bool  directGetSegmentToHexStr( char * bufData, int lenData, int &lenRead ) { return false; }
+	virtual void  directWriteBlob( char *data, long length ) {};
+	virtual void  directCloseBlob() {};
+	virtual int	  getOffset() { return offset; }
 	void putSegment (int length, const char *data, bool copyFlag);
+	void putLongSegment(int length, const char * data);
 	int length();
 	void getHexString(long pos, long length, void * address);
 	void getBytes (long pos, long length, void *address);
-	 BinaryBlob (int minSegmentSize);
+	void getBinary (long pos, long length, void * address);
+	BinaryBlob (int minSegmentSize);
 	BinaryBlob();
 	virtual ~BinaryBlob();
 	virtual int release();
+	virtual void clear();
 	virtual void addRef();
 	void populate();
+	virtual void bind(Statement *stmt, char * sqldata);
+	void attach(char * pointBlob, bool fetched, bool clear);
+	bool isBlob(){ return enType == enTypeBlob; }
+	bool isClob(){ return enType == enTypeClob; }
+	bool isArray(){ return enType == enTypeArray; }
 
 	int			useCount;
 	int			offset;
@@ -69,8 +80,9 @@ public:
 	long		sectionId;
 	long		recordNumber;
 	bool		populated;
+	int			directLength;
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_BINARYBLOB_H__74F68A11_3271_11D4_98E1_0000C01D2301__INCLUDED_)
+#endif // !defined(_BINARYBLOB_H_)

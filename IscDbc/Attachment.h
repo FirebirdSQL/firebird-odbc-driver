@@ -22,17 +22,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ATTACHMENT_H__F3F1D3A9_4083_11D4_98E8_0000C01D2301__INCLUDED_)
-#define AFX_ATTACHMENT_H__F3F1D3A9_4083_11D4_98E8_0000C01D2301__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#if !defined(_ATTACHMENT_H_)
+#define _ATTACHMENT_H_
 
 #include "Mutex.h"
 
-namespace IscDbcLibrary 
-{
+namespace IscDbcLibrary {
 
 using namespace classMutex;
 
@@ -45,7 +40,7 @@ public:
 	void checkAdmin();
 	JString& getUserAccess();
 	int getUserType();
-	JString existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix);
+	void existsAccess(char *& stringOut, const char *prefix, const char * relobject, int typeobject, const char *suffix);
 	int getDatabaseDialect();
 	JString getIscStatusText (ISC_STATUS *statusVector);
 	int release();
@@ -56,16 +51,19 @@ public:
 
 	CFbDll		*GDS;
 	void		*databaseHandle;
-	void		*transactionHandle;
+	void		*transactionHandle; // for two phase
 	JString		databaseName;
 	JString		userName;
 	JString		userAccess;
 	int			userType;
 	JString		serverVersion;
+	JString		databaseProductName;
 	int			pageSize;
 	int			serverBaseLevel;	
 	int			databaseDialect;
-	bool		quotedIdentifiers;
+	bool		quotedIdentifier;
+	bool		sensitiveIdentifier;
+	bool		autoQuotedIdentifier;
 	int			transactionIsolation;
 	int			useCount;
 	bool		admin;
@@ -75,4 +73,4 @@ public:
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ATTACHMENT_H__F3F1D3A9_4083_11D4_98E8_0000C01D2301__INCLUDED_)
+#endif // !defined(_ATTACHMENT_H_)

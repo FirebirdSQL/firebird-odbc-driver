@@ -51,13 +51,11 @@ BEGIN
             VALUE "FileDescription", "OdbcJdbc\0"
             VALUE "FileVersion", FILE_VERSION_STR
             VALUE "InternalName", "OdbcJdbc\0"
-            VALUE "LegalCopyright", "Copyright © 2000 - 2003\0"
-            VALUE "LegalTrademarks", "\0"
+            VALUE "LegalCopyright", "Copyright © 2000 - 2004\0"
             VALUE "OriginalFilename", "OdbcJdbc.dll\0"
-            VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "OdbcJdbc Dynamic Link Library\0"
             VALUE "ProductVersion", PRODUCT_VERSION_STR
-            VALUE "SpecialBuild", "Beta\0"
+            VALUE "SpecialBuild", "v1-2-release\0"
         END
     END
     BLOCK "VarFileInfo"

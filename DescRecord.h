@@ -23,16 +23,14 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_DESCRECORD_H__F3F1D3A4_4083_11D4_98E8_0000C01D2301__INCLUDED_)
-#define AFX_DESCRECORD_H__F3F1D3A4_4083_11D4_98E8_0000C01D2301__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#if !defined(_DESCRECORD_H_)
+#define _DESCRECORD_H_
 
 #include "OdbcConvert.h"
 
 namespace OdbcJdbcLibrary {
+
+using namespace IscDbcLibrary;
 
 class DescRecord
 {
@@ -41,12 +39,36 @@ public:
 	~DescRecord();
 	void setDefault(DescRecord *recTo);
 	bool operator =(DescRecord *rec);
+	void initZeroColumn();
+	void allocateLocalDataPtr();
+	void releaseAllocMemory();
+	void freeLocalDataPtr();
+    void beginBlobDataTransfer();
+    void putBlobSegmentData (int length, const void *bytes);
+    void endBlobDataTransfer();	
+
+	void setNull() 
+	{ 
+		if ( indicatorPtr ) 
+			*(short*)indicatorPtr = -1; 
+	}
 
 public:
+	bool			isDefined;
+	bool			isPrepared;
+	bool			isIndicatorSqlDa;
+	bool			isLocalDataPtr;  // use sqlPutData for set data_at_exec
+	char			*localDataPtr;		
+	SQLSMALLINT		callType; // use sqlGetData
+
 	int				isBlobOrArray;
 	bool			data_at_exec;
 	bool			startedTransfer;
 	int				sizeColumnExtendedFetch;
+	SQLINTEGER		dataOffset;
+	long			currentFetched;
+	HeadSqlVar		*headSqlVarPtr;
+	Blob			*dataBlobPtr; // for blob or array 
 
 	SQLSMALLINT		type;
 	SQLSMALLINT		datetimeIntervalCode;
@@ -88,4 +110,4 @@ public:
 
 }; // end namespace OdbcJdbcLibrary
 
-#endif // !defined(AFX_DESCRECORD_H__F3F1D3A4_4083_11D4_98E8_0000C01D2301__INCLUDED_)
+#endif // !defined(_DESCRECORD_H_)

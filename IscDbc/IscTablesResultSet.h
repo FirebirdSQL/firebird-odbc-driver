@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCTABLESRESULTSET_H__6C3E2AB7_229F_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCTABLESRESULTSET_H__6C3E2AB7_229F_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCTABLESRESULTSET_H_)
+#define _ISCTABLESRESULTSET_H_
 
 #include "IscMetaDataResultSet.h"
 
@@ -39,14 +35,8 @@ public:
 	virtual bool next();
 	void getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char **types);
 	IscTablesResultSet(IscDatabaseMetaData *metaData);
-
-	typedef IscMetaDataResultSet Parent;
-	virtual int getColumnDisplaySize(int index);
-	virtual int getColumnType(int index, int &realSqlType);
-	virtual int getPrecision(int index);
-
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCTABLESRESULTSET_H__6C3E2AB7_229F_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCTABLESRESULTSET_H_)

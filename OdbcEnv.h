@@ -22,14 +22,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ODBCENV_H__ED260D95_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ODBCENV_H__ED260D95_1BC4_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ODBCENV_H_)
+#define _ODBCENV_H_
 
 #include "OdbcObject.h"
+#include "IscDbc/Connection.h"
 #include "IscDbc/Mutex.h"
 
 namespace OdbcJdbcLibrary {
@@ -42,17 +39,17 @@ class OdbcConnection;
 class OdbcEnv : public OdbcObject  
 {
 public:
-	RETCODE sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr);
-	RETCODE sqlSetEnvAttr (int attribute, SQLPOINTER value, int length);
+	SQLRETURN sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr);
+	SQLRETURN sqlSetEnvAttr (int attribute, SQLPOINTER value, int length);
 	void connectionClosed (OdbcConnection *connection);
-	RETCODE sqlEndTran(int operation);
-	RETCODE sqlDrivers( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
-	RETCODE sqlDataSources( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
+	SQLRETURN sqlEndTran(int operation);
+	SQLRETURN sqlDrivers( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
+	SQLRETURN sqlDataSources( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
 #ifdef _WIN32
 	BOOL getDrivers();
-	BOOL getDataSources(UWORD wConfigMode);
+	bool getDataSources( SQLUSMALLINT wConfigMode );
 #endif
-	virtual RETCODE allocHandle (int handleType, SQLHANDLE *outputHandle);
+	virtual SQLRETURN allocHandle (int handleType, SQLHANDLE *outputHandle);
 	void LockEnv();
 	void UnLockEnv();
 	virtual OdbcObjectType getType();
@@ -66,6 +63,7 @@ public:
 #endif
 
 	Mutex			mutex;
+	EnvironmentShare *envShare;
 	OdbcConnection	*connections;
 	const char		*odbcIniFileName;
 	const char		*odbcInctFileName;
@@ -104,4 +102,4 @@ public:
 
 }; // end namespace OdbcJdbcLibrary
 
-#endif // !defined(AFX_ODBCENV_H__ED260D95_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ODBCENV_H_)

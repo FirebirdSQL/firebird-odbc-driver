@@ -1,8 +1,3 @@
-// SqlTime.h: interface for the SqlTime class.
-//
-//////////////////////////////////////////////////////////////////////
-
-#if !defined(AFX_TIME_H__EBB84E64_5FD6_4A16_9A4E_8D71B73E9075__INCLUDED_)
 /*
  *  
  *     The contents of this file are subject to the Initial 
@@ -23,11 +18,12 @@
  *  All Rights Reserved.
  */
  
- #define AFX_TIME_H__EBB84E64_5FD6_4A16_9A4E_8D71B73E9075__INCLUDED_
+// SqlTime.h: interface for the SqlTime class.
+//
+//////////////////////////////////////////////////////////////////////
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#if !defined(_TIME_H_INCLUDED_)
+#define _TIME_H_INCLUDED_
 
 namespace IscDbcLibrary {
 
@@ -44,4 +40,4 @@ public:
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_TIME_H__EBB84E64_5FD6_4A16_9A4E_8D71B73E9075__INCLUDED_)
+#endif // !defined(_TIME_H_INCLUDED_)

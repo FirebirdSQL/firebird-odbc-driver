@@ -26,10 +26,7 @@
 #if !defined(_IscArray_H_)
 #define _IscArray_H_
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
-
+#include <string.h>
 #include "BinaryBlob.h"
 #include "Connection.h"
 
@@ -39,46 +36,62 @@ class IscConnection;
 class IscStatement;
 class Value;
 
-struct SIscArrayData
-{
-	void*			arrBufData;
-	int				arrBufDataSize;
-	int				arrCountElement;
-	int				arrSizeElement;
-	int				arrTypeElement;
-};
-
-class IscArray : public BinaryBlob
+class CAttrArray
 {
 public:
+	CAttrArray()	{ memset( this, 0, sizeof ( *this) ); }
+	void			loadAttributes ( IscStatement *stmt, char * nameRelation, char * nameFields, int sqlsubtype );
+	int				getPrecisionInternal();
+	int				getBufferLength();
+	JString			getFbSqlType();
 
-	void attach(SIscArrayData * arr, bool bClear = false);
-	void detach(SIscArrayData * arr);
-	void removeBufData();
-	void getBytesFromArray();
-	void fetchArrayToString();
-	void writeArray(Value * value);
-
-	virtual void getBytes(long pos, long length, void * address);
-	virtual int length();
-	virtual int getSegment (int offset, int length, void *address);
-	virtual int	getLength();
-
-	IscArray(SIscArrayData * ptArr);
-	IscArray(IscConnection	*parentConnection,XSQLVAR *var);
-	~IscArray();
-
-	IscConnection	*connection;
-	ISC_QUAD		arrayId;
-	bool			clear;
-	bool			fetched;
-	bool			fetchedBinary;
+public:
 	ISC_ARRAY_DESC	arrDesc;
 	void*			arrBufData;
 	int				arrBufDataSize;
 	int				arrCountElement;
 	int				arrSizeElement;
 	int				arrTypeElement;
+	int				arrSubTypeElement;
+	int				arrOctetLength;
+};
+
+class IscArray : public BinaryBlob, public CAttrArray
+{
+protected:
+	void convStringToArray( char *data, long length );
+
+public:
+	void attach(char * pointBlob, bool fetched, bool clear);
+	void attach(CAttrArray * arr, bool fetchBinary = true, bool bClear = false);
+	void detach(CAttrArray * arr);
+	void removeBufData();
+	void getBytesFromArray();
+	void fetchArrayToString();
+	void writeBlob(char * sqldata);
+	void writeStreamHexToBlob(char * sqldata) {};
+	void writeBlob(char * sqldata, char *data, long length);
+	void writeStringHexToBlob(char * sqldata, char *data, long length);
+	void writeArray(Value * value);
+
+	void init();
+	void bind(IscStatement *stmt, XSQLVAR *var);
+	void bind(Statement *stmt, char * sqldata);
+	void getBinary(long pos, long length, void * address);
+	int length();
+	int getSegment (int offset, int length, void *address);
+	int	getLength();
+
+	IscArray();
+	IscArray(CAttrArray * ptArr);
+	IscArray(IscStatement *stmt, XSQLVAR *var);
+	~IscArray();
+
+	IscStatement	*statement;
+	ISC_QUAD		arrayId;
+	bool			clearData;
+	bool			fetched;
+	bool			fetchedBinary;
 };
 
 }; // end namespace IscDbcLibrary

@@ -41,7 +41,7 @@
  *
  *	2002-06-04	Sqlda.cpp
  *				Contributed by Robert Milharcic
- *				Amended getDisplaySize() and getPrecision()
+ *				Amended getColumnDisplaySize() and getPrecision()
  *				to return char and varchar lengths more correctly.
  *
  */
@@ -61,9 +61,12 @@
 #include "IscConnection.h"
 #include "IscStatement.h"
 #include "IscBlob.h"
-#include "IscArray.h"
 
 namespace IscDbcLibrary {
+
+#define SET_INFO_FROM_SUBTYPE( a, b, c ) \
+		var->sqlsubtype == 1 || (!var->sqlsubtype && var->sqlscale) ? (a) : \
+		var->sqlsubtype == 2 ? (b) : (c)
 
 static short sqlNull = -1;
 
@@ -81,24 +84,25 @@ public:
 	int		countAllRows;
 	int		curBlock;
 	char	*ptRowBlock;
+	char	*ptOrgRowBlock;
 	int		indicatorsOffset;
 	int		minRow;
 	int		maxRow;
 	int		curRow;
 	short	*numColumnBlob;
 	short	countColumnBlob;
-	IscConnection	*connection;
+	IscStatement	*statement;
 
 public:
 
-	CDataStaticCursor(IscConnection *connect, XSQLDA * sqlda,int * ptOffsetSqldata,int lnRow)
+	CDataStaticCursor ( IscStatement *stmt, XSQLDA * sqlda, int * ptOffsetSqldata, int lnRow)
 	{
-		connection = connect;
+		statement = stmt;
 		bYesBlob = false;
 		ptSqlda = sqlda;
 		offsetSqldata = ptOffsetSqldata;
 		lenRow = lnRow;
-		indicatorsOffset = lenRow - ptSqlda->sqld*sizeof(short);
+		indicatorsOffset = lenRow - ptSqlda->sqld * sizeof(long);
 		nMAXROWBLOCK = 65535l/lnRow;
 		
 		if ( nMAXROWBLOCK < 40 )
@@ -116,10 +120,14 @@ public:
 
 		int n, numberColumns = ptSqlda->sqld;
 		XSQLVAR * var = ptSqlda->sqlvar;
+		ptOrgRowBlock = var->sqldata;
 		numColumnBlob = (short *)calloc(1,numberColumns*sizeof(*numColumnBlob));
 		countColumnBlob = 0;
+		char * ptRow = ptRowBlock;
+		int	*offset = offsetSqldata;
+		long *indicators = (long*)( ptRow + indicatorsOffset );
 
-		for (n = 0; n < numberColumns; ++n, ++var)
+		for (n = 0; n < numberColumns; ++n)
 		{
 			switch (var->sqltype & ~1)
 			{
@@ -130,6 +138,9 @@ public:
 				numColumnBlob[countColumnBlob++] = n;
 				break;
 			}
+			var->sqldata = ptRow + *offset++;
+			*indicators = 0;
+			(var++)->sqlind = (short*)indicators++;
 		}
 		if ( !bYesBlob )
 			free( numColumnBlob ),
@@ -152,14 +163,13 @@ public:
 					for (n = 0; n < countBlocks ; ++n)
 						if ( listBlocks[n] )
 						{
-							int l;
 							char * pt = listBlocks[n] + (var->sqldata - sqlvar[0].sqldata);
-							for ( l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
+							for (int l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
 							{
-								if ( pt )
+								if ( pt && *(long*)pt )
 								{
-									free ( ((SIscArrayData *)*(long*)pt)->arrBufData );
-									delete (SIscArrayData *)*(long*)pt;
+									free ( ((CAttrArray *)*(long*)pt)->arrBufData );
+									delete (CAttrArray *)*(long*)pt;
 								}
 							}
 						}
@@ -169,10 +179,9 @@ public:
 					for (n = 0; n < countBlocks ; ++n)
 						if ( listBlocks[n] )
 						{
-							int l;
 							char * pt = listBlocks[n] + (var->sqldata - sqlvar[0].sqldata);
-							for ( l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
-								if ( pt )delete (IscBlob *)*(long*)pt;
+							for (int l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
+								if ( pt && *(long*)pt )delete (IscBlob *)*(long*)pt;
 						}
 				}
 			}
@@ -187,6 +196,67 @@ public:
 
 		if ( numColumnBlob )
 			free( numColumnBlob );
+	}
+
+	void addRow ()
+	{
+		if ( bYesBlob )
+		{
+			int n;
+			XSQLVAR * sqlvar = ptSqlda->sqlvar;
+			for ( n = 0; n < countColumnBlob; ++n )
+			{
+				XSQLVAR * var = sqlvar + numColumnBlob[n];
+				if ( *var->sqlind == -1 )
+					*(long*)var->sqldata = (long)0;
+				else if ( (var->sqltype & ~1) == SQL_ARRAY )
+				{
+					CAttrArray * ptArr = new CAttrArray;
+					IscArray iscArr(statement,var);
+					iscArr.getBytesFromArray();
+					iscArr.detach(ptArr);
+					*(long*)var->sqldata = (long)ptArr;
+				}
+				else if ( (var->sqltype & ~1) == SQL_BLOB )
+				{
+					IscBlob * ptBlob = new IscBlob (statement, var);
+					ptBlob->fetchBlob();
+					*(long*)var->sqldata = (long)ptBlob;
+				}
+			}
+		}
+
+		nextPosition();
+
+		XSQLVAR * var = ptSqlda->sqlvar;
+		char * ptRow = ptRowBlock;
+		int	*offset = offsetSqldata;
+		long *indicators = (long*)( ptRow + indicatorsOffset );
+		int n = ptSqlda->sqld;
+
+		while ( n-- )
+		{
+			var->sqldata = ptRow + *offset++;
+			*indicators = 0;
+			(var++)->sqlind = (short*)indicators++;
+		}
+
+		++countAllRows;
+	}
+
+	void restoreOriginalAdressFieldsSqlDa()
+	{
+		XSQLVAR * var = ptSqlda->sqlvar;
+		char * ptRow = ptOrgRowBlock;
+		int	*offset = offsetSqldata;
+		long *indicators = (long*)( ptRow + indicatorsOffset );
+		int n = ptSqlda->sqld;
+
+		while ( n-- )
+		{
+			var->sqldata = ptRow + *offset++;
+			(var++)->sqlind = (short*)indicators++;
+		}
 	}
 
 	bool current(int nRow)
@@ -213,10 +283,10 @@ public:
 	{
 		char * ptRow = ptRowBlock + lenRow;
 		sqldata = ptRow + offsetSqldata[--column];
-		sqlind = (short*)(ptRow + indicatorsOffset + column * sizeof(short));
+		sqlind = (short*)( ptRow + indicatorsOffset + column * sizeof(long) );
 	}
 
-	char * next()
+	char * nextPosition()
 	{
 		if ( ++curRow < maxRow )
 			ptRowBlock += lenRow;
@@ -253,82 +323,62 @@ public:
 
 	void operator << (char * orgBuf)
 	{
-		if ( bYesBlob )
-		{
-			int n;
-			XSQLVAR * sqlvar = ptSqlda->sqlvar;
-			for ( n = 0; n < countColumnBlob; ++n )
-			{
-				XSQLVAR * var = sqlvar + numColumnBlob[n];
-				if ( *var->sqlind == -1 )
-					*(long*)var->sqldata = (long)0;
-				else if ( (var->sqltype & ~1) == SQL_ARRAY )
-				{
-					SIscArrayData * ptArr = new SIscArrayData;
-					IscArray iscArr(connection,var);
-					iscArr.getBytesFromArray();
-					iscArr.detach(ptArr);
-					*(long*)var->sqldata = (long)ptArr;
-				}
-				else if ( (var->sqltype & ~1) == SQL_BLOB )
-				{
-					IscBlob * ptBlob = new IscBlob (connection, var);
-					ptBlob->fetchBlob();
-					*(long*)var->sqldata = (long)ptBlob;
-				}
-			}
-		}
-		memcpy(next(),orgBuf,lenRow);
-		++countAllRows;
+		memcpy(nextPosition(),orgBuf,lenRow);
 	}
 
 	void operator >> (char * orgBuf)
 	{
-		memcpy(orgBuf,next(),lenRow);
+		memcpy(orgBuf,nextPosition(),lenRow);
 	}
 };
+
 //////////////////////////////////////////////////////////////////////
-// Construction/Destruction
+// Construction/Destruction Sqlda
 //////////////////////////////////////////////////////////////////////
 
 Sqlda::Sqlda()
 {
-	sqlda = (XSQLDA*) tempSqlda;
-	sqlda->version = SQLDA_VERSION1;
-	sqlda->sqln = DEFAULT_SQLDA_COUNT;
-	buffer = NULL;
-	temps = NULL;
-	dataStaticCursor = NULL;
-	offsetSqldata = NULL;
-	indicatorsOffset = 0;
-	saveOrgAdressSqlData = NULL;
-	saveOrgAdressSqlInd = NULL;
-	needsbuffer = true;
+	init();
 }
 
 Sqlda::~Sqlda()
 {
-	if (buffer)
-		delete [] buffer;
-	if ( dataStaticCursor )
-		delete 	dataStaticCursor;
-	if ( offsetSqldata )
-		delete [] offsetSqldata;
-	if ( saveOrgAdressSqlData )
-		delete [] saveOrgAdressSqlData;
-	if ( saveOrgAdressSqlInd )
-		delete [] saveOrgAdressSqlInd;
+	remove();
+}
+
+void Sqlda::init()
+{
+	memset(tempSqlda,0,sizeof(tempSqlda));
+	sqlda = (XSQLDA*) tempSqlda;
+	sqlda->version = SQLDA_VERSION1;
+	sqlda->sqln = DEFAULT_SQLDA_COUNT;
+	buffer = NULL;
+	orgsqlvar = NULL;
+	dataStaticCursor = NULL;
+	offsetSqldata = NULL;
+	indicatorsOffset = 0;
+	needsbuffer = true;
+}
+
+void Sqlda::remove()
+{
+	delete dataStaticCursor;
+	delete [] buffer;
+	delete [] offsetSqldata;
 
 	deleteSqlda(); // Should stand only here!!!
 }
 
-Sqlda::operator XSQLDA* ()
+void Sqlda::clearSqlda()
 {
-	return sqlda;
+	remove();
+	init();
 }
 
 void Sqlda::deleteSqlda()
 {
+	delete [] orgsqlvar;
+
 	if (sqlda != (XSQLDA*) tempSqlda)
 		free (sqlda);
 }
@@ -352,7 +402,7 @@ bool Sqlda::checkOverflow()
 	return true;
 }
 
-void Sqlda::allocBuffer()
+void Sqlda::allocBuffer ( IscStatement *stmt )
 {
 	//We've already done it,
 	// doing it again lengthens SQL_TEXT areas and causes
@@ -361,25 +411,25 @@ void Sqlda::allocBuffer()
 
 	needsbuffer = false;
 
-	if (buffer)
-	{
-		delete [] buffer;
-		buffer = NULL;
-	}
-
-	if ( offsetSqldata )
-		delete [] offsetSqldata;
+	delete [] orgsqlvar;
+	delete [] buffer;
+	delete [] offsetSqldata;
 
 	int offset = 0;
 	int n = 0;
 	int numberColumns = sqlda->sqld;
 	XSQLVAR *var = sqlda->sqlvar;
 	offsetSqldata = new int [numberColumns];
+	orgsqlvar = new CAttrSqlVar [numberColumns];
+	CAttrSqlVar * orgvar = orgsqlvar;
 
-	for (n = 0; n < numberColumns; ++n, ++var)
+	for (n = 0; n < numberColumns; ++n, ++var, ++orgvar)
 	{
 		int length = var->sqllen;
 		int boundary = length;
+
+		*orgvar = var;
+
 		switch (var->sqltype & ~1)
 		{
 		case SQL_TEXT:
@@ -417,8 +467,14 @@ void Sqlda::allocBuffer()
 			length = sizeof (QUAD);
 			break;
 
-		case SQL_ARRAY:
 		case SQL_BLOB:
+			length = sizeof (ISC_QUAD);
+			boundary = 4;
+			break;
+
+		case SQL_ARRAY:
+			orgvar->array = new CAttrArray;
+			orgvar->array->loadAttributes ( stmt, var->relname, var->sqlname, var->sqlsubtype );
 			length = sizeof (ISC_QUAD);
 			boundary = 4;
 			break;
@@ -430,27 +486,38 @@ void Sqlda::allocBuffer()
 		offset += length;
 	}
 
-	offset = ROUNDUP (offset, sizeof (short));
+	offset = ROUNDUP (offset, sizeof (int));
 	indicatorsOffset = offset;
-	offset += sizeof (short) * numberColumns;
+	offset += sizeof(long) * numberColumns;
 	buffer = new char [offset];
 	lengthBufferRows = offset;
-	short *indicators = (short*) (buffer + indicatorsOffset);
+	long *indicators = (long*)( buffer + indicatorsOffset );
 	var = sqlda->sqlvar;
 
-	for (n = 0; n < numberColumns; ++n, ++var)
-		{
+	for ( n = 0; n < numberColumns; ++n )
+	{
 		var->sqldata = buffer + (long) var->sqldata;
-		var->sqlind = indicators + n;
-		}
+		(var++)->sqlind = (short*)indicators;
+		*indicators++ = 0;
+	}
 }
 
-void Sqlda::initStaticCursor(IscConnection *connect)
+void Sqlda::initStaticCursor(IscStatement *stmt)
 {
 	if ( dataStaticCursor )
 		delete 	dataStaticCursor;
 
-	dataStaticCursor = new CDataStaticCursor(connect,sqlda,offsetSqldata,lengthBufferRows);
+	dataStaticCursor = new CDataStaticCursor( stmt, sqlda, offsetSqldata, lengthBufferRows );
+}
+
+void Sqlda::addRowSqldaInBufferStaticCursor()
+{
+	dataStaticCursor->addRow();
+}
+
+void Sqlda::restoreOrgAdressFieldsStaticCursor()
+{
+	dataStaticCursor->restoreOriginalAdressFieldsSqlDa();
 }
 
 bool Sqlda::setCurrentRowInBufferStaticCursor(int nRow)
@@ -481,51 +548,6 @@ int Sqlda::getCountRowsStaticCursor()
 int Sqlda::getColumnCount()
 {
 	return sqlda->sqld;
-}
-
-void Sqlda::getSqlData(int index, char *& ptData, short *& ptIndData)
-{
-	ptData = sqlda->sqlvar[index - 1].sqldata;
-	ptIndData = sqlda->sqlvar[index - 1].sqlind;
-}
-
-void Sqlda::setSqlData(int index, long ptData, long ptIndData)
-{
-	saveSqlData(index, ptData, ptIndData);
-	sqlda->sqlvar[index - 1].sqldata = (char*)ptData;
-	sqlda->sqlvar[index - 1].sqlind = (short*)ptIndData;
-}
-
-void Sqlda::saveSqlData(int index, long ptData, long ptIndData)
-{
-	if ( !saveOrgAdressSqlData )
-	{
-		int numberColumns = sqlda->sqld;
-		saveOrgAdressSqlData = new long [numberColumns];
-		memset(saveOrgAdressSqlData,0,sizeof(*saveOrgAdressSqlData)*numberColumns);
-		saveOrgAdressSqlInd = new long [numberColumns];
-		memset(saveOrgAdressSqlInd,0,sizeof(*saveOrgAdressSqlInd)*numberColumns);
-	}
-	if ( !saveOrgAdressSqlData[index-1] )
-	{
-		saveOrgAdressSqlData[index-1] = ptData;
-		saveOrgAdressSqlInd[index-1] = ptIndData;
-	}
-}
-
-void Sqlda::restoreSqlData(int index)
-{
-	if ( !saveOrgAdressSqlData )
-		return;
-
-	int ind = index-1;
-	if ( saveOrgAdressSqlData[ind] )
-	{
-		sqlda->sqlvar[ind].sqldata = (char*)saveOrgAdressSqlData[ind];
-		saveOrgAdressSqlData[ind] = 0;
-		sqlda->sqlvar[ind].sqlind = (short*)saveOrgAdressSqlInd[ind];
-		saveOrgAdressSqlInd[ind] = 0;
-	}
 }
 
 void Sqlda::print()
@@ -598,57 +620,63 @@ void Sqlda::print()
 
 int Sqlda::getColumnDisplaySize(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	CAttrSqlVar *var = orgVar(index);
 
 	switch (var->sqltype & ~1)
-		{
-		case SQL_SHORT:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH + 2;
-			return MAX_SMALLINT_LENGTH + 1;
-			
-		case SQL_LONG:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH + 2;
-			return MAX_INT_LENGTH + 1;
+	{
+	case SQL_TEXT:
+		if ( var->sqllen == 1 && var->sqlsubtype == 1 )
+			return MAX_TINYINT_LENGTH + 1;
+		return var->sqllen;
 
-		case SQL_FLOAT:
-			return MAX_FLOAT_LENGTH + 4;			
+	case SQL_SHORT:
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_SHORT_LENGTH + 2,
+										MAX_DECIMAL_SHORT_LENGTH + 2,
+										MAX_SMALLINT_LENGTH + 1);
+		
+	case SQL_LONG:
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_LONG_LENGTH + 2,
+										MAX_DECIMAL_LONG_LENGTH + 2,
+										MAX_INT_LENGTH + 1);
 
-		case SQL_D_FLOAT:
-		case SQL_DOUBLE:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH + 2;
-			return MAX_DOUBLE_LENGTH + 4;			
+	case SQL_FLOAT:
+		return MAX_FLOAT_LENGTH + 4;			
 
-		case SQL_QUAD:
-		case SQL_INT64:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH + 2;
-			return MAX_QUAD_LENGTH + 1;
-			
-		case SQL_ARRAY:
-			return MAX_ARRAY_LENGTH;
+	case SQL_D_FLOAT:
+	case SQL_DOUBLE:
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_DOUBLE_LENGTH + 2,
+										MAX_DECIMAL_DOUBLE_LENGTH + 2,
+										MAX_DOUBLE_LENGTH + 4);
 
-		case SQL_BLOB:
-			return MAX_BLOB_LENGTH;
+	case SQL_QUAD:
+	case SQL_INT64:
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_LENGTH + 2,
+										MAX_DECIMAL_LENGTH + 2,
+										MAX_QUAD_LENGTH + 1);
+		
+	case SQL_ARRAY:
+		return var->array->arrOctetLength;
+//		return MAX_ARRAY_LENGTH;
 
-		case SQL_TYPE_TIME:
-			return MAX_TIME_LENGTH;
+	case SQL_BLOB:
+		return MAX_BLOB_LENGTH;
 
-		case SQL_TYPE_DATE:
-			return MAX_DATE_LENGTH;
+	case SQL_TYPE_TIME:
+		return MAX_TIME_LENGTH;
 
-		case SQL_TIMESTAMP:
-			return MAX_TIMESTAMP_LENGTH;
-		}
+	case SQL_TYPE_DATE:
+		return MAX_DATE_LENGTH;
+
+	case SQL_TIMESTAMP:
+		return MAX_TIMESTAMP_LENGTH;
+	}
 
 	return var->sqllen;
 }
 
 const char* Sqlda::getColumnName(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	XSQLVAR *var = Var(index);
 
 	if (var->aliasname [0])
 		return var->aliasname;
@@ -658,57 +686,63 @@ const char* Sqlda::getColumnName(int index)
 
 int Sqlda::getPrecision(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	CAttrSqlVar *var = orgVar(index);
 
 	switch (var->sqltype & ~1)
-		{
-		case SQL_SHORT:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH;
-			return MAX_SMALLINT_LENGTH;
+	{
+	case SQL_TEXT:
+		if ( var->sqllen == 1 && var->sqlsubtype == 1 )
+			return MAX_TINYINT_LENGTH;
+		return var->sqllen;
 
-		case SQL_LONG:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH;
-			return MAX_INT_LENGTH;
+	case SQL_SHORT:
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_SHORT_LENGTH,
+										MAX_DECIMAL_SHORT_LENGTH,
+										MAX_SMALLINT_LENGTH);
 
-		case SQL_FLOAT:
-			return MAX_FLOAT_LENGTH;
+	case SQL_LONG:
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_LONG_LENGTH,
+										MAX_DECIMAL_LONG_LENGTH,
+										MAX_INT_LENGTH);
 
-		case SQL_D_FLOAT:
-		case SQL_DOUBLE:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH;
-			return MAX_DOUBLE_LENGTH;
+	case SQL_FLOAT:
+		return MAX_FLOAT_LENGTH;
 
-		case SQL_QUAD:
-		case SQL_INT64:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH;
-			return MAX_QUAD_LENGTH;
+	case SQL_D_FLOAT:
+	case SQL_DOUBLE:
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_DOUBLE_LENGTH,
+										MAX_DECIMAL_DOUBLE_LENGTH,
+										MAX_DOUBLE_LENGTH);
 
-		case SQL_ARRAY:		
-			return MAX_ARRAY_LENGTH;
-		
-		case SQL_BLOB:		
-			return MAX_BLOB_LENGTH;
+	case SQL_QUAD:
+	case SQL_INT64:
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_LENGTH,
+										MAX_DECIMAL_LENGTH,
+										MAX_QUAD_LENGTH);
 
-		case SQL_TYPE_TIME:
-			return MAX_TIME_LENGTH;
+	case SQL_ARRAY:	
+		return var->array->arrOctetLength;
+//		return MAX_ARRAY_LENGTH;
+	
+	case SQL_BLOB:		
+		return MAX_BLOB_LENGTH;
 
-		case SQL_TYPE_DATE:
-			return MAX_DATE_LENGTH;
+	case SQL_TYPE_TIME:
+		return MAX_TIME_LENGTH;
 
-		case SQL_TIMESTAMP:
-			return MAX_TIMESTAMP_LENGTH;
-		}
+	case SQL_TYPE_DATE:
+		return MAX_DATE_LENGTH;
+
+	case SQL_TIMESTAMP:
+		return MAX_TIMESTAMP_LENGTH;
+	}
 
 	return var->sqllen;
 }
 
 int Sqlda::getScale(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	CAttrSqlVar *var = orgVar(index);
 
 	switch (var->sqltype & ~1)
 	{
@@ -722,35 +756,33 @@ int Sqlda::getScale(int index)
 
 bool Sqlda::isNullable(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	CAttrSqlVar *var = orgVar(index);
 
 	return (var->sqltype & 1) ? true : false;
 }
 
 int Sqlda::getColumnType(int index, int &realSqlType)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
-
-	return getSqlType (var->sqltype, var->sqlsubtype, var->sqlscale, realSqlType);
+	return getSqlType ( orgVar(index), realSqlType );
 }
 
 const char* Sqlda::getColumnTypeName(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
-
-	return getSqlTypeName (var->sqltype, var->sqlsubtype, var->sqlscale);
+	return getSqlTypeName ( orgVar(index) );
 }
 
-int Sqlda::getSubType(int index)
+short Sqlda::getSubType(int index)
 {
-	return sqlda->sqlvar[index - 1].sqlsubtype;
+	return orgsqlvar[index - 1].sqlsubtype;
 }
 
-int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
+int Sqlda::getSqlType(CAttrSqlVar *var, int &realSqlType)
 {
-	switch (iscType & ~1)
+	switch (var->sqltype & ~1)
 	{
 	case SQL_TEXT:
+		if ( var->sqllen == 1 && var->sqlsubtype == 1 )
+			return (realSqlType = JDBC_TINYINT);
 		return (realSqlType = JDBC_CHAR);
 
 	case SQL_VARYING:
@@ -758,56 +790,28 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
 
 	case SQL_SHORT:
 		realSqlType = JDBC_SMALLINT;
-		if ( sqlScale < 0 )
-		{
-			if(subType == 2)
-				return JDBC_DECIMAL;
-			else
-				return JDBC_NUMERIC;
-		}
-		return realSqlType;
+		return SET_INFO_FROM_SUBTYPE ( JDBC_NUMERIC, JDBC_DECIMAL, realSqlType);
 
 	case SQL_LONG:
 		realSqlType = JDBC_INTEGER;
-		if ( sqlScale < 0 )
-		{
-			if(subType == 2)
-				return JDBC_DECIMAL;
-			else
-				return JDBC_NUMERIC;
-		}
-		return realSqlType;
+		return SET_INFO_FROM_SUBTYPE ( JDBC_NUMERIC, JDBC_DECIMAL, realSqlType);
 
 	case SQL_FLOAT:
 		return (realSqlType = JDBC_REAL);
 
 	case SQL_DOUBLE:
 		realSqlType = JDBC_DOUBLE;
-		if ( sqlScale < 0 )
-		{
-			if(subType == 2)
-				return JDBC_DECIMAL;
-			else
-				return JDBC_NUMERIC;
-		}
-		return realSqlType;
+		return SET_INFO_FROM_SUBTYPE ( JDBC_NUMERIC, JDBC_DECIMAL, realSqlType);
 
 	case SQL_QUAD:
 		return JDBC_BIGINT;
 
 	case SQL_INT64:
 		realSqlType = JDBC_BIGINT;
-		if ( sqlScale < 0 )
-		{
-			if(subType == 2)
-				return JDBC_DECIMAL;
-			else
-				return JDBC_NUMERIC;
-		}
-		return realSqlType;
+		return SET_INFO_FROM_SUBTYPE ( JDBC_NUMERIC, JDBC_DECIMAL, realSqlType);
 
 	case SQL_BLOB:
-		if (subType == 1)
+		if (var->sqlsubtype == 1)
 			return (realSqlType = JDBC_LONGVARCHAR);
 		return (realSqlType = JDBC_LONGVARBINARY);
 
@@ -821,87 +825,47 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
 		return (realSqlType = JDBC_DATE);
 
 	case SQL_ARRAY:
-		return (realSqlType = JDBC_ARRAY);
+		if ( var->array->arrOctetLength < MAX_VARCHAR_LENGTH )
+			return (realSqlType = JDBC_VARCHAR);
+		return (realSqlType = JDBC_LONGVARCHAR);
 	}
 
 	return (realSqlType = 0);
 }
 
-const char* Sqlda::getSqlTypeName(int iscType, int subType, int sqlScale)
+const char* Sqlda::getSqlTypeName ( CAttrSqlVar *var )
 {
-	switch (iscType & ~1)
+	switch (var->sqltype & ~1)
 	{
 	case SQL_TEXT:
+		if ( var->sqllen == 1 && var->sqlsubtype == 1 )
+			return "TINYINT";
 		return "CHAR";
 
 	case SQL_VARYING:
 		return "VARCHAR";
 
 	case SQL_SHORT:
-		if ( sqlScale < 0 )
-		{
-			if(subType == 2)
-			{
-				return "DECIMAL";
-			}
-			else
-			{
-				return "NUMERIC";
-			}
-		}
-		return "SMALLINT";
+		return SET_INFO_FROM_SUBTYPE ( "NUMERIC", "DECIMAL", "SMALLINT");
 
 	case SQL_LONG:
-		if ( sqlScale < 0 )
-		{
-			if(subType == 2)
-			{
-				return "DECIMAL";
-			}
-			else
-			{
-				return "NUMERIC";
-			}
-		}
-		return "INTEGER";
+		return SET_INFO_FROM_SUBTYPE ( "NUMERIC", "DECIMAL", "INTEGER");
 
 	case SQL_FLOAT:
 		return "FLOAT";
 
 	case SQL_D_FLOAT:
 	case SQL_DOUBLE:
-		if ( sqlScale < 0 )
-		{
-			if(subType == 2)
-			{
-				return "DECIMAL";
-			}
-			else
-			{
-				return "NUMERIC";
-			}
-		}
-		return "DOUBLE PRECISION";
+		return SET_INFO_FROM_SUBTYPE ( "NUMERIC", "DECIMAL", "DOUBLE PRECISION");
 
 	case SQL_QUAD:
 		return "BIGINT";
 
 	case SQL_INT64:
-		if ( sqlScale < 0 )
-		{
-			if(subType == 2)
-			{
-				return "DECIMAL";
-			}
-			else
-			{
-				return "NUMERIC";
-			}
-		}
-		return "BIGINT";
+		return SET_INFO_FROM_SUBTYPE ( "NUMERIC", "DECIMAL", "BIGINT");
 
 	case SQL_BLOB:
-		if (subType == 1)
+		if ( var->sqlsubtype == 1 )
 			return "LONG VARCHAR";
 		return "LONG VARBINARY";
 
@@ -931,7 +895,7 @@ const char* Sqlda::getTableName(int index)
 	return var->relname;
 }
 
-void Sqlda::setValue(int slot, Value * value, IscConnection *connection)
+void Sqlda::setValue(int slot, Value * value, IscStatement	*stmt)
 {
 	XSQLVAR *var = sqlda->sqlvar + slot;
 
@@ -941,10 +905,10 @@ void Sqlda::setValue(int slot, Value * value, IscConnection *connection)
 	switch (var->sqltype & ~1)
 		{
 		case SQL_BLOB:	
-			setBlob (var, value, connection);
+			setBlob (var, value, stmt);
 			return;
 		case SQL_ARRAY:	
-			setArray (var, value, connection);
+			setArray (var, value, stmt);
 			return;
 		}
 
@@ -1014,7 +978,7 @@ void Sqlda::setValue(int slot, Value * value, IscConnection *connection)
 
 }
 
-void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
+void Sqlda::setBlob(XSQLVAR * var, Value * value, IscStatement *stmt)
 {
 	if (value->type == Null)
 	{
@@ -1025,6 +989,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 
 	var->sqltype &= ~1;
 	ISC_STATUS statusVector [20];
+	IscConnection * connection = stmt->connection;
 	CFbDll * GDS = connection->GDS;
 	isc_blob_handle blobHandle = NULL;
 	isc_tr_handle transactionHandle = connection->startTransaction();
@@ -1042,82 +1007,68 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 	int length = 0;
 
 	switch (value->type)
-		{
-		case String:
-			address = value->data.string.string;
-			length = value->data.string.length;
-			break;
-
-		case Short:
-			length = sizeof (short);
-			break;
-
-		case Long:
-			length = sizeof (long);
-			break;
-
-		case Quad:
-			length = sizeof (QUAD);
-			break;
-
-		case Float:
-			length = sizeof (float);
-			break;
-
-		case Double:
-			length = sizeof (double);
-			break;
-
-		case BlobPtr:
-			{
-			length = 0;
-			Blob *blob = value->data.blob;
-			for (int len, offset = 0; len = blob->getSegmentLength (offset); offset += len)
-				{
-				GDS->_put_segment (statusVector, &blobHandle, len, (char*) blob->getSegment (offset));
-				if (statusVector [1])
-					THROW_ISC_EXCEPTION (connection, statusVector);
-				}
-			}
-			break;
-
-		case Date:
-									
-		default:
-			NOT_YET_IMPLEMENTED;
-		}			
-
-	if (length)
 	{
-		int post = 16384u;
-		if ( length > post )
+	case String:
+		address = value->data.string.string;
+		length = value->data.string.length;
+		break;
+
+	case Short:
+		length = sizeof (short);
+		break;
+
+	case Long:
+		length = sizeof (long);
+		break;
+
+	case Quad:
+		length = sizeof (QUAD);
+		break;
+
+	case Float:
+		length = sizeof (float);
+		break;
+
+	case Double:
+		length = sizeof (double);
+		break;
+
+	case BlobPtr:
 		{
-			while( length > 0 )
+		length = 0;
+		Blob *blob = value->data.blob;
+		for (int len, offset = 0; len = blob->getSegmentLength (offset); offset += len)
 			{
-				if ( length > post )
-				{
-					GDS->_put_segment (statusVector, &blobHandle, post, address);
-					if (statusVector [1])
-						THROW_ISC_EXCEPTION (connection, statusVector);
-					address+=post;
-					length-=post;
-				}
-				else
-				{
-					if(length>0)
-					{
-						GDS->_put_segment (statusVector, &blobHandle, length, address);
-						if (statusVector [1])
-							THROW_ISC_EXCEPTION (connection, statusVector);
-					}
-					break;
-				}
+			GDS->_put_segment (statusVector, &blobHandle, len, (char*) blob->getSegment (offset));
+			if (statusVector [1])
+				THROW_ISC_EXCEPTION (connection, statusVector);
 			}
 		}
-		else
+		break;
+
+	case Date:
+								
+	default:
+		NOT_YET_IMPLEMENTED;
+	}			
+
+	if ( length )
+	{
+		int post = DEFAULT_BLOB_BUFFER_LENGTH;
+
+		while ( length > post )
+		{
+			GDS->_put_segment (statusVector, &blobHandle, post, address);
+			if ( statusVector [1] )
+				THROW_ISC_EXCEPTION (connection, statusVector);
+			address+=post;
+			length-=post;
+		}
+
+		if( length > 0 )
 		{
 			GDS->_put_segment (statusVector, &blobHandle, length, address);
-			if (statusVector [1])
+			if ( statusVector [1] )
 				THROW_ISC_EXCEPTION (connection, statusVector);
 		}
 	}
@@ -1129,19 +1080,18 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 
 void WriteToArray(IscConnection *connect,XSQLVAR *var,Value * value);
 
-void Sqlda::setArray(XSQLVAR * var, Value * value, IscConnection *connection)
+void Sqlda::setArray(XSQLVAR * var, Value * value, IscStatement *stmt)
 {
 	if (value->type == Null)
-		{
+	{
 		var->sqltype |= 1;
 		*var->sqlind = -1;
-		memset (var->sqldata, 0, var->sqllen);
 		return;
-		}
+	}
 
 	var->sqltype &= ~1;
 	
-	IscArray arr(connection,var);
+	IscArray arr(stmt,var);
 	arr.writeArray(value);
 	*(ISC_QUAD*)var->sqldata=arr.arrayId;
 }
@@ -1157,15 +1107,16 @@ int Sqlda::findColumn(const char * columnName)
 
 const char* Sqlda::getOwnerName(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
-
-	return var->ownname;
+//	XSQLVAR *var = Var(index);
+//	return var->ownname;
+//	ATTENTION! Fb can not at present execute a design
+//	INSERT INTO "OWNER"."EVCT" ("CNT") VALUES (?)
+	return "";
 }
 
 int Sqlda::isBlobOrArray(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
-	int type = var->sqltype & ~1;
+	int type = orgVar(index)->sqltype & ~1;
 
 	switch (type)
 	{
@@ -1175,6 +1126,112 @@ int Sqlda::isBlobOrArray(int index)
 	}
 
 	return 0;
+}
+
+bool Sqlda::isNull(int index)
+{
+	return *(short*)Var(index)->sqlind == -1;
+}
+
+void Sqlda::setNull(int index)
+{
+	*(short*)Var(index)->sqlind = -1;
+}
+
+short Sqlda::getShort (int index)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_SHORT);
+	if ( isNull ( index) )
+		return 0;
+	return *(short*)var->sqldata;
+}
+
+long Sqlda::getInt (int index)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_LONG);
+	if ( isNull ( index) )
+		return 0;
+	return *(long*)var->sqldata;
+}
+
+char * Sqlda::getText (int index, int &len)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_TEXT);
+	if( isNull ( index) )
+	{
+		len = 0;
+		return "";
+	}
+	len = var->sqllen;
+	return var->sqldata;
+}
+
+char * Sqlda::getVarying (int index, int &len)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_VARYING);
+	if( isNull ( index) )
+	{
+		len = 0;
+		return "";
+	}
+	len = *(short*)var->sqldata;
+	return var->sqldata+2;
+}
+
+////////////////////////////////////////////////////////
+
+void Sqlda::updateShort (int index, short value)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_SHORT);
+	*(short*)var->sqldata = value;
+	*var->sqlind = 0;
+}
+
+void Sqlda::updateInt (int index, int value)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_LONG);
+	*(int*)var->sqldata = value;
+	*var->sqlind = 0;
+}
+
+void Sqlda::updateText (int index, const char* dst)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_TEXT);
+    char * src = var->sqldata;
+	int n = var->sqllen;
+	*var->sqlind = 0;
+
+    if ( n < 1)
+       return;
+
+    while ( n-- && *dst)
+        *src++ = *dst++;
+
+	*src = '\0';
+}
+
+void Sqlda::updateVarying (int index, const char* dst)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_VARYING);
+    char * src = var->sqldata + sizeof(short);
+	int n = var->sqllen;
+	*var->sqlind = 0;
+
+    if ( n < 1)
+       return;
+
+    while ( n-- && *dst)
+        *src++ = *dst++;
+
+	*(unsigned short*)var->sqldata = (unsigned short)(var->sqllen - n - 1);
 }
 
 }; // end namespace IscDbcLibrary

@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCBLOB_H__C19738BC_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCBLOB_H__C19738BC_1C87_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCBLOB_H_)
+#define _ISCBLOB_H_
 
 #include "BinaryBlob.h"
 #include "Connection.h"
@@ -41,21 +37,38 @@ class IscConnection;
 class IscBlob : public BinaryBlob
 {
 public:
-	virtual void* getSegment (int pos);
-	virtual int getSegmentLength (int pos);
-	virtual char* getString();
+	void* getSegment (int pos);
+	int getSegmentLength (int pos);
+	char* getString();
 
+	void bind(Statement *stmt, char * sqldata);
+	void attach(char * pointBlob, bool fetched, bool clear);
+	void setType(short sqlsubtype);
 	void fetchBlob();
-	virtual int getSegment (int offset, int length, void *address);
-	virtual int length();
-	IscBlob(IscConnection *connect, XSQLVAR *var);
+	int getSegment (int offset, int length, void *address);
+	void writeBlob(char * sqldata);
+	void writeStreamHexToBlob(char * sqldata);
+	void writeBlob(char * sqldata, char *data, long length);
+	void  writeStringHexToBlob(char * sqldata, char *data, long length);
+	int length();
+	IscBlob();
+	IscBlob(IscStatement *stmt, XSQLVAR *var);
 	~IscBlob();
 
-	IscConnection	*connection;
+	void directCreateBlob( char * sqldata );
+	void directOpenBlob(char * sqldata);
+	bool directFetchBlob(char *data, int length, int &lengthRead);
+	bool directGetSegmentToHexStr( char * bufData, int lenData, int &lenRead );
+	void directWriteBlob( char *data, long length );
+	void directCloseBlob();
+
+	IscStatement	*statement;
 	ISC_QUAD		blobId;
+	isc_blob_handle directBlobHandle;
 	bool			fetched;
+	bool			directBlob;
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCBLOB_H__C19738BC_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCBLOB_H_)

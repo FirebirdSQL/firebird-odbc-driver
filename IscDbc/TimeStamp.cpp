@@ -37,9 +37,9 @@
 #include <stdio.h>
 #endif
 #include <time.h>
+#include <string.h>
 #include "IscDbc.h"
 #include "TimeStamp.h"
-#include <string.h>
 
 namespace IscDbcLibrary {
 

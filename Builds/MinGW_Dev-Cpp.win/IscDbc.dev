@@ -7,9 +7,9 @@ Type=3
 Compiler=-D__GNUWIN32__ -D_WIN32_WINNT=0x0400 -DWINVER=0x0400 -DWIN32 -D_WIN32 -DNDEBUG -D_WINDOWS_@@_
 CppCompiler=-D__GNUWIN32__ -D_WIN32_WINNT=0x0400 -DWINVER=0x0400 -DWIN32 -D_WIN32 -DNDEBUG -D_WINDOWS_@@_
 Includes=d:/firebird/include;../..
-Linker= --output-def Release/Obj/libIscDbc.def_@@_--output-lib Release/libIscDbc.a_@@_--def ../../IscDbc/IscDbc.def_@@_
+Linker=--output-def Release/Obj/libIscDbc.def_@@_--output-lib Release/libIscDbc.a_@@_--def ../../IscDbc/IscDbc.def_@@_
 Libs=d:/firebird/lib
-UnitCount=88
+UnitCount=97
 Folders="Header Files","Resource Files","Source Files"
 ObjFiles=
 PrivateResource=IscDbc_private.rc
@@ -89,16 +89,6 @@ BuildCmd=
 
 [Unit7]
 FileName=..\..\IscDbc\DateTime.h
-Folder="Header Files"
-Compile=1
-CompileCpp=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit8]
-FileName=..\..\IscDbc\IscArray.h
 Folder="Header Files"
 Compile=1
 CompileCpp=1
@@ -537,16 +527,6 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit52]
-FileName=..\..\IscDbc\extodbc.cpp
-Folder="Source Files"
-Compile=1
-CompileCpp=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
 [Unit53]
 FileName=..\..\IscDbc\IscArray.cpp
 Folder="Source Files"
@@ -907,6 +887,56 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
+[Unit89]
+FileName=..\..\IscDbc\IscOdbcStatement.cpp
+Folder=Source Files
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit90]
+FileName=..\..\IscDbc\IscOdbcStatement.h
+Folder=Header Files
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit91]
+FileName=..\..\IscDbc\IscResultSetMetaData.h
+Folder=Header Files
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit92]
+FileName=..\..\IscDbc\IscResultSetMetaData.cpp
+Folder=Source Files
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit93]
+FileName=..\..\IscDbc\IscOdbcStatement.h
+Folder=Header Files
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
 [VersionInfo]
 Major=0
 Minor=1
@@ -924,4 +954,74 @@ OriginalFilename=IscDbc.exe
 ProductName=IscDbc
 ProductVersion=0.1
 AutoIncBuildNr=0
+
+[Unit8]
+FileName=..\..\IscDbc\IscArray.h
+CompileCpp=1
+Folder="Header Files"
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit52]
+FileName=..\..\IscDbc\extodbc.cpp
+CompileCpp=1
+Folder="Source Files"
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit93]
+FileName=..\..\IscDbc\Mlist.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit94]
+FileName=..\..\IscDbc\SupportFunctions.cpp
+CompileCpp=1
+Folder="Source Files"
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit95]
+FileName=..\..\IscDbc\SupportFunctions.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit96]
+FileName=..\..\IscDbc\EnvShare.cpp
+CompileCpp=1
+Folder="Source Files"
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit97]
+FileName=..\..\IscDbc\EnvShare.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
 

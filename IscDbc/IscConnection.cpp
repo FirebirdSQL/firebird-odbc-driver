@@ -47,18 +47,30 @@
 #include <time.h>
 #include <string.h>
 #include "IscDbc.h"
+#include "EnvShare.h"
 #include "IscConnection.h"
+#include "IscProceduresResultSet.h"
 #include "SQLError.h"
+#include "IscOdbcStatement.h"
 #include "IscCallableStatement.h"
 #include "IscDatabaseMetaData.h"
 #include "Parameters.h"
 #include "Attachment.h"
+#include "Mlist.h"
+#include "SupportFunctions.h"
+#include "../SetupAttributes.h"
 
 namespace IscDbcLibrary {
+
+extern SupportFunctions supportFn;
+
+extern char charTable [];
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+
+extern EnvShare environmentShare;
 
 extern "C" Connection* createConnection()
 {
@@ -69,7 +81,6 @@ IscConnection::IscConnection()
 {
 	init();
 }
-
 
 IscConnection::IscConnection(IscConnection * source)
 {
@@ -86,6 +97,7 @@ void IscConnection::init()
 	transactionIsolation = 0;
 	transactionPending = false;
 	autoCommit = true;
+	shareConnected = false;
 	attachment = NULL;
 	transactionExtInit = 0;
 }
@@ -112,28 +124,28 @@ void IscConnection::close()
 		statement->connection = NULL; // NOMEY
 	END_FOR;
 
+	if ( shareConnected )
+		connectionFromEnvShare();
+
 	delete this;
 }
 
 PreparedStatement* IscConnection::prepareStatement(const char * sqlString)
 {
 	IscPreparedStatement *statement = NULL;
-	IscPreparedStatement *statementSearch = NULL;
-	bool found = false;
 
 	try
-		{
-			statement = new IscPreparedStatement (this);
-			statement->prepare (sqlString);
-		}
+	{
+		statement = new IscPreparedStatement (this);
+		statement->prepare (sqlString);
+	}
 	catch (...)
-		{
+	{
 		if (statement)
 			delete statement;
 		throw;
-		}
+	}
 
-//From R. Milharcic
 	statements.append (statement);
 
 	return statement;
@@ -158,13 +170,13 @@ void IscConnection::commit()
 void IscConnection::rollback()
 {
 	if (transactionHandle)
-		{
+	{
 		ISC_STATUS statusVector [20];
 		GDS->_rollback_transaction (statusVector, &transactionHandle);
 
 		if (statusVector [1])
 			throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
-		}
+	}
 	transactionPending = false;
 }
 
@@ -184,6 +196,18 @@ void* IscConnection::getHandleDb()
 
 void* IscConnection::startTransaction()
 {
+	if ( shareConnected )
+	{
+		if ( !attachment->transactionHandle )
+		{
+			environmentShare.startTransaction();
+			// ASSERT (!autoCommit)
+			transactionPending = true;
+		}
+
+		return attachment->transactionHandle;
+	}
+
     if (transactionHandle)
         return transactionHandle;
 
@@ -212,8 +236,16 @@ void* IscConnection::startTransaction()
 
         case 0x00000001L:
             // SQL_TXN_READ_UNCOMMITTED:
-            iscTpb[3] = isc_tpb_read_committed;
-            iscTpb[4] = isc_tpb_rec_version;
+			if ( transactionExtInit & TRA_nw )
+			{
+				iscTpb[3] = isc_tpb_rec_version;
+				count = 4;
+			}
+			else
+			{
+				iscTpb[3] = isc_tpb_read_committed;
+				iscTpb[4] = isc_tpb_rec_version;
+			}
             break;
 
         case 0x00000002L:
@@ -244,7 +276,6 @@ void* IscConnection::startTransaction()
     return transactionHandle;
 }
 
-
 Statement* IscConnection::createStatement()
 {
 	IscStatement *statement = new IscStatement (this);
@@ -253,6 +284,13 @@ Statement* IscConnection::createStatement()
 	return statement;
 }
 
+InternalStatement* IscConnection::createInternalStatement()
+{
+	IscOdbcStatement *statement = new IscOdbcStatement (this);
+	statements.append (statement);
+
+	return statement;
+}
 
 Blob* IscConnection::genHTML(Properties * parameters, long genHeaders)
 {
@@ -268,116 +306,579 @@ void IscConnection::freeHTML(const char * html)
 }
 ***/
 
-bool IscConnection::getNativeSql (const char * inStatementText, long textLength1,
+int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
+{
+	char * ptSrc = string;
+
+	SKIP_WHITE ( ptSrc );
+
+	if ( *ptSrc == '}' )
+	{
+		if ( numInputParam )
+		{
+			int i = 0, offset = numInputParam * 2 - 1 + 2;
+			memmove(ptSrc + offset, ptSrc, strlen(ptSrc) + 1 );
+
+			*ptSrc++ = '(';
+			while( i++ < numInputParam )
+			{
+				if ( i > 1 )
+					*ptSrc++ = ',';
+				*ptSrc++ = '?';
+			}
+			*ptSrc++ = ')';
+		}
+		return 0;
+	}
+
+	if ( *ptSrc != '(' )
+		return -1;
+
+	if ( !numInputParam )
+	{
+		char * ptCh = ptSrc++; // '('
+
+		while ( *ptSrc && *ptSrc != ')' )
+			ptSrc++;
+
+		if ( *ptSrc != ')' )
+			return -1;
+
+		ptSrc++; // ')'
+		memmove(ptCh, ptSrc, strlen(ptSrc) + 1 );
+		return 0;
+	}
+
+	ptSrc++; // '('
+
+	int i = 0;
+	bool nextParam = false;
+	char * ptCh;
+
+	while( *ptSrc && i < numInputParam )
+	{
+		SKIP_WHITE ( ptSrc );
+
+		if ( *ptSrc == ')' )
+		{
+			int offset = (numInputParam - i) * 2 - ( !i ? 1 : 0 );
+			memmove(ptSrc + offset, ptSrc, strlen(ptSrc) + 1 );
+
+			while( i++ < numInputParam )
+			{
+				if ( i > 1 )
+					*ptSrc++ = ',';
+				*ptSrc++ = '?';
+			}
+			return 0;
+		}
+
+		if ( *ptSrc == ',' )
+		{
+			if ( nextParam == true )
+			{
+				nextParam = false;
+				ptSrc++;
+			}
+			else
+			{
+				i++;
+				memmove(ptSrc + 1, ptSrc, strlen(ptSrc) + 1 );
+				*ptSrc = '?';
+				ptSrc += 2;
+			}
+			continue;
+		}
+
+		char delimiter;
+
+		ptCh = ptSrc;
+
+		if ( *ptCh == '\'' )
+		{
+			delimiter = *ptCh;
+			++ptCh; // '\''
+			ptSrc = ptCh;
+			while ( *ptCh && *ptCh != ',' && *ptCh != ')' )
+			{
+				if ( *ptCh == delimiter )
+				{
+					if ( *(ptCh+1) == delimiter )
+					{
+						ptCh += 2;
+						continue;
+					}
+					break;
+				}
+				++ptCh;
+			}
+
+			if ( *ptCh == delimiter )
+				++ptCh;
+
+			if ( *ptCh && *ptCh != ',' )
+			{
+				ptSrc = ptCh;
+				i++;
+				break;
+			}
+
+			if ( !*ptCh )
+				break;
+
+			nextParam = true;
+		}
+		else
+		{
+			delimiter = ',';
+			ptSrc = ptCh;
+			while ( *ptCh && *ptCh != delimiter && *ptCh != ')' )
+				++ptCh;
+
+			if ( *ptCh && *ptCh != delimiter )
+			{
+				ptSrc = ptCh;
+				i++;
+				break;
+			}
+
+			if ( !*ptCh )
+				break;
+
+			nextParam = false;
+		}
+
+		if( ptCh == ptSrc )
+			ptSrc++;
+		else
+		{
+			ptSrc = ptCh + 1;
+			i++;
+		}
+	}
+
+	if ( *(ptSrc-1) == ',' )
+	{
+		ptCh = --ptSrc;
+		//  ok, it's output param
+
+		while ( *ptCh && *ptCh != ')' )
+			ptCh++;
+
+		memmove(ptSrc, ptCh, strlen(ptCh) + 1 );
+		string = ptSrc + 1;
+
+		return 1; 
+	}
+
+	SKIP_WHITE(ptSrc);
+
+	if ( *ptSrc == ')' )
+	{
+		if ( i < numInputParam )
+		{
+			int offset = (numInputParam - i) * 2;
+			memmove(ptSrc + offset, ptSrc, strlen(ptSrc) + 1 );
+
+			while( i++ < numInputParam )
+			{
+				*ptSrc++ = ',';
+				*ptSrc++ = '?';
+			}
+		}
+		return 0;
+	}
+
+// error query
+	return -1;
+}
+
+int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 								char * outStatementText, long bufferLength,
 								long * textLength2Ptr)
 {
-	bool bModify = false;
+	int statysModify = 0;
 	char * ptIn = (char*)inStatementText;
 	char * ptInEnd = ptIn + textLength1;
-	char * ptBeg, * ptOut = outStatementText;
+	char * ptOut = outStatementText;
 	char * ptEndBracket = NULL;
+	int ignoreBracket = 0;
+	int statusQuote = 0;
+	char quote;
+	char delimiter = *metaData->getIdentifierQuoteString();
+	delimiter = delimiter == ' ' || attachment->databaseDialect < 3 ? 0 : delimiter;
+
+	bool autoQuoted = delimiter && attachment->autoQuotedIdentifier;
 
 #pragma FB_COMPILER_MESSAGE("IscConnection::getNativeSql - The temporary decision; FIXME!")
 
 	while ( ptIn < ptInEnd )
 	{
-		if ( *ptIn == '\"' )
+		if ( !statusQuote )
 		{
-			// replace "123" to '123'
-			bool bConst = false;
-			ptBeg = ptOut;
-			*ptOut++ = *ptIn++;
-			
-			while( *ptIn == ' ')
-				*ptOut++ = *ptIn++;
-
-			if ( *ptIn >= '0' && *ptIn <= '9' )
-				bConst = true;
-
-			while( *ptIn && *ptIn != '\"' )
-				*ptOut++ = *ptIn++;
-
-			if ( *ptIn != '\"' )
-				return false;
-			
-			if ( bConst )
-				*ptBeg = *ptOut = '\'';
-			else
-				*ptOut = *ptIn;
-
-			++ptIn;	++ptOut;
-			bModify = true;
-			continue;
-		}
-		else
-		{
-			if ( *ptIn == '{' )
+			if ( IS_QUOTE( *ptIn ) )
+			{
+				quote = *ptIn;
+				statusQuote ^= 1;
+			}
+			else if ( *ptIn == '{' )
 				ptEndBracket = ptOut;
+			else if ( autoQuoted && IS_IDENT ( *ptIn ) )
+			{
+				bool mixed = false;
+				char * pt = ptIn;
+				
+				if ( ISUPPER ( *ptIn ) )
+				{
+					while ( IS_IDENT ( *pt ) )
+					{
+						if ( ISLOWER ( *pt ) )
+						{
+							mixed = true;
+							break;
+						}
+						pt++;
+					}
+				}
+				else
+				{
+					while ( IS_IDENT ( *pt ) )
+					{
+						if ( ISUPPER ( *pt ) )
+						{
+							mixed = true;
+							break;
+						}
+						pt++;
+					}
+				}
 
-			*ptOut++ = *ptIn++;
+				if ( mixed )
+				{
+					*ptOut++ = delimiter;
+					 
+					while ( IS_IDENT ( *ptIn ) )
+						*ptOut++ = *ptIn++;
+
+					*ptOut++ = delimiter;
+					statysModify++;
+				}
+				else
+					while ( IS_IDENT ( *ptIn ) )
+						*ptOut++ = *ptIn++;
+				continue;
+			}
 		}
+		else if ( quote == *ptIn )
+		{
+			quote = 0;
+			statusQuote ^= 1;
+		}
+
+		*ptOut++ = *ptIn++;
 	}
 
+	if ( textLength2Ptr )
+		*textLength2Ptr = textLength1;
+
+	if ( statusQuote ) // There is no '"' or '\'' a syntactic mistake
+		return statysModify;
+
 	*ptOut = '\0';
-	int ignoreBracket = 0;
 
-	while ( ptEndBracket )
+	if ( !ptEndBracket )
 	{
-		ptIn = ptEndBracket;
+		ptOut = outStatementText;
 
-		ptIn++; // '{'
-		
-		while( *ptIn == ' ' )ptIn++;
+		SKIP_WHITE ( ptOut );
 
-		if ( *(long*)ptIn == 0x6c6c6163 || *(long*)ptIn == 0x4c4c4143 )
-			++ignoreBracket; // { call }
-		else
+		if ( !strncasecmp (ptOut, "CREATE", 6) || !strncasecmp (ptOut, "ALTER", 5) )
 		{
-			// Check 'oj' or 'OJ'
-			if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
-				ptIn += 2; // 'oj'
+			if ( UPPER(*ptOut) == 'A' )
+				ptOut += 5;
 			else
-				ptIn += 2; // temp 'fn'
+				ptOut += 6;
 
-			ptOut = ptEndBracket;
-			int ignoreBr = ignoreBracket;
-
-			do
+			while ( *ptOut )
 			{
-				while( *ptIn && *ptIn != '}' )
-					*ptOut++ = *ptIn++;
+				SKIP_WHITE ( ptOut );
 
-				if( ignoreBr )
-					*ptOut++ = *ptIn++;
+				if ( *ptOut )
+				{
+					#define LENSTR_TINYINT 7 
 
-			}while ( ignoreBr-- );
+					if ( !strncasecmp (ptOut, "TINYINT", LENSTR_TINYINT) && IS_END_TOKEN(*(ptOut+LENSTR_TINYINT)) )
+					{
+						const char * nameTinyint = "CHAR CHARACTER SET OCTETS";
+						int lenNameTinyint = 25;
+						int offset = lenNameTinyint - LENSTR_TINYINT;
 
-			if(*ptIn != '}')
-				return false;
-
-			ptIn++; // '}'
-
-			while( *ptIn )
-				*ptOut++ = *ptIn++;
-
-			*ptOut = '\0';
-			bModify = true;
+						memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
+						memcpy(ptOut, nameTinyint, lenNameTinyint);
+						ptOut += lenNameTinyint;
+					}
+					else 
+						SKIP_NO_WHITE ( ptOut );
+				}
+			}
 		}
+	}
+	else
+	{
+		while ( ptEndBracket )
+		{
+			ptIn = ptEndBracket;
 
-		--ptEndBracket; // '{'
+			ptIn++; // '{'
+			
+			while( *ptIn == ' ' )ptIn++;
 
-		while ( ptEndBracket > outStatementText && *ptEndBracket != '{')
-			--ptEndBracket;
+//	On a note		++ignoreBracket; // ignored { }
+			if ( *ptIn == '?' || *(long*)ptIn == 0x6c6c6163 || *(long*)ptIn == 0x4c4c4143 )
+			{	// Check '?' or 'call' or 'CALL'
+				if ( *ptIn == '?' )
+				{
+					ptIn++;
+					while( *ptIn == ' ' )ptIn++;
 
-		if(*ptEndBracket != '{')
-			ptEndBracket = NULL;
+					if(*ptIn != '=')
+						return statysModify;
+
+					ptIn++; // '='
+					while( *ptIn == ' ' )ptIn++;
+				}
+
+				if ( *(long*)ptIn != 0x6c6c6163 && *(long*)ptIn != 0x4c4c4143 )
+					return statysModify;
+
+				ptIn += 4; // 'call'
+
+				while( *ptIn == ' ' )ptIn++;
+
+				ptOut = ptEndBracket;
+				int ignoreBr = ignoreBracket;
+				char * savePtOut;
+
+				const int lenSpase = 18;
+				int offset = lenSpase - ( ptIn - ptOut );
+
+				memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
+				memset(ptOut, ' ', lenSpase);
+				savePtOut = ptOut;
+				ptIn += offset; 
+				ptOut += lenSpase;
+
+				char procedureName[256];
+				char * end = procedureName;
+
+				SKIP_WHITE ( ptIn );
+
+				end = procedureName;
+
+				if ( IS_QUOTE(*ptIn) )
+				{
+					ptIn++;
+					// Wizard VC : example {call ".SP_TEST"(?,?)}
+					if ( *ptIn == '.' )
+					{
+						*ptIn = *(ptIn-1);
+						*(ptIn-1) = ' ';
+						ptIn++;
+					}
+					
+					while ( !(IS_END_TOKEN(*ptIn)) )
+						*end++ = *ptIn++;
+
+					end--;
+
+					if ( !IS_QUOTE(*end) )
+						return statysModify;
+				}
+				else
+					while ( !(IS_END_TOKEN(*ptIn)) )
+						*end++ = UPPER(*ptIn), ++ptIn;
+
+				*end = '\0';
+
+				int numIn, numOut;
+				bool canSelect;
+
+				if ( !getCountInputParamFromProcedure ( procedureName, numIn, numOut, canSelect ) )
+					return statysModify; // not found
+
+				int ret = buildParamProcedure ( ptIn, numIn );
+				
+				if ( ret == -1 ) 
+					return statysModify;
+				else if ( canSelect )
+					memcpy(savePtOut, "select * from ", 14);
+				else
+					memcpy(savePtOut, "execute procedure ", 18);
+
+				ptOut = ptIn;
+
+				statusQuote = 0;
+				quote = 0;
+
+				do
+				{
+					while( *ptIn )
+					{
+						if ( !statusQuote )
+						{
+							if ( IS_QUOTE( *ptIn ) )
+							{
+								quote = *ptIn;
+								statusQuote ^= 1;
+							}
+							else if ( *ptIn == '}' )
+								break;
+						}
+						else if ( quote == *ptIn )
+						{
+							quote = 0;
+							statusQuote ^= 1;
+						}
+
+						*ptOut++ = *ptIn++;
+					}
+
+					if( ignoreBr )
+						*ptOut++ = *ptIn++;
+
+				}while ( ignoreBr-- );
+
+				if(*ptIn != '}')
+					return statysModify;
+
+				ptIn++; // '}'
+
+				while( *ptIn )
+					*ptOut++ = *ptIn++;
+
+				*ptOut = '\0';
+				statysModify = ret == 1 ? 2 : 1;
+			}
+			else
+			{
+				ptOut = ptEndBracket;
+
+				// Check 'oj' or 'OJ'
+				if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
+					ptIn += 2; // 'oj'
+				else
+				{
+					ptIn += 2; // 'fn'
+//
+// select "FIRST_NAME" from "EMPLOYEE" where { fn UCASE("FIRST_NAME") } = { fn UCASE('robert') }
+// to
+// select "FIRST_NAME" from "EMPLOYEE" where UPPER("FIRST_NAME") = UPPER('robert')
+//
+// ATTENTION! ptIn and ptOut pointer of outStatementText
+					supportFn.translateNativeFunction ( ptIn, ptOut );
+				}
+
+				int ignoreBr = ignoreBracket;
+				statusQuote = 0;
+				quote = 0;
+
+				do
+				{
+					while( *ptIn )
+					{
+						if ( !statusQuote )
+						{
+							if ( IS_QUOTE( *ptIn ) )
+							{
+								quote = *ptIn;
+								statusQuote ^= 1;
+							}
+							else if ( *ptIn == '}' )
+								break;
+						}
+						else if ( quote == *ptIn )
+						{
+							quote = 0;
+							statusQuote ^= 1;
+						}
+
+						*ptOut++ = *ptIn++;
+					}
+
+					if( ignoreBr )
+						*ptOut++ = *ptIn++;
+
+				}while ( ignoreBr-- );
+
+				if(*ptIn != '}')
+					return statysModify;
+
+				ptIn++; // '}'
+
+				while( *ptIn )
+					*ptOut++ = *ptIn++;
+
+				*ptOut = '\0';
+				statysModify = 1;
+			}
+
+			--ptEndBracket; // '{'
+
+			statusQuote = 0;
+			quote = 0;
+
+			while ( ptEndBracket > outStatementText )
+			{
+				if ( !statusQuote )
+				{
+					if ( IS_QUOTE( *ptEndBracket ) )
+					{
+						quote = *ptEndBracket;
+						statusQuote ^= 1;
+					}
+					else if ( *ptEndBracket == '{' )
+						break;
+				}
+				else if ( quote == *ptEndBracket )
+				{
+					quote = 0;
+					statusQuote ^= 1;
+				}
+
+				--ptEndBracket;
+			}
+
+			if(*ptEndBracket != '{')
+				ptEndBracket = NULL;
+		}
 	}
 
 	if ( textLength2Ptr )
 		*textLength2Ptr = ptOut - outStatementText;
 
-	return bModify;
+	return statysModify;
+}
+
+bool IscConnection::getCountInputParamFromProcedure ( const char* procedureName, int &numIn, int &numOut, bool &canSelect )
+{
+	bool ret = false; // not found
+	numIn = numOut = 0;
+	canSelect = false;
+
+	IscProceduresResultSet resultSet ( (IscDatabaseMetaData *)getMetaData() );
+	resultSet.addBlr = true;
+	resultSet.getProcedures ( NULL, NULL, procedureName );
+
+	if ( resultSet.getCountRowsStaticCursor() )
+	{
+		numIn = resultSet.sqlda->getShort(4); // NUM_INPUT_PARAM
+		numOut = resultSet.sqlda->getShort(5); // NUM_OUTPUT_PARAM
+		if ( numOut )
+			canSelect = resultSet.canSelectFromProcedure();
+		ret = true;
+	}
+
+	return ret;
 }
 
 DatabaseMetaData* IscConnection::getMetaData()
@@ -477,6 +978,11 @@ int IscConnection::objectVersion()
 	return CONNECTION_VERSION;
 }
 
+void IscConnection::clearWarnings()
+{
+	NOT_YET_IMPLEMENTED;
+}
+
 Connection* IscConnection::clone()
 {
 	return new IscConnection (this);
@@ -495,6 +1001,17 @@ bool IscConnection::getAutoCommit()
 	return autoCommit;
 }
 
+const char*	IscConnection::getCatalog()
+{
+	NOT_YET_IMPLEMENTED;
+	return "";
+}
+
+void IscConnection::setCatalog(const char* catalog)
+{
+	NOT_YET_IMPLEMENTED;
+}
+
 void IscConnection::setTransactionIsolation(int level)
 {
 	transactionIsolation = level;
@@ -505,9 +1022,53 @@ int IscConnection::getTransactionIsolation()
 	return transactionIsolation;
 }
 
+bool IscConnection::isClosed()
+{
+	NOT_YET_IMPLEMENTED;
+	return false;
+}
+
+bool IscConnection::isReadOnly()
+{
+	NOT_YET_IMPLEMENTED;
+	return false;
+}
+
+void IscConnection::setReadOnly(bool readOnly)
+{
+	NOT_YET_IMPLEMENTED;
+}
+
+const char*	IscConnection::nativeSQL(const char *sqlString)
+{
+	NOT_YET_IMPLEMENTED;
+	return sqlString;
+}
+
 void IscConnection::setExtInitTransaction(int optTpb)
 {
 	transactionExtInit = optTpb;
+}
+
+EnvironmentShare* IscConnection::getEnvironmentShare()
+{
+	return (EnvironmentShare*)&environmentShare;
+}
+
+void IscConnection::connectionToEnvShare()
+{
+	shareConnected = environmentShare.addConnection (this);
+}
+
+void IscConnection::connectionFromEnvShare()
+{
+	environmentShare.removeConnection (this);
+	shareConnected = false;
+}
+
+int	IscConnection::getDriverBuildKey()
+{
+	return MAJOR_VERSION * 1000000 + MINOR_VERSION * 10000 + BUILDNUM_VERSION;
 }
 
 void IscConnection::addRef()
@@ -549,7 +1110,7 @@ CallableStatement* IscConnection::prepareCall(const char * sqlString)
 void IscConnection::commitAuto()
 {
 	FOR_OBJECTS (IscStatement*, statement, &statements)
-		if (statement->selectActive)
+		if ( statement->isActiveSelect() )
 		{
 			commitRetaining();
 			return;
@@ -562,7 +1123,7 @@ void IscConnection::commitAuto()
 void IscConnection::rollbackAuto()
 {
 	FOR_OBJECTS (IscStatement*, statement, &statements)
-		if (statement->selectActive)
+		if ( statement->isActiveSelect() )
 		{
 			rollbackRetaining();
 			return;

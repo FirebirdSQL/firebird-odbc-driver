@@ -25,12 +25,8 @@
 // copyright (c) 1999 - 2000 by James A. Starkey for IBPhoenix.
 
 
-#if !defined(AFX_ERROR_H__6A019C1E_A340_11D2_AB5A_0000C01D2301__INCLUDED_)
-#define AFX_ERROR_H__6A019C1E_A340_11D2_AB5A_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ERROR_H_)
+#define _ERROR_H_
 
 #undef ERROR
 #undef ASSERT
@@ -49,4 +45,4 @@ public:
 
 };
 
-#endif // !defined(AFX_ERROR_H__6A019C1E_A340_11D2_AB5A_0000C01D2301__INCLUDED_)
+#endif // !defined(_ERROR_H_)

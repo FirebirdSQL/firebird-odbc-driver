@@ -18,6 +18,6 @@ pthread_mutex_t	MutexEnvThread::mutexLockedLevelDll;
 
 MutexEnvThread iniMutexEnv;
 
-#endif
-
 }; // end namespace OdbcJdbcLibrary
+
+#endif

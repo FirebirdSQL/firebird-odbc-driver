@@ -55,21 +55,23 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 													const char * foreignSchema, 
 													const char * foreignTable)
 {
-	JString sql = 
-		"select NULL as pktable_cat,\n"						// 1
-				" NULL as pktable_schem,\n"					// 2
-				" pidx.rdb$relation_name as pktable_name,\n"// 3
-				" pseg.rdb$field_name as pkcolumn_name,\n"	// 4
-				" NULL as fktable_cat,\n"					// 5
-				" NULL as fktable_schem,\n"					// 6
-				" fidx.rdb$relation_name as fktable_name,\n"// 7
-				" fseg.rdb$field_name as fkcolumn_name,\n"	// 8
-				" pseg.rdb$field_position as key_seq,\n"	// 9
-				" refc.rdb$update_rule as update_rule,\n"	// 10
-				" refc.rdb$delete_rule as delete_rule,\n"	// 11
-				" fkey.rdb$constraint_name as fk_name,\n"	// 12
-				" refc.rdb$const_name_uq as pk_name,\n"		// 13
-				" 7 as deferrability\n"						// 14	SQL_NOT_DEFERRABLE
+	char sql[4096] =
+		"select cast (NULL as varchar(7)) as pktable_cat,\n"	// 1
+				" cast (NULL as varchar(7)) as pktable_schem,\n"// 2
+				" cast (pidx.rdb$relation_name as varchar(31)) as pktable_name,\n"	// 3
+				" cast (pseg.rdb$field_name as varchar(31)) as pkcolumn_name,\n"	// 4
+				" cast (NULL as varchar(7)) as fktable_cat,\n"	// 5
+				" cast (NULL as varchar(7)) as fktable_schem,\n"// 6
+				" cast (fidx.rdb$relation_name as varchar(31)) as fktable_name,\n"	// 7
+				" cast (fseg.rdb$field_name as varchar(31)) as fkcolumn_name,\n"	// 8
+				" cast (pseg.rdb$field_position+1 as smallint) as key_seq,\n"		// 9
+				" cast (0 as smallint) as update_rule,\n"		// 10
+				" cast (0 as smallint) as delete_rule,\n"		// 11
+				" cast (fkey.rdb$constraint_name as varchar(31)) as fk_name,\n"		// 12
+				" cast (refc.rdb$const_name_uq as varchar(31)) as pk_name,\n"		// 13
+				" 7 as deferrability,\n"						// 14	SQL_NOT_DEFERRABLE
+				" refc.rdb$update_rule,\n"						// 15
+				" refc.rdb$delete_rule\n"						// 16
 
 		"from rdb$relation_constraints fkey,\n"
 		"     rdb$indices fidx,\n"
@@ -79,45 +81,40 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 		"     rdb$ref_constraints refc\n"
 		"where fkey.rdb$constraint_type = 'FOREIGN KEY'\n";
 
+	char * ptFirst = sql + strlen(sql);
+
 	if ( !metaData->allTablesAreSelectable() )
 	{
-		sql += metaData->existsAccess("  and ", "pidx", 0, "\n");
-		sql += metaData->existsAccess("  and ", "fidx", 0, "\n");
+		metaData->existsAccess(ptFirst, "  and ", "pidx", 0, "\n");
+		metaData->existsAccess(ptFirst, "  and ", "fidx", 0, "\n");
 	}
 
-	sql += "  and fkey.rdb$index_name = fidx.rdb$index_name\n"
+	addString(ptFirst, "  and fkey.rdb$index_name = fidx.rdb$index_name\n"
 		"  and fidx.rdb$foreign_key = pidx.rdb$index_name\n"
 		"  and fidx.rdb$index_name = fseg.rdb$index_name\n"
 		"  and pidx.rdb$index_name = pseg.rdb$index_name\n"
 		"  and pseg.rdb$field_position = fseg.rdb$field_position"
-		"  and refc.rdb$constraint_name = fkey.rdb$constraint_name"
-		;
+		"  and refc.rdb$constraint_name = fkey.rdb$constraint_name" );
 
 	if (primaryTable && *primaryTable)
-		sql += expandPattern (" and ","pidx.rdb$relation_name", primaryTable);
+		expandPattern (ptFirst, " and ","pidx.rdb$relation_name", primaryTable);
 
 	if (foreignTable && *foreignTable)
-		sql += expandPattern (" and ","fkey.rdb$relation_name", foreignTable);
+		expandPattern (ptFirst, " and ","fkey.rdb$relation_name", foreignTable);
 
-	sql += " order by pidx.rdb$relation_name, pseg.rdb$field_position";
+	addString(ptFirst, " order by pidx.rdb$relation_name, pseg.rdb$field_position\n");
 	prepareStatement (sql);
 	numberColumns = 14;
 }
 
 bool IscCrossReferenceResultSet::next()
 {
-	if (!resultSet->next())
+	if (!IscResultSet::next())
 		return false;
 
-	resultSet->setValue (10, getRule (resultSet->getString (10)));
-	resultSet->setValue (11, getRule (resultSet->getString (11)));
-
-	trimBlanks (3);			// primary key table name
-	trimBlanks (4);			// primary key field name
-	trimBlanks (7);			// foreign key table name
-	trimBlanks (8);			// foreign key field name
-	trimBlanks (12);		// foreign key name
-	trimBlanks (13);		// primary key name
+	int len;
+	sqlda->updateShort ( 10, getRule ( sqlda->getText(15, len)) );
+	sqlda->updateShort ( 11, getRule ( sqlda->getText(16, len)) );
 
 	return true;
 }
@@ -127,6 +124,9 @@ int IscCrossReferenceResultSet::getRule(const char * rule)
 	if (stringEqual (rule, "CASCADE"))
 		return SQL_CASCADE;
 
+	if (stringEqual (rule, "RESTRICT"))
+		return SQL_RESTRICT;
+	
 	if (stringEqual (rule, "SET NULL"))
 		return SQL_SET_NULL;
 	
@@ -142,51 +142,13 @@ bool IscCrossReferenceResultSet::stringEqual(const char * p1, const char * p2)
 		if (*p1++ != *p2++)
 			return false;
 
-	while (*p1)
-		if (*p1++ != ' ')
-			return false;
+	if (*p1 && *p1++ != ' ')
+		return false;
 
-	while (*p2)
-		if (*p2++ != ' ')
-			return false;
+	if (*p2 && *p2++ != ' ')
+		return false;
 
 	return true;
-}
-
-int IscCrossReferenceResultSet::getColumnType(int index, int &realSqlType)
-{
-	switch (index)
-		{
-		case UPD_RULE:					// update rule
-		case DEL_RULE:					// delete rule
-			return JDBC_INTEGER;
-		}
-
-	return Parent::getColumnType (index, realSqlType);
-}
-
-int IscCrossReferenceResultSet::getColumnDisplaySize(int index)
-{
-	switch (index)
-		{
-		case UPD_RULE:					// update rule
-		case DEL_RULE:					// delete rule
-			return 9;
-		}
-
-	return Parent::getColumnDisplaySize (index);
-}
-
-int IscCrossReferenceResultSet::getPrecision(int index)
-{
-	switch (index)
-		{
-		case UPD_RULE:					// update rule
-		case DEL_RULE:					// delete rule
-			return 9;
-		}
-
-	return Parent::getPrecision (index);
 }
 
 }; // end namespace IscDbcLibrary

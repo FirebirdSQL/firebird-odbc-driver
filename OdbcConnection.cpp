@@ -76,8 +76,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "OdbcJdbc.h"
-#include "OdbcConnection.h"
 #include "OdbcEnv.h"
+#include "OdbcConnection.h"
 #include <odbcinst.h>
 #include "SetupAttributes.h"
 #include "IscDbc/Connection.h"
@@ -85,6 +85,7 @@
 #include "OdbcStatement.h"
 #include "OdbcDesc.h"
 #include "ConnectDialog.h"
+#include "SecurityPassword.h"
 
 #ifndef _WIN32
 #define ELF
@@ -105,6 +106,8 @@
 #define ODBC_VERSION_NUMBER	"03.00.0000"
 
 namespace OdbcJdbcLibrary {
+
+using namespace classSecurityPassword;
 
 typedef Connection* (*ConnectFn)();
 
@@ -263,6 +266,11 @@ bool moduleInit()
 	return test;
 }
 
+static int getDriverBuildKey()
+{
+	return MAJOR_VERSION * 1000000 + MINOR_VERSION * 10000 + BUILDNUM_VERSION;
+}
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -283,8 +291,11 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	accessMode			= SQL_MODE_READ_WRITE;
 	transactionIsolation = SQL_TXN_READ_COMMITTED; //suggested by CGA.
 	optTpb				= 0;
+	defOptions			= 0;
 	dialect3			= true;
-	quotedIdentifiers	= true;
+	quotedIdentifier	= true;
+	sensitiveIdentifier  = false;
+	autoQuotedIdentifier = false;
 }
 
 OdbcConnection::~OdbcConnection()
@@ -315,12 +326,22 @@ OdbcObjectType OdbcConnection::getType()
 	return odbcTypeConnection;
 }
 
-RETCODE OdbcConnection::sqlSetConnectAttr (SQLINTEGER attribute, SQLPOINTER value, SQLINTEGER stringLength)
+SQLRETURN OdbcConnection::sqlSetConnectAttr( SQLINTEGER attribute, SQLPOINTER value, SQLINTEGER stringLength )
 {
 	clearErrors();
 
 	switch (attribute)
 	{
+	case SQL_ATTR_HANDLE_DBC_SHARE: // 4000
+		if (connection)
+		{
+			if ( (int) value )
+				connection->connectionToEnvShare();
+			else
+				connection->connectionFromEnvShare();
+		}
+		break;
+
 	case SQL_ATTR_LOGIN_TIMEOUT:
 		connectionTimeout = (int) value;
 		break;
@@ -355,7 +376,7 @@ RETCODE OdbcConnection::sqlSetConnectAttr (SQLINTEGER attribute, SQLPOINTER valu
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectString, int connectStringLength, SQLCHAR * outConnectBuffer, int connectBufferLength, SQLSMALLINT * outStringLength, int driverCompletion)
+SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectString, int connectStringLength, SQLCHAR * outConnectBuffer, int connectBufferLength, SQLSMALLINT * outStringLength, int driverCompletion)
 {
 	clearErrors();
 
@@ -395,23 +416,87 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 			while (p < end && (c = *p++) != ';')
 				*q++ = c;
 		*q = 0;
-		if (!strcmp (name, "DSN"))
+		if (!strncasecmp (name, SETUP_DSN, LEN_KEY(SETUP_DSN)) )
 			dsn = value;
-		else if (!strcmp (name, "DBNAME"))
+		else if (!strncasecmp (name, KEY_FILEDSN, LEN_KEY(KEY_FILEDSN)) )
+			filedsn = value;
+		else if (!strncasecmp (name, KEY_SAVEDSN, LEN_KEY(KEY_SAVEDSN)) )
+			savedsn = value;
+		else if (!strncasecmp (name, KEY_DSN_DATABASE, LEN_KEY(KEY_DSN_DATABASE))
+			|| !strncasecmp (name, SETUP_DBNAME, LEN_KEY(SETUP_DBNAME)) )
 			databaseName = value;
-		else if (!strcmp (name, "UID"))
+		else if (!strncasecmp (name, SETUP_CLIENT, LEN_KEY(SETUP_CLIENT)) )
+			client = value;
+		else if (!strncasecmp (name, KEY_DSN_UID, LEN_KEY(KEY_DSN_UID))
+			|| !strncasecmp (name, SETUP_USER, LEN_KEY(SETUP_USER)))
 			account = value;
-		else if (!strcmp (name, "PWD"))
-			password = value;
-		else if (!strcmp (name, "ROLE"))
+		else if (!strncasecmp (name, KEY_DSN_PWD, LEN_KEY(KEY_DSN_PWD))
+			|| !strncasecmp (name, SETUP_PASSWORD, LEN_KEY(SETUP_PASSWORD)) )
+		{
+			if ( strlen(value) > 40 )
+			{
+				char buffer[256];
+				CSecurityPassword security;
+				security.decode( value, buffer );
+				password = buffer;
+			}
+			else
+				password = value;
+		}
+		else if (!strncasecmp (name, SETUP_ROLE, LEN_KEY(SETUP_ROLE)))
 			role = value;
-		else if (!strcmp (name, "CHARSET"))
+		else if (!strncasecmp (name, KEY_DSN_CHARSET, LEN_KEY(KEY_DSN_CHARSET))
+			|| !strncasecmp (name, SETUP_CHARSET, LEN_KEY(SETUP_CHARSET)) )
 			charset = value;
-		else if (!strcmp (name, "DRIVER"))
+		else if (!strncasecmp (name, SETUP_DRIVER, LEN_KEY(SETUP_DRIVER)) )
 			driver = value;
-		else if (!strcmp (name, "JDBC_DRIVER"))
+		else if (!strncasecmp (name, KEY_DSN_JDBC_DRIVER, LEN_KEY(KEY_DSN_JDBC_DRIVER))
+			|| !strncasecmp (name, SETUP_JDBC_DRIVER, LEN_KEY(SETUP_JDBC_DRIVER)) )
 			jdbcDriver = value;
-		else if (!strcmp (name, "ODBC"))
+		else if (!strncasecmp (name, SETUP_READONLY_TPB, LEN_KEY(SETUP_READONLY_TPB)) )
+		{
+			if( *value == 'Y')
+				optTpb |=TRA_ro;
+
+			defOptions |= DEF_READONLY_TPB;
+		}
+		else if (!strncasecmp (name, SETUP_DIALECT, LEN_KEY(SETUP_DIALECT)) )
+		{
+			if( *value == '1')
+				dialect3 = false;
+
+			defOptions |= DEF_DIALECT;
+		}
+		else if (!strncasecmp (name, SETUP_NOWAIT_TPB, LEN_KEY(SETUP_NOWAIT_TPB)) )
+		{
+			if( *value == 'Y')
+				optTpb |=TRA_nw;
+
+			defOptions |= DEF_NOWAIT_TPB;
+		}
+		else if (!strncasecmp (name, KEY_DSN_QUOTED, LEN_KEY(KEY_DSN_QUOTED))
+			|| !strncasecmp (name, SETUP_QUOTED, LEN_KEY(SETUP_QUOTED)) )
+		{
+			if( *value == 'N')
+				quotedIdentifier = false;
+
+			defOptions |= DEF_QUOTED;
+		}
+		else if ( !strncasecmp (name, SETUP_SENSITIVE, LEN_KEY(SETUP_SENSITIVE)) )
+		{
+			if( *value == 'Y')
+				sensitiveIdentifier = true;
+
+			defOptions |= DEF_SENSITIVE;
+		}
+		else if ( !strncasecmp (name, SETUP_AUTOQUOTED, LEN_KEY(SETUP_AUTOQUOTED)) )
+		{
+			if( *value == 'Y')
+				autoQuotedIdentifier = true;
+
+			defOptions |= DEF_AUTOQUOTED;
+		}
+		else if (!strncasecmp (name, "ODBC", 4))
 			;
 		else
 			postError ("01S00", "Invalid connection string attribute");
@@ -422,50 +507,32 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 	char returnString [1024], *r = returnString;
 
 	*r = '\0';
-	//Block suggested by CGA
-	r = appendString (r, "DSN=");
-	r = appendString (r, dsn);
+
+	if (!dsn.IsEmpty())
+	{
+		r = appendString (r, SETUP_DSN"=");
+		r = appendString (r, dsn);
+	}
 
 	if (!driver.IsEmpty())
 	{
-		r = appendString (r, ";DRIVER=");
+		if ( r > returnString )
+			r = appendString (r, ";"SETUP_DRIVER"=");
+		else
+			r = appendString (r, SETUP_DRIVER"=");
 		r = appendString (r, driver);
 	}
 
 	if (!databaseName.IsEmpty())
 	{
-		r = appendString (r, ";DBNAME=");
+		r = appendString (r, ";"SETUP_DBNAME"=");
 		r = appendString (r, databaseName);
-	}
-
-	if (!account.IsEmpty())
-	{
-		r = appendString (r, ";UID=");
-		r = appendString (r, account);
-	}
-
-	if (!password.IsEmpty())
-	{
-		r = appendString (r, ";PWD=");
-		r = appendString (r, password);
-	}
-
-	if (!role.IsEmpty())
-	{
-		r = appendString (r, ";ROLE=");
-		r = appendString (r, role);
 	}
 
 	if (!charset.IsEmpty())
 	{
-		r = appendString (r, ";CHARSET=");
+		r = appendString (r, ";"KEY_DSN_CHARSET"=");
 		r = appendString (r, charset);
-	}
-
-	if ( outConnectBuffer && connectBufferLength )
-	{
-		if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
-			postError ("01004", "String data, right truncated");
 	}
 
 #ifdef _WIN32
@@ -488,7 +555,7 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 	}
 #endif // _WIN32
 
-	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
+	SQLRETURN ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
 	if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
 		return ret;
@@ -496,10 +563,40 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 	if ( levelBrowseConnect )
 		levelBrowseConnect = 0;
 
+	if ( outConnectBuffer && connectBufferLength )
+	{
+		if (!account.IsEmpty())
+		{
+			r = appendString (r, ";"KEY_DSN_UID"=");
+			r = appendString (r, account);
+		}
+
+		if (!password.IsEmpty())
+		{
+			char buffer[256];
+			CSecurityPassword security;
+			security.encode( (char*)(const char *)password, buffer );
+			r = appendString (r, ";"KEY_DSN_PWD"=");
+			r = appendString (r, buffer);
+		}
+
+		if (!role.IsEmpty())
+		{
+			r = appendString (r, ";"SETUP_ROLE"=");
+			r = appendString (r, role);
+		}
+
+		if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
+			postError ("01004", "String data, right truncated");
+	}
+
+	if (!savedsn.IsEmpty())
+		saveConnectParameters();
+
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, 
+SQLRETURN OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, 
 										 SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, 
 										 SQLSMALLINT * stringLength2Ptr)
 {
@@ -537,7 +634,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 			while (p < end && (c = *p++) != ';')
 				*q++ = c;
 		*q = 0;
-		if (!strcmp (name, "DSN"))
+		if (!strncasecmp (name, "DSN", 3))
 		{
 			if (dsn != (const char *)value)
 			{
@@ -546,7 +643,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 				break;
 			}
 		}
-		else if (!strcmp (name, "DRIVER"))
+		else if (!strncasecmp (name, "DRIVER", 6))
 		{
 			if (driver != (const char *)value)
 			{
@@ -555,7 +652,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 				break;
 			}
 		}
-		else if (!strcmp (name, "JDBC_DRIVER"))
+		else if (!strncasecmp (name, "JDBC_DRIVER", 11))
 		{
 			if (jdbcDriver != (const char *)value)
 			{
@@ -564,33 +661,33 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 				break;
 			}
 		}
-		else if (!strcmp (name, "DBNAME"))
+		else if (!strncasecmp (name, "DBNAME", 6))
 		{
 			levelBrowseConnect = 3;
 			databaseName = value;
 			bFullConnectionString = true;
 		}
-		else if (!strcmp (name, "UID"))
+		else if (!strncasecmp (name, "UID", 3))
 		{
 			account = value;
 			levelBrowseConnect = 2;
 		}
-		else if (!strcmp (name, "PWD"))
+		else if (!strncasecmp (name, "PWD", 3))
 		{
 			password = value;
 			levelBrowseConnect = 2;
 		}
-		else if (!strcmp (name, "ROLE"))
+		else if (!strncasecmp (name, "ROLE", 4))
 		{
 			role = value;
 			levelBrowseConnect = 2;
 		}
-		else if (!strcmp (name, "CHARSET"))
+		else if (!strncasecmp (name, "CHARSET", 7))
 		{
 			charset = value;
 			levelBrowseConnect = 2;
 		}
-		else if (!strcmp (name, "ODBC"))
+		else if (!strncasecmp (name, "ODBC", 4))
 			;
 		else
 			postError ("01S00", "Invalid connection string attribute");
@@ -694,7 +791,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 		return SQL_NEED_DATA;
 	else
 	{
-		RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
+		SQLRETURN ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
 		if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
 			return ret;
@@ -703,27 +800,51 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::sqlNativeSql(SQLCHAR * inStatementText, SQLINTEGER textLength1,
+SQLRETURN OdbcConnection::sqlNativeSql( SQLCHAR * inStatementText, SQLINTEGER textLength1,
 										SQLCHAR * outStatementText, SQLINTEGER bufferLength,
-										SQLINTEGER * textLength2Ptr)
+										SQLINTEGER * textLength2Ptr )
 {
 	clearErrors();
 
+	if ( !inStatementText )
+		return sqlReturn( SQL_ERROR, "HY009", "Invalid use of null pointer" );
+
+	if ( textLength1 == SQL_NTS )
+		textLength1 = strlen( (const char *)inStatementText );
+	else if ( textLength1 < 0 )
+		return sqlReturn( SQL_ERROR, "HY090", "Invalid string or buffer length" );
+
+	JString tempNative;
+	long textLength = textLength1 + 4096;
+	const char * outText;
+	SQLRETURN ret = SQL_SUCCESS;
+
+	if ( !connection->getNativeSql( (const char *)inStatementText, textLength1, 
+						tempNative.getBuffer ( textLength ), textLength, &textLength ) )
+	{
+		textLength = textLength1;
+		outText = (const char *)inStatementText;
+	}
+	else
+		outText = (const char *)tempNative;
+
+	if( textLength2Ptr )
+		*textLength2Ptr = textLength;
+
 	if ( outStatementText )
 	{
-		if ( textLength1 <= bufferLength )
+		if ( textLength >= bufferLength )
 		{
-			if ( !connection->getNativeSql((const char *)inStatementText,textLength1,(char *)outStatementText,bufferLength,textLength2Ptr) )
-			{	
-				memcpy(outStatementText,inStatementText,textLength1);
-				outStatementText[textLength1]='\0';
-				if( textLength2Ptr )
-					*textLength2Ptr = textLength1;
-			}
+			textLength = bufferLength - 1;
+			postError( "01004", "String data, right truncated" );
+			ret = SQL_SUCCESS_WITH_INFO;
 		}
+
+		memcpy( outStatementText, outText, textLength );
+		outStatementText[textLength] = '\0';
 	}
 
-	return sqlSuccess();
+	return ret;
 }
 
 JString OdbcConnection::readAttribute(const char * attribute)
@@ -735,7 +856,23 @@ JString OdbcConnection::readAttribute(const char * attribute)
 	return JString (buffer, ret);
 }
 
-RETCODE OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * supportedPtr)
+JString OdbcConnection::readAttributeFileDSN(const char * attribute)
+{
+	char buffer [256];
+	unsigned short ret;
+
+	if ( SQLReadFileDSN (filedsn, "ODBC", attribute, buffer, sizeof (buffer), &ret) )
+		return JString (buffer, ret);
+
+	return JString ("", 0);
+}
+
+void OdbcConnection::writeAttributeFileDSN(const char * attribute, const char * value)
+{
+	SQLWriteFileDSN (savedsn, "ODBC", attribute, value);
+}
+
+SQLRETURN OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * supportedPtr)
 {
 	clearErrors();
 
@@ -760,7 +897,7 @@ RETCODE OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * 
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::sqlDisconnect()
+SQLRETURN OdbcConnection::sqlDisconnect()
 {
 	if (!connected)
 	{
@@ -793,7 +930,7 @@ RETCODE OdbcConnection::sqlDisconnect()
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * actualLength)
+SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT * actualLength )
 {
 
 	clearErrors();
@@ -917,7 +1054,6 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 			value |= SQL_SU_PRIVILEGE_DEFINITION;
 		break;
 
-		//Added by CGA. 2002-06-25
 	case SQL_SERVER_NAME:
 		string = metaData->getDatabaseServerName();
 		break;
@@ -928,15 +1064,6 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 
 	case SQL_DATA_SOURCE_READ_ONLY:
 		string = (metaData->isReadOnly()) ? "Y" : "N";
-		break;
-
-	case SQL_CURSOR_SENSITIVITY:
-		{
-			if ( metaData->supportsANSI92EntryLevelSQL() )
-				value = SQL_UNSPECIFIED;	// Entry level SQL-92 compliant.
-			if ( metaData->supportsANSI92FullSQL() )
-				value = SQL_INSENSITIVE;	// Full level SQL-92 compliant.
-		}
 		break;
 
 	case SQL_DBMS_NAME:
@@ -1003,52 +1130,6 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 
 	case SQL_LIKE_ESCAPE_CLAUSE:
 		string = metaData->supportsLikeEscapeClause() ? "Y" : "N";
-		break;
-
-	case SQL_DATETIME_LITERALS:
-		value = SQL_DL_SQL92_DATE |
-		        SQL_DL_SQL92_TIME |
-		        SQL_DL_SQL92_TIMESTAMP;
-		break;
-
-	case SQL_CREATE_DOMAIN:
-		{
-			value = 0;
-			if ( metaData->supportsMinimumSQLGrammar() )
-				value |= 0;
-			if ( metaData->supportsCoreSQLGrammar() )
-				value = SQL_CDO_CREATE_DOMAIN	|
-				        SQL_CDO_DEFAULT			|
-				        SQL_CDO_CONSTRAINT		|
-				        SQL_CDO_COLLATION;
-			if ( metaData->supportsANSI92FullSQL() )
-				value |= 0;
-		}
-		break;
-
-	case SQL_CREATE_TABLE:
-		{
-			value = 0;
-			if ( metaData->supportsMinimumSQLGrammar() )
-				value |= SQL_CT_CREATE_TABLE		|
-				         SQL_CT_COLUMN_CONSTRAINT	|
-				         SQL_CT_COLUMN_DEFAULT		|
-				         SQL_CT_TABLE_CONSTRAINT;
-			if ( metaData->supportsCoreSQLGrammar() )
-				value |= SQL_CT_CONSTRAINT_NAME_DEFINITION;
-			if ( metaData->supportsExtendedSQLGrammar() )
-				value |= SQL_CT_COLUMN_COLLATION;
-		}
-		break;
-
-	case SQL_FILE_USAGE:
-		{
-			value =  SQL_FILE_NOT_SUPPORTED;
-			if ( metaData->usesLocalFiles() )
-				value = SQL_FILE_TABLE;
-			if ( metaData->usesLocalFilePerTable() )
-				value = SQL_FILE_CATALOG;
-		}
 		break;
 
 	case SQL_TXN_ISOLATION_OPTION:
@@ -1155,103 +1236,12 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 		}
 		break;
 
-	case SQL_STRING_FUNCTIONS:
-		value = SQL_FN_STR_UCASE |
-		        SQL_FN_STR_SUBSTRING;
-		break;
-
-	case SQL_NUMERIC_FUNCTIONS:
-		value = 0;
-		break;
-
-	case SQL_TIMEDATE_FUNCTIONS:
-		value |= SQL_FN_TD_EXTRACT;
-		break;
-
-	case SQL_SYSTEM_FUNCTIONS:
-		value = SQL_FN_SYS_USERNAME |
-		        SQL_FN_SYS_DBNAME;
-		break;
-
 	case SQL_EXPRESSIONS_IN_ORDERBY:
 		string = metaData->supportsExpressionsInOrderBy() ? "Y" : "N";
 		break;
 
 	case SQL_ORDER_BY_COLUMNS_IN_SELECT:
 		string = metaData->supportsOrderByUnrelated() ? "Y" : "N";
-		break;
-
-	case SQL_CONVERT_FUNCTIONS:
-		value |= SQL_FN_CVT_CAST;
-		break;
-
-	case SQL_CONVERT_NUMERIC:
-		if ( metaData->supportsConvert() )
-		{
-			if ( metaData->supportsConvert(SQL_NUMERIC, SQL_CHAR) )
-				value |= SQL_CVT_CHAR;
-			if ( metaData->supportsConvert(SQL_NUMERIC, SQL_VARCHAR) )
-				value |= SQL_CVT_VARCHAR;
-			if ( metaData->supportsConvert(SQL_NUMERIC, SQL_TYPE_DATE) )
-				value |= SQL_CVT_DATE;
-			if ( metaData->supportsConvert(SQL_NUMERIC, SQL_TYPE_TIME) )
-				value |= SQL_CVT_TIME;
-			if ( metaData->supportsConvert(SQL_NUMERIC, SQL_TYPE_TIMESTAMP) )
-				value |= SQL_CVT_TIMESTAMP;
-		}
-		break;
-
-	case SQL_CONVERT_DATE:
-		if ( metaData->supportsConvert() )
-		{
-			if ( metaData->supportsConvert(SQL_TYPE_DATE, SQL_CHAR) )
-				value |= SQL_CVT_CHAR;
-			if ( metaData->supportsConvert(SQL_TYPE_DATE, SQL_VARCHAR) )
-				value |= SQL_CVT_VARCHAR;
-			if ( metaData->supportsConvert(SQL_TYPE_DATE, SQL_TYPE_TIMESTAMP) )
-				value |= SQL_CVT_TIMESTAMP;
-		}
-		break;
-
-	case SQL_CONVERT_TIME:
-		if ( metaData->supportsConvert() )
-		{
-			if ( metaData->supportsConvert(SQL_TYPE_TIME, SQL_CHAR) )
-				value |= SQL_CVT_CHAR;
-			if ( metaData->supportsConvert(SQL_TYPE_TIME, SQL_VARCHAR) )
-				value |= SQL_CVT_VARCHAR;
-			if ( metaData->supportsConvert(SQL_TYPE_TIME, SQL_TYPE_TIMESTAMP) )
-				value |= SQL_CVT_TIMESTAMP;
-		}
-		break;
-
-	case SQL_CONVERT_CHAR:
-	case SQL_CONVERT_VARCHAR:
-		if ( metaData->supportsConvert() )
-		{
-			if ( metaData->supportsConvert(SQL_CHAR, SQL_NUMERIC) )
-				value |= SQL_CVT_NUMERIC;
-			if ( metaData->supportsConvert(SQL_CHAR, SQL_TYPE_DATE) )
-				value |= SQL_CVT_DATE;
-			if ( metaData->supportsConvert(SQL_CHAR, SQL_TYPE_TIME) )
-				value |= SQL_CVT_TIME;
-			if ( metaData->supportsConvert(SQL_CHAR, SQL_TYPE_TIMESTAMP) )
-				value |= SQL_CVT_TIMESTAMP;
-		}
-		break;
-
-	case SQL_CONVERT_TIMESTAMP:
-		if ( metaData->supportsConvert() )
-		{
-			if ( metaData->supportsConvert(SQL_TYPE_TIMESTAMP, SQL_CHAR) )
-				value |= SQL_CVT_CHAR;
-			if ( metaData->supportsConvert(SQL_TYPE_TIMESTAMP, SQL_VARCHAR) )
-				value |= SQL_CVT_VARCHAR;
-			if ( metaData->supportsConvert(SQL_TYPE_TIMESTAMP, SQL_TYPE_DATE) )
-				value |= SQL_CVT_DATE;
-			if ( metaData->supportsConvert(SQL_TYPE_TIMESTAMP, SQL_TYPE_TIME) )
-				value |= SQL_CVT_TIME;
-		}
 		break;
 
 	case SQL_IDENTIFIER_CASE:
@@ -1293,188 +1283,10 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 			value |= SQL_NC_END;
 		break;
 
-	case SQL_DYNAMIC_CURSOR_ATTRIBUTES1:
-		break;
-
-	case SQL_DYNAMIC_CURSOR_ATTRIBUTES2:
-		break;
-
-	case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES1:
-		break;
-
-	case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES2:
-		break;
-
-	case SQL_STATIC_CURSOR_ATTRIBUTES1:
-		break;
-
-	case SQL_STATIC_CURSOR_ATTRIBUTES2:
-		break;
-
 	case SQL_PROCEDURE_TERM:
 		string = metaData->getProcedureTerm();
 		break;
-
-	case SQL_OUTER_JOINS:
-		if (metaData->supportsFullOuterJoins())
-			string = "F";
-		else if (metaData->supportsLimitedOuterJoins())
-			string = "P";
-		else if (metaData->supportsOuterJoins())
-			string = "Y";
-		else
-			string = "N";
-		break;
-
-	case SQL_OJ_CAPABILITIES:
-		if (metaData->supportsFullOuterJoins())
-			value = SQL_OJ_LEFT | SQL_OJ_RIGHT | SQL_OJ_FULL | SQL_OJ_NESTED |
-			        SQL_OJ_NOT_ORDERED | SQL_OJ_INNER | SQL_OJ_ALL_COMPARISON_OPS;
-		else if (metaData->supportsLimitedOuterJoins())
-			value = 0;
-		else if (metaData->supportsOuterJoins())
-			value = 0;
-		else
-			value = 0;
-		break;
-
-	case SQL_STANDARD_CLI_CONFORMANCE:
-		value = SQL_SCC_ISO92_CLI;
-		break;
-
-	case SQL_SQL92_PREDICATES:
-		{
-			value = 0;
-			if ( metaData->supportsANSI92EntryLevelSQL() )
-			{
-				value |= SQL_SP_BETWEEN    |
-				         SQL_SP_EXISTS    |
-				         SQL_SP_IN        |
-				         SQL_SP_ISNOTNULL|
-				         SQL_SP_ISNULL    |
-				         SQL_SP_LIKE;
-				// SQL_SP_QUANTIFIED_COMPARISON
-				// SQL_SP_UNIQUE
-			}
-			if ( metaData->supportsANSI92IntermediateSQL() )
-				value |= SQL_SP_OVERLAPS;
-			if ( metaData->supportsANSI92FullSQL() )
-				value |= SQL_SP_MATCH_FULL            |
-				         SQL_SP_MATCH_PARTIAL        |
-				         SQL_SP_MATCH_UNIQUE_FULL    |
-				         SQL_SP_MATCH_UNIQUE_PARTIAL    |
-				         SQL_SP_ISNULL    |
-				         SQL_SP_LIKE;
-		}
-		break;
-
-
-	case SQL_SQL92_GRANT:
-		{
-			value = 0;
-			if ( metaData->supportsANSI92EntryLevelSQL() )
-			{
-				value |= SQL_SG_DELETE_TABLE    |
-				         SQL_SG_INSERT_TABLE    |
-				         SQL_SG_REFERENCES_COLUMN |
-				         SQL_SG_REFERENCES_TABLE    |
-				         SQL_SG_SELECT_TABLE    |
-				         SQL_SG_UPDATE_COLUMN    |
-				         SQL_SG_UPDATE_TABLE    |
-				         SQL_SG_WITH_GRANT_OPTION ;
-			}
-			if ( metaData->supportsANSI92IntermediateSQL() )
-				value |= SQL_SG_USAGE_ON_DOMAIN    |
-				         SQL_SG_USAGE_ON_CHARACTER_SET |
-				         SQL_SG_USAGE_ON_COLLATION |
-				         SQL_SG_USAGE_ON_TRANSLATION;
-			// if ( metaData->supportsANSI92FullSQL() )
-		}
-		break;
-
-	case SQL_SQL92_REVOKE:
-		{
-			value = 0;
-			if ( metaData->supportsANSI92EntryLevelSQL() )
-				value |= SQL_SR_DELETE_TABLE    |
-				         SQL_SR_INSERT_TABLE    |
-				         SQL_SR_REFERENCES_COLUMN |
-				         SQL_SR_REFERENCES_TABLE    |
-				         SQL_SR_SELECT_TABLE    |
-				         SQL_SR_UPDATE_COLUMN    |
-				         SQL_SR_UPDATE_TABLE;
-			if ( metaData->supportsANSI92IntermediateSQL() )
-				value |= SQL_SR_CASCADE            |
-				         SQL_SR_GRANT_OPTION_FOR |
-				         SQL_SR_INSERT_COLUMN    |
-				         SQL_SR_RESTRICT        |
-				         SQL_SR_USAGE_ON_DOMAIN    |
-				         SQL_SR_USAGE_ON_CHARACTER_SET |
-				         SQL_SR_USAGE_ON_COLLATION |
-				         SQL_SR_USAGE_ON_TRANSLATION;
-			// if ( metaData->supportsANSI92FullSQL() )
-		}
-		break;
-
-	case SQL_SQL92_DATETIME_FUNCTIONS:
-		value |= SQL_SDF_CURRENT_DATE |
-		         SQL_SDF_CURRENT_TIME |
-		         SQL_SDF_CURRENT_TIMESTAMP;
-		break;
-
-
-	case SQL_SQL92_FOREIGN_KEY_DELETE_RULE:
-		value |= SQL_SFKD_CASCADE    |
-		         SQL_SFKD_NO_ACTION |
-		         SQL_SFKD_SET_DEFAULT |
-		         SQL_SFKD_SET_NULL;
-		break;
-
-	case SQL_SQL92_FOREIGN_KEY_UPDATE_RULE:
-		value |= SQL_SFKU_CASCADE    |
-		         SQL_SFKU_NO_ACTION |
-		         SQL_SFKU_SET_DEFAULT |
-		         SQL_SFKU_SET_NULL;
-		break;
-
-	case SQL_SQL92_RELATIONAL_JOIN_OPERATORS:
-		{
-			value = 0;
-			if ( metaData->supportsANSI92EntryLevelSQL() )
-				value |= SQL_SRJO_LEFT_OUTER_JOIN |    // (FIPS Transitional level)
-				         SQL_SRJO_NATURAL_JOIN    |    // (FIPS Transitional level)
-				         SQL_SRJO_INNER_JOIN    |    // (FIPS Transitional level)
-				         SQL_SRJO_RIGHT_OUTER_JOIN; // (FIPS Transitional level)
-
-			if ( metaData->supportsANSI92IntermediateSQL() )
-				value |= SQL_SRJO_CORRESPONDING_CLAUSE |
-				         SQL_SRJO_EXCEPT_JOIN |
-				         SQL_SRJO_FULL_OUTER_JOIN |
-				         SQL_SRJO_INTERSECT_JOIN;
-						 
-			if ( metaData->supportsANSI92FullSQL() )
-				value |= SQL_SRJO_CROSS_JOIN |
-				         SQL_SRJO_UNION_JOIN;
-		}
-		break;
-
-	case SQL_SQL92_VALUE_EXPRESSIONS:
-		{
-			value = 0;
-			if ( metaData->supportsANSI92EntryLevelSQL() )
-				value |= SQL_SVE_CAST; // (FIPS Transitional level)
-
-			if ( metaData->supportsANSI92IntermediateSQL() )
-				value |= SQL_SVE_CASE |
-				         SQL_SVE_COALESCE |
-				         SQL_SVE_NULLIF;
-
-			// if ( metaData->supportsANSI92FullSQL() )
-		}
-		break;
 	}
-
-	//char temp [256];
 
 	switch (item->type)
 	{
@@ -1535,7 +1347,7 @@ char* OdbcConnection::appendString(char * ptr, const char * string)
 	return ptr;
 }
 
-RETCODE OdbcConnection::allocHandle(int handleType, SQLHANDLE * outputHandle)
+SQLRETURN OdbcConnection::allocHandle(int handleType, SQLHANDLE * outputHandle)
 {
 	clearErrors();
 	if ( handleType == SQL_HANDLE_DESC )
@@ -1575,7 +1387,7 @@ void OdbcConnection::UnLock()
 	connection->getMetaData()->UnLockThread();
 }
 
-RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQLCHAR *uid, int uidLength, SQLCHAR * passwd, int passwdLength)
+SQLRETURN OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQLCHAR *uid, int uidLength, SQLCHAR * passwd, int passwdLength)
 {
 	clearErrors();
 
@@ -1590,7 +1402,7 @@ RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQ
 	role = "";
 	charset = "";
 	expandConnectParameters();
-	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
+	SQLRETURN ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
 	if (ret != SQL_SUCCESS)
 		return ret;
@@ -1601,7 +1413,7 @@ RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQ
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * databaseName, const char * account, const char * password, const char * role, const char * charset)
+SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databaseName, const char * account, const char * password, const char * role, const char * charset)
 {
 	Properties *properties = NULL;
 
@@ -1658,6 +1470,27 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 #endif
 		connection = (fn)();
 		//connection = createConnection();
+
+		if ( getDriverBuildKey() != connection->getDriverBuildKey() )
+		{
+			connection->close();
+			connection = NULL;
+			env->envShare = NULL;
+
+#ifdef _WIN32
+			FreeLibrary(env->libraryHandle);
+			env->libraryHandle = NULL;
+#endif
+#ifdef ELF
+			dlclose (env->libraryHandle);
+			env->libraryHandle = 0;
+#endif
+
+			JString text;
+			text.Format (" Unable to load %s Library : can't find ver. %s ", sharedLibrary, DRIVER_VERSION);
+			return sqlReturn (SQL_ERROR, "HY000", text);
+		}
+
 		properties = connection->allocProperties();
 		if (account)
 			properties->putValue ("user", account);
@@ -1672,10 +1505,14 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 
 		properties->putValue ("dialect", dialect3 ? "3" : "1");
 
-		properties->putValue ("quoted", quotedIdentifiers ? "Y" : "N");
+		properties->putValue ("quoted", quotedIdentifier ? "Y" : "N");
+		properties->putValue ("sensitive", sensitiveIdentifier ? "Y" : "N");
+		properties->putValue ("autoQuoted", autoQuotedIdentifier ? "Y" : "N");
 
 		connection->openDatabase (databaseName, properties);
 		properties->release();
+
+		env->envShare = connection->getEnvironmentShare();
 
 		// Next two lines added by CA
 		connection->setAutoCommit( autoCommit );
@@ -1684,6 +1521,8 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 	}
 	catch (SQLException& exception)
 	{
+		if ( env->envShare )
+			env->envShare = NULL;
 		if (properties)
 			properties->release();
 		JString text = exception.getText();
@@ -1697,7 +1536,7 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 	return SQL_SUCCESS;
 }
 
-RETCODE OdbcConnection::sqlEndTran(int operation)
+SQLRETURN OdbcConnection::sqlEndTran(int operation)
 {
 	clearErrors();
 
@@ -1749,7 +1588,18 @@ void OdbcConnection::expandConnectParameters()
 			account = readAttribute (SETUP_USER);
 
 		if (password.IsEmpty())
-			password = readAttribute (SETUP_PASSWORD);
+		{
+			JString pass = readAttribute (SETUP_PASSWORD);
+			if ( pass.length() > 40 )
+			{
+				char buffer[256];
+				CSecurityPassword security;
+				security.decode( (char*)(const char *)pass, buffer );
+				password = buffer;
+			}
+			else
+				password = pass;
+		}
 
 		if (jdbcDriver.IsEmpty())
 			jdbcDriver = readAttribute (SETUP_JDBC_DRIVER);
@@ -1760,30 +1610,170 @@ void OdbcConnection::expandConnectParameters()
 		if (charset.IsEmpty())
 			charset = readAttribute(SETUP_CHARSET);
 
-		optTpb = 0;
-		options = readAttribute(SETUP_READONLY_TPB);
+		if ( !(defOptions & DEF_READONLY_TPB) )
+		{
+			options = readAttribute(SETUP_READONLY_TPB);
 
-		if(*(const char *)options == 'Y')
-			optTpb |=TRA_ro;
+			if(*(const char *)options == 'Y')
+				optTpb |=TRA_ro;
+		}
 
-		options = readAttribute(SETUP_NOWAIT_TPB);
+		if ( !(defOptions & DEF_NOWAIT_TPB) )
+		{
+			options = readAttribute(SETUP_NOWAIT_TPB);
 
-		if(*(const char *)options == 'Y')
-			optTpb |=TRA_nw;
+			if(*(const char *)options == 'Y')
+				optTpb |=TRA_nw;
+		}
 
-		options = readAttribute(SETUP_DIALECT);
+		if ( !(defOptions & DEF_DIALECT) )
+		{
+			options = readAttribute(SETUP_DIALECT);
 
-		if(*(const char *)options == '1')
-			dialect3 = false;
+			if(*(const char *)options == '1')
+				dialect3 = false;
+		}
 
-		options = readAttribute(SETUP_QUOTED);
+		if ( !(defOptions & DEF_QUOTED) )
+		{
+			options = readAttribute(SETUP_QUOTED);
 
-		if(*(const char *)options == 'N')
-			quotedIdentifiers = false;
+			if(*(const char *)options == 'N')
+				quotedIdentifier = false;
+		}
+
+		if ( !(defOptions & DEF_SENSITIVE) )
+		{
+			options = readAttribute(SETUP_SENSITIVE);
+
+			if(*(const char *)options == 'Y')
+				sensitiveIdentifier = true;
+		}
+
+		if ( !(defOptions & DEF_AUTOQUOTED) )
+		{
+			options = readAttribute(SETUP_AUTOQUOTED);
+
+			if(*(const char *)options == 'Y')
+				autoQuotedIdentifier = true;
+		}
+	}
+	else if (!filedsn.IsEmpty())
+	{
+		JString options;
+
+		if (databaseName.IsEmpty())
+			databaseName = readAttributeFileDSN (SETUP_DBNAME);
+
+		if (client.IsEmpty())
+			client = readAttributeFileDSN (SETUP_CLIENT);
+
+		if (account.IsEmpty())
+			account = readAttributeFileDSN (SETUP_USER);
+
+		if (password.IsEmpty())
+		{
+			JString pass = readAttributeFileDSN (SETUP_PASSWORD);
+			if ( pass.length() > 40 )
+			{
+				char buffer[256];
+				CSecurityPassword security;
+				security.decode( (char*)(const char *)pass, buffer );
+				password = buffer;
+			}
+			else
+				password = pass;
+		}
+
+		if (jdbcDriver.IsEmpty())
+			jdbcDriver = readAttributeFileDSN (SETUP_JDBC_DRIVER);
+
+		if (role.IsEmpty())
+			role = readAttributeFileDSN (SETUP_ROLE);
+
+		if (charset.IsEmpty())
+			charset = readAttributeFileDSN (SETUP_CHARSET);
+
+		if ( !(defOptions & DEF_READONLY_TPB) )
+		{
+			options = readAttributeFileDSN (SETUP_READONLY_TPB);
+
+			if(*(const char *)options == 'Y')
+				optTpb |=TRA_ro;
+		}
+
+		if ( !(defOptions & DEF_NOWAIT_TPB) )
+		{
+			options = readAttributeFileDSN (SETUP_NOWAIT_TPB);
+
+			if(*(const char *)options == 'Y')
+				optTpb |=TRA_nw;
+		}
+
+		if ( !(defOptions & DEF_DIALECT) )
+		{
+			options = readAttributeFileDSN (SETUP_DIALECT);
+
+			if(*(const char *)options == '1')
+				dialect3 = false;
+		}
+
+		if ( !(defOptions & DEF_QUOTED) )
+		{
+			options = readAttributeFileDSN (SETUP_QUOTED);
+
+			if(*(const char *)options == 'N')
+				quotedIdentifier = false;
+		}
+
+		if ( !(defOptions & DEF_SENSITIVE) )
+		{
+			options = readAttribute(SETUP_SENSITIVE);
+
+			if(*(const char *)options == 'Y')
+				sensitiveIdentifier = true;
+		}
+
+		if ( !(defOptions & DEF_AUTOQUOTED) )
+		{
+			options = readAttribute(SETUP_AUTOQUOTED);
+
+			if(*(const char *)options == 'Y')
+				autoQuotedIdentifier = true;
+		}
+
+		if (dsn.IsEmpty())
+		{
+			dsn = readAttributeFileDSN (SETUP_DSN);
+			if (!dsn.IsEmpty())
+				expandConnectParameters();
+		}
 	}
 
 	if (jdbcDriver.IsEmpty())
 		jdbcDriver = DEFAULT_DRIVER;
+}
+
+void OdbcConnection::saveConnectParameters()
+{
+	writeAttributeFileDSN (SETUP_DRIVER, DRIVER_FULL_NAME);
+	writeAttributeFileDSN (SETUP_DBNAME, databaseName);
+	writeAttributeFileDSN (SETUP_CLIENT, client);
+	writeAttributeFileDSN (SETUP_USER, account);
+	writeAttributeFileDSN (SETUP_ROLE, role);
+	writeAttributeFileDSN (SETUP_CHARSET, charset);
+	writeAttributeFileDSN (SETUP_JDBC_DRIVER, jdbcDriver);
+	writeAttributeFileDSN (SETUP_READONLY_TPB, (optTpb & TRA_ro) ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_NOWAIT_TPB, (optTpb & TRA_nw) ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_DIALECT, dialect3 ? "3" : "1");
+	writeAttributeFileDSN (SETUP_QUOTED, quotedIdentifier ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_SENSITIVE, sensitiveIdentifier ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_AUTOQUOTED, autoQuotedIdentifier ? "Y" : "N");
+
+	char buffer[256];
+	CSecurityPassword security;
+	security.encode( (char*)(const char *)password, buffer );
+	writeAttributeFileDSN (SETUP_PASSWORD, buffer);
 }
 
 OdbcDesc* OdbcConnection::allocDescriptor(OdbcDescType type)
@@ -1805,7 +1795,7 @@ void OdbcConnection::descriptorDeleted(OdbcDesc * descriptor)
 		}
 }
 
-RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
+SQLRETURN OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
 {
 	clearErrors();
 	long value;

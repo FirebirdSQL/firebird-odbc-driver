@@ -23,12 +23,8 @@
 //////////////////////////////////////////////////////////////////////
 
 
-#if !defined(AFX_DATETIME_H__84FD1970_A97F_11D2_AB5C_0000C01D2301__INCLUDED_)
-#define AFX_DATETIME_H__84FD1970_A97F_11D2_AB5C_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_DATETIME_H_)
+#define _DATETIME_H_
 
 namespace IscDbcLibrary {
 
@@ -53,4 +49,4 @@ public:
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_DATETIME_H__84FD1970_A97F_11D2_AB5C_0000C01D2301__INCLUDED_)
+#endif // !defined(_DATETIME_H_)

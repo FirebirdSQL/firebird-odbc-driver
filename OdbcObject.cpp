@@ -51,7 +51,7 @@ OdbcObject::~OdbcObject()
 	clearErrors();
 }
 
-RETCODE OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT* returnLength, const char * value)
+SQLRETURN OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT* returnLength, const char * value)
 {
 	int count = strlen (value);
 	*returnLength = count;
@@ -73,7 +73,7 @@ RETCODE OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLS
 	return sqlReturn (SQL_SUCCESS_WITH_INFO, "01004", "String data, right truncated");
 }
 
-RETCODE OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLINTEGER *returnLength, const char *value)
+SQLRETURN OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLINTEGER *returnLength, const char *value)
 {
 	int count = strlen (value);
 	*returnLength = count;
@@ -110,7 +110,7 @@ int OdbcObject::sqlSuccess()
 	return SQL_SUCCESS;
 }
 
-RETCODE OdbcObject::allocHandle(int handleType, SQLHANDLE * outputHandle)
+SQLRETURN OdbcObject::allocHandle(int handleType, SQLHANDLE * outputHandle)
 {
 	*outputHandle = (SQLHANDLE)NULL;
 
@@ -185,14 +185,14 @@ bool OdbcObject::appendString(const char * string, int stringLength, SQLCHAR * t
 	return true;
 }
 
-RETCODE OdbcObject::sqlError(UCHAR * stateBuffer, SDWORD * nativeCode, UCHAR * msgBuffer, int msgBufferLength, SWORD * msgLength)
+SQLRETURN OdbcObject::sqlError(UCHAR * stateBuffer, SDWORD * nativeCode, UCHAR * msgBuffer, int msgBufferLength, SWORD * msgLength)
 {
 	OdbcError *error = errors;
 
 	if (error)
 		{
 		errors = error->next;
-		RETCODE ret = error->sqlGetDiagRec (stateBuffer, nativeCode, msgBuffer, msgBufferLength, msgLength);
+		SQLRETURN ret = error->sqlGetDiagRec (stateBuffer, nativeCode, msgBuffer, msgBufferLength, msgLength);
 		delete error;
 		return ret;
 		}
@@ -261,7 +261,7 @@ OdbcError* OdbcObject::postError(const char * state, JString msg)
 	return postError (new OdbcError (0, state, msg));
 }
 
-RETCODE OdbcObject::sqlGetDiagRec(int handleType, int recNumber, SQLCHAR * stateBuffer, SQLINTEGER * nativeCode, SQLCHAR * msgBuffer, int msgBufferLength, SQLSMALLINT * msgLength)
+SQLRETURN OdbcObject::sqlGetDiagRec(int handleType, int recNumber, SQLCHAR * stateBuffer, SQLINTEGER * nativeCode, SQLCHAR * msgBuffer, int msgBufferLength, SQLSMALLINT * msgLength)
 {
 	int n = 1;
 
@@ -280,7 +280,7 @@ RETCODE OdbcObject::sqlGetDiagRec(int handleType, int recNumber, SQLCHAR * state
 	return SQL_NO_DATA_FOUND;
 }
 
-RETCODE OdbcObject::sqlGetDiagField(int recNumber, int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength)
+SQLRETURN OdbcObject::sqlGetDiagField(int recNumber, int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength)
 {
 	int n = 1;
 
@@ -334,66 +334,6 @@ RETCODE OdbcObject::sqlGetDiagField(int recNumber, int diagId, SQLPOINTER ptr, i
 			return error->sqlGetDiagField (diagId, ptr, bufferLength, stringLength);
 
 	return SQL_NO_DATA_FOUND;
-}
-
-int OdbcObject::getCType(int type, bool isSigned)
-{
-	switch (type)
-		{
-		case SQL_CHAR:
-		case SQL_VARCHAR:
-		case SQL_LONGVARCHAR:
-		case SQL_DECIMAL:
-		case SQL_NUMERIC:
-			return SQL_C_CHAR;
-
-		case SQL_TINYINT:
-			return (isSigned) ? SQL_C_STINYINT : SQL_C_UTINYINT;
-
-		case SQL_SMALLINT:
-			return (isSigned) ? SQL_C_SSHORT : SQL_C_USHORT;
-
-		case SQL_INTEGER:
-			return (isSigned) ? SQL_C_SLONG : SQL_C_ULONG;
-
-		case SQL_BIGINT:
-			return (isSigned) ? SQL_C_SBIGINT : SQL_C_UBIGINT;
-
-		case SQL_REAL:
-			return SQL_C_FLOAT;
-
-		case SQL_FLOAT:
-		case SQL_DOUBLE:
-			return SQL_C_DOUBLE;
-
-		case SQL_BIT:
-			return SQL_C_BIT;
-
-		case SQL_BINARY:
-		case SQL_VARBINARY:
-		case SQL_LONGVARBINARY:
-			return SQL_C_BINARY;
-
-		case SQL_DATE:
-			return SQL_C_DATE;
-
-		case SQL_TYPE_DATE:
-			return SQL_C_TYPE_DATE;
-
-		case SQL_TIME:
-			return SQL_C_TIME;
-
-		case SQL_TYPE_TIME:
-			return SQL_C_TYPE_TIME;
-
-		case SQL_TIMESTAMP:
-			return SQL_C_TIMESTAMP;
-
-		case SQL_TYPE_TIMESTAMP:
-			return SQL_C_TYPE_TIMESTAMP;
-		}
-
-	return type;
 }
 
 void OdbcObject::setCursorRowCount(int count)

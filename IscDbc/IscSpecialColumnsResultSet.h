@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCSPECIALCOLUMNSRESULTSET_H__87400B75_EA1F_46D6_BBED_83CE5B36BCE3__INCLUDED_)
-#define AFX_ISCSPECIALCOLUMNSRESULTSET_H__87400B75_EA1F_46D6_BBED_83CE5B36BCE3__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#if !defined(_ISCSPECIALCOLUMNSRESULTSET_H_)
+#define _ISCSPECIALCOLUMNSRESULTSET_H_
 
 #include "IscMetaDataResultSet.h"
 #include "IscSqlType.h"
@@ -40,16 +36,12 @@ public:
 	IscSpecialColumnsResultSet(IscDatabaseMetaData *metaData);
 	virtual void specialColumns (const char * catalog, const char * schema, const char * table, int scope, int nullable);
 	bool next();
-	typedef IscMetaDataResultSet Parent;
-	virtual int getColumnType (int index, int &realSqlType);
-	virtual int IscSpecialColumnsResultSet::getColumnDisplaySize(int index);
-	virtual int IscSpecialColumnsResultSet::getPrecision(int index);
 
 private:
-	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType sqlType);
-	virtual void adjustResults (IscSqlType sqlType);
+	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType &sqlType);
+	virtual void adjustResults (IscSqlType &sqlType);
 	int	index_id;	
-
+	IscSqlType sqlType;
 };
 
 }; // end namespace IscDbcLibrary

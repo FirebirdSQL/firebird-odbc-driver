@@ -22,22 +22,31 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCSQLTYPE_H__32C6E499_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
-#define AFX_ISCSQLTYPE_H__32C6E499_2C14_11D4_98E0_0000C01D2301__INCLUDED_
+#if !defined(_ISCSQLTYPE_H_)
+#define _ISCSQLTYPE_H_
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#include <string.h>
 
 namespace IscDbcLibrary {
 
 class IscSqlType  
 {
 public:
-	void getType (int blrType, int subType, int length, int bufferLen, int dialect, int precision, int scale);
-	IscSqlType(int blrType, int subType, int length, int bufferLen, int dialect, int precision, int scale);
-	~IscSqlType();
+	IscSqlType() { memset ( this, 0, sizeof ( *this ) ); }
 
+	void buildType ();
+
+public:		// In
+	int		blrType;
+	int		subType;
+	int		lengthIn;
+	int		dialect;
+	int		precisionIn;
+	int		scale;
+	int		collationId;
+	int		characterId;
+
+public:		// Out
 	int		type;
 	char	*typeName;
 	int		length;
@@ -47,4 +56,4 @@ public:
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCSQLTYPE_H__32C6E499_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCSQLTYPE_H_)

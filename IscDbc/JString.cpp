@@ -291,7 +291,7 @@ append (string.string);
 return *this;
 }
 
-JString JString::operator + (const char *string)
+JString operator + (const JString& string1, const char *string2)
 {
 /**************************************
  *
@@ -303,8 +303,11 @@ JString JString::operator + (const char *string)
  *		Return string as string.
  *
  **************************************/
-	append (string);
-	return *this;
+JString	s = string1;
+
+s.append (string2);
+
+return s;
 }
 
 void JString::release ()

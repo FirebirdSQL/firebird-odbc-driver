@@ -22,14 +22,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCCOLUMNSMETADATA_H__6C3E2ABA_229F_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCCOLUMNSMETADATA_H__6C3E2ABA_229F_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCCOLUMNSMETADATA_H_)
+#define _ISCCOLUMNSMETADATA_H_
 
 #include "IscMetaDataResultSet.h"
+#include "IscBlob.h"
+#include "IscArray.h"
 #include "IscSqlType.h"
 
 namespace IscDbcLibrary {
@@ -37,21 +35,21 @@ namespace IscDbcLibrary {
 class IscColumnsResultSet : public IscMetaDataResultSet  
 {
 public:
-	virtual int getPrecision (int index);
-	virtual int getColumnDisplaySize(int index);
-	typedef IscMetaDataResultSet Parent;
-
-	virtual int getColumnType (int index, int &realSqlType);
 	virtual bool next();
 	void getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern);
 	IscColumnsResultSet(IscDatabaseMetaData *metaData);
+	void initResultSet(IscStatement *stmt);
 private:
-	virtual bool getBLRLiteral (int indexIn, int indexTarget, IscSqlType sqlType);
-	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType sqlType);
-	virtual void checkQuotes (IscSqlType sqlType, JString stringVal);
-	virtual void adjustResults (IscSqlType sqlType);	
+	virtual bool getDefSource (int indexIn, int indexTarget);
+	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType &sqlType);
+	virtual void checkQuotes (IscSqlType &sqlType, JString stringVal);
+	virtual void adjustResults (IscSqlType &sqlType);	
+
+	IscBlob blob;
+	CAttrArray arrAttr;
+	IscSqlType sqlType;
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCCOLUMNSMETADATA_H__6C3E2ABA_229F_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCCOLUMNSMETADATA_H_)

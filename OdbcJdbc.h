@@ -36,7 +36,13 @@
 
 #ifdef DEBUG 
 #ifdef LOGGING
+
+#ifdef _WIN32
 #define LOG_FILE "c:\\odbc.log"
+#else
+#define LOG_FILE "/tmp/odbc.log"
+#endif
+
 void logMsg (const char *msg);
 #define LOG_MSG(msg)	logMsg (msg)
 
@@ -52,6 +58,12 @@ void logMsg (const char *msg);
 #include <sqlext.h>
 #include "IscDbc/JavaType.h"
 
+#ifndef SQLLEN
+#define SQLLEN			SQLINTEGER
+#define SQLULEN			SQLUINTEGER
+#define SQLSETPOSIROW	SQLUSMALLINT
+#endif
+
 #ifndef NULL
 #define NULL				0
 #endif
@@ -66,7 +78,14 @@ void logMsg (const char *msg);
 #define MIN(a,b)			((a < b) ? a : b)
 #define ABS(n)				(((n) >= 0) ? (n) : -(n))
 #define MASK(n)				(1 << (n))
-#define ROUNDUP(n,b)		((n + b - 1) & ~(b - 1))
+#define ISLOWER(c)			((c) >= 'a' && (c) <= 'z')
+#define ISUPPER(c)			((c) >= 'A' && (c) <= 'Z')
+#define ISDIGIT(c)			((c) >= '0' && (c) <= '9')
+#define UPPER(c)			((ISLOWER (c)) ? (c) - 'a' + 'A' : (c))
+#define ROUNDUP(n,b)		(((n) + (b) - 1) & ~((b) - 1))
+
+// ext env attribute
+#define SQL_ATTR_HANDLE_DBC_SHARE		4000
 
 #define DRIVER_LOCKED_LEVEL_ENV         4
 #define DRIVER_LOCKED_LEVEL_CONNECT     3

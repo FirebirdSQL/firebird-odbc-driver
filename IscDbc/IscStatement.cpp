@@ -108,7 +108,9 @@ IscStatement::IscStatement(IscConnection *connect)
 	useCount = 1;
 	numberColumns = 0;
 	statementHandle = NULL;
-	selectActive = false;
+	typeStmt = stmtNone;
+	resultsCount = 0;
+	resultsSequence	= 0;
 }
 
 IscStatement::~IscStatement()
@@ -147,12 +149,23 @@ void IscStatement::close()
 		resultSet->close();
 	END_FOR;
 
-	if (selectActive)
-		{
-		selectActive = false;
-		if (connection->autoCommit)
-			connection->commitAuto();
-		}
+	if (typeStmt == stmtSelect && connection->autoCommit)
+		connection->commitAuto();
+}
+
+void IscStatement::setMaxFieldSize(int max)
+{
+	NOT_YET_IMPLEMENTED;
+}
+
+void IscStatement::setMaxRows(int max)
+{
+	NOT_YET_IMPLEMENTED;
+}
+
+void IscStatement::setQueryTimeout(int seconds)
+{
+	NOT_YET_IMPLEMENTED;
 }
 
 bool IscStatement::execute(const char * sqlString)
@@ -169,6 +182,32 @@ int IscStatement::executeUpdate(const char * sqlString)
 	return 0;
 }
 
+int	IscStatement::getMaxFieldSize()
+{
+	NOT_YET_IMPLEMENTED;
+
+	return 0;
+}
+
+int	IscStatement::getMaxRows()
+{
+	NOT_YET_IMPLEMENTED;
+
+	return 0;
+}
+
+int	IscStatement::getQueryTimeout()
+{
+	NOT_YET_IMPLEMENTED;
+
+	return 0;
+}
+
+void IscStatement::cancel()
+{
+	NOT_YET_IMPLEMENTED;
+}
+
 ResultList* IscStatement::search(const char * searchString)
 {
 	NOT_YET_IMPLEMENTED;
@@ -181,10 +220,8 @@ ResultSet* IscStatement::getResultSet()
 	if (!statementHandle)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "no active statement");
 
-    if (!selectActive)
- 		if (outputSqlda.sqlda->sqld < 1)
-//		            throw SQLEXCEPTION (RUNTIME_ERROR, "current statement doesn't return results");
-		            throw SQLEXCEPTION (NO_RECORDS_FOR_FETCH, "current statement doesn't return results");
+    if ( typeStmt != stmtSelect && outputSqlda.sqlda->sqld < 1)
+		throw SQLEXCEPTION (NO_RECORDS_FOR_FETCH, "current statement doesn't return results");
 	
 	return createResultSet();
 }
@@ -203,6 +240,11 @@ void IscStatement::setCursorName(const char * name)
 
 	if (statusVector [1])
 		THROW_ISC_EXCEPTION (connection, statusVector);
+}
+
+void IscStatement::setEscapeProcessing(bool enable)
+{
+	NOT_YET_IMPLEMENTED;
 }
 
 void IscStatement::addRef()
@@ -247,13 +289,17 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 	resultSets.deleteItem (resultSet);
 	if (resultSets.isEmpty())
 	{
-		selectActive = false;
-		if (connection->autoCommit)
-			connection->commitAuto();
-		// Close cursors too.
-		ISC_STATUS statusVector [20];
-		connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_close);
-		//FIXME: Test status vector.
+		typeStmt = stmtNone;
+		if ( connection )
+		{
+			if (connection->autoCommit)
+				connection->commitAuto();
+			// Close cursors too.
+			ISC_STATUS statusVector [20];
+			connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_close);
+			if (statusVector [1] && statusVector [1] != 335544569)
+				THROW_ISC_EXCEPTION (connection, statusVector);
+		}
 	}
 }
 
@@ -289,20 +335,39 @@ void IscStatement::prepareStatement(const char * sqlString)
 		if (statusVector [1])
 			THROW_ISC_EXCEPTION (connection, statusVector);
 	}
+	
+	outputSqlda.allocBuffer ( this );
 
-	selectActive		= false;
+	typeStmt			= stmtNone;
 	resultsCount		= 1;
 	resultsSequence		= 0;
 	int statementType	= getUpdateCounts();
 	
-	numberColumns		= outputSqlda.getColumnCount();
-	XSQLVAR *var		= outputSqlda.sqlda->sqlvar;
+	switch ( statementType )
+	{
+	case isc_info_sql_stmt_ddl:
+		typeStmt = stmtDDL;
+		break;
+	case isc_info_sql_stmt_insert:
+		typeStmt = stmtInsert | stmtModify;
+		break;
+	case isc_info_sql_stmt_update:
+		typeStmt = stmtUpdate | stmtModify;
+		break;
+	case isc_info_sql_stmt_delete:
+		typeStmt = stmtDelete | stmtModify;
+		break;
+	case isc_info_sql_stmt_exec_procedure:
+		typeStmt = stmtProcedure;
+		break;
+	}
 
+	numberColumns		= outputSqlda.getColumnCount();
 }
 
 bool IscStatement::execute()
 {
-	if (selectActive && connection->autoCommit && resultSets.isEmpty())
+	if ( typeStmt == stmtSelect && connection->autoCommit && resultSets.isEmpty())
 		clearSelect();
 
 	// Make sure there is a transaction
@@ -310,8 +375,8 @@ bool IscStatement::execute()
 	void *transHandle = connection->startTransaction();
 
 	int dialect = connection->getDatabaseDialect ();
-	if (connection->GDS->_dsql_execute (statusVector, &transHandle, &statementHandle, 
-			dialect, inputSqlda))
+	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle, 
+			dialect, inputSqlda, NULL))
 	{
 		clearSelect();
 		if (connection->autoCommit)
@@ -322,7 +387,9 @@ bool IscStatement::execute()
 	resultsCount		= 1;
 	resultsSequence		= 0;
 	int statementType	= getUpdateCounts();
-	selectActive = false;
+
+	if ( typeStmt == stmtSelect )
+		typeStmt = stmtNone;
 
 	switch (statementType)
 	{
@@ -335,10 +402,9 @@ bool IscStatement::execute()
 		}
 		break;
 
-	//case isc_info_sql_stmt_exec_procedure:
 	case isc_info_sql_stmt_select:
 	case isc_info_sql_stmt_select_for_upd:
-		selectActive = true;
+		typeStmt = stmtSelect;
 		break;
 
 	case isc_info_sql_stmt_insert:
@@ -348,6 +414,27 @@ bool IscStatement::execute()
 			connection->commitAuto();
 		break;
 	}
+
+	return outputSqlda.sqlda->sqld > 0;
+}
+
+bool IscStatement::executeProcedure()
+{
+	ISC_STATUS statusVector [20];
+	void *transHandle = connection->startTransaction();
+
+	int dialect = connection->getDatabaseDialect ();
+	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle,
+			dialect, inputSqlda, outputSqlda))
+	{
+		if (connection->autoCommit)
+			connection->rollbackAuto();
+		THROW_ISC_EXCEPTION (connection, statusVector);
+	}
+
+	resultsCount		= 1;
+	resultsSequence		= 0;
+	getUpdateCounts();
 
 	return outputSqlda.sqlda->sqld > 0;
 }
@@ -430,7 +517,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 			case SQL_TEXT:
 				{
 				char *data = (char*) var->sqldata;
-				data [var->sqllen] = 0;    
+				data [ var->sqllen ] = 0;    
 				value->setString (data, false);
 				}
 				break;
@@ -439,13 +526,12 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				{
 				int length = *((short*) var->sqldata);
 				char *data = var->sqldata + 2;
-				if (length < var->sqllen)
+				if ( length < var->sqllen )
 				{
 					data [length] = 0;
 					value->setString (data, false);
-					}
+				}
 				else
-//					value->setString (length, data, false);
 					value->setString (length, data, true);
 
 				}
@@ -475,7 +561,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 
 			case SQL_BLOB:
 				{
-				IscBlob* blob = new IscBlob (connection, var);
+				IscBlob* blob = new IscBlob (this, var);
 				value->setValue (blob);
 				blob->release();
 				}
@@ -512,7 +598,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 
 			case SQL_ARRAY:
 				{
-				IscArray* blob = new IscArray (connection, var);
+				IscArray* blob = new IscArray (this, var);
 				value->setValue (blob);
 				blob->release();
 				}
@@ -522,19 +608,13 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 
 ISC_DATE IscStatement::getIscDate(DateTime value)
 {
-//	return value.date / (24 * 60 * 60) + baseDate;
-//Suggestion from LiWeimin to change this to
 	return value.date;
 }
 
 ISC_TIMESTAMP IscStatement::getIscTimeStamp(TimeStamp value)
 {
 	ISC_TIMESTAMP date;
-//Orig.
-/*	date.timestamp_date = value.date / (24 * 60 * 60) + baseDate;
-	date.timestamp_time = value.date % (24 * 60 * 60) + value.nanos / 100;
-*/
-//From B. Schulte
+
 	date.timestamp_date = value.date ;
 	date.timestamp_time =  value.nanos;
 
@@ -548,9 +628,11 @@ ISC_TIME IscStatement::getIscTime(SqlTime value)
 
 void IscStatement::clearSelect()
 {
-	if (selectActive)
+	if ( typeStmt == stmtSelect )
 	{
-		selectActive = false;
+		resultsCount = 0;
+		resultsSequence	= 0;
+		typeStmt = stmtNone;
 		if(connection->autoCommit)
 			connection->commitAuto();
 		freeStatementHandle();

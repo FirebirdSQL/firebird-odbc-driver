@@ -280,9 +280,9 @@ const int IscDatabaseMetaData::getUserType()
 	return connection->attachment->getUserType();
 	}
 
-JString IscDatabaseMetaData::existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix)
+void IscDatabaseMetaData::existsAccess(char *& stringOut, const char *prefix, const char * relobject, int typeobject, const char *suffix)
 	{
-	return connection->attachment->existsAccess(prefix, relobject, typeobject, suffix);
+	connection->attachment->existsAccess(stringOut, prefix, relobject, typeobject, suffix);
 	}
 
 bool IscDatabaseMetaData::isReadOnly()
@@ -312,12 +312,12 @@ bool IscDatabaseMetaData::nullsAreSortedAtEnd()
 
 const char* IscDatabaseMetaData::getDatabaseServerName()
 	{
-	return "Firebird / InterBase(r) Server";
+	return "Firebird Server";
 	}
 
 const char* IscDatabaseMetaData::getDatabaseProductName()
 	{
-	return "Firebird / InterBase(r)";
+	return connection->attachment->databaseProductName;
 	}
 
 const char* IscDatabaseMetaData::getDatabaseProductVersion()
@@ -367,7 +367,7 @@ bool IscDatabaseMetaData::supportsMixedCaseIdentifiers()
 
 bool IscDatabaseMetaData::storesUpperCaseIdentifiers()
 	{
-	return connection->attachment->databaseDialect < 3 || !connection->attachment->quotedIdentifiers;
+	return !connection->attachment->sensitiveIdentifier;
 	}
 
 bool IscDatabaseMetaData::storesLowerCaseIdentifiers()
@@ -397,12 +397,12 @@ bool IscDatabaseMetaData::storesLowerCaseQuotedIdentifiers()
 
 bool IscDatabaseMetaData::storesMixedCaseQuotedIdentifiers()
 	{
-	return connection->attachment->databaseDialect < 3 || !connection->attachment->quotedIdentifiers;
+	return connection->attachment->databaseDialect < 3 || !connection->attachment->quotedIdentifier;
 	}
 
 const char* IscDatabaseMetaData::getIdentifierQuoteString()
 	{
-	return (connection->attachment->quotedIdentifiers) ? "\"" : " ";
+	return connection->attachment->databaseDialect < 3 || !connection->attachment->quotedIdentifier ? " " : "\"";
 	}
 
 const char* IscDatabaseMetaData::getSQLKeywords()
@@ -485,39 +485,63 @@ bool IscDatabaseMetaData::supportsConvert()
 
 bool IscDatabaseMetaData::supportsConvert(int fromType, int toType)
 	{
-	if ( fromType == JDBC_NUMERIC )
-		if ( toType == JDBC_CHAR || toType == JDBC_VARCHAR || toType == JDBC_DATE ||
-			 toType == JDBC_TIME || toType == JDBC_TIMESTAMP )
+	switch( fromType )
+	{
+	case JDBC_NUMERIC:
+		switch( toType )
+		{
+		case JDBC_CHAR:
+		case JDBC_VARCHAR:
+		case JDBC_DATE:
+		case JDBC_TIME:
+		case JDBC_TIMESTAMP:
 			return true;
-		else
-			return false;
+		}
+		return false;
 
-	if ( fromType == JDBC_CHAR || fromType == JDBC_VARCHAR )
-		if ( toType == JDBC_NUMERIC || toType == JDBC_DATE ||
-			toType == JDBC_TIME || toType == JDBC_TIMESTAMP )
+	case JDBC_CHAR:
+	case JDBC_VARCHAR:
+		switch( toType )
+		{
+		case JDBC_NUMERIC:
+		case JDBC_DATE:
+		case JDBC_TIME:
+		case JDBC_TIMESTAMP:
 			return true;
-		else
-			return false;
+		}
+		return false;
 
-	if ( fromType == JDBC_DATE )
-		if ( toType == JDBC_CHAR || toType == JDBC_VARCHAR || toType == JDBC_TIMESTAMP )
+	case JDBC_DATE:
+		switch( toType )
+		{
+		case JDBC_CHAR:
+		case JDBC_VARCHAR:
+		case JDBC_TIMESTAMP:
 			return true;
-		else
-			return false;
+		}
+		return false;
 
-	if ( fromType == JDBC_TIME )
-		if ( toType == JDBC_CHAR || toType == JDBC_VARCHAR || toType == JDBC_TIMESTAMP )
+	case JDBC_TIME:
+		switch( toType )
+		{
+		case JDBC_CHAR:
+		case JDBC_VARCHAR:
+		case JDBC_TIMESTAMP:
 			return true;
-		else
-			return false;
+		}
+		return false;
 
-	if ( fromType == JDBC_TIMESTAMP )
-		if ( toType == JDBC_CHAR || toType == JDBC_VARCHAR || toType == JDBC_DATE || 
-			 toType == JDBC_TIME )
+	case JDBC_TIMESTAMP:
+		switch( toType )
+		{
+		case JDBC_CHAR:
+		case JDBC_VARCHAR:
+		case JDBC_DATE:
+		case JDBC_TIME:
 			return true;
-		else
-			return false;
-
+		}
+		return false;
+	}
 	return false;
 	}
 
@@ -630,6 +654,8 @@ const char* IscDatabaseMetaData::getSchemaTerm()
 	{
 	return "";
 //	return "schema";
+//	ATTENTION! Fb can not at present execute a design
+//	select  *  from "owner"."table"
 	}
 
 const char* IscDatabaseMetaData::getProcedureTerm()
@@ -775,6 +801,12 @@ bool IscDatabaseMetaData::supportsOpenStatementsAcrossCommit()
 bool IscDatabaseMetaData::supportsOpenStatementsAcrossRollback()
 	{
 	return true;
+	}
+
+int IscDatabaseMetaData::getMaxBinaryLiteralLength()
+	{
+	NOT_YET_IMPLEMENTED;
+	return 0;
 	}
 
 int IscDatabaseMetaData::getMaxCharLiteralLength()
@@ -1087,6 +1119,11 @@ ResultSet* IscDatabaseMetaData::getCrossReference(
 ResultSet* IscDatabaseMetaData::getTypeInfo(int dataType)
 	{
 	return new TypesResultSet(dataType);
+	}
+
+StatementMetaData* IscDatabaseMetaData::getMetaDataTypeInfo(ResultSet* setTypeInfo)
+	{
+	return (StatementMetaData*)(TypesResultSet*)setTypeInfo;
 	}
 
 bool IscDatabaseMetaData::supportsResultSetConcurrency(int type, int concurrency)

@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCPRIMARYKEYSRESULTSET_H__32C6E493_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
-#define AFX_ISCPRIMARYKEYSRESULTSET_H__32C6E493_2C14_11D4_98E0_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCPRIMARYKEYSRESULTSET_H_)
+#define _ISCPRIMARYKEYSRESULTSET_H_
 
 #include "IscMetaDataResultSet.h"
 
@@ -36,12 +32,10 @@ namespace IscDbcLibrary {
 class IscPrimaryKeysResultSet : public IscMetaDataResultSet  
 {
 public:
-	virtual bool next();
 	void getPrimaryKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern);
 	IscPrimaryKeysResultSet(IscDatabaseMetaData *metaData);
-
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCPRIMARYKEYSRESULTSET_H__32C6E493_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCPRIMARYKEYSRESULTSET_H_)

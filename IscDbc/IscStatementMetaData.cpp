@@ -25,6 +25,7 @@
 #include "IscDbc.h"
 #include "IscBlob.h"
 #include "IscArray.h"
+#include "IscHeadSqlVar.h"
 #include "IscStatementMetaData.h"
 #include "Sqlda.h"
 
@@ -34,14 +35,10 @@ namespace IscDbcLibrary {
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscStatementMetaData::IscStatementMetaData(Sqlda *ptSqlda)
+IscStatementMetaData::IscStatementMetaData(IscStatement *stmt, Sqlda *ptSqlda)
 {
+	statement = stmt;
 	sqlda = ptSqlda;
-}
-
-IscStatementMetaData::~IscStatementMetaData()
-{
-
 }
 
 int IscStatementMetaData::getColumnCount()
@@ -149,7 +146,7 @@ int IscStatementMetaData::isBlobOrArray(int index)
 
 const char* IscStatementMetaData::getSchemaName(int index)
 {
-	return sqlda->getOwnerName (index);;
+	return sqlda->getOwnerName (index);
 }
 
 const char* IscStatementMetaData::getCatalogName(int index)
@@ -157,24 +154,44 @@ const char* IscStatementMetaData::getCatalogName(int index)
 	return "";	
 }
 
-void IscStatementMetaData::getSqlData(int index, char *& ptData, short *& ptIndData)
+void IscStatementMetaData::createBlobDataTransfer(int index, Blob *& ptDataBlob)
 {
-	sqlda->getSqlData(index, ptData, ptIndData);
+	int isRet = sqlda->isBlobOrArray(index);
+
+	if ( ptDataBlob )
+	{
+		ptDataBlob->release();
+		ptDataBlob = NULL;
+	}
+	if ( isRet )
+	{
+		if ( isRet == SQL_BLOB )
+		{
+			IscBlob * pt = new IscBlob;
+			pt->setType(sqlda->getSubType(index));
+			pt->setMinSegment( DEFAULT_BLOB_BUFFER_LENGTH );
+			pt->setConsecutiveRead( true );
+			pt->statement = statement;
+			ptDataBlob = pt;
+		}
+		else // if ( isRet == SQL_ARRAY )
+		{
+			IscArray * pt = new IscArray(statement, sqlda->Var(index));
+			ptDataBlob = pt;
+		}
+	}
 }
 
-void IscStatementMetaData::setSqlData(int index, long ptData, long ptIndData)
+void IscStatementMetaData::getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar *& ptHeadSqlVar)
 {
-	sqlda->setSqlData(index, ptData, ptIndData);
-}
+	CAttrSqlVar *var = sqlda->orgVar(index);
 
-void IscStatementMetaData::saveSqlData(int index, long ptData, long ptIndData)
-{
-	sqlda->saveSqlData(index, ptData, ptIndData);
-}
+	if ( ptHeadSqlVar )
+		ptHeadSqlVar->release();
 
-void IscStatementMetaData::restoreSqlData(int index)
-{
-	sqlda->restoreSqlData(index);
+	ptHeadSqlVar = new IscHeadSqlVar(var);
+
+	createBlobDataTransfer(index, ptDataBlob);
 }
 
 int IscStatementMetaData::objectVersion()

@@ -52,7 +52,6 @@ BEGIN
     "LANGUAGE 9, 1\r\n"
     "#pragma code_page(1252)\r\n"
     "#endif\r\n"
-    "#include ""res\\OdbcJdbcSetup.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
     "#include ""afxres.rc""         // Standard components\r\n"
     "#endif\0"
 END
@@ -81,25 +80,23 @@ VS_VERSION_INFO VERSIONINFO
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904b0"
+        BLOCK "080904b0"
         BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "IBPhoenix Inc.\0"
             VALUE "FileDescription", "OdbcJdbcSetup\0"
             VALUE "FileVersion", FILE_VERSION_STR
             VALUE "InternalName", "OdbcJdbcSetup\0"
-            VALUE "LegalCopyright", "Copyright © 2000 - 2003\0"
-            VALUE "LegalTrademarks", "\0"
+            VALUE "LegalCopyright", "Copyright © 2000 - 2004\0"
             VALUE "OriginalFilename", "OdbcJdbcSetup.dll\0"
-            VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "OdbcJdbcSetup Dynamic Link Library\0"
             VALUE "ProductVersion", PRODUCT_VERSION_STR
-            VALUE "SpecialBuild", "Beta\0"
+            VALUE "SpecialBuild", "v1-2-release\0"
         END
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x409, 1200
+        VALUE "Translation", 0x809, 1200
     END
 END
 
@@ -126,12 +123,13 @@ BEGIN
     EDITTEXT        IDC_USER,7,89,66,12,ES_UPPERCASE | ES_AUTOHSCROLL
     EDITTEXT        IDC_PASSWORD,77,89,73,12,ES_PASSWORD | ES_AUTOHSCROLL
     EDITTEXT        IDC_ROLE,154,89,76,12,ES_AUTOHSCROLL
-    EDITTEXT        IDC_CHARSET,56,109,114,12,ES_AUTOHSCROLL
+    COMBOBOX        IDC_CHARSET,53,109,114,120,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
     CONTROL         "read (default write)",IDC_CHECK_READ,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,148,69,10
     CONTROL         "nowait (default wait)",IDC_CHECK_NOWAIT,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,158,72,10
-    DEFPUSHBUTTON   "OK",IDOK,43,183,50,14
+    DEFPUSHBUTTON   "OK",IDOK,85,183,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,143,183,50,14
     LTEXT           "Data Source Name (DSN)",IDC_STATIC,7,2,83,8
     LTEXT           "Database",IDC_STATIC,7,27,32,8
@@ -140,17 +138,23 @@ BEGIN
     LTEXT           "Driver",IDC_STATIC,123,2,20,8
     LTEXT           "Role",IDC_STATIC,155,78,16,8
     LTEXT           "Character Set",IDC_STATIC,7,112,44,8
-    GROUPBOX        "Options",IDC_STATIC,7,130,223,49
-    GROUPBOX        "Initializing transaction",IDC_STATIC,14,139,79,33
+    GROUPBOX        "Options",IDC_STATIC,7,128,223,52
+    GROUPBOX        "Initializing transaction",IDC_STATIC,14,139,89,33
     LTEXT           "Client",IDC_STATIC,7,52,32,8
-    GROUPBOX        "Dialect",IDC_STATIC,96,139,31,33,WS_GROUP
-    CONTROL         "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,104,148,16,
+    GROUPBOX        "Dialect",IDC_STATIC,106,139,31,33,WS_GROUP
+    CONTROL         "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,114,148,16,
                     10
-    CONTROL         "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,104,158,16,
+    CONTROL         "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,114,158,16,
                     10
-    CONTROL         "quoted identifiers",IDC_CHECK_QUOTED,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,136,148,66,10
-    PUSHBUTTON      "Test connection",IDC_TEST_CONNECTION,175,108,55,14
+    GROUPBOX        "Extend property identifier",IDC_STATIC,140,134,86,43
+    CONTROL         "quoted identifier",IDC_CHECK_QUOTED,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,143,67,9
+    CONTROL         "sensitive identifier",IDC_CHECK_SENSITIVE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,154,74,9
+    CONTROL         "autoquoted identifier",IDC_CHECK_AUTOQUOTED,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,165,77,9
+    PUSHBUTTON      "Test connection",IDC_TEST_CONNECTION,172,108,58,14
+    PUSHBUTTON      "Help",IDC_HELP_ODBC,27,183,50,14
 END
 
 

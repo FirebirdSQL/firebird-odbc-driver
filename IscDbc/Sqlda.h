@@ -22,21 +22,39 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_SQLDA_H__6C3E2AB9_229F_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_SQLDA_H__6C3E2AB9_229F_11D4_98DF_0000C01D2301__INCLUDED_
+#if !defined(_SQLDA_H_INCLUDED_)
+#define _SQLDA_H_INCLUDED_
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#include "IscArray.h"
 
 namespace IscDbcLibrary {
 
 #define DEFAULT_SQLDA_COUNT		20
 
-struct TempVector {
-    char	*temp;
-	int		length;
-	};
+class CAttrSqlVar
+{
+public:
+	CAttrSqlVar()	{ memset( this, 0, sizeof ( *this) ); }
+	~CAttrSqlVar()	
+	{ 
+		if ( array ) 
+			delete array; 
+	}
+
+	void operator = ( XSQLVAR *var )
+	{
+		*(QUAD*)this = *(QUAD*)var;
+		varOrg = var;
+	}
+
+	short			sqltype;			/* datatype of field */
+	short			sqlscale;			/* scale factor */
+	short			sqlsubtype;			/* datatype subtype - BLOBs & Text types only */
+	short			sqllen;				/* length of data area */
+	CAttrArray		*array;
+	XSQLVAR			*varOrg;
+	bool			replaceForParamArray;
+};
 
 class Value;
 class IscConnection;
@@ -44,60 +62,76 @@ class CDataStaticCursor;
 
 class Sqlda  
 {
+protected:
+	void initStaticCursor(IscStatement *stmt);
+	void addRowSqldaInBufferStaticCursor();
+	void restoreOrgAdressFieldsStaticCursor();
+
 public:
 	const char* getOwnerName (int index);
 	int findColumn (const char *columnName);
-	void setBlob (XSQLVAR *var, Value *value, IscConnection *connection);
-	void setArray (XSQLVAR *var, Value *value, IscConnection *connection);
-	void setValue (int slot, Value *value, IscConnection *connection);
+	void setBlob (XSQLVAR *var, Value *value, IscStatement *stmt);
+	void setArray (XSQLVAR *var, Value *value, IscStatement *stmt);
+	void setValue (int slot, Value *value, IscStatement	*stmt);
 	const char* getTableName (int index);
-//	static const char* getSqlTypeName (int iscType, int subType);
-//	static int getSqlType (int iscType, int subType);
-	static int getSqlType (int iscType, int subType, int sqlScale, int &realSqlType);
-	static const char* getSqlTypeName (int iscType, int subType, int sqlScale);
+	int getSqlType (CAttrSqlVar *var, int &realSqlType);
+	const char* getSqlTypeName (CAttrSqlVar *var);
 	bool isNullable (int index);
 	int getScale (int index);
 	int getPrecision (int index);
 	const char* getColumnName (int index);
 	int getColumnDisplaySize (int index);
-	int getSubType(int index);
+	short getSubType(int index);
 	int getColumnType (int index, int &realSqlType);
 	const char * getColumnTypeName (int index);
-	void getSqlData(int index, char *& ptData, short *& ptIndData);
-	void setSqlData(int index, long ptData, long ptIndData);
-	void saveSqlData(int index, long ptData, long ptIndData);
-	void restoreSqlData(int index);
 	void print();
-	void initStaticCursor(IscConnection *connect);
 	bool setCurrentRowInBufferStaticCursor(int nRow);
 	void getAdressFieldFromCurrentRowInBufferStaticCursor(int column, char *& sqldata, short *& sqlind);
 	void copyNextSqldaInBufferStaticCursor();
 	void copyNextSqldaFromBufferStaticCursor();
 	int getCountRowsStaticCursor();
 	int getColumnCount();
-	void allocBuffer();
+	void init();
+	void remove();
+	void allocBuffer(IscStatement *stmt);
 	bool checkOverflow();
 	void deleteSqlda();
-	operator XSQLDA*();
+	void clearSqlda();
+	operator XSQLDA*(){ return sqlda; }
+	XSQLVAR * Var(int index){ return sqlda->sqlvar + index - 1; }
+	CAttrSqlVar * orgVar(int index){ return orgsqlvar + index - 1; }
+
 	Sqlda();
 	~Sqlda();
 
 	int isBlobOrArray(int index);
+	bool isNull(int index);
+	void setNull(int index);
+
+	short getShort (int index);
+	long getInt (int index);
+	char * getText (int index, int &len);
+	char * getVarying (int index, int &len);
+
+	void updateShort (int index, short value);
+	void updateInt (int index, int value);
+	void updateText (int index, const char* value);
+	void updateVarying (int index, const char* dst);
 
 	CDataStaticCursor * dataStaticCursor;
 	int			lengthBufferRows;
 	int			*offsetSqldata;
 	int			indicatorsOffset;
-	long		*saveOrgAdressSqlData;
-	long		*saveOrgAdressSqlInd;
 
 	XSQLDA		*sqlda;
 	char		tempSqlda [XSQLDA_LENGTH (DEFAULT_SQLDA_COUNT)];
 	char		*buffer;
-	TempVector	*temps;
+	CAttrSqlVar	*orgsqlvar;
 	bool		needsbuffer;
+
+	friend class IscResultSet;
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_SQLDA_H__6C3E2AB9_229F_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_SQLDA_H_INCLUDED_)

@@ -22,12 +22,8 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_IscColumnPrivilegesResultSet_H__6C3E2AB7_229F_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_IscColumnPrivilegesResultSet_H__6C3E2AB7_229F_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_IscColumnPrivilegesResultSet_H_)
+#define _IscColumnPrivilegesResultSet_H_
 
 #include "IscMetaDataResultSet.h"
 
@@ -39,14 +35,8 @@ public:
 	virtual bool next();
 	void getColumnPrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * columnNamePattern);
 	IscColumnPrivilegesResultSet(IscDatabaseMetaData *metaData);
-
-	typedef IscMetaDataResultSet Parent;
-	virtual int getColumnDisplaySize(int index);
-	virtual int getColumnType(int index, int &realSqlType);
-	virtual int getColumnPrecision(int index);
-
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCCOLUMNPRIVILEGESRESULTSET_H__6C3E2AB7_229F_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_IscColumnPrivilegesResultSet_H_)

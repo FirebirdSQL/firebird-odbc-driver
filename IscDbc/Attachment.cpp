@@ -31,6 +31,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "IscDbc.h"
 #include "Attachment.h"
 #include "SQLError.h"
@@ -59,6 +60,7 @@ Attachment::Attachment()
 	useCount = 1;
 	GDS = NULL;
 	databaseHandle = NULL;
+	transactionHandle = NULL;
 	admin = true;
 	isRoles = false;
 	userType = 8;
@@ -82,16 +84,19 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 {
 	if( !GDS )
 	{
+		const char *clientDefault = NULL;
 		const char *client = properties->findValue ("client", NULL);
 		if ( !client || !*client )
 #ifdef _WIN32
-			client = "gds32.dll";
+			client = "gds32.dll",
+			clientDefault = "fbclient.dll";
 #else
-			client = "libgds.so";
+			client = "libgds.so",
+			clientDefault = "libfbclient.so";
 #endif
 
 		GDS = new CFbDll();
-		if ( !GDS->LoadDll (client) )
+		if ( !GDS->LoadDll (client, clientDefault) )
 		{
 			JString text;
 			text.Format ("Unable to connect to data source: library '%s' failed to load", client);
@@ -103,7 +108,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 
 	isRoles = false;
 	databaseName = dbName;
-	char dpb [256], *p = dpb;
+	char dpb [2048], *p = dpb;
 	*p++ = isc_dpb_version1;
 
 	const char *user = properties->findValue ("user", NULL);
@@ -162,7 +167,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		throw SQLEXCEPTION (statusVector [1], text);
 	}
 
-	char result [256]; // 100
+	char result [2048];
 	databaseDialect = SQL_DIALECT_V5;
 
 	if (!GDS->_database_info (statusVector, &databaseHandle, sizeof (databaseInfoItems), databaseInfoItems, sizeof (result), result))
@@ -192,7 +197,46 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 				break;
 			
 			case isc_info_version:
-				serverVersion = JString (p + 2, p [1]);
+				{
+					int level = 0;
+					int major = 0, minor = 0, version = 0;
+					char * start = p + 2;
+					char * beg = start;
+					char * end = beg + p [1];
+					char * tmp = NULL;
+					
+					while ( beg < end )
+					{
+						if ( *beg >= '0' && *beg <= '9' )
+						{
+							switch ( ++level )
+							{
+							case 1:
+								tmp = beg;
+								major = atoi(beg);
+								while( *++beg != '.' );
+								break;
+							case 2:
+								minor = atoi(beg);
+								while( *++beg != '.' );
+								break;
+							default: // Firebird (##.##.##.####) and Yaffil(##.##.####)
+								version = atoi(beg);
+								while( *beg >= '0' && *beg <= '9' || *beg == ' ')
+									beg++;
+								if ( *beg == '.' )
+									break;
+								if ( beg < end )
+									databaseProductName = JString( beg, end - beg );
+								beg = end;
+								break;
+							}
+						}
+						else
+							beg++;
+					}
+					serverVersion.Format("%02d.%02d.%04d %.*s %s",major,minor,version, tmp ? tmp - start : 0, start, (const char*)databaseProductName);
+				}
 				break;
 
 			case isc_info_page_size:
@@ -208,12 +252,26 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	else
 		databaseDialect = SQL_DIALECT_V6;
 
-	const char *quoted = properties->findValue ("quoted", NULL);
+	const char *property = properties->findValue ("quoted", NULL);
 
-	if ( quoted && *quoted == 'Y')
-		quotedIdentifiers = true;
+	if ( property && *property == 'Y')
+		quotedIdentifier = true;
 	else
-		quotedIdentifiers = false;
+		quotedIdentifier = false;
+
+	property = properties->findValue ("sensitive", NULL);
+
+	if ( property && *property == 'Y')
+		sensitiveIdentifier = true;
+	else
+		sensitiveIdentifier = false;
+
+	property = properties->findValue ("autoQuoted", NULL);
+
+	if ( property && *property == 'Y')
+		autoQuotedIdentifier = true;
+	else
+		autoQuotedIdentifier = false;
 
 	checkAdmin();
 }
@@ -291,19 +349,18 @@ int Attachment::getUserType()
 	return userType;
 }
 
-JString Attachment::existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix)
+void Attachment::existsAccess(char *& stringOut, const char *prefix, const char * relobject, int typeobject, const char *suffix)
 {
-	char temp [300];
-
-	sprintf (temp,	" %s exists( select cast(1 as integer) from rdb$user_privileges priv\n"
+	int len = sprintf (stringOut,	" %s exists( select cast(1 as integer) from rdb$user_privileges priv\n"
 					"\t\twhere %s.rdb$%s = priv.rdb$relation_name\n"
-					"\t\t\tand priv.rdb$privilege = 'S' and priv.rdb$object_type = %d\n"
-					"\t\t\tand priv.rdb$user = '%s' and priv.rdb$user_type = %d ) %s \n",
+					"\t\t\tand priv.rdb$privilege = '%c' and priv.rdb$object_type = %d\n"
+					"\t\t\tand ( (priv.rdb$user = '%s' and priv.rdb$user_type = %d)\n"
+					"\t\t\t\tor (priv.rdb$user = 'PUBLIC' and priv.rdb$user_type = 8) ) ) %s \n",
 						prefix, relobject, 
 						!typeobject ? "relation_name" : "procedure_name",
+						!typeobject ? 'S' : 'X',
 						typeobject, (const char *)userAccess, userType, suffix);
-
-	return temp;
+	stringOut += len;
 }
 
 }; // end namespace IscDbcLibrary

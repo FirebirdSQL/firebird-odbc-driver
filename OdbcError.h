@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ODBCERROR_H__C19738BE_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ODBCERROR_H__C19738BE_1C87_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ODBCERROR_H_)
+#define _ODBCERROR_H_
 
 #include "IscDbc/JString.h"
 
@@ -40,8 +36,8 @@ class OdbcError
 public:
 	void setColumnNumber (int column, int row);
 	void setRowNumber (int number);
-	RETCODE sqlGetDiagField (int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
-	RETCODE sqlGetDiagRec (UCHAR *stateBuffer, SDWORD *nativeCode, UCHAR *msgBuffer, int msgBufferLength, SWORD *msgLength);
+	SQLRETURN sqlGetDiagField (int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
+	SQLRETURN sqlGetDiagRec (UCHAR *stateBuffer, SDWORD *nativeCode, UCHAR *msgBuffer, int msgBufferLength, SWORD *msgLength);
 	OdbcError(int code, const char *state, JString errorMsg);
 	~OdbcError();
 
@@ -55,4 +51,4 @@ public:
 
 }; // end namespace OdbcJdbcLibrary
 
-#endif // !defined(AFX_ODBCERROR_H__C19738BE_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ODBCERROR_H_)

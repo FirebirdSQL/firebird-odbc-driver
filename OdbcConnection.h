@@ -22,49 +22,56 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ODBCCONNECTION_H__ED260D96_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ODBCCONNECTION_H__ED260D96_1BC4_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ODBCCONNECTION_H_)
+#define _ODBCCONNECTION_H_
 
 #include "OdbcDesc.h"
 #include "IscDbc/JString.h"	// Added by ClassView
 
 namespace OdbcJdbcLibrary {
 
-using namespace IscDbcLibrary;
-
 class OdbcEnv;
 class OdbcStatement;
 
 class OdbcConnection : public OdbcObject  
 {
+	enum 
+	{	
+		DEF_READONLY_TPB = 1,
+		DEF_NOWAIT_TPB = 2,
+		DEF_DIALECT = 4,
+		DEF_QUOTED = 8,
+		DEF_SENSITIVE = 16,
+		DEF_AUTOQUOTED = 32
+	};
+
 public:
 	void transactionStarted();
-	RETCODE sqlGetConnectAttr (int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER * lengthPtr);
+	SQLRETURN sqlGetConnectAttr (int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER * lengthPtr);
 	void descriptorDeleted (OdbcDesc* descriptor);
 	OdbcDesc* allocDescriptor(OdbcDescType type);
 	void expandConnectParameters();
+	void saveConnectParameters();
 	void statementDeleted (OdbcStatement *statement);
-	RETCODE sqlEndTran (int operation);
-	RETCODE connect (const char *sharedLibrary, const char *databaseName, const char *account, const char *password, const char *role, const char *charset);
-	RETCODE sqlConnect (const SQLCHAR *dsn, int dsnLength, SQLCHAR*UID,int uidLength,SQLCHAR*password,int passwordLength);
+	SQLRETURN sqlEndTran (int operation);
+	SQLRETURN connect (const char *sharedLibrary, const char *databaseName, const char *account, const char *password, const char *role, const char *charset);
+	SQLRETURN sqlConnect (const SQLCHAR *dsn, int dsnLength, SQLCHAR*UID,int uidLength,SQLCHAR*password,int passwordLength);
 	DatabaseMetaData* getMetaData();
-	virtual RETCODE allocHandle (int handleType, SQLHANDLE *outputHandle);
+	virtual SQLRETURN allocHandle (int handleType, SQLHANDLE *outputHandle);
 	char* appendString (char *ptr, const char *string);
-	RETCODE sqlGetInfo (UWORD type, PTR ptr, int maxLength, SWORD *actualLength);
-	RETCODE sqlDisconnect();
-	RETCODE sqlGetFunctions (SQLUSMALLINT functionId, SQLUSMALLINT *supportedPtr);
+	SQLRETURN sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT * actualLength );
+	SQLRETURN sqlDisconnect();
+	SQLRETURN sqlGetFunctions (SQLUSMALLINT functionId, SQLUSMALLINT *supportedPtr);
 	JString readAttribute (const char *attribute);
-	RETCODE sqlDriverConnect (SQLHWND hWnd, 
+	JString readAttributeFileDSN (const char * attribute);
+	void writeAttributeFileDSN (const char * attribute, const char * value);
+	SQLRETURN sqlDriverConnect (SQLHWND hWnd, 
 						   const SQLCHAR *connectString, int connectStringLength, 
 						   SQLCHAR *outConnectBuffer, int connectBufferLength, SQLSMALLINT *outStringLength, 
 						   int driverCompletion);
-	RETCODE sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, SQLSMALLINT * stringLength2Ptr);
-	RETCODE sqlNativeSql(SQLCHAR * inStatementText, SQLINTEGER textLength1,	SQLCHAR * outStatementText, SQLINTEGER bufferLength, SQLINTEGER * textLength2Ptr);
-	RETCODE sqlSetConnectAttr (SQLINTEGER arg1, SQLPOINTER arg2, SQLINTEGER stringLength);
+	SQLRETURN sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, SQLSMALLINT * stringLength2Ptr);
+	SQLRETURN sqlNativeSql(SQLCHAR * inStatementText, SQLINTEGER textLength1,	SQLCHAR * outStatementText, SQLINTEGER bufferLength, SQLINTEGER * textLength2Ptr);
+	SQLRETURN sqlSetConnectAttr( SQLINTEGER attribute, SQLPOINTER value, SQLINTEGER stringLength );
 	virtual OdbcObjectType getType();
 	OdbcConnection(OdbcEnv *parent);
 	~OdbcConnection();
@@ -78,6 +85,8 @@ public:
 	bool		connected;
 	int			connectionTimeout;
 	JString		dsn;
+	JString		filedsn;
+	JString		savedsn;
 	JString		databaseName;
 	JString		client;
 	JString		account;
@@ -86,7 +95,10 @@ public:
 	JString		charset;
 	JString		jdbcDriver;
 	int			optTpb;
-	bool		quotedIdentifiers;
+	int			defOptions;
+	bool		quotedIdentifier;
+	bool		sensitiveIdentifier;
+	bool		autoQuotedIdentifier;
 	bool		dialect3;
 	SQLUINTEGER	asyncEnabled;
 	bool		autoCommit;
@@ -103,7 +115,7 @@ class SafeConnectThread
 public:
 	SafeConnectThread(OdbcConnection * connect)
 	{
-		if(connect->connected)
+		if(connect && connect->connected)
 		{
 			connection=connect;
 			connection->Lock();
@@ -120,4 +132,4 @@ public:
 
 }; // end namespace OdbcJdbcLibrary
 
-#endif // !defined(AFX_ODBCCONNECTION_H__ED260D96_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ODBCCONNECTION_H_)

@@ -46,18 +46,9 @@
 #include "Value.h"
 #include "SQLError.h"
 
-#define SKIP_WHITE(p)	while (charTable [*p] == WHITE) ++p
-
-#define PUNCT			1
-#define WHITE			2
-#define DIGIT			4
-#define LETTER			8
-#define QUOTE			16
-#define IDENT			32
-
 namespace IscDbcLibrary {
 
-char charTable [256];
+char charTable [256] = {0};
 static int init();
 static int foo = init();
 
@@ -84,6 +75,7 @@ int init ()
 	charTable ['\''] = QUOTE;
 	charTable ['"'] = QUOTE;
 	charTable ['_'] = IDENT;
+	charTable ['$'] = IDENT;
 
 	return 0;
 }
@@ -98,63 +90,16 @@ IscCallableStatement::IscCallableStatement(IscConnection *connection)
 	minOutputVariable = 0;
 }
 
-IscCallableStatement::~IscCallableStatement()
-{
-
-}
-
-ResultSet* IscCallableStatement::executeQuery()
-{
-	return Parent::executeQuery();
-}
-
-void IscCallableStatement::setInt(int index, long value)
-{
-	Parent::setInt(index, value);
-}
-
-void IscCallableStatement::setNull(int index, int type)
-{
-	Parent::setNull(index, type);
-}
-
-void IscCallableStatement::setDate(int index, DateTime value)
-{
-	Parent::setDate(index, value);
-}
-
-void IscCallableStatement::setDouble(int index, double value)
-{
-	Parent::setDouble(index, value);
-}
-
-void IscCallableStatement::setString(int index, const char * string)
-{
-	Parent::setString(index, string);
-}
-
-void IscCallableStatement::setString(int index, const char * string, int length)
-{
-    Parent::setString(index, string, length);   
-}
-
-void IscCallableStatement::convStringData(int index)
-{
-	Parent::convStringData (index);
-}
-
 bool IscCallableStatement::execute()
 {
-	connection->startTransaction();
 	ISC_STATUS statusVector [20];
-	outputSqlda.allocBuffer();
 	values.alloc (numberColumns);
 	int numberParameters = inputSqlda.getColumnCount();
 	void *transHandle = connection->startTransaction();
 	int n;
 
 	for (n = 0; n < numberParameters; ++n)
-		inputSqlda.setValue (n, parameters.values + n, connection);
+		inputSqlda.setValue (n, parameters.values + n, this);
 
 	int dialect = connection->getDatabaseDialect();
 
@@ -173,144 +118,6 @@ bool IscCallableStatement::execute()
 		setValue (value, var);
 
 	return outputSqlda.sqlda->sqld > 0;
-}
-
-int IscCallableStatement::executeUpdate()
-{
-	return Parent::executeUpdate();
-}
-
-// Added by RM 2002-06-04
-void IscCallableStatement::beginBlobDataTransfer(int index)
-{
-    Parent::beginBlobDataTransfer(index);
-}
-
-// Added by RM 2002-06-04
-void IscCallableStatement::putBlobSegmentData (int length, const void *bytes)
-{
-    Parent::putBlobSegmentData(length, bytes);
-}
-
-// Added by RM 2002-06-04
-void IscCallableStatement::endBlobDataTransfer()
-{
-    Parent::endBlobDataTransfer();
-}
-
-void IscCallableStatement::setBytes(int index, int length, const void* bytes)
-{
-	Parent::setBytes(index, length, bytes);
-}
-
-bool IscCallableStatement::execute (const char *sqlString)
-{
-	return Parent::execute(sqlString);
-}
-
-ResultSet*	 IscCallableStatement::executeQuery (const char *sqlString)
-{
-	return Parent::executeQuery(sqlString);
-}
-
-void IscCallableStatement::clearResults()
-{
-	Parent::clearResults();
-}
-
-int	IscCallableStatement::getUpdateCount()
-{
-	return Parent::getUpdateCount();
-}
-
-bool IscCallableStatement::getMoreResults()
-{
-	return Parent::getMoreResults();
-}
-
-void IscCallableStatement::setCursorName (const char *name)
-{
-	Parent::setCursorName(name);
-}
-
-ResultSet* IscCallableStatement::getResultSet()
-{
-	return Parent::getResultSet();
-}
-
-ResultList* IscCallableStatement::search (const char *searchString)
-{
-	return Parent::search(searchString);
-}
-
-int	IscCallableStatement::executeUpdate (const char *sqlString)
-{
-	return Parent::executeUpdate(sqlString);
-}
-
-void IscCallableStatement::close()
-{
-	Parent::close();
-}
-
-int IscCallableStatement::release()
-{
-	return Parent::release();
-}
-
-void IscCallableStatement::addRef()
-{
-	Parent::addRef();
-}
-
-StatementMetaData* IscCallableStatement::getStatementMetaDataIPD()
-{
-	return Parent::getStatementMetaDataIPD();
-}
-
-StatementMetaData* IscCallableStatement::getStatementMetaDataIRD()
-{
-	return Parent::getStatementMetaDataIRD();
-}
-
-void IscCallableStatement::setByte(int index, char value)
-{
-	Parent::setByte(index, value);
-}
-
-void IscCallableStatement::setQuad(int index, QUAD value)
-{
-	Parent::setQuad(index, value);
-}
-
-void IscCallableStatement::setFloat(int index, float value)
-{
-	Parent::setFloat(index, value);
-}
-
-void IscCallableStatement::setTime(int index, SqlTime value)
-{
-	Parent::setTime(index, value);
-}
-
-void IscCallableStatement::setTimestamp(int index, TimeStamp value)
-{
-	Parent::setTimestamp(index, value);
-}
-
-void IscCallableStatement::setShort(int index, short value)
-{
-	Parent::setShort(index, value);
-}
-
-void IscCallableStatement::setBlob(int index, Blob * value)
-{
-	Parent::setBlob(index, value);
-}
-
-void IscCallableStatement::setArray(int index, Blob * value)
-{
-	Parent::setArray(index, value);
 }
 
 int IscCallableStatement::objectVersion()
@@ -333,7 +140,7 @@ long IscCallableStatement::getInt(int id)
 	return getValue (id)->getLong();
 }
 
-QUAD IscCallableStatement::getQuad(int id)
+QUAD IscCallableStatement::getLong(int id)
 {
 	return getValue (id)->getQuad();
 }
@@ -404,12 +211,7 @@ void IscCallableStatement::prepare(const char * originalSql)
 	char	buffer [1024];
 	const char *sql = rewriteSql (originalSql, buffer, sizeof (buffer));
 
-	Parent::prepare (sql);
-}
-
-int	IscCallableStatement::getNumParams()
-{
-	return Parent::getNumParams();
+	IscPreparedStatement::prepare (sql);
 }
 
 const char* IscCallableStatement::rewriteSql(const char *originalSql, char *buffer, int length)

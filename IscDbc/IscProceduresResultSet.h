@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCPROCEDURESRESULTSET_H__32C6E497_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
-#define AFX_ISCPROCEDURESRESULTSET_H__32C6E497_2C14_11D4_98E0_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCPROCEDURESRESULTSET_H_)
+#define _ISCPROCEDURESRESULTSET_H_
 
 #include "IscMetaDataResultSet.h"
 
@@ -37,11 +33,14 @@ class IscProceduresResultSet : public IscMetaDataResultSet
 {
 public:
 	virtual bool next();
+	bool canSelectFromProcedure();
 	void getProcedures(const char * catalog, const char * schemaPattern, const char * procedureNamePattern);
+
 	IscProceduresResultSet(IscDatabaseMetaData *metaData);
 
+	bool	addBlr;
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCPROCEDURESRESULTSET_H__32C6E497_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCPROCEDURESRESULTSET_H_)

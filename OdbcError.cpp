@@ -120,7 +120,7 @@ OdbcError::~OdbcError()
 
 }
 
-RETCODE OdbcError::sqlGetDiagRec(UCHAR * stateBuffer, SDWORD * nativeCodePtr, UCHAR * msgBuffer, int msgBufferLength, SWORD * msgLength)
+SQLRETURN OdbcError::sqlGetDiagRec(UCHAR * stateBuffer, SDWORD * nativeCodePtr, UCHAR * msgBuffer, int msgBufferLength, SWORD * msgLength)
 {
 	if (stateBuffer)
 		strcpy ((char*) stateBuffer, sqlState);
@@ -149,7 +149,7 @@ RETCODE OdbcError::sqlGetDiagRec(UCHAR * stateBuffer, SDWORD * nativeCodePtr, UC
 	return SQL_SUCCESS;
 }
 
-RETCODE OdbcError::sqlGetDiagField(int diagId, SQLPOINTER ptr, int msgBufferLength, SQLSMALLINT *msgLength)
+SQLRETURN OdbcError::sqlGetDiagField(int diagId, SQLPOINTER ptr, int msgBufferLength, SQLSMALLINT *msgLength)
 {
 	const char *string = NULL;
 	int value;

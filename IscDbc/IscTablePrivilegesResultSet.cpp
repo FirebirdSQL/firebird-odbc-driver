@@ -45,35 +45,37 @@ namespace IscDbcLibrary {
 IscTablePrivilegesResultSet::IscTablePrivilegesResultSet(IscDatabaseMetaData *metaData)
         : IscMetaDataResultSet(metaData)
 {
-    resultSet = NULL;
 }
 
 void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
-	JString sql = "select NULL as table_cat,"										//1
-				          "NULL as table_schem,"									//2
-						  "tbl.rdb$relation_name as table_name,"					//3
-						  "priv.rdb$grantor as grantor,"							//4
-						  "priv.rdb$user as grantee,"								//5
-						  "cast( priv.rdb$privilege as char(11) ) as privilege,"	//6
-						  "'YES' as isgrantable, "									//7
-						  "priv.rdb$grant_option as GRANT_OPTION "					//8
+	char sql[2048] =  "select cast (NULL as varchar(7)) as table_cat,"						//1
+				          "cast (NULL as varchar(7)) as table_schem,"					//2
+						  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,"	//3
+						  "cast (priv.rdb$grantor as varchar(31)) as grantor,"			//4
+						  "cast (priv.rdb$user as varchar(31)) as grantee,"				//5
+						  "cast (priv.rdb$privilege as varchar(11)) as privilege,"		//6
+						  "cast ('YES' as varchar(3)) as isgrantable, "					//7
+						  "priv.rdb$grant_option as GRANT_OPTION "						//8
                           "from rdb$relations tbl, rdb$user_privileges priv\n"
                           "where tbl.rdb$relation_name = priv.rdb$relation_name\n";
 
+	char * ptFirst = sql + strlen(sql);
+
 	if ( !metaData->allTablesAreSelectable() )
 	{
-		char buf[128];
-		sprintf (buf, "and priv.rdb$object_type = 0\n"
-					  "and priv.rdb$user = '%s' and priv.rdb$user_type = %d\n",
+		char buf[256];
+		int len = sprintf (buf, "and priv.rdb$object_type = 0\n"
+					  "and ( (priv.rdb$user = '%s' and priv.rdb$user_type = %d)\n"
+					  "\tor (priv.rdb$user = 'PUBLIC' and priv.rdb$user_type = 8) )\n",
 						metaData->getUserAccess(),metaData->getUserType());
-		sql +=	buf;
+		addString(ptFirst, buf, len);
 	}
 
     if (tableNamePattern && *tableNamePattern)
-        sql += expandPattern (" and ","tbl.rdb$relation_name", tableNamePattern);
+        expandPattern (ptFirst, " and ","tbl.rdb$relation_name", tableNamePattern);
 
-    sql += " order by tbl.rdb$relation_name, priv.rdb$privilege, priv.rdb$user";
+    addString(ptFirst, " order by tbl.rdb$relation_name, priv.rdb$privilege, priv.rdb$user");
 
     prepareStatement (sql);
     numberColumns = 7;
@@ -81,83 +83,46 @@ void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const
 
 bool IscTablePrivilegesResultSet::next()
 {
-    if (!resultSet->next())
+    if (!IscResultSet::next())
         return false;
 
-	trimBlanks(3);
-	trimBlanks(4);
-	trimBlanks(5);
+	int len1, len2;
+	const char *grantor = sqlda->getVarying(4, len1);
+	const char *grantee = sqlda->getVarying(5, len2);
+	if( len1 == len2 && !strncmp(grantor,grantee,len1) )
+		sqlda->updateVarying (4, "_SYSTEM");
 
-	const char *grantor = resultSet->getString(4);
-	const char *grantee = resultSet->getString(5);
-	if(!strcmp(grantor,grantee))
-		resultSet->setValue( 4, "_SYSTEM" );
-
-    const char *privilege = resultSet->getString(6);
+	const char *privilege = sqlda->getVarying(6, len1);
 
     switch ( *privilege )
     {
         case 'S':
-            resultSet->setValue( 6, "SELECT" );
+            sqlda->updateVarying( 6, "SELECT" );
             break;
 
         case 'I':
-            resultSet->setValue( 6, "INSERT" );
+            sqlda->updateVarying( 6, "INSERT" );
             break;
 
         case 'U':
-            resultSet->setValue( 6, "UPDATE" );
+            sqlda->updateVarying( 6, "UPDATE" );
             break;
 
         case 'D':
-            resultSet->setValue( 6, "DELETE" );
+            sqlda->updateVarying( 6, "DELETE" );
             break;
 
         case 'R':
-            resultSet->setValue( 6, "REFERENCES" );
+            sqlda->updateVarying( 6, "REFERENCES" );
             break;
     }
 
-	int isGrantable = resultSet->getInt(8);
-	if ( isGrantable )
-		resultSet->setValue( 7, "YES" );
-	else
-		resultSet->setValue( 7, "NO" );
+	int isGrantable = sqlda->getShort(8);
+
+	if ( !isGrantable )
+		sqlda->updateVarying( 7, "NO" );
 
     return true;
-}
-
-int IscTablePrivilegesResultSet::getColumnDisplaySize(int index)
-{
-    switch (index)
-        {
-        case TABLE_TYPE:                // change from blob to text
-            return 128;
-        }
-
-    return Parent::getColumnDisplaySize (index);
-}
-
-int IscTablePrivilegesResultSet::getColumnType(int index, int &realSqlType)
-{
-    switch (index)
-        {
-        case TABLE_TYPE:                // change from blob to text
-            return JDBC_VARCHAR;
-        }
-
-    return Parent::getColumnType (index, realSqlType);
-}
-
-int IscTablePrivilegesResultSet::getColumnPrecision(int index)
-{
-    switch (index)
-        {
-        case TABLE_TYPE:                // change from blob to text
-            return 128;
-        }
-
-    return Parent::getPrecision (index);
 }
 
 }; // end namespace IscDbcLibrary

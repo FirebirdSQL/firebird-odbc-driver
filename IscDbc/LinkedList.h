@@ -93,6 +93,7 @@ inline void	*LinkedList::getNext(LinkedList **node)
 	return object;
 	}
 
+
 }; // end namespace IscDbcLibrary
 
 #endif

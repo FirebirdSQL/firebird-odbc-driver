@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCRESULTSET_H__C19738BA_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCRESULTSET_H__C19738BA_1C87_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCRESULTSET_H_)
+#define _ISCRESULTSET_H_
 
 #include "Connection.h"
 #include "LinkedList.h"
@@ -35,93 +31,87 @@
 #include "DateTime.h"	// Added by ClassView
 #include "SqlTime.h"
 #include "TimeStamp.h"	// Added by ClassView
+#include "IscStatementMetaData.h"
+#include "Sqlda.h"
 
 namespace IscDbcLibrary {
 
 class IscStatement;
 class IscDatabaseMetaData;
-class Sqlda;
 
 enum enStatysActivePositionRow { enSUCCESS, enUNKNOWN, enINSERT_ROW, enAFTER_LAST, enBEFORE_FIRST };
 
-class IscResultSet : public ResultSet, public StatementMetaData
+class IscResultSet : public ResultSet, public IscStatementMetaData
 {
 public:
-	void allocConversions();
-	IscResultSet(IscStatement *iscStatement);
-	virtual ~IscResultSet();
-	void				initResultSet(IscStatement *iscStatement);
-	virtual int			findColumn (const char *columName);
-	virtual void		freeHTML(const char *html);
-	virtual const char* genHTML(const char *series, const char *type, Properties *context);
+//{{{ specification jdbc
+//	virtual void		clearWarnings();
 	virtual void		close();
-	virtual bool		next();
+	virtual int			findColumn (const char *columName);
+//	virtual	InputStream* getAsciiStream( int columnIndex );
+//	virtual	InputStream* getAsciiStream( const char *columnName );
+//	virtual	BigDecimal	getBigDecimal( int columnIndex, int scale );
+//	virtual	BigDecimal	getBigDecimal( const char *columnName, int scale );
+//	virtual	InputStream getBinaryStream( int columnIndex );
+//	virtual	InputStream getBinaryStream( const char *columnName );
+//	virtual	bool		getBoolean( int columnIndex );
+//	virtual	bool		getBoolean( const char *columnName );
+	virtual char		getByte (int columnIndex);
+	virtual char		getByte (const char *columnName);
+//	virtual byte[]		getBytes( int columnIndex );
+//	virtual byte[]		getBytes( int columnIndex );
+//	virtual byte[]		getBytes( const char *columnName );
+	virtual const char* getCursorName();
+	virtual DateTime	getDate (int columnIndex);
+	virtual DateTime	getDate (const char *columnName);
+	virtual double		getDouble (int columnIndex);
+	virtual double		getDouble (const char *columnName);
+	virtual float		getFloat (int columnIndex);
+	virtual float		getFloat (const char *columnName);
+	virtual long		getInt (int columnIndex);
+	virtual long		getInt (const char *columnName);
+	virtual QUAD		getLong (int columnIndex);
+	virtual QUAD		getLong (const char *columnName);
 	virtual StatementMetaData* getMetaData();
-	virtual int			release();
-	virtual void		addRef();
+//	virtual Object		getObject( int columnIndex );
+	virtual short		getShort (int columnIndex);
+	virtual short		getShort (const char *columnName);
+	virtual const char* getString (int columnIndex);
+	virtual const char* getString (const char *columnName);
+	virtual SqlTime		getTime (int columnIndex);
+	virtual SqlTime		getTime (const char *columnName);
+	virtual TimeStamp	getTimestamp (int columnIndex);
+	virtual TimeStamp	getTimestamp (const char *columnName);
+//	virtual InputStream getUnicodeStream( int columnIndex );
+//	virtual InputStream getUnicodeStream( const char *columnName );
+//	virtual void		getWarnings();
+	virtual bool		next();
 	virtual bool		wasNull();
-
-//public StatementMetaData
-	virtual int			getColumnCount();
-	virtual int			getColumnType (int index, int &realSqlType);
-	virtual int			getPrecision(int index);
-	virtual int			getScale(int index);
-	virtual bool		isNullable (int index);
-	virtual int			getColumnDisplaySize(int index);
-	virtual const char* getColumnLabel(int index);
-	virtual const char* getSqlTypeName(int index);
-	virtual const char* getColumnName(int index);
-	virtual const char* getTableName(int index);
-	virtual const char* getColumnTypeName(int index);
-	virtual bool		isSigned (int index);
-	virtual bool		isReadOnly (int index);
-	virtual bool		isWritable (int index);
-	virtual bool		isDefinitelyWritable (int index);
-	virtual bool		isCurrency (int index);
-	virtual bool		isCaseSensitive (int index);
-	virtual bool		isAutoIncrement (int index);
-	virtual bool		isSearchable (int index);
-	virtual int			isBlobOrArray(int index);
-	virtual const char*	getSchemaName (int index);
-	virtual const char*	getCatalogName (int index);
-
-	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData);
-	virtual void		setSqlData(int index, long ptData, long ptIndData);
-	virtual void		saveSqlData(int index, long ptData, long ptIndData);
-	virtual void		restoreSqlData(int index);
-// end public StatementMetaData
-
-	void		deleteBlobs();
-	void		reset();
+//}}} end specification jdbc
 
 public:
-	void				setNull (int index);
+	IscResultSet(IscStatement *iscStatement);
+	virtual ~IscResultSet();
+
 	virtual int			objectVersion();
+
+	virtual void		initResultSet(IscStatement *iscStatement);
+	void				allocConversions();
+	virtual void		freeHTML(const char *html);
+	virtual const char* genHTML(const char *series, const char *type, Properties *context);
+	virtual bool		nextFetch();
+	virtual int			release();
+	virtual void		addRef();
+	virtual int			getColumnCount();
+
+	void				deleteBlobs();
+	void				reset();
+
 	virtual Value*		getValue (int index);
 	virtual Value*		getValue (const char *columnName);
-	virtual bool		isNull(int index);
-	virtual const char* getString (int index);
-	virtual const char* getString (const char *columnName);
-	virtual TimeStamp	getTimestamp (int index);
-	virtual TimeStamp	getTimestamp (const char * columnName);
-	virtual SqlTime		getTime (int index);
-	virtual SqlTime		getTime (const char * columnName);
-	virtual DateTime	getDate (int index);
-	virtual DateTime	getDate (const char * columnName);
-	virtual long		getInt (int index);
-	virtual long		getInt (const char *columnName);
-	virtual float		getFloat (int index);
-	virtual float		getFloat (const char * columnName);
-	virtual char		getByte (int index);
-	virtual char		getByte (const char *columnName);
+	virtual void		setNull (int index);
 	virtual Blob*		getBlob (int index);
 	virtual Blob*		getBlob (const char * columnName);
-	virtual double		getDouble (int index);
-	virtual double		getDouble (const char * columnName);
-	virtual QUAD		getQuad (int index);
-	virtual QUAD		getQuad (const char *columnName);
-	virtual short		getShort (int index);
-	virtual short		getShort (const char * columnName);
 
 	virtual bool		isBeforeFirst();
 	virtual bool		isAfterLast();
@@ -150,6 +140,7 @@ public:
 	virtual void		updateLong (int columnIndex, QUAD value);
 	virtual void		updateFloat (int columnIndex, float value);
 	virtual void		updateDouble (int columnIndex, double value);
+	virtual void		updateText (int columnIndex, const char* value);
 	virtual void		updateString (int columnIndex, const char* value);
 	virtual void		updateBytes (int columnIndex, int length, const void *bytes);
 	virtual void		updateDate (int columnIndex, DateTime value);
@@ -180,16 +171,19 @@ public:
 	virtual Statement	*getStatement();
 	virtual void		setPosRowInSet(int posRow);
 	virtual int			getPosRowInSet();
+	virtual long		*getSqlDataOffsetPtr();
 	virtual bool		readStaticCursor();
+	virtual bool		readFromSystemCatalog();
 	virtual bool		readForwardCursor();
 	virtual bool		setCurrentRowInBufferStaticCursor(int nRow);
 	virtual void		copyNextSqldaInBufferStaticCursor();
 	virtual void		copyNextSqldaFromBufferStaticCursor();
 	virtual int			getCountRowsStaticCursor();
-	virtual bool		getDataFromStaticCursor (int column, int cType, void * pointer, int bufferLength, long * indicatorPointer);
+	virtual bool		getDataFromStaticCursor (int column);
+	virtual bool		nextFromProcedure();
 
-	void setValue (int index, long value);
-	void setValue (int index, const char *value);
+	void				setValue (int index, long value);
+	void				setValue (int index, const char *value);
 
 	int				numberColumns;
 	void			*handle;
@@ -198,14 +192,15 @@ public:
 	char			**conversions;
 	char			**columnNames;
 	bool			valueWasNull;
+	bool			nextSimulateForProcedure;
 	LinkedList		blobs;
 	LinkedList		clobs;
-	Sqlda			*sqlda;
 	IscStatement	*statement;
 	int				activePosRowInSet;
+	long			sqldataOffsetPtr;
 	enStatysActivePositionRow statysPositionRow;
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_ISCRESULTSET_H__C19738BA_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCRESULTSET_H_)

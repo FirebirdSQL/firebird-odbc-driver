@@ -31,10 +31,23 @@
 #include "DsnDialog.h"
 #include "Setup.h"
 #include "../SetupAttributes.h"
+#include "../SecurityPassword.h"
 
 extern HINSTANCE m_hInstance;
 
 namespace OdbcJdbcSetupLibrary {
+
+using namespace classSecurityPassword;
+
+#ifdef _WIN32
+#define strncasecmp		strnicmp
+#endif
+
+#define ISLOWER(c)			((c) >= 'a' && (c) <= 'z')
+#define UPPER(c)			((ISLOWER (c)) ? (c) - 'a' + 'A' : (c))
+#define IS_END_TOKEN(c)		((c) == '\n' || (c) == '\r')
+#define IS_CHECK_YES(c)		((c) == 'Y' || (c) == '1')
+#define IS_CHECK_NO(c)		((c) == 'N' || (c) == '0')
 
 const char *driverInfo =
 	DRIVER_FULL_NAME"\0"
@@ -56,6 +69,14 @@ static const char *fileNames [] = {
 	};
 
 static const char *drivers [] = { "IscDbc", NULL };
+static const char *charsets []= 
+{ 
+	"NONE", "ASCII", "BIG_5", "CYRL", "DOS437", "DOS850", "DOS852", "DOS857", "DOS860",
+	"DOS861", "DOS863", "DOS865", "DOS866", "EUCJ_0208", "GB_2312", "ISO8859_1", 
+	"ISO8859_2", "KSC_5601", "OCTETS", "SJIS_0208", "UNICODE_FSS", 
+	"WIN1250", "WIN1251", "WIN1252", "WIN1253", "WIN1254", NULL
+};
+
 void MessageBoxError(char * stageExecuted, char * pathFile);
 void MessageBoxInstallerError(char * stageExecuted, char * pathOut);
 bool CopyFile(char * sourceFile, char * destFile);
@@ -77,6 +98,12 @@ BOOL INSTAPI ConfigDSN(HWND		hWnd,
 			   LPCSTR	lpszDriver,
 			   LPCSTR	lpszAttributes)
 {
+	if ( !lpszDriver || strncmp (lpszDriver, DRIVER_FULL_NAME, strlen(DRIVER_FULL_NAME)) )
+	{
+		SQLPostInstallerError ( ODBC_ERROR_INVALID_NAME,"Invalid driver name");
+		return false;
+	}
+
 	Setup setup (hWnd, lpszDriver, lpszAttributes);
 	switch (fRequest)
 	{
@@ -132,7 +159,7 @@ extern "C" __declspec( dllexport ) int INSTAPI DllRegisterServer (void)
 			ODBC_INSTALL_COMPLETE,
 			&useCount))
 	{
-		MessageBoxInstallerError("Install Driver False", pathOut);
+		MessageBoxInstallerError("Install Driver Failed", pathOut);
 		return S_FALSE;
 	}
 
@@ -350,10 +377,8 @@ Setup::Setup(HWND windowHandle, const char *drvr, const char *attr)
 
 	if (attr)
 	{
-		//MessageBox (hWnd, attr, "Attributes", 0);
 		attributes = attr;
 		dsn = getAttribute (SETUP_DSN);
-		readAttributes();
 	}
 }
 
@@ -364,17 +389,93 @@ Setup::~Setup()
 
 void Setup::configDsn()
 {
+	if ( !dsn.IsEmpty() )
+		readAttributes();
 	configureDialog();
 }
 
 void Setup::addDsn()
 {
-	configureDialog();
+	dbName = getAttribute (SETUP_DBNAME);
+	if ( dbName.IsEmpty() )
+		dbName = getAttribute (KEY_DSN_DATABASE);
+
+	client = getAttribute (SETUP_CLIENT);
+
+	user = getAttribute (SETUP_USER);
+	if ( user.IsEmpty() )
+		user = getAttribute (KEY_DSN_UID);
+
+	password = getAttribute (SETUP_PASSWORD);
+	if ( password.IsEmpty() )
+		password = getAttribute (KEY_DSN_PWD);
+
+	jdbcDriver = getAttribute (SETUP_JDBC_DRIVER);
+	if ( jdbcDriver.IsEmpty() )
+		jdbcDriver = getAttribute (KEY_DSN_JDBC_DRIVER);
+	if ( jdbcDriver.IsEmpty() )
+		jdbcDriver = drivers [0];
+
+	role = getAttribute (SETUP_ROLE);
+	
+	charset = getAttribute (SETUP_CHARSET);
+	if ( charset.IsEmpty() )
+		charset = getAttribute (KEY_DSN_CHARSET);
+
+	readonlyTpb = getAttribute (SETUP_READONLY_TPB);
+	nowaitTpb = getAttribute (SETUP_NOWAIT_TPB);
+	dialect = getAttribute (SETUP_DIALECT);
+
+	quoted = getAttribute (SETUP_QUOTED);
+	if ( quoted.IsEmpty() )
+		quoted = getAttribute (KEY_DSN_QUOTED);
+
+	sensitive = getAttribute ( SETUP_SENSITIVE );
+	autoQuoted = getAttribute ( SETUP_AUTOQUOTED );
+
+	char chCheck = UPPER( *(const char*)readonlyTpb );
+	
+	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
+		readonlyTpb = "N";
+
+	chCheck = UPPER( *(const char*)nowaitTpb );
+	
+	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
+		nowaitTpb = "N";
+
+	chCheck = *(const char*)dialect;
+	
+	if ( chCheck != '1' && chCheck != '3' )
+		dialect = "3";
+
+	chCheck = UPPER( *(const char*)quoted );
+	
+	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
+		quoted = "Y";
+
+	chCheck = UPPER( *(const char*)sensitive );
+	
+	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
+		sensitive = "N";
+
+	chCheck = UPPER( *(const char*)autoQuoted );
+	
+	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
+		autoQuoted = "N";
+
+	if ( hWnd || dsn.IsEmpty() )
+		configureDialog();
+	else
+	{
+		SQLWriteDSNToIni(dsn, driver);
+		writeAttributes();
+	}
 }
 
 void Setup::removeDsn()
 {
-	SQLRemoveDSNFromIni (dsn);
+	if ( !dsn.IsEmpty() )
+		SQLRemoveDSNFromIni (dsn);
 }
 
 JString Setup::getAttribute(const char * attribute)
@@ -382,18 +483,30 @@ JString Setup::getAttribute(const char * attribute)
 	const char *p;
 	int count = strlen (attribute);
 
-	for (p = attributes; *p; ++p)
+	for (p = attributes; *p || *(p+1); ++p)
 	{
-		if (*p == *attribute && !strncmp (p, attribute, count) && p [count] == '=')
+		if ( p - attributes > 4096 )
+			break; // attributes should be finished "\0\0"
+
+		if (*p == *attribute && !strncasecmp (p, attribute, count) )
 		{
-			const char *q;
-			p += count + 1;
-			for (q = p; *q && *q != ';'; ++q)
-				;
-			return JString (p, q - p);
+			p += count;
+			while (*p && (*p == ' ' || *p == '\t') )
+				++p;
+			if ( *p == '=' )
+			{
+				++p;
+				while (*p && (*p == ' ' || *p == '\t') )
+					++p;
+
+				const char *q;
+				for (q = p; *q && *q != ';' && !IS_END_TOKEN(*q); ++q)
+					;
+				return JString (p, q - p);
+			}
 		}
-		while (*p && *p++ != ';')
-			;
+		while (*p && *p != ';' && !IS_END_TOKEN(*p) )
+			++p;
 	}
 
 	return JString();
@@ -404,7 +517,7 @@ bool Setup::configureDialog()
 	if ( jdbcDriver.IsEmpty() )
 		jdbcDriver = drivers [0];
 
-	CDsnDialog dialog (drivers);
+	CDsnDialog dialog (drivers, charsets);
 	dialog.m_name = dsn;
 	dialog.m_database = dbName;
 	dialog.m_client = client;
@@ -414,19 +527,35 @@ bool Setup::configureDialog()
 	dialog.m_role = role;
 	dialog.m_charset = charset;
 
-	if ( *(const char*)readonlyTpb == 'Y' ) dialog.m_readonly = TRUE;
-	else dialog.m_readonly=FALSE;
+	if ( IS_CHECK_YES(*(const char*)readonlyTpb) )
+		dialog.m_readonly = TRUE;
+	else 
+		dialog.m_readonly=FALSE;
 
-	if ( *(const char*)nowaitTpb == 'Y' ) dialog.m_nowait = TRUE;
-	else dialog.m_nowait=FALSE;
+	if ( IS_CHECK_YES(*(const char*)nowaitTpb) )
+		dialog.m_nowait = TRUE;
+	else 
+		dialog.m_nowait=FALSE;
 
 	if ( *(const char*)dialect == '1' )
 		dialog.m_dialect3 = FALSE;
 	else 
 		dialog.m_dialect3 = TRUE;
 
-	if ( *(const char*)quoted == 'Y' ) dialog.m_quoted = TRUE;
-	else dialog.m_quoted = FALSE;
+	if ( IS_CHECK_YES(*(const char*)quoted) )
+		dialog.m_quoted = TRUE;
+	else 
+		dialog.m_quoted = FALSE;
+
+	if ( IS_CHECK_YES ( *(const char*)sensitive ) )
+		dialog.m_sensitive = TRUE;
+	else 
+		dialog.m_sensitive = FALSE;
+
+	if ( IS_CHECK_YES ( *(const char*)autoQuoted ) )
+		dialog.m_autoQuoted = TRUE;
+	else 
+		dialog.m_autoQuoted = FALSE;
 
 	if ( dialog.DoModal() != IDOK )
 		return false;
@@ -452,6 +581,12 @@ bool Setup::configureDialog()
 	if( dialog.m_quoted ) quoted = "Y";
 	else quoted = "N";
 
+	if( dialog.m_sensitive ) sensitive = "Y";
+	else sensitive = "N";
+
+	if( dialog.m_autoQuoted ) autoQuoted = "Y";
+	else autoQuoted = "N";
+
 	SQLWriteDSNToIni(dialog.m_name, driver);
 	writeAttributes();
 
@@ -463,7 +598,6 @@ void Setup::writeAttributes()
 	writeAttribute (SETUP_DBNAME, dbName);
 	writeAttribute (SETUP_CLIENT, client);
 	writeAttribute (SETUP_USER, user);
-	writeAttribute (SETUP_PASSWORD, password);
 	writeAttribute (SETUP_ROLE, role);
 	writeAttribute (SETUP_CHARSET, charset);
 	writeAttribute (SETUP_JDBC_DRIVER, jdbcDriver);
@@ -471,6 +605,13 @@ void Setup::writeAttributes()
 	writeAttribute (SETUP_NOWAIT_TPB, nowaitTpb);
 	writeAttribute (SETUP_DIALECT, dialect);
 	writeAttribute (SETUP_QUOTED, quoted);
+	writeAttribute (SETUP_SENSITIVE, sensitive);
+	writeAttribute (SETUP_AUTOQUOTED, autoQuoted);
+
+	char buffer[256];
+	CSecurityPassword security;
+	security.encode( (char*)(const char *)password, buffer );
+	writeAttribute (SETUP_PASSWORD, buffer);
 }
 
 void Setup::readAttributes()
@@ -478,7 +619,6 @@ void Setup::readAttributes()
 	dbName = readAttribute (SETUP_DBNAME);
 	client = readAttribute (SETUP_CLIENT);
 	user = readAttribute (SETUP_USER);
-	password = readAttribute (SETUP_PASSWORD);
 	jdbcDriver = readAttribute (SETUP_JDBC_DRIVER);
 	role = readAttribute (SETUP_ROLE);
 	charset = readAttribute (SETUP_CHARSET);
@@ -486,6 +626,19 @@ void Setup::readAttributes()
 	nowaitTpb = readAttribute (SETUP_NOWAIT_TPB);
 	dialect = readAttribute (SETUP_DIALECT);
 	quoted = readAttribute (SETUP_QUOTED);
+	sensitive = readAttribute (SETUP_SENSITIVE);
+	autoQuoted = readAttribute (SETUP_AUTOQUOTED);
+
+	JString pass = readAttribute (SETUP_PASSWORD);
+	if ( pass.length() > 40 )
+	{
+		char buffer[256];
+		CSecurityPassword security;
+		security.decode( (char*)(const char *)pass, buffer );
+		password = buffer;
+	}
+	else
+		password = pass;
 }
 
 void Setup::writeAttribute(const char * attribute, const char * value)

@@ -49,6 +49,7 @@
 #include "IscSqlType.h"
 #include "IscStatement.h"
 #include "IscConnection.h"
+#include "IscPreparedStatement.h"
 #include "IscDatabaseMetaData.h"
 
 #ifndef SQL_PARAM_INPUT
@@ -79,106 +80,146 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 													   const char * procedureNamePattern, 
 													   const char * columnNamePattern)
 {
-	JString sql = 
-		"select NULL as procedure_cat,\n"							// 1
-				"\tNULL as procedure_schem,\n"						// 2
-				"\tpp.rdb$procedure_name as procedure_name,\n"		// 3
-				"\tpp.rdb$parameter_name as column_name,\n"			// 4
+	char sql[4096] =
+		"select cast (NULL as varchar(7)) as procedure_cat,\n"		// 1
+				"\tcast (NULL as varchar(7)) as procedure_schem,\n"	// 2
+				"\tcast (pp.rdb$procedure_name as varchar(31)) as procedure_name,\n"	// 3
+				"\tcast (pp.rdb$parameter_name as varchar(31)) as column_name,\n"		// 4
 				"\tpp.rdb$parameter_type as column_type,\n"			// 5
 				"\tf.rdb$field_type as data_type,\n"				// 6
-				"\tf.rdb$field_sub_type as type_name,\n"			// 7
-				"\tf.rdb$field_length as column_size,\n"			// 8
-				"\tnull as buffer_length,\n"						// 9
-				"\tf.rdb$field_scale as decimal_digits,\n"			// 10
-				"\t10 as num_prec_radix,\n"							// 11
-				"\t1 as nullable,\n"								// 12 #define SQL_NULLABLE 1
-//				"\tf.rdb$null_flag as nullable,\n"					// 12
-				"\tf.rdb$description as remarks,\n"					// 13
-				"\tf.rdb$default_value as column_def,\n"			// 14
-				"\tnull as sql_data_type,\n"						// 15
-				"\tnull as sql_datetime_sub,\n"						// 16
-				"\tf.rdb$field_length as char_octet_length,\n"		// 17
-				"\tpp.rdb$parameter_number as ordinal_position,\n"	// 18
-				"\t'YES' as is_nullable,\n"							// 19
+				"\tcast (pp.rdb$procedure_name as varchar(31)) as type_name,\n"			// 7
+				"\tcast ( f.rdb$field_length as integer ) as column_size,\n"			// 8
+				"\tcast ( null as integer ) as buffer_length,\n"	// 9
+				"\tcast ( f.rdb$field_scale as smallint) as decimal_digits,\n"			// 10
+				"\tcast ( 10 as smallint) as num_prec_radix,\n"		// 11
+				"\tcast ( 1 as smallint) as nullable,\n"			// 12 #define SQL_NULLABLE 1
+				"\tcast (f.rdb$description as varchar(256)) as remarks,\n"				// 13
+				"\tcast (f.rdb$default_value as varchar(512)) as column_def,\n"			// 14
+				"\tf.rdb$field_type as sql_data_type,\n"			// 15 - SMALLINT NOT NULL
+				"\tf.rdb$field_sub_type as sql_datetime_sub,\n"		// 16 - SMALLINT
+				"\tcast ( f.rdb$field_length as integer ) as char_octet_length,\n"		// 17
+				"\tcast ( pp.rdb$parameter_number + 1 as integer) as ordinal_position,\n"// 18
+				"\tcast ('YES' as varchar(3)) as is_nullable,\n"	// 19
 				"\tf.rdb$field_precision as column_precision\n"		// 20
 		"from rdb$procedure_parameters pp, rdb$fields f\n"
 		"where pp.rdb$field_source = f.rdb$field_name\n";
 
+	char * ptFirst = sql + strlen(sql);
+
 	if (procedureNamePattern && *procedureNamePattern)
-		sql += expandPattern (" and ","pp.rdb$procedure_name", procedureNamePattern);
+		expandPattern (ptFirst, " and ","pp.rdb$procedure_name", procedureNamePattern);
 
 	if ( !metaData->allTablesAreSelectable() )
-		sql += metaData->existsAccess(" and ", "pp", 5, "\n");
+		metaData->existsAccess(ptFirst, " and ", "pp", 5, "\n");
 
 	if (columnNamePattern && *columnNamePattern)
-		sql += expandPattern (" and ","pp.rdb$parameter_name", columnNamePattern);
+		expandPattern (ptFirst, " and ","pp.rdb$parameter_name", columnNamePattern);
 
-	sql += " order by pp.rdb$procedure_name, pp.rdb$parameter_number";
+	addString(ptFirst, " order by pp.rdb$procedure_name, pp.rdb$parameter_type, pp.rdb$parameter_number");
 	prepareStatement (sql);
 	numberColumns = 19;
 }
 
 bool IscProcedureColumnsResultSet::next()
 {
-	if (!resultSet->next())
+	if (!IscResultSet::next())
 		return false;
 
-	trimBlanks (3);							// procedure name
-	trimBlanks (4);							// parameter name
+	int parameterType = sqlda->getShort (5);
+	int type = parameterType ? SQL_PARAM_OUTPUT : SQL_PARAM_INPUT;
+	sqlda->updateShort (5, type);
 
-	int parameterType = resultSet->getInt (5);
-	int type = (parameterType) ? SQL_PARAM_INPUT : SQL_PARAM_OUTPUT;
-	resultSet->setValue (5, type);
+	sqlType.blrType = sqlda->getShort (6);	// field type
+	sqlType.subType = sqlda->getShort (16);
+	sqlType.lengthIn = sqlda->getInt (8);
+	sqlType.scale = sqlda->getShort (10);
+	sqlType.precision = sqlda->getShort (20);
+	sqlType.dialect = statement->connection->getDatabaseDialect();
 
-	int blrType = resultSet->getInt (6);	// field type
-	int subType = resultSet->getInt (7);
-	int length = resultSet->getInt (8);
-	int scale = resultSet->getInt (10);
-	int dialect	= resultSet->statement->connection->getDatabaseDialect();
-	int precision = resultSet->getInt (20);
-	IscSqlType sqlType (blrType, subType, length, length, dialect, precision, scale);
+	sqlType.buildType();
 
-	resultSet->setValue (6, sqlType.type);
-	resultSet->setValue (7, sqlType.typeName);
-	resultSet->setValue (9, length);
+	sqlda->updateShort (6, sqlType.type);
+	sqlda->updateVarying (7, sqlType.typeName);
+
+	if (sqlType.type != JDBC_VARCHAR &&	sqlType.type != JDBC_CHAR)
+		sqlda->updateInt (9, sqlType.bufferLength);
+	else
+		sqlda->updateInt (9, sqlType.lengthIn);
+
+	switch (sqlType.type)
+	{
+	case JDBC_NUMERIC:
+	case JDBC_DECIMAL:
+		sqlda->updateShort ( 10, -sqlType.scale );
+	}
+	
+	adjustResults (sqlType);
 
 	return true;
 }
 
-int IscProcedureColumnsResultSet::getColumnDisplaySize(int index)
+void IscProcedureColumnsResultSet::adjustResults (IscSqlType &sqlType)
 {
-	switch (index)
-		{
-		case TYPE_NAME:					//	TYPE_NAME
-			return 128;
-		}
+	// decimal digits have no meaning for some columns
+	// radix - doesn't mean much for some colums either
+	switch (sqlType.type)
+	{
+	case JDBC_CHAR:
+	case JDBC_VARCHAR:
+	case JDBC_LONGVARCHAR:
+	case JDBC_LONGVARBINARY:
+	case JDBC_DATE:
+	case JDBC_SQL_DATE:
+		sqlda->setNull (10);
+		sqlda->setNull (11);
+		break;
+	case JDBC_REAL:
+	case JDBC_DOUBLE:
+		sqlda->updateShort (11, 2);
+		break;
+	case JDBC_TIME:
+	case JDBC_SQL_TIME:
+	case JDBC_TIMESTAMP:
+	case JDBC_SQL_TIMESTAMP:
+		sqlda->updateShort (10, -ISC_TIME_SECONDS_PRECISION_SCALE);
+	default:
+		sqlda->updateShort (11, 10);
+	}	
 
-	return Parent::getColumnDisplaySize (index);
-}
+	switch (sqlType.type)
+	{
+	case JDBC_DATE:
+	case JDBC_SQL_DATE:
+		sqlda->updateShort (15, 9);
+		sqlda->updateShort (16, 1);
+		break;
+	case JDBC_TIME:
+	case JDBC_SQL_TIME:
+		sqlda->updateShort (15, 9);
+		sqlda->updateShort (16, 2);
+		break;
+	case JDBC_TIMESTAMP:
+	case JDBC_SQL_TIMESTAMP:
+		sqlda->updateShort (15, 9);
+		sqlda->updateShort (16, 3);
+		break;
+	default:
+		sqlda->updateShort (15, sqlda->getShort(6));
+		sqlda->setNull (16);
+	}
 
-int IscProcedureColumnsResultSet::getColumnType(int index, int &realSqlType)
-{
-	switch (index)
-		{
-		case TYPE_NAME:					//	TYPE_NAME
-			return JDBC_VARCHAR;
-		}
-
-	return Parent::getColumnType (index, realSqlType);
-}
-
-int IscProcedureColumnsResultSet::getPrecision(int index)
-{
-	return 31;
-/*
-	switch (index)
-		{
-		case TYPE_NAME:					//	TYPE_NAME
-			return 128;
-		}
-
-	return Parent::getPrecision (index);
-*/
+	//Octet length
+	switch (sqlType.type)
+	{
+	case JDBC_LONGVARCHAR:
+	case JDBC_LONGVARBINARY:
+	case JDBC_VARCHAR:
+	case JDBC_CHAR:
+		sqlda->updateInt (17, sqlda->getInt (8));
+		break;
+	default:
+		sqlda->setNull (17);
+	} 
 }
 
 }; // end namespace IscDbcLibrary

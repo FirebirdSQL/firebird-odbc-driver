@@ -1,8 +1,8 @@
 ISCDBCSRC = \
 	Attachment.cpp \
 	BinaryBlob.cpp \
-	Blob.cpp \
 	DateTime.cpp \
+	EnvShare.cpp \
 	extodbc.cpp \
 	IscArray.cpp \
 	IscBlob.cpp \
@@ -14,11 +14,13 @@ ISCDBCSRC = \
 	IscDatabaseMetaData.cpp \
 	IscIndexInfoResultSet.cpp \
 	IscMetaDataResultSet.cpp \
+	IscOdbcStatement.cpp \
 	IscPreparedStatement.cpp \
 	IscPrimaryKeysResultSet.cpp \
 	IscProcedureColumnsResultSet.cpp \
 	IscProceduresResultSet.cpp \
 	IscResultSet.cpp \
+	IscResultSetMetaData.cpp \
 	IscSpecialColumnsResultSet.cpp \
 	IscSqlType.cpp \
 	IscStatement.cpp \
@@ -36,13 +38,13 @@ ISCDBCSRC = \
 	SQLError.cpp \
 	SqlTime.cpp \
 	Stream.cpp \
+	SupportFunctions.cpp \
 	TimeStamp.cpp \
 	TypesResultSet.cpp \
 	Value.cpp \
 	Values.cpp
 
 ODBCJDBCSRC = \
-	Attributes.cpp \
 	DescRecord.cpp \
 	Main.cpp \
 	OdbcConnection.cpp \

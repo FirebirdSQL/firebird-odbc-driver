@@ -37,10 +37,6 @@
 #include "IscDbc.h"
 #include "BinaryBlob.h"
 
-#ifdef ENGINE
-#include "Database.h"
-#endif
-
 #ifdef _DEBUG
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
@@ -57,6 +53,7 @@ BinaryBlob::BinaryBlob()
     useCount = 1;
     offset = 0;
     populated = true;
+	directLength = 0;
 }
 
 BinaryBlob::BinaryBlob(int minSegmentSize) : Stream (minSegmentSize)
@@ -64,19 +61,8 @@ BinaryBlob::BinaryBlob(int minSegmentSize) : Stream (minSegmentSize)
     useCount = 1;
     offset = 0;
     populated = true;
+	directLength = 0;
 }
-
-#ifdef ENGINE
-BinaryBlob::BinaryBlob(Database * db, long recNumber, long sectId)
-{
-    useCount = 1;
-    offset = 0;
-    populated = false;
-    database = db;
-    recordNumber = recNumber;
-    sectionId = sectId;
-}
-#endif
 
 BinaryBlob::~BinaryBlob()
 {
@@ -91,14 +77,19 @@ void BinaryBlob::addRef()
 int BinaryBlob::release()
 {
 	if (--useCount == 0)
-		{
+	{
 		delete this;
 		return 0;
-		}
+	}
 
 	return useCount;
 }
 
+void BinaryBlob::clear()
+{
+	Stream::clear();
+    offset = 0;
+}
 /***
 bool BinaryBlob::write(const char * filename)
 {
@@ -154,12 +145,20 @@ bool BinaryBlob::loadFile(const char * fileName)
 	return true;
 }
 ***/
+void BinaryBlob::getBinary(long pos, long length, void * address)
+{
+	if (!populated)
+		populate();
+
+	offset += Stream::getSegmentToBinary (pos, length, address);
+}
+
 void BinaryBlob::getHexString(long pos, long length, void * address)
 {
 	if (!populated)
 		populate();
 
-	Stream::getSegmentToHexStr (pos, length, address);
+	offset += Stream::getSegmentToHexStr (pos, length, address);
 }
 
 void BinaryBlob::getBytes(long pos, long length, void * address)
@@ -167,7 +166,7 @@ void BinaryBlob::getBytes(long pos, long length, void * address)
 	if (!populated)
 		populate();
 
-	Stream::getSegment (pos, length, address);
+	offset += Stream::getSegment (pos, length, address);
 }
 
 int BinaryBlob::length()
@@ -183,6 +182,16 @@ void BinaryBlob::putSegment(int length, const char * data, bool copyFlag)
 	Stream::putSegment (length, data, copyFlag);
 }
 
+void BinaryBlob::putLongSegment(int length, const char * data)
+{
+	while ( length >= DEFAULT_BLOB_BUFFER_LENGTH )
+	{
+		Stream::putSegment ( DEFAULT_BLOB_BUFFER_LENGTH, data, true );
+		data += DEFAULT_BLOB_BUFFER_LENGTH;
+		length -= DEFAULT_BLOB_BUFFER_LENGTH;
+	}
+	if (length)	Stream::putSegment (length, data, true);
+}
 
 int BinaryBlob::getSegmentLength(int pos)
 {
@@ -204,17 +213,22 @@ int	BinaryBlob::getSegment (int offset, int length, void* address)
 
 void BinaryBlob::populate()
 {
-#ifdef ENGINE
-	if (database)
-		database->fetchRecord (sectionId, recordNumber, this);
-#endif
-
 	populated = true;
 }
 
 void BinaryBlob::putSegment(Blob * blob)
 {
 	Stream::putSegment (blob);
+}
+
+void BinaryBlob::attach(char * pointBlob, bool fetched, bool clear)
+{
+
+}
+
+void BinaryBlob::bind(Statement *stmt, char * sqldata)
+{
+
 }
 
 }; // end namespace IscDbcLibrary

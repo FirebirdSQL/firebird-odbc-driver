@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_STREAM_H__02AD6A53_A433_11D2_AB5B_0000C01D2301__INCLUDED_)
-#define AFX_STREAM_H__02AD6A53_A433_11D2_AB5B_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_STREAM_H_INCLUDED_)
+#define _STREAM_H_INCLUDED_
 
 namespace IscDbcLibrary {
 
@@ -57,6 +53,8 @@ public:
 	virtual char*	getString();
 	virtual int		getSegment (int offset, int len, void *ptr, char delimiter);
 	virtual void	setSegment (Segment *segment, int length, void *address);
+	virtual char*	convStrHexToBinary (char * ptr, int len);
+	virtual int		getSegmentToBinary(int offset, int len, void * ptr);
 	virtual int		getSegmentToHexStr(int offset, int len, void * ptr);
 	virtual int		getSegment (int offset, int length, void* address);
 	virtual void	putSegment (const char *string);
@@ -67,22 +65,30 @@ public:
 	Segment*		allocSegment (int tail);
 	char*			transferRecord();
 	void			setMinSegment (int length);
+	void			attach(Stream &dst, bool clear);
+	void			setConsecutiveRead (bool status) { consecutiveRead = status; }
 
 	Stream();
 	Stream (int minSegmentSize);
-	~Stream();
+	virtual ~Stream();
 
 	int		totalLength;
 	int		minSegment;
+	int		sizeStructSegment;
 	int		currentLength;
 	int		decompressedLength;
 	int		useCount;
 	bool	copyFlag;
+	bool	bClear;
 	Segment	first;
+	Segment	*ptFirst;
 	Segment	*segments;
 	Segment *current;
+	bool	consecutiveRead;
+	Segment *currentRead;
+	int		currentN;
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(AFX_STREAM_H__02AD6A53_A433_11D2_AB5B_0000C01D2301__INCLUDED_)
+#endif // !defined(_STREAM_H_INCLUDED_)

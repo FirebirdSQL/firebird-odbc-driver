@@ -33,10 +33,13 @@ using namespace classJString;
 
 class CDsnDialog
 {
-// Construction
-public:
+	HWND hwndHtmlHelp;
+
 	const char** drivers;
-	CDsnDialog(const char **jdbcDrivers);   // standard constructor
+	const char** charsets;
+
+public:
+	CDsnDialog(const char **jdbcDrivers, const char **jdbcCharsets);
 	~CDsnDialog();
 
 // Dialog Data
@@ -53,6 +56,8 @@ public:
 	BOOL	m_nowait;
 	BOOL	m_dialect3;
 	BOOL	m_quoted;
+	BOOL	m_sensitive;
+	BOOL	m_autoQuoted;
 
 public:
 	int DoModal();
@@ -61,11 +66,15 @@ public:
 	void CheckRemotehost(char * fullPathFileName);
 	BOOL OnFindFile();
 	BOOL OnFindFileClient();
+	void SetDisabledDlgItem(HWND hDlg, int ID, BOOL bDisabled = TRUE );
 	void UpdateData(HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	BOOL OnInitDialog(HWND hDlg);
 #ifdef _WIN32
-	void OnTestConnection(HWND hDlg);
+	void OnTestConnection( HWND hDlg );
+	void WinHtmlHelp( HWND hDlg );
 #endif
+	int getDriverBuildKey();
+	void removeNameFileDBfromMessage(char * message);
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

@@ -26,7 +26,6 @@
 
 #define JDBC_NULL		   0 
 
-#define JDBC_ARRAY 		  -8
 #define JDBC_BIT 		  -7
 #define JDBC_TINYINT 	  -6
 #define JDBC_SMALLINT	   5

@@ -28,12 +28,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ODBCSTATEMENT_H__ED260D97_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ODBCSTATEMENT_H__ED260D97_1BC4_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ODBCSTATEMENT_H_)
+#define _ODBCSTATEMENT_H_
 
 #include "OdbcObject.h"
 
@@ -42,115 +38,126 @@ namespace OdbcJdbcLibrary {
 using namespace classJString;
 using namespace IscDbcLibrary;
 
-struct Binding {
-	int			type;
-	int			cType;
-	int			sqlType;
-	void		*pointer;
-	void		*pointerOrg;
-	SQLINTEGER	bufferLength;
-//Suggested by R. Milharcic
-	SQLINTEGER	dataOffset;
-	bool		startedTransfer;		// Carlos G.A.
-	bool		data_at_exec;
-	SQLINTEGER	*indicatorPointer;
-	};
-    
 class OdbcConnection;
 class OdbcDesc;
 class DescRecord;
+class OdbcStatement;
+class OdbcConvert;
 
 enum enFetchType { NoneFetch, Fetch, ExtendedFetch, FetchScroll };
+
+typedef SQLRETURN (OdbcStatement::*EXECUTE_FUNCTION)();
+typedef bool (ResultSet::*FETCH_FUNCTION)();
 
 class OdbcStatement : public OdbcObject  
 {
 public:
-	RETCODE sqlMoreResults();
-	RETCODE sqlColAttribute (int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT* strLengthPtr, SQLPOINTER numericAttributePtr);
-	RETCODE returnData();
-	RETCODE sqlFetchScroll (int orientation, int offset);
-	RETCODE sqlFetchScrollCursorStatic(int orientation, int offset);
-	RETCODE sqlSetPos (SQLUSMALLINT rowNumber, SQLUSMALLINT operation, SQLUSMALLINT lockType);
-	RETCODE sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGER crowKeyset, SQLUSMALLINT crowRowset);
-	RETCODE sqlExtendedFetch (int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray);
-	RETCODE sqlColAttributes (int column, int descType, SQLPOINTER buffer, int bufferSize, SWORD *length, SDWORD *value);
-	RETCODE sqlRowCount (SQLINTEGER *rowCount);
-	RETCODE sqlSetStmtAttr (int attribute, SQLPOINTER ptr, int length);
-	RETCODE sqlParamData(SQLPOINTER *ptr);	// Carlos Guzmán Álvarez
-	RETCODE	sqlPutData (SQLPOINTER value, SQLINTEGER valueSize);
-	RETCODE sqlGetTypeInfo (int dataType);
-	Binding* allocBindings (int count, int oldCount, Binding *oldBindings);
-	RETCODE executeStatement();	//Changed return type 2002-06-04 RM 
-	char* getToken (const char** ptr, char *token);
-	bool isStoredProcedureEscape (const char *sqlString);
-	RETCODE sqlGetCursorName (SQLCHAR *name, int bufferLength, SQLSMALLINT *nameLength);
-	RETCODE sqlGetStmtAttr (int attribute, SQLPOINTER value, int bufferLength, SQLINTEGER *lengthPtr);
-	RETCODE sqlCloseCursor();
-	RETCODE sqlSetCursorName (SQLCHAR*name, int nameLength);
-	RETCODE sqlProcedureColumns(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength, SQLCHAR*col,int colLength);
-	RETCODE sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength);
-	RETCODE sqlCancel();
-	void setParameter(DescRecord *record,int parameter);
-	RETCODE sqlBindParameter (int parameter, int type, int cType, int sqlType, int precision, int scale, PTR ptr, int bufferLength, SDWORD *length);
-	RETCODE sqlDescribeParam (int parameter, SWORD* sqlType, UDWORD*precision, SWORD*scale,SWORD*nullable);
-	RETCODE OdbcStatement::formatParameter( int parameter );
-	ResultSet* getResultSet();
-	RETCODE sqlExecuteDirect (SQLCHAR * sql, int sqlLength);
-	RETCODE sqlExecute();
-	RETCODE sqlGetData (int column, int cType, PTR value, int bufferLength, SDWORD *length);
-	RETCODE sqlDescribeCol (int col, SQLCHAR *colName, int nameSize, SWORD *nameLength,SWORD*sqlType,UDWORD*precision,SWORD*scale,SWORD *nullable);
-	RETCODE sqlNumResultCols (SWORD *columns);
-	RETCODE sqlNumParams (SWORD *params);
-	RETCODE sqlForeignKeys (SQLCHAR *pkCatalog, int pkCatLength, SQLCHAR*pkSchema, int pkSchemaLength,SQLCHAR*pkTable,int pkTableLength, SQLCHAR* fkCatalog,int fkCatalogLength, SQLCHAR*fkSchema, int fkSchemaLength,SQLCHAR*fkTable,int fkTableLength);
-	RETCODE sqlPrimaryKeys (SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength);
-	RETCODE sqlStatistics (SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, int unique, int reservedSic);
+	SQLRETURN sqlMoreResults();
+	inline SQLRETURN fetchData();
+	inline SQLRETURN returnData();
+	inline SQLRETURN returnDataFromExtendedFetch();
+	SQLRETURN sqlColAttribute (int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT* strLengthPtr, SQLPOINTER numericAttributePtr);
+	SQLRETURN sqlFetchScroll (int orientation, int offset);
+	SQLRETURN sqlFetchScrollCursorStatic(int orientation, int offset);
+	SQLRETURN sqlSetPos (SQLUSMALLINT rowNumber, SQLUSMALLINT operation, SQLUSMALLINT lockType);
+	SQLRETURN sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGER crowKeyset, SQLUSMALLINT crowRowset);
+	SQLRETURN sqlExtendedFetch (int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray);
+	SQLRETURN sqlRowCount (SQLINTEGER *rowCount);
+	SQLRETURN sqlSetStmtAttr (int attribute, SQLPOINTER ptr, int length);
+	SQLRETURN sqlParamData(SQLPOINTER *ptr);	// Carlos Guzmán Álvarez
+	SQLRETURN	sqlPutData (SQLPOINTER value, SQLINTEGER valueSize);
+	SQLRETURN sqlGetTypeInfo (int dataType);
+	bool 	registerOutParameter();
+	SQLRETURN inputParam();
+	SQLRETURN executeStatement();
+	SQLRETURN executeStatementParamArray();
+	SQLRETURN executeProcedure();
+	SQLRETURN sqlGetCursorName (SQLCHAR *name, int bufferLength, SQLSMALLINT *nameLength);
+	SQLRETURN sqlGetStmtAttr (int attribute, SQLPOINTER value, int bufferLength, SQLINTEGER *lengthPtr);
+	SQLRETURN sqlCloseCursor();
+	SQLRETURN sqlSetCursorName (SQLCHAR*name, int nameLength);
+	SQLRETURN sqlProcedureColumns(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength, SQLCHAR*col,int colLength);
+	SQLRETURN sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength);
+	SQLRETURN sqlCancel();
+	SQLRETURN sqlBindParameter (int parameter, int type, int cType, int sqlType, int precision, int scale, PTR ptr, int bufferLength, SDWORD *length);
+	SQLRETURN sqlDescribeParam (int parameter, SWORD* sqlType, UDWORD*precision, SWORD*scale,SWORD*nullable);
+	SQLRETURN formatParameter( int parameter );
+	SQLRETURN sqlExecuteDirect (SQLCHAR * sql, int sqlLength);
+	SQLRETURN sqlExecute();
+	SQLRETURN sqlGetData (int column, int cType, PTR value, int bufferLength, SDWORD *length);
+	SQLRETURN sqlDescribeCol (int col, SQLCHAR *colName, int nameSize, SWORD *nameLength,SWORD*sqlType,UDWORD*precision,SWORD*scale,SWORD *nullable);
+	SQLRETURN sqlNumResultCols (SWORD *columns);
+	SQLRETURN sqlNumParams (SWORD *params);
+	SQLRETURN sqlForeignKeys (SQLCHAR *pkCatalog, int pkCatLength, SQLCHAR*pkSchema, int pkSchemaLength,SQLCHAR*pkTable,int pkTableLength, SQLCHAR* fkCatalog,int fkCatalogLength, SQLCHAR*fkSchema, int fkSchemaLength,SQLCHAR*fkTable,int fkTableLength);
+	SQLRETURN sqlPrimaryKeys (SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength);
+	SQLRETURN sqlStatistics (SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, int unique, int reservedSic);
 	void releaseParameters();
 	void releaseBindings();
-	RETCODE sqlFreeStmt (int option);
-	RETCODE setValue (Binding *binding, int column);
-	bool setValue (DescRecord *record, int column);
-
-	RETCODE sqlFetch();
-//	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
-	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr, Binding** _bindings = NULL, int* _numberBindings = NULL); //From RM
-	void setResultSet (ResultSet *results);
+	SQLRETURN sqlFreeStmt (int option);
+	SQLRETURN sqlFetch();
+	SQLRETURN sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
+	void rebindColumn();
+	void rebindParam(bool initAttrDataAtExec = false);
+	void setResultSet (ResultSet *results, bool fromSystemCatalog = true);
 	void releaseResultSet();
 	void releaseStatement();
-//	RETCODE sqlPrepare (SQLCHAR *sql, int sqlLength);
-	RETCODE sqlPrepare (SQLCHAR *sql, int sqlLength, bool isExecDirect);
+	SQLRETURN sqlPrepare (SQLCHAR *sql, int sqlLength);
 
-	RETCODE sqlColumns (SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, SQLCHAR *column, int columnLength);
-	RETCODE sqlTables (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength, SQLCHAR *type, int typeLength);
-	RETCODE sqlTablePrivileges (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength);
-	RETCODE sqlColumnPrivileges (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength, SQLCHAR * column, int columnLength);
-	RETCODE sqlSpecialColumns(unsigned short rowId, SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, unsigned short scope, unsigned short nullable);
-	RETCODE sqlSetParam (int parameter, int cType, int sqlType, int precision, int scale, PTR ptr, SDWORD * length);
+	SQLRETURN sqlColumns (SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, SQLCHAR *column, int columnLength);
+	SQLRETURN sqlTables (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength, SQLCHAR *type, int typeLength);
+	SQLRETURN sqlTablePrivileges (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength);
+	SQLRETURN sqlColumnPrivileges (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength, SQLCHAR * column, int columnLength);
+	SQLRETURN sqlSpecialColumns(unsigned short rowId, SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, unsigned short scope, unsigned short nullable);
+	SQLRETURN sqlSetParam (int parameter, int cType, int sqlType, int precision, int scale, PTR ptr, SDWORD * length);
+	void addBindColumn(int column, DescRecord * recordFrom, DescRecord * recordTo);
+	void delBindColumn(int column);
+	void addBindParam(int param, DescRecord * recordFrom, DescRecord * recordTo);
+	void delBindParam(int param);
 	virtual OdbcObjectType getType();
 	OdbcStatement(OdbcConnection *connect, int statementNumber);
 	~OdbcStatement();
-	bool isStaticCursor(){ return cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE; }
+	bool isStaticCursor(){ return cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE || isResultSetFromSystemCatalog; }
+	long getCurrentFetched(){ return countFetched; }
+	bool getSchemaFetchData(){ return rowBindType || bindOffsetPtr; }
+	inline StatementMetaData	*getStatementMetaDataIRD();
+	inline void clearErrors();
+	SQLRETURN prepareGetData(int column, DescRecord *recordARD);
+	inline void setZeroColumn(int column);
+	inline SQLRETURN transferDataToBlobParam ( DescRecord *record );
+	void bindInputOutputParam(int param, DescRecord * recordApp);
+	void bindOutputColumn(int column, DescRecord * recordApp);
+	operator Statement* () { return statement->getStatement(); }
 
 	OdbcConnection		*connection;
 	OdbcDesc			*applicationRowDescriptor;
+	OdbcDesc			*saveApplicationRowDescriptor;
 	OdbcDesc			*applicationParamDescriptor;
+	OdbcDesc			*saveApplicationParamDescriptor;
 	OdbcDesc			*implementationRowDescriptor;
 	OdbcDesc			*implementationParamDescriptor;
+	OdbcDesc			*implementationGetDataDescriptor;
+	OdbcConvert			*convert;
+	ListBindColumn		*listBindIn;
+	ListBindColumn		*listBindOut;
+	ListBindColumn		*listBindGetData;
 	ResultSet			*resultSet;
-	PreparedStatement	*statement;
-	CallableStatement	*callableStatement;
+	EXECUTE_FUNCTION	execute;
+	FETCH_FUNCTION		fetchNext;
+	InternalStatement	*statement;
 	StatementMetaData	*metaData;
 	int					numberColumns;
-	int					numberParameters;
-//Added 2002-06-04	RM
+	bool				registrationOutParameter;
+	bool				isRegistrationOutParameter;
     int                 parameterNeedData;
- 	int					numberGetDataBindings;
- 	int					maxColumnGetDataBinding;
-	Binding				*getDataBindings;
 	bool				eof;
 	bool				cancel;
+	long				countFetched;
 	enFetchType			enFetch;
 	JString				cursorName;
 	bool				setPreCursorName;
+	bool				isResultSetFromSystemCatalog;
+	bool				isFetchStaticCursor;
+	bool				schemaFetchData;
 	int					rowBindType;
 	int					paramBindType;
 	int					rowArraySize;
@@ -159,8 +166,8 @@ public:
 	void				*paramBindOffset;
 	void				*paramsProcessedPtr;
 	int					paramsetSize;
+	SQLINTEGER			*sqldataOutOffsetPtr;
 	SQLINTEGER			*bindOffsetPtr;
-	SQLUSMALLINT		*rowStatusPtr;
 	SQLUINTEGER			enableAutoIPD;
 	SQLINTEGER			useBookmarks;
 	SQLINTEGER			cursorSensitivity;
@@ -168,7 +175,7 @@ public:
 	SQLUINTEGER			noscanSQL;
 	int					currency;
 	int					cursorType;
-	bool				cursorScrollable;
+	int					cursorScrollable;
 	bool				asyncEnable;
 	int					rowNumber;
 	long				indicatorRowNumber;
@@ -178,4 +185,4 @@ public:
 
 }; // end namespace OdbcJdbcLibrary
 
-#endif // !defined(AFX_ODBCSTATEMENT_H__ED260D97_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ODBCSTATEMENT_H_)
