@@ -106,6 +106,10 @@ SOURCE=..\..\ODbcJdbc.rc
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=..\..\ConnectDialog.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\DescRecord.cpp
 # End Source File
 # Begin Source File
@@ -169,14 +173,14 @@ SOURCE=..\..\OdbcStatement.cpp
 
 SOURCE=..\..\SafeEnvThread.cpp
 # End Source File
-# Begin Source File
-
-SOURCE=..\..\ConnectDialog.cpp
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\..\ConnectDialog.h
+# End Source File
 # Begin Source File
 
 SOURCE=..\..\DescRecord.h
@@ -232,10 +236,6 @@ SOURCE=..\..\OdbcStatement.h
 # Begin Source File
 
 SOURCE=..\..\SafeEnvThread.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\ConnectDialog.h
 # End Source File
 # Begin Source File
 

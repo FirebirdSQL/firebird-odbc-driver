@@ -58,6 +58,7 @@ static const char *fileNames [] = {
 static const char *drivers [] = { "IscDbc", NULL };
 void MessageBoxError(char * stageExecuted, char * pathFile);
 void MessageBoxInstallerError(char * stageExecuted, char * pathOut);
+bool CopyFile(char * sourceFile, char * destFile);
 
 /*
  *	To debug the control panel applet 
@@ -131,14 +132,21 @@ extern "C" __declspec( dllexport ) int INSTAPI DllRegisterServer (void)
 			ODBC_INSTALL_COMPLETE,
 			&useCount))
 	{
-		MessageBoxError("Install Driver Complete", pathOut);
+		MessageBoxInstallerError("Install Driver Failed", pathOut);
 		return S_FALSE;
 	}
 
-	if( useCount > 1 ) // On a case update
+	if ( useCount > 1 ) // On a case update
 		SQLRemoveDriver(DRIVER_FULL_NAME, fRemoveDSN, &useCount);
 
-	char *path = pathOut + strlen (pathOut);
+	if( !memicmp( fileName, pathOut, strlen(pathOut)) )
+	{
+		MessageBox(NULL, " ERROR!\nPlease, use regsvr32.exe .\\OdbcJdbcSetup.dll", DRIVER_NAME, MB_ICONSTOP|MB_OK);
+		SQLRemoveDriver(DRIVER_FULL_NAME, fRemoveDSN, &useCount);
+        return S_FALSE;
+	}
+
+ 	char *path = pathOut + strlen (pathOut);
 	if (path != strrchr (pathOut, '\\') + 1)
 		*path++ = '\\';
 	char *tail = strrchr (fileName, '\\') + 1;
@@ -147,9 +155,9 @@ extern "C" __declspec( dllexport ) int INSTAPI DllRegisterServer (void)
 	{
 		strcpy (path, *ptr);
 		strcpy (tail, *ptr);
-		if (!CopyFile (fileName, pathOut, false))
+		if (!CopyFile (fileName, pathOut))
 		{
-			MessageBoxError("CopyFile", pathOut);
+			SQLRemoveDriver(DRIVER_FULL_NAME, fRemoveDSN, &useCount);
 			return S_FALSE;
 		}
 	}
@@ -164,6 +172,7 @@ extern "C" __declspec( dllexport ) int INSTAPI DllRegisterServer (void)
 			NULL))
 	{
 		MessageBoxInstallerError("Config Install", pathOut);
+		SQLRemoveDriver(DRIVER_FULL_NAME, fRemoveDSN, &useCount);
         return S_FALSE;
 	} 	
 
@@ -258,6 +267,69 @@ void MessageBoxInstallerError(char * stageExecuted, char * pathOut)
 		                stageExecuted, DRIVER_FULL_NAME, errCodeOut, message);
 
     MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
+}
+
+bool CopyFile(char * sourceFile, char * destFile)
+{
+	if ( (long)GetFileAttributes( sourceFile ) == -1 )
+	{
+		MessageBoxError("CopyFile", sourceFile);
+		return false;
+	}
+
+	HFILE	src;
+	HFILE	dst;
+	OFSTRUCT reopenBuff;
+	UINT uStyle = OF_READ | OF_SHARE_DENY_NONE;
+
+	src = OpenFile( sourceFile, &reopenBuff, uStyle );
+	if ( src == HFILE_ERROR )
+	{
+		MessageBoxError("CopyFile", sourceFile);
+		return false;
+	}
+
+	uStyle = OF_WRITE | OF_CREATE;
+	dst = OpenFile( destFile, &reopenBuff, uStyle );
+	if ( src == HFILE_ERROR )
+	{
+		MessageBoxError("CopyFile", destFile);
+		return false;
+	}
+
+	DWORD allSize = GetFileSize( (HANDLE)src, NULL );
+ 	unsigned long bufferSize = 32768;
+	char *  bufferData = new char[ bufferSize ];
+	DWORD dwRead;
+
+	while ( allSize > 0 )
+	{
+		if ( !ReadFile( (HANDLE)src, bufferData, bufferSize, &dwRead, NULL) )
+		{
+			MessageBoxError("CopyFile", sourceFile);
+			return false;
+		}
+
+		DWORD nWritten;
+		if ( !WriteFile( (HANDLE)dst, bufferData, dwRead, &nWritten, NULL))
+		{
+			MessageBoxError("CopyFile", destFile);
+			return false;
+		}
+
+		if (nWritten != dwRead)
+		{
+			MessageBox(NULL, "Disk full",DRIVER_NAME, MB_ICONSTOP|MB_OK);
+			return false;
+		}
+		allSize -= dwRead;
+	}
+
+	CloseHandle( (HANDLE)src );
+	CloseHandle( (HANDLE)dst );
+	delete [] bufferData;
+
+	return true;
 }
 
 //////////////////////////////////////////////////////////////////////
