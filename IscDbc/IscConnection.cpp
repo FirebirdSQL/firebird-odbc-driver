@@ -325,6 +325,7 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 	}
 
 	*ptOut = '\0';
+	int ignoreBracket = 0;
 
 	while ( ptEndBracket )
 	{
@@ -335,29 +336,41 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 		while( *ptIn == ' ' )ptIn++;
 
 		if ( *(long*)ptIn == 0x6c6c6163 || *(long*)ptIn == 0x4c4c4143 )
-			break; // { call }
-
-		// Check 'oj' or 'OJ'
-		if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
-			ptIn += 2; // 'oj'
+			++ignoreBracket; // { call }
 		else
-			ptIn += 2; // temp 'fn'
+		{
+			// Check 'oj' or 'OJ'
+			if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
+				ptIn += 2; // 'oj'
+			else
+				ptIn += 2; // temp 'fn'
 
-		ptOut = ptEndBracket;
+			ptOut = ptEndBracket;
+			int ignoreBr = ignoreBracket;
 
-		while( *ptIn && *ptIn != '}' )
-			*ptOut++ = *ptIn++;
+			do
+			{
+				while( *ptIn && *ptIn != '}' )
+					*ptOut++ = *ptIn++;
 
-		if(*ptIn != '}')
-			return false;
+				if( ignoreBr )
+					*ptOut++ = *ptIn++;
 
-		ptIn++; // '}'
+			}while ( ignoreBr-- );
 
-		while( *ptIn )
-			*ptOut++ = *ptIn++;
+			if(*ptIn != '}')
+				return false;
 
-		*ptOut = '\0';
-		bModify = true;
+			ptIn++; // '}'
+
+			while( *ptIn )
+				*ptOut++ = *ptIn++;
+
+			*ptOut = '\0';
+			bModify = true;
+		}
+
+		--ptEndBracket; // '{'
 
 		while ( ptEndBracket > outStatementText && *ptEndBracket != '{')
 			--ptEndBracket;
