@@ -128,4 +128,10 @@ IDS_ERROR_MESSAGE_15, // "CopyFile"
 ,
 IDS_ERROR_MESSAGE_16, // "Disk full"
 	"На диске нет свободного места"
+,
+IDS_ERROR_MESSAGE_17, // "Config DSN"
+	"Конфигуратор источника данных"
+,
+IDS_ERROR_MESSAGE_18, // "Invalid characters are included in the data source name: []{}(),;?*=!@\\"
+	"Имя источника данных содержит недопустимые символы: []{}(),;?*=!@\\"
 }

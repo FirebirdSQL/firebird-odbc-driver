@@ -128,4 +128,10 @@ IDS_ERROR_MESSAGE_15, // "CopyFile"
 ,
 IDS_ERROR_MESSAGE_16, // "Disk full"
 	"Disco lleno"
+,
+IDS_ERROR_MESSAGE_17, // "Config DSN"
+	"Config DSN"
+,
+IDS_ERROR_MESSAGE_18, // "Invalid characters are included in the data source name: []{}(),;?*=!@\\"
+	"Invalid characters are included in the data source name: []{}(),;?*=!@\\"
 }
