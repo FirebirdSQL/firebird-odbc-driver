@@ -1204,7 +1204,7 @@ SQLRETURN OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTE
 	if ( crowKeyset > crowRowset )
 		sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN, 0);
 	else
-		sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)-crowKeyset, 0);
+		sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, crowKeyset < 0 ? (SQLPOINTER)-crowKeyset : (SQLPOINTER)crowKeyset, 0);
 
 	sqlSetStmtAttr(SQL_ATTR_CONCURRENCY, (SQLPOINTER)(int)fConcurrency, 0);
 
