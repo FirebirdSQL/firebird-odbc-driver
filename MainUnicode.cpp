@@ -1086,7 +1086,9 @@ SQLRETURN SQL_API SQLGetStmtAttrW( SQLHSTMT hStmt,
 	case 11998:
 	case 11997:
 
-		if ( bufferLength > 0 || bufferLength == SQL_NTS )
+		if ( bufferLength <= SQL_LEN_BINARY_ATTR_OFFSET )
+			bufferLength = -bufferLength + SQL_LEN_BINARY_ATTR_OFFSET;
+		else if ( bufferLength > 0 || bufferLength == SQL_NTS )
 		{
 			ConvertingString<SQLINTEGER> Value( bufferLength, (SQLWCHAR *)value, stringLength );
 
