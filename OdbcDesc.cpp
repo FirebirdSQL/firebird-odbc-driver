@@ -211,7 +211,11 @@ RETCODE OdbcDesc::operator =(OdbcDesc &sour)
 	headBindType = sour.headBindType;
 
 	for ( int n = 0 ; n <= headCount ; n++ )
-		*records [n] = sour.records [n];
+	{
+		DescRecord &rec = *getDescRecord ( n );
+		rec = sour.records[n];
+		rec.isDefined = true;
+	}
 
 	return sqlSuccess();
 }
