@@ -67,7 +67,7 @@ namespace IscDbcLibrary {
 IscColumnsResultSet::IscColumnsResultSet(IscDatabaseMetaData *metaData)
 		: IscMetaDataResultSet(metaData)
 {
-
+	sqlType.appOdbcVersion = metaData->connection->getUseAppOdbcVersion(); // SQL_OV_ODBC2 or SQL_OV_ODBC3
 }
 
 void IscColumnsResultSet::initResultSet(IscStatement *stmt)

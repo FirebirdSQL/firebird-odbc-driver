@@ -45,6 +45,7 @@ public:		// In
 	int		scale;
 	int		collationId;
 	int		characterId;
+	int		appOdbcVersion;
 
 public:		// Out
 	int		type;

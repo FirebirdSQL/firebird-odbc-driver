@@ -53,7 +53,7 @@ IscSpecialColumnsResultSet::IscSpecialColumnsResultSet(IscDatabaseMetaData *meta
 		: IscMetaDataResultSet(metaData)
 
 {
-
+	sqlType.appOdbcVersion = metaData->connection->getUseAppOdbcVersion(); // SQL_OV_ODBC2 or SQL_OV_ODBC3
 }
 
 void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const char * schema, const char * table, int scope, int nullable)
