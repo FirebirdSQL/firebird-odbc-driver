@@ -30,11 +30,6 @@ namespace IscDbcLibrary {
 #define DEFAULT_SQLDA_COUNT		20
 #define DEFAULT_BLOB_BUFFER_LENGTH 16384
 
-struct TempVector {
-    char	*temp;
-	int		length;
-	};
-
 class Value;
 class IscConnection;
 class CDataStaticCursor;
@@ -58,10 +53,6 @@ public:
 	short getSubType(int index);
 	int getColumnType (int index, int &realSqlType);
 	const char * getColumnTypeName (int index);
-	void getSqlData(int index, char *& ptData, short *& ptIndData);
-	void setSqlData(int index, long ptData, long ptIndData);
-	void saveSqlData(int index);
-	void restoreSqlData(int index);
 	void print();
 	void initStaticCursor(IscConnection *connect);
 	bool setCurrentRowInBufferStaticCursor(int nRow);
@@ -97,13 +88,10 @@ public:
 	int			lengthBufferRows;
 	int			*offsetSqldata;
 	int			indicatorsOffset;
-	long		*saveOrgAdressSqlData;
-	long		*saveOrgAdressSqlInd;
 
 	XSQLDA		*sqlda;
 	char		tempSqlda [XSQLDA_LENGTH (DEFAULT_SQLDA_COUNT)];
 	char		*buffer;
-	TempVector	*temps;
 	bool		needsbuffer;
 };
 

@@ -466,20 +466,6 @@ void IscResultSet::getSqlData(int index, char *& ptData, short *& ptIndData, Blo
 	}
 }
 
-void IscResultSet::setSqlData(int index, long ptData, long ptIndData)
-{
-	sqlda->setSqlData(index, ptData, ptIndData);
-}
-
-void IscResultSet::saveSqlData(int index)
-{
-	sqlda->saveSqlData(index);
-}
-
-void IscResultSet::restoreSqlData(int index)
-{
-	sqlda->restoreSqlData(index);
-}
 ///////////////////////////////////////
 void IscResultSet::allocConversions()
 {

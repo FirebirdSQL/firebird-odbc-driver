@@ -181,21 +181,6 @@ void IscStatementMetaData::getSqlData(int index, char *& ptData, short *& ptIndD
 	}
 }
 
-void IscStatementMetaData::setSqlData(int index, long ptData, long ptIndData)
-{
-	sqlda->setSqlData(index, ptData, ptIndData);
-}
-
-void IscStatementMetaData::saveSqlData(int index)
-{
-	sqlda->saveSqlData(index);
-}
-
-void IscStatementMetaData::restoreSqlData(int index)
-{
-	sqlda->restoreSqlData(index);
-}
-
 int IscStatementMetaData::objectVersion()
 {
 	return STATEMENTMETADATA_VERSION;

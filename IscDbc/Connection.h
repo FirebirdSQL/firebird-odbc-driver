@@ -365,9 +365,6 @@ public:
 	virtual const char*	getCatalogName (int index) = 0;
 
 	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData, Blob *& ptDataBlob) = 0;
-	virtual void		setSqlData(int index, long ptData, long ptIndData) = 0;
-	virtual void		saveSqlData(int index) = 0;
-	virtual void		restoreSqlData(int index) = 0;
 
 	virtual int			objectVersion() = 0;
 };

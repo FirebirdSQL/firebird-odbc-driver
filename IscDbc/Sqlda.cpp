@@ -298,12 +298,9 @@ Sqlda::Sqlda()
 	sqlda->version = SQLDA_VERSION1;
 	sqlda->sqln = DEFAULT_SQLDA_COUNT;
 	buffer = NULL;
-	temps = NULL;
 	dataStaticCursor = NULL;
 	offsetSqldata = NULL;
 	indicatorsOffset = 0;
-	saveOrgAdressSqlData = NULL;
-	saveOrgAdressSqlInd = NULL;
 	needsbuffer = true;
 }
 
@@ -315,10 +312,6 @@ Sqlda::~Sqlda()
 		delete 	dataStaticCursor;
 	if ( offsetSqldata )
 		delete [] offsetSqldata;
-	if ( saveOrgAdressSqlData )
-		delete [] saveOrgAdressSqlData;
-	if ( saveOrgAdressSqlInd )
-		delete [] saveOrgAdressSqlInd;
 
 	deleteSqlda(); // Should stand only here!!!
 }
@@ -483,51 +476,6 @@ int Sqlda::getCountRowsStaticCursor()
 int Sqlda::getColumnCount()
 {
 	return sqlda->sqld;
-}
-
-void Sqlda::getSqlData(int index, char *& ptData, short *& ptIndData)
-{
-	ptData = sqlda->sqlvar[index - 1].sqldata;
-	ptIndData = sqlda->sqlvar[index - 1].sqlind;
-}
-
-void Sqlda::setSqlData(int index, long ptData, long ptIndData)
-{
-	saveSqlData(index);
-	sqlda->sqlvar[index - 1].sqldata = (char*)ptData;
-	sqlda->sqlvar[index - 1].sqlind = (short*)ptIndData;
-}
-
-void Sqlda::saveSqlData(int index)
-{
-	if ( !saveOrgAdressSqlData )
-	{
-		int numberColumns = sqlda->sqld;
-		saveOrgAdressSqlData = new long [numberColumns];
-		memset(saveOrgAdressSqlData,0,sizeof(*saveOrgAdressSqlData)*numberColumns);
-		saveOrgAdressSqlInd = new long [numberColumns];
-		memset(saveOrgAdressSqlInd,0,sizeof(*saveOrgAdressSqlInd)*numberColumns);
-	}
-	if ( !saveOrgAdressSqlData[index-1] )
-	{
-		saveOrgAdressSqlData[index-1] = (long)sqlda->sqlvar[index - 1].sqldata;
-		saveOrgAdressSqlInd[index-1] = (long)sqlda->sqlvar[index - 1].sqlind;
-	}
-}
-
-void Sqlda::restoreSqlData(int index)
-{
-	if ( !saveOrgAdressSqlData )
-		return;
-
-	int ind = index-1;
-	if ( saveOrgAdressSqlData[ind] )
-	{
-		sqlda->sqlvar[ind].sqldata = (char*)saveOrgAdressSqlData[ind];
-		saveOrgAdressSqlData[ind] = 0;
-		sqlda->sqlvar[ind].sqlind = (short*)saveOrgAdressSqlInd[ind];
-		saveOrgAdressSqlInd[ind] = 0;
-	}
 }
 
 void Sqlda::print()

@@ -58,9 +58,6 @@ public:
 	virtual const char*	getSchemaName (int index);
 	virtual const char*	getCatalogName (int index);
 	virtual void getSqlData(int index, char *& ptData, short *& ptIndData, Blob *& ptDataBlob);
-	virtual void setSqlData(int index, long ptData, long ptIndData);
-	virtual void saveSqlData(int index);
-	virtual void restoreSqlData(int index);
 
 	IscStatementMetaData(Sqlda	* ptSqlda);
 	~IscStatementMetaData();
