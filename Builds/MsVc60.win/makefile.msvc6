@@ -36,11 +36,11 @@ ODBCJDBCSDLL    = $(TARGETDIR)\OdbcJdbcSetup.dll
 !ifdef DEBUG
 DEBUGFLAGS	= /MTd /Gm /Zi /Od /D "_DEBUG" /D "DEBUG" /D "LOGGING" /FR"$(INTDIR)\\" 
 LINKFLAGS	= $(LINKFLAGS) /incremental:yes /debug /pdbtype:sept
-RSCFLAGS	= /l 0x409 /fo"$*.res" /d "DEBUG" /d "_DEBUG" 
+RSCFLAGS	= /l 0x409 /fo"$*.res" /I "$(COMPDIR)\Include" /I "$(COMPDIR)\MFC\Include" /d "DEBUG" /d "_DEBUG" 
 !else
 DEBUGFLAGS	= /MT /O2 /D "NDEBUG"
 LINKFLAGS	= $(LINKFLAGS) /incremental:no
-RSCFLAGS	= /l 0x409 /fo"$*.res" /d "NDEBUG" 
+RSCFLAGS	= /l 0x409 /fo"$*.res" /I "$(COMPDIR)\Include" /I "$(COMPDIR)\MFC\Include" /d "NDEBUG" 
 !endif
 #
 ISCDBCLIB	= $(ISCDBCDLL:.dll=.lib)
@@ -79,7 +79,7 @@ $(BUILDDIR)\OdbcJdbc.res : $(ODBCJDBCDIR)\OdbcJdbc.rc
 	@$(RSC) $(RSCFLAGS) $(ODBCJDBCDIR)\OdbcJdbc.rc
 #
 $(BUILDDIR)\OdbcJdbcSetup.res : $(ODBCJDBCSDIR)\OdbcJdbcSetup.rc
-	@$(RSC) $(RSCFLAGS) /I "$(COMPDIR)\Include" /I "$(COMPDIR)\MFC\Include" $(ODBCJDBCSDIR)\OdbcJdbcSetup.rc
+	@$(RSC) $(RSCFLAGS) $(ODBCJDBCSDIR)\OdbcJdbcSetup.rc
 #
 ISCDBCDEFFILE	= $(ISCDBCDIR)\IscDbc.def
 ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)\OdbcJdbc.def
