@@ -486,6 +486,7 @@ void Sqlda::allocBuffer ( IscConnection * connect )
 	indicatorsOffset = offset;
 	offset += sizeof (int) * numberColumns;
 	buffer = new char [offset];
+	memset (buffer, 0, sizeof(char) * offset);
 	lengthBufferRows = offset;
 	int *indicators = (int*) (buffer + indicatorsOffset);
 	var = sqlda->sqlvar;
