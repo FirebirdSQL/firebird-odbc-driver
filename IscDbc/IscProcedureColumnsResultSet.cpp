@@ -82,33 +82,34 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 													   const char * columnNamePattern)
 {
 	JString sql = 
-		"select NULL as table_cat,\n"								// 1
-				"\tNULL as table_schem,\n"							// 2
+		"select NULL as procedure_cat,\n"							// 1
+				"\tNULL as procedure_schem,\n"						// 2
 				"\tpp.rdb$procedure_name as procedure_name,\n"		// 3
 				"\tpp.rdb$parameter_name as column_name,\n"			// 4
 				"\tpp.rdb$parameter_type as column_type,\n"			// 5
-				"\tf.rdb$field_type as data_type,\n"				// 5 + 1
-				"\tf.rdb$field_sub_type as type_name,\n"			// 6 + 1
-				"\tf.rdb$field_length as column_size,\n"			// 7 + 1
-				"\tnull as buffer_length,\n"						// 8 + 1
-				"\tf.rdb$field_scale as decimal_digits,\n"			// 9 + 1
-				"\t10 as num_prec_radix,\n"							// 10 + 1
-				"\tf.rdb$null_flag as nullable,\n"					// 11 + 1
-				"\tf.rdb$description as remarks,\n"					// 12 + 1
-				"\tf.rdb$default_value as column_def,\n"			// 13 + 1
-				"\tnull as SQL_DATA_TYPE,\n"						// 14 + 1
-				"\tnull as SQL_DATETIME_SUB,\n"						// 15 + 1
-				"\tf.rdb$field_length as CHAR_OCTET_LENGTH,\n"		// 16 + 1
-				"\tpp.rdb$parameter_number as ordinal_position,\n"	// 17 + 1
-				"\t'YES' as IS_NULLABLE\n"							// 18 + 1
-				"\tf.rdb$field_precision as column_precision\n"		// 19 + 1
+				"\tf.rdb$field_type as data_type,\n"				// 6
+				"\tf.rdb$field_sub_type as type_name,\n"			// 7
+				"\tf.rdb$field_length as column_size,\n"			// 8
+				"\tnull as buffer_length,\n"						// 9
+				"\tf.rdb$field_scale as decimal_digits,\n"			// 10
+				"\t10 as num_prec_radix,\n"							// 11
+				"\t1 as nullable,\n"								// 12 #define SQL_NULLABLE 1
+//				"\tf.rdb$null_flag as nullable,\n"					// 12
+				"\tf.rdb$description as remarks,\n"					// 13
+				"\tf.rdb$default_value as column_def,\n"			// 14
+				"\tnull as sql_data_type,\n"						// 15
+				"\tnull as sql_datetime_sub,\n"						// 16
+				"\tf.rdb$field_length as char_octet_length,\n"		// 17
+				"\tpp.rdb$parameter_number as ordinal_position,\n"	// 18
+				"\t'YES' as is_nullable,\n"							// 19
+				"\tf.rdb$field_precision as column_precision\n"		// 20
 		"from rdb$procedure_parameters pp, rdb$fields f\n"
 		"where pp.rdb$field_source = f.rdb$field_name";
 
-	if (procedureNamePattern)
+	if (procedureNamePattern && *procedureNamePattern)
 		sql += expandPattern (" and pp.rdb$procedure_name %s '%s'", procedureNamePattern);
 
-	if (columnNamePattern)
+	if (columnNamePattern && *columnNamePattern)
 		sql += expandPattern (" and pp.rdb$parameter_name %s '%s'", columnNamePattern);
 
 	sql += " order by pp.rdb$procedure_name, pp.rdb$parameter_number";
@@ -133,11 +134,12 @@ bool IscProcedureColumnsResultSet::next()
 	int length = resultSet->getInt (8);
 	int scale = resultSet->getInt (10);
 	int dialect	= resultSet->statement->connection->getDatabaseDialect();
-	int precision = resultSet->getInt (19);
+	int precision = resultSet->getInt (20);
 	IscSqlType sqlType (blrType, subType, length, length, dialect, precision, scale);
 
 	resultSet->setValue (6, sqlType.type);
 	resultSet->setValue (7, sqlType.typeName);
+	resultSet->setValue (9, length);
 
 	return true;
 }

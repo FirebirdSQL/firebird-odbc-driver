@@ -28,8 +28,8 @@
  * however, if an attempt is made to create a FileDSN the system 
  * doesn't use 'OdbcJdbc' as the driver string.		PR 2002-06-04
  */
-//#define DRIVER_NAME			"OdbcJdbc"
-#define DRIVER_NAME			"Firebird/InterBase(r) driver"
+#define DRIVER_NAME			"OdbcJdbc"
+
 #define DRIVER_VERSION		"01.00.0000"
 #define SETUP_DSN			"DSN"
 #define SETUP_DBNAME		"Dbname"

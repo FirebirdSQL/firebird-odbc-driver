@@ -87,7 +87,10 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 				"\t\ton rel.rdb$constraint_type = 'PRIMARY KEY'\n"
 				"\t\tand rel.rdb$index_name = i.rdb$index_name\n"
 		"where i.rdb$unique_flag = 1\n";
-	sql += expandPattern ("\tand rfr.rdb$relation_name %s '%s'\n", table);
+
+	if(table && *table)
+		sql += expandPattern ("\tand rfr.rdb$relation_name %s '%s'\n", table);
+
 	sql += " order by rel.rdb$constraint_type, rdb$index_name, rdb$field_position";
 
 	prepareStatement (sql);

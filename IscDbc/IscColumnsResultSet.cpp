@@ -105,10 +105,10 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 		"from rdb$relation_fields rfr, rdb$fields fld\n"
 		" where rfr.rdb$field_source = fld.rdb$field_name\n";
 
-	if (tableNamePattern)
+	if (tableNamePattern && *tableNamePattern)
 		sql += expandPattern (" and rfr.rdb$relation_name %s '%s'\n", tableNamePattern);
 
-	if (fieldNamePattern)
+	if (fieldNamePattern && *fieldNamePattern)
 		sql += expandPattern (" and rfr.rdb$field_name %s '%s'\n", fieldNamePattern);
 
 	sql += " order by rfr.rdb$relation_name, rfr.rdb$field_position\n";
@@ -117,8 +117,11 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 	OutputDebugString (sql.getString());
 #endif
 	prepareStatement (sql);
-//NewTestFire
-//	numberColumns = 18;
+
+// SELECT returns 25 columns,
+// But all interests only 18 
+// This line is forbidden for modifying!!!
+	numberColumns = 18;
 }
 
 bool IscColumnsResultSet::next()

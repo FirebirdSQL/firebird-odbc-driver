@@ -763,6 +763,7 @@ RETCODE SQL_API SQLBrowseConnect  (HDBC arg0,
 		 SWORD * arg5)
 {
 	GUARD_HDBC(arg0);
+#pragma FB_COMPILER_MESSAGE("SQLBrowseConnect - Implemented; FIXME!")
 	notYetImplemented("SQLBrowseConnect called\n");
 	return(SQL_SUCCESS);
 }
@@ -778,6 +779,7 @@ RETCODE SQL_API SQLDataSources  (HENV arg0,
 		 SWORD arg6,
 		 SWORD * arg7)
 {
+#pragma FB_COMPILER_MESSAGE("SQLDataSources - Implemented; FIXME!")
 	notYetImplemented("SQLDataSources called\n");
 	return(SQL_SUCCESS);
 }
@@ -855,6 +857,7 @@ RETCODE SQL_API SQLNativeSql  (HDBC arg0,
 		 SDWORD * arg5)
 {
 	GUARD_HDBC(arg0);
+#pragma FB_COMPILER_MESSAGE("SQLNativeSql - Implemented; FIXME!")
 	notYetImplemented("SQLNativeSql called\n");
 	return(SQL_SUCCESS);
 }
@@ -864,11 +867,6 @@ RETCODE SQL_API SQLNativeSql  (HDBC arg0,
 RETCODE SQL_API SQLNumParams  (HSTMT arg0,
 		 SWORD * arg1)
 {
-	/*
-	notYetImplemented("SQLNumParams called\n");
-	return(SQL_SUCCESS);
-	*/
-	
 	TRACE("SQLMoreResults");
 	GUARD_HSTMT(arg0);
 
@@ -882,6 +880,7 @@ RETCODE SQL_API SQLParamOptions  (HSTMT arg0,
 		 UDWORD * arg2)
 {
 	GUARD_HSTMT(arg0);
+#pragma FB_COMPILER_MESSAGE("SQLParamOptions - Implemented; FIXME!")
 	notYetImplemented("SQLParamOptions called\n");
 	return(SQL_SUCCESS);
 }
@@ -943,6 +942,7 @@ RETCODE SQL_API SQLSetPos  (HSTMT arg0,
 		 UWORD arg2,
 		 UWORD arg3)
 {
+	TRACE ("SQLSetPos");
 	GUARD_HSTMT(arg0);
 	return ((OdbcStatement*) arg0)->sqlSetPos (arg1, arg2, arg3);
 }
@@ -955,6 +955,7 @@ RETCODE SQL_API SQLSetScrollOptions  (HSTMT arg0,
 		 UWORD arg3)
 {
 	GUARD_HSTMT(arg0);
+#pragma FB_COMPILER_MESSAGE("SQLSetScrollOptions - Implemented; FIXME!")
 	notYetImplemented("SQLSetScrollOptions called\n");
 	return(SQL_SUCCESS);
 }
@@ -970,11 +971,6 @@ RETCODE SQL_API SQLTablePrivileges  (
 		 UCHAR * arg5,
 		 SWORD arg6)
 {
-	/*
-	notYetImplemented("SQLTablePrivileges called\n");
-	return(SQL_SUCCESS);
-	*/
-
 	TRACE ("SQLTablePrivileges");
 	GUARD_HSTMT(arg0);
 	return ((OdbcStatement*) arg0)->sqlTablePrivileges (arg1,arg2,arg3,arg4,arg5,arg6);
@@ -992,11 +988,6 @@ RETCODE SQL_API SQLColumnPrivileges  (HSTMT arg0,
 		 UCHAR * arg7,
 		 SWORD arg8)
 {
-	/*
-	notYetImplemented("SQLColumnPrivileges called\n");
-	return(SQL_SUCCESS);
-	*/
-
 	TRACE ("SQLColumnPrivileges");
 	GUARD_HSTMT(arg0);
 	return ((OdbcStatement*) arg0)->sqlColumnPrivileges (arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
@@ -1013,6 +1004,7 @@ RETCODE SQL_API SQLDrivers  (HENV arg0,
 		 SWORD arg6,
 		 SWORD * arg7)
 {
+#pragma FB_COMPILER_MESSAGE("SQLDrivers - Implemented; FIXME!")
 	notYetImplemented("SQLDrivers called\n");
 	return(SQL_SUCCESS);
 }
@@ -1042,6 +1034,7 @@ RETCODE SQL_API SQLAllocHandle (SQLSMALLINT arg0,
 		 SQLHANDLE arg1,
 		 SQLHANDLE * arg2)
 {
+#pragma FB_COMPILER_MESSAGE("SQLAllocHandle - GUARD_????(arg0); FIXME!")
 	return __SQLAllocHandle (arg0, arg1, arg2);
 }
 
@@ -1058,6 +1051,7 @@ RETCODE SQL_API SQLBindParam  (SQLHSTMT arg0,
 		 SQLINTEGER * arg7)
 {
 	GUARD_HSTMT(arg0);
+#pragma FB_COMPILER_MESSAGE("SQLBindParam - Implemented; FIXME!")
 	notYetImplemented("SQLBindParam called\n");
 	return(SQL_SUCCESS);
 }

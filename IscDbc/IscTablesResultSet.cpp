@@ -63,7 +63,7 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 
 	const char *sep = " where (";
 
-	if (tableNamePattern)
+	if (tableNamePattern && *tableNamePattern)
 		{
 		sql += expandPattern (" where rdb$relation_name %s '%s'\n", tableNamePattern);
 		sep = " and (";

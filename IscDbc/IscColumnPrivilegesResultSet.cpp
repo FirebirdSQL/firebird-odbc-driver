@@ -32,9 +32,6 @@
 #include "IscPreparedStatement.h"
 #include "IscBlob.h"
 
-#define TABLE_TYPE	4
-
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -56,21 +53,21 @@ void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, con
 	JString sql = "select NULL as table_cat,"
 				          "NULL as table_schem,"
 						  "tbl.rdb$relation_name as table_name,"
-						  "usp.rdb$field_name as column_name,"
+						  "tbl.rdb$field_name as column_name,"
 						  "usp.rdb$grantor as grantor,"
 						  "usp.rdb$user as grantee,"
 						  "usp.rdb$privilege as privilege,"
-						  "usp.rdb$grant_option as isgrantable "
-						  "from rdb$relations tbl, rdb$user_privileges usp\n"
+						  "usp.rdb$grant_option as is_grantable "
+						  "from rdb$relation_fields tbl, rdb$user_privileges usp\n"
 						  " where tbl.rdb$relation_name = usp.rdb$relation_name\n";
 	
-	if (tableNamePattern)
+	if (tableNamePattern && *tableNamePattern)
 		sql += expandPattern (" and tbl.rdb$relation_name %s '%s'", tableNamePattern);
 
-	if (columnNamePattern)
-		sql += expandPattern (" and usp.rdb$field_name %s '%s'", columnNamePattern);
+	if (columnNamePattern && *columnNamePattern)
+		sql += expandPattern (" and tbl.rdb$field_name %s '%s'", columnNamePattern);
 
-	sql += " order by tbl.rdb$relation_name, usp.rdb$field_name, usp.rdb$privilege";
+	sql += " order by tbl.rdb$relation_name, tbl.rdb$field_name, usp.rdb$privilege";
 
 	prepareStatement (sql);
 	numberColumns = 8;
@@ -122,33 +119,15 @@ bool IscColumnPrivilegesResultSet::next()
 
 int IscColumnPrivilegesResultSet::getColumnDisplaySize(int index)
 {
-	switch (index)
-		{
-		case TABLE_TYPE:				// change from blob to text
-			return 128;
-		}
-
 	return Parent::getColumnDisplaySize (index);
 }
 
 int IscColumnPrivilegesResultSet::getColumnType(int index)
 {
-	switch (index)
-		{
-		case TABLE_TYPE:				// change from blob to text
-			return JDBC_VARCHAR;
-		}
-
 	return Parent::getColumnType (index);
 }
 
 int IscColumnPrivilegesResultSet::getColumnPrecision(int index)
 {
-	switch (index)
-		{
-		case TABLE_TYPE:				// change from blob to text
-			return 128;
-		}
-
 	return Parent::getPrecision (index);
 }

@@ -339,22 +339,16 @@ RETCODE OdbcStatement::sqlColumnPrivileges(SQLCHAR * catalog, int catLength,
 	const char *tbl		= getString (&p, table, tableLength, NULL);
 	const char *col		= getString (&p, column, columnLength, NULL);
 
-//	if ( *tbl && *col )
-	if ( tbl || col )
+	try
 	{
-		try
-			{
-			DatabaseMetaData *metaData = connection->getMetaData();
-			setResultSet (metaData->getColumnPrivileges (cat, scheme, tbl, col));
-			}
-		catch (SQLException &exception)
-			{
-			postError ("HY000", exception);
-			return SQL_ERROR;
-			}
+		DatabaseMetaData *metaData = connection->getMetaData();
+		setResultSet (metaData->getColumnPrivileges (cat, scheme, tbl, col));
 	}
-	else
-		return sqlReturn (SQL_ERROR, "HY009", "Invalid use of null pointer");
+	catch (SQLException &exception)
+	{
+		postError ("HY000", exception);
+		return SQL_ERROR;
+	}
 
 	return sqlSuccess();
 }
@@ -559,8 +553,8 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 					);
 			OutputDebugString (tempDebugStr);
 #endif
-		}
 
+		}
 	}
 
 	catch (SQLException& exception)
@@ -1062,7 +1056,7 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 
 RETCODE OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQLUSMALLINT lockType)
 {
-	
+
 	switch ( operation )
 	{
 	case SQL_POSITION:
@@ -1614,23 +1608,18 @@ RETCODE OdbcStatement::sqlStatistics(SQLCHAR * catalog, int catLength,
 	const char *scheme = getString (&p, schema, schemaLength, NULL);
 	const char *tbl = getString (&p, table, tableLength, NULL);
 
-	if ( *tbl )
+	try
 	{
-		try
-			{
-			DatabaseMetaData *metaData = connection->getMetaData();
-			setResultSet (metaData->getIndexInfo (cat, scheme, tbl, 
-												unique == SQL_INDEX_UNIQUE, 
-												reservedSic == SQL_QUICK));
-			}
-		catch (SQLException& exception)
-			{
-			postError ("HY000", exception);
-			return SQL_ERROR;
-			}
+		DatabaseMetaData *metaData = connection->getMetaData();
+		setResultSet (metaData->getIndexInfo (cat, scheme, tbl, 
+										unique == SQL_INDEX_UNIQUE, 
+										reservedSic == SQL_QUICK));
 	}
-	else
-		return sqlReturn (SQL_ERROR, "HY009", "Invalid use of null pointer");
+	catch (SQLException& exception)
+	{
+		postError ("HY000", exception);
+		return SQL_ERROR;
+	}
 
 	return sqlSuccess();
 }
@@ -2071,12 +2060,12 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 			 record->precision = precision;
 			 break;
 		}
-		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	return sqlSuccess();
 }
@@ -2711,8 +2700,8 @@ RETCODE OdbcStatement::executeStatement()
 	{
 		if(parameterNeedData == 0)
 			parameterNeedData = 1;
-    
-	    for (int n = parameterNeedData; n <= nInputParam; ++n)
+
+		for (int n = parameterNeedData; n <= nInputParam; ++n)
 		{
 			DescRecord *record = applicationParamDescriptor->getDescRecord (n);
 
@@ -2725,28 +2714,28 @@ RETCODE OdbcStatement::executeStatement()
 				}
 				else if( record->dataPtr )
 					setParameter (record, n);
-	        }
+			}
 		}
 	}
 	if (callableStatement)
 		for (int n = 1; n <= implementationParamDescriptor->headCount; ++n)
-        {
+		{
 			DescRecord *record = implementationParamDescriptor->getDescRecord (n);
 			if (record->parameterType != SQL_PARAM_INPUT)
 				callableStatement->registerOutParameter (n, record->conciseType);
-        }
+		}
 
-    statement->execute();
+	statement->execute();
 
-    if (callableStatement)
-        for (int n = 1; n <= implementationParamDescriptor->headCount; ++n)
-        {
+	if (callableStatement)
+		for (int n = 1; n <= implementationParamDescriptor->headCount; ++n)
+		{
 			DescRecord *record = implementationParamDescriptor->getDescRecord (n);
 			if (record->parameterType != SQL_PARAM_INPUT)
 				setValue (applicationParamDescriptor->getDescRecord (n), n );
-        }
+		}
 
-    getResultSet();
+	getResultSet();
 
 	if ( cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE )
 	{
@@ -3145,7 +3134,7 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
  
  			case SQL_ATTR_CONCURRENCY:			// SQL_CONCURRENCY	7
 				currency = (int) ptr;
-				
+
 				if(currency == SQL_CONCUR_READ_ONLY)
 					cursorSensitivity = SQL_INSENSITIVE;
 				else
@@ -3185,7 +3174,7 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 
 			case SQL_ATTR_CURSOR_SCROLLABLE:
 				cursorScrollable = SQL_SCROLLABLE;
-//TestNew02
+
 				if( !cursorScrollable )
 					cursorType = SQL_CURSOR_FORWARD_ONLY;
 				else
@@ -3214,8 +3203,6 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 				useBookmarks = (SQLINTEGER)ptr;
 				TRACE02(SQL_ATTR_USE_BOOKMARKS,(int) ptr);
 				break;
-
-
 
 			case SQL_ATTR_CURSOR_SENSITIVITY:    // (-2)
 				cursorSensitivity = (SQLINTEGER)ptr;

@@ -38,15 +38,9 @@ class IscConnection;
 class IscDatabaseMetaData : public DatabaseMetaData  
 {
 public:
-//////////////////////////////////???
-//////////////////////////////////???
-//////////////////////////////////???
 	virtual short getSqlStrPageSizeBd(const void * info_buffer, int bufferLength,short *lengthPtr);
 	virtual short getSqlStrWalInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr);
 	virtual short getStrStatInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr);
-//////////////////////////////////???
-//////////////////////////////////???
-//////////////////////////////////???
 	virtual bool supportsStatementMetaData();
 	virtual int objectVersion();
 	IscDatabaseMetaData(IscConnection *connect);
