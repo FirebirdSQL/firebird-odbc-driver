@@ -1868,7 +1868,6 @@ RETCODE OdbcStatement::sqlCancel()
 {
 	try
 	{
-		clearErrors();
 		cancel = true;
 	}
 	catch (SQLException& exception)
@@ -1877,7 +1876,7 @@ RETCODE OdbcStatement::sqlCancel()
 		return SQL_ERROR;
 	}
 
-	return sqlSuccess();
+	return SQL_SUCCESS;
 }
 
 RETCODE OdbcStatement::sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength)
