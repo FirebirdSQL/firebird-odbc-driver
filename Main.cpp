@@ -75,6 +75,7 @@ extern "C"
 }
 
 #include <stdio.h>
+#include <locale.h>
 #include "OdbcJdbc.h"
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
@@ -155,19 +156,31 @@ void trace (const char *msg)
     LOG_MSG(msg);
 }
 
+using namespace OdbcJdbcLibrary;
+
 #ifdef _WIN32
 HINSTANCE m_hInstance = NULL;
+UINT codePage = CP_ACP;
+
+namespace OdbcJdbcLibrary {
+
+void initCodePageTranslate(  int userLCID );
+
+};
 
 BOOL APIENTRY DllMain(  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID )
 {
 	if ( fdwReason == DLL_PROCESS_ATTACH )
+	{
 		m_hInstance = hinstDLL;
+		codePage = GetACP();
+		initCodePageTranslate( GetUserDefaultLCID() );
+		setlocale( LC_ALL, ".ACP" );
+	}
 
     return TRUE;
 }
 #endif
-
-using namespace OdbcJdbcLibrary;
 
 static SQLRETURN __SQLAllocHandle( SQLSMALLINT handleType, SQLHANDLE inputHandle, 
 								SQLHANDLE *outputHandle )

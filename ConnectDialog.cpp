@@ -54,6 +54,8 @@ TranslateString translate[] =
 	#include "Res/resource.uk"
 ,	
 	#include "Res/resource.es"
+,	
+	#include "Res/resource.it"
 };
 
 void initCodePageTranslate( int userLCID )
@@ -108,17 +110,11 @@ void CConnectDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 /////////////////////////////////////////////////////////////////////////////
 // CConnectDialog message handlers
 
-#ifdef __MINGW32__
 int DialogBoxDynamic();
-#endif
 
 int CConnectDialog::DoModal()
 {
-#ifdef __MINGW32__
 	return DialogBoxDynamicConnect();
-#else
-	return DialogBox(m_hInstance, MAKEINTRESOURCE(IDD), NULL, (DLGPROC)wndprocConnectDialog);
-#endif
 }
 
 BOOL CConnectDialog::OnInitDialog(HWND hDlg) 
@@ -156,11 +152,6 @@ BOOL CALLBACK wndprocConnectDialog(HWND hDlg, UINT message, WORD wParam, LONG lP
     return FALSE ;
 }
 
-// Temporarily!
-// After assembly from MinGW LoadString and LoadResurse does not work!!!
-// To me these magic switchs for dllwrap.exe are unknown ;-(
-// 
-#ifdef __MINGW32__
 int nCopyAnsiToWideChar (LPWORD lpWCStr, LPSTR lpAnsiIn)
 {
   int cchAnsi = lstrlen(lpAnsiIn);
@@ -212,7 +203,7 @@ LPWORD lpwAlign ( LPWORD lpIn)
 
 //    EDITTEXT        IDC_NAME,7,17,102,12,ES_AUTOHSCROLL
 #define TMP_EDITTEXT(ID,X,Y,CX,CY,STYLE) \
-	TMP_COMTROL(0x0081,"",ID,X,Y,CX,CY, 0x50810080 )
+	TMP_COMTROL(0x0081,"",ID,X,Y,CX,CY, 0x50810080|STYLE )
 
 //    COMBOBOX        IDC_DRIVER,123,17,102,47,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 #define TMP_COMBOBOX(ID,X,Y,CX,CY,STYLE) \
@@ -260,7 +251,7 @@ int DialogBoxDynamicConnect()
 	*p++ = 0;          // Class
 
 	/* copy the title of the dialog */
-	nchar = nCopyAnsiToWideChar (p, TEXT("FireBird ODBC Connect"));
+	nchar = nCopyAnsiToWideChar ( p, TEXT( _TR( IDS_DLG_TITLE_CONNECT, "FireBird ODBC Connect" ) ) );
 	p += nchar;
 
 	*p++ = 8;          // FontSize
@@ -270,18 +261,17 @@ int DialogBoxDynamicConnect()
     TMP_EDITTEXT      ( IDC_USER,60,10,70,12,ES_UPPERCASE | ES_AUTOHSCROLL )
     TMP_EDITTEXT      ( IDC_PASSWORD,60,25,70,12,ES_PASSWORD | ES_AUTOHSCROLL )
     TMP_EDITTEXT      ( IDC_ROLE,60,40,70,12,ES_AUTOHSCROLL )
-    TMP_DEFPUSHBUTTON ( "OK",IDOK,16,64,50,14 )
-    TMP_PUSHBUTTON    ( "Cancel",IDCANCEL,77,64,50,14 )
-    TMP_LTEXT         ( "Account",IDC_STATIC,9,12,30,8 )
-    TMP_LTEXT         ( "Password",IDC_STATIC,9,26,32,8 )
-    TMP_LTEXT         ( "Role",IDC_STATIC,9,41,16,8 )
+    TMP_DEFPUSHBUTTON ( _TR( IDS_BUTTON_OK, "OK" ), IDOK,16,64,50,14 )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_CANCEL, "Cancel" ), IDCANCEL,77,64,50,14 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_ACCOUNT, "Account" ), IDC_STATIC,5,12,54,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_PASSWORD, "Password" ), IDC_STATIC,5,26,54,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_ROLE, "Role" ), IDC_STATIC,5,41,54,8 )
 
 	int nRet = DialogBoxIndirect(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hwnd, (DLGPROC)wndprocConnectDialog);
 	LocalFree (LocalHandle (pdlgtemplate));
 
 	return nRet;
 }
-#endif // __MINGW32__
 
 }; // end namespace OdbcJdbcLibrary
 
