@@ -23,6 +23,7 @@
 #ifdef _WIN32
 
 #include <windows.h>
+#include "OdbcEnv.h"
 #include "OdbcConnection.h"
 #include "ConnectDialog.h"
 

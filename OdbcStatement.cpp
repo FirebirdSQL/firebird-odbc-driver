@@ -130,6 +130,7 @@
 #include <stdlib.h>
 #include "IscDbc/Connection.h"
 #include "IscDbc/SQLException.h"
+#include "OdbcEnv.h"
 #include "OdbcConnection.h"
 #include "OdbcStatement.h"
 #include "OdbcError.h"

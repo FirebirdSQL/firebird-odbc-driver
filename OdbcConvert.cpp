@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "OdbcJdbc.h"
+#include "OdbcEnv.h"
 #include "OdbcDesc.h"
 #include "OdbcStatement.h"
 #include "OdbcConnection.h"

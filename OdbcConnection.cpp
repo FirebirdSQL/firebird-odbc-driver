@@ -76,8 +76,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "OdbcJdbc.h"
-#include "OdbcConnection.h"
 #include "OdbcEnv.h"
+#include "OdbcConnection.h"
 #include <odbcinst.h>
 #include "SetupAttributes.h"
 #include "IscDbc/Connection.h"

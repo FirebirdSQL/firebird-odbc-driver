@@ -24,6 +24,7 @@
 
 #include <memory.h>
 #include <string.h>
+#include "OdbcEnv.h"
 #include "OdbcConnection.h"
 #include "IscDbc/Connection.h"
 #include "OdbcDesc.h"

@@ -30,8 +30,6 @@
 
 namespace OdbcJdbcLibrary {
 
-using namespace IscDbcLibrary;
-
 class OdbcEnv;
 class OdbcStatement;
 

@@ -34,6 +34,7 @@
 #include "IscDbc/Connection.h"
 #include "IscDbc/SQLException.h"
 #include "OdbcJdbc.h"
+#include "OdbcEnv.h"
 #include "OdbcConnection.h"
 #include "OdbcStatement.h"
 #include "DescRecord.h"
