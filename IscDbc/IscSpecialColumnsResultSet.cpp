@@ -182,7 +182,7 @@ void IscSpecialColumnsResultSet::adjustResults (IscSqlType &sqlType)
 	case JDBC_SQL_TIME:
 	case JDBC_TIMESTAMP:
 	case JDBC_SQL_TIMESTAMP:
-		sqlda->updateShort (7, -ISC_TIME_SECONDS_PRECISION_SCALE);
+		sqlda->updateInt( 7, -ISC_TIME_SECONDS_PRECISION_SCALE );
 	}	
 }
 
