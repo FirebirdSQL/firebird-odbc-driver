@@ -25,6 +25,7 @@
 #if !defined(_ODBCDESC_H_)
 #define _ODBCDESC_H_
 
+#include <string.h>
 #include "IscDbc/Connection.h"
 #include "OdbcObject.h"
 #include "IscDbc/Mlist.h"
