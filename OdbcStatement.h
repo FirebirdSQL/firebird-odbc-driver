@@ -182,6 +182,7 @@ public:
 	int					cursorScrollable;
 	bool				asyncEnable;
 	int					rowNumber;
+	int					lastRowsetSize;
 	long				indicatorRowNumber;
 	int					maxRows;
 	int					maxLength;

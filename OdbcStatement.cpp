@@ -484,6 +484,7 @@ void OdbcStatement::releaseResultSet()
 		implementationParamDescriptor->clearDefined();
 	}
 	
+	lastRowsetSize = 0;
 	countFetched = 0;
 	isResultSetFromSystemCatalog = false;
 
@@ -522,6 +523,7 @@ void OdbcStatement::setResultSet(ResultSet * results, bool fromSystemCatalog)
 	countFetched = 0;
 	rowNumber = 0;
 	indicatorRowNumber = 0;
+	lastRowsetSize = 0;
 
 	if ( fromSystemCatalog )
 	{
@@ -811,7 +813,8 @@ char *strDebOrientFetch[]=
 SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 {
 	int rowsetSize = applicationRowDescriptor->headArraySize;
-	SQLUINTEGER rowCount = 0;
+	bool bFetchAbsolute;
+	SQLUINTEGER rowCount;
 	SQLUINTEGER *rowCountPt =	implementationRowDescriptor->headRowsProcessedPtr ? implementationRowDescriptor->headRowsProcessedPtr
 								: &rowCount;
 
@@ -820,12 +823,72 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 	switch(orientation) 
 	{
 	case SQL_FETCH_RELATIVE: 
-		break;
+		if ( resultSet->isCurrRowsetStart() )
+		{
+			if ( !rowNumber && offset < 0 )
+			{
+				resultSet->beforeFirst();
+				resultSet->setPosRowInSet(0);
+				return SQL_NO_DATA;
+			}
+
+			int checkRow = rowNumber + offset;
+
+			if ( rowNumber > 0 && checkRow < 0 )
+			{
+				if ( abs( offset ) > rowsetSize )
+				{
+					resultSet->beforeFirst();
+					resultSet->setPosRowInSet(0);
+					return SQL_NO_DATA;
+				}
+				rowNumber = 0;
+				postError( "01S06", "Attempt to fetch before the result set returned the first rowset" );
+			}
+			else if ( checkRow > sqlDiagCursorRowCount )
+			{
+				resultSet->afterLast();
+				resultSet->setPosRowInSet(sqlDiagCursorRowCount ? sqlDiagCursorRowCount - 1 : 0);
+				return SQL_NO_DATA;
+			}
+
+			rowNumber = checkRow;
+			break;
+		}
+
+		bFetchAbsolute = ( resultSet->isBeforeFirst() && offset > 0 ) || ( resultSet->isAfterLast() && offset < 0 );
+
+		if ( !bFetchAbsolute )
+		{
+			if ( resultSet->isBeforeFirst() )
+			{
+				if ( offset <= 0 )
+				{
+					resultSet->beforeFirst();
+					resultSet->setPosRowInSet(0);
+					return SQL_NO_DATA;
+				}
+			}
+			else if ( resultSet->isAfterLast() )
+			{
+				if ( offset >= 0 )
+				{
+					resultSet->afterLast();
+					resultSet->setPosRowInSet(sqlDiagCursorRowCount ? sqlDiagCursorRowCount - 1 : 0);
+					return SQL_NO_DATA;
+				}
+			}
+
+			rowNumber += offset;
+			break;
+		}
 
 	case SQL_FETCH_ABSOLUTE:
-		if( offset == -1 )
+		if ( offset > 0 )
+			rowNumber = offset - 1;
+		else if( offset == -1 )
 		{
-			rowNumber = sqlDiagCursorRowCount - applicationRowDescriptor->headArraySize;
+			rowNumber = sqlDiagCursorRowCount - rowsetSize;
 			if ( rowNumber < 0 )
 				rowNumber = 0;
 		}
@@ -841,9 +904,10 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 				}
 
 				rowNumber = 0;
+				postError( "01S06", "Attempt to fetch before the result set returned the first rowset" );
 			}
 			else
-				rowNumber = sqlDiagCursorRowCount + offset + 1;
+				rowNumber = sqlDiagCursorRowCount + offset;
 		}
 		else if( !offset )
 		{
@@ -851,38 +915,68 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 			resultSet->setPosRowInSet(0);
 			return SQL_NO_DATA;
 		}
-		else if( offset > sqlDiagCursorRowCount )
+		else // if( offset > sqlDiagCursorRowCount )
 		{
 			resultSet->afterLast();
 			resultSet->setPosRowInSet(sqlDiagCursorRowCount ? sqlDiagCursorRowCount - 1 : 0);
 			return SQL_NO_DATA;
 		}
-		else
-			rowNumber = offset - 1;
 		break;
 
 	case SQL_FETCH_NEXT:
 		if ( eof && rowNumber == sqlDiagCursorRowCount - 1 )
 			return SQL_NO_DATA;
 
+		rowNumber += lastRowsetSize;
+		break;
+
 	case SQL_FETCH_LAST:
+		if( sqlDiagCursorRowCount )
+		{
+			rowNumber = sqlDiagCursorRowCount - rowsetSize;
+			if ( rowNumber < 0 )
+				rowNumber = 0;
+		}
 		break;
 
 	case SQL_FETCH_FIRST:
+		rowNumber = 0;
+		break;
+
 	case SQL_FETCH_PRIOR:
+		if( sqlDiagCursorRowCount && rowNumber > 0 )
+		{
+			rowNumber -= rowsetSize;
+
+			if ( resultSet->isAfterLast() )
+				rowNumber++;
+
+			if ( rowNumber < 0 )
+			{
+				rowNumber = 0;
+				postError( "01S06", "Attempt to fetch before the result set returned the first rowset" );
+			}
+		}
+		else
+		{
+			resultSet->beforeFirst();
+			resultSet->setPosRowInSet(0);
+			return SQL_NO_DATA;
+		}
 		break;
 	
 	case SQL_FETCH_BOOKMARK:
-		if ( fetchBookmarkPtr )
+		if ( !fetchBookmarkPtr )
+			return sqlReturn( SQL_ERROR, "HY111", "Invalid bookmark value" );
+
+		if ( *(long*)fetchBookmarkPtr + offset < 1 )
 		{
-			if ( *(long*)fetchBookmarkPtr + offset < 1 )
-			{
-				resultSet->beforeFirst();
-				resultSet->setPosRowInSet(0);
-				return SQL_NO_DATA;
-			}
-			rowNumber = *(long*)fetchBookmarkPtr + offset - 1;
+			resultSet->beforeFirst();
+			resultSet->setPosRowInSet(0);
+			return SQL_NO_DATA;
 		}
+
+		rowNumber = *(long*)fetchBookmarkPtr + offset - 1;
 
 		if( rowNumber >= sqlDiagCursorRowCount )
 		{
@@ -896,10 +990,13 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 		return sqlReturn (SQL_ERROR, "HY106", "Fetch type out of range");
 	}
 
+	lastRowsetSize = rowsetSize;
+
 	if( rowNumber >= 0 && rowNumber < sqlDiagCursorRowCount )
 	{
 		int nRow = 0;
 		resultSet->setPosRowInSet(rowNumber);
+		resultSet->currRowsetStart();
 		eof = false;
 
 		if ( fetchRetData == SQL_RD_OFF )
@@ -974,69 +1071,48 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 						*pt++ = SQL_ROW_NOROW;
 				}
 				else if ( !nRow && eof )
+				{
+					resultSet->afterLast();
 					return SQL_NO_DATA;
+				}
 			}
 		}
+
+		return sqlSuccess();
 	}
 	else if ( rowNumber < 0 )
 	{
 		rowNumber = 0;
-		convert->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
-		setZeroColumn(rowNumber);
-		*rowCountPt = 0;
-		return SQL_NO_DATA;
+		resultSet->beforeFirst();
 	}
 	else 
 	{
-		rowNumber = sqlDiagCursorRowCount - 1;
-		convert->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
-		setZeroColumn(rowNumber);
-		*rowCountPt = 0;
-		return SQL_NO_DATA;
-	}
-
-	resultSet->setPosRowInSet(rowNumber);
-
-	switch(orientation)
-	{
-	case SQL_FETCH_RELATIVE: 
-		if(offset<0) 
-			resultSet->beforeFirst();
-		else if(offset>0) 
+		if( sqlDiagCursorRowCount )
+		{
+			rowNumber = sqlDiagCursorRowCount - 1;
 			resultSet->afterLast();
-		break;
-
-	case SQL_FETCH_ABSOLUTE:
-		if(offset==0)
-			resultSet->beforeFirst();
+		}
 		else
-			resultSet->afterLast();
-		break;
-
-	case SQL_FETCH_NEXT:
-	case SQL_FETCH_LAST:
-		resultSet->afterLast();
-		break;
-
-	case SQL_FETCH_FIRST:
-	case SQL_FETCH_PRIOR:
-		resultSet->beforeFirst();
-		break;
-
-	case SQL_FETCH_BOOKMARK:
-		resultSet->afterLast();
-		break;
+		{
+			rowNumber = 0;
+			resultSet->beforeFirst();
+		}
 	}
 
-	return sqlSuccess();
+	convert->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
+	resultSet->setPosRowInSet(rowNumber);
+	setZeroColumn(rowNumber);
+	*rowCountPt = 0;
+
+	return SQL_NO_DATA;
 }
 
 SQLRETURN OdbcStatement::sqlFetchScroll(int orientation, int offset)
 {
 #ifdef DEBUG
 	char strTmp[128];
-	sprintf(strTmp,"\t%s : offset %i : bookmark %i\n",strDebOrientFetch[orientation],offset,
-								fetchBookmarkPtr ? *(long*)fetchBookmarkPtr : 0);
+	sprintf(strTmp,"\t%s : bookmark %i : offset %i\n",strDebOrientFetch[orientation],
+								fetchBookmarkPtr ? *(long*)fetchBookmarkPtr : 0, offset);
 	OutputDebugString(strTmp); 
 #endif
 	clearErrors();
@@ -1115,8 +1191,8 @@ SQLRETURN OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQ
 {
 #ifdef DEBUG
 	char strTmp[128];
-	sprintf(strTmp,"\t%s : row %i : current bookmark %i\n",strDebOrientSetPos[operation],row,
-								fetchBookmarkPtr ? *(long*)fetchBookmarkPtr : 0);
+	sprintf(strTmp,"\t%s : current bookmark %i : row %i\n",strDebOrientSetPos[operation],
+								fetchBookmarkPtr ? *(long*)fetchBookmarkPtr : 0, row );
 	OutputDebugString(strTmp); 
 #endif
 
