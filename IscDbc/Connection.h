@@ -435,8 +435,8 @@ public:
 	virtual TimeStamp	getTimestamp (const char *columnName) = 0;
 	virtual Blob*		getBlob (int index) = 0;
 	virtual Blob*		getBlob (const char *columnName) = 0;
-	virtual QUAD		getQuad (int id) = 0;
-	virtual QUAD		getQuad (const char *columnName) = 0;
+	virtual QUAD		getLong (int id) = 0;
+	virtual QUAD		getLong (const char *columnName) = 0;
 
 	virtual int			findColumn (const char *columName) = 0;
 	virtual StatementMetaData* getMetaData() = 0;
@@ -548,7 +548,7 @@ public:
 	virtual DateTime	getDate(int parameterIndex) = 0;
 	virtual SqlTime		getTime(int parameterIndex) = 0;
 	virtual TimeStamp	getTimestamp(int parameterIndex) = 0;
-	virtual QUAD		getQuad(int parameterIndex) = 0;
+	virtual QUAD		getLong(int parameterIndex) = 0;
 	virtual Blob*		getBlob (int i) = 0;
 };
 

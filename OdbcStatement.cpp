@@ -1431,7 +1431,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			*((QUAD*) pointer) = RESULTS (getQuad (column));
+			*((QUAD*) pointer) = RESULTS (getLong (column));
 			length = sizeof(QUAD);
 			break;
 
@@ -1499,7 +1499,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 		case SQL_C_NUMERIC:
 			{
 				char *var = (char*) pointer;
-				QUAD &number = *(QUAD*)(var+3) = RESULTS (getQuad(column));
+				QUAD &number = *(QUAD*)(var+3) = RESULTS (getLong(column));
 				*var++=(char)metaData->getPrecision (column);
 				*var=(char)metaData->getScale (column);
 

@@ -338,7 +338,7 @@ long IscCallableStatement::getInt(int id)
 	return getValue (id)->getLong();
 }
 
-QUAD IscCallableStatement::getQuad(int id)
+QUAD IscCallableStatement::getLong(int id)
 {
 	return getValue (id)->getQuad();
 }
