@@ -41,9 +41,6 @@ class BinaryBlob : public Blob, public Stream
 {
 public:
 	void putSegment (Blob *blob);
-#ifdef ENGINE
-	BinaryBlob (Database *db, long recordNumber, long sectId);
-#endif
 	virtual void* getSegment (int pos);
 	virtual int	  getSegment (int offset, int length, void* address);
 	virtual int getSegmentLength (int pos);

@@ -37,10 +37,6 @@
 #include "IscDbc.h"
 #include "BinaryBlob.h"
 
-#ifdef ENGINE
-#include "Database.h"
-#endif
-
 #ifdef _DEBUG
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
@@ -65,18 +61,6 @@ BinaryBlob::BinaryBlob(int minSegmentSize) : Stream (minSegmentSize)
     offset = 0;
     populated = true;
 }
-
-#ifdef ENGINE
-BinaryBlob::BinaryBlob(Database * db, long recNumber, long sectId)
-{
-    useCount = 1;
-    offset = 0;
-    populated = false;
-    database = db;
-    recordNumber = recNumber;
-    sectionId = sectId;
-}
-#endif
 
 BinaryBlob::~BinaryBlob()
 {
@@ -204,11 +188,6 @@ int	BinaryBlob::getSegment (int offset, int length, void* address)
 
 void BinaryBlob::populate()
 {
-#ifdef ENGINE
-	if (database)
-		database->fetchRecord (sectionId, recordNumber, this);
-#endif
-
 	populated = true;
 }
 
