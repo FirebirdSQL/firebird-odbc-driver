@@ -3494,7 +3494,8 @@ RETCODE OdbcStatement::sqlColAttributes(int column, int descType, SQLPOINTER buf
             string = metaData->getColumnTypeName (column);
             break;
 
-		case SQL_COLUMN_TABLE_NAME:
+		case SQL_DESC_BASE_TABLE_NAME:
+		case SQL_DESC_TABLE_NAME: // case SQL_COLUMN_TABLE_NAME:
 			string = metaData->getTableName (column);
 			break;
 
