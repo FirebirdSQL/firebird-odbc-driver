@@ -32,7 +32,6 @@ namespace IscDbcLibrary {
 
 class IscDatabaseMetaData;
 class IscPreparedStatement;
-class IscResultSet;
 
 class IscMetaDataResultSet : public IscResultSet  
 {

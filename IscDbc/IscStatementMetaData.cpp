@@ -25,6 +25,7 @@
 #include "IscDbc.h"
 #include "IscBlob.h"
 #include "IscArray.h"
+#include "IscHeadSqlVar.h"
 #include "IscStatementMetaData.h"
 #include "Sqlda.h"
 
@@ -34,14 +35,10 @@ namespace IscDbcLibrary {
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscStatementMetaData::IscStatementMetaData(Sqlda *ptSqlda)
+IscStatementMetaData::IscStatementMetaData(IscConnection *connect, Sqlda *ptSqlda)
 {
+	connection = connect;
 	sqlda = ptSqlda;
-}
-
-IscStatementMetaData::~IscStatementMetaData()
-{
-
 }
 
 int IscStatementMetaData::getColumnCount()
@@ -149,7 +146,7 @@ int IscStatementMetaData::isBlobOrArray(int index)
 
 const char* IscStatementMetaData::getSchemaName(int index)
 {
-	return sqlda->getOwnerName (index);;
+	return sqlda->getOwnerName (index);
 }
 
 const char* IscStatementMetaData::getCatalogName(int index)
@@ -157,10 +154,8 @@ const char* IscStatementMetaData::getCatalogName(int index)
 	return "";	
 }
 
-void IscStatementMetaData::getSqlData(int index, char *& ptData, short *& ptIndData, Blob *& ptDataBlob)
+void IscStatementMetaData::createBlobDataTransfer(int index, Blob *& ptDataBlob)
 {
-	sqlda->getSqlData(index, ptData, ptIndData);
-
 	int isRet = sqlda->isBlobOrArray(index);
 
 	if ( ptDataBlob )
@@ -174,11 +169,28 @@ void IscStatementMetaData::getSqlData(int index, char *& ptData, short *& ptIndD
 		{
 			IscBlob * pt = new IscBlob;
 			pt->setType(sqlda->getSubType(index));
+			pt->connection = connection;
 			ptDataBlob = pt;
 		}
 		else // if ( isRet == SQL_ARRAY )
-			ptDataBlob = new IscArray;
+		{
+			IscArray * pt = new IscArray;
+			pt->connection = connection;
+			ptDataBlob = pt;
+		}
 	}
+}
+
+void IscStatementMetaData::getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar *& ptHeadSqlVar)
+{
+	XSQLVAR *var = sqlda->Var(index);
+
+	if ( ptHeadSqlVar )
+		ptHeadSqlVar->release();
+
+	ptHeadSqlVar = new IscHeadSqlVar(var);
+
+	createBlobDataTransfer(index, ptDataBlob);
 }
 
 int IscStatementMetaData::objectVersion()

@@ -30,6 +30,7 @@
 namespace IscDbcLibrary {
 
 class Sqlda;
+class IscConnection;
 
 class IscStatementMetaData : public StatementMetaData  
 {
@@ -57,12 +58,13 @@ public:
 	virtual int	 isBlobOrArray(int index);
 	virtual const char*	getSchemaName (int index);
 	virtual const char*	getCatalogName (int index);
-	virtual void getSqlData(int index, char *& ptData, short *& ptIndData, Blob *& ptDataBlob);
+	virtual void getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar *& ptHeadSqlVar);
+	virtual void createBlobDataTransfer(int index, Blob *& ptDataBlob);
 
-	IscStatementMetaData(Sqlda	* ptSqlda);
-	~IscStatementMetaData();
+	IscStatementMetaData(IscConnection *connect, Sqlda	* ptSqlda);
 
-	Sqlda					*sqlda;
+	IscConnection	*connection;
+	Sqlda			*sqlda;
 };
 
 }; // end namespace IscDbcLibrary

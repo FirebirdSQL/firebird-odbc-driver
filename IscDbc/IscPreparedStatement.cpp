@@ -292,7 +292,7 @@ StatementMetaData* IscPreparedStatement::getStatementMetaDataIPD()
 	if (statementMetaDataIPD)
 		return statementMetaDataIPD;
 
-	statementMetaDataIPD = new IscStatementMetaData (&inputSqlda);
+	statementMetaDataIPD = new IscStatementMetaData (connection, &inputSqlda);
 
 	return statementMetaDataIPD;
 }
@@ -302,7 +302,7 @@ StatementMetaData* IscPreparedStatement::getStatementMetaDataIRD()
 	if (statementMetaDataIRD)
 		return statementMetaDataIRD;
 
-	statementMetaDataIRD = new IscStatementMetaData (&outputSqlda);
+	statementMetaDataIRD = new IscStatementMetaData (connection, &outputSqlda);
 
 	return statementMetaDataIRD;
 }

@@ -336,6 +336,38 @@ public:
 	
 };
 
+class HeadSqlVar
+{
+public:
+	virtual void		setTypeText() = 0;
+	virtual void		setTypeVarying() = 0;
+	virtual void		setTypeShort() = 0;
+	virtual void		setTypeLong() = 0;
+	virtual void		setTypeFloat() = 0;
+	virtual void		setTypeDouble() = 0;
+	virtual void		setType_D_Float() = 0;
+	virtual void		setTypeTimestamp() = 0;
+	virtual void		setTypeBlob() = 0;
+	virtual void		setTypeArray() = 0;
+	virtual void		setTypeQuad() = 0;
+	virtual void		setTypeTime() = 0;
+	virtual void		setTypeDate() = 0;
+	virtual void		setTypeInt64() = 0;
+
+	virtual void		setSqlType ( short type ) = 0;
+	virtual void		setSqlScale ( short scale ) = 0;
+	virtual void		setSqlSubType ( short subtype ) = 0;
+	virtual void		setSqlLen ( short len ) = 0;
+
+	virtual char *		getSqlData() = 0;
+	virtual short *		getSqlInd() = 0;
+	virtual void		setSqlData( char *data ) = 0;
+	virtual void		setSqlInd( short *ind ) = 0;
+
+	virtual void		release() = 0;
+	virtual void		restoreOrgPtrSqlData() = 0;
+};
+
 #define STATEMENTMETADATA_VERSION	1
 
 class StatementMetaData  
@@ -364,7 +396,8 @@ public:
 	virtual const char*	getSchemaName (int index) = 0;
 	virtual const char*	getCatalogName (int index) = 0;
 
-	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData, Blob *& ptDataBlob) = 0;
+	virtual void		getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar *& ptHeadSqlVar) = 0;
+	virtual void		createBlobDataTransfer(int index, Blob *& ptDataBlob) = 0;
 
 	virtual int			objectVersion() = 0;
 };
@@ -452,6 +485,7 @@ public:
 	virtual int			release() = 0;
 	virtual void		addRef() = 0;
 	virtual bool		wasNull() = 0;
+	virtual int			getColumnCount() = 0;
 	virtual int			objectVersion() = 0;
 	virtual bool		isBeforeFirst() = 0;
 	virtual bool		isAfterLast() = 0;
