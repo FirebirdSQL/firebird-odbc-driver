@@ -274,8 +274,8 @@ void IscResultSet::close()
 	if (statement)
 		{
 		statement->deleteResultSet (this);
-		if ( !statement->release() )
-			statement = NULL;
+		statement->release();
+		statement = NULL;
 		}
 }
 
