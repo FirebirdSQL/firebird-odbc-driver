@@ -51,6 +51,18 @@
 #define UPPER(c)			((ISLOWER (c)) ? (c) - 'a' + 'A' : (c))
 #define ROUNDUP(n,b)		(((n) + (b) - 1) & ~((b) - 1))
 
+#define PUNCT				1
+#define WHITE				2
+#define DIGIT				4
+#define LETTER				8
+#define QUOTE				16
+#define IDENT				32
+
+#define IS_WHITE(p)			(charTable [(p)] == WHITE)
+#define IS_END_TOKEN(p)		(charTable [(p)] & (PUNCT | WHITE))
+#define SKIP_WHITE(p)		while (charTable [*p] == WHITE) ++p
+#define SKIP_NO_WHITE(p)	while ( *p && charTable [*p] != WHITE) ++p
+
 #define FB_COMPILER_MESSAGE_STR(x) #x
 #define FB_COMPILER_MESSAGE_STR2(x)   FB_COMPILER_MESSAGE_STR(x)
 #define FB_COMPILER_MESSAGE(desc) message(__FILE__ "("	\

@@ -46,15 +46,6 @@
 #include "Value.h"
 #include "SQLError.h"
 
-#define SKIP_WHITE(p)	while (charTable [*p] == WHITE) ++p
-
-#define PUNCT			1
-#define WHITE			2
-#define DIGIT			4
-#define LETTER			8
-#define QUOTE			16
-#define IDENT			32
-
 namespace IscDbcLibrary {
 
 char charTable [256] = {0};

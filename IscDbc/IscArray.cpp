@@ -34,15 +34,7 @@
 #include "IscStatement.h"
 #include "SQLError.h"
 
-#define SKIP_WHITE(p)	while (charTable [*p] == WHITE) ++p
 #define SET_INFO_FROM_SUBTYPE( a, b, c ) arrSubTypeElement == 1 ? (a) :  arrSubTypeElement == 2 ? (b) : (c)
-
-#define PUNCT			1
-#define WHITE			2
-#define DIGIT			4
-#define LETTER			8
-#define QUOTE			16
-#define IDENT			32
 
 namespace IscDbcLibrary {
 
