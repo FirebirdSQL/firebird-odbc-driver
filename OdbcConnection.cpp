@@ -1740,7 +1740,7 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 {
 	clearErrors();
 	long value;
-	char *string = NULL;
+	const char *string = NULL;
 
 	switch (attribute)
 	{
