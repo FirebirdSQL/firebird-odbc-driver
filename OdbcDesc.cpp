@@ -1224,55 +1224,52 @@ RETCODE OdbcDesc::sqlSetDescRec(	SQLSMALLINT	recNumber,
 int OdbcDesc::getConciseType(int type)
 {
 	switch ( type )
-		{
-		case JDBC_LONGVARBINARY:
-		case JDBC_LONGVARCHAR:
-			return SQL_C_BINARY;
+	{
+	case JDBC_LONGVARBINARY:
+	case JDBC_LONGVARCHAR:
+		return SQL_C_BINARY;
 
-		case JDBC_CHAR:
-		case JDBC_VARCHAR:
-			return SQL_C_CHAR;
+	case JDBC_CHAR:
+	case JDBC_VARCHAR:
+		return SQL_C_CHAR;
 
-		case JDBC_TINYINT:
-			return SQL_C_STINYINT;
+	case JDBC_TINYINT:
+		return SQL_C_STINYINT;
 
-		case JDBC_SMALLINT:
-			return SQL_C_SSHORT;
+	case JDBC_SMALLINT:
+		return SQL_C_SSHORT;
 
-		case JDBC_INTEGER:
-			return SQL_C_SLONG;
+	case JDBC_INTEGER:
+		return SQL_C_SLONG;
 
-		case JDBC_BIGINT:
-			return SQL_C_SBIGINT;
+	case JDBC_BIGINT:
+		return SQL_C_SBIGINT;
 
-		case JDBC_REAL:
-			return SQL_C_FLOAT;
+	case JDBC_REAL:
+		return SQL_C_FLOAT;
 
-		case JDBC_FLOAT:
-		case JDBC_DOUBLE:
-			return SQL_C_DOUBLE;
+	case JDBC_FLOAT:
+	case JDBC_DOUBLE:
+		return SQL_C_DOUBLE;
 
-		case JDBC_DATE:
-			return SQL_C_TYPE_DATE;
+	case JDBC_DATE:
+		return SQL_C_TYPE_DATE;
 
-		case JDBC_SQL_DATE:
-			return SQL_C_DATE;
+	case JDBC_SQL_DATE:
+		return SQL_C_DATE;
 
-		case JDBC_TIME:
-			return SQL_C_TYPE_TIME;
+	case JDBC_TIME:
+		return SQL_C_TYPE_TIME;
 
-		case JDBC_SQL_TIME:
-			return SQL_C_TIME;
+	case JDBC_SQL_TIME:
+		return SQL_C_TIME;
 
-		case JDBC_TIMESTAMP:
-			return SQL_C_TYPE_TIMESTAMP;
+	case JDBC_TIMESTAMP:
+		return SQL_C_TYPE_TIMESTAMP;
 
-		case JDBC_SQL_TIMESTAMP:
-			return SQL_C_TIMESTAMP;
-
-		case JDBC_ARRAY:
-			return SQL_C_BINARY;
-		}
+	case JDBC_SQL_TIMESTAMP:
+		return SQL_C_TIMESTAMP;
+	}
 
 	return type;
 }
@@ -1288,7 +1285,6 @@ int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType, int bufferLength)
 	case JDBC_LONGVARCHAR:
 	case JDBC_DECIMAL:
 	case JDBC_NUMERIC:
-	case JDBC_ARRAY:
 		cType = SQL_C_CHAR;
 		break;
 	case JDBC_TINYINT:

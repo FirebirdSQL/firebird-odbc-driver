@@ -654,6 +654,8 @@ const char* IscDatabaseMetaData::getSchemaTerm()
 	{
 	return "";
 //	return "schema";
+//	ATTENTION! Fb can not at present execute a design
+//	select  *  from "owner"."table"
 	}
 
 const char* IscDatabaseMetaData::getProcedureTerm()

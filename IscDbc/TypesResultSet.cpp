@@ -154,8 +154,8 @@ TypesResultSet::TypesResultSet(int dataType) : IscResultSet (NULL)
 	sqlda = &outputSqlda;
 	((XSQLDA*)*sqlda)->sqld = numberColumns;
 	sqldataOffsetPtr = (unsigned long)types - sizeof (*types);
-	sqlda->orgsqlvar = (ORGSQLVAR *)malloc ( numberColumns * sizeof(ORGSQLVAR) );
-	ORGSQLVAR * orgvar = sqlda->orgsqlvar;
+	sqlda->orgsqlvar = new CAttrSqlVar [numberColumns];
+	CAttrSqlVar * orgvar = sqlda->orgsqlvar;
 
 	SET_SQLVAR( 1, "TYPE_NAME"			, SQL_VARYING	,	33  , OFFSET(Types,lenTypeName)				)
 	SET_SQLVAR( 2, "DATA_TYPE"			, SQL_SHORT		,	 5	, OFFSET(Types,typeType)				)

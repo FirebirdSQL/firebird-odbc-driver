@@ -174,8 +174,7 @@ void IscStatementMetaData::createBlobDataTransfer(int index, Blob *& ptDataBlob)
 		}
 		else // if ( isRet == SQL_ARRAY )
 		{
-			IscArray * pt = new IscArray;
-			pt->connection = connection;
+			IscArray * pt = new IscArray(connection, sqlda->Var(index));
 			ptDataBlob = pt;
 		}
 	}

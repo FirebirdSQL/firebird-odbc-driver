@@ -473,6 +473,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_UBIGINT:
 			return &OdbcConvert::convBlobToBigint;
 		case SQL_C_BINARY:
+			if ( from->isIndicatorSqlDa && from->dataBlobPtr && from->dataBlobPtr->isArray() )
+				return &OdbcConvert::convBlobToString;
 			bIdentity = true;
 			return &OdbcConvert::convBlobToBlob;
 		case SQL_C_CHAR:
@@ -500,8 +502,13 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			case SQL_C_UBIGINT:
 				return &OdbcConvert::convVarStringToBigint;
 			case SQL_C_CHAR:
+				if ( from->isIndicatorSqlDa && from->dataBlobPtr && from->dataBlobPtr->isArray() )
+					return &OdbcConvert::convBlobToString;
 				bIdentity = true;
 				return &OdbcConvert::convVarStringToString;
+			case SQL_C_BINARY:
+				if ( from->isIndicatorSqlDa && from->dataBlobPtr && from->dataBlobPtr->isArray() )
+					return &OdbcConvert::convBlobToString;
 			}
 		else 
 			switch(to->conciseType) // Text
@@ -1423,12 +1430,15 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 			from->currentFetched = parentStmt->getCurrentFetched();
 		}
 
-		length = blob->length();
-		
-		bool isBlob = blob->isBlob();
-
-		if ( isBlob )
-			length *= 2;
+		if ( blob->isArray() )
+			length = ((BinaryBlob*)blob)->getLength();
+		else
+		{
+			length = blob->length();
+			
+			if ( blob->isBlob() )
+				length *= 2;
+		}
 
 		int dataRemaining = length - from->dataOffset;
 
@@ -1449,7 +1459,7 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 			{
 				if ( len > 0 ) 
 				{
-					if ( isBlob )
+					if ( blob->isBlob() )
 						blob->getHexString (from->dataOffset/2, len/2, pointer);
 					else
 						blob->getBytes (from->dataOffset, len, pointer);
@@ -1786,7 +1796,13 @@ int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 
 	if ( !from->data_at_exec )
 	{
-		to->headSqlVarPtr->setSqlLen( (short)strlen( pointerFrom ) );
+		short len;
+		if ( from->octetLengthPtr && *from->octetLengthPtr != SQL_NTSL )
+			len = (short)*from->octetLengthPtr;
+		else
+			len = strlen( pointerFrom );
+
+		to->headSqlVarPtr->setSqlLen( len );
 		to->headSqlVarPtr->setSqlData( pointerFrom );
 	}
 	else

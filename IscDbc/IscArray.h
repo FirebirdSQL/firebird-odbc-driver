@@ -35,22 +35,32 @@ class IscConnection;
 class IscStatement;
 class Value;
 
-struct SIscArrayData
+class CAttrArray
 {
+public:
+	CAttrArray()	{ memset( this, 0, sizeof ( *this) ); }
+	void			loadAttributes ( IscConnection *connection, char * nameRelation, char * nameFields );
+	int				getPrecisionInternal();
+	int				getBufferLength();
+	JString			getFbSqlType();
+
+public:
+	ISC_ARRAY_DESC	arrDesc;
 	void*			arrBufData;
 	int				arrBufDataSize;
 	int				arrCountElement;
 	int				arrSizeElement;
 	int				arrTypeElement;
+	int				arrOctetLength;
 };
 
-class IscArray : public BinaryBlob
+class IscArray : public BinaryBlob, public CAttrArray
 {
 public:
 
-	void attach(char * pointBlob, bool fetched, bool clear){};
-	void attach(SIscArrayData * arr, bool fetchBinary = true, bool bClear = false);
-	void detach(SIscArrayData * arr);
+	void attach(char * pointBlob, bool fetched, bool clear);
+	void attach(CAttrArray * arr, bool fetchBinary = true, bool bClear = false);
+	void detach(CAttrArray * arr);
 	void removeBufData();
 	void getBytesFromArray();
 	void fetchArrayToString();
@@ -60,15 +70,16 @@ public:
 	void writeStringHexToBlob(char * sqldata, char *data, long length) {};
 	void writeArray(Value * value);
 
+	void init();
 	void bind(IscConnection	*parentConnection,XSQLVAR *var);
-	void bind(Connection *connect, char * sqldata){};
-	void getBytes(long pos, long length, void * address);
+	void bind(Connection *connect, char * sqldata);
+	void getBinary(long pos, long length, void * address);
 	int length();
 	int getSegment (int offset, int length, void *address);
 	int	getLength();
 
 	IscArray();
-	IscArray(SIscArrayData * ptArr);
+	IscArray(CAttrArray * ptArr);
 	IscArray(IscConnection	*parentConnection,XSQLVAR *var);
 	~IscArray();
 
@@ -77,12 +88,6 @@ public:
 	bool			clearData;
 	bool			fetched;
 	bool			fetchedBinary;
-	ISC_ARRAY_DESC	arrDesc;
-	void*			arrBufData;
-	int				arrBufDataSize;
-	int				arrCountElement;
-	int				arrSizeElement;
-	int				arrTypeElement;
 };
 
 }; // end namespace IscDbcLibrary

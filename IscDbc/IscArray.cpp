@@ -47,39 +47,210 @@
 namespace IscDbcLibrary {
 
 extern char charTable [];
-//
+
+void CAttrArray::loadAttributes ( IscConnection *connection, char * nameRelation, char * nameFields )
+{
+    ISC_STATUS_ARRAY statusVector;
+	void *transactionHandle = connection->startTransaction();
+
+	if ( !connection->GDS->_array_lookup_bounds(statusVector,&connection->databaseHandle, &transactionHandle,
+						nameRelation, nameFields, &arrDesc) )
+	{
+		arrCountElement = 1;
+		for(int i = 0; i < arrDesc.array_desc_dimensions; i++)
+			arrCountElement = arrCountElement *	(arrDesc.array_desc_bounds[i].array_bound_upper -
+					arrDesc.array_desc_bounds[i].array_bound_lower + 1);
+
+// Examples array long: 1,2,3,4 to string '{1,2,3,4}' octetLength = 45
+//          array varchar(15): aa,sa,dsd,ww to string '{'aa','sa','dsd','ww'}' octetLength = 73
+		arrOctetLength = (arrCountElement - 1)  // + (',' * (count elements - 1) )
+						 + 2; // + ( '{','}' ) - size 2
+
+		arrSizeElement = arrDesc.array_desc_length;
+		arrTypeElement = arrDesc.array_desc_dtype;
+
+		if (arrTypeElement == blr_varying)
+		{
+			arrSizeElement += 2;
+			arrOctetLength += 2 * arrCountElement; // + ''
+		}
+		else if (arrTypeElement == blr_cstring)
+		{
+			arrSizeElement += 1;
+			arrOctetLength += 2 * arrCountElement; // + ''
+		}
+		arrOctetLength += getPrecisionInternal() * arrCountElement;
+		arrBufDataSize = arrSizeElement * arrCountElement;
+		arrBufData = NULL;
+	}
+	else
+	{
+		memset( this, 0, sizeof ( *this) );
+		THROW_ISC_EXCEPTION (connection, statusVector);
+	}
+}
+
+int CAttrArray::getPrecisionInternal()
+{
+	switch ( arrTypeElement )
+	{
+	case blr_short:
+		if ( arrDesc.array_desc_scale < 0 )
+			return MAX_NUMERIC_LENGTH;
+		return MAX_SMALLINT_LENGTH;
+
+	case blr_long:
+		if ( arrDesc.array_desc_scale < 0 )
+			return MAX_NUMERIC_LENGTH;
+		return MAX_INT_LENGTH;
+
+	case blr_float:
+		return MAX_FLOAT_LENGTH;
+
+	case blr_d_float:
+	case blr_double:
+		if ( arrDesc.array_desc_scale < 0 )
+			return MAX_NUMERIC_LENGTH;
+		return MAX_DOUBLE_LENGTH;
+
+	case blr_quad:
+	case blr_int64:
+		if ( arrDesc.array_desc_scale < 0 )
+			return MAX_NUMERIC_LENGTH;
+		return MAX_QUAD_LENGTH;
+
+	case blr_sql_time:
+		return MAX_TIME_LENGTH;
+
+	case blr_sql_date:
+		return MAX_DATE_LENGTH;
+
+	case blr_timestamp:
+		return MAX_TIMESTAMP_LENGTH;
+	}
+
+	return arrDesc.array_desc_length;
+}
+
+int	CAttrArray::getBufferLength()
+{
+	return arrDesc.array_desc_length * arrCountElement;
+}
+
+JString CAttrArray::getFbSqlType()
+{
+	char temp [30];
+	char name [80];
+	char * ch = temp;
+	char sqlscale = arrDesc.array_desc_scale;
+	unsigned short sqllen = arrDesc.array_desc_length;
+
+	switch ( arrTypeElement )
+	{
+	case blr_short:
+		if ( sqlscale < 0 )
+			sprintf (temp, "NUMERIC(4,%d)",-sqlscale);
+		else
+			ch = "SMALLINT";
+		break;
+
+	case blr_long:
+		if ( sqlscale < 0 )
+			sprintf (temp, "NUMERIC(9,%d)",-sqlscale);
+		else
+			ch = "INTEGER";
+		break;
+
+	case blr_int64:
+		if ( sqlscale < 0 )
+			sprintf (temp, "NUMERIC(%d,%d)", MAX_NUMERIC_LENGTH, -sqlscale);
+		else
+			ch = "BIGINT";
+		break;
+
+	case blr_quad:
+		ch = "QUAD";
+		break;
+
+	case blr_timestamp:
+		ch = "TIMESTAMP";
+		break;
+
+	case blr_sql_time:
+		ch = "TIME";
+		break;
+
+	case blr_sql_date:
+		ch = "DATE";
+		break;
+
+	case blr_float:
+		ch = "FLOAT";
+		break;
+
+	case blr_d_float:
+	case blr_double:
+		if ( sqlscale < 0 )
+			sprintf (temp, "NUMERIC(15,%d)", -sqlscale);
+		else
+			ch = "DOUBLE PRECISION";
+		break;
+
+	case blr_text:
+	case blr_text2:
+		if ( sqllen == 1 )
+			ch = "CHAR";
+		else
+			sprintf (temp, "CHAR(%d)", sqllen);
+		break;
+
+	case blr_varying:
+	case blr_varying2:
+		sprintf (temp, "VARCHAR(%d)", sqllen);
+		break;
+
+	case blr_cstring:
+	case blr_cstring2:
+		sprintf (temp, "CSTRING(%d)", sqllen);
+		break;
+
+	default:
+		ch = "*unknown type*";
+	}
+
+	int len = sprintf (name, "%s[", ch);
+	ch = name + len;
+	for(int i = 0; i < arrDesc.array_desc_dimensions; i++)
+	{
+		len = sprintf ( ch , "%d:%d,", arrDesc.array_desc_bounds[i].array_bound_lower
+									, arrDesc.array_desc_bounds[i].array_bound_upper);
+		ch += len;
+	}
+	*(ch-1) = ']';
+	*ch = '\0';
+
+	return name;
+}
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
 IscArray::IscArray()
 {
-	enType = enTypeArray;
-
-	connection = NULL;
-	memset(&arrayId,0,sizeof(ISC_QUAD));
-	clearData = false;
-	fetched = false;
-	fetchedBinary = false;
-	memset(&arrDesc,0,sizeof(ISC_ARRAY_DESC));
-	arrBufData = NULL;
-	arrBufDataSize = 0;
-	arrCountElement = 0;
-	arrSizeElement = 0;
-	arrTypeElement = 0;
+	init();
 }
 
-IscArray::IscArray(SIscArrayData * ptArr)
+IscArray::IscArray ( CAttrArray * ptArr )
 {
+	init();
 	attach(ptArr);
-	connection = NULL;
-	fetched = false;
-	enType = enTypeArray;
 }
 
-IscArray::IscArray(IscConnection *connect,XSQLVAR *var)
+IscArray::IscArray ( IscConnection *connect, XSQLVAR *var )
 {
-	clearData = false;
+	init();
+	connection = connect;
 	bind(connect, var);
 }
 
@@ -88,24 +259,36 @@ IscArray::~IscArray()
 	removeBufData();
 }
 
-void IscArray::attach(SIscArrayData * arr, bool fetchBinary, bool bClear)
+void IscArray::init()
 {
-	arrBufData = arr->arrBufData;
-	arrBufDataSize = arr->arrBufDataSize;
-	arrCountElement = arr->arrCountElement;
-	arrSizeElement = arr->arrSizeElement;
-	arrTypeElement = arr->arrTypeElement;
+	enType = enTypeArray;
+
+	connection = NULL;
+	memset ( &arrayId, ~0, sizeof(ISC_QUAD) );
+	clearData = false;
+	fetched = false;
+	fetchedBinary = false;
+	memset ( (CAttrArray *)this , 0, sizeof(*(CAttrArray *)this) );
+}
+
+void IscArray::attach(CAttrArray * arr, bool fetchBinary, bool bClear)
+{
+	memcpy ( (CAttrArray *)this, arr, sizeof(*(CAttrArray *)this) );
 	fetchedBinary = fetchBinary;
 	clearData = bClear;
 }
 
-void IscArray::detach(SIscArrayData * arr)
+void IscArray::attach(char * pointBlob, bool fetchBinary, bool bClear)
 {
-	arr->arrBufData = arrBufData;
-	arr->arrBufDataSize = arrBufDataSize;
-	arr->arrCountElement = arrCountElement;
-	arr->arrSizeElement = arrSizeElement;
-	arr->arrTypeElement = arrTypeElement;
+	clear();
+	CAttrArray * arr = (CAttrArray *)*(long*)pointBlob;
+	attach(arr, fetchBinary, bClear);
+	fetched = false;
+}
+
+void IscArray::detach(CAttrArray * arr)
+{
+	memcpy ( arr, (CAttrArray *)this, sizeof(*(CAttrArray *)this) );
 	clearData = false;
 }
 
@@ -124,33 +307,18 @@ void IscArray::bind(IscConnection *connect,XSQLVAR *var)
 	fetchedBinary = false;
 	enType = enTypeArray;
 
-	int i;
-	ISC_STATUS statusVector [20];
-	void *transactionHandle = connection->startTransaction();
-
-	int ret = connection->GDS->_array_lookup_bounds(statusVector,&connection->databaseHandle, &transactionHandle,
-		var->relname,var->sqlname, &arrDesc);
-	if (ret)
-		THROW_ISC_EXCEPTION (connection, statusVector);
-
-	arrBufData = NULL;
-
-	// Computes total number of elements in the array or slice
-	arrCountElement = 1;
-	for(i = 0; i < arrDesc.array_desc_dimensions; i++)
-		arrCountElement = arrCountElement *	(arrDesc.array_desc_bounds[i].array_bound_upper -
-				arrDesc.array_desc_bounds[i].array_bound_lower + 1);
-
-	arrSizeElement = arrDesc.array_desc_length;
-	arrTypeElement = arrDesc.array_desc_dtype;
-
-	if (arrTypeElement == blr_varying)
-		arrSizeElement += 2;
-	else if (arrTypeElement == blr_cstring)
-		arrSizeElement += 1;
-
-	arrBufDataSize = arrSizeElement * arrCountElement;
+	loadAttributes ( connection, var->relname, var->sqlname );
 	arrBufData = (void*)malloc(arrBufDataSize);
+}
+
+void IscArray::bind(Connection *connect, char * sqldata)
+{
+	clear();
+	clearData = true;
+
+	arrayId = *(ISC_QUAD*)sqldata;
+	fetched = false;
+	fetchedBinary = false;
 }
 
 void IscArray::removeBufData()
@@ -182,7 +350,7 @@ void IscArray::getBytesFromArray()
 	fetchedBinary = true;
 }
 
-void IscArray::getBytes(long pos, long length, void * address)
+void IscArray::getBinary(long pos, long length, void * address)
 {
 	if(!fetchedBinary)
 		getBytesFromArray();

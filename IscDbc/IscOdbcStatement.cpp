@@ -105,7 +105,7 @@ void IscOdbcStatement::getInputParameters()
 			THROW_ISC_EXCEPTION (connection, statusVector);
 	}
 
-	inputSqlda.allocBuffer();
+	inputSqlda.allocBuffer(connection);
 }
 
 int IscOdbcStatement::getNumParams()

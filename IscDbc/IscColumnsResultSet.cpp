@@ -151,19 +151,43 @@ bool IscColumnsResultSet::next()
 	int dialect = statement->connection->getDatabaseDialect();
 	IscSqlType sqlType (blrType, subType, length, length, dialect, precision, scale);
 
-	sqlda->updateShort (5, sqlType.type);
-
 	if ( array )
 	{
-		JString type;
-		type.Format ("%s%s", "ARRAY OF ", sqlType.typeName);
-		sqlda->updateVarying (6, type);
-		sqlda->updateInt (8, MAX_ARRAY_LENGTH);
+		int len;
+		char * relation_name = sqlda->getVarying ( 3, len);
+		relation_name[len] = '\0';
+		char * field_name = sqlda->getVarying ( 4, len);
+		field_name[len] = '\0';
+
+		arrAttr.loadAttributes ( statement->connection, relation_name, field_name );
+
+		sqlda->updateVarying (6, arrAttr.getFbSqlType());
+		sqlda->updateInt (7, arrAttr.arrOctetLength );
+		sqlda->updateInt (8, arrAttr.getBufferLength());
+
+		if ( arrAttr.arrOctetLength < MAX_VARCHAR_LENGTH )
+			sqlda->updateShort (5, JDBC_VARCHAR);
+		else
+			sqlda->updateShort (5, JDBC_LONGVARCHAR);
+
+		sqlda->updateInt (16, arrAttr.arrOctetLength );
 	}
 	else
 	{
 		sqlda->updateVarying (6, sqlType.typeName);
 		setCharLen (7, 8, sqlType);
+		sqlda->updateShort (5, sqlType.type);
+
+		//Octet length
+		switch (sqlType.type)
+		{
+		case JDBC_VARCHAR:
+		case JDBC_CHAR:
+			sqlda->updateInt (16, sqlda->getInt (8));
+			break;
+		default:
+			sqlda->setNull (16);
+		} 
 	}
 
 	adjustResults (sqlType);
@@ -460,17 +484,6 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 			sqlda->updateShort (14, sqlda->getShort(5));
 			sqlda->setNull (15);
 		}
-
-	//Octet length
-	switch (sqlType.type)
-	{
-	case JDBC_VARCHAR:
-	case JDBC_CHAR:
-		sqlda->updateInt (16, sqlda->getInt (8));
-		break;
-	default:
-		sqlda->setNull (16);
-	} 
 
 	// Is Nullable - I'm seeing everything twice
 	if ( !nullable )

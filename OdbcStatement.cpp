@@ -491,7 +491,8 @@ void OdbcStatement::rebindColumn()
 	if ( !implementationRowDescriptor->headCount )
 		return;
 
-	int nCount = applicationRowDescriptor->headCount;
+	int nCount = implementationRowDescriptor->headCount;
+	int nCountApp = applicationRowDescriptor->headCount;
 	DescRecord * record = applicationRowDescriptor->getDescRecord (0);
 
 	if ( !record->isPrepared && record->isDefined )
@@ -503,14 +504,16 @@ void OdbcStatement::rebindColumn()
 		record->initZeroColumn();
 	}
 
-	for (int column = 1; column <= nCount; ++column)
+#pragma FB_COMPILER_MESSAGE("This temporary decision. FIXME!")
+
+	for (int column = 1, columnApp = 1; column <= nCount && columnApp <= nCountApp; ++column,  ++columnApp)
 	{
-		record = applicationRowDescriptor->getDescRecord ( column );
+		record = applicationRowDescriptor->getDescRecord ( columnApp );
 
 		if ( !record->isPrepared && record->isDefined )
 		{
 			SQLINTEGER bufferLength = record->length;
-			bindOutputColumn ( column, record);
+			bindOutputColumn ( columnApp, record);
 			record->length = bufferLength;
 		}
 	}
@@ -640,6 +643,9 @@ RETCODE OdbcStatement::sqlFetch()
 		rebindColumn();
 		enFetch = Fetch;
 	}
+
+	if ( isStaticCursor() )
+		return sqlFetchScrollCursorStatic ( SQL_FETCH_NEXT, 1);
 
 	SQLINTEGER	*bindOffsetPtrSave = bindOffsetPtr;
 
@@ -850,6 +856,7 @@ RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 			while ( nRow < rowsetSize && rowNumber < sqlDiagCursorRowCount )
 			{
 				resultSet->copyNextSqldaFromBufferStaticCursor();
+				++countFetched;
 				++rowNumber; // Should stand only here!!!
 				returnData();
 
@@ -1575,6 +1582,7 @@ RETCODE OdbcStatement::prepareGetData(int column, DescRecord *recordARD)
 	}
 
 	recordARD->isPrepared = true;
+	recordIRD->currentFetched = 0;
 	(*listBindGetData)(column) = CBindColumn(column,recordIRD,recordARD);
 
 	return SQL_SUCCESS;
@@ -1722,6 +1730,8 @@ void OdbcStatement::rebindParam()
 {
 	int nCount = implementationParamDescriptor->headCount;
 	int nCountApp = applicationParamDescriptor->headCount;
+
+#pragma FB_COMPILER_MESSAGE("This temporary decision. FIXME!")
 
 	for (int paramApp = 1, param = 1; param <= nCount && paramApp <= nCountApp; ++param, ++paramApp)
 	{
@@ -2262,13 +2272,14 @@ void OdbcStatement::bindInputOutputParam(int param, DescRecord * recordApp)
 {
 	OdbcDesc * ipd = implementationParamDescriptor;
 	StatementMetaData * metaDataIn = ipd->metaDataIn;
+	StatementMetaData * metaDataOut = ipd->metaDataOut;
 
-	if ( !ipd->metaDataOut && !metaDataIn )
+	if ( !metaDataOut && !metaDataIn )
 		return;
 
 	DescRecord *record = ipd->getDescRecord ( param );
 
-	if ( record->parameterType != SQL_PARAM_INPUT )
+	if ( record->parameterType != SQL_PARAM_INPUT && metaDataOut->getColumnCount() )
 	{
 		param -= metaDataIn->getColumnCount();
 

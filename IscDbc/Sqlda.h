@@ -25,18 +25,34 @@
 #if !defined(_SQLDA_H_INCLUDED_)
 #define _SQLDA_H_INCLUDED_
 
+#include "IscArray.h"
+
 namespace IscDbcLibrary {
 
 #define DEFAULT_SQLDA_COUNT		20
 #define DEFAULT_BLOB_BUFFER_LENGTH 16384
 
-typedef struct
+class CAttrSqlVar
 {
+public:
+	CAttrSqlVar()	{ memset( this, 0, sizeof ( *this) ); }
+	~CAttrSqlVar()	
+	{ 
+		if ( array ) 
+			delete array; 
+	}
+
+	void operator = ( XSQLVAR *var )
+	{
+		*(QUAD*)this = *(QUAD*)var;
+	}
+
 	short			sqltype;			/* datatype of field */
 	short			sqlscale;			/* scale factor */
 	short			sqlsubtype;			/* datatype subtype - BLOBs & Text types only */
 	short			sqllen;				/* length of data area */
-} ORGSQLVAR;
+	CAttrArray		*array;
+};
 
 class Value;
 class IscConnection;
@@ -56,8 +72,8 @@ public:
 	void setArray (XSQLVAR *var, Value *value, IscConnection *connection);
 	void setValue (int slot, Value *value, IscConnection *connection);
 	const char* getTableName (int index);
-	int getSqlType (ORGSQLVAR *var, int &realSqlType);
-	const char* getSqlTypeName (ORGSQLVAR *var);
+	int getSqlType (CAttrSqlVar *var, int &realSqlType);
+	const char* getSqlTypeName (CAttrSqlVar *var);
 	bool isNullable (int index);
 	int getScale (int index);
 	int getPrecision (int index);
@@ -75,13 +91,13 @@ public:
 	int getColumnCount();
 	void init();
 	void remove();
-	void allocBuffer();
+	void allocBuffer(IscConnection *connect);
 	bool checkOverflow();
 	void deleteSqlda();
 	void clearSqlda();
 	operator XSQLDA*(){ return sqlda; }
 	XSQLVAR * Var(int index){ return sqlda->sqlvar + index - 1; }
-	ORGSQLVAR * orgVar(int index){ return orgsqlvar + index - 1; }
+	CAttrSqlVar * orgVar(int index){ return orgsqlvar + index - 1; }
 
 	Sqlda();
 	~Sqlda();
@@ -108,7 +124,7 @@ public:
 	XSQLDA		*sqlda;
 	char		tempSqlda [XSQLDA_LENGTH (DEFAULT_SQLDA_COUNT)];
 	char		*buffer;
-	ORGSQLVAR	*orgsqlvar;
+	CAttrSqlVar	*orgsqlvar;
 	bool		needsbuffer;
 
 	friend class IscResultSet;

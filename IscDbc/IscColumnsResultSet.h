@@ -27,6 +27,7 @@
 
 #include "IscMetaDataResultSet.h"
 #include "IscBlob.h"
+#include "IscArray.h"
 #include "IscSqlType.h"
 
 namespace IscDbcLibrary {
@@ -44,6 +45,7 @@ private:
 	virtual void adjustResults (IscSqlType sqlType);	
 
 	IscBlob blob;
+	CAttrArray arrAttr;
 };
 
 }; // end namespace IscDbcLibrary

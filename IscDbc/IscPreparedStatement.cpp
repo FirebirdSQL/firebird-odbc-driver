@@ -171,7 +171,7 @@ void IscPreparedStatement::getInputParameters()
 	}
 
 	parameters.alloc (inputSqlda.getColumnCount());
-	inputSqlda.allocBuffer();
+	inputSqlda.allocBuffer(connection);
 }
 
 int IscPreparedStatement::getNumParams()

@@ -334,7 +334,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 			THROW_ISC_EXCEPTION (connection, statusVector);
 	}
 	
-	outputSqlda.allocBuffer();
+	outputSqlda.allocBuffer(connection);
 
 	typeStmt			= stmtNone;
 	resultsCount		= 1;
@@ -499,7 +499,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 			case SQL_TEXT:
 				{
 				char *data = (char*) var->sqldata;
-				data [var->sqllen - 1 ] = 0;    
+				data [ var->sqllen ] = 0;    
 				value->setString (data, false);
 				}
 				break;

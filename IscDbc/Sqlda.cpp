@@ -61,7 +61,6 @@
 #include "IscConnection.h"
 #include "IscStatement.h"
 #include "IscBlob.h"
-#include "IscArray.h"
 
 namespace IscDbcLibrary {
 
@@ -159,14 +158,13 @@ public:
 					for (n = 0; n < countBlocks ; ++n)
 						if ( listBlocks[n] )
 						{
-							int l;
 							char * pt = listBlocks[n] + (var->sqldata - sqlvar[0].sqldata);
-							for ( l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
+							for (int l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
 							{
 								if ( pt )
 								{
-									free ( ((SIscArrayData *)*(long*)pt)->arrBufData );
-									delete (SIscArrayData *)*(long*)pt;
+									free ( ((CAttrArray *)*(long*)pt)->arrBufData );
+									delete (CAttrArray *)*(long*)pt;
 								}
 							}
 						}
@@ -176,9 +174,8 @@ public:
 					for (n = 0; n < countBlocks ; ++n)
 						if ( listBlocks[n] )
 						{
-							int l;
 							char * pt = listBlocks[n] + (var->sqldata - sqlvar[0].sqldata);
-							for ( l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
+							for (int l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
 								if ( pt )delete (IscBlob *)*(long*)pt;
 						}
 				}
@@ -209,7 +206,7 @@ public:
 					*(long*)var->sqldata = (long)0;
 				else if ( (var->sqltype & ~1) == SQL_ARRAY )
 				{
-					SIscArrayData * ptArr = new SIscArrayData;
+					CAttrArray * ptArr = new CAttrArray;
 					IscArray iscArr(connection,var);
 					iscArr.getBytesFromArray();
 					iscArr.detach(ptArr);
@@ -328,8 +325,9 @@ public:
 		memcpy(orgBuf,nextPosition(),lenRow);
 	}
 };
+
 //////////////////////////////////////////////////////////////////////
-// Construction/Destruction
+// Construction/Destruction Sqlda
 //////////////////////////////////////////////////////////////////////
 
 Sqlda::Sqlda()
@@ -373,8 +371,7 @@ void Sqlda::clearSqlda()
 
 void Sqlda::deleteSqlda()
 {
-	if ( orgsqlvar )
-		free (orgsqlvar);
+	delete [] orgsqlvar;
 
 	if (sqlda != (XSQLDA*) tempSqlda)
 		free (sqlda);
@@ -399,7 +396,7 @@ bool Sqlda::checkOverflow()
 	return true;
 }
 
-void Sqlda::allocBuffer()
+void Sqlda::allocBuffer ( IscConnection * connect )
 {
 	//We've already done it,
 	// doing it again lengthens SQL_TEXT areas and causes
@@ -408,9 +405,7 @@ void Sqlda::allocBuffer()
 
 	needsbuffer = false;
 
-	if ( orgsqlvar ) 
-		free (orgsqlvar);
-
+	delete [] orgsqlvar;
 	delete [] buffer;
 	delete [] offsetSqldata;
 
@@ -419,15 +414,15 @@ void Sqlda::allocBuffer()
 	int numberColumns = sqlda->sqld;
 	XSQLVAR *var = sqlda->sqlvar;
 	offsetSqldata = new int [numberColumns];
-	orgsqlvar = (ORGSQLVAR *)malloc ( numberColumns * sizeof(ORGSQLVAR) );
-	ORGSQLVAR * orgvar = orgsqlvar;
+	orgsqlvar = new CAttrSqlVar [numberColumns];
+	CAttrSqlVar * orgvar = orgsqlvar;
 
 	for (n = 0; n < numberColumns; ++n, ++var, ++orgvar)
 	{
 		int length = var->sqllen;
 		int boundary = length;
 
-		*(QUAD*)orgvar = *(QUAD*)var;
+		*orgvar = var;
 
 		switch (var->sqltype & ~1)
 		{
@@ -466,8 +461,14 @@ void Sqlda::allocBuffer()
 			length = sizeof (QUAD);
 			break;
 
-		case SQL_ARRAY:
 		case SQL_BLOB:
+			length = sizeof (ISC_QUAD);
+			boundary = 4;
+			break;
+
+		case SQL_ARRAY:
+			orgvar->array = new CAttrArray;
+			orgvar->array->loadAttributes ( connect, var->relname, var->sqlname );
 			length = sizeof (ISC_QUAD);
 			boundary = 4;
 			break;
@@ -612,7 +613,7 @@ void Sqlda::print()
 
 int Sqlda::getColumnDisplaySize(int index)
 {
-	ORGSQLVAR *var = orgVar(index);
+	CAttrSqlVar *var = orgVar(index);
 
 	switch (var->sqltype & ~1)
 	{
@@ -647,7 +648,8 @@ int Sqlda::getColumnDisplaySize(int index)
 		return MAX_QUAD_LENGTH + 1;
 		
 	case SQL_ARRAY:
-		return MAX_ARRAY_LENGTH;
+		return var->array->arrOctetLength;
+//		return MAX_ARRAY_LENGTH;
 
 	case SQL_BLOB:
 		return MAX_BLOB_LENGTH;
@@ -677,7 +679,7 @@ const char* Sqlda::getColumnName(int index)
 
 int Sqlda::getPrecision(int index)
 {
-	ORGSQLVAR *var = orgVar(index);
+	CAttrSqlVar *var = orgVar(index);
 
 	switch (var->sqltype & ~1)
 	{
@@ -711,8 +713,9 @@ int Sqlda::getPrecision(int index)
 			return MAX_NUMERIC_LENGTH;
 		return MAX_QUAD_LENGTH;
 
-	case SQL_ARRAY:		
-		return MAX_ARRAY_LENGTH;
+	case SQL_ARRAY:	
+		return var->array->arrOctetLength;
+//		return MAX_ARRAY_LENGTH;
 	
 	case SQL_BLOB:		
 		return MAX_BLOB_LENGTH;
@@ -732,7 +735,7 @@ int Sqlda::getPrecision(int index)
 
 int Sqlda::getScale(int index)
 {
-	ORGSQLVAR *var = orgVar(index);
+	CAttrSqlVar *var = orgVar(index);
 
 	switch (var->sqltype & ~1)
 	{
@@ -746,7 +749,7 @@ int Sqlda::getScale(int index)
 
 bool Sqlda::isNullable(int index)
 {
-	ORGSQLVAR *var = orgVar(index);
+	CAttrSqlVar *var = orgVar(index);
 
 	return (var->sqltype & 1) ? true : false;
 }
@@ -766,7 +769,7 @@ short Sqlda::getSubType(int index)
 	return orgsqlvar[index - 1].sqlsubtype;
 }
 
-int Sqlda::getSqlType(ORGSQLVAR *var, int &realSqlType)
+int Sqlda::getSqlType(CAttrSqlVar *var, int &realSqlType)
 {
 	switch (var->sqltype & ~1)
 	{
@@ -843,13 +846,15 @@ int Sqlda::getSqlType(ORGSQLVAR *var, int &realSqlType)
 		return (realSqlType = JDBC_DATE);
 
 	case SQL_ARRAY:
-		return (realSqlType = JDBC_ARRAY);
+		if ( var->array->arrOctetLength < MAX_VARCHAR_LENGTH )
+			return (realSqlType = JDBC_VARCHAR);
+		return (realSqlType = JDBC_LONGVARCHAR);
 	}
 
 	return (realSqlType = 0);
 }
 
-const char* Sqlda::getSqlTypeName ( ORGSQLVAR *var )
+const char* Sqlda::getSqlTypeName ( CAttrSqlVar *var )
 {
 	switch (var->sqltype & ~1)
 	{
@@ -1150,9 +1155,11 @@ int Sqlda::findColumn(const char * columnName)
 
 const char* Sqlda::getOwnerName(int index)
 {
-	XSQLVAR *var = Var(index);
-
-	return var->ownname;
+//	XSQLVAR *var = Var(index);
+//	return var->ownname;
+//	ATTENTION! Fb can not at present execute a design
+//	INSERT INTO "OWNER"."EVCT" ("CNT") VALUES (?)
+	return "";
 }
 
 int Sqlda::isBlobOrArray(int index)
