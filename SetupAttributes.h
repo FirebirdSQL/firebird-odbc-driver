@@ -47,6 +47,15 @@
 #define SETUP_DIALECT		"Dialect"
 #define SETUP_QUOTED		"QuotedIdentifier"
 
+#define KEY_DSN_JDBC_DRIVER	"JDBC_DRIVER"
+#define KEY_DSN_DATABASE	"DATABASE"
+#define KEY_DSN_UID			"UID"
+#define KEY_DSN_PWD			"PWD"
+#define KEY_DSN_CHARSET		"CHARSET"
+#define KEY_DSN_QUOTED		"QUOTED"
+
+#define LEN_KEY(keydsn) sizeof(keydsn) - 1
+
 #define BUILD_STR(x)	#x
 #define BUILD_STR1(x)	x
 #define BUILD_STR2(x)   BUILD_STR(x)

@@ -199,6 +199,7 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	paramsetSize = 0;
 	numberColumns = 0;
 	registrationOutParameter = false;
+	isRegistrationOutParameter = false;
 	isResultSetFromSystemCatalog = false;
 	isFetchStaticCursor = false;
 	paramsProcessedPtr = NULL;
@@ -540,6 +541,8 @@ void OdbcStatement::addBindColumn(int column, DescRecord * recordFrom, DescRecor
 	int j = listBindOut->SearchAndInsert( &bindCol );
 	if( j < 0 )
 		(*listBindOut)[-j-1] = bindCol;
+	else
+		(*listBindOut)[j] = bindCol;
 }
 
 void OdbcStatement::delBindColumn(int column)
@@ -1227,6 +1230,10 @@ RETCODE OdbcStatement::sqlFreeStmt(int option)
 		case SQL_RESET_PARAMS:
 			releaseParameters();
 			break;
+		
+		case SQL_DROP:
+			statement->release();
+			break;
 		}
 	}
 	catch (SQLException& exception)
@@ -1619,6 +1626,8 @@ void OdbcStatement::addBindParam(int param, DescRecord * recordFrom, DescRecord 
 	int j = listBindIn->SearchAndInsert( &bindCol );
 	if( j < 0 )
 		(*listBindIn)[-j-1] = bindCol;
+	else
+		(*listBindIn)[j] = bindCol;
 }
 
 void OdbcStatement::delBindParam(int param)
@@ -2168,25 +2177,7 @@ void OdbcStatement::bindInputOutputParam(int param, DescRecord * recordApp)
 
 	DescRecord *record = ipd->getDescRecord ( param );
 
-	if ( record->parameterType != SQL_PARAM_INPUT && metaDataOut->getColumnCount() )
-	{
-		param -= metaDataIn->getColumnCount();
-
-		if ( !record->isDefined )
-			ipd->defFromMetaDataOut( param, record );
-
-		if( recordApp->conciseType == SQL_C_DEFAULT )
-		{
-			record->setDefault ( recordApp );
-			recordApp->conciseType = ipd->getDefaultFromSQLToConciseType(record->type);
-		}
-
-		record->fnConv = convert->getAdresFunction(record, recordApp);
-
-//		if ( convert->isIdentity() )
-			addBindColumn ( param, record, recordApp );
-	}
-	else if ( metaDataIn->getColumnCount() )
+	if ( record->parameterType != SQL_PARAM_OUTPUT && param <= metaDataIn->getColumnCount() )
 	{
 		if ( !record->isDefined )
 			ipd->defFromMetaDataIn( param, record );
@@ -2201,6 +2192,22 @@ void OdbcStatement::bindInputOutputParam(int param, DescRecord * recordApp)
 
 //		if ( convert->isIdentity() )
 			addBindParam ( param, record, recordApp );
+	}
+	else if ( param -= metaDataIn->getColumnCount(), param <= metaDataOut->getColumnCount() )
+	{
+		if ( !record->isDefined )
+			ipd->defFromMetaDataOut( param, record );
+
+		if( recordApp->conciseType == SQL_C_DEFAULT )
+		{
+			record->setDefault ( recordApp );
+			recordApp->conciseType = ipd->getDefaultFromSQLToConciseType(record->type);
+		}
+
+		record->fnConv = convert->getAdresFunction(record, recordApp);
+
+//		if ( convert->isIdentity() )
+			addBindColumn ( param, record, recordApp );
 	}
 	else
 		return;
@@ -2254,6 +2261,8 @@ bool OdbcStatement::registerOutParameter()
 		return false;
 	}
 
+	isRegistrationOutParameter = param <= nCountApp;
+
 	for ( ; param <= nCountApp; ++param)
 	{
 		DescRecord * recordApp = applicationParamDescriptor->getDescRecord ( param );
@@ -2289,6 +2298,7 @@ RETCODE OdbcStatement::inputParam()
 
 			parameterNeedData = 1;
 			convert->setBindOffsetPtrFrom ( applicationParamDescriptor->headBindOffsetPtr, applicationParamDescriptor->headBindOffsetPtr );
+			convert->setBindOffsetPtrTo(NULL, NULL);
 		}
 
 		for (int n = parameterNeedData; n <= nInputParam; ++n)
@@ -2343,10 +2353,7 @@ RETCODE OdbcStatement::executeStatement()
 	statement->executeStatement();
 
 	if ( statement->getMoreResults() )
-	{
 		setResultSet (statement->getResultSet(), false);
-		statement->addRef();
-	}
 
 	if ( statement->isActiveSelect() && isStaticCursor() )
 	{
@@ -2370,11 +2377,12 @@ RETCODE OdbcStatement::executeProcedure()
 
 	if ( statement->executeProcedure() )
 	{
-		if ( listBindOut->GetCount() )
+		if ( isRegistrationOutParameter )
 		{
 			RETCODE retCode;
 
 			++countFetched;
+			convert->statusReturnData = true;
 
 			CBindColumn * bindParam = listBindOut->GetHeadPosition();
 			while( bindParam )
@@ -2388,6 +2396,7 @@ RETCODE OdbcStatement::executeProcedure()
 				}
 				bindParam = listBindOut->GetNext();
 			}
+			convert->statusReturnData = false;
 		}
 		else
 		{
@@ -2396,8 +2405,8 @@ RETCODE OdbcStatement::executeProcedure()
 			if ( statement->getMoreResults() )
 			{
 				setResultSet (statement->getResultSet(), false);
+				execute = &OdbcStatement::executeProcedure;
 				fetchNext = &ResultSet::nextFromProcedure;
-				statement->addRef();
 			}
 		}
 	}

@@ -82,8 +82,6 @@ extern "C"
 #include "OdbcStatement.h"
 #include "SafeEnvThread.h"
 
-#define __MONITOR_EXECUTING
-
 #ifdef _WIN32
 #define OUTPUT_MONITOR_EXECUTING(msg)  OutputDebugString(msg"\n");
 #else
@@ -93,7 +91,11 @@ extern "C"
 #ifdef DEBUG
 #define TRACE(msg)		trace (msg"\n")
 #else
+#ifdef __MONITOR_EXECUTING
 #define TRACE(msg)		OUTPUT_MONITOR_EXECUTING(msg)
+#else
+#define TRACE(msg)		
+#endif
 #endif
 
 #if(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_ENV)

@@ -146,6 +146,7 @@ public:
 	StatementMetaData	*metaData;
 	int					numberColumns;
 	bool				registrationOutParameter;
+	bool				isRegistrationOutParameter;
     int                 parameterNeedData;
 	bool				eof;
 	bool				cancel;

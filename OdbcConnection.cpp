@@ -411,46 +411,52 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 			while (p < end && (c = *p++) != ';')
 				*q++ = c;
 		*q = 0;
-		if (!strncasecmp (name, "DSN", 3))
+		if (!strncasecmp (name, SETUP_DSN, LEN_KEY(SETUP_DSN)) )
 			dsn = value;
-		else if (!strncasecmp (name, "DBNAME", 6))
+		else if (!strncasecmp (name, KEY_DSN_DATABASE, LEN_KEY(KEY_DSN_DATABASE))
+			|| !strncasecmp (name, SETUP_DBNAME, LEN_KEY(SETUP_DBNAME)) )
 			databaseName = value;
-		else if (!strncasecmp (name, "CLIENT", 6))
+		else if (!strncasecmp (name, SETUP_CLIENT, LEN_KEY(SETUP_CLIENT)) )
 			client = value;
-		else if (!strncasecmp (name, "UID", 3) || !strncasecmp (name, "USER", 4))
+		else if (!strncasecmp (name, KEY_DSN_UID, LEN_KEY(KEY_DSN_UID))
+			|| !strncasecmp (name, SETUP_USER, LEN_KEY(SETUP_USER)))
 			account = value;
-		else if (!strncasecmp (name, "PWD", 3) || !strncasecmp (name, "PASSWORD", 8))
+		else if (!strncasecmp (name, KEY_DSN_PWD, LEN_KEY(KEY_DSN_PWD))
+			|| !strncasecmp (name, SETUP_PASSWORD, LEN_KEY(SETUP_PASSWORD)) )
 			password = value;
-		else if (!strncasecmp (name, "ROLE", 4))
+		else if (!strncasecmp (name, SETUP_ROLE, LEN_KEY(SETUP_ROLE)))
 			role = value;
-		else if (!strncasecmp (name, "CHARSET", 7))
+		else if (!strncasecmp (name, KEY_DSN_CHARSET, LEN_KEY(KEY_DSN_CHARSET))
+			|| !strncasecmp (name, SETUP_CHARSET, LEN_KEY(SETUP_CHARSET)) )
 			charset = value;
-		else if (!strncasecmp (name, "DRIVER", 6))
+		else if (!strncasecmp (name, SETUP_DRIVER, LEN_KEY(SETUP_DRIVER)) )
 			driver = value;
-		else if (!strncasecmp (name, "JDBC_DRIVER", 11))
+		else if (!strncasecmp (name, KEY_DSN_JDBC_DRIVER, LEN_KEY(KEY_DSN_JDBC_DRIVER))
+			|| !strncasecmp (name, SETUP_JDBC_DRIVER, LEN_KEY(SETUP_JDBC_DRIVER)) )
 			jdbcDriver = value;
-		else if (!strncasecmp (name, "READONLY", 8))
+		else if (!strncasecmp (name, SETUP_READONLY_TPB, LEN_KEY(SETUP_READONLY_TPB)) )
 		{
 			if( *value == 'Y')
 				optTpb |=TRA_ro;
 
 			defOptions |= DEF_READONLY_TPB;
 		}
-		else if (!strncasecmp (name, "DIALECT", 7))
+		else if (!strncasecmp (name, SETUP_DIALECT, LEN_KEY(SETUP_DIALECT)) )
 		{
 			if( *value == '1')
 				dialect3 = false;
 
 			defOptions |= DEF_DIALECT;
 		}
-		else if (!strncasecmp (name, "NOWAIT", 6))
+		else if (!strncasecmp (name, SETUP_NOWAIT_TPB, LEN_KEY(SETUP_NOWAIT_TPB)) )
 		{
 			if( *value == 'Y')
 				optTpb |=TRA_nw;
 
 			defOptions |= DEF_NOWAIT_TPB;
 		}
-		else if (!strncasecmp (name, "QUOTED", 6))
+		else if (!strncasecmp (name, KEY_DSN_QUOTED, LEN_KEY(KEY_DSN_QUOTED))
+			|| !strncasecmp (name, SETUP_QUOTED, LEN_KEY(SETUP_QUOTED)) )
 		{
 			if( *value == 'N')
 				quotedIdentifiers = false;
