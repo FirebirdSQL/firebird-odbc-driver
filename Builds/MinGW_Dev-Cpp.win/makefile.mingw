@@ -1,5 +1,7 @@
 #
-.PHONY: all createdirs IscDbc OdbcJdbc clean
+#DEBUG=1
+#
+.PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean
 #
 #    Init variables for compile MinGW
 #
@@ -26,6 +28,8 @@ LIST_ISCDBCSRC 	=   $(addprefix $(ISCDBCDIR)/, $(ISCDBCSRC))
 LIST_ISCDBCOBJ 	=   $(addprefix $(BUILDDIR)/, $(ISCDBCSRC:.cpp=.o))
 LIST_ODBCJDBCSRC=   $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSRC))
 LIST_ODBCJDBCOBJ=   $(addprefix $(BUILDDIR)/, $(ODBCJDBCSRC:.cpp=.o))
+LIST_ODBCJDBCSSRC=  $(addprefix $(ODBCJDBCSETUPDIR)/, $(ODBCJDBCSETUPSRC))
+LIST_ODBCJDBCSOBJ=  $(addprefix $(BUILDDIR)/, $(ODBCJDBCSETUPSRC:.cpp=.o))
 #
 COMPFLAGS	= -I"$(MINGWDIR)/include/c++" -I"$(MINGWDIR)/include/c++/mingw32" \
 		  -I"$(MINGWDIR)/include/c++/backward" -I"$(MINGWDIR)/include" \
@@ -40,8 +44,10 @@ WINDRES		= $(COMPDIRBIN)/windres.exe
 #
 ISCDBCDLL       = $(TARGETDIR)/IscDbc.dll
 ODBCJDBCDLL     = $(TARGETDIR)/OdbcJdbc.dll
+ODBCJDBCSDLL    = $(TARGETDIR)/OdbcJdbcSetup.dll
 ISCDBCDEFFILE	= $(ISCDBCDIR)/IscDbc.def
 ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)/OdbcJdbc.def
+ODBCJDBCSDEFFILE= $(ODBCJDBCSETUPDIR)/OdbcJdbcSetup.def
 #
 ifdef DEBUG
 DEBUGFLAGS	= -D_DEBUG -DDEBUG -DLOGGING -fexceptions 
@@ -58,10 +64,15 @@ $(BUILDDIR)/%.o: $(ISCDBCDIR)/%.cpp
 $(BUILDDIR)/%.o: $(ODBCJDBCDIR)/%.cpp
 	$(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
 #
+$(BUILDDIR)/%.o: $(ODBCJDBCSETUPDIR)/%.cpp
+	$(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
+#
 ISCDBCLIB       = $(ISCDBCDLL:.dll=.a)
 ODBCJDBCLIB     = $(ODBCJDBCDLL:.dll=.a)
+ODBCJDBCSLIB    = $(ODBCJDBCSDLL:.dll=.a)
 #
 all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL)
+#all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSDLL)
 #
 # Silently creates the target and build directories
 createdirs :
@@ -72,8 +83,9 @@ createdirs :
 clean :
 	@-rm -fr $(TARGETDIR)
 #
-IscDbc : $(ISCDBCDLL)
-OdbcJdbc : $(ODBCJDBCDLL)
+IscDbc 		: $(ISCDBCDLL)
+OdbcJdbc 	: $(ODBCJDBCDLL)
+OdbcJdbcSetup 	: $(ODBCJDBCSDLL)
 #
 # Build the library from the object modules
 #
@@ -82,6 +94,9 @@ $(ISCDBCDLL) : $(LIST_ISCDBCOBJ)
 #
 $(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ)
 	$(LD) $(LINKFLAGS) --implib $(ODBCJDBCLIB) $(BUILDDIR)/JString.o $(LIST_ODBCJDBCOBJ) -lodbccp32 --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
+#
+$(ODBCJDBCSDLL) : $(LIST_ODBCJDBCSOBJ)
+	$(LD) $(LINKFLAGS) --implib $(ODBCJDBCSLIB) $(LIST_ODBCJDBCSOBJ) -lodbccp32 --def $(ODBCJDBCSDEFFILE) -o $(ODBCJDBCSDLL)
 #
 # End
 #
