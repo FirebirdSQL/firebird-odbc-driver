@@ -125,7 +125,6 @@ public:
     int                 parameterNeedData;
 	bool				eof;
 	bool				cancel;
-	bool				fetched;
 	long				countFetched;
 	enFetchType			enFetch;
 	JString				cursorName;

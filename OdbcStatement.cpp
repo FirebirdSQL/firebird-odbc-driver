@@ -181,7 +181,7 @@ int init ()
 	for (n = 'a'; n <= 'z'; ++n)
 		charTable [n] |= LETTER;
 
-	for (n = 'A'; n <= 'A'; ++n)
+	for (n = 'A'; n <= 'Z'; ++n)
 		charTable [n] |= LETTER;
 
 	for (n = '0'; n <= '9'; ++n)
@@ -190,6 +190,9 @@ int init ()
 	return 0;
 }
 
+//	Bound Address + Binding Offset + ((Row Number – 1) x Element Size)
+//	*ptr = binding->pointer + bindOffsetPtr + ((1 – 1) * rowBindType); // <-- for single row
+#define GETBOUNDADDRESS(binding)	(unsigned long)binding->dataPtr + (unsigned long)bindOffsetPtr; 
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -203,8 +206,6 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	callableStatement = NULL;
 	metaData = NULL;
 	cancel = false;
-	fetched = false;
-//	Delete fetched
 	countFetched = 0l;
 	enFetch = NoneFetch;
     parameterNeedData = 0;	
@@ -606,8 +607,6 @@ RETCODE OdbcStatement::sqlFetch()
 	if( enFetch == NoneFetch )
 		enFetch = Fetch;
 
-	fetched = true;
-//	Delete fetched = true;
 	++countFetched;
 
 	try
@@ -852,7 +851,6 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 	if( enFetch == NoneFetch )
 		enFetch = FetchScroll;
 
-	fetched = true;
 	++countFetched;
 
 	if (!resultSet)
@@ -972,7 +970,6 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 	if( enFetch == NoneFetch )
 		enFetch = ExtendedFetch;
 
-	fetched = true;
 	++countFetched;
 
 	try
@@ -1034,7 +1031,6 @@ RETCODE OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQLU
 			rowNumber = row - 1;
 		if( resultSet )
 			resultSet->setPosRowInSet(rowNumber);
-		fetched = true;
 		++countFetched;
 		break;
 	case SQL_REFRESH:
@@ -1177,7 +1173,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 				info = true;
 			}
 
-			length = len;
+			length = dataRemaining;
 			dataOffset += len;
 
 			if (!info)
@@ -1284,7 +1280,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 				info = true;
 			}
 				
-			length = len;
+			length = dataRemaining;
 			dataOffset += len;
 
 			if (!info)
@@ -2558,9 +2554,7 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 
 	DescRecord *binding = applicationParamDescriptor->getDescRecord ( parameterNeedData );
 
-//	Bound Address + Binding Offset + ((Row Number – 1) x Element Size)
-//	*ptr = binding->pointer + bindOffsetPtr + ((1 – 1) * rowBindType);
-	*(unsigned long*)ptr = (unsigned long)binding->dataPtr + (unsigned long)bindOffsetPtr; // for single row
+	*(unsigned long*)ptr = GETBOUNDADDRESS(binding);
 
 	if( binding->indicatorPtr && binding->data_at_exec )
 	{
@@ -2595,7 +2589,15 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 	
 	try
 	{
+		int saveParameter = parameterNeedData;
+
 		retcode = executeStatement();
+		
+		if ( retcode == SQL_NEED_DATA && saveParameter != parameterNeedData )
+		{
+			binding = applicationParamDescriptor->getDescRecord ( parameterNeedData );
+			*(unsigned long*)ptr = GETBOUNDADDRESS(binding);
+		}
 	}
 	catch (SQLException& exception)
 	{
