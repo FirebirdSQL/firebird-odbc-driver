@@ -44,6 +44,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <time.h>
 #include <string.h>
 #include "IscDbc.h"
 #include "IscConnection.h"

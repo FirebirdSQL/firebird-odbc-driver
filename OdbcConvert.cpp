@@ -22,6 +22,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include <memory.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "OdbcJdbc.h"
@@ -60,7 +61,7 @@ double listScale[] =
 	100000000000000000.0,
 	1000000000000000000.0
 };
-#elif defined __FreeBSD__
+#elif defined __FreeBSD__ || defined __linux__
 unsigned __int64 listScale[] =
 {
 	0x0000000000000001LL,
