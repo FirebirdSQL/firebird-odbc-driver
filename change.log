@@ -5,6 +5,11 @@ Changes made to OdbcJdbc codebase
 !!  using the format below and then paste them into this document. 
 
 
+ *	2002-12-05	OdbcConnection.cpp 
+ *				Contributed by C. Guzman Alvarez
+ *				SQLGetInfo returns more info.
+ *				Solve error in SQL_ORDER_BY_COLUMNS_IN_SELECT.
+
  *	2002-11-25	Values.cpp
  *				Contributed by C. G. Alvarez
  *				Minor adjustment to improve handling of 

@@ -18,7 +18,10 @@
  *  All Rights Reserved.
  *
  *
- *	2002-11-21
+ *	2002-12-05	OdbcConnection.cpp 
+ *				Contributed by C. Guzman Alvarez
+ *				SQLGetInfo returns more info.
+ *				Solve error in SQL_ORDER_BY_COLUMNS_IN_SELECT.
  *
  *	2002-08-12	OdbcConnection.cpp 
  *				Contributed by C. G. Alvarez
@@ -249,18 +252,19 @@ bool moduleInit()
 
 OdbcConnection::OdbcConnection(OdbcEnv *parent)
 {
-	env = parent;
-	connected = false;
-	connectionTimeout = 0;
-	connection = NULL;
-	transactionPending = false;
-	statements = NULL;
-	descriptors = NULL;
-	libraryHandle = NULL;
-	asyncEnabled = false;
-	autoCommit = true;
-	cursors = SQL_CUR_USE_DRIVER;
-	statementNumber = 0;
+	env					= parent;
+	connected			= false;
+	connectionTimeout	= 0;
+	connection			= NULL;
+	transactionPending	= false;
+	statements			= NULL;
+	descriptors			= NULL;
+	libraryHandle		= NULL;
+	asyncEnabled		= false;
+	autoCommit			= true;
+	cursors				= SQL_CUR_USE_DRIVER;
+	statementNumber		= 0;
+	accessMode			= SQL_MODE_READ_ONLY;
 	transactionIsolation = SQL_TXN_READ_COMMITTED; //suggested by CGA.
 }
 
@@ -321,6 +325,9 @@ RETCODE OdbcConnection::sqlSetConnectAttr (SQLINTEGER attribute, SQLPOINTER valu
 		asyncEnabled = (int) value == SQL_ASYNC_ENABLE_ON;
 		break;
 
+	case SQL_ATTR_ACCESS_MODE:
+		accessMode = (int)value;
+		break;
 	}
 
 	return sqlSuccess();
@@ -647,6 +654,15 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 		string = (metaData->isReadOnly()) ? "Y" : "N";
 		break;
 
+	case SQL_CURSOR_SENSITIVITY:
+		{
+			if ( metaData->supportsANSI92EntryLevelSQL() )
+				value = SQL_UNSPECIFIED;	// Entry level SQL-92 compliant.
+			if ( metaData->supportsANSI92FullSQL() )
+				value = SQL_INSENSITIVE;	// Full level SQL-92 compliant.
+		}
+		break;
+
 	case SQL_DBMS_NAME:
 		string = metaData->getDatabaseProductName();
 		break;
@@ -886,7 +902,7 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 		break;
 
 	case SQL_ORDER_BY_COLUMNS_IN_SELECT:
-		string = metaData->supportsOrderByUnrelated() ? "N" : "Y";
+		string = metaData->supportsOrderByUnrelated() ? "Y" : "N";
 		break;
 
 	case SQL_CONVERT_FUNCTIONS:
@@ -982,6 +998,23 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 			value = SQL_IC_MIXED;
 		else
 			value = SQL_IC_SENSITIVE;
+		break;
+
+	case SQL_NON_NULLABLE_COLUMNS:
+		if(metaData->supportsNonNullableColumns())
+			value = SQL_NNC_NON_NULL;
+		break;
+
+	case SQL_NULL_COLLATION:
+		value = 0;
+		if(metaData->nullsAreSortedHigh())
+			value |= SQL_NC_HIGH;
+		if(metaData->nullsAreSortedLow())
+			value |= SQL_NC_LOW;
+		if(metaData->nullsAreSortedAtStart())
+			value |= SQL_NC_START;
+		if(metaData->nullsAreSortedAtEnd())
+			value |= SQL_NC_END;
 		break;
 
 	case SQL_DYNAMIC_CURSOR_ATTRIBUTES1:
@@ -1437,9 +1470,11 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 		bufferLength = databaseName.length();
 		break;
 
-	case SQL_ACCESS_MODE:			//   101
-		value = SQL_MODE_READ_ONLY;
+	case SQL_ATTR_ACCESS_MODE:			//   101		
+		value = accessMode;
 		break;
+
+
 
 	case SQL_TXN_ISOLATION:			//   108
 		value = connection->getTransactionIsolation();

@@ -82,6 +82,7 @@ public:
 	bool		quotedIdentifiers;
 	bool		asyncEnabled;
 	bool		autoCommit;
+	int			accessMode;
 	int			transactionIsolation;
 	void		*libraryHandle;
 	int			cursors;			// default is SQL_CUR_USE_DRIVER

@@ -1824,7 +1824,7 @@ RETCODE OdbcStatement::executeStatement()
         {
         Binding *binding = parameters + n;
 		if ( ( binding->pointer || binding->indicatorPointer ) && binding->type != SQL_PARAM_OUTPUT )
-			if( *binding->indicatorPointer == SQL_DATA_AT_EXEC || *binding->indicatorPointer < SQL_LEN_DATA_AT_EXEC_OFFSET )
+			if ( *binding->indicatorPointer == SQL_DATA_AT_EXEC || *binding->indicatorPointer < SQL_LEN_DATA_AT_EXEC_OFFSET )
 				return SQL_NEED_DATA;
 			else				
             setParameter (binding, n + 1);
