@@ -13,6 +13,7 @@ ISCDBCSRC = \
 	IscDatabaseMetaData.cpp \
 	IscIndexInfoResultSet.cpp \
 	IscMetaDataResultSet.cpp \
+	IscOdbcStatement.cpp \
 	IscPreparedStatement.cpp \
 	IscPrimaryKeysResultSet.cpp \
 	IscProcedureColumnsResultSet.cpp \
