@@ -1054,7 +1054,7 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 					OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
 					ret = SQL_SUCCESS_WITH_INFO;
 				}
-				length = len;
+				length = dataRemaining;
 			}
 		}
 	}
@@ -1132,7 +1132,7 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 					ret = SQL_SUCCESS_WITH_INFO;
 				}
 					
-				length = len;
+				length = dataRemaining;
 			}
 		}
 	}
@@ -1228,7 +1228,7 @@ int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
 	RETCODE ret = SQL_SUCCESS;
 	int len = MIN((int)from->length, (int)MAX(0, (int)to->length-1));
 #pragma FB_COMPILER_MESSAGE("Dispute on a theme \"Whether it is necessary to carry out trimBlanks on a type CHAR?\" FIXME!")
-	len = MIN(len, strlen((char*)pointerFrom));
+	len = MIN(len, (int)strlen((char*)pointerFrom));
 	
 	if( len )
 		memcpy (pointerTo, pointerFrom, len);
@@ -1244,7 +1244,7 @@ int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
 	}
 
 	if ( indicatorPointer )
-		*indicatorPointer = len;
+		*indicatorPointer = from->length;
 
 	return ret;
 }
@@ -1286,7 +1286,7 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 	}
 
 	if ( indicatorPointer )
-		*indicatorPointer = len;
+		*indicatorPointer = lenVar;
 
 	return ret;
 }
