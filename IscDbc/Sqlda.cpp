@@ -1017,82 +1017,68 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 	int length = 0;
 
 	switch (value->type)
-		{
-		case String:
-			address = value->data.string.string;
-			length = value->data.string.length;
-			break;
-
-		case Short:
-			length = sizeof (short);
-			break;
-
-		case Long:
-			length = sizeof (long);
-			break;
-
-		case Quad:
-			length = sizeof (QUAD);
-			break;
-
-		case Float:
-			length = sizeof (float);
-			break;
-
-		case Double:
-			length = sizeof (double);
-			break;
-
-		case BlobPtr:
-			{
-			length = 0;
-			Blob *blob = value->data.blob;
-			for (int len, offset = 0; len = blob->getSegmentLength (offset); offset += len)
-				{
-				GDS->_put_segment (statusVector, &blobHandle, len, (char*) blob->getSegment (offset));
-				if (statusVector [1])
-					THROW_ISC_EXCEPTION (connection, statusVector);
-				}
-			}
-			break;
-
-		case Date:
-									
-		default:
-			NOT_YET_IMPLEMENTED;
-		}			
-
-	if (length)
 	{
-		int post = 16384u;
-		if ( length > post )
+	case String:
+		address = value->data.string.string;
+		length = value->data.string.length;
+		break;
+
+	case Short:
+		length = sizeof (short);
+		break;
+
+	case Long:
+		length = sizeof (long);
+		break;
+
+	case Quad:
+		length = sizeof (QUAD);
+		break;
+
+	case Float:
+		length = sizeof (float);
+		break;
+
+	case Double:
+		length = sizeof (double);
+		break;
+
+	case BlobPtr:
 		{
-			while( length > 0 )
+		length = 0;
+		Blob *blob = value->data.blob;
+		for (int len, offset = 0; len = blob->getSegmentLength (offset); offset += len)
 			{
-				if ( length > post )
-				{
-					GDS->_put_segment (statusVector, &blobHandle, post, address);
-					if (statusVector [1])
-						THROW_ISC_EXCEPTION (connection, statusVector);
-					address+=post;
-					length-=post;
-				}
-				else
-				{
-					if(length>0)
-					{
-						GDS->_put_segment (statusVector, &blobHandle, length, address);
-						if (statusVector [1])
-							THROW_ISC_EXCEPTION (connection, statusVector);
-					}
-					break;
-				}
+			GDS->_put_segment (statusVector, &blobHandle, len, (char*) blob->getSegment (offset));
+			if (statusVector [1])
+				THROW_ISC_EXCEPTION (connection, statusVector);
 			}
 		}
-		else
+		break;
+
+	case Date:
+								
+	default:
+		NOT_YET_IMPLEMENTED;
+	}			
+
+	if ( length )
+	{
+		int post = DEFAULT_BLOB_BUFFER_LENGTH;
+
+		while ( length > post )
+		{
+			GDS->_put_segment (statusVector, &blobHandle, post, address);
+			if ( statusVector [1] )
+				THROW_ISC_EXCEPTION (connection, statusVector);
+			address+=post;
+			length-=post;
+		}
+
+		if( length > 0 )
 		{
 			GDS->_put_segment (statusVector, &blobHandle, length, address);
-			if (statusVector [1])
+			if ( statusVector [1] )
 				THROW_ISC_EXCEPTION (connection, statusVector);
 		}
 	}
