@@ -61,6 +61,7 @@ public:
 	virtual bool nullsAreSortedLow();
 	virtual bool nullsAreSortedAtStart();
 	virtual bool nullsAreSortedAtEnd();
+    virtual const char* getDatabaseServerName();    
 	virtual const char* getDatabaseProductName();
 	virtual const char* getDatabaseProductVersion();
 	virtual const char* getDriverName();

@@ -5,6 +5,18 @@ Changes made to OdbcJdbc codebase
 !!  using the format below and then paste them into this document. 
 
 
+ *	2002-06-25	IscDatabaseMetaData.cpp
+ *				C. G.Alvarez
+ *				Implement getDatabaseServerName()
+
+ *  2002-06-25	Connection.h
+ *				Contributed by C. G. Alvarez
+ *				declare getDatabaseServerName() in DatabaseMetaData
+
+ *	2002-06-25  OdbcConnection.cpp  
+ *				Contributed by C. G. Alvarez
+ *				Return Database Server Name from sqlGetInfo
+  
  *	2002-06-17	OdbcStatement::setParameter()
  *				Submitted by C. G. Alvarez
  *				Added code to handle returning strings that are not

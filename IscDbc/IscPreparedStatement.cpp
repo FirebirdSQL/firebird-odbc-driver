@@ -17,6 +17,10 @@
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
  *
+ *
+ *	2002-06-17	Submitted by C. G. Alvarez
+ *				Overloaded SetString with a length parameter.
+ *
  *	2002-06-04	IscPreparedStatement.cpp
  *				Contributed by Robert Milharcic
  *				o Added beginDataTransfer(), putSegmentData()

@@ -19,6 +19,11 @@
  *
  *
  *
+ *	2002-06-25  OdbcConnection.cpp  
+ *				Contributed by C. G. Alvarez
+ *				Return Database Server Name from sqlGetInfo
+ *
+ *
  *	2002-06-08  OdbcConnection.cpp 
  *				Contributed by C. G. Alvarez
  *				sqlSetConnectAttr() and connect()
@@ -580,6 +585,11 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 			if (metaData->supportsCatalogsInProcedureCalls())
 				value |= SQL_CU_PROCEDURE_INVOCATION;
 			break;
+
+//Added by CGA. 2002-06-25
+        case SQL_SERVER_NAME:
+            string = metaData->getDatabaseServerName();
+            break;
 
 		case SQL_DATA_SOURCE_NAME:
 			string = dsn;

@@ -16,6 +16,12 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	2002-06-25	IscDatabaseMetaData.cpp
+ *				C. G.Alvarez
+ *				Implement getDatabaseServerName()
+ *
  */
 
 // IscDatabaseMetaData.cpp: implementation of the IscDatabaseMetaData class.
@@ -251,9 +257,14 @@ bool IscDatabaseMetaData::nullsAreSortedAtEnd()
 	return true;
 	}
 
+const char* IscDatabaseMetaData::getDatabaseServerName()
+	{
+	return "Firebird / InterBase(r) Server";
+	}
+
 const char* IscDatabaseMetaData::getDatabaseProductName()
 	{
-	return "InterBase";
+	return "Firebird / InterBase(r)";
 	}
 
 const char* IscDatabaseMetaData::getDatabaseProductVersion()

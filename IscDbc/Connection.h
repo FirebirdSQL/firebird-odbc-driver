@@ -18,6 +18,11 @@
  *  All Rights Reserved.
  *
  *
+ *  2002-06-25	Connection.h
+ *				Contributed by C. G. Alvarez
+ *				declare getDatabaseServerName() in DatabaseMetaData
+ *	
+ *
  *	2002-06-04	Connection.h
  *				Contributed by Robert Milharcic
  *				o Added declarations for beginDataTransfer()
@@ -115,6 +120,7 @@ public:
 	virtual ResultSet* getRoles (const char * catalog, const char * schema, const char *rolePattern) = 0;
 	virtual ResultSet* getUsers (const char * catalog, const char *userPattern) = 0;
 	virtual ResultSet* specialColumns (const char * catalog, const char *schema, const char * table, int scope, int nullable) = 0;
+    virtual const char* getDatabaseServerName() = 0;
 	virtual bool allProceduresAreCallable() = 0;
 	virtual bool allTablesAreSelectable() = 0;
 	virtual const char* getURL() = 0;

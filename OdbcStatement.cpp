@@ -20,6 +20,11 @@
  *
  *	Changes
  *
+ *	2002-06-17	OdbcStatement::setParameter()
+ *				Submitted by C. G. Alvarez
+ *				Added code to handle returning strings that are not
+ *				null terminated.
+ *
  *	2002-06-08	OdbcStatement.cpp
  *				Submitted by B. Schulte
  *				sqlNumResultCols().
@@ -1147,7 +1152,7 @@ RETCODE OdbcStatement::setParameter(Binding * binding, int parameter)
 //Orig
 //				statement->setString (parameter, (char*) binding->pointer);
 //				break;
-//Suggested by CGA
+//Suggested by CGA to handle situation where strings are NOT null-terminated.
                 switch( *binding->indicatorPointer )
                 {
                     case SQL_NTS:
