@@ -334,7 +334,18 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 		SKIP_WHITE ( ptSrc );
 
 		if ( *ptSrc == ')' )
-			return -1;
+		{
+			int offset = (numInputParam - i) * 2 - ( !i ? 1 : 0 );
+			memmove(ptSrc + offset, ptSrc, strlen(ptSrc) + 1 );
+
+			while( i++ < numInputParam )
+			{
+				if ( i > 1 )
+					*ptSrc++ = ',';
+				*ptSrc++ = '?';
+			}
+			return 0;
+		}
 
 		if ( *ptSrc == ',' )
 		{
@@ -545,15 +556,23 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 				ptOut = ptEndBracket;
 				int ignoreBr = ignoreBracket;
 
-#define LENSTR_EXECUTE_PROCEDURE 18 
-
+#ifdef TRANSLATE_CALL_TO_EXECUTE
+#define LENSTR_EXECUTE_PROCEDURE 18
 				int offset = LENSTR_EXECUTE_PROCEDURE - ( ptIn - ptOut );
 
 				memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
 				memcpy(ptOut, "execute procedure ", LENSTR_EXECUTE_PROCEDURE);
-
 				ptIn += offset; 
 				ptOut += LENSTR_EXECUTE_PROCEDURE;
+#else
+#define LENSTR_SELECT_PROCEDURE 14
+				int offset = LENSTR_SELECT_PROCEDURE - ( ptIn - ptOut );
+
+				memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
+				memcpy(ptOut, "select * from ", LENSTR_SELECT_PROCEDURE);
+				ptIn += offset; 
+				ptOut += LENSTR_SELECT_PROCEDURE;
+#endif
 
 				char procedureName[256];
 				char * end = procedureName;
