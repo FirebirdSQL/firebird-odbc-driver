@@ -51,11 +51,6 @@ typedef wchar_t			WCHAR;
 typedef unsigned char	UCHAR;
 typedef unsigned long	ULONG;
 
-
-
-typedef __int64				QUAD;
-typedef unsigned __int64	UQUAD;
-
 enum LockType {
 	None,
     Exclusive,
