@@ -2384,17 +2384,10 @@ void OdbcStatement::registerOutParameter()
 		DescRecord * recordApp = applicationParamDescriptor->getDescRecord ( paramApp );
 		if ( !recordApp->isPrepared && recordApp->isDefined )
 			bindInputOutputParam ( param, recordApp );
-
-		long * length;
-
-		if ( !applicationParamDescriptor->headBindOffsetPtr )
-			length = recordApp->indicatorPtr;
-		else
-			length = (long*)((char*)recordApp->indicatorPtr + *applicationParamDescriptor->headBindOffsetPtr);
-
-		recordApp->data_at_exec = length && recordApp->parameterType != SQL_PARAM_OUTPUT 
-			&& (*length == SQL_DATA_AT_EXEC || *length <= SQL_LEN_DATA_AT_EXEC_OFFSET);
 	}
+
+	if ( !implementationParamDescriptor->headCount ) // count input param
+		convert->setBindOffsetPtrFrom ( applicationParamDescriptor->headBindOffsetPtr, applicationParamDescriptor->headBindOffsetPtr );
 }
 
 RETCODE OdbcStatement::inputParam()
