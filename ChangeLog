@@ -1,3 +1,17 @@
+2002-08-02  paul_reeves
+	* IscDbc/IscStatement.cpp 1.6:
+	* IscDbc/Sqlda.cpp 1.3:
+	* IscDbc/Sqlda.h 1.2:
+	* Main.cpp 1.4:
+	* OdbcEnv.cpp 1.3:
+	* OdbcEnv.h 1.2:
+	* OdbcJdbc.opt 1.11:
+	* OdbcJdbc.plg 1.4:
+	* OdbcJdbcSetup/OdbcJdbcSetup.aps 1.5:
+	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.12:
+	* change.log 1.11:
+		Added some more minor changes. See change.log for more details.
+
 2002-07-08  paul_reeves
 	* OdbcJdbc.opt 1.10:
 	* OdbcJdbcSetup/OdbcJdbcSetup.plg 1.10:
@@ -388,60 +402,4 @@
 	* OdbcJdbcSetup/OdbcJdbcSetup.h 1.1.1.1:
 	* OdbcJdbcSetup/OdbcJdbcSetup.mak 1.1.1.1:
 	* OdbcJdbcSetup/OdbcJdbcSetup.rc 1.1.1.1:
-	* OdbcJdbcSetup/ReadMe.txt 1.1.1.1:
-	* OdbcJdbcSetup/Setup.cpp 1.1.1.1:
-	* OdbcJdbcSetup/Setup.h 1.1.1.1:
-	* OdbcJdbcSetup/StdAfx.cpp 1.1.1.1:
-	* OdbcJdbcSetup/StdAfx.h 1.1.1.1:
-	* OdbcJdbcSetup/resource.h 1.1.1.1:
-	* OdbcObject.cpp 1.1.1.1:
-	* OdbcObject.h 1.1.1.1:
-	* OdbcStatement.cpp 1.1.1.1:
-	* OdbcStatement.h 1.1.1.1:
-	* SetupAttributes.h 1.1.1.1:
-	* Test/Constraint.cpp 1.1.1.1:
-	* Test/Constraint.h 1.1.1.1:
-	* Test/Database.cpp 1.1.1.1:
-	* Test/Database.h 1.1.1.1:
-	* Test/Field.cpp 1.1.1.1:
-	* Test/Field.h 1.1.1.1:
-	* Test/Gen.cpp 1.1.1.1:
-	* Test/Gen.h 1.1.1.1:
-	* Test/Hash.cpp 1.1.1.1:
-	* Test/Hash.h 1.1.1.1:
-	* Test/Index.cpp 1.1.1.1:
-	* Test/Index.h 1.1.1.1:
-	* Test/JString.cpp 1.1.1.1:
-	* Test/JString.h 1.1.1.1:
-	* Test/LinkedList.cpp 1.1.1.1:
-	* Test/LinkedList.h 1.1.1.1:
-	* Test/NetfraDatabase.cpp 1.1.1.1:
-	* Test/NetfraDatabase.h 1.1.1.1:
-	* Test/NetfraRemote.lib 1.1.1.1:
-	* Test/Odbc.cpp 1.1.1.1:
-	* Test/Odbc.h 1.1.1.1:
-	* Test/Print.cpp 1.1.1.1:
-	* Test/Print.h 1.1.1.1:
-	* Test/RString.cpp 1.1.1.1:
-	* Test/RString.h 1.1.1.1:
-	* Test/SimpleTest.cpp 1.1.1.1:
-	* Test/StdAfx.h 1.1.1.1:
-	* Test/Table.cpp 1.1.1.1:
-	* Test/Table.h 1.1.1.1:
-	* Test/Test.001 1.1.1.1:
-	* Test/Test.cpp 1.1.1.1:
-	* Test/Test.dsp 1.1.1.1:
-	* Test/Test.dsw 1.1.1.1:
-	* Test/Test.ncb 1.1.1.1:
-	* Test/Test.opt 1.1.1.1:
-	* Test/Test.plg 1.1.1.1:
-	* Test/Type.cpp 1.1.1.1:
-	* Test/Type.h 1.1.1.1:
-	* Test/scrambledTest.cpp 1.1.1.1:
-	* Test/statistics.cpp 1.1.1.1:
-	* TestInstall/TestInstall.cpp 1.1.1.1:
-	* TestInstall/TestInstall.dsp 1.1.1.1:
-	* TestInstall/TestInstall.plg 1.1.1.1:
-	* makefile 1.1.1.1:
-		Finally the source of the Starkey ODBC/JDBC driver is released
-
+	* OdbcJdbcSetup/ReadMe.txt 1
