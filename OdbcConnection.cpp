@@ -919,6 +919,8 @@ SQLRETURN OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT 
 
 SQLRETURN OdbcConnection::sqlDisconnect()
 {
+	clearErrors();
+
 	if (!connected)
 	{
 		if ( levelBrowseConnect )
@@ -952,7 +954,6 @@ SQLRETURN OdbcConnection::sqlDisconnect()
 
 SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT * actualLength )
 {
-
 	clearErrors();
 
 #ifdef DEBUG
