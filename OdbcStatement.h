@@ -169,7 +169,7 @@ public:
 	SQLUINTEGER			noscanSQL;
 	int					currency;
 	int					cursorType;
-	bool				cursorScrollable;
+	int					cursorScrollable;
 	bool				asyncEnable;
 	int					rowNumber;
 	long				indicatorRowNumber;

@@ -204,7 +204,7 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	cursorType = SQL_CURSOR_FORWARD_ONLY;
 	cursorName.Format ("cursor%d", statementNumber);
 	setPreCursorName = false;
-	cursorScrollable = false;
+	cursorScrollable = SQL_NONSCROLLABLE;
 	asyncEnable = false;
     rowArraySize  = applicationRowDescriptor->headArraySize;
 	enableAutoIPD = SQL_TRUE;
@@ -2859,9 +2859,9 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 				break;
 
 			case SQL_ATTR_CURSOR_SCROLLABLE:
-				cursorScrollable = SQL_SCROLLABLE;
+				cursorScrollable = (int) ptr;
 
-				if( !cursorScrollable )
+				if( cursorScrollable == SQL_NONSCROLLABLE )
 					cursorType = SQL_CURSOR_FORWARD_ONLY;
 				else
 					cursorType = SQL_CURSOR_STATIC;
