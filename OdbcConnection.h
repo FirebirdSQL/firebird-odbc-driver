@@ -46,7 +46,6 @@ class OdbcConnection : public OdbcObject
 	};
 
 public:
-	void transactionStarted();
 	SQLRETURN sqlGetConnectAttr (int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER * lengthPtr);
 	void descriptorDeleted (OdbcDesc* descriptor);
 	OdbcDesc* allocDescriptor(OdbcDescType type);
