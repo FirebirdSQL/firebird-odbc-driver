@@ -151,8 +151,6 @@ void IscStatement::close()
 
 	if (typeStmt == stmtSelect && connection->autoCommit)
 		connection->commitAuto();
-
-	typeStmt = stmtNone;
 }
 
 void IscStatement::setMaxFieldSize(int max)
