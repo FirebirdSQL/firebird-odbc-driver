@@ -29,6 +29,9 @@ static const char *d3_1[] =
 static const char *szHelpPassword = "Your Password will be used to gain additional information from the DBMS and will not be saved anywhere.";
 static const char *szHelpReadOnly = "Init transaction (default Write)";
 static const char *szHelpNoWait = "Init transaction (default Wait)";
+static const char *szHelpQuotedIdentifier = "Quoted identifier (default Yes)";
+static const char *szHelpSensitiveIdentifier = "Sensitive identifier (default No)";
+static const char *szHelpAvtoQuotedIdentifier = "On avto quoted identifier (default No)";
 
 int ODBCINSTGetProperties( HODBCINSTPROPERTY hLastProperty )
 { 
@@ -115,7 +118,7 @@ int ODBCINSTGetProperties( HODBCINSTPROPERTY hLastProperty )
     hLastProperty->pNext            = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
     hLastProperty                   = hLastProperty->pNext;
     memset( hLastProperty, 0, sizeof(ODBCINSTPROPERTY) );
-    hLastProperty->pszHelp	    = (char *)strdup( szHelpNoWait );
+    hLastProperty->pszHelp	    = (char *)strdup( szHelpQuotedIdentifier );
     hLastProperty->nPromptType      = ODBCINST_PROMPTTYPE_COMBOBOX;
     hLastProperty->bRefresh	    = TRUE;
     hLastProperty->aPromptData      = (char**)malloc( sizeof(aYesNo) );
@@ -123,7 +126,29 @@ int ODBCINSTGetProperties( HODBCINSTPROPERTY hLastProperty )
     strncpy( hLastProperty->szName, SETUP_QUOTED, INI_MAX_PROPERTY_NAME );
     strcpy( hLastProperty->szValue, "Yes" );
 
-	return 1;
+    hLastProperty->pNext            = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
+    hLastProperty                   = hLastProperty->pNext;
+    memset( hLastProperty, 0, sizeof(ODBCINSTPROPERTY) );
+    hLastProperty->pszHelp	    = (char *)strdup( szHelpSensitiveIdentifier );
+    hLastProperty->nPromptType      = ODBCINST_PROMPTTYPE_COMBOBOX;
+    hLastProperty->bRefresh	    = TRUE;
+    hLastProperty->aPromptData      = (char**)malloc( sizeof(aYesNo) );
+    memcpy( hLastProperty->aPromptData, aYesNo, sizeof(aYesNo) );
+    strncpy( hLastProperty->szName, SETUP_SENSITIVE, INI_MAX_PROPERTY_NAME );
+    strcpy( hLastProperty->szValue, "No" );
+
+    hLastProperty->pNext            = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
+    hLastProperty                   = hLastProperty->pNext;
+    memset( hLastProperty, 0, sizeof(ODBCINSTPROPERTY) );
+    hLastProperty->pszHelp	    = (char *)strdup( szHelpAvtoQuotedIdentifier );
+    hLastProperty->nPromptType      = ODBCINST_PROMPTTYPE_COMBOBOX;
+    hLastProperty->bRefresh	    = TRUE;
+    hLastProperty->aPromptData      = (char**)malloc( sizeof(aYesNo) );
+    memcpy( hLastProperty->aPromptData, aYesNo, sizeof(aYesNo) );
+    strncpy( hLastProperty->szName, SETUP_AVTOQUOTED, INI_MAX_PROPERTY_NAME );
+    strcpy( hLastProperty->szValue, "No" );
+
+    return 1;
 }
 
 #endif

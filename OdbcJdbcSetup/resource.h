@@ -18,6 +18,8 @@
 #define IDC_DIALECT3                    1012
 #define IDC_DIALECT1                    1013
 #define IDC_CHECK_QUOTED                1014
-#define IDC_TEST_CONNECTION             1015
-#define IDC_HELP_ODBC                   1016
+#define IDC_CHECK_SENSITIVE             1015
+#define IDC_CHECK_AVTOQUOTED            1016
+#define IDC_TEST_CONNECTION             1017
+#define IDC_HELP_ODBC                   1018
 #define IDC_STATIC                      -1

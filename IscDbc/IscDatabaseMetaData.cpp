@@ -367,7 +367,7 @@ bool IscDatabaseMetaData::supportsMixedCaseIdentifiers()
 
 bool IscDatabaseMetaData::storesUpperCaseIdentifiers()
 	{
-	return true;
+	return !connection->attachment->sensitiveIdentifier;
 	}
 
 bool IscDatabaseMetaData::storesLowerCaseIdentifiers()
@@ -397,12 +397,12 @@ bool IscDatabaseMetaData::storesLowerCaseQuotedIdentifiers()
 
 bool IscDatabaseMetaData::storesMixedCaseQuotedIdentifiers()
 	{
-	return connection->attachment->databaseDialect < 3 || !connection->attachment->quotedIdentifiers;
+	return connection->attachment->databaseDialect < 3 || !connection->attachment->quotedIdentifier;
 	}
 
 const char* IscDatabaseMetaData::getIdentifierQuoteString()
 	{
-	return (connection->attachment->quotedIdentifiers) ? "\"" : " ";
+	return connection->attachment->databaseDialect < 3 || !connection->attachment->quotedIdentifier ? " " : "\"";
 	}
 
 const char* IscDatabaseMetaData::getSQLKeywords()

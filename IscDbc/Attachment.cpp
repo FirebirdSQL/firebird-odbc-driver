@@ -252,12 +252,26 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	else
 		databaseDialect = SQL_DIALECT_V6;
 
-	const char *quoted = properties->findValue ("quoted", NULL);
+	const char *property = properties->findValue ("quoted", NULL);
 
-	if ( quoted && *quoted == 'Y')
-		quotedIdentifiers = true;
+	if ( property && *property == 'Y')
+		quotedIdentifier = true;
 	else
-		quotedIdentifiers = false;
+		quotedIdentifier = false;
+
+	property = properties->findValue ("sensitive", NULL);
+
+	if ( property && *property == 'Y')
+		sensitiveIdentifier = true;
+	else
+		sensitiveIdentifier = false;
+
+	property = properties->findValue ("avtoQuoted", NULL);
+
+	if ( property && *property == 'Y')
+		avtoQuotedIdentifier = true;
+	else
+		avtoQuotedIdentifier = false;
 
 	checkAdmin();
 }

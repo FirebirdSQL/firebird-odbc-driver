@@ -430,6 +430,9 @@ void Setup::addDsn()
 	if ( quoted.IsEmpty() )
 		quoted = getAttribute (KEY_DSN_QUOTED);
 
+	sensitive = getAttribute ( SETUP_SENSITIVE );
+	avtoQuoted = getAttribute ( SETUP_AVTOQUOTED );
+
 	char chCheck = UPPER( *(const char*)readonlyTpb );
 	
 	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
@@ -449,6 +452,16 @@ void Setup::addDsn()
 	
 	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
 		quoted = "Y";
+
+	chCheck = UPPER( *(const char*)sensitive );
+	
+	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
+		sensitive = "N";
+
+	chCheck = UPPER( *(const char*)avtoQuoted );
+	
+	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
+		avtoQuoted = "N";
 
 	if ( hWnd || dsn.IsEmpty() )
 		configureDialog();
@@ -534,6 +547,16 @@ bool Setup::configureDialog()
 	else 
 		dialog.m_quoted = FALSE;
 
+	if ( IS_CHECK_YES ( *(const char*)sensitive ) )
+		dialog.m_sensitive = TRUE;
+	else 
+		dialog.m_sensitive = FALSE;
+
+	if ( IS_CHECK_YES ( *(const char*)avtoQuoted ) )
+		dialog.m_avtoQuoted = TRUE;
+	else 
+		dialog.m_avtoQuoted = FALSE;
+
 	if ( dialog.DoModal() != IDOK )
 		return false;
 
@@ -558,6 +581,12 @@ bool Setup::configureDialog()
 	if( dialog.m_quoted ) quoted = "Y";
 	else quoted = "N";
 
+	if( dialog.m_sensitive ) sensitive = "Y";
+	else sensitive = "N";
+
+	if( dialog.m_avtoQuoted ) avtoQuoted = "Y";
+	else avtoQuoted = "N";
+
 	SQLWriteDSNToIni(dialog.m_name, driver);
 	writeAttributes();
 
@@ -576,6 +605,8 @@ void Setup::writeAttributes()
 	writeAttribute (SETUP_NOWAIT_TPB, nowaitTpb);
 	writeAttribute (SETUP_DIALECT, dialect);
 	writeAttribute (SETUP_QUOTED, quoted);
+	writeAttribute (SETUP_SENSITIVE, sensitive);
+	writeAttribute (SETUP_AVTOQUOTED, avtoQuoted);
 
 	char buffer[256];
 	CSecurityPassword security;
@@ -595,6 +626,8 @@ void Setup::readAttributes()
 	nowaitTpb = readAttribute (SETUP_NOWAIT_TPB);
 	dialect = readAttribute (SETUP_DIALECT);
 	quoted = readAttribute (SETUP_QUOTED);
+	sensitive = readAttribute (SETUP_SENSITIVE);
+	avtoQuoted = readAttribute (SETUP_AVTOQUOTED);
 
 	JString pass = readAttribute (SETUP_PASSWORD);
 	if ( pass.length() > 40 )

@@ -59,6 +59,8 @@ public:
 	JString		nowaitTpb;
 	JString		dialect;
 	JString		quoted;
+	JString		sensitive;
+	JString		avtoQuoted;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

@@ -51,6 +51,8 @@ CDsnDialog::CDsnDialog(const char **jdbcDrivers, const char **jdbcCharsets)
 	m_nowait = FALSE;
 	m_dialect3 = TRUE;
 	m_quoted = TRUE;
+	m_sensitive = FALSE;
+	m_avtoQuoted = FALSE;
 
 	drivers = jdbcDrivers;
 	charsets = jdbcCharsets;
@@ -108,6 +110,8 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
         m_dialect3 = IsDlgButtonChecked(hDlg, IDC_DIALECT3);
 
 		m_quoted = SendDlgItemMessage(hDlg, IDC_CHECK_QUOTED, BM_GETCHECK, 0, 0);
+		m_sensitive = SendDlgItemMessage(hDlg, IDC_CHECK_SENSITIVE, BM_GETCHECK, 0, 0);
+		m_avtoQuoted = SendDlgItemMessage(hDlg, IDC_CHECK_AVTOQUOTED, BM_GETCHECK, 0, 0);
 	}
 	else
 	{
@@ -133,16 +137,34 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 
         CheckDlgButton(hDlg, IDC_CHECK_READ, m_readonly);
         CheckDlgButton(hDlg, IDC_CHECK_NOWAIT, m_nowait);
+        CheckDlgButton ( hDlg, IDC_CHECK_QUOTED, m_quoted );
 
 		CheckRadioButton(hDlg, IDC_DIALECT3, IDC_DIALECT1, m_dialect3 ? IDC_DIALECT3 : IDC_DIALECT1);
 		if ( m_dialect3 )
-			SetDisabledDlgItem(hDlg, IDC_CHECK_QUOTED, FALSE);
+		{
+			SetDisabledDlgItem ( hDlg, IDC_CHECK_QUOTED, FALSE );
+			if ( m_quoted )
+			{
+				SetDisabledDlgItem ( hDlg, IDC_CHECK_SENSITIVE, FALSE );
+				SetDisabledDlgItem ( hDlg, IDC_CHECK_AVTOQUOTED, FALSE );
+			}
+			else
+			{
+				SetDisabledDlgItem ( hDlg, IDC_CHECK_SENSITIVE );
+				SetDisabledDlgItem ( hDlg, IDC_CHECK_AVTOQUOTED );
+			}
+		}
 		else
-			SetDisabledDlgItem(hDlg, IDC_CHECK_QUOTED);
+		{
+			SetDisabledDlgItem ( hDlg, IDC_CHECK_QUOTED );
+			SetDisabledDlgItem ( hDlg, IDC_CHECK_SENSITIVE );
+			SetDisabledDlgItem ( hDlg, IDC_CHECK_AVTOQUOTED );
+		}
 
-        CheckDlgButton(hDlg, IDC_CHECK_QUOTED, m_quoted);
+        CheckDlgButton ( hDlg, IDC_CHECK_SENSITIVE, m_sensitive );
+        CheckDlgButton ( hDlg, IDC_CHECK_AVTOQUOTED, m_avtoQuoted );
 
-		SetDisabledDlgItem(hDlg, IDC_HELP_ODBC);
+		SetDisabledDlgItem ( hDlg, IDC_HELP_ODBC);
 	}
 }
 
@@ -409,10 +431,32 @@ BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam
 
 		case IDC_DIALECT1:
 			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_QUOTED);
+			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE);
+			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AVTOQUOTED);
 			break;
 
 		case IDC_DIALECT3:
+			m_ptDsnDialog->UpdateData(hDlg);
 			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_QUOTED, FALSE);
+			if ( m_ptDsnDialog->m_quoted )
+			{
+				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE, FALSE);
+				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AVTOQUOTED, FALSE);
+			}
+			break;
+
+		case IDC_CHECK_QUOTED:
+			m_ptDsnDialog->UpdateData(hDlg);
+			if ( !m_ptDsnDialog->m_quoted )
+			{
+				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE);
+				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AVTOQUOTED);
+			}
+			else
+			{
+				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE, FALSE);
+				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AVTOQUOTED, FALSE);
+			}
 			break;
 
         case IDC_HELP_ODBC:
@@ -690,7 +734,7 @@ int DialogBoxDynamic()
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 30;         // NumberOfItems
+	*p++ = 33;         // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
@@ -728,13 +772,16 @@ int DialogBoxDynamic()
     TMP_LTEXT         ( "Driver",IDC_STATIC,123,2,20,8 )
     TMP_LTEXT         ( "Role",IDC_STATIC,155,78,16,8 )
     TMP_LTEXT         ( "Character Set",IDC_STATIC,7,112,44,8 )
-    TMP_GROUPBOX      ( "Options",IDC_STATIC,7,130,223,49 )
+    TMP_GROUPBOX      ( "Options",IDC_STATIC,7,128,223,52 )
     TMP_GROUPBOX      ( "Initializing transaction",IDC_STATIC,14,139,89,33 )
     TMP_LTEXT         ( "Client",IDC_STATIC,7,52,32,8 )
     TMP_GROUPBOX      ( "Dialect",IDC_STATIC,106,139,31,33 )
     TMP_RADIOCONTROL  ( "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,114,148,16,10 )
     TMP_RADIOCONTROL  ( "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,114,158,16,10 )
-    TMP_BUTTONCONTROL ( "quoted identifiers",IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,148,66,10 )
+    TMP_GROUPBOX      ( "Extend property identifier",IDC_STATIC,140,134,86,43 )
+    TMP_BUTTONCONTROL ( "quoted identifiers",IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,143,67,9 )
+    TMP_BUTTONCONTROL ( "sensitive identifier",IDC_CHECK_SENSITIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,154,74,9 )
+    TMP_BUTTONCONTROL ( "avtoquoted identifier",IDC_CHECK_AVTOQUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,165,77,9 )
     TMP_PUSHBUTTON    ( "Test connection",IDC_TEST_CONNECTION,172,108,58,14 )
     TMP_PUSHBUTTON    ( "Help",IDC_HELP_ODBC,27,183,50,14 )
 

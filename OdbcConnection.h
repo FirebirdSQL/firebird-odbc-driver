@@ -40,7 +40,9 @@ class OdbcConnection : public OdbcObject
 		DEF_READONLY_TPB = 1,
 		DEF_NOWAIT_TPB = 2,
 		DEF_DIALECT = 4,
-		DEF_QUOTED = 8
+		DEF_QUOTED = 8,
+		DEF_SENSITIVE = 16,
+		DEF_AVTOQUOTED = 32
 	};
 
 public:
@@ -94,7 +96,9 @@ public:
 	JString		jdbcDriver;
 	int			optTpb;
 	int			defOptions;
-	bool		quotedIdentifiers;
+	bool		quotedIdentifier;
+	bool		sensitiveIdentifier;
+	bool		avtoQuotedIdentifier;
 	bool		dialect3;
 	SQLUINTEGER	asyncEnabled;
 	bool		autoCommit;

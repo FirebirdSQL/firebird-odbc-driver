@@ -138,7 +138,7 @@ BEGIN
     LTEXT           "Driver",IDC_STATIC,123,2,20,8
     LTEXT           "Role",IDC_STATIC,155,78,16,8
     LTEXT           "Character Set",IDC_STATIC,7,112,44,8
-    GROUPBOX        "Options",IDC_STATIC,7,130,223,49
+    GROUPBOX        "Options",IDC_STATIC,7,128,223,52
     GROUPBOX        "Initializing transaction",IDC_STATIC,14,139,89,33
     LTEXT           "Client",IDC_STATIC,7,52,32,8
     GROUPBOX        "Dialect",IDC_STATIC,106,139,31,33,WS_GROUP
@@ -146,8 +146,13 @@ BEGIN
                     10
     CONTROL         "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,114,158,16,
                     10
-    CONTROL         "quoted identifiers",IDC_CHECK_QUOTED,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,146,148,66,10
+    GROUPBOX        "Extend property identifier",IDC_STATIC,140,134,86,43
+    CONTROL         "quoted identifier",IDC_CHECK_QUOTED,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,143,67,9
+    CONTROL         "sensitive identifier",IDC_CHECK_SENSITIVE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,154,74,9
+    CONTROL         "avtoquoted identifier",IDC_CHECK_AVTOQUOTED,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,165,77,9
     PUSHBUTTON      "Test connection",IDC_TEST_CONNECTION,172,108,58,14
     PUSHBUTTON      "Help",IDC_HELP_ODBC,27,183,50,14
 END

@@ -75,6 +75,7 @@ int init ()
 	charTable ['\''] = QUOTE;
 	charTable ['"'] = QUOTE;
 	charTable ['_'] = IDENT;
+	charTable ['$'] = IDENT;
 
 	return 0;
 }

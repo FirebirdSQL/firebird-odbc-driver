@@ -505,6 +505,10 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 	int ignoreBracket = 0;
 	int statusQuote = 0;
 	char quote;
+	char delimiter = *metaData->getIdentifierQuoteString();
+	delimiter = delimiter == ' ' || attachment->databaseDialect < 3 ? 0 : delimiter;
+
+	bool avtoQuoted = delimiter && attachment->avtoQuotedIdentifier;
 
 #pragma FB_COMPILER_MESSAGE("IscConnection::getNativeSql - The temporary decision; FIXME!")
 
@@ -519,6 +523,51 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 			}
 			else if ( *ptIn == '{' )
 				ptEndBracket = ptOut;
+			else if ( avtoQuoted && IS_IDENT ( *ptIn ) )
+			{
+				bool mixed = false;
+				char * pt = ptIn;
+				
+				if ( ISUPPER ( *ptIn ) )
+				{
+					while ( IS_IDENT ( *pt ) )
+					{
+						if ( ISLOWER ( *pt ) )
+						{
+							mixed = true;
+							break;
+						}
+						pt++;
+					}
+				}
+				else
+				{
+					while ( IS_IDENT ( *pt ) )
+					{
+						if ( ISUPPER ( *pt ) )
+						{
+							mixed = true;
+							break;
+						}
+						pt++;
+					}
+				}
+
+				if ( mixed )
+				{
+					*ptOut++ = delimiter;
+					 
+					while ( IS_IDENT ( *ptIn ) )
+						*ptOut++ = *ptIn++;
+
+					*ptOut++ = delimiter;
+					statysModify++;
+				}
+				else
+					while ( IS_IDENT ( *ptIn ) )
+						*ptOut++ = *ptIn++;
+				continue;
+			}
 		}
 		else if ( quote == *ptIn )
 		{

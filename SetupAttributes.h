@@ -46,6 +46,8 @@
 #define SETUP_NOWAIT_TPB	"NoWait"
 #define SETUP_DIALECT		"Dialect"
 #define SETUP_QUOTED		"QuotedIdentifier"
+#define SETUP_SENSITIVE		"SensitiveIdentifier"
+#define SETUP_AVTOQUOTED	"AvtoQuotedIdentifier"
 
 #define KEY_DSN_JDBC_DRIVER	"JDBC_DRIVER"
 #define KEY_FILEDSN			"FILEDSN"

@@ -293,7 +293,9 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	optTpb				= 0;
 	defOptions			= 0;
 	dialect3			= true;
-	quotedIdentifiers	= true;
+	quotedIdentifier	= true;
+	sensitiveIdentifier  = false;
+	avtoQuotedIdentifier = false;
 }
 
 OdbcConnection::~OdbcConnection()
@@ -476,9 +478,23 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 			|| !strncasecmp (name, SETUP_QUOTED, LEN_KEY(SETUP_QUOTED)) )
 		{
 			if( *value == 'N')
-				quotedIdentifiers = false;
+				quotedIdentifier = false;
 
 			defOptions |= DEF_QUOTED;
+		}
+		else if ( !strncasecmp (name, SETUP_SENSITIVE, LEN_KEY(SETUP_SENSITIVE)) )
+		{
+			if( *value == 'Y')
+				sensitiveIdentifier = true;
+
+			defOptions |= DEF_SENSITIVE;
+		}
+		else if ( !strncasecmp (name, SETUP_AVTOQUOTED, LEN_KEY(SETUP_AVTOQUOTED)) )
+		{
+			if( *value == 'Y')
+				avtoQuotedIdentifier = true;
+
+			defOptions |= DEF_AVTOQUOTED;
 		}
 		else if (!strncasecmp (name, "ODBC", 4))
 			;
@@ -1465,7 +1481,9 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 
 		properties->putValue ("dialect", dialect3 ? "3" : "1");
 
-		properties->putValue ("quoted", quotedIdentifiers ? "Y" : "N");
+		properties->putValue ("quoted", quotedIdentifier ? "Y" : "N");
+		properties->putValue ("sensitive", sensitiveIdentifier ? "Y" : "N");
+		properties->putValue ("avtoQuoted", avtoQuotedIdentifier ? "Y" : "N");
 
 		connection->openDatabase (databaseName, properties);
 		properties->release();
@@ -1597,7 +1615,23 @@ void OdbcConnection::expandConnectParameters()
 			options = readAttribute(SETUP_QUOTED);
 
 			if(*(const char *)options == 'N')
-				quotedIdentifiers = false;
+				quotedIdentifier = false;
+		}
+
+		if ( !(defOptions & DEF_SENSITIVE) )
+		{
+			options = readAttribute(SETUP_SENSITIVE);
+
+			if(*(const char *)options == 'Y')
+				sensitiveIdentifier = true;
+		}
+
+		if ( !(defOptions & DEF_AVTOQUOTED) )
+		{
+			options = readAttribute(SETUP_AVTOQUOTED);
+
+			if(*(const char *)options == 'Y')
+				avtoQuotedIdentifier = true;
 		}
 	}
 	else if (!filedsn.IsEmpty())
@@ -1665,7 +1699,23 @@ void OdbcConnection::expandConnectParameters()
 			options = readAttributeFileDSN (SETUP_QUOTED);
 
 			if(*(const char *)options == 'N')
-				quotedIdentifiers = false;
+				quotedIdentifier = false;
+		}
+
+		if ( !(defOptions & DEF_SENSITIVE) )
+		{
+			options = readAttribute(SETUP_SENSITIVE);
+
+			if(*(const char *)options == 'Y')
+				sensitiveIdentifier = true;
+		}
+
+		if ( !(defOptions & DEF_AVTOQUOTED) )
+		{
+			options = readAttribute(SETUP_AVTOQUOTED);
+
+			if(*(const char *)options == 'Y')
+				avtoQuotedIdentifier = true;
 		}
 
 		if (dsn.IsEmpty())
@@ -1692,7 +1742,9 @@ void OdbcConnection::saveConnectParameters()
 	writeAttributeFileDSN (SETUP_READONLY_TPB, (optTpb & TRA_ro) ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_NOWAIT_TPB, (optTpb & TRA_nw) ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_DIALECT, dialect3 ? "3" : "1");
-	writeAttributeFileDSN (SETUP_QUOTED, quotedIdentifiers ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_QUOTED, quotedIdentifier ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_SENSITIVE, sensitiveIdentifier ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_AVTOQUOTED, avtoQuotedIdentifier ? "Y" : "N");
 
 	char buffer[256];
 	CSecurityPassword security;

@@ -61,7 +61,9 @@ public:
 	int			pageSize;
 	int			serverBaseLevel;	
 	int			databaseDialect;
-	bool		quotedIdentifiers;
+	bool		quotedIdentifier;
+	bool		sensitiveIdentifier;
+	bool		avtoQuotedIdentifier;
 	int			transactionIsolation;
 	int			useCount;
 	bool		admin;
