@@ -297,11 +297,8 @@ RETCODE OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, in
 			case odtApplication:
 			case odtApplicationRow:
 			case odtApplicationParameter:
-#pragma FB_COMPILER_MESSAGE("Modify after realized SQLAllocHandle ( SQL_HANDLE_DESC ) FIXME!")
-//				if call SQLAllocHandle ( SQL_HANDLE_DESC )
-//				value = SQL_DESC_ALLOC_USER;
 				if (ptr)
-					*(SQLSMALLINT*) ptr = SQL_DESC_ALLOC_AUTO,
+					*(SQLSMALLINT*) ptr = headAllocType,
 					size = sizeof (SQLSMALLINT);
 				break;
 			case odtImplementationRow:
