@@ -140,7 +140,7 @@
 #include "TimeStamp.h"
 
 #ifdef DEBUG                               
-#define TRACE(msg)		OutputDebugString(#msg);OutputDebugString("\n")      
+#define TRACE(msg)		OutputDebugString(#msg"\n");
 #define TRACE02(msg,val)  TraceOutput(#msg,val)
 #else
 #define TRACE(msg)		
@@ -149,7 +149,6 @@
 #define RESULTS(fn)		(resultSet) ? resultSet->fn : callableStatement->fn
 #define SKIP_WHITE(p)	while (charTable [*p] == WHITE) ++p
 
-#define SET_ClearBindDataOffset  
 void TraceOutput(char * msg,long val)
 {
 	char buf[80];
@@ -599,8 +598,6 @@ RETCODE OdbcStatement::sqlFetch()
 		return sqlReturn (SQL_ERROR, "S1008", "Operation canceled");
 	}
 
-	SET_ClearBindDataOffset
-
 	if( enFetch == NoneFetch )
 		enFetch = Fetch;
 
@@ -846,13 +843,10 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 
 	try
 	{ 
-		SET_ClearBindDataOffset
-
 		if(applicationRowDescriptor->headArraySize > 1)
 		{
 			SQLUSMALLINT *statusPtr = implementationRowDescriptor->headArrayStatusPtr;
 			int nCountRow = applicationRowDescriptor->headArraySize;
-
 
 			if ( !eof )
 			{
@@ -951,8 +945,6 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 		if(rowCountPointer)
 			*rowCountPointer = 1;
 		
-		SET_ClearBindDataOffset
-
 		if (eof || !resultSet->next())
 		{
 			eof = true;
@@ -3149,8 +3141,11 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 				break;
 			
 			case SQL_ATTR_MAX_LENGTH:
-				TRACE02(SQL_ATTR_MAX_LENGTH,(int) ptr);
-				maxLength = (int) ptr;
+				if ( length == SQL_IS_POINTER )
+					maxLength = *(int*) ptr;
+				else
+					maxLength = (int) ptr;
+				TRACE02(SQL_ATTR_MAX_LENGTH, maxLength);
 				break;
 
 		    case SQL_ATTR_USE_BOOKMARKS:        //    SQL_USE_BOOKMARKS 12
