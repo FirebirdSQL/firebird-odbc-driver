@@ -1176,7 +1176,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 				info = true;
 			}
 
-			length = dataRemaining;
+			length = len;
 			dataOffset += len;
 
 			if (!info)
@@ -1276,7 +1276,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 				info = true;
 			}
 				
-			length = dataRemaining;
+			length = len;
 			dataOffset += len;
 
 			if (!info)
@@ -1401,7 +1401,7 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 				else if (binding->bufferLength && len <= binding->bufferLength)
 					binding->dataOffset += len;
 					
-				length = dataRemaining;
+				length = len;
 				}
 			}
 			break;
@@ -1511,7 +1511,7 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 				else if (binding->bufferLength && len <= binding->bufferLength)
 					binding->dataOffset += len;
 					
-				length = dataRemaining;
+				length = len;
 			}
 			}
 			break;	
@@ -2138,7 +2138,7 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 		record->indicatorPtr = length;
 #pragma FB_COMPILER_MESSAGE("Definition data_at_exec!!! FIXME!")
 		record->data_at_exec = length && type != SQL_PARAM_OUTPUT 
-					&& (*length == SQL_DATA_AT_EXEC || *length < SQL_LEN_DATA_AT_EXEC_OFFSET );
+					&& (*length == SQL_DATA_AT_EXEC || *length <= SQL_LEN_DATA_AT_EXEC_OFFSET );
 		record->startedTransfer = false;
 
 		record = implementationParamDescriptor->getDescRecord (parameter);
@@ -2810,7 +2810,28 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 			; // continue into executeStatement();
 		}
 		else
+		{
+			StatementMetaData *metaData = statement->getStatementMetaDataIPD();
+
+			if( metaData )
+			{
+				binding->isBlobOrArray = metaData->isBlobOrArray(parameterNeedData);
+
+				if ( binding->isBlobOrArray )
+				{
+					switch (binding->conciseType)
+					{
+					case SQL_C_CHAR:
+					case SQL_C_BINARY:
+						binding->startedTransfer = true;
+						*binding->indicatorPtr = 0;
+						statement->beginBlobDataTransfer( parameterNeedData );
+					}
+				}
+			}
+
 			return SQL_NEED_DATA;
+		}
 	}
 	
 	try
