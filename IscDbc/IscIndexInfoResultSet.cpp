@@ -138,6 +138,10 @@ bool IscIndexInfoResultSet::next()
 		resultSet->setNull(4);
 	else 
 	{
+#pragma FB_COMPILER_MESSAGE("RDB$UNIQUE_FLAG Whether there be NULL?; FIXME!")
+		if ( resultSet->isNull(4) )
+			resultSet->setValue(4, (short)1);
+
 		int position = resultSet->getInt(8);
 		resultSet->setValue(8,position+1);
 

@@ -75,6 +75,7 @@ public:
 
 	virtual Value*		getValue (int index);
 	virtual Value*		getValue (const char *columnName);
+	virtual bool		isNull(int index);
 
 	void		deleteBlobs();
 	void		reset();

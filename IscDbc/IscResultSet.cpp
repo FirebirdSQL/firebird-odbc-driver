@@ -267,6 +267,15 @@ Value* IscResultSet::getValue(int index)
 	return value;
 }
 
+bool IscResultSet::isNull(int index)
+{
+	if (index < 1 || index > numberColumns)
+		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
+
+	Value *value = values.values + index - 1;
+	return value->type == Null;
+}
+
 Value* IscResultSet::getValue(const char * columnName)
 {
 	return getValue (findColumn (columnName));
