@@ -57,7 +57,7 @@
 		</OBJECT>
 	<LI> <OBJECT type="text/sitemap">
 		<param name="Name" value="Enviroument">
-		<param name="Local" value="html/Enviroument.htm">
+		<param name="Local" value="html/Environment.htm">
 		</OBJECT>
 	<LI> <OBJECT type="text/sitemap">
 		<param name="Name" value="Multithread">
