@@ -42,6 +42,9 @@ namespace OdbcJdbcSetupLibrary {
 
 #define ISLOWER(c)			((c) >= 'a' && (c) <= 'z')
 #define UPPER(c)			((ISLOWER (c)) ? (c) - 'a' + 'A' : (c))
+#define IS_END_TOKEN(c)		((c) == '\n' || (c) == '\r')
+#define IS_CHECK_YES(c)		((c) == 'Y' || (c) == '1')
+#define IS_CHECK_NO(c)		((c) == 'N' || (c) == '0')
 
 const char *driverInfo =
 	DRIVER_FULL_NAME"\0"
@@ -426,12 +429,12 @@ void Setup::addDsn()
 
 	char chCheck = UPPER( *(const char*)readonlyTpb );
 	
-	if ( chCheck != 'Y' && chCheck != 'N' )
+	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
 		readonlyTpb = "N";
 
 	chCheck = UPPER( *(const char*)nowaitTpb );
 	
-	if ( chCheck != 'Y' && chCheck != 'N' )
+	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
 		nowaitTpb = "N";
 
 	chCheck = *(const char*)dialect;
@@ -441,7 +444,7 @@ void Setup::addDsn()
 
 	chCheck = UPPER( *(const char*)quoted );
 	
-	if ( chCheck != 'Y' && chCheck != 'N' )
+	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
 		quoted = "Y";
 
 	if ( hWnd || dsn.IsEmpty() )
@@ -464,8 +467,11 @@ JString Setup::getAttribute(const char * attribute)
 	const char *p;
 	int count = strlen (attribute);
 
-	for (p = attributes; *p; ++p)
+	for (p = attributes; *p || *(p+1); ++p)
 	{
+		if ( p - attributes > 4096 )
+			break; // attributes should be finished "\0\0"
+
 		if (*p == *attribute && !strncasecmp (p, attribute, count) )
 		{
 			p += count;
@@ -478,12 +484,12 @@ JString Setup::getAttribute(const char * attribute)
 					++p;
 
 				const char *q;
-				for (q = p; *q && *q != ';' && *q != '\n'; ++q)
+				for (q = p; *q && *q != ';' && !IS_END_TOKEN(*q); ++q)
 					;
 				return JString (p, q - p);
 			}
 		}
-		while (*p && *p != ';' && *p != '\n' )
+		while (*p && *p != ';' && !IS_END_TOKEN(*p) )
 			++p;
 	}
 
@@ -505,19 +511,25 @@ bool Setup::configureDialog()
 	dialog.m_role = role;
 	dialog.m_charset = charset;
 
-	if ( *(const char*)readonlyTpb == 'Y' ) dialog.m_readonly = TRUE;
-	else dialog.m_readonly=FALSE;
+	if ( IS_CHECK_YES(*(const char*)readonlyTpb) )
+		dialog.m_readonly = TRUE;
+	else 
+		dialog.m_readonly=FALSE;
 
-	if ( *(const char*)nowaitTpb == 'Y' ) dialog.m_nowait = TRUE;
-	else dialog.m_nowait=FALSE;
+	if ( IS_CHECK_YES(*(const char*)nowaitTpb) )
+		dialog.m_nowait = TRUE;
+	else 
+		dialog.m_nowait=FALSE;
 
 	if ( *(const char*)dialect == '1' )
 		dialog.m_dialect3 = FALSE;
 	else 
 		dialog.m_dialect3 = TRUE;
 
-	if ( *(const char*)quoted == 'Y' ) dialog.m_quoted = TRUE;
-	else dialog.m_quoted = FALSE;
+	if ( IS_CHECK_YES(*(const char*)quoted) )
+		dialog.m_quoted = TRUE;
+	else 
+		dialog.m_quoted = FALSE;
 
 	if ( dialog.DoModal() != IDOK )
 		return false;

@@ -46,7 +46,7 @@ public:
 
 	HWND		hWnd;
 	JString		driver;
-	JString		attributes;
+	const char *attributes;
 	JString		dsn;
 	JString		dbName;
 	JString		client;
