@@ -114,10 +114,12 @@ public:
 
 	virtual bool		isBeforeFirst();
 	virtual bool		isAfterLast();
+	virtual bool		isCurrRowsetStart();
 	virtual bool		isFirst();
 	virtual bool		isLast();
 	virtual void		beforeFirst();
 	virtual void		afterLast();
+	virtual void		currRowsetStart();
 	virtual bool		first();
 	virtual bool		last();
 	virtual int			getRow();

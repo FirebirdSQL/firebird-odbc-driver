@@ -570,10 +570,12 @@ public:
 	virtual int			getColumnCount() = 0;
 	virtual bool		isBeforeFirst() = 0;
 	virtual bool		isAfterLast() = 0;
+	virtual bool		isCurrRowsetStart() = 0;
 	virtual bool		isFirst() = 0;
 	virtual bool		isLast() = 0;
 	virtual void		beforeFirst() = 0;
 	virtual void		afterLast() = 0;
+	virtual void		currRowsetStart() = 0;
 	virtual bool		first() = 0;
 	virtual bool		last() = 0;
 	virtual int			getRow() = 0;

@@ -509,6 +509,11 @@ bool IscResultSet::isAfterLast()
 	return statysPositionRow == enAFTER_LAST;
 }
 
+bool IscResultSet::isCurrRowsetStart()
+{
+	return statysPositionRow == enSUCCESS;
+}
+
 bool IscResultSet::isFirst()
 {
 	NOT_YET_IMPLEMENTED;
@@ -529,6 +534,11 @@ void IscResultSet::beforeFirst()
 void IscResultSet::afterLast()
 {
 	statysPositionRow = enAFTER_LAST;
+}
+
+void IscResultSet::currRowsetStart()
+{
+	statysPositionRow = enSUCCESS;
 }
 
 bool IscResultSet::first()
