@@ -1053,7 +1053,15 @@ SQLRETURN SQL_API SQLGetDiagRecW( SQLSMALLINT handleType, SQLHANDLE handle,
 	GUARD_HTYPE( handle, handleType );
 
 	ConvertingString<> State( 12, sqlState );
-	ConvertingString<> MessageText( bufferLength, messageText, textLength );
+// MSDN
+// DOC: ODBC Spec Incorrectly says SQLGetDiagRecW Takes in Bufferlength as the Number of Bytes
+// PSS ID Number: 243526
+// Article Last Modified on 8/23/2001
+
+// should be Number of Bytes!!!
+// however ODBC.DLL wait Number of Character
+	bool isByte = false;
+	ConvertingString<> MessageText( bufferLength, messageText, textLength, isByte );
 
 	return ((OdbcObject*) handle)->sqlGetDiagRec( handleType, recNumber, State,
 												 nativeError, MessageText,
