@@ -92,7 +92,7 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 			type = JDBC_BIGINT;
 			typeName = "BIGINT";
 			length = MAX_QUAD_LENGTH;
-			bufferLength = sizeof(QUAD);
+			bufferLength = MAX_QUAD_LENGTH + 2;
 			}
 			break;
 
@@ -194,7 +194,7 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 				type = JDBC_NUMERIC;
 				typeName = "NUMERIC";
 				length = precision;
-				bufferLength = MAX_DECIMAL_LENGTH + 2;
+				bufferLength = MAX_NUMERIC_LENGTH + 2;
 				}
 		}
 	}
