@@ -1,0 +1,173 @@
+<!--  
+ *     Los contenidos de este archivo están sujetos a la Versión 1.0 de la
+ *     Licencia Pública de los Desarrolladores Iniciales (la "Licencia"); 
+ *     usted no puede utilizar este archivo excepto en conformidad con 
+ *     la Licencia. Puede obtener una copia de la Licencia en 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl(en inglés)
+ *
+ *     El software distribuído bajo la Licencia es distribuída en 
+ *     términos "TAL COMO ESTA", SIN GARANTIAS DE NINGUN TIPO, ni 
+ *     expresas ni implícitas.  Vea la Licencia para el lenguaje  
+ *     específico que controla derechos y limitaciones bajo la Licencia.
+ *
+ *
+ *  Código original creado por Vladimir Tsvigun para IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  Todos los derechos reservados.
+ *
+ *  Traduccion al Espanol: Gerardo Czajkowski
+ *  Correcciones: Jorge Andres Brugger
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Atributos de Conexión</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_connection_parameters"></A><h1>Atributos de Conexión</h1><P>Los
+parámetros de conexión son cadenas utilizadas para especificar cómo
+conectarse a un motor de base de datos o a un servidor de red. La cadena es una
+lista de parámetros de configuración en la forma de&nbsp; PALABRA_CLAVE=valor,
+delimitados por puntos y comas.<P>Las palabras clave se definen en la siguiente
+tabla:</P>
+
+<table width="566" cellspacing=0 cellpadding=2 border=1 cols=2>
+  <tr>
+    <td width="317" bgcolor="#d5d5d5" align="center">
+        <b>Palabra clave completa</b>
+    </td>
+    <td width="235" bgcolor="#d5d5d5" align="center">
+    <b>Forma corta</b>
+    </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Cuenta de Base de Datos
+      </td>
+    <td width="235">&nbsp;
+		<B>UID</B> ó <B>USER</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Contraseña
+      </td>
+    <td width="235">&nbsp;
+		<B>PWD</B> ó <B>PASSWORD</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Rol
+      </td>
+    <td width="235">&nbsp;
+		<B>ROLE</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Nombre de Origen de Datos
+      </td>
+    <td width="235">&nbsp;
+		<B>DSN</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Controlador
+      </td>
+    <td width="235">&nbsp;
+		<B>DRIVER</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Base de Datos
+      </td>
+    <td width="235">&nbsp;
+		<B>DBNAME</B> ó <B>DATABASE</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Cliente
+      </td>
+    <td width="235">&nbsp;
+		<B>CLIENT</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Set de Caracteres
+      </td>
+    <td width="235">&nbsp;
+		<B>CHARSET</B> ó <B>CHARACTERSET</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Establecer sólo lectura
+      </td>
+    <td width="235">&nbsp;
+		<B>READONLY</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Establecer no esperar
+      </td>
+    <td width="235">&nbsp;
+		<B>NOWAIT</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Dialecto
+      </td>
+    <td width="235">&nbsp;
+		<B>DIALECT</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Establecer identificador entre comillas
+      </td>
+    <td width="235">&nbsp;
+		<B>QUOTED</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Establecer identificador sensitivo
+      </td>
+    <td width="235">&nbsp;
+		<B>SENSITIVE</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Establecer identificador entre comillas automático
+      </td>
+    <td width="235">&nbsp;
+		<B>AUTOQUOTED</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Archivo DSN
+      </td>
+    <td width="235">&nbsp;
+		<B>FILEDSN</B>
+      </td>
+  </tr>
+  <tr>
+    <td width="317">&nbsp;Guardar DSN
+      </td>
+    <td width="235">&nbsp;
+		<B>SAVEDSN</B>
+      </td>
+  </tr>
+</table>
+
+<P>La función ODBC SQLDriverConnect utiliza estas claves en la siguiente
+secuencia: primero toma los atributos definidos, especificados en la cadena de
+conexión,&nbsp; luego toma la información faltante del <B>FILEDSN</B> ó <B>DSN
+</B>especificado.</P>
+<P>Si el parámetro <B>SAVEDSN</B> se encuentra en la cadena de conexión,
+entonces los parámetros que fueron proporcionados por la conexión exitosa
+serán almacenados. <B>Nota:</B> la contraseña es almacenada en formato <B>encriptado</B>. </P>
+
+<P>Vea también <A HREF="ConnectionExamples.htm">ejemplos de conexión</A></P>
+
+</BODY>
+</HTML>
