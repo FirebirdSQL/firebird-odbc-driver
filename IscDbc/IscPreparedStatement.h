@@ -60,6 +60,7 @@ public:
 	virtual void		close();
 	virtual int			release();
 	virtual void		addRef();
+	virtual bool		isActiveSelect(){ return IscStatement::isActiveSelect(); }
 
 	virtual void		setNull (int index, int type);
 	virtual void		setString(int index, const char * string);
