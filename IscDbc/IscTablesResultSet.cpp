@@ -61,19 +61,17 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 						  "tbl.rdb$system_flag\n"
 						  "from rdb$relations tbl\n";
 
-	if ( !metaData->allTablesAreSelectable() )
-	{
-		sql +=	"join rdb$user_privileges priv\n"
-					"on tbl.rdb$relation_name = priv.rdb$relation_name\n"
-					"and priv.rdb$privilege = 'S' and priv.rdb$object_type = 0\n";
-		sql +=	metaData->getUserAccess();
-	}
-
 	const char *sep = " where (";
 
 	if (tableNamePattern && *tableNamePattern)
 	{
-		sql += expandPattern (" where ","rdb$relation_name", tableNamePattern);
+		sql += expandPattern (" where ","tbl.rdb$relation_name", tableNamePattern);
+		sep = " and (";
+	}
+
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		sql += metaData->existsAccess(sep, "tbl", 0, ")\n");
 		sep = " and (";
 	}
 

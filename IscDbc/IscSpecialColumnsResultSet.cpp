@@ -62,7 +62,7 @@ IscSpecialColumnsResultSet::~IscSpecialColumnsResultSet()
 void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const char * schema, const char * table, int scope, int nullable)
 {
 	JString sql = 
-		"select f.rdb$field_type as scope,\n"						// 1 
+		"select distinct f.rdb$field_type as scope,\n"				// 1 
 				"\trfr.rdb$field_name as column_name, \n"			// 2
 				"\tf.rdb$field_type as data_type,\n"				// 3
 				"\tf.rdb$field_sub_type as type_name,\n"			// 4
@@ -77,17 +77,8 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 				"\tf.rdb$field_precision as column_precision\n"		//13
 		"from rdb$fields f\n"
 			"\tjoin rdb$relation_fields rfr\n" 
-				"\t\ton rfr.rdb$field_source = f.rdb$field_name\n";
-
-	if ( !metaData->allTablesAreSelectable() )
-	{
-		sql +=	"join rdb$user_privileges priv\n"
-					"on rfr.rdb$relation_name = priv.rdb$relation_name\n"
-						"and priv.rdb$privilege = 'S' and priv.rdb$object_type = 0\n";
-		sql +=	metaData->getUserAccess();
-	}
-
-	sql +=	"\tjoin rdb$indices i\n"
+				"\t\ton rfr.rdb$field_source = f.rdb$field_name\n"
+			"\tjoin rdb$indices i\n"
 				"\t\ton rfr.rdb$relation_name = i.rdb$relation_name\n"
 			"\tjoin rdb$index_segments s\n"
 				"\t\ton rfr.rdb$field_name = s.rdb$field_name\n"
@@ -97,8 +88,11 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 				"\t\tand rel.rdb$index_name = i.rdb$index_name\n"
 		"where i.rdb$unique_flag = 1\n";
 
+	if ( !metaData->allTablesAreSelectable() )
+		sql += metaData->existsAccess("\t\tand ", "rfr", 0, "\n");
+
 	if(table && *table)
-		sql += expandPattern ("\tand ","rfr.rdb$relation_name", table);
+		sql += expandPattern ("\t\tand ","rfr.rdb$relation_name", table);
 
 	sql += " order by rel.rdb$constraint_type, rdb$index_name, rdb$field_position";
 

@@ -38,7 +38,9 @@ class Attachment
 public:
 	bool isAdmin();
 	void checkAdmin();
-	JString& filtrAccess();
+	JString& getUserAccess();
+	int getUserType();
+	JString existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix);
 	int getDatabaseDialect();
 	int release();
 	void addRef();
@@ -51,6 +53,7 @@ public:
 	JString		databaseName;
 	JString		userName;
 	JString		userAccess;
+	int			userType;
 	JString		serverVersion;
 	int			pageSize;
 	int			serverBaseLevel;	

@@ -102,17 +102,11 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 				"\trfr.rdb$field_position as column_position,\n"	// 23
 				"\tfld.rdb$field_length as column_length,\n"		// 24
 				"\tfld.rdb$field_precision as column_precision\n"	// 25
-		"from rdb$relation_fields rfr, rdb$fields fld\n";
+		"from rdb$relation_fields rfr, rdb$fields fld\n"
+		"where rfr.rdb$field_source = fld.rdb$field_name\n";
 
 	if ( !metaData->allTablesAreSelectable() )
-	{
-		sql +=	"join rdb$user_privileges priv\n"
-					"on rfr.rdb$relation_name = priv.rdb$relation_name\n"
-						"and priv.rdb$privilege = 'S' and priv.rdb$object_type = 0\n";
-		sql +=	metaData->getUserAccess();
-	}
-
-	sql +=	" where rfr.rdb$field_source = fld.rdb$field_name\n";
+		sql += metaData->existsAccess(" and ", "rfr", 0, "\n");
 
 	if (tableNamePattern && *tableNamePattern)
 		sql += expandPattern (" and ","rfr.rdb$relation_name", tableNamePattern);

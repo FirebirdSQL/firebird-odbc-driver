@@ -55,16 +55,16 @@ void IscProceduresResultSet::getProcedures(const char * catalog, const char * sc
 				"\t0 as procedure_type\n"									// 8 SQL_PT_UNKNOWN
 		"from rdb$procedures proc\n";
 
-	if ( !metaData->allProceduresAreCallable() )
-	{
-		sql +=	"join rdb$user_privileges priv\n"
-					"on proc.rdb$procedure_name = priv.rdb$relation_name\n"
-					"and priv.rdb$privilege = 'S' and priv.rdb$object_type = 5\n";
-		sql +=	metaData->getUserAccess();
-	}
+	const char *sep = " where ";
 
 	if (procedureNamePattern && *procedureNamePattern)
-		sql += expandPattern (" where ","proc.rdb$procedure_name", procedureNamePattern);
+	{
+		sql += expandPattern (sep,"proc.rdb$procedure_name", procedureNamePattern);
+		sep = " and ";
+	}
+
+	if ( !metaData->allTablesAreSelectable() )
+		sql += metaData->existsAccess(sep, "proc", 5, "");
 
 	sql += " order by proc.rdb$procedure_name";
 	prepareStatement (sql);

@@ -59,16 +59,19 @@ void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const
 						  "tbl.rdb$relation_name as table_name,"					//3
 						  "priv.rdb$grantor as grantor,"							//4
 						  "priv.rdb$user as grantee,"								//5
-						  "priv.rdb$privilege as privilege,"						//6
+						  "cast( priv.rdb$privilege as char(11) ) as privilege,"	//6
 						  "'YES' as isgrantable, "									//7
 						  "priv.rdb$grant_option as GRANT_OPTION "					//8
                           "from rdb$relations tbl, rdb$user_privileges priv\n"
-                          " where tbl.rdb$relation_name = priv.rdb$relation_name\n";
+                          "where tbl.rdb$relation_name = priv.rdb$relation_name\n";
 
 	if ( !metaData->allTablesAreSelectable() )
 	{
-		sql +=	"and priv.rdb$object_type = 0\n";
-		sql +=	metaData->getUserAccess();
+		char buf[128];
+		sprintf (buf, "and priv.rdb$object_type = 0\n"
+					  "and priv.rdb$user = '%s' and priv.rdb$user_type = %d\n",
+						metaData->getUserAccess(),metaData->getUserType());
+		sql +=	buf;
 	}
 
     if (tableNamePattern && *tableNamePattern)
@@ -88,6 +91,11 @@ bool IscTablePrivilegesResultSet::next()
 	trimBlanks(3);
 	trimBlanks(4);
 	trimBlanks(5);
+
+	const char *grantor = resultSet->getString(4);
+	const char *grantee = resultSet->getString(5);
+	if(!strcmp(grantor,grantee))
+		resultSet->setValue( 4, "_SYSTEM" );
 
     const char *privilege = resultSet->getString(6);
 

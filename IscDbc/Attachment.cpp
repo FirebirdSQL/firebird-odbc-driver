@@ -57,6 +57,7 @@ Attachment::Attachment()
 	databaseHandle = NULL;
 	admin = true;
 	isRoles = false;
+	userType = 8;
 }
 
 Attachment::~Attachment()
@@ -82,6 +83,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	{
 		userName = user;
 		userAccess = user;
+		userType = 8;
 		*p++ = isc_dpb_user_name,
 		*p++ = strlen (user);
 		for (const char *q = user; *q;)
@@ -103,6 +105,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	if (role && *role)
 	{
 		userAccess = role;
+		userType = 13;
 		isRoles = true;
 		*p++ = isc_dpb_sql_role_name;
 		*p++ = strlen (role);
@@ -200,7 +203,6 @@ int Attachment::getDatabaseDialect()
 
 void Attachment::checkAdmin()
 {
-	char temp [256];
 	QUAD adm1 = (QUAD)71752869960019.0;
 	QUAD adm2 = (QUAD)107075219978611.0;
 	QUAD user = (QUAD)0;
@@ -209,12 +211,9 @@ void Attachment::checkAdmin()
 	admin = user == adm1 || user == adm2;
 
 	if ( admin )
-		userAccess = "";
-	else
 	{
-		sprintf (temp, "and priv.rdb$user = '%s' and priv.rdb$user_type = %d\n",
-			(const char *)userAccess, isRoles ? 13 : 8);
-		userAccess = temp;
+		userAccess = "";
+		userType = 0;
 	}
 }
 
@@ -223,7 +222,27 @@ bool Attachment::isAdmin()
 	return admin;
 }
 
-JString& Attachment::filtrAccess()
+JString& Attachment::getUserAccess()
 {
 	return userAccess;
+}
+
+int Attachment::getUserType()
+{
+	return userType;
+}
+
+JString Attachment::existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix)
+{
+	char temp [300];
+
+	sprintf (temp,	" %s exists( select cast(1 as integer) from rdb$user_privileges priv\n"
+					"\t\twhere %s.rdb$%s = priv.rdb$relation_name\n"
+					"\t\t\tand priv.rdb$privilege = 'S' and priv.rdb$object_type = %d\n"
+					"\t\t\tand priv.rdb$user = '%s' and priv.rdb$user_type = %d ) %s \n",
+						prefix, relobject, 
+						!typeobject ? "relation_name" : "procedure_name",
+						typeobject, (const char *)userAccess, userType, suffix);
+
+	return temp;
 }

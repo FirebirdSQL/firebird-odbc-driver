@@ -274,7 +274,17 @@ const char* IscDatabaseMetaData::getUserName()
 
 const char* IscDatabaseMetaData::getUserAccess()
 	{
-	return connection->attachment->filtrAccess();
+	return connection->attachment->getUserAccess();
+	}
+
+const int IscDatabaseMetaData::getUserType()
+	{
+	return connection->attachment->getUserType();
+	}
+
+JString IscDatabaseMetaData::existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix)
+	{
+	return connection->attachment->existsAccess(prefix, relobject, typeobject, suffix);
 	}
 
 bool IscDatabaseMetaData::isReadOnly()

@@ -56,15 +56,18 @@ void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, con
 						  "tbl.rdb$field_name as column_name,"
 						  "priv.rdb$grantor as grantor,"
 						  "priv.rdb$user as grantee,"
-						  "priv.rdb$privilege as privilege,"
-						  "priv.rdb$grant_option as is_grantable "
+						  "cast( priv.rdb$privilege as char(11) ) as privilege,"
+						  "cast ( priv.rdb$grant_option as char(4) ) as is_grantable "
 						  "from rdb$relation_fields tbl, rdb$user_privileges priv\n"
 						  " where tbl.rdb$relation_name = priv.rdb$relation_name\n";
 	
 	if ( !metaData->allTablesAreSelectable() )
 	{
-		sql +=	"and priv.rdb$object_type = 0\n";
-		sql +=	metaData->getUserAccess();
+		char buf[128];
+		sprintf (buf, "and priv.rdb$object_type = 0\n"
+					  "and priv.rdb$user = '%s' and priv.rdb$user_type = %d\n",
+						metaData->getUserAccess(),metaData->getUserType());
+		sql +=	buf;
 	}
 
 	if (tableNamePattern && *tableNamePattern)
@@ -88,6 +91,11 @@ bool IscColumnPrivilegesResultSet::next()
 	trimBlanks(4);
 	trimBlanks(5);
 	trimBlanks(6);
+
+	const char *grantor = resultSet->getString(5);
+	const char *grantee = resultSet->getString(6);
+	if(!strcmp(grantor,grantee))
+		resultSet->setValue( 5, "_SYSTEM" );
 
 	const char *privilege = resultSet->getString(7);
 

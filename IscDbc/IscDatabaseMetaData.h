@@ -54,12 +54,14 @@ public:
 	virtual ResultSet* getPrimaryKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern);
 	virtual ResultSet* getColumns (const char *catalog, const char *schema, const char *table, const char *fieldNamePattern);
 	virtual ResultSet* getTables (const char *catalog, const char *schemaPattern, const char *tableNamePattern, int typeCount, const char **types);
-	virtual ResultSet*specialColumns(const char * catalog, const char * schema, const char * table, int scope, int nullable);
+	virtual ResultSet* specialColumns(const char * catalog, const char * schema, const char * table, int scope, int nullable);
 	virtual bool allProceduresAreCallable();
 	virtual bool allTablesAreSelectable();
 	virtual const char* getURL();
 	virtual const char* getUserName();
 	virtual const char* getUserAccess();
+	virtual const int getUserType();
+	virtual JString existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix);
 	virtual bool isReadOnly();
 	virtual bool nullsAreSortedHigh();
 	virtual bool nullsAreSortedLow();
