@@ -64,7 +64,9 @@
 
 namespace IscDbcLibrary {
 
-#define SET_INFO_FROM_SUBTYPE( a, b, c ) var->sqlsubtype == 1 ? (a) :  var->sqlsubtype == 2 ? (b) : (c)
+#define SET_INFO_FROM_SUBTYPE( a, b, c ) \
+		var->sqlsubtype == 1 || (!var->sqlsubtype && var->sqlscale) ? (a) : \
+		var->sqlsubtype == 2 ? (b) : (c)
 
 static short sqlNull = -1;
 

@@ -137,6 +137,8 @@ public:
 	int convBigintToShort(DescRecord * from, DescRecord * to);
 	int convBigintToFloat(DescRecord * from, DescRecord * to);
 	int convBigintToDouble(DescRecord * from, DescRecord * to);
+	int convBigintToFloatWithScale(DescRecord * from, DescRecord * to);
+	int convBigintToDoubleWithScale(DescRecord * from, DescRecord * to);
 	int convBigintToBigint(DescRecord * from, DescRecord * to);
 	int convBigintToBinary(DescRecord * from, DescRecord * to);
 	int convBigintToString(DescRecord * from, DescRecord * to);
