@@ -505,6 +505,7 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 				DescRecord *imprec = implementationRowDescriptor->getDescRecord (column);
 				imprec->dataPtr = &rowNumber;
 				imprec->indicatorPtr = &indicatorRowNumber;
+				record->octetLengthPtr = &indicatorRowNumber;
 
 				record->autoUniqueValue = SQL_FALSE;
 				record->caseSensitive = SQL_FALSE;
@@ -1010,6 +1011,77 @@ RETCODE OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQLU
 	case SQL_DELETE:
 		break;
 	}
+
+	return sqlSuccess();
+}
+
+RETCODE OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGER crowKeyset, SQLUSMALLINT crowRowset)
+{
+	BOOL bOk;
+    UWORD InfoType, InfoValuePtr;
+
+    switch( crowKeyset )
+    {
+      case SQL_SCROLL_FORWARD_ONLY:
+        InfoType = SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES2;
+        break;
+
+      case SQL_SCROLL_STATIC:
+        InfoType = SQL_STATIC_CURSOR_ATTRIBUTES2;
+        break;
+
+      case SQL_SCROLL_KEYSET_DRIVEN:
+        InfoType = SQL_KEYSET_CURSOR_ATTRIBUTES2;
+        break;
+
+      case SQL_SCROLL_DYNAMIC:
+        InfoType = SQL_DYNAMIC_CURSOR_ATTRIBUTES2;
+        break;
+
+      default:
+        if ( crowKeyset > crowRowset )
+            InfoType = SQL_KEYSET_CURSOR_ATTRIBUTES2;
+        else
+			return sqlReturn (SQL_ERROR, "S1107", "Row value out of range");
+        break;
+    }
+
+    connection->sqlGetInfo (InfoType, &InfoValuePtr, sizeof(InfoValuePtr), 0);
+
+	bOk = FALSE;
+
+	switch( fConcurrency )
+	{
+	case SQL_CONCUR_READ_ONLY:
+		if ( InfoValuePtr & SQL_CA2_READ_ONLY_CONCURRENCY )
+			bOk = TRUE;
+		break;
+	case SQL_CONCUR_LOCK:
+		if ( InfoValuePtr & SQL_CA2_LOCK_CONCURRENCY )
+			bOk = TRUE;
+		break;
+	case SQL_CONCUR_ROWVER:
+		if ( InfoValuePtr & SQL_CA2_OPT_ROWVER_CONCURRENCY )
+			bOk = TRUE;
+		break;
+	case SQL_CONCUR_VALUES:
+		if ( InfoValuePtr & SQL_CA2_OPT_VALUES_CONCURRENCY )
+			bOk = TRUE;
+		break;
+	default:
+		return sqlReturn (SQL_ERROR, "S1108", "Concurrency option out of range");
+	}
+
+	if ( bOk == FALSE )
+		return sqlReturn (SQL_ERROR, "S1C00", "Driver not capable");
+
+	sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)(int)InfoType, 0);
+	sqlSetStmtAttr(SQL_ATTR_CONCURRENCY, (SQLPOINTER)(int)fConcurrency, 0);
+
+	if ( crowKeyset > 0 )
+		sqlSetStmtAttr(SQL_ATTR_KEYSET_SIZE, (SQLPOINTER)crowKeyset, 0);
+
+	sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)crowKeyset, 0);
 
 	return sqlSuccess();
 }

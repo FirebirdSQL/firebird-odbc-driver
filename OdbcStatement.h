@@ -70,6 +70,7 @@ public:
 	RETCODE sqlFetchScroll (int orientation, int offset);
 	RETCODE sqlFetchScrollCursorStatic(int orientation, int offset);
 	RETCODE sqlSetPos (SQLUSMALLINT rowNumber, SQLUSMALLINT operation, SQLUSMALLINT lockType);
+	RETCODE sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGER crowKeyset, SQLUSMALLINT crowRowset);
 	RETCODE sqlExtendedFetch (int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray);
 	RETCODE sqlColAttributes (int column, int descType, SQLPOINTER buffer, int bufferSize, SWORD *length, SDWORD *value);
 	RETCODE sqlRowCount (SQLINTEGER *rowCount);
