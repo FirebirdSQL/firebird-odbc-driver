@@ -319,6 +319,9 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_TYPE_DATE:
 			bIdentity = true;
 			return &OdbcConvert::convDateToTagDate;
+		case SQL_C_TYPE_TIMESTAMP:
+		case SQL_C_TIMESTAMP:
+			return &OdbcConvert::convDateToTagTimestamp;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateToString;
 		}
@@ -601,13 +604,15 @@ ODBCCONVERT_CONVROUND(Float,float,Bigint,QUAD);
 
 int OdbcConvert::convFloatToString(DescRecord * from, DescRecord * to)
 {
-	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);
+	char * pointerTo = (char *)getAdressData((char*)to->dataPtr);
 	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL;
-	
-	int len = snprintf((char*)to->dataPtr,to->octetLength,"%f",*(float*)from->dataPtr);
-//	int len = snprintf((char*)to->dataPtr,to->octetLength,"%.*f",from->scale,*(float*)from->dataPtr);
+
+	int len = to->length;
+
+	if ( len )	// MAX_FLOAT_DIGIT_LENGTH = 7
+		convertFloatToString(*(float*)from->dataPtr, pointerTo, len-1, &len, 7);
 
 	if ( indicatorPointer )
 		*indicatorPointer = len;
@@ -628,13 +633,15 @@ ODBCCONVERT_CONVTAGNUMERIC(Double,double);
 
 int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 {
-	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);
+	char * pointerTo = (char *)getAdressData((char*)to->dataPtr);
 	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL;
-	
-	int len = snprintf((char*)to->dataPtr,to->octetLength,"%f",*(double*)from->dataPtr);
-//	int len = snprintf((char*)to->dataPtr,to->octetLength,"%.*f",from->scale,*(double*)from->dataPtr);
+
+	int len = to->length;
+
+	if ( len )	// MAX_DOUBLE_DIGIT_LENGTH = 15
+		convertFloatToString(*(float*)from->dataPtr, pointerTo, len-1, &len);
 
 	if ( indicatorPointer )
 		*indicatorPointer = len;
@@ -749,6 +756,23 @@ int OdbcConvert::convDateToTagDate(DescRecord * from, DescRecord * to)
 		*indicatorPointer = 0;
 
 	return 0;
+}
+
+int OdbcConvert::convDateToTagTimestamp(DescRecord * from, DescRecord * to)
+{
+	tagTIMESTAMP_STRUCT * tagTs = (tagTIMESTAMP_STRUCT*)getAdressData((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	decode_sql_date(*(long*)from->dataPtr, tagTs->day, tagTs->month, tagTs->year);
+	tagTs->hour = tagTs->minute = tagTs->second = 0;
+	tagTs->fraction = 0;
+
+	if ( indicatorPointer )
+		*indicatorPointer = sizeof(tagTIMESTAMP_STRUCT);
+
+	return SQL_SUCCESS;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1052,4 +1076,146 @@ void OdbcConvert::decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMA
 	hour = (SQLUSMALLINT)(minutes / 60);
 	minute = (SQLUSMALLINT)(minutes % 60);
 	second = (SQLUSMALLINT)((ntime / ISC_TIME_SECONDS_PRECISION) % 60);
+}
+
+void OdbcConvert::convertFloatToString(double value, char *string, int size, int *length, int digit, char POINT_DIV)
+{
+	char temp[64];
+	char * dst = temp;
+	int  decimal, sign;
+	bool copy = false;
+	char * strCvt = fcvt( value, digit, &decimal, &sign );
+	int len = strlen( strCvt );
+
+	if ( !size )
+		return;
+
+	if ( size >= 24 )
+		dst = string;
+	else
+		copy = true;
+
+	if ( !*strCvt )
+	{
+		len = strlen( gcvt( value, digit, dst) );
+		char * end = dst + len - 1;
+		if ( *end == '.' )
+			*end = '\0',--len;
+	}
+	else if ( !len )
+	{
+		*dst++ = '0';
+		*dst = '\0';
+		len = 1;
+	}
+	else
+	{
+		char strF[20];
+		char * src = strF, * end, * begin = dst;
+
+		if ( sign )
+			*dst++ = '-';
+
+		if ( len < digit + 1 )
+		{
+			char * ch = strCvt;
+			end = strF;
+			while ( (*end++ = *ch++) );
+			end -= 2;
+		}
+		else
+		{
+			char * ch = strCvt;
+			char * chEnd = strCvt + digit;
+			end = strF;
+
+			if ( *(strCvt + digit) < '5' )
+			{
+				while ( ch < chEnd )
+					*end++ = *ch++;
+				*end-- = '\0';
+			}
+			else
+			{
+				*strF = '0';
+				end++;
+				while ( ch < chEnd )
+					*end++ = *ch++;
+				*end-- = '\0';
+				chEnd = end;
+
+				while ( chEnd > strF && *chEnd + 1 > '9' )
+					*chEnd-- = '0';
+
+				++(*chEnd);
+
+				if ( chEnd > strF )
+					src++;
+			}
+		}
+
+		if ( decimal <= 0 )
+		{
+			int dec = decimal;
+
+			while ( end > src && *end == '0' )
+				*end-- = '\0';
+
+			if ( end > src )
+			{
+				*dst++ = '0';
+				*dst++ = POINT_DIV;
+
+				while ( dec++ )
+					*dst++ = '0';
+
+				while ( (*dst++ = *src++) );
+				--dst;
+			}
+			else if ( *end == '0' )
+			{
+				dst = begin;
+				*dst++ = '0';
+				*dst = '\0';
+			}
+		}			
+		else if ( decimal > 0 )
+		{
+			int dec = decimal;
+			while ( *src )
+			{
+				*dst++ = *src++;
+				if (--dec == 0)
+				{
+					if ( *src && decimal < digit )
+						*dst++ = POINT_DIV;
+					else
+						break;
+				}
+			}
+
+			if ( dec > 0 )
+				while ( dec-- )
+					*dst++ = '0';
+			else
+			{
+				--dst;
+				while ( *dst == '0' )
+					*dst-- = '\0';
+
+				if ( *dst == POINT_DIV )
+					*dst-- = '\0';
+				++dst;
+			}
+			*dst = '\0';
+		}
+		len = dst - begin;
+	}
+	if ( copy )
+	{
+		len = MIN( len, size - 1 );
+		memcpy( string, temp, len );
+		string[len] = '\0';
+	}
+	*length = len;
 }

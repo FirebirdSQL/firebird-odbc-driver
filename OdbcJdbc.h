@@ -27,6 +27,8 @@
 #define strcasecmp		stricmp
 #define strncasecmp		strnicmp
 #define snprintf		_snprintf
+#define fcvt			_fcvt
+#define gcvt			_gcvt
 
 #else
 #define OutputDebugString(string)	fputs (string, stdout)
