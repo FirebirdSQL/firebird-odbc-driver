@@ -59,7 +59,6 @@ public:
 	virtual DateTime	getDate(int id);
 	virtual SqlTime		getTime (int id);
 	virtual Blob*		getBlob (int id);
-	virtual Clob*		getClob (int id);
 	virtual double		getDouble  (int id);
 	virtual float		getFloat (int id);
 	virtual QUAD		getQuad(int id);
@@ -68,7 +67,6 @@ public:
 	virtual short		getShort (int id);
 
 	virtual int			objectVersion();
-	virtual void		setClob (int index, Clob *value);
 	virtual StatementMetaData* getStatementMetaDataIPD();
 	virtual StatementMetaData* getStatementMetaDataIRD();
 	virtual bool		execute (const char *sqlString);
@@ -107,10 +105,6 @@ public:
     virtual void        putBlobSegmentData (int length, const void *bytes);
     virtual void        endBlobDataTransfer();
 	
-    virtual void        beginClobDataTransfer(int index);
-    virtual void        putClobSegmentData (int length, const void *bytes);
-    virtual void        endClobDataTransfer();
-
 	virtual int			executeUpdate();
 	virtual bool		execute();
 	virtual ResultSet*	executeQuery();

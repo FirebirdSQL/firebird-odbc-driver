@@ -54,7 +54,7 @@ IscArray::IscArray(SIscArrayData * ptArr)
 	connection = NULL;
 	fetched = false;
 	fetchedBinary = true;
-	bArray = true;
+	enType = enTypeArray;
 }
 
 IscArray::IscArray(IscConnection *connect,XSQLVAR *var)
@@ -64,7 +64,7 @@ IscArray::IscArray(IscConnection *connect,XSQLVAR *var)
 	arrayId = *(ISC_QUAD*)var->sqldata;
 	fetched = false;
 	fetchedBinary = false;
-	bArray = true;
+	enType = enTypeArray;
 
 	int i;
 	ISC_STATUS statusVector [20];

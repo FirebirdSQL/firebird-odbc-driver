@@ -54,7 +54,6 @@
 #include "Value.h"
 #include "SQLError.h"
 #include "BinaryBlob.h"
-#include "AsciiBlob.h"
 
 #define DECIMAL_POINT		'.'
 #define DIGIT_SEPARATOR		','
@@ -156,24 +155,9 @@ void Value::setValue(Value * value)
 			data.dbl = value->data.dbl;
 			break;
 
-		/***
-		case Asciiblob:
-			data.blobId = value->data.blobId;
-			break;
-		
-		case Binaryblob:
-			data.blobId = value->data.blobId;
-			break;
-		***/
-
 		case BlobPtr:
 			data.blob = value->data.blob;
 			data.blob->addRef();
-			break;
-
-		case ClobPtr:
-			data.clob = value->data.clob;
-			data.clob->addRef();
 			break;
 
 		case Date:
@@ -544,43 +528,38 @@ char* Value::getString(char **tempPtr)
 			break;
 
 		case BlobPtr:
-			{
 			if (!tempPtr)	// NOMEY +
 				throw SQLEXCEPTION (BUG_CHECK, "NULL-Pointer in Value::getString, case BlobPtr:"); // NOMEY +
 
  			if (*tempPtr)
 				delete [] *tempPtr;
-			if(data.blob->bArray)
+
+			if(data.blob->enType == enTypeBlob)
+			{
+				int length = data.blob->length();
+				*tempPtr = new char [length*2 + 1];
+				if( length > 0 )
+					data.blob->getBytes (0, length, *tempPtr);
+				(*tempPtr) [length*2] = 0;
+			}
+			else if(data.blob->enType == enTypeClob)
+			{
+				int length = data.blob->length();
+				*tempPtr = new char [length + 1];
+				if( length > 0 )
+					data.blob->getBytes (0, length, *tempPtr);
+				(*tempPtr) [length] = 0;
+			}
+			else // if(data.blob->enType == enTypeArray)
 			{
 				BinaryBlob * ptArr = (BinaryBlob *)data.blob;
 				int length = ptArr->getLength();
 				*tempPtr = new char [length + 1];
-				ptArr->getSegment ((int)0, length,(void*)*tempPtr);
-				(*tempPtr) [length] = 0;
-			}
-			else
-			{
-				int length = data.blob->length();
-				*tempPtr = new char [length + 1];
-				data.blob->getBytes (0, length, *tempPtr);
+				if( length > 0 )
+					ptArr->getSegment ((int)0, length,(void*)*tempPtr);
 				(*tempPtr) [length] = 0;
 			}
 			return *tempPtr;
-			}
-
-		case ClobPtr:
-			{
-			if (!tempPtr)	// NOMEY +
-				throw SQLEXCEPTION (BUG_CHECK, "NULL-Pointer in Value::getString, case ClobPtr:"); // NOMEY +
-
-			if (*tempPtr)
-				delete [] *tempPtr;
-			int length = data.clob->length();
-			*tempPtr = new char [length + 1];
-			data.clob->getSubString (0, length, *tempPtr);
-			(*tempPtr) [length] = 0;
-			return *tempPtr;
-			}
 
 		default:
 			NOT_YET_IMPLEMENTED;
@@ -615,9 +594,6 @@ Blob* Value::getBlob()
 			data.blob->addRef();
 			return data.blob;
 
-		case ClobPtr:
-			return new BinaryBlob (data.clob);
-
 		case String:
 			blob = new BinaryBlob;
 			blob->putSegment (data.string.length, data.string.string, false);	
@@ -627,33 +603,6 @@ Blob* Value::getBlob()
 
 	NOT_YET_IMPLEMENTED;
 
-	return NULL;
-}
-
-
-Clob* Value::getClob()
-{
-	AsciiBlob *blob;
-
-	switch (type)
-		{
-		case Null:
-			return new AsciiBlob;
-
-		case ClobPtr:
-			data.clob->addRef();
-			return data.clob;
-
-		case BlobPtr:
-			return new AsciiBlob (data.blob);
-
-		case String:
-			blob = new AsciiBlob;
-			blob->putSegment (data.string.length, data.string.string, false);	
-			return blob;
-		}
-
-	NOT_YET_IMPLEMENTED;
 	return NULL;
 }
 
@@ -967,14 +916,6 @@ SqlTime Value::getTime()
 		}
 
 	return SqlTime::convert (data.string.string, data.string.length);
-}
-
-void Value::setValue(Clob * blob)
-{
-	clear();
-	type = ClobPtr;
-	data.clob = blob;
-	data.clob->addRef();
 }
 
 void Value::convert(QUAD value, int scale, char *string)

@@ -30,20 +30,18 @@
 #endif // _MSC_VER >= 1000
 
 struct Segment
-    {
+{
 	int		length;
 	char	*address;
 	Segment	*next;
-	};
+};
 
 class Blob;
-class Clob;
 
 class Stream  
 {
 public:
 	void putSegment (Blob *blob);
-	void putSegment (Clob *blob);
 	void* getSegment (int offset);
 	int getSegmentLength(int offset);
 	void printChars (const char *msg, int length, const char *data);

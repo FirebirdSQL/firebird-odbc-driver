@@ -38,20 +38,17 @@
 #include "Stream.h"
 
 class Database;
-class AsciiBlob;
 
 class BinaryBlob : public Blob, public Stream 
 {
 public:
 	void putSegment (Blob *blob);
-	void putSegment (Clob *blob);
 #ifdef ENGINE
 	 BinaryBlob (Database *db, long recordNumber, long sectId);
 #endif
 	virtual void* getSegment (int pos);
 	virtual int	  getSegment (int offset, int length, void* address);
 	virtual int getSegmentLength (int pos);
-	 BinaryBlob (Clob *blob);
 	void putSegment (int length, const char *data, bool copyFlag);
 	int length();
 	void getBytes (long pos, long length, void *address);

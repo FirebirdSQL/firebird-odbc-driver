@@ -77,7 +77,6 @@ class ResultSetMetaData;
 class DateTime;
 class TimeStamp;
 class SqlTime;
-class Clob;
 
 #define CONNECTION_VERSION	1
 
@@ -93,7 +92,7 @@ public:
 	virtual void		rollback() = 0;
 	virtual void		commit() = 0;
 
-	virtual Clob*		genHTML (Properties *context, long genHeaders) = 0;
+	virtual Blob*		genHTML (Properties *context, long genHeaders) = 0;
 
 	virtual Statement*	createStatement() = 0;
 	virtual PreparedStatement* prepareStatement (const char *sqlString) = 0;
@@ -370,10 +369,6 @@ public:
     virtual void        putBlobSegmentData (int length, const void *bytes) = 0;
     virtual void        endBlobDataTransfer() = 0;
 
-    virtual void        beginClobDataTransfer(int index) = 0;
-    virtual void        putClobSegmentData (int length, const void *bytes) = 0;
-    virtual void        endClobDataTransfer() = 0;
-
 	virtual void		setFloat (int index, float value) = 0;
 	virtual void		setDouble (int index, double value) = 0;
 	virtual void		setNull (int index, int type) = 0;
@@ -382,7 +377,6 @@ public:
 	virtual void		setTimestamp (int index, TimeStamp value) = 0;
 	virtual void		setBlob (int index, Blob *value) = 0;
 	virtual void		setArray (int index, Blob *value) = 0;
-	virtual void		setClob (int index, Clob *value) = 0;
 	virtual StatementMetaData*
 						getStatementMetaDataIPD() = 0;
 	virtual StatementMetaData*
@@ -416,8 +410,6 @@ public:
 	virtual TimeStamp	getTimestamp (const char *columnName) = 0;
 	virtual Blob*		getBlob (int index) = 0;
 	virtual Blob*		getBlob (const char *columnName) = 0;
-	virtual Clob*		getClob (int index) = 0;
-	virtual Clob*		getClob (const char *columnName) = 0;
 	virtual QUAD		getQuad (int id) = 0;
 	virtual QUAD		getQuad (const char *columnName) = 0;
 	virtual int			findColumn (const char *columName) = 0;
@@ -470,7 +462,6 @@ public:
 	virtual void		updateTime (int columnIndex, SqlTime value) = 0;
 	virtual void		updateTimeStamp (int columnIndex, TimeStamp value) = 0;
 	virtual void		updateBlob (int columnIndex, Blob* value) = 0;
-	virtual void		updateClob (int columnIndex, Clob* value) = 0;
 	virtual void		updateNull (const char *columnName) = 0;
 	virtual void		updateBoolean (const char *columnName, bool value) = 0;
 	virtual void		updateByte (const char *columnName, char value) = 0;
@@ -485,7 +476,6 @@ public:
 	virtual void		updateTime (const char *columnName, SqlTime value) = 0;
 	virtual void		updateTimeStamp (const char *columnName, TimeStamp value) = 0;
 	virtual void		updateBlob (const char *columnName, Blob* value) = 0;
-	virtual void		updateClob (const char *columnName, Clob* value) = 0;
 	virtual void		insertRow() = 0;
 	virtual void		updateRow() = 0;
 	virtual void		deleteRow() = 0;
@@ -561,7 +551,6 @@ public:
 	virtual TimeStamp	getTimestamp(int parameterIndex) = 0;
 	virtual QUAD		getQuad(int parameterIndex) = 0;
 	virtual Blob*		getBlob (int i) = 0;
-	virtual Clob*		getClob (int i) = 0;
     //void		registerOutParameter (int paramIndex, int sqlType, const char* typeName) = 0;
 };
 

@@ -46,7 +46,7 @@ public:
 	void fetchBlob();
 	virtual int getSegment (int offset, int length, void *address);
 	virtual int length();
-	IscBlob(IscConnection *connect, ISC_QUAD *id);
+	IscBlob(IscConnection *connect, XSQLVAR *var);
 	virtual ~IscBlob();
 
 	IscConnection	*connection;

@@ -472,9 +472,3 @@ void Stream::putSegment(Blob * blob)
 	for (int n, offset = 0; n = blob->getSegmentLength (offset); offset += n)
 		putSegment (n, (const char*) blob->getSegment (offset), true);
 }
-
-void Stream::putSegment(Clob * blob)
-{
-	for (int n, offset = 0; n = blob->getSegmentLength (offset); offset += n)
-		putSegment (n, (const char*) blob->getSegment (offset), true);
-}

@@ -2779,29 +2779,14 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 			switch (binding->conciseType)
 			{
 				case SQL_C_CHAR:
-				{
-					if ( !binding->startedTransfer )
-					{
-						binding->startedTransfer = true;
-						*binding->indicatorPtr = 0;
-						statement->beginClobDataTransfer(n+1);
-					}
-
-					return SQL_NEED_DATA;
-				}
-				break;
-
 				case SQL_C_BINARY:
-				{
 					if ( !binding->startedTransfer )
 					{
 						binding->startedTransfer = true;
 						*binding->indicatorPtr = 0;
 						statement->beginBlobDataTransfer(n+1);
 					}
-
 					return SQL_NEED_DATA;
-				}
 				break;				
 			}
 		}
@@ -2814,9 +2799,6 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 					switch (binding->conciseType)
 					{
 					case SQL_C_CHAR:
-						statement->endClobDataTransfer();
-						break;
-							
 					case SQL_C_BINARY:
 						statement->endBlobDataTransfer();
 						break;
@@ -2873,7 +2855,7 @@ RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 				else
 				{
 					*binding->indicatorPtr += valueSize;
-					statement->putClobSegmentData (valueSize, value);
+					statement->putBlobSegmentData (valueSize, value);
 				}
 			}
 			break;

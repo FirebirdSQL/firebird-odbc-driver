@@ -69,7 +69,7 @@ public:
 	virtual void ping();
 	virtual int hasRole (const char *schemaName, const char *roleName);
 	//virtual void freeHTML (const char *html);
-	virtual Clob* genHTML (Properties *context, long genHeaders);
+	virtual Blob* genHTML (Properties *context, long genHeaders);
 	virtual bool isConnected();
 	virtual Statement* createStatement();
 	virtual void prepareTransaction();

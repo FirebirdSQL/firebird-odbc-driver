@@ -256,7 +256,7 @@ Statement* IscConnection::createStatement()
 }
 
 
-Clob* IscConnection::genHTML(Properties * parameters, long genHeaders)
+Blob* IscConnection::genHTML(Properties * parameters, long genHeaders)
 {
 	NOT_YET_IMPLEMENTED;
 

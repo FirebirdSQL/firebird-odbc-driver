@@ -82,8 +82,6 @@ public:
 public:
 	void setNull (int index);
 	const char* getSchemaName (int index);
-	virtual Clob* getClob (const char* columnName);
-	virtual Clob* getClob (int index);
 	virtual int objectVersion();
 	virtual TimeStamp getTimestamp (const char * columnName);
 	virtual TimeStamp getTimestamp (int index);
@@ -136,7 +134,6 @@ public:
 	virtual void		updateTime (int columnIndex, SqlTime value);
 	virtual void		updateTimeStamp (int columnIndex, TimeStamp value);
 	virtual void		updateBlob (int columnIndex, Blob* value);
-	virtual void		updateClob (int columnIndex, Clob* value);
 	virtual void		updateNull (const char *columnName);
 	virtual void		updateBoolean (const char *columnName, bool value);
 	virtual void		updateByte (const char *columnName, char value);
@@ -151,7 +148,6 @@ public:
 	virtual void		updateTime (const char *columnName, SqlTime value);
 	virtual void		updateTimeStamp (const char *columnName, TimeStamp value);
 	virtual void		updateBlob (const char *columnName, Blob* value);
-	virtual void		updateClob (const char *columnName, Clob* value);
 	virtual void		insertRow();
 	virtual void		updateRow();
 	virtual void		deleteRow();

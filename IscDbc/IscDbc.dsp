@@ -100,10 +100,6 @@ SOURCE=.\IscDbc.rc
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\AsciiBlob.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\Attachment.h
 # End Source File
 # Begin Source File
@@ -133,6 +129,10 @@ SOURCE=.\Error.h
 # Begin Source File
 
 SOURCE="C:\Program Files\InterBase\SDK\Include\ibase.h"
+# End Source File
+# Begin Source File
+
+SOURCE=.\IscArray.h
 # End Source File
 # Begin Source File
 
@@ -300,10 +300,6 @@ SOURCE=.\Value.h
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\AsciiBlob.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\Attachment.cpp
 # End Source File
 # Begin Source File
@@ -329,10 +325,6 @@ SOURCE=.\extodbc.cpp
 # Begin Source File
 
 SOURCE=.\IscArray.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\IscArray.h
 # End Source File
 # Begin Source File
 

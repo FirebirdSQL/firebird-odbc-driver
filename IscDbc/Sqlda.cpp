@@ -267,7 +267,7 @@ public:
 				}
 				else if ( (var->sqltype & ~1) == SQL_BLOB )
 				{
-					IscBlob * ptBlob = new IscBlob (connection, (ISC_QUAD*) var->sqldata);
+					IscBlob * ptBlob = new IscBlob (connection, var);
 					ptBlob->fetchBlob();
 					*(long*)var->sqldata = (long)ptBlob;
 				}
@@ -373,61 +373,58 @@ void Sqlda::allocBuffer()
 	offsetSqldata = new int [numberColumns];
 
 	for (n = 0; n < numberColumns; ++n, ++var)
-		{
+	{
 		int length = var->sqllen;
 		int boundary = length;
 		switch (var->sqltype & ~1)
-			{
-			case SQL_TEXT:
-				boundary = 1;
-				++length;
-				break;
+		{
+		case SQL_TEXT:
+			boundary = 1;
+			++length;
+			break;
 
-			case SQL_VARYING:
-				boundary = 2;
-				length += 2;
-				break;
+		case SQL_VARYING:
+			boundary = 2;
+			length += 2;
+			break;
 
-			case SQL_SHORT:
-				length = sizeof (short);
-				break;
+		case SQL_SHORT:
+			length = sizeof (short);
+			break;
 
-			case SQL_LONG:
-			case SQL_TYPE_TIME:
-			case SQL_TYPE_DATE:
-				length = sizeof (long);
-				break;
+		case SQL_LONG:
+		case SQL_TYPE_TIME:
+		case SQL_TYPE_DATE:
+			length = sizeof (long);
+			break;
 
-			case SQL_FLOAT:
-				length = sizeof (float);
-				break;
+		case SQL_FLOAT:
+			length = sizeof (float);
+			break;
 
-			case SQL_DOUBLE:
-				length = sizeof (double);
-				break;
+		case SQL_DOUBLE:
+			length = sizeof (double);
+			break;
 
-			case SQL_QUAD:
-			case SQL_INT64:
-			case SQL_TIMESTAMP:
-				length = sizeof (QUAD);
-				break;
+		case SQL_QUAD:
+		case SQL_INT64:
+		case SQL_TIMESTAMP:
+			length = sizeof (QUAD);
+			break;
 
-			case SQL_ARRAY:
-			case SQL_BLOB:
-				length = sizeof (ISC_QUAD);
-				boundary = 4;
-				break;
-
-//			case SQL_ARRAY:
-//				NOT_SUPPORTED("array", var->relname_length, var->relname, var->aliasname_length, var->aliasname);
-			}
+		case SQL_ARRAY:
+		case SQL_BLOB:
+			length = sizeof (ISC_QUAD);
+			boundary = 4;
+			break;
+		}
 		if (length == 0)
 			throw SQLEXCEPTION (COMPILE_ERROR, "Sqlda variable has zero length");
 		offset = ROUNDUP (offset, boundary);
 		var->sqldata = (char*)(offsetSqldata[n] = offset);
 		var->sqllen = length;
 		offset += length;
-		}
+	}
 
 	offset = ROUNDUP (offset, sizeof (short));
 	indicatorsOffset = offset;
@@ -1027,12 +1024,11 @@ void Sqlda::setValue(int slot, Value * value, IscConnection *connection)
 void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 {
 	if (value->type == Null)
-		{
+	{
 		var->sqltype |= 1;
 		*var->sqlind = -1;
-		memset (var->sqldata, 0, var->sqllen);
 		return;
-		}
+	}
 
 	var->sqltype &= ~1;
 	ISC_STATUS statusVector [20];
@@ -1082,19 +1078,6 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 			{
 			length = 0;
 			Blob *blob = value->data.blob;
-			for (int len, offset = 0; len = blob->getSegmentLength (offset); offset += len)
-				{
-				GDS->_put_segment (statusVector, &blobHandle, len, (char*) blob->getSegment (offset));
-				if (statusVector [1])
-					THROW_ISC_EXCEPTION (statusVector);
-				}
-			}
-			break;
-
-		case ClobPtr:
-			{
-			length = 0;
-			Clob *blob = value->data.clob;
 			for (int len, offset = 0; len = blob->getSegmentLength (offset); offset += len)
 				{
 				GDS->_put_segment (statusVector, &blobHandle, len, (char*) blob->getSegment (offset));

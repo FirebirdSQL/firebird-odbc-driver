@@ -47,7 +47,6 @@ class IscPreparedStatement : public IscStatement, public PreparedStatement
 {
 public:
 	virtual int objectVersion();
-	virtual void setClob (int index, Clob *value);
 	virtual StatementMetaData* getStatementMetaDataIPD();
 	virtual StatementMetaData* getStatementMetaDataIRD();
 	virtual ~IscPreparedStatement();
@@ -73,10 +72,6 @@ public:
     virtual void        beginBlobDataTransfer(int index);
     virtual void        putBlobSegmentData (int length, const void *bytes);
     virtual void        endBlobDataTransfer();	
-
-    virtual void        beginClobDataTransfer(int index);
-    virtual void        putClobSegmentData (int length, const void *bytes);
-    virtual void        endClobDataTransfer();
 
 	virtual void		setShort (int index, short value);
 	virtual void		setInt (int index, long value);

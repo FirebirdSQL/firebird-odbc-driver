@@ -40,13 +40,10 @@
 #include "DateTime.h"	// Added by ClassView
 
 class Blob;
-class Clob;
 
 class Value  
 {
 public:
-	//void setBinaryBlob (long recordNumber, long sectionId);
-	//void setAsciiBlob (long recordNumber, long sectionId);
 	void setValue (Blob *blb);
 	Blob* getBlob();
 	char* getString (char **tempPtr);
@@ -72,8 +69,6 @@ public:
 public:	
 	void setValue (SqlTime value);
 	static void convert (QUAD number, int scale, char *string);
-	Clob* getClob();
-	void setValue (Clob *blob);
 	TimeStamp getTimestamp();
 	SqlTime getTime();
 	void setValue (TimeStamp value);
@@ -99,14 +94,12 @@ public:
 		{
 			delete [] data.string.string;
 			data.string.string = NULL;
-			}
+		}
 		else if (type == BlobPtr)
 			data.blob->release();
-		else if (type == ClobPtr)
-			data.clob->release();
 
 		type = Null;
-		}
+	}
 
 	Value();
 	virtual ~Value();
@@ -122,19 +115,11 @@ public:
 			char	*string;
 			int		length;
 			}	string;
-		/***
-		struct
-			{
-			long	recordNumber;
-			long	sectionId;
-			}	blobId;
-		***/
 		short		smallInt;
 		long		integer;
 		double		dbl;
 		QUAD		quad;
 		Blob		*blob;
-		Clob		*clob;
 		DateTime	date;
 		TimeStamp	timestamp;
 		SqlTime		time;

@@ -33,12 +33,16 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscBlob::IscBlob(IscConnection *connect, ISC_QUAD *id)
+IscBlob::IscBlob(IscConnection *connect, XSQLVAR *var)
 {
 	connection = connect;
-	blobId = *id;
+	blobId = *(ISC_QUAD*) var->sqldata;
 	fetched = false;
-	bArray = false;
+
+	if ( var->sqlsubtype == 1 )
+		enType = enTypeClob;
+	else
+		enType = enTypeBlob;
 }
 
 IscBlob::~IscBlob()

@@ -43,7 +43,6 @@
 #include "IscResultSet.h"
 #include "IscConnection.h"
 #include "BinaryBlob.h"
-#include "AsciiBlob.h"
 #include "Value.h"
 #include "IscStatementMetaData.h"
 
@@ -168,36 +167,9 @@ void IscPreparedStatement::putBlobSegmentData(int length, const void* bytes)
 void IscPreparedStatement::endBlobDataTransfer()
 {
 	if (segmentBlob)
-{
-    segmentBlob->release();
-    segmentBlob = NULL;
-}
-}
-
-// Carlos G.A.
-void IscPreparedStatement::beginClobDataTransfer(int index)
-{
-	if (segmentClob)
-        endClobDataTransfer();
-
-    segmentClob = new AsciiBlob();
-	getParameter (index - 1)->setValue (segmentClob);
-}
-
-// Carlos G.A.
-void IscPreparedStatement::putClobSegmentData(int length, const void* bytes)
-{
-	if( segmentClob )
-		segmentClob->putSegment (length, (char*) bytes, true);
-}
-
-// Carlos G.A.
-void IscPreparedStatement::endClobDataTransfer()
-{
-	if( segmentClob )
 	{
-		segmentClob->release();
-		segmentClob = NULL;
+		segmentBlob->release();
+		segmentBlob = NULL;
 	}
 }
 
@@ -352,11 +324,6 @@ void IscPreparedStatement::setBlob(int index, Blob * value)
 }
 
 void IscPreparedStatement::setArray(int index, Blob * value)
-{
-	getParameter (index - 1)->setValue (value);
-}
-
-void IscPreparedStatement::setClob(int index, Clob * value)
 {
 	getParameter (index - 1)->setValue (value);
 }

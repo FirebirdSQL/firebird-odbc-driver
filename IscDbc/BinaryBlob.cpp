@@ -36,7 +36,6 @@
 
 #include "IscDbc.h"
 #include "BinaryBlob.h"
-#include "AsciiBlob.h"
 
 #ifdef ENGINE
 #include "Database.h"
@@ -78,12 +77,6 @@ BinaryBlob::BinaryBlob(Database * db, long recNumber, long sectId)
     sectionId = sectId;
 }
 #endif
-
-BinaryBlob::BinaryBlob(Clob * blob)
-{
-    useCount = 1;
-	Stream::putSegment (blob);
-}
 
 BinaryBlob::~BinaryBlob()
 {
@@ -216,9 +209,3 @@ void BinaryBlob::putSegment(Blob * blob)
 {
 	Stream::putSegment (blob);
 }
-
-void BinaryBlob::putSegment(Clob * blob)
-{
-	Stream::putSegment (blob);
-}
-

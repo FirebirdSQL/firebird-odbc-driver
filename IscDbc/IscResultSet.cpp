@@ -300,25 +300,6 @@ Blob* IscResultSet::getBlob(const char * columnName)
 	return blob;
 }
 
-
-Clob* IscResultSet::getClob(int index)
-{
-	Clob *blob = getValue (index)->getClob();
-	clobs.append (blob);
-
-	return blob;
-}
-
-Clob* IscResultSet::getClob(const char * columnName)
-{
-	Clob *blob = getValue (columnName)->getClob();
-	clobs.append (blob);
-
-	return blob;
-}
-
-
-
 void IscResultSet::deleteBlobs()
 {
 	FOR_OBJECTS (Blob*, blob, &blobs)
@@ -326,12 +307,6 @@ void IscResultSet::deleteBlobs()
 	END_FOR;
 
 	blobs.clear();
-
-	FOR_OBJECTS (Clob*, blob, &clobs)
-		blob->release();
-	END_FOR;
-
-	clobs.clear();
 }
 
 const char* IscResultSet::genHTML(const char *series, const char *type, Properties *context)
@@ -763,11 +738,6 @@ void IscResultSet::updateBlob (int columnIndex, Blob* value)
 	NOT_YET_IMPLEMENTED;
 }
 
-void IscResultSet::updateClob (int columnIndex, Clob* value)
-{
-	NOT_YET_IMPLEMENTED;
-}
-
 void IscResultSet::updateNull (const char *columnName)
 {
 	NOT_YET_IMPLEMENTED;
@@ -834,11 +804,6 @@ void IscResultSet::updateTimeStamp (const char *columnName, TimeStamp value)
 }
 
 void IscResultSet::updateBlob (const char *columnName, Blob* value)
-{
-	NOT_YET_IMPLEMENTED;
-}
-
-void IscResultSet::updateClob (const char *columnName, Clob* value)
 {
 	NOT_YET_IMPLEMENTED;
 }

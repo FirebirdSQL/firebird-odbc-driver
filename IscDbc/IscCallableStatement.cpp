@@ -196,29 +196,10 @@ void IscCallableStatement::endBlobDataTransfer()
     Parent::endBlobDataTransfer();
 }
 
-// Carlos G.A.
-void IscCallableStatement::beginClobDataTransfer(int index)
-{
-    Parent::beginClobDataTransfer(index);
-}
-
-// Carlos G.A.
-void IscCallableStatement::putClobSegmentData (int length, const void *bytes)
-{
-    Parent::putClobSegmentData(length, bytes);
-}
-
-// Carlos G.A.
-void IscCallableStatement::endClobDataTransfer()
-{
-    Parent::endClobDataTransfer();
-}
-
 void IscCallableStatement::setBytes(int index, int length, const void* bytes)
 {
 	Parent::setBytes(index, length, bytes);
 }
-
 
 bool IscCallableStatement::execute (const char *sqlString)
 {
@@ -330,11 +311,6 @@ void IscCallableStatement::setArray(int index, Blob * value)
 	Parent::setArray(index, value);
 }
 
-void IscCallableStatement::setClob(int index, Clob * value)
-{
-	Parent::setClob(index, value);
-}
-
 int IscCallableStatement::objectVersion()
 {
 	return CALLABLESTATEMENT_VERSION;
@@ -368,11 +344,6 @@ float IscCallableStatement::getFloat(int id)
 double IscCallableStatement::getDouble(int id)
 {
 	return getValue (id)->getDouble();
-}
-
-Clob* IscCallableStatement::getClob(int id)
-{
-	return getValue (id)->getClob();
 }
 
 Blob* IscCallableStatement::getBlob(int id)
