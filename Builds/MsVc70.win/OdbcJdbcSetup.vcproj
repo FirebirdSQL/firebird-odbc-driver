@@ -39,7 +39,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="user32.lib comdlg32.lib odbccp32.lib /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE"
+				AdditionalDependencies="user32.lib comdlg32.lib odbccp32.lib /EXPORT:ConfigDSN /EXPORT:DllRegisterServer /EXPORT:DllUnregisterServer,PRIVATE"
 				OutputFile=".\Debug/OdbcJdbcSetup.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
@@ -97,7 +97,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="user32.lib comdlg32.lib odbccp32.lib /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE"
+				AdditionalDependencies="user32.lib comdlg32.lib odbccp32.lib /EXPORT:ConfigDSN /EXPORT:DllRegisterServer /EXPORT:DllUnregisterServer,PRIVATE"
 				OutputFile=".\Release/OdbcJdbcSetup.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
