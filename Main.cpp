@@ -61,7 +61,6 @@
  *				o Changed parameter types for SQLSetConnectOption
  *	
  */
-// D:\FIREDRV\OdbcJdbc\Visdata.exe
 
 #ifdef _WIN32
 #include <windows.h>
