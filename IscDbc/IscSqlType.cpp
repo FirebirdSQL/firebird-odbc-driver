@@ -221,15 +221,23 @@ void IscSqlType::buildType ()
 			{
 			case JDBC_SMALLINT:
 				bufferLength = MAX_NUMERIC_SHORT_LENGTH + 2;
+				if ( !precision )
+					precision = MAX_NUMERIC_SHORT_LENGTH;
 				break;
 			case JDBC_INTEGER:
 				bufferLength = MAX_NUMERIC_LONG_LENGTH + 2;
+				if ( !precision )
+					precision = MAX_NUMERIC_LONG_LENGTH;
 				break;
 			case JDBC_DOUBLE:
 				bufferLength = MAX_NUMERIC_DOUBLE_LENGTH + 2;
+				if ( !precision )
+					precision = MAX_NUMERIC_DOUBLE_LENGTH;
 				break;
 			default:
 				bufferLength = MAX_NUMERIC_LENGTH + 2;
+				if ( !precision )
+					precision = MAX_NUMERIC_LENGTH;
 			}
 
 			type = JDBC_NUMERIC;
