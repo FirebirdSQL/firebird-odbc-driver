@@ -2932,7 +2932,10 @@ RETCODE OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attri
 
 		case SQL_COLUMN_COUNT:
 		case SQL_DESC_COUNT:
-			value = metaData->getColumnCount();
+			if ( statement && statement->isActiveProcedure() )
+				value = 0;
+			else
+				value = metaData->getColumnCount();
 			break;
 
 		case SQL_DESC_TYPE:

@@ -306,19 +306,23 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 {
 	char * ptSrc = string;
 
-	if ( !numInputParam )
+	SKIP_WHITE ( ptSrc );
+
+	if ( *ptSrc == '}' )
 	{
-		while( *ptSrc && *ptSrc != '}' )
-			ptSrc++;
+		int i = 0, offset = numInputParam * 2 - 1 + 2;
+		memmove(ptSrc + offset, ptSrc, strlen(ptSrc) + 1 );
 
-		if ( *ptSrc == '}' )
-			memmove(string, ptSrc, strlen(ptSrc) + 1 );
-
+		*ptSrc++ = '(';
+		while( i++ < numInputParam )
+		{
+			if ( i > 1 )
+				*ptSrc++ = ',';
+			*ptSrc++ = '?';
+		}
+		*ptSrc++ = ')';
 		return 0;
 	}
-
-	while( *ptSrc && *ptSrc != '(' )
-		ptSrc++;
 
 	if ( *ptSrc != '(' )
 		return -1;
@@ -387,7 +391,10 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 				++ptCh;
 			}
 
-			if ( *ptCh && *ptCh != delimiter && *ptCh != ',' )
+			if ( *ptCh == delimiter )
+				++ptCh;
+
+			if ( *ptCh && *ptCh != ',' )
 			{
 				ptSrc = ptCh;
 				i++;
@@ -451,6 +458,7 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 	ptCh = --ptSrc;
 
 //  ASSERT ( *ptCh == ',' );
+//  ok, it's output param
 
 	while ( *ptCh && *ptCh != ')' )
 		ptCh++;
@@ -458,14 +466,14 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 	memmove(ptSrc, ptCh, strlen(ptCh) + 1 );
 	string = ptSrc + 1;
 
-	return 0;
+	return 1; 
 }
 
-bool IscConnection::getNativeSql (const char * inStatementText, long textLength1,
+int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 								char * outStatementText, long bufferLength,
 								long * textLength2Ptr)
 {
-	bool bModify = false;
+	int statysModify = 0;
 	char * ptIn = (char*)inStatementText;
 	char * ptInEnd = ptIn + textLength1;
 	char * ptOut = outStatementText;
@@ -540,14 +548,14 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 					while( *ptIn == ' ' )ptIn++;
 
 					if(*ptIn != '=')
-						return false;
+						return statysModify;
 
 					ptIn++; // '='
 					while( *ptIn == ' ' )ptIn++;
 				}
 
 				if ( *(long*)ptIn != 0x6c6c6163 && *(long*)ptIn != 0x4c4c4143 )
-					return false;
+					return statysModify;
 
 				ptIn += 4; // 'call'
 
@@ -555,24 +563,16 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 
 				ptOut = ptEndBracket;
 				int ignoreBr = ignoreBracket;
+				char * savePtOut;
 
-#ifdef TRANSLATE_CALL_TO_EXECUTE
-#define LENSTR_EXECUTE_PROCEDURE 18
-				int offset = LENSTR_EXECUTE_PROCEDURE - ( ptIn - ptOut );
-
-				memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
-				memcpy(ptOut, "execute procedure ", LENSTR_EXECUTE_PROCEDURE);
-				ptIn += offset; 
-				ptOut += LENSTR_EXECUTE_PROCEDURE;
-#else
-#define LENSTR_SELECT_PROCEDURE 14
-				int offset = LENSTR_SELECT_PROCEDURE - ( ptIn - ptOut );
+				const int lenSpase = 18;
+				int offset = lenSpase - ( ptIn - ptOut );
 
 				memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
-				memcpy(ptOut, "select * from ", LENSTR_SELECT_PROCEDURE);
+				memset(ptOut, ' ', lenSpase);
+				savePtOut = ptOut;
 				ptIn += offset; 
-				ptOut += LENSTR_SELECT_PROCEDURE;
-#endif
+				ptOut += lenSpase;
 
 				char procedureName[256];
 				char * end = procedureName;
@@ -591,7 +591,7 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 					end--;
 
 					if ( !IS_QUOTE(*end) )
-						return false;
+						return statysModify;
 				}
 				else
 					while ( !(IS_END_TOKEN(*ptIn)) )
@@ -599,15 +599,19 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 
 				*end = '\0';
 
-				int count = getCountInputParamFromProcedure ( procedureName );
-				
-				if ( count == -1 ) // not found
-					return false;
+				int numIn, numOut;
 
-				int ret = buildParamProcedure ( ptIn, count );
+				if ( !getCountInputParamFromProcedure ( procedureName, numIn, numOut ) )
+					return statysModify; // not found
+
+				int ret = buildParamProcedure ( ptIn, numIn );
 				
 				if ( ret == -1 ) 
-					return false;
+					return statysModify;
+				else if ( ret == 1 || !numOut )
+					memcpy(savePtOut, "execute procedure ", 18);
+				else // if ( ret == 2 )
+					memcpy(savePtOut, "select * from ", 14);
 
 				ptOut = ptIn;
 
@@ -622,7 +626,7 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 				}while ( ignoreBr-- );
 
 				if(*ptIn != '}')
-					return false;
+					return statysModify;
 
 				ptIn++; // '}'
 
@@ -630,7 +634,7 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 					*ptOut++ = *ptIn++;
 
 				*ptOut = '\0';
-				bModify = true;
+				statysModify = ret == 1 ? 2 : 1;
 			}
 			else
 			{
@@ -664,7 +668,7 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 				}while ( ignoreBr-- );
 
 				if(*ptIn != '}')
-					return false;
+					return statysModify;
 
 				ptIn++; // '}'
 
@@ -672,7 +676,7 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 					*ptOut++ = *ptIn++;
 
 				*ptOut = '\0';
-				bModify = true;
+				statysModify = 1;
 			}
 
 			--ptEndBracket; // '{'
@@ -688,23 +692,29 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 	if ( textLength2Ptr )
 		*textLength2Ptr = ptOut - outStatementText;
 
-	return bModify;
+	return statysModify;
 }
 
-int IscConnection::getCountInputParamFromProcedure ( const char* procedureName )
+bool IscConnection::getCountInputParamFromProcedure ( const char* procedureName, int &numIn, int &numOut )
 {
-	int num = -1; // not found
+	bool ret = false; // not found
+	numIn = numOut = 0;
+
 	IscProceduresResultSet * resultSet = 
 		(IscProceduresResultSet*)getMetaData()->getProcedures ( NULL, NULL, procedureName );
 
 	if ( resultSet )
 	{
 		if ( resultSet->getCountRowsStaticCursor() )
-			num = resultSet->sqlda->getShort(4); // NUM_INPUT_PARAM
+		{
+			numIn = resultSet->sqlda->getShort(4); // NUM_INPUT_PARAM
+			numOut = resultSet->sqlda->getShort(5); // NUM_OUTPUT_PARAM
+			ret = true;
+		}
 		resultSet->release();
 	}
 
-	return num;
+	return ret;
 }
 
 DatabaseMetaData* IscConnection::getMetaData()

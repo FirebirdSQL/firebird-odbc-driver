@@ -85,7 +85,7 @@ public:
 	JString getInfoString (char *buffer, int item, const char *defaultString);
 	int getInfoItem (char *buffer, int item, int defaultValue);
 	JString getIscStatusText (ISC_STATUS *statusVector);
-	virtual bool getNativeSql (const char * inStatementText, long textLength1,
+	virtual int getNativeSql (const char * inStatementText, long textLength1,
 								char * outStatementText, long bufferLength,
 								long * textLength2Ptr);
 	void* startTransaction();
@@ -100,7 +100,7 @@ public:
 	virtual Blob* genHTML (Properties *context, long genHeaders);
 	virtual bool isConnected();
 	InternalStatement* createInternalStatement();
-	int getCountInputParamFromProcedure ( const char* procedureName );
+	bool getCountInputParamFromProcedure ( const char* procedureName, int &numIn, int &numOut );
 	int buildParamProcedure ( char *& string, int numInputParam );
 	virtual void prepareTransaction();
 	virtual bool getTransactionPending();

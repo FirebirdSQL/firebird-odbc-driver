@@ -120,7 +120,7 @@ public:
 	virtual void		rollbackAuto() = 0;
 
 	virtual Blob*		genHTML (Properties *context, long genHeaders) = 0;
-	virtual bool		getNativeSql (const char * inStatementText, long textLength1,
+	virtual int			getNativeSql (const char * inStatementText, long textLength1,
 										char * outStatementText, long bufferLength,
 										long * textLength2Ptr) = 0;
 
