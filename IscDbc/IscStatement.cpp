@@ -479,7 +479,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				value->setValue (*(QUAD*) var->sqldata, var->sqlscale);
 				break;
 
-			case SQL_BLOB: 
+			case SQL_BLOB:
 				{
 				IscBlob* blob = new IscBlob (connection, var);
 				value->setValue (blob);
@@ -517,7 +517,11 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				break;
 
 			case SQL_ARRAY:
-				value->setValue (new IscArray(connection,var));
+				{
+				IscArray* blob = new IscArray (connection, var);
+				value->setValue (blob);
+				blob->release();
+				}
 				break;
 			}
 }
