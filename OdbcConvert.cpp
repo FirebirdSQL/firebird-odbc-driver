@@ -652,21 +652,21 @@ SQLINTEGER * OdbcConvert::getAdressBindIndTo(char * pointer)
 	return (SQLINTEGER *)(pointer + *bindOffsetPtrIndTo);
 }
 
-#define ODBCCONVERT_CHECKNULL					\
-	if( *(short*)indicatorFrom == -1 )			\
-	{											\
-		if ( indicatorTo )						\
-			*indicatorTo = -1;					\
-		return SQL_SUCCESS;						\
-	}											\
+#define ODBCCONVERT_CHECKNULL								\
+	if( *(short*)indicatorFrom == SQL_NULL_DATA )			\
+	{														\
+		if ( indicatorTo )									\
+			*indicatorTo = SQL_NULL_DATA;					\
+		return SQL_SUCCESS;									\
+	}														\
 
 #define ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO)				\
 	if ( from->isIndicatorSqlDa )							\
 	{														\
-		if( *(short*)indicatorFrom == -1 )					\
+		if( *(short*)indicatorFrom == SQL_NULL_DATA )		\
 		{													\
 			if ( indicatorTo )								\
-				*indicatorTo = -1;							\
+				*indicatorTo = SQL_NULL_DATA;				\
 			return SQL_SUCCESS;								\
 		}													\
 		else if ( indicatorTo )								\
@@ -674,21 +674,23 @@ SQLINTEGER * OdbcConvert::getAdressBindIndTo(char * pointer)
 	}														\
 	else /* if ( to->isIndicatorSqlDa ) */					\
 	{														\
-		if( indicatorFrom && *indicatorFrom == -1 )			\
+		if(indicatorFrom && *indicatorFrom==SQL_NULL_DATA)	\
 		{													\
-			*(short*)indicatorTo = -1;						\
+			*(short*)indicatorTo = SQL_NULL_DATA;			\
 			return SQL_SUCCESS;								\
 		}													\
 		else												\
 			*indicatorTo = 0;								\
 	}														\
 
-#define ODBCCONVERT_CHECKNULL_SQLDA					\
-	if( indicatorFrom && *indicatorFrom == -1 )		\
-	{												\
-		*(short*)indicatorTo = -1;					\
-		return SQL_SUCCESS;							\
-	}												\
+#define ODBCCONVERT_CHECKNULL_SQLDA							\
+	if( indicatorFrom && *indicatorFrom == SQL_NULL_DATA )	\
+	{														\
+		*(short*)indicatorTo = SQL_NULL_DATA;				\
+		return SQL_SUCCESS;									\
+	}														\
+	else													\
+		*indicatorTo = 0;									\
 
 #define ODBCCONVERT_CONV(TYPE_FROM,C_TYPE_FROM,TYPE_TO,C_TYPE_TO)								\
 int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)				\
@@ -1211,7 +1213,6 @@ int OdbcConvert::transferTagDateToDate(DescRecord * from, DescRecord * to)
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
 	*(long*)pointer = encode_sql_date ( tagDt->day, tagDt->month, tagDt->year );
-	*(short*)indicatorTo = 0;
 
 	return SQL_SUCCESS;
 }
@@ -1303,7 +1304,6 @@ int OdbcConvert::transferTagTimeToTime(DescRecord * from, DescRecord * to)
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
 	*(long*)pointer = encode_sql_time ( tagTm->hour, tagTm->minute, tagTm->second );
-	*(short*)indicatorTo = 0;
 
 	return SQL_SUCCESS;
 }
@@ -1442,7 +1442,6 @@ int OdbcConvert::transferTagDateTimeToDate(DescRecord * from, DescRecord * to)
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
 	*(long*)pointer = encode_sql_date ( tagTs->day, tagTs->month, tagTs->year );
-	*(short*)indicatorTo = 0;
 
 	return SQL_SUCCESS;
 }
@@ -1460,8 +1459,6 @@ int OdbcConvert::transferTagDateTimeToTime(DescRecord * from, DescRecord * to)
 
 	ntime = encode_sql_time ( tagTs->hour, tagTs->minute, tagTs->second );
 	ntime += tagTs->fraction / ( STD_TIME_SECONDS_PRECISION / ISC_TIME_SECONDS_PRECISION );
-
-	*(short*)indicatorTo = 0;
 
 	return SQL_SUCCESS;
 }
@@ -1483,7 +1480,6 @@ int OdbcConvert::transferTagDateTimeToDateTime(DescRecord * from, DescRecord * t
 	ntime += tagTs->fraction / ( STD_TIME_SECONDS_PRECISION / ISC_TIME_SECONDS_PRECISION );
 
 	*(QUAD*)pointer = MAKEQUAD( nday, ntime );
-	*(short*)indicatorTo = 0;
 
 	return SQL_SUCCESS;
 }
@@ -1879,9 +1875,6 @@ int OdbcConvert::convStringToBlob(DescRecord * from, DescRecord * to)
 	if( len >= 0 )
 		to->dataBlobPtr->writeStringHexToBlob(pointerTo, pointerFrom, len);
 
-	if ( indicatorTo )
-		*(short*)indicatorTo = 0;
-
 	return ret;
 }
 
@@ -1900,9 +1893,6 @@ int OdbcConvert::convStreamHexStringToBlob(DescRecord * from, DescRecord * to)
 	else
 		from->dataBlobPtr->writeBlob( pointerTo );
 
-	if ( indicatorTo )
-		*(short*)indicatorTo = 0;
-
 	return SQL_SUCCESS;
 }
 
@@ -1916,9 +1906,6 @@ int OdbcConvert::convStreamToBlob(DescRecord * from, DescRecord * to)
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
 	from->dataBlobPtr->writeBlob( pointerTo );
-
-	if ( indicatorTo )
-		*(short*)indicatorTo = 0;
 
 	return SQL_SUCCESS;
 }
@@ -1968,8 +1955,6 @@ int OdbcConvert::transferStringToTinyInt(DescRecord * from, DescRecord * to)
 	else
 		*org = (char)val;
 
-	*(short*)indicatorTo = 0;
-
 	return SQL_SUCCESS;
 }
 
@@ -1984,6 +1969,14 @@ int OdbcConvert::transferStringToDateTime(DescRecord * from, DescRecord * to)
 
 	int len = 0;
 	convertStringDataToServerStringData ( pointerFrom, len );
+
+	if ( !len )
+	{
+		if ( !indicatorFrom || *indicatorFrom == SQL_NTS )
+			len = strlen ( pointerFrom );
+		else
+			len = MIN ( (int)from->length, *indicatorFrom );
+	}
 
 	if ( !from->data_at_exec )
 	{
@@ -2000,8 +1993,6 @@ int OdbcConvert::transferStringToDateTime(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen( (short)len );
 		to->headSqlVarPtr->setSqlData( to->localDataPtr );
 	}
-
-	*(short*)indicatorTo = 0;
 
 	return SQL_SUCCESS;
 }
@@ -2038,8 +2029,6 @@ int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen( (short)len );
 		to->headSqlVarPtr->setSqlData( to->localDataPtr );
 	}
-
-	*(short*)indicatorTo = 0;
 
 	return SQL_SUCCESS;
 }
@@ -2078,8 +2067,6 @@ int OdbcConvert::transferBinaryStringToAllowedType(DescRecord * from, DescRecord
 			to->headSqlVarPtr->setSqlData( to->localDataPtr );
 		}
 	}
-
-	*(short*)indicatorTo = 0;
 
 	return SQL_SUCCESS;
 }
