@@ -231,7 +231,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 			{
 				JString text;
 				text.Format ("File Database is used by another process");
-				throw SQLEXCEPTION ( 8002, text );
+				throw SQLEXCEPTION ( statusVector [1], text );
 			}
 		}
 		else
