@@ -371,7 +371,7 @@ signed long DateTime::decodeDate (signed long nday, tm	*times)
 	signed long	century;
 
 //	nday = nday / (60 * 60 * 24);	//NOMEY -
-	nday += 719469;
+	nday += 678882;
 	century = (4 * nday - 1) / 146097;
 	nday = 4 * nday - 1 - 146097 * century;
 	day = nday / 4;
