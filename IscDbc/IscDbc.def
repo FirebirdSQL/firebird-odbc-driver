@@ -1,0 +1,7 @@
+LIBRARY IscDbc
+DESCRIPTION "IscDbc -- Jim's Jdbc C++ Binding for Interbase"
+EXETYPE WINDOWS
+
+
+EXPORTS
+	createConnection
