@@ -28,6 +28,7 @@
 namespace IscDbcLibrary {
 
 #define DEFAULT_SQLDA_COUNT		20
+#define DEFAULT_BLOB_BUFFER_LENGTH 16384
 
 struct TempVector {
     char	*temp;
