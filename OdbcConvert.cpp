@@ -613,6 +613,22 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 	return SQL_SUCCESS;																			\
 }																								\
 
+#define ODBCCONVERTBIGINT_CONV(TYPE_TO,C_TYPE_TO)												\
+int OdbcConvert::convBigintTo##TYPE_TO(DescRecord * from, DescRecord * to)						\
+{																								\
+	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
+	SQLINTEGER *indicatorPointer = (SQLINTEGER *)getAdressBindIndTo((char*)to->indicatorPtr);	\
+																								\
+	ODBCCONVERT_CHECKNULL;																		\
+																								\
+	*(C_TYPE_TO*)pointer = ( (C_TYPE_TO)*(QUAD*)getAdressBindDataFrom((char*)from->dataPtr)	)	\
+					/(C_TYPE_TO)(QUAD)listScale[from->scale];									\
+	if ( indicatorPointer )																		\
+		*indicatorPointer = sizeof(C_TYPE_TO);													\
+																								\
+	return SQL_SUCCESS;																			\
+}																								\
+
 #define ODBCCONVERT_CONVTAGNUMERIC(TYPE_FROM,C_TYPE_FROM)										\
 int OdbcConvert::conv##TYPE_FROM##ToTagNumeric(DescRecord * from, DescRecord * to)				\
 {																								\
@@ -900,10 +916,10 @@ int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 // Bigint
 ////////////////////////////////////////////////////////////////////////
 
-ODBCCONVERT_CONV(Bigint,QUAD,Short,short);
-ODBCCONVERT_CONV(Bigint,QUAD,Long,long);
-ODBCCONVERT_CONV(Bigint,QUAD,Float,float);
-ODBCCONVERT_CONV(Bigint,QUAD,Double,double);
+ODBCCONVERTBIGINT_CONV(Short,short);
+ODBCCONVERTBIGINT_CONV(Long,long);
+ODBCCONVERTBIGINT_CONV(Float,float);
+ODBCCONVERTBIGINT_CONV(Double,double);
 ODBCCONVERT_CONV(Bigint,QUAD,Bigint,QUAD);
 ODBCCONVERT_CONV_TO_BINARY(Bigint,QUAD,18);
 ODBCCONVERT_CONV_TO_STRING(Bigint,QUAD,18);
