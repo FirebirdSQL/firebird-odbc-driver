@@ -261,6 +261,9 @@
 				RelativePath="..\..\IscDbc\Lock.h">
 			</File>
 			<File
+				RelativePath="..\..\IscDbc\Mlist.h">
+			</File>
+			<File
 				RelativePath="..\..\IscDbc\Mutex.h">
 			</File>
 			<File

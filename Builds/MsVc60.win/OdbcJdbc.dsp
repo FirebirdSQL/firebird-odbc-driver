@@ -195,7 +195,7 @@ SOURCE=..\..\IscDbc\JString.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\Mlist.h
+SOURCE=..\..\IscDbc\Mlist.h
 # End Source File
 # Begin Source File
 

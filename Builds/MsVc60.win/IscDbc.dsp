@@ -246,6 +246,10 @@ SOURCE=..\..\IscDbc\Lock.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\Mlist.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\Mutex.h
 # End Source File
 # Begin Source File
@@ -279,6 +283,10 @@ SOURCE=..\..\IscDbc\SqlTime.h
 # Begin Source File
 
 SOURCE=..\..\IscDbc\Stream.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\SupportFunctions.h
 # End Source File
 # Begin Source File
 
@@ -455,6 +463,10 @@ SOURCE=..\..\IscDbc\SqlTime.cpp
 # Begin Source File
 
 SOURCE=..\..\IscDbc\Stream.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\SupportFunctions.cpp
 # End Source File
 # Begin Source File
 
