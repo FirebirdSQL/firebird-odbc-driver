@@ -85,6 +85,9 @@ public:
 
 //}}} end class Statement without specification jdbc
 
+protected:
+	void				bindArrayParamForStmtUpdate();
+
 public:
 	IscOdbcStatement(IscConnection *connect);
 	virtual ~IscOdbcStatement();

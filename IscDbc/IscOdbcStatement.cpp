@@ -105,6 +105,7 @@ void IscOdbcStatement::getInputParameters()
 			THROW_ISC_EXCEPTION (connection, statusVector);
 	}
 
+	bindArrayParamForStmtUpdate();
 	inputSqlda.allocBuffer(connection);
 }
 
@@ -134,6 +135,88 @@ StatementMetaData* IscOdbcStatement::getStatementMetaDataIRD()
 	statementMetaDataIRD = new IscStatementMetaData (connection, &outputSqlda);
 
 	return statementMetaDataIRD;
+}
+
+//  
+//  UPDATE "TESTTBL" SET "KOD"=?,"ARRAYFLD1"=?,"ARRAYFLD2"=? WHERE "KOD" = ? AND "ARRAYFLD1" = ? AND "ARRAYFLD2" = ?
+//  "ARRAYFLD1","ARRAYFLD2" - it's array
+//	Our purpose:
+//		set attributes(relname,sqlname) of param 2 to param 5
+//			and param 3 to param 6
+// 
+void IscOdbcStatement::bindArrayParamForStmtUpdate()
+{
+	const char *strSql = sql, *ch;
+	int numberColumns = inputSqlda.sqlda->sqld;
+	XSQLVAR *var = inputSqlda.sqlda->sqlvar;
+	int *offsetParam = NULL;
+
+	for (int n = 0; n < numberColumns; ++n, ++var)
+	{
+		switch ( var->sqltype & ~1 )
+		{
+		case SQL_ARRAY:
+			if ( !var->sqlname_length )
+			{
+				if ( !offsetParam )
+				{
+					offsetParam = new int[numberColumns];
+					int *param = offsetParam;
+
+					ch = strSql;
+
+					while ( *ch )
+					{
+						if ( *ch == '?' )
+							*param++ = ch - strSql;
+						ch++;
+					}
+				}
+
+				const char *end = strSql + offsetParam[n];
+
+				while ( end > strSql && *end != '=' ) --end;
+				--end; // '='
+				while ( end > strSql && *end == ' ' ) --end;
+
+				char delimiter = '"';
+
+				if ( *end != '"' )
+				{
+					delimiter = ' ';
+					end++;
+				}
+
+				const char *start = end;
+
+				while ( start-- > strSql )
+					if ( *start == delimiter )
+					{
+						start++;
+						break;
+					}
+
+				XSQLVAR *varIn = inputSqlda.sqlda->sqlvar;
+				int len = end - start;
+
+				for ( int m = 0; m < n; ++m, ++varIn )
+				{
+					if ( varIn->sqlname_length == len && !strncasecmp ( varIn->sqlname, start, len ) )
+					{
+						memcpy ( var->sqlname, varIn->sqlname, len );
+						var->sqlname_length = len;
+						memcpy ( var->relname, varIn->relname, varIn->relname_length );
+						var->relname_length = varIn->relname_length;
+						break;
+					}
+				}
+				
+			}
+			break;
+		}
+	}
+
+	delete [] offsetParam;
 }
 
 int IscOdbcStatement::objectVersion()
