@@ -90,15 +90,15 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 				"\tcast (pp.rdb$procedure_name as varchar(31)) as type_name,\n"			// 7
 				"\tcast ( f.rdb$field_length as integer ) as column_size,\n"			// 8
 				"\tcast ( null as integer ) as buffer_length,\n"	// 9
-				"\tf.rdb$field_scale as decimal_digits,\n"			// 10
-				"\t10 as num_prec_radix,\n"							// 11
-				"\t1 as nullable,\n"								// 12 #define SQL_NULLABLE 1
+				"\tcast ( f.rdb$field_scale as smallint) as decimal_digits,\n"			// 10
+				"\tcast ( 10 as smallint) as num_prec_radix,\n"		// 11
+				"\tcast ( 1 as smallint) as nullable,\n"			// 12 #define SQL_NULLABLE 1
 				"\tcast (f.rdb$description as varchar(256)) as remarks,\n"				// 13
 				"\tcast (f.rdb$default_value as varchar(512)) as column_def,\n"			// 14
 				"\tf.rdb$field_type as sql_data_type,\n"			// 15 - SMALLINT NOT NULL
 				"\tf.rdb$field_sub_type as sql_datetime_sub,\n"		// 16 - SMALLINT
 				"\tcast ( f.rdb$field_length as integer ) as char_octet_length,\n"		// 17
-				"\tcast ( pp.rdb$parameter_number as integer )+1 as ordinal_position,\n"// 18
+				"\tcast ( pp.rdb$parameter_number + 1 as integer) as ordinal_position,\n"// 18
 				"\tcast ('YES' as varchar(3)) as is_nullable,\n"	// 19
 				"\tf.rdb$field_precision as column_precision\n"		// 20
 		"from rdb$procedure_parameters pp, rdb$fields f\n"
@@ -139,6 +139,13 @@ bool IscProcedureColumnsResultSet::next()
 	sqlda->updateVarying (7, sqlType.typeName);
 	sqlda->updateInt (9, length);
 
+	switch (sqlType.type)
+	{
+	case JDBC_NUMERIC:
+	case JDBC_DECIMAL:
+		sqlda->updateShort ( 10, -scale );
+	}
+	
 	adjustResults (sqlType);
 
 	return true;
@@ -159,11 +166,17 @@ void IscProcedureColumnsResultSet::adjustResults (IscSqlType &sqlType)
 		sqlda->setNull (10);
 		sqlda->setNull (11);
 		break;
+	case JDBC_REAL:
+	case JDBC_DOUBLE:
+		sqlda->updateShort (11, 2);
+		break;
 	case JDBC_TIME:
 	case JDBC_SQL_TIME:
 	case JDBC_TIMESTAMP:
 	case JDBC_SQL_TIMESTAMP:
 		sqlda->updateShort (10, -ISC_TIME_SECONDS_PRECISION_SCALE);
+	default:
+		sqlda->updateShort (11, 10);
 	}	
 
 	switch (sqlType.type)
