@@ -37,76 +37,105 @@ namespace IscDbcLibrary {
 
 class IscConnection;
 class IscStatementMetaData;
-//Added by RM
 class BinaryBlob;
 class AsciiBlob;
 
 class IscPreparedStatement : public IscStatement, public PreparedStatement
 {
 public:
-	virtual int objectVersion();
-	virtual StatementMetaData* getStatementMetaDataIPD();
-	virtual StatementMetaData* getStatementMetaDataIRD();
-	~IscPreparedStatement();
-	virtual bool		execute (const char *sqlString);
-	virtual ResultSet*	executeQuery (const char *sqlString);
-	virtual void		clearResults();
-	virtual int			getUpdateCount();
-	virtual bool		getMoreResults();
-	virtual void		setCursorName (const char *name);
-	virtual ResultSet*	getResultSet();
-	virtual ResultList* search (const char *searchString);
-	virtual int			executeUpdate (const char *sqlString);
-	virtual void		close();
-	virtual int			release();
-	virtual void		addRef();
+// {{{specification jdbc
+	virtual void		clearParameters();
+	virtual bool		execute();
+	virtual ResultSet*	executeQuery();
+	virtual int			executeUpdate();
+//	virtual void		setAsciiStream( int parameterIndex, InputStream x, int length );
+//	virtual void		setBigDecimal( int parameterIndex, BigDecimal x );
+//	virtual void		setBinaryStream( int parameterIndex, InputStream x, int length );
+//	virtual void		setBoolean( int parameterIndex, boolean x );
+	virtual void		setByte (int index, char value);
+	virtual void		setBytes (int index, const void *bytes);
+	virtual void		setDate (int index, DateTime value);
+	virtual void		setDouble (int index, double value);
+	virtual void		setFloat (int index, float value);
+	virtual void		setInt (int index, long value);
+	virtual void		setLong (int index, QUAD value);
+	virtual void		setNull (int index, int type);
+//	virtual void		setObject( int parameterIndex, Object x );
+//	virtual void		setObject( int parameterIndex, Object x, int targetSqlType );
+//	virtual void		setObject( int parameterIndex, Object x, int targetSqlType, int scale );
+	virtual void		setShort (int index, short value);
+	virtual void		setString(int index, const char * string);
+	virtual void		setTime (int index, SqlTime value);
+	virtual void		setTimestamp (int index, TimeStamp value);
+//	virtual void		setUnicodeStream( int parameterIndex, InputStream x, int length );
+// }}}end specification jdbc
+
+//{{{ class Statement specification jdbc
+	virtual bool		execute (const char *sqlString) { return IscStatement::execute (sqlString); }
+	virtual ResultSet*	executeQuery (const char *sqlString) { return IscStatement::executeQuery ( sqlString ); }
+	virtual int			getUpdateCount() { return IscStatement::getUpdateCount (); }
+	virtual bool		getMoreResults(){ return IscStatement::getMoreResults(); }
+	virtual void		setCursorName (const char *name){ IscStatement::setCursorName ( name ); }
+	virtual void		setEscapeProcessing(bool enable){ IscStatement::setEscapeProcessing( enable ); }
+	virtual ResultSet*	getResultSet(){ return IscStatement::getResultSet(); }
+	virtual int			executeUpdate (const char *sqlString){ return IscStatement::executeUpdate ( sqlString ); }
+	virtual int			getMaxFieldSize(){ return IscStatement::getMaxFieldSize(); }
+	virtual int			getMaxRows(){ return IscStatement::getMaxRows(); }
+	virtual int			getQueryTimeout(){ return IscStatement::getQueryTimeout(); }
+	virtual void		cancel(){ IscStatement::cancel(); }
+//	virtual void		clearWarnings(){ IscStatement::clearWarnings(); }
+//	virtual void		getWarnings(){ IscStatement::getWarnings(); }
+	virtual void		close(){ IscStatement::close(); }
+	virtual void		setMaxFieldSize(int max){ IscStatement::setMaxFieldSize( max ); }
+	virtual void		setMaxRows(int max){ IscStatement::setMaxRows( max ); }
+	virtual void		setQueryTimeout(int seconds){ IscStatement::setQueryTimeout( seconds ); }
+//}}} end class Statement specification jdbc
+
+	virtual void		clearResults() { IscStatement::clearResults (); }
+	virtual ResultList* search (const char *searchString) { return IscStatement::search (searchString); }
+	virtual int			release() { return IscStatement::release (); }
+	virtual void		addRef() { IscStatement::addRef (); }
 	virtual bool		isActiveSelect(){ return IscStatement::isActiveSelect(); }
 	virtual bool		isActiveProcedure(){ return IscStatement::isActiveProcedure(); }
+	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtPlan( value, bufferLength, lengthPtr ); }  
+	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtType( value, bufferLength, lengthPtr ); }  
+	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtInfoCountRecords( value, bufferLength, lengthPtr ); }  
 
-	virtual void		setNull (int index, int type);
-	virtual void		setString(int index, const char * string);
+//}}} end class Statement without specification jdbc
+
+public:
+	IscPreparedStatement(IscConnection *connect);
+	virtual ~IscPreparedStatement();
+
+	virtual StatementMetaData* getStatementMetaDataIPD();
+	virtual StatementMetaData* getStatementMetaDataIRD();
+
     virtual void        setString(int index, const char * string, int length);
 	virtual void        convStringData(int index);
-	virtual void		setByte (int index, char value);
-//Added by RM
+	virtual void		setBlob (int index, Blob *value);
+	virtual void		setBytes (int index, int length, const void *bytes);
+	virtual void		setArray (int index, Blob *value);
     virtual void        beginBlobDataTransfer(int index);
     virtual void        putBlobSegmentData (int length, const void *bytes);
     virtual void        endBlobDataTransfer();	
 
-	virtual void		setShort (int index, short value);
-	virtual void		setInt (int index, long value);
-	virtual void		setQuad (int index, QUAD value);
-	virtual void		setFloat (int index, float value);
-	virtual void		setDouble (int index, double value);
-	virtual void		setDate (int index, DateTime value);
-	virtual void		setTimestamp (int index, TimeStamp value);
-	virtual void		setTime (int index, SqlTime value);
-	virtual void		setBlob (int index, Blob *value);
-	virtual void		setBytes (int index, int length, const void *bytes);
-	virtual void		setArray (int index, Blob *value);
-
-	virtual int			executeUpdate();
-	virtual bool		execute();
-	virtual ResultSet*	executeQuery();
 	virtual void		executeMetaDataQuery();
 
 	void				getInputParameters();
 	virtual int			getNumParams();
 	virtual void		prepare (const char *sqlString);
-	IscPreparedStatement(IscConnection *connect);
+
 	Value* getParameter (int index);
 
 	Values				parameters;
-	IscStatementMetaData	*statementMetaDataIPD;
-	IscStatementMetaData	*statementMetaDataIRD;
-    BinaryBlob              *segmentBlob;
-	AsciiBlob				*segmentClob;
-	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
-	{ return getPlanStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  
-	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr)
-	{ return getTypeStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  
-	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr)
-	{ return getInfoCountRecordsStatement(connection, statementHandle, value,bufferLength,lengthPtr); }  
+	IscStatementMetaData	
+						*statementMetaDataIPD;
+	IscStatementMetaData
+						*statementMetaDataIRD;
+    BinaryBlob          *segmentBlob;
+	AsciiBlob			*segmentClob;
+
+	virtual int			objectVersion();
 };
 
 }; // end namespace IscDbcLibrary

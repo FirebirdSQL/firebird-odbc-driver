@@ -52,24 +52,33 @@ public:
 	virtual int objectVersion();
 	void clearResults();
 	virtual bool execute();
-	bool executeProcedure();
+	virtual bool executeProcedure();
 	virtual void prepareStatement (const char *sqlString);
 	void deleteResultSet (IscResultSet *resultSet);
 	IscStatement(IscConnection *connect);
 	virtual int getUpdateCount();
 	virtual bool getMoreResults();
 	virtual void setCursorName (const char *name);
+	virtual void setEscapeProcessing(bool enable);
 	virtual ResultSet* executeQuery (const char *sqlString);
 	virtual ResultSet* getResultSet();
 	virtual ResultList* search (const char *searchString);
 	virtual int executeUpdate (const char *sqlString);
+	virtual int	getMaxFieldSize();
+	virtual int	getMaxRows();
+	virtual int	getQueryTimeout();
+	virtual void cancel();
 	virtual bool execute (const char *sqlString);
 	virtual void close();
+	inline virtual void setMaxFieldSize(int max);
+	inline virtual void setMaxRows(int max);
+	inline virtual void setQueryTimeout(int seconds);
+
 	virtual int release();
 	virtual void addRef();
 	virtual bool isActiveSelect(){ return typeStmt == stmtSelect; }
 	virtual bool isActiveProcedure(){ return typeStmt == stmtProcedure; }
-	~IscStatement();
+	virtual ~IscStatement();
 
 	virtual int getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
 	{ return getPlanStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  

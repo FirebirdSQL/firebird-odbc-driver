@@ -132,7 +132,6 @@ PreparedStatement* IscConnection::prepareStatement(const char * sqlString)
 		throw;
 	}
 
-//From R. Milharcic
 	statements.append (statement);
 
 	return statement;
@@ -544,6 +543,11 @@ int IscConnection::objectVersion()
 	return CONNECTION_VERSION;
 }
 
+void IscConnection::clearWarnings()
+{
+	NOT_YET_IMPLEMENTED;
+}
+
 Connection* IscConnection::clone()
 {
 	return new IscConnection (this);
@@ -562,6 +566,17 @@ bool IscConnection::getAutoCommit()
 	return autoCommit;
 }
 
+const char*	IscConnection::getCatalog()
+{
+	NOT_YET_IMPLEMENTED;
+	return "";
+}
+
+void IscConnection::setCatalog(const char* catalog)
+{
+	NOT_YET_IMPLEMENTED;
+}
+
 void IscConnection::setTransactionIsolation(int level)
 {
 	transactionIsolation = level;
@@ -570,6 +585,29 @@ void IscConnection::setTransactionIsolation(int level)
 int IscConnection::getTransactionIsolation()
 {
 	return transactionIsolation;
+}
+
+bool IscConnection::isClosed()
+{
+	NOT_YET_IMPLEMENTED;
+	return false;
+}
+
+bool IscConnection::isReadOnly()
+{
+	NOT_YET_IMPLEMENTED;
+	return false;
+}
+
+void IscConnection::setReadOnly(bool readOnly)
+{
+	NOT_YET_IMPLEMENTED;
+}
+
+const char*	IscConnection::nativeSQL(const char *sqlString)
+{
+	NOT_YET_IMPLEMENTED;
+	return sqlString;
 }
 
 void IscConnection::setExtInitTransaction(int optTpb)

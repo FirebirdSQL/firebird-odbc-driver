@@ -155,6 +155,21 @@ void IscStatement::close()
 	typeStmt = stmtNone;
 }
 
+void IscStatement::setMaxFieldSize(int max)
+{
+	NOT_YET_IMPLEMENTED;
+}
+
+void IscStatement::setMaxRows(int max)
+{
+	NOT_YET_IMPLEMENTED;
+}
+
+void IscStatement::setQueryTimeout(int seconds)
+{
+	NOT_YET_IMPLEMENTED;
+}
+
 bool IscStatement::execute(const char * sqlString)
 {
 	NOT_YET_IMPLEMENTED;
@@ -167,6 +182,32 @@ int IscStatement::executeUpdate(const char * sqlString)
 	NOT_YET_IMPLEMENTED;
 
 	return 0;
+}
+
+int	IscStatement::getMaxFieldSize()
+{
+	NOT_YET_IMPLEMENTED;
+
+	return 0;
+}
+
+int	IscStatement::getMaxRows()
+{
+	NOT_YET_IMPLEMENTED;
+
+	return 0;
+}
+
+int	IscStatement::getQueryTimeout()
+{
+	NOT_YET_IMPLEMENTED;
+
+	return 0;
+}
+
+void IscStatement::cancel()
+{
+	NOT_YET_IMPLEMENTED;
 }
 
 ResultList* IscStatement::search(const char * searchString)
@@ -201,6 +242,11 @@ void IscStatement::setCursorName(const char * name)
 
 	if (statusVector [1])
 		THROW_ISC_EXCEPTION (connection, statusVector);
+}
+
+void IscStatement::setEscapeProcessing(bool enable)
+{
+	NOT_YET_IMPLEMENTED;
 }
 
 void IscStatement::addRef()

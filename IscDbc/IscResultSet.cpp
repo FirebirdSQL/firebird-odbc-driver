@@ -303,6 +303,12 @@ void IscResultSet::reset()
 	}
 }
 
+const char* IscResultSet::getCursorName()
+{
+	NOT_YET_IMPLEMENTED;
+	return "";
+}
+
 int IscResultSet::findColumn(const char * columnName)
 {
 	int n = sqlda->findColumn (columnName);

@@ -71,74 +71,6 @@ void IscOdbcStatement::executeMetaDataQuery()
 	getMoreResults();
 }
 
-bool IscOdbcStatement::executeStatement()
-{
-	return IscStatement::execute();
-}
-
-bool IscOdbcStatement::executeProcedure()
-{
-	return IscStatement::executeProcedure();
-}
-
-int IscOdbcStatement::executeUpdate()
-{
-	connection->startTransaction();
-	NOT_YET_IMPLEMENTED;
-
-	return 0;
-}
-
-bool IscOdbcStatement::execute (const char *sqlString)
-{
-	return IscStatement::execute (sqlString);
-}
-
-ResultSet*	 IscOdbcStatement::executeQuery (const char *sqlString)
-{
-	return IscStatement::executeQuery (sqlString);
-}
-
-void IscOdbcStatement::clearResults()
-{
-	IscStatement::clearResults ();
-}
-
-int	IscOdbcStatement::getUpdateCount()
-{
-	return IscStatement::getUpdateCount ();
-}
-
-bool IscOdbcStatement::getMoreResults()
-{
-	return IscStatement::getMoreResults();
-}
-
-void IscOdbcStatement::setCursorName (const char *name)
-{
-	IscStatement::setCursorName (name);
-}
-
-ResultSet* IscOdbcStatement::getResultSet()
-{
-	return IscStatement::getResultSet ();
-}
-
-ResultList* IscOdbcStatement::search (const char *searchString)
-{
-	return IscStatement::search (searchString);
-}
-
-int	IscOdbcStatement::executeUpdate (const char *sqlString)
-{
-	return IscStatement::executeUpdate (sqlString);
-}
-
-void IscOdbcStatement::close()
-{
-	IscStatement::close ();
-}
-
 void IscOdbcStatement::drop()
 {
 	IscStatement::close ();
@@ -148,16 +80,6 @@ void IscOdbcStatement::drop()
 	inputSqlda.clearSqlda();
 	outputSqlda.clearSqlda();
 	numberColumns = 0;
-}
-
-int IscOdbcStatement::release()
-{
-	return IscStatement::release ();
-}
-
-void IscOdbcStatement::addRef()
-{
-	IscStatement::addRef ();
 }
 
 void IscOdbcStatement::prepareStatement(const char * sqlString)

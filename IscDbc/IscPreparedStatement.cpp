@@ -56,7 +56,6 @@ IscPreparedStatement::IscPreparedStatement(IscConnection *connection) : IscState
 {
 	statementMetaDataIPD = NULL;
 	statementMetaDataIRD = NULL;
-//Added by RM 2002-06-04
     segmentBlob = NULL;
 	segmentClob = NULL;
 }
@@ -80,6 +79,13 @@ ResultSet* IscPreparedStatement::executeQuery()
 	return getResultSet();
 }
 
+int IscPreparedStatement::executeUpdate()
+{
+	NOT_YET_IMPLEMENTED;
+
+	return 0;
+}
+
 void IscPreparedStatement::executeMetaDataQuery()
 {
 	if (outputSqlda.sqlda->sqld < 1)
@@ -97,39 +103,14 @@ Value* IscPreparedStatement::getParameter(int index)
 	return parameters.values + index;
 }
 
-void IscPreparedStatement::setInt(int index, long value)
-{
-	getParameter (index - 1)->setValue (value);
-}
-
-void IscPreparedStatement::setNull(int index, int type)
-{
-	getParameter (index - 1)->clear();
-}
-
-void IscPreparedStatement::setDate(int index, DateTime value)
-{
-	getParameter (index - 1)->setValue (value);
-}
-
-void IscPreparedStatement::setDouble(int index, double value)
-{
-	getParameter (index - 1)->setValue (value);
-}
-
-void IscPreparedStatement::setString(int index, const char * string)
-{
-	getParameter (index - 1)->setString (string, true);
-}
-
-void IscPreparedStatement::setString(int index, const char * string, int length)
-{
-    getParameter (index - 1)->setString (length, string, true);
-}
-
 void IscPreparedStatement::convStringData(int index)
 {
 	getParameter (--index)->convertStringData ();
+}
+
+void IscPreparedStatement::clearParameters()
+{
+	NOT_YET_IMPLEMENTED;
 }
 
 bool IscPreparedStatement::execute()
@@ -142,30 +123,6 @@ bool IscPreparedStatement::execute()
 	return IscStatement::execute();
 }
 
-int IscPreparedStatement::executeUpdate()
-{
-	connection->startTransaction();
-	NOT_YET_IMPLEMENTED;
-
-	return 0;
-}
-
-void IscPreparedStatement::setBytes(int index, int length, const void* bytes)
-{
-	char *idx = (char*)bytes;
-	BinaryBlob *blob = new BinaryBlob();
-	getParameter (index - 1)->setValue (blob);
-	blob->release();
-	while (length >= DEFAULT_BLOB_BUFFER_LENGTH) 
-	{
-		blob->putSegment(DEFAULT_BLOB_BUFFER_LENGTH, idx, true);
-		idx += DEFAULT_BLOB_BUFFER_LENGTH;
-		length -= DEFAULT_BLOB_BUFFER_LENGTH;
-	}
-	if (length)	blob->putSegment(length, idx, true);
-}
-
-//Added by RM 2002-06-04
 void IscPreparedStatement::beginBlobDataTransfer(int index)
 {
     if (segmentBlob)
@@ -175,14 +132,12 @@ void IscPreparedStatement::beginBlobDataTransfer(int index)
 	getParameter (index - 1)->setValue (segmentBlob);
 }
 
-//Added by RM 2002-06-04
 void IscPreparedStatement::putBlobSegmentData(int length, const void* bytes)
 {
 	if (segmentBlob)
 		segmentBlob->putSegment (length, (char*) bytes, true);
 }
 
-//Added by RM 2002-06-04
 void IscPreparedStatement::endBlobDataTransfer()
 {
 	if (segmentBlob)
@@ -190,66 +145,6 @@ void IscPreparedStatement::endBlobDataTransfer()
 		segmentBlob->release();
 		segmentBlob = NULL;
 	}
-}
-
-bool IscPreparedStatement::execute (const char *sqlString)
-{
-	return IscStatement::execute (sqlString);
-}
-
-ResultSet*	 IscPreparedStatement::executeQuery (const char *sqlString)
-{
-	return IscStatement::executeQuery (sqlString);
-}
-
-void IscPreparedStatement::clearResults()
-{
-	IscStatement::clearResults ();
-}
-
-int	IscPreparedStatement::getUpdateCount()
-{
-	return IscStatement::getUpdateCount ();
-}
-
-bool IscPreparedStatement::getMoreResults()
-{
-	return IscStatement::getMoreResults();
-}
-
-void IscPreparedStatement::setCursorName (const char *name)
-{
-	IscStatement::setCursorName (name);
-}
-
-ResultSet* IscPreparedStatement::getResultSet()
-{
-	return IscStatement::getResultSet ();
-}
-
-ResultList* IscPreparedStatement::search (const char *searchString)
-{
-	return IscStatement::search (searchString);
-}
-
-int	IscPreparedStatement::executeUpdate (const char *sqlString)
-{
-	return IscStatement::executeUpdate (sqlString);
-}
-
-void IscPreparedStatement::close()
-{
-	IscStatement::close ();
-}
-
-int IscPreparedStatement::release()
-{
-	return IscStatement::release ();
-}
-
-void IscPreparedStatement::addRef()
-{
-	IscStatement::addRef ();
 }
 
 void IscPreparedStatement::prepare(const char * sqlString)
@@ -306,13 +201,58 @@ StatementMetaData* IscPreparedStatement::getStatementMetaDataIRD()
 
 	return statementMetaDataIRD;
 }
+/*
+void IscPreparedStatement::setAsciiStream( int parameterIndex, InputStream x, int length )
+{
+	NOT_YET_IMPLEMENTED;
+}
 
+void IscPreparedStatement::setBigDecimal( int parameterIndex, BigDecimal x );
+{
+	NOT_YET_IMPLEMENTED;
+}
+
+void IscPreparedStatement::setBinaryStream( int parameterIndex, InputStream x, int length );
+{
+	NOT_YET_IMPLEMENTED;
+}
+
+void IscPreparedStatement::setBoolean( int parameterIndex, boolean x );
+{
+	NOT_YET_IMPLEMENTED;
+}
+*/
 void IscPreparedStatement::setByte(int index, char value)
 {
 	getParameter (index - 1)->setValue ((short) value);
 }
 
-void IscPreparedStatement::setQuad(int index, QUAD value)
+void IscPreparedStatement::setBytes(int index, const void* bytes)
+{
+	NOT_YET_IMPLEMENTED;
+}
+
+void IscPreparedStatement::setBytes(int index, int length, const void* bytes)
+{
+	char *idx = (char*)bytes;
+	BinaryBlob *blob = new BinaryBlob();
+	getParameter (index - 1)->setValue (blob);
+	blob->release();
+	while (length >= DEFAULT_BLOB_BUFFER_LENGTH) 
+	{
+		blob->putSegment(DEFAULT_BLOB_BUFFER_LENGTH, idx, true);
+		idx += DEFAULT_BLOB_BUFFER_LENGTH;
+		length -= DEFAULT_BLOB_BUFFER_LENGTH;
+	}
+	if (length)	blob->putSegment(length, idx, true);
+}
+
+void IscPreparedStatement::setDate(int index, DateTime value)
+{
+	getParameter (index - 1)->setValue (value);
+}
+
+void IscPreparedStatement::setDouble(int index, double value)
 {
 	getParameter (index - 1)->setValue (value);
 }
@@ -320,6 +260,49 @@ void IscPreparedStatement::setQuad(int index, QUAD value)
 void IscPreparedStatement::setFloat(int index, float value)
 {
 	getParameter (index - 1)->setValue (value);
+}
+
+void IscPreparedStatement::setInt(int index, long value)
+{
+	getParameter (index - 1)->setValue (value);
+}
+
+void IscPreparedStatement::setLong(int index, QUAD value)
+{
+	getParameter (index - 1)->setValue (value);
+}
+
+void IscPreparedStatement::setNull(int index, int type)
+{
+	getParameter (index - 1)->clear();
+}
+/*
+void IscPreparedStatement::setObject( int parameterIndex, Object x )
+{
+	NOT_YET_IMPLEMENTED;
+}
+void IscPreparedStatement::setObject( int parameterIndex, Object x, int targetSqlType )
+{
+	NOT_YET_IMPLEMENTED;
+}
+void IscPreparedStatement::setObject( int parameterIndex, Object x, int targetSqlType, int scale )
+{
+	NOT_YET_IMPLEMENTED;
+}
+*/
+void IscPreparedStatement::setShort(int index, short value)
+{
+	getParameter (index - 1)->setValue (value);
+}
+
+void IscPreparedStatement::setString(int index, const char * string)
+{
+	getParameter (index - 1)->setString (string, true);
+}
+
+void IscPreparedStatement::setString(int index, const char * string, int length)
+{
+    getParameter (index - 1)->setString (length, string, true);
 }
 
 void IscPreparedStatement::setTime(int index, SqlTime value)
@@ -331,12 +314,12 @@ void IscPreparedStatement::setTimestamp(int index, TimeStamp value)
 {
 	getParameter (index - 1)->setValue (value);
 }
-
-void IscPreparedStatement::setShort(int index, short value)
+/*
+void IscPreparedStatement::setUnicodeStream( int parameterIndex, InputStream x, int length )
 {
-	getParameter (index - 1)->setValue (value);
+	NOT_YET_IMPLEMENTED;
 }
-
+*/
 void IscPreparedStatement::setBlob(int index, Blob * value)
 {
 	getParameter (index - 1)->setValue (value);

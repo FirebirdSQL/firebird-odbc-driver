@@ -801,6 +801,12 @@ bool IscDatabaseMetaData::supportsOpenStatementsAcrossRollback()
 	return true;
 	}
 
+int IscDatabaseMetaData::getMaxBinaryLiteralLength()
+	{
+	NOT_YET_IMPLEMENTED;
+	return 0;
+	}
+
 int IscDatabaseMetaData::getMaxCharLiteralLength()
 	{
 	NOT_YET_IMPLEMENTED;

@@ -40,7 +40,7 @@ class LinkedList
 		bool insertBefore (void *insertItem, void *item);
 
 	LinkedList();
-	~LinkedList();
+	virtual ~LinkedList();
 
 	void		append (void *object);
 	int			appendUnique (void *object);

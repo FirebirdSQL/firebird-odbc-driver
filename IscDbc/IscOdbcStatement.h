@@ -38,49 +38,63 @@ class IscOdbcStatement;
 class IscOdbcStatement : public IscStatement, public InternalStatement
 {
 public:
-	virtual int objectVersion();
-	virtual StatementMetaData* getStatementMetaDataIPD();
-	virtual StatementMetaData* getStatementMetaDataIRD();
-
-	IscOdbcStatement(IscConnection *connect);
-	~IscOdbcStatement();
-
-	virtual bool		execute (const char *sqlString);
-	virtual ResultSet*	executeQuery (const char *sqlString);
-	virtual void		clearResults();
-	virtual int			getUpdateCount();
-	virtual bool		getMoreResults();
-	virtual void		setCursorName (const char *name);
-	virtual ResultSet*	getResultSet();
-	virtual ResultList* search (const char *searchString);
-	virtual int			executeUpdate (const char *sqlString);
-	virtual void		close();
+//{{{ class InternalStatement specification jdbc
+	virtual bool		isActive() { return !!statementHandle; }
+	virtual void		prepareStatement(const char * sqlString);
+	virtual bool		executeStatement() { return IscStatement::execute(); }
+	virtual bool		executeProcedure(){ return IscStatement::executeProcedure(); }
+	virtual StatementMetaData*	
+						getStatementMetaDataIPD();
+	virtual StatementMetaData*	
+						getStatementMetaDataIRD();
+	virtual int			getNumParams();
 	virtual void		drop();
-	virtual int			release();
-	virtual void		addRef();
+	virtual int			objectVersion();
+//}}} end class InternalStatement specification jdbc
+
+//{{{ class Statement specification jdbc
+	virtual bool		execute (const char *sqlString) { return IscStatement::execute (sqlString); }
+	virtual ResultSet*	executeQuery (const char *sqlString) { return IscStatement::executeQuery ( sqlString ); }
+	virtual int			getUpdateCount() { return IscStatement::getUpdateCount (); }
+	virtual bool		getMoreResults(){ return IscStatement::getMoreResults(); }
+	virtual void		setCursorName (const char *name){ IscStatement::setCursorName ( name ); }
+	virtual void		setEscapeProcessing(bool enable){ IscStatement::setEscapeProcessing( enable ); }
+	virtual ResultSet*	getResultSet(){ return IscStatement::getResultSet(); }
+	virtual int			executeUpdate (const char *sqlString){ return IscStatement::executeUpdate ( sqlString ); }
+	virtual int			getMaxFieldSize(){ return IscStatement::getMaxFieldSize(); }
+	virtual int			getMaxRows(){ return IscStatement::getMaxRows(); }
+	virtual int			getQueryTimeout(){ return IscStatement::getQueryTimeout(); }
+	virtual void		cancel(){ IscStatement::cancel(); }
+//	virtual void		clearWarnings(){ IscStatement::clearWarnings(); }
+//	virtual void		getWarnings(){ IscStatement::getWarnings(); }
+	virtual void		close(){ IscStatement::close(); }
+	virtual void		setMaxFieldSize(int max){ IscStatement::setMaxFieldSize( max ); }
+	virtual void		setMaxRows(int max){ IscStatement::setMaxRows( max ); }
+	virtual void		setQueryTimeout(int seconds){ IscStatement::setQueryTimeout( seconds ); }
+//}}} end class Statement specification jdbc
+
+	virtual void		clearResults() { IscStatement::clearResults (); }
+	virtual ResultList* search (const char *searchString) { return IscStatement::search (searchString); }
+	virtual int			release() { return IscStatement::release (); }
+	virtual void		addRef() { IscStatement::addRef (); }
 	virtual bool		isActiveSelect(){ return IscStatement::isActiveSelect(); }
 	virtual bool		isActiveProcedure(){ return IscStatement::isActiveProcedure(); }
+	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtPlan( value, bufferLength, lengthPtr ); }  
+	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtType( value, bufferLength, lengthPtr ); }  
+	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtInfoCountRecords( value, bufferLength, lengthPtr ); }  
 
-	virtual int			executeUpdate();
-	virtual bool		executeStatement();
-	virtual bool		executeProcedure();
+//}}} end class Statement without specification jdbc
+
+public:
+	IscOdbcStatement(IscConnection *connect);
+	virtual ~IscOdbcStatement();
+
 	virtual ResultSet*	executeQuery();
 	virtual void		executeMetaDataQuery();
-
 	void				getInputParameters();
-	int					getNumParams();
-	void				prepareStatement(const char * sqlString);
-	bool				isActive() { return !!statementHandle; }
 
 	IscStatementMetaData	*statementMetaDataIPD;
 	IscStatementMetaData	*statementMetaDataIRD;
-
-	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
-	{ return getPlanStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  
-	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr)
-	{ return getTypeStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  
-	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr)
-	{ return getInfoCountRecordsStatement(connection, statementHandle, value,bufferLength,lengthPtr); }  
 };
 
 }; // end namespace IscDbcLibrary

@@ -44,54 +44,75 @@ enum enStatysActivePositionRow { enSUCCESS, enUNKNOWN, enINSERT_ROW, enAFTER_LAS
 class IscResultSet : public ResultSet, public IscStatementMetaData
 {
 public:
-	void allocConversions();
-	IscResultSet(IscStatement *iscStatement);
-	~IscResultSet();
-	void				initResultSet(IscStatement *iscStatement);
-	virtual int			findColumn (const char *columName);
-	virtual void		freeHTML(const char *html);
-	virtual const char* genHTML(const char *series, const char *type, Properties *context);
+//{{{ specification jdbc
+//	virtual void		clearWarnings();
 	virtual void		close();
-	virtual bool		nextFetch();
+	virtual int			findColumn (const char *columName);
+//	virtual	InputStream* getAsciiStream( int columnIndex );
+//	virtual	InputStream* getAsciiStream( const char *columnName );
+//	virtual	BigDecimal	getBigDecimal( int columnIndex, int scale );
+//	virtual	BigDecimal	getBigDecimal( const char *columnName, int scale );
+//	virtual	InputStream getBinaryStream( int columnIndex );
+//	virtual	InputStream getBinaryStream( const char *columnName );
+//	virtual	bool		getBoolean( int columnIndex );
+//	virtual	bool		getBoolean( const char *columnName );
+	virtual char		getByte (int columnIndex);
+	virtual char		getByte (const char *columnName);
+//	virtual byte[]		getBytes( int columnIndex );
+//	virtual byte[]		getBytes( int columnIndex );
+//	virtual byte[]		getBytes( const char *columnName );
+	virtual const char* getCursorName();
+	virtual DateTime	getDate (int columnIndex);
+	virtual DateTime	getDate (const char *columnName);
+	virtual double		getDouble (int columnIndex);
+	virtual double		getDouble (const char *columnName);
+	virtual float		getFloat (int columnIndex);
+	virtual float		getFloat (const char *columnName);
+	virtual long		getInt (int columnIndex);
+	virtual long		getInt (const char *columnName);
+	virtual QUAD		getLong (int columnIndex);
+	virtual QUAD		getLong (const char *columnName);
 	virtual StatementMetaData* getMetaData();
-	virtual int			release();
-	virtual void		addRef();
+//	virtual Object		getObject( int columnIndex );
+	virtual short		getShort (int columnIndex);
+	virtual short		getShort (const char *columnName);
+	virtual const char* getString (int columnIndex);
+	virtual const char* getString (const char *columnName);
+	virtual SqlTime		getTime (int columnIndex);
+	virtual SqlTime		getTime (const char *columnName);
+	virtual TimeStamp	getTimestamp (int columnIndex);
+	virtual TimeStamp	getTimestamp (const char *columnName);
+//	virtual InputStream getUnicodeStream( int columnIndex );
+//	virtual InputStream getUnicodeStream( const char *columnName );
+//	virtual void		getWarnings();
+	virtual bool		next();
 	virtual bool		wasNull();
-	virtual int			getColumnCount();
-
-	void		deleteBlobs();
-	void		reset();
+//}}} end specification jdbc
 
 public:
-	virtual int objectVersion();
+	IscResultSet(IscStatement *iscStatement);
+	virtual ~IscResultSet();
+
+	virtual int			objectVersion();
+
+	void				initResultSet(IscStatement *iscStatement);
+	void				allocConversions();
+	virtual void		freeHTML(const char *html);
+	virtual const char* genHTML(const char *series, const char *type, Properties *context);
+	virtual bool		nextFetch();
+	virtual int			release();
+	virtual void		addRef();
+	virtual int			getColumnCount();
+
+	void				deleteBlobs();
+	void				reset();
 
 	virtual Value*		getValue (int index);
 	virtual Value*		getValue (const char *columnName);
 	virtual void		setNull (int index);
-	virtual const char* getString (int index);
-	virtual const char* getString (const char *columnName);
-	virtual TimeStamp	getTimestamp (int index);
-	virtual TimeStamp	getTimestamp (const char * columnName);
-	virtual SqlTime		getTime (int index);
-	virtual SqlTime		getTime (const char * columnName);
-	virtual DateTime	getDate (int index);
-	virtual DateTime	getDate (const char * columnName);
-	virtual long		getInt (int index);
-	virtual long		getInt (const char *columnName);
-	virtual float		getFloat (int index);
-	virtual float		getFloat (const char * columnName);
-	virtual char		getByte (int index);
-	virtual char		getByte (const char *columnName);
 	virtual Blob*		getBlob (int index);
 	virtual Blob*		getBlob (const char * columnName);
-	virtual double		getDouble (int index);
-	virtual double		getDouble (const char * columnName);
-	virtual QUAD		getLong (int index);
-	virtual QUAD		getLong (const char *columnName);
-	virtual short		getShort (int index);
-	virtual short		getShort (const char * columnName);
 
-	virtual bool		next();
 	virtual bool		isBeforeFirst();
 	virtual bool		isAfterLast();
 	virtual bool		isFirst();
@@ -159,8 +180,8 @@ public:
 	virtual int			getCountRowsStaticCursor();
 	virtual bool		getDataFromStaticCursor (int column);
 
-	void setValue (int index, long value);
-	void setValue (int index, const char *value);
+	void				setValue (int index, long value);
+	void				setValue (int index, const char *value);
 
 	int				numberColumns;
 	void			*handle;

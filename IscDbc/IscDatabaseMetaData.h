@@ -36,28 +36,16 @@ class IscConnection;
 class IscDatabaseMetaData : public DatabaseMetaData  
 {
 public:
-	virtual short getSqlStrPageSizeBd(const void * info_buffer, int bufferLength,short *lengthPtr);
-	virtual short getSqlStrWalInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr);
-	virtual short getStrStatInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr);
-	virtual bool supportsStatementMetaData();
-	virtual int objectVersion();
-	IscDatabaseMetaData(IscConnection *connect);
-	~IscDatabaseMetaData();
-	virtual ResultSet* getUsers (const char * catalog, const char *userPattern);
-	virtual ResultSet* getRoles (const char * catalog, const char * schema, const char *rolePattern);
-	virtual ResultSet* getUserRoles (const char *user);
-	virtual ResultSet* getObjectPrivileges (const char *catalog, const char *schemaPattern, const char *namePattern, int objectType);
+//{{{ specification jdbc
 	virtual ResultSet* getIndexInfo (const char * catalog, const char * schemaPattern, const char * tableNamePattern, bool unique, bool approximate);
 	virtual ResultSet* getImportedKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern);
 	virtual ResultSet* getPrimaryKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern);
 	virtual ResultSet* getColumns (const char *catalog, const char *schema, const char *table, const char *fieldNamePattern);
 	virtual ResultSet* getTables (const char *catalog, const char *schemaPattern, const char *tableNamePattern, int typeCount, const char **types);
-	virtual ResultSet* specialColumns(const char * catalog, const char * schema, const char * table, int scope, int nullable);
 	virtual bool allProceduresAreCallable();
 	virtual bool allTablesAreSelectable();
 	virtual const char* getURL();
 	virtual const char* getUserName();
-	virtual const char* getUserAccess();
 	virtual const int getUserType();
 	virtual JString existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix);
 	virtual bool isReadOnly();
@@ -65,10 +53,8 @@ public:
 	virtual bool nullsAreSortedLow();
 	virtual bool nullsAreSortedAtStart();
 	virtual bool nullsAreSortedAtEnd();
-    virtual const char* getDatabaseServerName();    
 	virtual const char* getDatabaseProductName();
 	virtual const char* getDatabaseProductVersion();
-	virtual int getDatabasePageSize();
 	virtual const char* getDriverName();
 	virtual const char* getDriverVersion();
 	virtual int getDriverMajorVersion();
@@ -148,6 +134,7 @@ public:
 	virtual bool supportsOpenCursorsAcrossRollback();
 	virtual bool supportsOpenStatementsAcrossCommit();
 	virtual bool supportsOpenStatementsAcrossRollback();
+	virtual int getMaxBinaryLiteralLength();
 	virtual int getMaxCharLiteralLength();
 	virtual int getMaxColumnNameLength();
 	virtual int getMaxColumnsInGroupBy();
@@ -203,12 +190,28 @@ public:
 
 	virtual ResultSet* getCrossReference(
 		const char* primaryCatalog, const char* primarySchema, const char* primaryTable,
-		const char* foreignCatalog, const char* foreignSchema, const char* foreignTable
-		);
-
+		const char* foreignCatalog, const char* foreignSchema, const char* foreignTable);
 	virtual ResultSet* getTypeInfo(int dataType);
-	virtual StatementMetaData* getMetaDataTypeInfo(ResultSet* setTypeInfo);
+//}}} end specification jdbc
 
+public:
+	IscDatabaseMetaData(IscConnection *connect);
+	~IscDatabaseMetaData();
+
+	virtual ResultSet* getUsers (const char * catalog, const char *userPattern);
+	virtual ResultSet* getRoles (const char * catalog, const char * schema, const char *rolePattern);
+	virtual ResultSet* getUserRoles (const char *user);
+	virtual ResultSet* specialColumns(const char * catalog, const char * schema, const char * table, int scope, int nullable);
+	virtual ResultSet* getObjectPrivileges (const char *catalog, const char *schemaPattern, const char *namePattern, int objectType);
+	virtual short getSqlStrPageSizeBd(const void * info_buffer, int bufferLength,short *lengthPtr);
+	virtual short getSqlStrWalInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr);
+	virtual short getStrStatInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr);
+    virtual const char* getDatabaseServerName();    
+	virtual const char* getUserAccess();
+	virtual int getDatabasePageSize();
+	virtual bool supportsStatementMetaData();
+	virtual ResultSet* getUDTs(const char* catalog, const char* schemaPattern, const char* typeNamePattern, int* types);
+	virtual StatementMetaData* getMetaDataTypeInfo(ResultSet* setTypeInfo);
 	virtual bool supportsResultSetConcurrency(int type, int concurrency);
 	virtual bool ownUpdatesAreVisible(int type);
 	virtual bool ownDeletesAreVisible(int type);
@@ -220,11 +223,12 @@ public:
 	virtual bool deletesAreDetected(int type);
 	virtual bool insertsAreDetected(int type);
 	virtual bool supportsBatchUpdates();
-	virtual ResultSet* getUDTs(const char* catalog, const char* schemaPattern, 
-			  const char* typeNamePattern, int* types);
+
 	void LockThread();
 	void UnLockThread();
+	virtual int objectVersion();
 
+public:
 	IscConnection	*connection;
 	LinkedList		resultSets;
 };
