@@ -302,8 +302,8 @@ Sqlda::Sqlda()
 
 Sqlda::~Sqlda()
 {
-	deleteSqlda();
 	deleteTemps();
+	deleteSqlda();
 
 	if (buffer)
 		delete [] buffer;
