@@ -36,6 +36,12 @@ OdbcObject::OdbcObject()
 	next = NULL; // NOMEY
 	errors = NULL;
 	infoPosted = false;
+	sqlDiagCursorRowCount = 0;			// SQL_DIAG_CURSOR_ROW_COUNT 
+	sqlDiagDynamicFunction = NULL;		// SQL_DIAG_DYNAMIC_FUNCTION 
+	sqlDiagDynamicFunctionCode = 0;		// SQL_DIAG_DYNAMIC_FUNCTION_CODE
+	sqlDiagNumber = 0;					// SQL_DIAG_NUMBER 
+	sqlDiagReturnCode = SQL_SUCCESS;	// SQL_DIAG_RETURNCODE
+	sqlDiagRowCount = 0;				// SQL_DIAG_ROW_COUNT
 }
 
 OdbcObject::~OdbcObject()
@@ -220,6 +226,11 @@ void OdbcObject::clearErrors()
 		}
 
 	infoPosted = false;
+	sqlDiagDynamicFunction = NULL;		// SQL_DIAG_DYNAMIC_FUNCTION 
+	sqlDiagDynamicFunctionCode = 0;		// SQL_DIAG_DYNAMIC_FUNCTION_CODE
+	sqlDiagNumber = 0;					// SQL_DIAG_NUMBER 
+	sqlDiagReturnCode = SQL_SUCCESS;	// SQL_DIAG_RETURNCODE
+	sqlDiagRowCount = 0;				// SQL_DIAG_ROW_COUNT
 }
 
 
