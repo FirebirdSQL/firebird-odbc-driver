@@ -341,8 +341,21 @@ void IscStatement::prepareStatement(const char * sqlString)
 	resultsSequence		= 0;
 	int statementType	= getUpdateCounts();
 	
-	if (statementType == isc_info_sql_stmt_exec_procedure )
+	switch ( statementType )
+	{
+	case isc_info_sql_stmt_insert:
+		typeStmt = stmtInsert;
+		break;
+	case isc_info_sql_stmt_update:
+		typeStmt = stmtUpdate;
+		break;
+	case isc_info_sql_stmt_delete:
+		typeStmt = stmtDelete;
+		break;
+	case isc_info_sql_stmt_exec_procedure:
 		typeStmt = stmtProcedure;
+		break;
+	}
 
 	numberColumns		= outputSqlda.getColumnCount();
 }

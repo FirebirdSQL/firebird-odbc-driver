@@ -37,7 +37,7 @@ class IscResultSet;
 class IscStatement : public Statement  
 {
 public:
-	enum TypeStatement { stmtNone, stmtSelect, stmtProcedure };
+	enum TypeStatement { stmtNone, stmtSelect, stmtInsert, stmtUpdate, stmtDelete, stmtProcedure };
 
 	void freeStatementHandle();
 	void clearSelect();
