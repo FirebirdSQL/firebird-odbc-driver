@@ -62,6 +62,7 @@ public:
 	void CheckRemotehost(char * fullPathFileName);
 	BOOL OnFindFile();
 	BOOL OnFindFileClient();
+	void SetDisabledDlgItem(HWND hDlg, int ID, BOOL bDisabled = TRUE );
 	void UpdateData(HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	BOOL OnInitDialog(HWND hDlg);
 #ifdef _WIN32

@@ -62,6 +62,16 @@ CDsnDialog::~CDsnDialog()
 	m_ptDsnDialog = NULL;
 }
 
+void CDsnDialog::SetDisabledDlgItem(HWND hDlg, int ID, BOOL bDisabled)
+{
+	HWND hWnd = GetDlgItem(hDlg, ID);
+	int style = GetWindowLong(hWnd, GWL_STYLE);
+	if ( bDisabled )style |= WS_DISABLED;
+	else			style &= ~WS_DISABLED;
+	SetWindowLong(hWnd, GWL_STYLE, style);
+	InvalidateRect(hWnd, NULL, TRUE);
+}
+
 void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 {
 	HWND hWnd;
@@ -125,8 +135,14 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
         CheckDlgButton(hDlg, IDC_CHECK_NOWAIT, m_nowait);
 
 		CheckRadioButton(hDlg, IDC_DIALECT3, IDC_DIALECT1, m_dialect3 ? IDC_DIALECT3 : IDC_DIALECT1);
+		if ( m_dialect3 )
+			SetDisabledDlgItem(hDlg, IDC_CHECK_QUOTED, FALSE);
+		else
+			SetDisabledDlgItem(hDlg, IDC_CHECK_QUOTED);
 
         CheckDlgButton(hDlg, IDC_CHECK_QUOTED, m_quoted);
+
+		SetDisabledDlgItem(hDlg, IDC_HELP_ODBC);
 	}
 }
 
@@ -389,6 +405,18 @@ BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam
 
         case IDC_TEST_CONNECTION:
 			m_ptDsnDialog->OnTestConnection(hDlg);
+			break;
+
+		case IDC_DIALECT1:
+			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_QUOTED);
+			break;
+
+		case IDC_DIALECT3:
+			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_QUOTED, FALSE);
+			break;
+
+        case IDC_HELP_ODBC:
+			WinHelp(hDlg, DRIVER_NAME, HELP_CONTEXT, 0x60000);
 			break;
 
         case IDOK:
@@ -662,7 +690,7 @@ int DialogBoxDynamic()
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 29;         // NumberOfItems
+	*p++ = 30;         // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
@@ -691,7 +719,7 @@ int DialogBoxDynamic()
     TMP_COMBOBOX      ( IDC_CHARSET,53,109,114,120,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
     TMP_BUTTONCONTROL ( "read (default write)",IDC_CHECK_READ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,148,69,10 )
     TMP_BUTTONCONTROL ( "nowait (default wait)",IDC_CHECK_NOWAIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,158,72,10 )
-    TMP_DEFPUSHBUTTON ( "OK",IDOK,43,183,50,14 )
+    TMP_DEFPUSHBUTTON ( "OK",IDOK,85,183,50,14 )
     TMP_PUSHBUTTON    ( "Cancel",IDCANCEL,143,183,50,14 )
     TMP_LTEXT         ( "Data Source Name (DSN)",IDC_STATIC,7,2,83,8 )
     TMP_LTEXT         ( "Database",IDC_STATIC,7,27,32,8 )
@@ -708,6 +736,7 @@ int DialogBoxDynamic()
     TMP_RADIOCONTROL  ( "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,114,158,16,10 )
     TMP_BUTTONCONTROL ( "quoted identifiers",IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,146,148,66,10 )
     TMP_PUSHBUTTON    ( "Test connection",IDC_TEST_CONNECTION,172,108,58,14 )
+    TMP_PUSHBUTTON    ( "Help",IDC_HELP_ODBC,27,183,50,14 )
 
 	int nRet = DialogBoxIndirect(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hwnd, (DLGPROC)wndprocDsnDialog);
 	LocalFree (LocalHandle (pdlgtemplate));

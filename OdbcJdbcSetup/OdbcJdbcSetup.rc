@@ -129,7 +129,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,148,69,10
     CONTROL         "nowait (default wait)",IDC_CHECK_NOWAIT,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,158,72,10
-    DEFPUSHBUTTON   "OK",IDOK,43,183,50,14
+    DEFPUSHBUTTON   "OK",IDOK,85,183,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,143,183,50,14
     LTEXT           "Data Source Name (DSN)",IDC_STATIC,7,2,83,8
     LTEXT           "Database",IDC_STATIC,7,27,32,8
@@ -149,6 +149,7 @@ BEGIN
     CONTROL         "quoted identifiers",IDC_CHECK_QUOTED,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,146,148,66,10
     PUSHBUTTON      "Test connection",IDC_TEST_CONNECTION,172,108,58,14
+    PUSHBUTTON      "Help",IDC_HELP_ODBC,27,183,50,14
 END
 
 
