@@ -44,6 +44,7 @@
 
 #include <stdio.h>
 #include "IscDbc.h"
+#include "../SetupAttributes.h"
 #include "IscDatabaseMetaData.h"
 #include "IscConnection.h"
 #include "Attachment.h"
@@ -60,10 +61,6 @@
 #include "TypesResultSet.h"
 #include "IscSpecialColumnsResultSet.h"
 #include "IscTablePrivilegesResultSet.h" 
-
-#define DRIVER_VERSION	"T1.0A"
-#define MAJOR_VERSION	1
-#define MINOR_VERSION	0
 
 #define TRANSACTION_READ_UNCOMMITTED  1
 
