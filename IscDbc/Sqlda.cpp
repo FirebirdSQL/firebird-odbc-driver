@@ -69,6 +69,7 @@ static short sqlNull = -1;
 class CDataStaticCursor
 {
 public:
+	int		*offsetSqldata;
 	XSQLDA	*ptSqlda;
 	bool	bYesBlob;
 	int		nMAXROWBLOCK;
@@ -79,6 +80,7 @@ public:
 	int		countAllRows;
 	int		curBlock;
 	char	*ptRowBlock;
+	int		indicatorsOffset;
 	int		minRow;
 	int		maxRow;
 	int		curRow;
@@ -88,12 +90,14 @@ public:
 
 public:
 
-	CDataStaticCursor(IscConnection *connect, XSQLDA * sqlda,int lnRow)
+	CDataStaticCursor(IscConnection *connect, XSQLDA * sqlda,int * ptOffsetSqldata,int lnRow)
 	{
 		connection = connect;
 		bYesBlob = false;
 		ptSqlda = sqlda;
+		offsetSqldata = ptOffsetSqldata;
 		lenRow = lnRow;
+		indicatorsOffset = lenRow - ptSqlda->sqld*sizeof(short);
 		nMAXROWBLOCK = 65535u;
 		countBlocks = 10;
 		countAllRows = 0;
@@ -183,15 +187,28 @@ public:
 	bool current(int nRow)
 	{
 		int i, n;
-		for ( i = 0, n = countRowsInBlock[i]; 
-					nRow > n && i < countBlocks; 
-					n += countRowsInBlock[++i]);
-		curBlock = i;
-		maxRow = n;
-		minRow = maxRow - countRowsInBlock[curBlock];
-		curRow = nRow - 1;
+
+		if( !(nRow >= minRow && nRow < maxRow) )
+		{
+			for ( i = 0, n = countRowsInBlock[i]; 
+						nRow > n && i < countBlocks; 
+						n += countRowsInBlock[++i]);
+			curBlock = i;
+			maxRow = n;
+			minRow = maxRow - countRowsInBlock[curBlock];
+		}
+
+		curRow = nRow - 1; // We put previous for use next() !!!
 		ptRowBlock = listBlocks[curBlock] + (curRow - minRow) * lenRow;
+
 		return true;
+	}
+
+	void getAdressFieldFromCurrentRowInBufferStaticCursor(int column, char *& sqldata, short *& sqlind)
+	{
+		char * ptRow = ptRowBlock + lenRow;
+		sqldata = ptRow + offsetSqldata[--column];
+		sqlind = (short*)(ptRow + indicatorsOffset + column * sizeof(short));
 	}
 
 	char * next()
@@ -419,12 +436,17 @@ void Sqlda::initStaticCursor(IscConnection *connect)
 	if ( dataStaticCursor )
 		delete 	dataStaticCursor;
 
-	dataStaticCursor = new CDataStaticCursor(connect,sqlda,lengthBufferRows);
+	dataStaticCursor = new CDataStaticCursor(connect,sqlda,offsetSqldata,lengthBufferRows);
 }
 
 bool Sqlda::setCurrentRowInBufferStaticCursor(int nRow)
 {
 	return dataStaticCursor->current(nRow);
+}
+
+void Sqlda::getAdressFieldFromCurrentRowInBufferStaticCursor(int column, char *& sqldata, short *& sqlind)
+{
+	dataStaticCursor->getAdressFieldFromCurrentRowInBufferStaticCursor(column, sqldata, sqlind);
 }
 
 void Sqlda::copyNextSqldaInBufferStaticCursor()
@@ -501,7 +523,7 @@ void Sqlda::print()
 		char *p = var->sqldata;
 		printf ("%d. type %d, len %d, addr %x (%x) ",
 				n, var->sqltype, var->sqllen, p, var->sqlind);
-		if ((var->sqltype & 1) && var->sqlind)
+		if ((var->sqltype & 1) && *var->sqlind == -1)
 			printf ("<null>");
 		else
 			switch (var->sqltype & ~1)

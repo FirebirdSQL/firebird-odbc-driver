@@ -185,12 +185,6 @@ void IscResultSet::copyNextSqldaInBufferStaticCursor()
 void IscResultSet::copyNextSqldaFromBufferStaticCursor()
 {
 	sqlda->copyNextSqldaFromBufferStaticCursor();
-
-	XSQLVAR *var = sqlda->sqlda->sqlvar;
-    Value *value = values.values;
-
-	for (int n = 0; n < numberColumns; ++n, ++var, ++value)
-		statement->setValue (value, var);
 }
 
 int IscResultSet::getCountRowsStaticCursor()
@@ -203,24 +197,34 @@ bool IscResultSet::getDataFromStaticCursor (int column, int cType, void * pointe
 	if ( !(activePosRowInSet >= 0 && activePosRowInSet < sqlda->getCountRowsStaticCursor()) )
 		return false;
 
+	char * sqldata;
+	short * sqlind;
 	XSQLVAR *var = sqlda->sqlda->sqlvar + column - 1;
     Value *value = values.values + column - 1;
 
 	sqlda->setCurrentRowInBufferStaticCursor(activePosRowInSet);
-	sqlda->copyNextSqldaFromBufferStaticCursor();
-	if ( !*(long*)var->sqldata )
+	sqlda->getAdressFieldFromCurrentRowInBufferStaticCursor(column,sqldata,sqlind);
+
+	if ( *sqlind == -1 )
 		value->type = Null;
 	else if ( (var->sqltype & ~1) == SQL_ARRAY )
 	{
-		SIscArrayData * ptArr = (SIscArrayData *)*(long*)var->sqldata;
+		SIscArrayData * ptArr = (SIscArrayData *)*(long*)sqldata;
 		IscArray iscArr(ptArr);
 		iscArr.fetchArrayToString();
 		value->setString(iscArr.getString(),false);
 	}
 	else if ( (var->sqltype & ~1) == SQL_BLOB )
 	{
-		IscBlob * ptBlob = (IscBlob *)*(long*)var->sqldata;
+		IscBlob * ptBlob = (IscBlob *)*(long*)sqldata;
 		value->setString(ptBlob->getString(),false);
+	}
+	else
+	{
+		XSQLVAR Var = *var;
+		Var.sqlind = sqlind;
+		Var.sqldata = sqldata;
+		statement->setValue (value, &Var);
 	}
 
 	return true;

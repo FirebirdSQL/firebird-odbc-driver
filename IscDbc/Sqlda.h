@@ -70,6 +70,7 @@ public:
 	void print();
 	void initStaticCursor(IscConnection *connect);
 	bool setCurrentRowInBufferStaticCursor(int nRow);
+	void getAdressFieldFromCurrentRowInBufferStaticCursor(int column, char *& sqldata, short *& sqlind);
 	void copyNextSqldaInBufferStaticCursor();
 	void copyNextSqldaFromBufferStaticCursor();
 	int getCountRowsStaticCursor();
