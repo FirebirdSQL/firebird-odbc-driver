@@ -127,7 +127,11 @@ bool OdbcConnection::enlistTransaction( SQLPOINTER transaction )
 
 	hr = ptIResMgr->Enlist( (ITransaction*)transaction,
 							tranResAsync,
+#if _MSC_VER > 1200
+							(XACTUOW*)&ResourceManagerGuid,
+#else
 							&ResourceManagerGuid,
+#endif
 							&tranResAsync->isoLevel,
 							&tranResAsync->enlist );
 
