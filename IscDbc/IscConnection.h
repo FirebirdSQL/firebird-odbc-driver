@@ -59,7 +59,7 @@ public:
 	virtual Properties* allocProperties();
 	JString getInfoString (char *buffer, int item, const char *defaultString);
 	int getInfoItem (char *buffer, int item, int defaultValue);
-	static JString getIscStatusText (ISC_STATUS *statusVector);
+	JString getIscStatusText (ISC_STATUS *statusVector);
 	virtual bool getNativeSql (const char * inStatementText, long textLength1,
 								char * outStatementText, long bufferLength,
 								long * textLength2Ptr);
@@ -82,8 +82,10 @@ public:
 	virtual PreparedStatement* prepareStatement (const char *sqlString);
 	virtual void close();
 	virtual DatabaseMetaData* getMetaData();
+	void	*getHandleDb();
 
 	Attachment		*attachment;
+	CFbDll			*GDS;
 	void			*databaseHandle;
 	void			*transactionHandle;
 	LinkedList		statements;

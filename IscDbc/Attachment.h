@@ -42,12 +42,14 @@ public:
 	int getUserType();
 	JString existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix);
 	int getDatabaseDialect();
+	JString getIscStatusText (ISC_STATUS *statusVector);
 	int release();
 	void addRef();
 	void openDatabase(const char * dbName, Properties * properties);
 	Attachment();
 	virtual ~Attachment();
 
+	CFbDll		*GDS;
 	void		*databaseHandle;
 	void		*transactionHandle;
 	JString		databaseName;

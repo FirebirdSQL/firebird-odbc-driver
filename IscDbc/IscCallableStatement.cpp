@@ -156,9 +156,9 @@ bool IscCallableStatement::execute()
 
 	int dialect = connection->getDatabaseDialect();
 
-	if (GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle,
+	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle,
 						  dialect, inputSqlda, outputSqlda))
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (connection, statusVector);
 
 	resultsCount	= 1;
 	resultsSequence = 0;

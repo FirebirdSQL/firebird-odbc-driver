@@ -1037,6 +1037,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 
 	var->sqltype &= ~1;
 	ISC_STATUS statusVector [20];
+	CFbDll * GDS = connection->GDS;
 	isc_blob_handle blobHandle = NULL;
 	isc_tr_handle transactionHandle = connection->startTransaction();
 	GDS->_create_blob2 (statusVector, 
@@ -1047,7 +1048,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 					  0, NULL);
 
 	if (statusVector [1])
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (connection, statusVector);
 
 	char *address = (char*) &value->data;
 	int length = 0;
@@ -1087,7 +1088,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 				{
 				GDS->_put_segment (statusVector, &blobHandle, len, (char*) blob->getSegment (offset));
 				if (statusVector [1])
-					THROW_ISC_EXCEPTION (statusVector);
+					THROW_ISC_EXCEPTION (connection, statusVector);
 				}
 			}
 			break;
@@ -1109,7 +1110,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 				{
 					GDS->_put_segment (statusVector, &blobHandle, post, address);
 					if (statusVector [1])
-						THROW_ISC_EXCEPTION (statusVector);
+						THROW_ISC_EXCEPTION (connection, statusVector);
 					address+=post;
 					length-=post;
 				}
@@ -1119,7 +1120,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 					{
 						GDS->_put_segment (statusVector, &blobHandle, length, address);
 						if (statusVector [1])
-							THROW_ISC_EXCEPTION (statusVector);
+							THROW_ISC_EXCEPTION (connection, statusVector);
 					}
 					break;
 				}
@@ -1129,13 +1130,13 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 		{
 			GDS->_put_segment (statusVector, &blobHandle, length, address);
 			if (statusVector [1])
-				THROW_ISC_EXCEPTION (statusVector);
+				THROW_ISC_EXCEPTION (connection, statusVector);
 		}
 	}
 
 	GDS->_close_blob (statusVector, &blobHandle);
 	if (statusVector [1])
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (connection, statusVector);
 }
 
 void WriteToArray(IscConnection *connect,XSQLVAR *var,Value * value);

@@ -53,7 +53,6 @@
 #include "Parameters.h"
 #include "Attachment.h"
 
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -73,8 +72,6 @@ IscConnection::IscConnection(IscConnection * source)
 {
 	init();
 	attachment = source->attachment;
-	// NOMEY
-	// ++attachment;
 	attachment->addRef();
 }
 
@@ -176,22 +173,11 @@ bool IscConnection::getTransactionPending()
 	return transactionPending;
 }
 
-/* Original
-void* IscConnection::startTransaction()
-{
-	if (transactionHandle)
-		return transactionHandle;
-
-	ISC_STATUS statusVector [20];
-	isc_start_transaction (statusVector, &transactionHandle, 1, &attachment->databaseHandle, 0, NULL);
-
-	if (statusVector [1])
-		throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
-
-	return transactionHandle;
+void* IscConnection::getHandleDb()
+{	
+	return attachment->databaseHandle;
 }
-*/
-//2002-06-08 New version suggested by CA
+
 void* IscConnection::startTransaction()
 {
     if (transactionHandle)
@@ -266,12 +252,6 @@ void IscConnection::freeHTML(const char * html)
 	delete [] (char*) html;
 }
 ***/
-/*
-SELECT *
- FROM  {oj DEPARTMENT Department LEFT OUTER JOIN EMPLOYEE Employee
-   ON  Department.DEPT_NO = Employee.DEPT_NO }
- WHERE Employee.DEPT_NO = Department.DEPT_NO
-*/
 
 bool IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 								char * outStatementText, long bufferLength,
@@ -413,18 +393,19 @@ void IscConnection::createDatabase(const char * host, const char * dbName, Prope
 void IscConnection::openDatabase(const char * dbName, Properties * properties)
 {
 	try
-		{
+	{
 		attachment = new Attachment;
 		attachment->openDatabase (dbName, properties);
 		databaseHandle = attachment->databaseHandle;
-		}
+		GDS = attachment->GDS;
+	}
 	catch (...)
-		{
+	{
 		delete attachment;
 		attachment = NULL;
+		GDS = NULL;
 		throw;
-		}
-
+	}
 }
 
 
@@ -437,23 +418,7 @@ void IscConnection::deleteStatement(IscStatement * statement)
 
 JString IscConnection::getIscStatusText(ISC_STATUS * statusVector)
 {
-	char text [4096], *p = text;
-	ISC_STATUS *status = statusVector;
-	bool first = true;
-
-	while (GDS->_interprete (p, &status))
-		{
-		while (*p)
-			++p;
-		*p++ = '\n';
-		}
-
-	if (p > text)
-		--p;
-
-	*p = 0;
-
-	return text;
+	return attachment->getIscStatusText(statusVector);
 }
 
 

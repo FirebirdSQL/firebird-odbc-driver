@@ -274,40 +274,56 @@ JString Setup::getAttribute(const char * attribute)
 
 bool Setup::configureDialog()
 {
-	if (jdbcDriver == "")
+	if ( jdbcDriver.IsEmpty() )
 		jdbcDriver = drivers [0];
 
 	CDsnDialog dialog (drivers);
 	dialog.m_name = dsn;
 	dialog.m_database = dbName;
+	dialog.m_client = client;
 	dialog.m_user = user;
 	dialog.m_password = password;
 	dialog.m_driver = jdbcDriver;
 	dialog.m_role = role;
 	dialog.m_charset = charset;
 
-	if(*(const char*)readonlyTpb=='Y')	dialog.m_readonly=TRUE;
+	if ( *(const char*)readonlyTpb == 'Y' ) dialog.m_readonly = TRUE;
 	else dialog.m_readonly=FALSE;
 
-	if(*(const char*)nowaitTpb=='Y')	dialog.m_nowait=TRUE;
+	if ( *(const char*)nowaitTpb == 'Y' ) dialog.m_nowait = TRUE;
 	else dialog.m_nowait=FALSE;
 
-	if (dialog.DoModal() != IDOK)
+	if ( *(const char*)dialect == '1' )
+		dialog.m_dialect3 = FALSE;
+	else 
+		dialog.m_dialect3 = TRUE;
+
+	if ( *(const char*)quoted == 'Y' ) dialog.m_quoted = TRUE;
+	else dialog.m_quoted = FALSE;
+
+	if ( dialog.DoModal() != IDOK )
 		return false;
 
 	dsn = dialog.m_name;
 	dbName = dialog.m_database;
+	client = dialog.m_client;
 	user = dialog.m_user;
 	password = dialog.m_password;
 	jdbcDriver = dialog.m_driver;
 	role = dialog.m_role;
 	charset = dialog.m_charset;
 
-	if(dialog.m_readonly)readonlyTpb="Y";
-	else readonlyTpb="N";
+	if( dialog.m_readonly ) readonlyTpb = "Y";
+	else readonlyTpb = "N";
 
-	if(dialog.m_nowait)nowaitTpb="Y";
-	else nowaitTpb="N";
+	if( dialog.m_nowait ) nowaitTpb = "Y";
+	else nowaitTpb = "N";
+
+	if( dialog.m_dialect3 ) dialect = "3";
+	else dialect = "1";
+
+	if( dialog.m_quoted ) quoted = "Y";
+	else quoted = "N";
 
 	SQLWriteDSNToIni(dialog.m_name, driver);
 	writeAttributes();
@@ -318,6 +334,7 @@ bool Setup::configureDialog()
 void Setup::writeAttributes()
 {
 	writeAttribute (SETUP_DBNAME, dbName);
+	writeAttribute (SETUP_CLIENT, client);
 	writeAttribute (SETUP_USER, user);
 	writeAttribute (SETUP_PASSWORD, password);
 	writeAttribute (SETUP_ROLE, role);
@@ -325,18 +342,23 @@ void Setup::writeAttributes()
 	writeAttribute (SETUP_JDBC_DRIVER, jdbcDriver);
 	writeAttribute (SETUP_READONLY_TPB, readonlyTpb);
 	writeAttribute (SETUP_NOWAIT_TPB, nowaitTpb);
+	writeAttribute (SETUP_DIALECT, dialect);
+	writeAttribute (SETUP_QUOTED, quoted);
 }
 
 void Setup::readAttributes()
 {
-	dbName = readAttribute (SETUP_DBNAME);	
-	user = readAttribute (SETUP_USER);	
+	dbName = readAttribute (SETUP_DBNAME);
+	client = readAttribute (SETUP_CLIENT);
+	user = readAttribute (SETUP_USER);
 	password = readAttribute (SETUP_PASSWORD);
 	jdbcDriver = readAttribute (SETUP_JDBC_DRIVER);
 	role = readAttribute (SETUP_ROLE);
 	charset = readAttribute (SETUP_CHARSET);
 	readonlyTpb = readAttribute (SETUP_READONLY_TPB);
 	nowaitTpb = readAttribute (SETUP_NOWAIT_TPB);
+	dialect = readAttribute (SETUP_DIALECT);
+	quoted = readAttribute (SETUP_QUOTED);
 }
 
 void Setup::writeAttribute(const char * attribute, const char * value)

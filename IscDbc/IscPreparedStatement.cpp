@@ -251,21 +251,20 @@ void IscPreparedStatement::getInputParameters()
 	ISC_STATUS statusVector [20];
 
 	int dialect = connection->getDatabaseDialect ();
-	GDS->_dsql_describe_bind (statusVector, &statementHandle, dialect, inputSqlda);
+	connection->GDS->_dsql_describe_bind (statusVector, &statementHandle, dialect, inputSqlda);
 
 	if (statusVector [1])
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (connection, statusVector);
 
 	if (inputSqlda.checkOverflow())
-		{
-		GDS->_dsql_describe_bind (statusVector, &statementHandle, dialect, inputSqlda);
+	{
+		connection->GDS->_dsql_describe_bind (statusVector, &statementHandle, dialect, inputSqlda);
 		if (statusVector [1])
-			THROW_ISC_EXCEPTION (statusVector);
-		}
+			THROW_ISC_EXCEPTION (connection, statusVector);
+	}
 
 	parameters.alloc (inputSqlda.getColumnCount());
 	inputSqlda.allocBuffer();
-	
 }
 
 int IscPreparedStatement::getNumParams()

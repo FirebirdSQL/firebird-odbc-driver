@@ -31,12 +31,13 @@
 #include <string.h>
 #include "IscDbc.h"
 
-int getTypeStatement(isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr)
+int getTypeStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr)
 {
 	ISC_STATUS	statusVector[20];
 	char type_info[] = { isc_info_sql_stmt_type };
 	char * info_buffer=(char*)buffer;
 	long &l=*lengthPtr;
+	CFbDll * GDS = connection->GDS;
 
 	if(GDS->_dsql_sql_info(statusVector,&Stmt,sizeof(type_info),type_info,bufferLength,info_buffer))
 		return -1;
@@ -44,12 +45,13 @@ int getTypeStatement(isc_stmt_handle Stmt,const void * buffer, int bufferLength,
 	return 0;
 }
 
-int getInfoCountRecordsStatement(isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr)
+int getInfoCountRecordsStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr)
 {
 	ISC_STATUS	statusVector[20];
 	char records_info[] = { isc_info_sql_records,isc_info_end };
 	char * info_buffer=(char*)buffer;
 	long &l=*lengthPtr;
+	CFbDll * GDS = connection->GDS;
 
 	if(GDS->_dsql_sql_info(statusVector,&Stmt,sizeof(records_info),records_info,bufferLength,info_buffer))
 		return -1;
@@ -57,12 +59,13 @@ int getInfoCountRecordsStatement(isc_stmt_handle Stmt,const void * buffer, int b
 	return 0;
 }
 
-int getPlanStatement(isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr)
+int getPlanStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr)
 {
 	ISC_STATUS	statusVector[20];
 	char plan_info[] = { isc_info_sql_get_plan };
 	char * plan_buffer=(char*)buffer;
 	long &l=*lengthPtr;
+	CFbDll * GDS = connection->GDS;
 
 	if(GDS->_dsql_sql_info(statusVector,&Stmt,sizeof(plan_info),plan_info,bufferLength,plan_buffer))
 		return -1;
@@ -77,17 +80,17 @@ int getPlanStatement(isc_stmt_handle Stmt,const void * buffer, int bufferLength,
 	return 0;
 }
 
-int getInfoDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr,
+int getInfoDatabase(IscConnection * connection, const void * info_buffer, int bufferLength,short *lengthPtr,
 						char * db_items, int item_length);
 
-int getPageDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr)
+int getPageDatabase(IscConnection * connection, const void * info_buffer, int bufferLength,short *lengthPtr)
 {
 	static char db_info[] = { isc_info_page_size,isc_info_end };
-	int nRet=getInfoDatabase(Db,info_buffer,bufferLength,lengthPtr,db_info,sizeof(db_info));
+	int nRet=getInfoDatabase(connection,info_buffer,bufferLength,lengthPtr,db_info,sizeof(db_info));
 	return nRet;
 }
 
-int getWalDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr)
+int getWalDatabase(IscConnection * connection, const void * info_buffer, int bufferLength,short *lengthPtr)
 {
 	static char db_info[] = { 		
 		isc_info_num_wal_buffers,
@@ -96,7 +99,7 @@ int getWalDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,s
 		isc_info_wal_ckpt_length,
 		isc_info_end
  };
-	int nRet=getInfoDatabase(Db,info_buffer,bufferLength,lengthPtr,db_info,sizeof(db_info));
+	int nRet=getInfoDatabase(connection,info_buffer,bufferLength,lengthPtr,db_info,sizeof(db_info));
 	return nRet;
 }
 
@@ -115,7 +118,7 @@ void print_set(int &set_used, char *& buf, short &len)
 	}
 }
 
-int getInfoDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr,char * db_info, int db_info_length)
+int getInfoDatabase(IscConnection * connection, const void * info_buffer, int bufferLength,short *lengthPtr,char * db_info, int db_info_length)
 {
 	char *d, buffer[256], item, *info;
 	int length;
@@ -124,6 +127,8 @@ int getInfoDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,
 	short &l=*lengthPtr,len;
 	int set_used=0;
 	long value_out;
+	CFbDll * GDS = connection->GDS;
+	isc_db_handle Db = connection->getHandleDb();
 
 	*info_buf = '\0'; l=0;
 
@@ -220,7 +225,7 @@ public:
 
 static StatInfo StatInfoBefore, StatInfoAfter;
 
-void getStatInformations(isc_db_handle Db,char bNumberCall)
+void getStatInformations(IscConnection * connection, char bNumberCall)
 {
 	struct timeb time_buffer;
 #define LARGE_NUMBER 696600000	/* to avoid overflow, get rid of decades) */
@@ -236,6 +241,8 @@ void getStatInformations(isc_db_handle Db,char bNumberCall)
 	char *p, buffer[256];
 	signed short l, buffer_length, item_length;
 	ISC_STATUS	statusVector[20];
+	CFbDll * GDS = connection->GDS;
+	isc_db_handle Db = connection->getHandleDb();
 
 	buffer_length = sizeof(buffer);
 	item_length = sizeof(items);
@@ -316,7 +323,7 @@ void getStatInformations(isc_db_handle Db,char bNumberCall)
 		}
 }
 
-int getStatInformations(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr)
+int getStatInformations(IscConnection * connection, const void * info_buffer, int bufferLength,short *lengthPtr)
 {
 	struct timeb time_buffer;
 #define LARGE_NUMBER 696600000	/* to avoid overflow, get rid of decades) */
@@ -332,6 +339,8 @@ int getStatInformations(isc_db_handle Db,const void * info_buffer, int bufferLen
 	char *p, buffer[256];
 	signed short l, buffer_length, item_length;
 	ISC_STATUS	statusVector[20];
+	CFbDll * GDS = connection->GDS;
+	isc_db_handle Db = connection->getHandleDb();
 
 	buffer_length = sizeof(buffer);
 	item_length = sizeof(items);
@@ -414,7 +423,7 @@ char * strFormatReport =
 		"\nPage size      = !p$";
 
 
-int strBuildStatInformations(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr)
+int strBuildStatInformations(const void * info_buffer, int bufferLength,short *lengthPtr)
 {
 	signed long delta, length;
 	char *p, c;

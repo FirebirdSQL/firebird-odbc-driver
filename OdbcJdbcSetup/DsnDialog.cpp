@@ -33,6 +33,7 @@ void ProcessCDError(DWORD dwErrorCode, HWND hWnd);
 CDsnDialog::CDsnDialog(const char **jdbcDrivers)
 {
 	m_database = "";
+	m_client = "";
 	m_name = "";
 	m_password = "";
 	m_user = "";
@@ -41,6 +42,8 @@ CDsnDialog::CDsnDialog(const char **jdbcDrivers)
 	m_charset = "";
 	m_readonly = FALSE;
 	m_nowait = FALSE;
+	m_dialect3 = TRUE;
+	m_quoted = TRUE;
 
 	drivers = jdbcDrivers;
 	m_ptDsnDialog = this;
@@ -58,6 +61,7 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 	if ( bSaveAndValidate )
 	{
 		GetDlgItemText(hDlg, IDC_DATABASE, m_database.getBuffer(256), 256);
+		GetDlgItemText(hDlg, IDC_CLIENT, m_client.getBuffer(256), 256);
 		GetDlgItemText(hDlg, IDC_NAME, m_name.getBuffer(256), 256);
 		GetDlgItemText(hDlg, IDC_PASSWORD, m_password.getBuffer(256), 256);
 		GetDlgItemText(hDlg, IDC_USER, m_user.getBuffer(256), 256);
@@ -75,10 +79,15 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 
         m_readonly = SendDlgItemMessage(hDlg, IDC_CHECK_READ, BM_GETCHECK, 0, 0);
         m_nowait = SendDlgItemMessage(hDlg, IDC_CHECK_NOWAIT, BM_GETCHECK, 0, 0);
+
+        m_dialect3 = IsDlgButtonChecked(hDlg, IDC_DIALECT3);
+
+		m_quoted = SendDlgItemMessage(hDlg, IDC_CHECK_QUOTED, BM_GETCHECK, 0, 0);
 	}
 	else
 	{
 		SetDlgItemText(hDlg, IDC_DATABASE, (const char *)m_database);
+		SetDlgItemText(hDlg, IDC_CLIENT, (const char *)m_client);
 		SetDlgItemText(hDlg, IDC_NAME, (const char *)m_name);
 		SetDlgItemText(hDlg, IDC_PASSWORD, (const char *)m_password);
 		SetDlgItemText(hDlg, IDC_USER, (const char *)m_user);
@@ -86,15 +95,17 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 		hWnd = GetDlgItem(hDlg, IDC_DRIVER);
 
 		if (SendMessage(hWnd, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)(const char *)m_driver) == CB_ERR)
-		{
 			SetWindowText(hWnd, (const char *)m_driver);
-		}
 
 		SetDlgItemText(hDlg, IDC_ROLE, (const char *)m_role);
 		SetDlgItemText(hDlg, IDC_CHARSET, (const char *)m_charset);
 
         CheckDlgButton(hDlg, IDC_CHECK_READ, m_readonly);
         CheckDlgButton(hDlg, IDC_CHECK_NOWAIT, m_nowait);
+
+		CheckRadioButton(hDlg, IDC_DIALECT3, IDC_DIALECT1, m_dialect3 ? IDC_DIALECT3 : IDC_DIALECT1);
+
+        CheckDlgButton(hDlg, IDC_CHECK_QUOTED, m_quoted);
 	}
 }
 
@@ -185,6 +196,47 @@ BOOL CDsnDialog::OnFindFile()
 	return TRUE;
 }
 
+BOOL CDsnDialog::OnFindFileClient()
+{
+    OPENFILENAME ofn;
+    char strFullPathFileName[256];
+    char achPathFileName[256];
+	char * szOpenFilter =	"Firebird Client Files (*.dll)\0*.dll\0"
+							"All files (*.*)\0*.*\0"
+							"\0";
+
+	strcpy(strFullPathFileName,(const char*)m_client);
+
+    ofn.lStructSize = sizeof(OPENFILENAME);
+    ofn.hwndOwner = NULL;
+    ofn.hInstance = NULL;
+    ofn.lpstrFilter = szOpenFilter; 
+    ofn.lpstrCustomFilter = (LPSTR)NULL;
+    ofn.nMaxCustFilter = 0L;
+    ofn.nFilterIndex = 1L;              // first filter pair in list
+    ofn.lpstrFile = strFullPathFileName; // we need to get the full path to open
+    ofn.nMaxFile = sizeof(achPathFileName);
+    ofn.lpstrFileTitle = achPathFileName;    // return final elem of name here
+    ofn.nMaxFileTitle = sizeof(achPathFileName);
+    ofn.lpstrInitialDir = NULL;
+    ofn.lpstrTitle = "Select Firebird client";
+    ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
+    ofn.lpstrDefExt = "*.dll";
+    ofn.nFileOffset = 0;
+    ofn.nFileExtension = 0;
+    ofn.lCustData = 0;
+
+    if (!GetOpenFileName(&ofn))
+	{
+		ProcessCDError(CommDlgExtendedError(), NULL );
+		return FALSE;
+	}
+
+	m_client = strFullPathFileName;
+
+	return TRUE;
+}
+
 #ifdef __MINGW32__
 int DialogBoxDynamic();
 #endif
@@ -231,6 +283,12 @@ BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam
 		case IDC_FIND_FILE:
 			m_ptDsnDialog->UpdateData(hDlg);
 			if ( m_ptDsnDialog->OnFindFile() )
+				m_ptDsnDialog->UpdateData(hDlg, FALSE);
+			break;
+
+		case IDC_FIND_FILE_CLIENT:
+			m_ptDsnDialog->UpdateData(hDlg);
+			if ( m_ptDsnDialog->OnFindFileClient() )
 				m_ptDsnDialog->UpdateData(hDlg, FALSE);
 			break;
 
@@ -344,7 +402,7 @@ LPWORD lpwAlign ( LPWORD lpIn)
 
 //    EDITTEXT        IDC_NAME,7,17,102,12,ES_AUTOHSCROLL
 #define TMP_EDITTEXT(ID,X,Y,CX,CY,STYLE) \
-	TMP_COMTROL(0x0081,"",ID,X,Y,CX,CY, 0x50810080 )
+	TMP_COMTROL(0x0081,"",ID,X,Y,CX,CY, 0x50810080|STYLE )
 
 //    COMBOBOX        IDC_DRIVER,123,17,102,47,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 #define TMP_COMBOBOX(ID,X,Y,CX,CY,STYLE) \
@@ -361,6 +419,10 @@ LPWORD lpwAlign ( LPWORD lpIn)
 //    CONTROL         "read (default write)",IDC_CHECK_READ,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,18,129,69,10
 #define TMP_BUTTONCONTROL(STRTEXT,ID,NAME_CTRL,STYLE,X,Y,CX,CY) \
 	TMP_COMTROL(0x0080,STRTEXT,ID,X,Y,CX,CY, 0x50010003 )
+
+//    CONTROL         "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,104,154,16,10
+#define TMP_RADIOCONTROL(STRTEXT,ID,NAME_CTRL,STYLE,X,Y,CX,CY) \
+	TMP_COMTROL(0x0080,STRTEXT,ID,X,Y,CX,CY, 0x50000009 )
 
 //IDD_DSN_PROPERTIES DIALOG DISCARDABLE  0, 0, 237, 186
 //STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
@@ -382,12 +444,12 @@ int DialogBoxDynamic()
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 21;          // NumberOfItems
+	*p++ = 28;         // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
 	*p++ = 237;        // cx
-	*p++ = 186;        // cy
+	*p++ = 202;        // cy
 	*p++ = 0;          // Menu
 	*p++ = 0;          // Class
 
@@ -399,27 +461,34 @@ int DialogBoxDynamic()
 	nchar = nCopyAnsiToWideChar (p, TEXT("MS Sans Serif"));
 	p += nchar;
 
-	TMP_EDITTEXT      ( IDC_NAME,7,17,102,12,ES_AUTOHSCROLL )
-	TMP_COMBOBOX      ( IDC_DRIVER,123,17,102,47,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
-    TMP_EDITTEXT      ( IDC_DATABASE,7,42,176,12,ES_AUTOHSCROLL )
-    TMP_PUSHBUTTON    ( "Browse",IDC_FIND_FILE,189,42,36,14 )
-    TMP_EDITTEXT      ( IDC_USER,7,70,65,12,ES_UPPERCASE | ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_PASSWORD,80,70,70,12,ES_PASSWORD | ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_ROLE,155,70,70,12,ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_CHARSET,80,90,70,12,ES_AUTOHSCROLL )
-    TMP_LTEXT         ( "Data Source Name (DSN)",IDC_STATIC,7,7,83,8 )
-    TMP_LTEXT         ( "Database",IDC_STATIC,7,33,32,8 )
-    TMP_LTEXT         ( "Database Account",IDC_STATIC,7,59,60,8 )
-    TMP_LTEXT         ( "Password",IDC_STATIC,80,59,32,8 )
-    TMP_LTEXT         ( "Driver",IDC_STATIC,123,7,20,8 )
-    TMP_LTEXT         ( "Role",IDC_STATIC,155,59,16,8 )
-    TMP_LTEXT         ( "Character Set",IDC_STATIC,13,93,60,8)
-    TMP_GROUPBOX      ( "Options",IDC_STATIC,7,111,223,49 )
-	TMP_BUTTONCONTROL ( "read (default write)",IDC_CHECK_READ,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,18,129,69,10 )
-	TMP_BUTTONCONTROL ( "nowait (default wait)",IDC_CHECK_NOWAIT,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,18,139,72,10 )
-    TMP_GROUPBOX      ( "Initializing transaction",IDC_STATIC,14,120,79,33 )
-	TMP_DEFPUSHBUTTON ( "OK",IDOK,43,165,50,14	)
-	TMP_PUSHBUTTON    ( "Cancel",IDCANCEL,143,165,50,14 )
+    TMP_EDITTEXT      ( IDC_NAME,7,12,112,12,ES_AUTOHSCROLL )
+    TMP_COMBOBOX      ( IDC_DRIVER,123,12,107,47,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
+    TMP_EDITTEXT      ( IDC_DATABASE,7,37,181,12,ES_AUTOHSCROLL )
+    TMP_PUSHBUTTON    ( "Browse",IDC_FIND_FILE,194,36,36,14 )
+    TMP_EDITTEXT      ( IDC_CLIENT,7,62,182,12,ES_AUTOHSCROLL )
+    TMP_PUSHBUTTON    ( "Browse",IDC_FIND_FILE_CLIENT,194,61,36,14 )
+    TMP_EDITTEXT      ( IDC_USER,7,89,66,12,ES_UPPERCASE | ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_PASSWORD,77,89,73,12,ES_PASSWORD | ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_ROLE,154,89,76,12,ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_CHARSET,56,109,94,12,ES_AUTOHSCROLL )
+    TMP_BUTTONCONTROL ( "read (default write)",IDC_CHECK_READ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,148,69,10 )
+    TMP_BUTTONCONTROL ( "nowait (default wait)",IDC_CHECK_NOWAIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,158,72,10 )
+    TMP_DEFPUSHBUTTON ( "OK",IDOK,43,183,50,14 )
+    TMP_PUSHBUTTON    ( "Cancel",IDCANCEL,143,183,50,14 )
+    TMP_LTEXT         ( "Data Source Name (DSN)",IDC_STATIC,7,2,83,8 )
+    TMP_LTEXT         ( "Database",IDC_STATIC,7,27,32,8 )
+    TMP_LTEXT         ( "Database Account",IDC_STATIC,7,78,60,8 )
+    TMP_LTEXT         ( "Password",IDC_STATIC,80,78,32,8 )
+    TMP_LTEXT         ( "Driver",IDC_STATIC,123,2,20,8 )
+    TMP_LTEXT         ( "Role",IDC_STATIC,155,78,16,8 )
+    TMP_LTEXT         ( "Character Set",IDC_STATIC,7,112,44,8 )
+    TMP_GROUPBOX      ( "Options",IDC_STATIC,7,130,223,49 )
+    TMP_GROUPBOX      ( "Initializing transaction",IDC_STATIC,14,139,79,33 )
+    TMP_LTEXT         ( "Client",IDC_STATIC,7,52,32,8 )
+    TMP_GROUPBOX      ( "Dialect",IDC_STATIC,96,139,31,33 )
+    TMP_RADIOCONTROL  ( "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,104,148,16,10 )
+    TMP_RADIOCONTROL  ( "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,104,158,16,10 )
+    TMP_BUTTONCONTROL ( "quoted identifiers",IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,136,148,66,10 )
 
 	int nRet = DialogBoxIndirect(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hwnd, (DLGPROC)wndprocDsnDialog);
 	LocalFree (LocalHandle (pdlgtemplate));

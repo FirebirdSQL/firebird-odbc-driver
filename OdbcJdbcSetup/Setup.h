@@ -49,6 +49,7 @@ public:
 	JString		attributes;
 	JString		dsn;
 	JString		dbName;
+	JString		client;
 	JString		user;
 	JString		password;
 	JString		jdbcDriver;
@@ -56,6 +57,8 @@ public:
 	JString		charset;
 	JString		readonlyTpb;
 	JString		nowaitTpb;
+	JString		dialect;
+	JString		quoted;
 };
 
 #endif // !defined(_SETUP_H_INCLUDED_)

@@ -220,10 +220,10 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 	Blob *blob = resultSet->getBlob (indexIn);
 	
 	if (resultSet->valueWasNull)
-		{
+	{
 		resultSet->setValue (indexTarget, "NULL");
 		return false;
-		}
+	}
 
 	char * stuff = new char [blob->length()];
 	char * s = stuff;
@@ -236,8 +236,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 	if ((*stuff != blr_version4) && (*stuff != blr_version5))
 		{
 		resultSet->setValue (indexTarget, "unknown, not BLR");
-//		delete s;	// NOMEY -
-		delete[] s;	// NOMEY +
+		delete[] s;
 		return false;
 		}
 
@@ -246,16 +245,14 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 	if (*stuff == blr_null)
 		{
 		resultSet->setValue (indexTarget, "NULL");
-//		delete s;	// NOMEY -
-		delete[] s;	// NOMEY +
+		delete[] s;
 		return true;
 		}
 
 	if (*stuff != blr_literal)
 		{
 		resultSet->setValue (indexTarget, "unknown, not literal");
-//		delete s;	// NOMEY -
-		delete[] s;	// NOMEY +
+		delete[] s;
 		return false;
 		}
 
@@ -264,6 +261,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 	short	type, scale, mag;
 	char	stringTemp [BUFF_LEN];
 
+	CFbDll * GDS = resultSet->statement->connection->GDS;
 	JString stringVal;
 	TimeStamp timestamp;	
 	type = *stuff++;
@@ -311,7 +309,6 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 			break;
 			
 		case (blr_timestamp):
-//			TimeStamp timestamp;
 			timestamp.date = (long) stuff;
 			timestamp.nanos = (long) &stuff[4];
 			timestamp.getTimeString (BUFF_LEN, stringTemp);
@@ -364,8 +361,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 
 		}
 	resultSet->setValue (indexTarget, stringVal);
-//	delete s;	// NOMEY -
-	delete[] s;	// NOMEY +
+	delete[] s;
 	return true;
 }								
 

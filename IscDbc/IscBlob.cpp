@@ -72,27 +72,27 @@ void IscBlob::fetchBlob()
 	void *transactionHandle = connection->startTransaction();
 	isc_blob_handle blobHandle = NULL;
 
-	int ret = GDS->_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
+	int ret = connection->GDS->_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
 							  &blobHandle, &blobId, 0, NULL);
 
 	if (ret)
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (connection, statusVector);
 
 	char buffer [10000];
 	unsigned short length;
 
 	for (;;)
 		{
-		int ret = GDS->_get_segment (statusVector, &blobHandle, &length, sizeof (buffer), buffer);
+		int ret = connection->GDS->_get_segment (statusVector, &blobHandle, &length, sizeof (buffer), buffer);
 		if (ret)
 			if (ret == isc_segstr_eof)
 				break;
 			else if (ret != isc_segment)
-				THROW_ISC_EXCEPTION (statusVector);
+				THROW_ISC_EXCEPTION (connection, statusVector);
 		putSegment (length, buffer, true);
 		}
 
-	GDS->_close_blob (statusVector, &blobHandle);
+	connection->GDS->_close_blob (statusVector, &blobHandle);
 	blobHandle = NULL;
 	fetched = true;
 }
