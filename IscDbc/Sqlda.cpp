@@ -1099,11 +1099,39 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 		}			
 
 	if (length)
+	{
+		int post = 16384u;
+		if ( length > post )
 		{
-		GDS->_put_segment (statusVector, &blobHandle, length, address);
-		if (statusVector [1])
-			THROW_ISC_EXCEPTION (statusVector);
+			while( length > 0 )
+			{
+				if ( length > post )
+				{
+					GDS->_put_segment (statusVector, &blobHandle, post, address);
+					if (statusVector [1])
+						THROW_ISC_EXCEPTION (statusVector);
+					address+=post;
+					length-=post;
+				}
+				else
+				{
+					if(length>0)
+					{
+						GDS->_put_segment (statusVector, &blobHandle, length, address);
+						if (statusVector [1])
+							THROW_ISC_EXCEPTION (statusVector);
+					}
+					break;
+				}
+			}
 		}
+		else
+		{
+			GDS->_put_segment (statusVector, &blobHandle, length, address);
+			if (statusVector [1])
+				THROW_ISC_EXCEPTION (statusVector);
+		}
+	}
 
 	GDS->_close_blob (statusVector, &blobHandle);
 	if (statusVector [1])

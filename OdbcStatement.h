@@ -143,7 +143,7 @@ public:
 //Added 2002-06-04	RM
     int                 parameterNeedData;
  	int					numberGetDataBindings;
- 	int					columnPrevGetDataBinding;
+ 	int					maxColumnGetDataBinding;
 	Binding				*getDataBindings;
 	bool				eof;
 	bool				cancel;

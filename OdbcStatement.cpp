@@ -149,7 +149,7 @@
 	if ( getDataBindings )									\
 	{														\
 		int i;												\
-		for( i = 1; i <= numberGetDataBindings; i++ )		\
+		for( i = 1; i <= maxColumnGetDataBinding; i++ )		\
 		{													\
 			struct Binding * binding = getDataBindings + i;	\
 			if ( binding )									\
@@ -220,7 +220,7 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	enFetch = NoneFetch;
     parameterNeedData = 0;	
 	numberGetDataBindings = 0;	//added by RM
-	columnPrevGetDataBinding = -1;
+	maxColumnGetDataBinding = 0;
 	maxRows = 0;
 	maxLength = 0;
 	applicationRowDescriptor = connection->allocDescriptor (odtApplicationRow);
@@ -454,6 +454,15 @@ void OdbcStatement::releaseResultSet()
 		metaData  = NULL;
 		implementationRowDescriptor->setDefaultImplDesc (metaData);
 	}
+//==================================
+	numberGetDataBindings = 0;
+	maxColumnGetDataBinding = 0;
+
+	if (getDataBindings)
+	{
+		delete [] getDataBindings;
+		getDataBindings = NULL;
+	}
 }
 
 void OdbcStatement::setResultSet(ResultSet * results)
@@ -578,7 +587,6 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 		}
 		else
 		{
-			int realSqlType;
 			int count = MAX (column, numberColumns);
 			if (count >= *_numberBindings)
 			{
@@ -592,16 +600,8 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 			binding->pointer = targetValuePtr;
 			binding->bufferLength = bufferLength;
 			binding->indicatorPointer = indPtr;
+			maxColumnGetDataBinding = MAX(maxColumnGetDataBinding,column);
 
-			if(	columnPrevGetDataBinding != column )
-			{
-				binding->dataOffset	= 0;
-				columnPrevGetDataBinding = column;
-			}
-			else if ( metaData &&
-				 ( metaData->getColumnType (column, realSqlType) == SQL_CHAR || 
-				   metaData->getColumnType (column, realSqlType) == SQL_VARCHAR ))
-				binding->dataOffset			= 0;
 #ifdef DEBUG
 			char tempDebugStr [128];
 			sprintf (tempDebugStr, "Column %d %31s has SQL Type %3.3d, CType %3.3d, Type %3.3d \n", 
@@ -1709,7 +1709,7 @@ void OdbcStatement::releaseBindings()
 	implementationRowDescriptor->delAllBindColumn();
 //Added by RM
 	numberGetDataBindings = 0;
-	columnPrevGetDataBinding = -1;
+	maxColumnGetDataBinding = 0;
 
 	if (getDataBindings)
 		{
