@@ -447,12 +447,12 @@ char IscResultSet::getByte(const char * columnName)
 
 float IscResultSet::getFloat(int id)
 {
-	return (float) getValue (id)->getDouble();
+	return getValue (id)->getFloat();
 }
 
 float IscResultSet::getFloat(const char * columnName)
 {
-	return (float) getValue (columnName)->getDouble();
+	return getValue (columnName)->getFloat();
 }
 
 int IscResultSet::getColumnType(int index, int &realSqlType)

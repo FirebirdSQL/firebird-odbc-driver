@@ -338,7 +338,7 @@ QUAD IscCallableStatement::getQuad(int id)
 
 float IscCallableStatement::getFloat(int id)
 {
-	return (float) getValue (id)->getDouble();
+	return getValue (id)->getFloat();
 }
 
 double IscCallableStatement::getDouble(int id)

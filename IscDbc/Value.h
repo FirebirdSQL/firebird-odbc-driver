@@ -53,10 +53,12 @@ public:
 	short	getShort(int scale = 0);
 	long	getLong(int scale = 0);
 	QUAD	getQuad(int scale = 0);
+	float	getFloat();
 	double	getDouble();
 	char	*getString();
 	int		getString (int bufferSize, char *buffer);
 
+	void	setValue (float value);
 	void	setValue (double value);
 	void	setValue (long value, int scale = 0);
 	void	setValue (Value *value);
@@ -117,6 +119,7 @@ public:
 			}	string;
 		short		smallInt;
 		long		integer;
+		float		flt;
 		double		dbl;
 		QUAD		quad;
 		Blob		*blob;

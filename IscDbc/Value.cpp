@@ -151,6 +151,10 @@ void Value::setValue(Value * value)
 			data.quad = value->data.quad;
 			break;
 
+		case Float:
+			data.flt = value->data.flt;
+			break;
+
 		case Double:
 			data.dbl = value->data.dbl;
 			break;
@@ -295,6 +299,41 @@ double Value::getDouble()
 	return number / divisor;
 }
 
+float Value::getFloat()
+{
+	switch (type)
+		{
+		case Null:
+			return 0;
+
+		case Float:
+			return data.flt;
+
+		case Double:
+			return (float)data.dbl;
+
+		case Short:
+		case Long:
+		case Quad:
+			return (float) getQuad();
+
+		case Char:
+		case Varchar:
+		case String:
+			break;
+
+		case Date:
+			return (float) data.date.date;
+
+		default:
+			NOT_YET_IMPLEMENTED;
+		}
+
+	double divisor;
+	QUAD number = convertToQuad (divisor);
+	return (float)(number / divisor);
+}
+
 int Value::compare(Value * value)
 {
 	if (type == value->type)
@@ -305,6 +344,9 @@ int Value::compare(Value * value)
 
 			case Long:
 				return data.integer - value->data.integer;
+
+			case Float:
+				return (int) (data.flt - value->data.flt);
 
 			case Double:
 				return (int) (data.dbl - value->data.dbl);
@@ -371,6 +413,13 @@ int Value::compare(Value * value)
 	return 0;						
 }
 
+void Value::setValue(float value)
+{
+	clear();
+	type = Float;
+	data.flt = value;
+}
+
 void Value::setValue(double value)
 {
 	clear();
@@ -393,6 +442,9 @@ QUAD Value::getQuad(int scale)
 
 		case Quad:
 			return data.quad;
+
+		case Float:
+			return (QUAD) data.flt;
 
 		case Double:
 			return (QUAD) data.dbl;
@@ -509,6 +561,10 @@ char* Value::getString(char **tempPtr)
 
 		case Quad:
 			convert (data.quad, scale, temp);
+			break;
+
+		case Float:
+			sprintf (temp, "%f", data.flt);
 			break;
 
 		case Double:
