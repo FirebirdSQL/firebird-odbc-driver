@@ -127,6 +127,7 @@ public:
 	virtual Connection*	clone() = 0;
 	virtual bool		getTransactionPending() = 0;
 	virtual void		setExtInitTransaction (int optTpb) = 0;
+	virtual int			getDriverBuildKey() = 0;
 
 	virtual void		addRef() = 0;
 	virtual int			release() = 0;

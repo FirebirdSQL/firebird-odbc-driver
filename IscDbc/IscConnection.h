@@ -73,6 +73,7 @@ public:
 	virtual int release();
 	virtual void addRef();
 	virtual void setExtInitTransaction (int optTpb);
+	virtual int	getDriverBuildKey();
 	void init();
 	IscConnection (IscConnection *source);
 	virtual Connection* clone();

@@ -57,6 +57,7 @@
 #include "Attachment.h"
 #include "Mlist.h"
 #include "SupportFunctions.h"
+#include "SetupAttributes.h"
 
 namespace IscDbcLibrary {
 
@@ -840,6 +841,11 @@ const char*	IscConnection::nativeSQL(const char *sqlString)
 void IscConnection::setExtInitTransaction(int optTpb)
 {
 	transactionExtInit = optTpb;
+}
+
+int	IscConnection::getDriverBuildKey()
+{
+	return MAJOR_VERSION * 1000000 + MINOR_VERSION * 10000 + BUILDNUM_VERSION;
 }
 
 void IscConnection::addRef()

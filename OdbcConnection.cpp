@@ -263,6 +263,11 @@ bool moduleInit()
 	return test;
 }
 
+static int getDriverBuildKey()
+{
+	return MAJOR_VERSION * 1000000 + MINOR_VERSION * 10000 + BUILDNUM_VERSION;
+}
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -1370,6 +1375,26 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 #endif
 		connection = (fn)();
 		//connection = createConnection();
+
+		if ( getDriverBuildKey() != connection->getDriverBuildKey() )
+		{
+			connection->close();
+			connection = NULL;
+
+#ifdef _WIN32
+			FreeLibrary(env->libraryHandle);
+			env->libraryHandle = NULL;
+#endif
+#ifdef ELF
+			dlclose (env->libraryHandle);
+			env->libraryHandle = 0;
+#endif
+
+			JString text;
+			text.Format (" Unable to load %s Library : can't find ver. %s ", sharedLibrary, DRIVER_VERSION);
+			return sqlReturn (SQL_ERROR, "HY000", text);
+		}
+
 		properties = connection->allocProperties();
 		if (account)
 			properties->putValue ("user", account);

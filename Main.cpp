@@ -502,6 +502,7 @@ RETCODE SQL_API SQLTransact  (HENV arg0,
 		return ((OdbcConnection*) arg1)->sqlEndTran (arg2);
 	}
 
+	GUARD_ENV(arg0);
 	return ((OdbcEnv*) arg0)->sqlEndTran (arg2);
 }
 
@@ -1120,16 +1121,19 @@ RETCODE SQL_API SQLEndTran  (SQLSMALLINT arg0,
 	TRACE ("SQLEndTran");
 
 	switch (arg0)
+	{
+	case SQL_HANDLE_DBC:
 		{
-		case SQL_HANDLE_ENV:
-			return ((OdbcEnv*) arg1)->sqlEndTran (arg2);
-
-		case SQL_HANDLE_DBC:
-			{
-				GUARD_HDBC(arg1);
-				return ((OdbcConnection*) arg1)->sqlEndTran (arg2);
-			}
+			GUARD_HDBC(arg1);
+			return ((OdbcConnection*) arg1)->sqlEndTran (arg2);
 		}
+
+	case SQL_HANDLE_ENV:
+		{
+			GUARD_ENV(arg1);
+			return ((OdbcEnv*) arg1)->sqlEndTran (arg2);
+		}
+	}
 
 	return SQL_INVALID_HANDLE;
 }

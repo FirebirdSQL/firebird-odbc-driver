@@ -106,7 +106,7 @@ class SafeConnectThread
 public:
 	SafeConnectThread(OdbcConnection * connect)
 	{
-		if(connect->connected)
+		if(connect && connect->connected)
 		{
 			connection=connect;
 			connection->Lock();

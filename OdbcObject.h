@@ -47,7 +47,6 @@ class OdbcObject
 {
 public:
 	void setCursorRowCount (int count);
-	int getCType (int type, bool isSigned);
 	virtual RETCODE sqlGetDiagField (int recNumber, int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
 	RETCODE returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLINTEGER* returnLength, const char * value);
 	RETCODE sqlGetDiagRec (int handleType, int recNumber, SQLCHAR*sqlState,SQLINTEGER*nativeErrorPtr,SQLCHAR*messageText,int bufferLength,SQLSMALLINT*textLengthPtr);
