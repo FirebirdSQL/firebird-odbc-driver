@@ -94,8 +94,7 @@ void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaData)
 		return;
 
 	bDefined = false;
-	recordSlots = 0;
-	records = NULL;
+	removeRecords();
 
 	headAllocType = SQL_DESC_ALLOC_AUTO;
 	headArraySize = 1;
@@ -188,9 +187,9 @@ OdbcDesc::~OdbcDesc()
 		connection->descriptorDeleted (this);
 
 	removeRecords();
-	
-	if (convert)
-		delete convert;
+
+	delete convert;
+	delete listBind;
 }
 
 // 	Info -> ASSERT( headType == odtImplementationGetData )
@@ -280,11 +279,6 @@ int OdbcDesc::setConvFn(int recNumber, DescRecord * recordTo)
 	return convert->isIdentity() && recNumber;
 }
 
-static long fnCmpInt(CBindColumn * a, CBindColumn * b)
-{
-	return a->column-b->column;
-}
-
 void OdbcDesc::addGetDataColumn(int recNumber, DescRecord * recordImp)
 {
 	DescRecord *record = getDescRecord(recNumber);
@@ -303,7 +297,7 @@ void OdbcDesc::addBindColumn(int recNumber, DescRecord * recordApp)
 	DescRecord *recordImp = getDescRecord(recNumber);
 	CBindColumn bindCol(recNumber,recordImp,recordApp);
 
-	int j = listBind->SearchAndInsert(&bindCol,(long (*)(const void *,const void *))fnCmpInt);
+	int j = listBind->SearchAndInsert( &bindCol );
 	if( j < 0 )
 		(*listBind)[-j-1] = bindCol;
 }
@@ -314,7 +308,7 @@ void OdbcDesc::delBindColumn(int recNumber)
 
 void OdbcDesc::delAllBindColumn()
 {
-	listBind->OnRemoveAll();
+	listBind->removeAll();
 }
 
 RETCODE OdbcDesc::returnData()
