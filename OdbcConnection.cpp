@@ -800,27 +800,51 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::sqlNativeSql(SQLCHAR * inStatementText, SQLINTEGER textLength1,
+RETCODE OdbcConnection::sqlNativeSql( SQLCHAR * inStatementText, SQLINTEGER textLength1,
 										SQLCHAR * outStatementText, SQLINTEGER bufferLength,
-										SQLINTEGER * textLength2Ptr)
+										SQLINTEGER * textLength2Ptr )
 {
 	clearErrors();
 
+	if ( !inStatementText )
+		return sqlReturn( SQL_ERROR, "HY009", "Invalid use of null pointer" );
+
+	if ( textLength1 == SQL_NTS )
+		textLength1 = strlen( (const char *)inStatementText );
+	else if ( textLength1 < 0 )
+		return sqlReturn( SQL_ERROR, "HY090", "Invalid string or buffer length" );
+
+	JString tempNative;
+	long textLength = textLength1 + 4096;
+	const char * outText;
+	RETCODE ret = SQL_SUCCESS;
+
+	if ( !connection->getNativeSql( (const char *)inStatementText, textLength1, 
+						tempNative.getBuffer ( textLength ), textLength, &textLength ) )
+	{
+		textLength = textLength1;
+		outText = (const char *)inStatementText;
+	}
+	else
+		outText = (const char *)tempNative;
+
+	if( textLength2Ptr )
+		*textLength2Ptr = textLength;
+
 	if ( outStatementText )
 	{
-		if ( textLength1 <= bufferLength )
+		if ( textLength >= bufferLength )
 		{
-			if ( !connection->getNativeSql((const char *)inStatementText,textLength1,(char *)outStatementText,bufferLength,textLength2Ptr) )
-			{	
-				memcpy(outStatementText,inStatementText,textLength1);
-				outStatementText[textLength1]='\0';
-				if( textLength2Ptr )
-					*textLength2Ptr = textLength1;
-			}
+			textLength = bufferLength - 1;
+			postError( "01004", "String data, right truncated" );
+			ret = SQL_SUCCESS_WITH_INFO;
 		}
+
+		memcpy( outStatementText, outText, textLength );
+		outStatementText[textLength] = '\0';
 	}
 
-	return sqlSuccess();
+	return ret;
 }
 
 JString OdbcConnection::readAttribute(const char * attribute)
