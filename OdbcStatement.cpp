@@ -2099,13 +2099,13 @@ SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int buffe
 		{
 		switch (attribute)
 			{
-			case 11999:
+			case SQL_FBGETSTMT_PLAN:
 				return statement->getStmtPlan(ptr,bufferLength,lengthPtr);
 
-			case 11998:
+			case SQL_FBGETSTMT_TYPE:
 				return statement->getStmtType(ptr,bufferLength,lengthPtr);
 
-			case 11997:
+			case SQL_FBGETSTMT_INFO:
 				return statement->getStmtInfoCountRecords(ptr,bufferLength,lengthPtr);
 
 			case SQL_ATTR_APP_ROW_DESC:

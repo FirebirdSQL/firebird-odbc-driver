@@ -84,6 +84,10 @@ void logMsg (const char *msg);
 #define UPPER(c)			((ISLOWER (c)) ? (c) - 'a' + 'A' : (c))
 #define ROUNDUP(n,b)		(((n) + (b) - 1) & ~((b) - 1))
 
+#define SQL_FBGETSTMT_PLAN				11999
+#define SQL_FBGETSTMT_TYPE				11998
+#define SQL_FBGETSTMT_INFO				11997
+
 // ext env attribute
 #define SQL_ATTR_HANDLE_DBC_SHARE		4000
 
