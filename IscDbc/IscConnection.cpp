@@ -61,6 +61,8 @@ namespace IscDbcLibrary {
 
 extern SupportFunctions supportFn;
 
+extern char charTable [];
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -341,29 +343,35 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 	{
 		ptOut = outStatementText;
 
-		while( *ptOut == ' ' )ptOut++;
+		SKIP_WHITE ( ptOut );
 
 		if ( !strncasecmp (ptOut, "CREATE", 6) || !strncasecmp (ptOut, "ALTER", 5) )
 		{
+			if ( UPPER(*ptOut) == 'A' )
+				ptOut += 5;
+			else
+				ptOut += 6;
+
 			while ( *ptOut )
 			{
-				while( *ptOut && UPPER(*ptOut) != 'T' )
-					ptOut++;
+				SKIP_WHITE ( ptOut );
 
 				if ( *ptOut )
 				{
-					if ( !strncasecmp (ptOut, "TINYINT", 7) )
+					#define LENSTR_TINYINT 7 
+
+					if ( !strncasecmp (ptOut, "TINYINT", LENSTR_TINYINT) && IS_END_TOKEN(*(ptOut+LENSTR_TINYINT)) )
 					{
 						const char * nameTinyint = "CHAR CHARACTER SET OCTETS";
 						int lenNameTinyint = 25;
-						int offset = lenNameTinyint - 7;
+						int offset = lenNameTinyint - LENSTR_TINYINT;
 
 						memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
 						memcpy(ptOut, nameTinyint, lenNameTinyint);
 						ptOut += lenNameTinyint;
 					}
 					else 
-						ptOut++;
+						SKIP_NO_WHITE ( ptOut );
 				}
 			}
 		}
