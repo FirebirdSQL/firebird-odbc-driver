@@ -167,6 +167,7 @@ public:
 	SQLINTEGER			useBookmarks;
 	SQLINTEGER			cursorSensitivity;
 	SQLPOINTER			fetchBookmarkPtr;
+	SQLUINTEGER			noscanSQL;
 	int					currency;
 	int					cursorType;
 	bool				cursorScrollable;

@@ -93,6 +93,9 @@ public:
 	virtual void		commit() = 0;
 
 	virtual Blob*		genHTML (Properties *context, long genHeaders) = 0;
+	virtual bool		getNativeSql (const char * inStatementText, long textLength1,
+										char * outStatementText, long bufferLength,
+										long * textLength2Ptr) = 0;
 
 	virtual Statement*	createStatement() = 0;
 	virtual PreparedStatement* prepareStatement (const char *sqlString) = 0;

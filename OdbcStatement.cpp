@@ -234,6 +234,7 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	useBookmarks = SQL_UB_OFF;
 	cursorSensitivity = SQL_INSENSITIVE;
 	fetchBookmarkPtr = NULL;
+	noscanSQL = SQL_NOSCAN_OFF;
 }
 
 OdbcStatement::~OdbcStatement()
@@ -361,7 +362,7 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength, bool isExecDirec
 {
 	clearErrors();
 	releaseStatement();
-	JString temp;
+	JString temp, tempNative;
 	const char *string = (const char*) sql;
 
 	if (sqlLength != SQL_NTS)
@@ -371,9 +372,27 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength, bool isExecDirec
 	}
 
 #ifdef DEBUG
-	char tempDebugStr [8196];
-	sprintf (tempDebugStr, "Preparing statement:\n\t%.8170s\n", string);
-	OutputDebugString (tempDebugStr);
+	{
+		char tempDebugStr [8196];
+		sprintf (tempDebugStr, "Preparing statement:\n\t%.8170s\n", string);
+		OutputDebugString (tempDebugStr);
+	}
+#endif
+
+	if ( noscanSQL == SQL_NOSCAN_OFF )
+	{
+		long lenstrSQL = lstrlen(string);
+		long lennewstrSQL = lenstrSQL + 4096;
+		if ( connection->connection->getNativeSql(string,lenstrSQL,tempNative.getBuffer(lennewstrSQL),lennewstrSQL,&lenstrSQL))
+			string = tempNative;
+	}
+
+#ifdef DEBUG
+	{
+		char tempDebugStr [8196];
+		sprintf (tempDebugStr, "Preparing statement:\n\t%.8170s\n", string);
+		OutputDebugString (tempDebugStr);
+	}
 #endif
 
 	try
@@ -2700,11 +2719,15 @@ RETCODE OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferL
 				TRACE02(SQL_ATTR_FETCH_BOOKMARK_PTR,value);
 		        break;
 
+			case SQL_ATTR_NOSCAN:					// 2
+				value = noscanSQL;
+				TRACE02(SQL_ATTR_NOSCAN,value);
+		        break;
+
 			/***
 			case SQL_ATTR_ENABLE_AUTO_IPD			15
 			case SQL_ATTR_FETCH_BOOKMARK_PTR			16
 			case SQL_ATTR_KEYSET_SIZE				SQL_KEYSET_SIZE
-			case SQL_ATTR_NOSCAN						SQL_NOSCAN
 			case SQL_ATTR_PARAM_BIND_OFFSET_PTR		17
 			case SQL_ATTR_PARAM_OPERATION_PTR		19
 			case SQL_ATTR_PARAM_STATUS_PTR			20
@@ -3344,13 +3367,17 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 				TRACE02(SQL_ATTR_FETCH_BOOKMARK_PTR,(int) ptr);
 		        break;
 
+			case SQL_ATTR_NOSCAN:					// 2
+				noscanSQL = (int) ptr;
+				TRACE02(SQL_ATTR_NOSCAN,(int) ptr);
+		        break;
+
 			/***
 			case SQL_ATTR_ASYNC_ENABLE				4
 			case SQL_ATTR_CONCURRENCY				SQL_CONCURRENCY	7
 			case SQL_ATTR_CURSOR_TYPE				SQL_CURSOR_TYPE 6
 			case SQL_ATTR_ENABLE_AUTO_IPD			15
 			case SQL_ATTR_KEYSET_SIZE				SQL_KEYSET_SIZE 8
-			case SQL_ATTR_NOSCAN						SQL_NOSCAN 2
 			case SQL_ATTR_PARAM_BIND_OFFSET_PTR		17
 			case SQL_ATTR_PARAM_BIND_TYPE			18
 			case SQL_ATTR_PARAM_OPERATION_PTR		19

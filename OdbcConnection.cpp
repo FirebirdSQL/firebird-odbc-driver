@@ -680,10 +680,13 @@ RETCODE OdbcConnection::sqlNativeSql(SQLCHAR * inStatementText, SQLINTEGER textL
 	{
 		if ( textLength1 <= bufferLength )
 		{
-			memcpy(outStatementText,inStatementText,textLength1);
-			outStatementText[textLength1]='\0';
-			if( textLength2Ptr )
-				*textLength2Ptr = textLength1;
+			if ( !connection->getNativeSql((const char *)inStatementText,textLength1,(char *)outStatementText,bufferLength,textLength2Ptr) )
+			{	
+				memcpy(outStatementText,inStatementText,textLength1);
+				outStatementText[textLength1]='\0';
+				if( textLength2Ptr )
+					*textLength2Ptr = textLength1;
+			}
 		}
 	}
 

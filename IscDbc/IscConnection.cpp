@@ -267,6 +267,54 @@ void IscConnection::freeHTML(const char * html)
 }
 ***/
 
+bool IscConnection::getNativeSql (const char * inStatementText, long textLength1,
+								char * outStatementText, long bufferLength,
+								long * textLength2Ptr)
+{
+	char * ptStart;
+
+	if ( ptStart = strchr(inStatementText, '{'), !ptStart )
+		return false;
+
+#pragma FB_COMPILER_MESSAGE("IscConnection::getNativeSql - The temporary decision; FIXME!")
+
+	const char * ptIn = inStatementText;
+	char * ptOut = outStatementText;
+
+	while(ptIn < ptStart)
+		*ptOut++ = *ptIn++;
+	
+	ptIn++; // '{'
+
+	while(*ptIn==' ')ptIn++;
+
+	// Check 'oj' or 'OJ'
+	if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
+	{
+		ptIn += 2; // 'oj'
+
+		while(*ptIn && *ptIn!='}')
+			*ptOut++ = *ptIn++;
+
+		if(*ptIn!='}')
+			return false;
+
+		ptIn++; // '}'
+
+		while( *ptIn )
+			*ptOut++ = *ptIn++;
+
+		if ( textLength2Ptr )
+			*textLength2Ptr = ptOut - outStatementText;
+
+		*ptOut = '\0';
+		// validate end string check Server
+		return true;
+	}
+
+	return false;
+}
+
 DatabaseMetaData* IscConnection::getMetaData()
 {
 	if (metaData)
