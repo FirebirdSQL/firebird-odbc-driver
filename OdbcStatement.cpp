@@ -2004,10 +2004,10 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 			 case SQL_BIGINT:
 				cType = SQL_C_CHAR;
 				break;
-			 case SQL_FLOAT:
 			 case SQL_REAL:
 				cType = SQL_C_FLOAT;
 				break;
+			 case SQL_FLOAT:
 			 case SQL_DOUBLE:
 				cType = SQL_C_DOUBLE;
 				break;
