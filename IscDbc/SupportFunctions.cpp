@@ -149,14 +149,17 @@ void SupportFunctions::translateNativeFunction ( char *&ptIn, char *&ptOut )
 	fn.nameSqlFn = ptIn;
 	char * end = ptIn;
 
-	while( *end != ' ' && *end != '(' )end++;
+	while( *end && *end != ' ' && *end != '(' )end++;
 	fn.lenSqlFn = end - ptIn;
 
-	int ret = listSupportFunctions.Search( &fn );
-	if( ret != -1 )
+	if ( fn.lenSqlFn )
 	{
-		supportFn = &listSupportFunctions[ ret ];
-		(this->*supportFn->translate)( ptIn, ptOut );
+		int ret = listSupportFunctions.Search( &fn );
+		if( ret != -1 )
+		{
+			supportFn = &listSupportFunctions[ ret ];
+			(this->*supportFn->translate)( ptIn, ptOut );
+		}
 	}
 }
 
