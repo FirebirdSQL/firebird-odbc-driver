@@ -328,13 +328,13 @@ SQLPOINTER OdbcConvert::getAdressData(char * pointer)
 	return (SQLPOINTER)(pointer + **bindOffsetPtr);
 }
 
-#define ODBCCONVERT_CHECKNULL			\
-	if( *from->indicatorPtr == -1 )		\
-	{									\
-		if ( indicatorPointer )			\
-			*indicatorPointer = -1;		\
-		return 0;						\
-	}									\
+#define ODBCCONVERT_CHECKNULL					\
+	if( *(short*)from->indicatorPtr == -1 )		\
+	{											\
+		if ( indicatorPointer )					\
+			*indicatorPointer = -1;				\
+		return 0;								\
+	}											\
 
 #define ODBCCONVERT_CONV(TYPE_FROM,C_TYPE_FROM,TYPE_TO,C_TYPE_TO)							\
 int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)			\
@@ -342,17 +342,12 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);									\
 	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);	\
 																							\
-	if( *from->indicatorPtr == -1 )															\
-	{																						\
-		if ( indicatorPointer )																\
-			*indicatorPointer = -1;															\
-	}																						\
-	else																					\
-	{																						\
-		*(##C_TYPE_TO*)pointer = (##C_TYPE_TO)*(##C_TYPE_FROM*)from->dataPtr;				\
-		if ( indicatorPointer )																\
-			*indicatorPointer = sizeof(##C_TYPE_TO);										\
-	}																						\
+	ODBCCONVERT_CHECKNULL;																	\
+																							\
+	*(##C_TYPE_TO*)pointer = (##C_TYPE_TO)*(##C_TYPE_FROM*)from->dataPtr;					\
+	if ( indicatorPointer )																	\
+		*indicatorPointer = sizeof(##C_TYPE_TO);											\
+																							\
 	return 0;																				\
 }																							\
 
@@ -362,21 +357,16 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);									\
 	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);	\
 																							\
-	if( *from->indicatorPtr == -1 )															\
-	{																						\
-		if ( indicatorPointer )																\
-			*indicatorPointer = -1;															\
-	}																						\
-	else																					\
-	{																						\
-		##C_TYPE_FROM valFrom = *(##C_TYPE_FROM*)from->dataPtr;								\
-		if ( valFrom < 0 )valFrom -= 0.5;													\
-		else valFrom += 0.5;																\
+	ODBCCONVERT_CHECKNULL;																	\
 																							\
-		*(##C_TYPE_TO*)pointer = (##C_TYPE_TO)valFrom;										\
-		if ( indicatorPointer )																\
-			*indicatorPointer = sizeof(##C_TYPE_TO);										\
-	}																						\
+	##C_TYPE_FROM valFrom = *(##C_TYPE_FROM*)from->dataPtr;									\
+	if ( valFrom < 0 )valFrom -= 0.5;														\
+	else valFrom += 0.5;																	\
+																							\
+	*(##C_TYPE_TO*)pointer = (##C_TYPE_TO)valFrom;											\
+	if ( indicatorPointer )																	\
+		*indicatorPointer = sizeof(##C_TYPE_TO);											\
+																							\
 	return 0;																				\
 }																							\
 
@@ -557,6 +547,7 @@ int OdbcConvert::convNumericToTagNumeric(DescRecord * from, DescRecord * to)
 	*pointer++=(char)from->precision;
 	*pointer++=(char)from->scale;
 	if ( number < 0 )
+		number = -number,
 		*pointer++=0;
 	else
 		*pointer++=1;
@@ -575,17 +566,14 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);									\
 	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);	\
 																							\
-	if( *from->indicatorPtr == -1 )															\
-	{																						\
-		if ( indicatorPointer )																\
-			*indicatorPointer = -1;															\
-		return 0;																			\
-	}																						\
+	ODBCCONVERT_CHECKNULL;																	\
+																							\
 	if ( indicatorPointer )																	\
 		*indicatorPointer = 0;																\
+																							\
 	return 0;																				\
-}	
-																						\
+}																							\
+																							\
 ////////////////////////////////////////////////////////////////////////
 // Date
 ////////////////////////////////////////////////////////////////////////
