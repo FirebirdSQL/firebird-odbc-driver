@@ -462,8 +462,11 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 		r = appendString (r, charset);
 	}
 
-	if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
-		postError ("01004", "String data, right truncated");
+	if ( outConnectBuffer && connectBufferLength )
+	{
+		if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
+			postError ("01004", "String data, right truncated");
+	}
 
 #ifdef _WIN32
 	if ( account.IsEmpty() || password.IsEmpty() )
@@ -1806,7 +1809,7 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 {
 	clearErrors();
 	long value;
-	char *string = NULL;
+	const char *string = NULL;
 
 	switch (attribute)
 	{
@@ -1836,6 +1839,10 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 
 	case SQL_ATTR_AUTO_IPD:			// 10001
 		value = SQL_TRUE;
+		break;
+
+	case SQL_ATTR_CURRENT_CATALOG:
+		string = databaseName;
 		break;
 
 	case SQL_LOGIN_TIMEOUT:			//   103
