@@ -40,6 +40,7 @@
 static char databaseInfoItems [] = { 
 	isc_info_db_sql_dialect,
 	isc_info_base_level,
+	isc_info_user_names,
 	isc_info_ods_version,
 	isc_info_version, 
 	isc_info_page_size,
@@ -179,6 +180,15 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 				serverBaseLevel = GDS->_vax_integer (p, length);
 				break;
 
+			case isc_info_user_names:
+				if ( userAccess.IsEmpty() )
+				{
+					userName = JString ( p + 1, (int)*p );
+					userAccess = userName;
+					userType = 8;
+				}
+				break;
+			
 			case isc_info_version:
 				serverVersion = JString (p + 2, p [1]);
 				break;
