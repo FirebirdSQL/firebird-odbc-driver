@@ -338,120 +338,154 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 	*ptOut = '\0';
 	int ignoreBracket = 0;
 
-	while ( ptEndBracket )
+	if ( !ptEndBracket )
 	{
-		ptIn = ptEndBracket;
+		ptOut = outStatementText;
 
-		ptIn++; // '{'
-		
-		while( *ptIn == ' ' )ptIn++;
+		while( *ptOut == ' ' )ptOut++;
 
-//	On a note		++ignoreBracket; // ignored { }
-		if ( *ptIn == '?' || *(long*)ptIn == 0x6c6c6163 || *(long*)ptIn == 0x4c4c4143 )
-		{	// Check '?' or 'call' or 'CALL'
-			if ( *ptIn == '?' )
+		if ( !strncasecmp (ptOut, "CREATE", 6) || !strncasecmp (ptOut, "ALTER", 5) )
+		{
+			while ( *ptOut )
 			{
-				ptIn++;
-				while( *ptIn == ' ' )ptIn++;
+				while( *ptOut && UPPER(*ptOut) != 'T' )
+					ptOut++;
 
-				if(*ptIn != '=')
-					return false;
+				if ( *ptOut )
+				{
+					if ( !strncasecmp (ptOut, "TINYINT", 7) )
+					{
+						const char * nameTinyint = "CHAR CHARACTER SET OCTETS";
+						int lenNameTinyint = 25;
+						int offset = lenNameTinyint - 7;
 
-				ptIn++; // '='
-				while( *ptIn == ' ' )ptIn++;
+						memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
+						memcpy(ptOut, nameTinyint, lenNameTinyint);
+						ptOut += lenNameTinyint;
+					}
+					else 
+						ptOut++;
+				}
 			}
+		}
+	}
+	else
+	{
+		while ( ptEndBracket )
+		{
+			ptIn = ptEndBracket;
 
-			if ( *(long*)ptIn != 0x6c6c6163 && *(long*)ptIn != 0x4c4c4143 )
-				return false;
-
-			ptIn += 4; // 'call'
-
+			ptIn++; // '{'
+			
 			while( *ptIn == ' ' )ptIn++;
 
-			ptOut = ptEndBracket;
-			int ignoreBr = ignoreBracket;
+//	On a note		++ignoreBracket; // ignored { }
+			if ( *ptIn == '?' || *(long*)ptIn == 0x6c6c6163 || *(long*)ptIn == 0x4c4c4143 )
+			{	// Check '?' or 'call' or 'CALL'
+				if ( *ptIn == '?' )
+				{
+					ptIn++;
+					while( *ptIn == ' ' )ptIn++;
+
+					if(*ptIn != '=')
+						return false;
+
+					ptIn++; // '='
+					while( *ptIn == ' ' )ptIn++;
+				}
+
+				if ( *(long*)ptIn != 0x6c6c6163 && *(long*)ptIn != 0x4c4c4143 )
+					return false;
+
+				ptIn += 4; // 'call'
+
+				while( *ptIn == ' ' )ptIn++;
+
+				ptOut = ptEndBracket;
+				int ignoreBr = ignoreBracket;
 
 #define LENSTR_EXECUTE_PROCEDURE 18 
 
-			int offset = LENSTR_EXECUTE_PROCEDURE - ( ptIn - ptOut );
+				int offset = LENSTR_EXECUTE_PROCEDURE - ( ptIn - ptOut );
 
-			memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
-			memcpy(ptOut, "execute procedure ", LENSTR_EXECUTE_PROCEDURE);
+				memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
+				memcpy(ptOut, "execute procedure ", LENSTR_EXECUTE_PROCEDURE);
 
-			ptIn += offset; 
-			ptOut += LENSTR_EXECUTE_PROCEDURE;
+				ptIn += offset; 
+				ptOut += LENSTR_EXECUTE_PROCEDURE;
 
-			do
-			{
-				while( *ptIn && *ptIn != '}' )
+				do
+				{
+					while( *ptIn && *ptIn != '}' )
+						*ptOut++ = *ptIn++;
+
+					if( ignoreBr )
+						*ptOut++ = *ptIn++;
+
+				}while ( ignoreBr-- );
+
+				if(*ptIn != '}')
+					return false;
+
+				ptIn++; // '}'
+
+				while( *ptIn )
 					*ptOut++ = *ptIn++;
 
-				if( ignoreBr )
-					*ptOut++ = *ptIn++;
-
-			}while ( ignoreBr-- );
-
-			if(*ptIn != '}')
-				return false;
-
-			ptIn++; // '}'
-
-			while( *ptIn )
-				*ptOut++ = *ptIn++;
-
-			*ptOut = '\0';
-			bModify = true;
-		}
-		else
-		{
-			ptOut = ptEndBracket;
-
-			// Check 'oj' or 'OJ'
-			if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
-				ptIn += 2; // 'oj'
+				*ptOut = '\0';
+				bModify = true;
+			}
 			else
 			{
-				ptIn += 2; // 'fn'
+				ptOut = ptEndBracket;
+
+				// Check 'oj' or 'OJ'
+				if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
+					ptIn += 2; // 'oj'
+				else
+				{
+					ptIn += 2; // 'fn'
 //
 // select "FIRST_NAME" from "EMPLOYEE" where { fn UCASE("FIRST_NAME") } = { fn UCASE('robert') }
 // to
 // select "FIRST_NAME" from "EMPLOYEE" where UPPER("FIRST_NAME") = UPPER('robert')
 //
 // ATTENTION! ptIn and ptOut pointer of outStatementText
-				supportFn.translateNativeFunction ( ptIn, ptOut );
+					supportFn.translateNativeFunction ( ptIn, ptOut );
+				}
+
+				int ignoreBr = ignoreBracket;
+
+				do
+				{
+					while( *ptIn && *ptIn != '}' )
+						*ptOut++ = *ptIn++;
+
+					if( ignoreBr )
+						*ptOut++ = *ptIn++;
+
+				}while ( ignoreBr-- );
+
+				if(*ptIn != '}')
+					return false;
+
+				ptIn++; // '}'
+
+				while( *ptIn )
+					*ptOut++ = *ptIn++;
+
+				*ptOut = '\0';
+				bModify = true;
 			}
 
-			int ignoreBr = ignoreBracket;
+			--ptEndBracket; // '{'
 
-			do
-			{
-				while( *ptIn && *ptIn != '}' )
-					*ptOut++ = *ptIn++;
+			while ( ptEndBracket > outStatementText && *ptEndBracket != '{')
+				--ptEndBracket;
 
-				if( ignoreBr )
-					*ptOut++ = *ptIn++;
-
-			}while ( ignoreBr-- );
-
-			if(*ptIn != '}')
-				return false;
-
-			ptIn++; // '}'
-
-			while( *ptIn )
-				*ptOut++ = *ptIn++;
-
-			*ptOut = '\0';
-			bModify = true;
+			if(*ptEndBracket != '{')
+				ptEndBracket = NULL;
 		}
-
-		--ptEndBracket; // '{'
-
-		while ( ptEndBracket > outStatementText && *ptEndBracket != '{')
-			--ptEndBracket;
-
-		if(*ptEndBracket != '{')
-			ptEndBracket = NULL;
 	}
 
 	if ( textLength2Ptr )

@@ -343,6 +343,9 @@ void IscStatement::prepareStatement(const char * sqlString)
 	
 	switch ( statementType )
 	{
+	case isc_info_sql_stmt_ddl:
+		typeStmt = stmtDDL;
+		break;
 	case isc_info_sql_stmt_insert:
 		typeStmt = stmtInsert;
 		break;

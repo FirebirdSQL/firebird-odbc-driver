@@ -77,6 +77,7 @@ public:
 	virtual ResultList* search (const char *searchString) { return IscStatement::search (searchString); }
 	virtual int			release() { return IscStatement::release (); }
 	virtual void		addRef() { IscStatement::addRef (); }
+	virtual bool		isActiveDDL(){ return IscStatement::isActiveDDL(); }
 	virtual bool		isActiveSelect(){ return IscStatement::isActiveSelect(); }
 	virtual bool		isActiveProcedure(){ return IscStatement::isActiveProcedure(); }
 	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtPlan( value, bufferLength, lengthPtr ); }  

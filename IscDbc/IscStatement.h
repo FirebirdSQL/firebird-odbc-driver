@@ -37,7 +37,7 @@ class IscResultSet;
 class IscStatement : public Statement  
 {
 public:
-	enum TypeStatement { stmtNone, stmtSelect, stmtInsert, stmtUpdate, stmtDelete, stmtProcedure };
+	enum TypeStatement { stmtNone, stmtDDL, stmtSelect, stmtInsert, stmtUpdate, stmtDelete, stmtProcedure };
 
 	void freeStatementHandle();
 	void clearSelect();
@@ -76,6 +76,7 @@ public:
 
 	virtual int release();
 	virtual void addRef();
+	virtual bool isActiveDDL(){ return typeStmt == stmtDDL; }
 	virtual bool isActiveSelect(){ return typeStmt == stmtSelect; }
 	virtual bool isActiveProcedure(){ return typeStmt == stmtProcedure; }
 	virtual ~IscStatement();

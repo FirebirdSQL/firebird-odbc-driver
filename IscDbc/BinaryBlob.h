@@ -49,6 +49,7 @@ public:
 	virtual void  writeBlob(char * sqldata, char *data, long length) {};
 	virtual void  writeStringHexToBlob(char * sqldata, char *data, long length) {};
 	void putSegment (int length, const char *data, bool copyFlag);
+	void putLongSegment(int length, const char * data);
 	int length();
 	void getHexString(long pos, long length, void * address);
 	void getBytes (long pos, long length, void *address);

@@ -23,6 +23,7 @@ public:
 	virtual int		length() = 0;
 	virtual int		getSegmentLength (int pos) = 0;
 	virtual void	putSegment (int length, const char *data, bool copyFlag) = 0;
+	virtual void	putLongSegment (int length, const char *data) = 0;
 	virtual void	*getSegment (int pos) = 0;
 	virtual void	writeBlob(char * sqldata) = 0;
 	virtual void	writeStreamHexToBlob(char * sqldata) = 0;

@@ -87,6 +87,8 @@ typedef unsigned __int64			UQUAD;
 #include "Connection.h"
 #include "IscConnection.h"
 
+#define DEFAULT_BLOB_BUFFER_LENGTH	16384
+
 #define MAX_ARRAY_LENGTH			100000000
 #define MAX_BLOB_LENGTH				2147483647
 #define MAX_CHAR_LENGTH				32767

@@ -690,6 +690,7 @@ class InternalStatement : public Statement
 {
 public:
 	virtual bool		isActive() = 0;
+	virtual bool		isActiveDDL() = 0;
 	virtual void		prepareStatement(const char * sqlString) = 0;
 	virtual bool		executeStatement() = 0;
 	virtual bool		executeProcedure() = 0;

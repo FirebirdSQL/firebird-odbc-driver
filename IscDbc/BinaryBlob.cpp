@@ -179,6 +179,16 @@ void BinaryBlob::putSegment(int length, const char * data, bool copyFlag)
 	Stream::putSegment (length, data, copyFlag);
 }
 
+void BinaryBlob::putLongSegment(int length, const char * data)
+{
+	while ( length >= DEFAULT_BLOB_BUFFER_LENGTH )
+	{
+		Stream::putSegment ( DEFAULT_BLOB_BUFFER_LENGTH, data, true );
+		data += DEFAULT_BLOB_BUFFER_LENGTH;
+		length -= DEFAULT_BLOB_BUFFER_LENGTH;
+	}
+	if (length)	Stream::putSegment (length, data, true);
+}
 
 int BinaryBlob::getSegmentLength(int pos)
 {
