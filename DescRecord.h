@@ -41,6 +41,7 @@ public:
 	bool operator =(DescRecord *rec);
 
 public:
+	int				isBlobOrArray;
 	bool			data_at_exec;
 	bool			startedTransfer;
 

@@ -31,6 +31,7 @@
 
 DescRecord::DescRecord()
 {
+	isBlobOrArray = 0;
 	data_at_exec = false;
 	startedTransfer	= false;
 

@@ -79,8 +79,6 @@ public:
 	RETCODE	sqlPutData (SQLPOINTER value, SQLINTEGER valueSize);
 	RETCODE sqlGetTypeInfo (int dataType);
 	Binding* allocBindings (int count, int oldCount, Binding *oldBindings);
-//	RETCODE setParameters();	//Added 2002-06-04 RM
-//	void executeSQL();			//Added 2002-06-04 RM
 	RETCODE executeStatement();	//Changed return type 2002-06-04 RM 
 	char* getToken (const char** ptr, char *token);
 	bool isStoredProcedureEscape (const char *sqlString);
@@ -91,7 +89,6 @@ public:
 	RETCODE sqlProcedureColumns(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength, SQLCHAR*col,int colLength);
 	RETCODE sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength);
 	RETCODE sqlCancel();
-	void setParameter (Binding *binding, int parameter);
 	void setParameter(DescRecord *record,int parameter);
 	RETCODE sqlBindParameter (int parameter, int type, int cType, int sqlType, int precision, int scale, PTR ptr, int bufferLength, SDWORD *length);
 	RETCODE sqlDescribeParam (int parameter, SWORD* sqlType, UDWORD*precision, SWORD*scale,SWORD*nullable);
