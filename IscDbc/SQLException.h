@@ -34,15 +34,14 @@ enum SqlCode {
 	NO_RECORDS_FOR_FETCH = -508 // No current record for fetch operation 335544348L
 	};
 
-class DllExport SQLException {
+class DllExport SQLException 
+{
 public:
 	//virtual void		addRef() = 0;
 	//virtual int		release() = 0;
 	virtual int			getSqlcode () = 0;
 	virtual const char	*getText() = 0;
 	virtual const char	*getTrace() = 0;
-
-	//protected: virtual ~SQLException() {};
-    };
+};
 
 #endif

@@ -45,7 +45,7 @@ class OdbcDateTime
 {
 public:
 	OdbcDateTime();
-	virtual ~OdbcDateTime();
+	~OdbcDateTime();
 	int	convert (tagDATE_STRUCT * tagDateIn, DateTime * dateTimeOut);
 	int	convert (tagTIMESTAMP_STRUCT * tagTimeStampIn, DateTime * dateTimeOut);
 	int convert (tagTIMESTAMP_STRUCT * tagTimeStampIn, TimeStamp * timeStampOut);

@@ -104,7 +104,7 @@ public:
 	RETCODE sqlSetParam (int parameter, int cType, int sqlType, int precision, int scale, PTR ptr, SDWORD * length);
 	virtual OdbcObjectType getType();
 	OdbcStatement(OdbcConnection *connect, int statementNumber);
-	virtual ~OdbcStatement();
+	~OdbcStatement();
 	bool isStaticCursor(){ return cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE; }
 	long getCurrentFetched(){ return countFetched; }
 	inline StatementMetaData	*getStatementMetaDataIRD();

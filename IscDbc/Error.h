@@ -41,7 +41,7 @@ public:
 	static void assertionFailed (char *fileName, int line);
 	static void error (char *text, ...);
 	Error();
-	virtual ~Error();
+	~Error();
 
 };
 

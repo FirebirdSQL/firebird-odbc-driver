@@ -35,7 +35,7 @@ public:
 	void release();
 	void lock();
 	Mutex();
-	virtual ~Mutex();
+	~Mutex();
 
 #ifdef _WIN32
 	void*	mutex;

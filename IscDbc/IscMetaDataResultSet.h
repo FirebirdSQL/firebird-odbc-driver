@@ -40,7 +40,7 @@ public:
 	void trimBlanks (int id);
 	virtual void prepareStatement (const char *sql);
 	IscMetaDataResultSet(IscDatabaseMetaData *meta);
-	virtual ~IscMetaDataResultSet();
+	~IscMetaDataResultSet();
 
 	IscDatabaseMetaData		*metaData;
 	IscPreparedStatement	*statement;

@@ -37,7 +37,7 @@ public: // StatementMetaData
 public:
 	virtual bool next();
 	TypesResultSet(int dataType);
-	virtual ~TypesResultSet();
+	~TypesResultSet();
 	int findType();
 
 	int			recordNumber;

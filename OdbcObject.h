@@ -63,7 +63,7 @@ public:
 	int sqlReturn (int code, const char *state, const char *text, int nativeCode = 0);
 	RETCODE returnStringInfo (SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT* returnLength, const char * value);
 	OdbcObject();
-	virtual ~OdbcObject();
+	~OdbcObject();
 
 	OdbcError	*errors;
 	bool		infoPosted;

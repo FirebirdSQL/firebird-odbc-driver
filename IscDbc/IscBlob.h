@@ -47,7 +47,7 @@ public:
 	virtual int length();
 	IscBlob();
 	IscBlob(IscConnection *connect, XSQLVAR *var);
-	virtual ~IscBlob();
+	~IscBlob();
 
 	IscConnection	*connection;
 	ISC_QUAD		blobId;

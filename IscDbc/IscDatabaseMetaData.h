@@ -40,7 +40,7 @@ public:
 	virtual bool supportsStatementMetaData();
 	virtual int objectVersion();
 	IscDatabaseMetaData(IscConnection *connect);
-	virtual ~IscDatabaseMetaData();
+	~IscDatabaseMetaData();
 	virtual ResultSet* getUsers (const char * catalog, const char *userPattern);
 	virtual ResultSet* getRoles (const char * catalog, const char * schema, const char *rolePattern);
 	virtual ResultSet* getUserRoles (const char *user);

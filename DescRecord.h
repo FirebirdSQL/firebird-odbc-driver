@@ -33,7 +33,7 @@ class DescRecord
 {
 public:
 	DescRecord();
-	virtual ~DescRecord();
+	~DescRecord();
 	void setDefault(DescRecord *recTo);
 	bool operator =(DescRecord *rec);
 	void initZeroColumn();

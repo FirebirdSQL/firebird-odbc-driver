@@ -52,7 +52,7 @@ public:
 		pthread_mutex_lock (&MutexEnvThread::mutexLockedLevelDll);
 #endif 
 	}
-	virtual ~SafeDllThread()
+	~SafeDllThread()
 	{
 #ifdef _WIN32
 		ReleaseMutex (MutexEnvThread::mutexLockedLevelDll);

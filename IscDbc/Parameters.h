@@ -44,7 +44,7 @@ public:
 	virtual void putValue(const char * name, int nameLength, const char * value, int valueLength);
 	virtual void putValue(const char * name, const char * value);
 	Parameters();
-	virtual ~Parameters();
+	~Parameters();
 
 	Parameter	*parameters;
 	int			count;

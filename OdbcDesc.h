@@ -100,7 +100,7 @@ public:
 
 	virtual OdbcObjectType getType();
 	OdbcDesc(OdbcDescType type, OdbcConnection *connect);
-	virtual ~OdbcDesc();
+	~OdbcDesc();
 
 	bool isDefined() { return bDefined; }
 	void updateDefined();

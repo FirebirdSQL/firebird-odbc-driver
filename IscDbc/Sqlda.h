@@ -74,7 +74,7 @@ public:
 	XSQLVAR * Var(int index){ return sqlda->sqlvar + index - 1; }
 
 	Sqlda();
-	virtual ~Sqlda();
+	~Sqlda();
 
 	int isBlobOrArray(int index);
 	bool isNull(int index);

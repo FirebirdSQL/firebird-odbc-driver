@@ -100,7 +100,7 @@ public:
 	}
 
 	Value();
-	virtual ~Value();
+	~Value();
 
 	Type		type;
 	bool		copyFlag;

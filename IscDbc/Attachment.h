@@ -43,7 +43,7 @@ public:
 	void addRef();
 	void openDatabase(const char * dbName, Properties * properties);
 	Attachment();
-	virtual ~Attachment();
+	~Attachment();
 
 	CFbDll		*GDS;
 	void		*databaseHandle;

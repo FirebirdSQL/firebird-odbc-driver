@@ -45,7 +45,7 @@ public:
 	typedef IscPreparedStatement	Parent;
 
 	IscCallableStatement(IscConnection *connection);
-	virtual ~IscCallableStatement();
+	~IscCallableStatement();
 
 	virtual void		registerOutParameter(int parameterIndex, int sqlType, int scale);
 	virtual void		registerOutParameter(int parameterIndex, int sqlType);

@@ -35,7 +35,7 @@ public:
 	RETCODE sqlGetDiagField (int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
 	RETCODE sqlGetDiagRec (UCHAR *stateBuffer, SDWORD *nativeCode, UCHAR *msgBuffer, int msgBufferLength, SWORD *msgLength);
 	OdbcError(int code, const char *state, JString errorMsg);
-	virtual ~OdbcError();
+	~OdbcError();
 
 	OdbcError		*next;
 	char			sqlState [128];
