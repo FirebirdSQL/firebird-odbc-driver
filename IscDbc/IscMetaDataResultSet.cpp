@@ -93,7 +93,7 @@ void IscMetaDataResultSet::trimBlanks(int id)
 bool IscMetaDataResultSet::isWildcarded(const char * pattern)
 {
 	for (const char *p = pattern; *p; ++p)
-		if (*p == '%' || *p == '*')
+		if (*p == '%' || *p == '\\' || *p == '*')
 			return true;
 
 	return false;
@@ -104,7 +104,11 @@ JString IscMetaDataResultSet::expandPattern(const char * string, const char * pa
 	char temp [128];
 
 	if (isWildcarded (pattern))
-		sprintf (temp, string, "like", pattern);
+	{
+		char strValLike [128];
+		sprintf (strValLike, "%%%s%%' ESCAPE '\\",pattern);
+		sprintf (temp, string, "like", strValLike);
+	}
 	else
 		sprintf (temp, string, "= ", pattern);
 

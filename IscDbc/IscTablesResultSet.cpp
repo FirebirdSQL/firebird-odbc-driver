@@ -33,7 +33,7 @@
 #include "IscBlob.h"
 
 #define TABLE_TYPE	4
-
+#define REMARKS		5
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -148,13 +148,18 @@ int IscTablesResultSet::getColumnType(int index)
 	return Parent::getColumnType (index);
 }
 
-int IscTablesResultSet::getColumnPrecision(int index)
+int IscTablesResultSet::getPrecision(int index)
 {
 	switch (index)
 		{
 		case TABLE_TYPE:				// change from blob to text
-			return 128;
-		}
+			return 12;
+//			return 128;
+		case REMARKS:
+			return 254;
+		default:
+			return 31;
 
-	return Parent::getPrecision (index);
+		}
+//	return Parent::getPrecision (index);
 }

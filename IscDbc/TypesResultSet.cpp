@@ -70,7 +70,7 @@ struct Types {
 
 #define ALPHA(type,code,prec) type,code,prec,"'","'","length",NULLABLE,CASE_SENSITIVE,SEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
 #define BLOB(type,code,prefix,suffix,casesensitive) type,code,MAX_BLOB_LENGTH,prefix,suffix,NULL,NULLABLE,casesensitive,UNSEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
-#define NUMERIC(type,code,prec,attr,min,max,numprecradix) type,code,prec,"'","'",attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,IS_SIGNED,NOT_MONEY,NOT_AUTO_INCR,type,min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
+#define NUMERIC(type,code,prec,attr,min,max,numprecradix) type,code,prec,"<n/a>","<n/a>",attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,IS_SIGNED,NOT_MONEY,NOT_AUTO_INCR,type,min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
 #define DATETIME(type,code,prec,prefix,suffix,datetimesub) type,code,prec,prefix,suffix,NULL,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_NUMERIC,NOT_NUMERIC,NOT_AUTO_INCR,type,UNSCALED,UNSCALED,TYPE_SQL_DATETIME,datetimesub,NOT_NUMERIC,NOT_NUMERIC
 
 static const Types types [] = {
