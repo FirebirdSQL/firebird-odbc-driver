@@ -20,6 +20,8 @@
 //
 // DsnDialog.cpp : implementation file
 //
+#include <stdio.h>
+#include <string.h>
 #include "OdbcJdbcSetup.h"
 #include "../IscDbc/Connection.h"
 #include "DsnDialog.h"
@@ -33,12 +35,15 @@ using namespace classJString;
 using namespace IscDbcLibrary;
 
 CDsnDialog * m_ptDsnDialog = NULL;
+HINSTANCE instanceHtmlHelp = NULL;
 
 BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam);
 void ProcessCDError(DWORD dwErrorCode, HWND hWnd);
 
 CDsnDialog::CDsnDialog(const char **jdbcDrivers, const char **jdbcCharsets)
 {
+	hwndHtmlHelp = NULL;
+
 	m_database = "";
 	m_client = "";
 	m_name = "";
@@ -61,6 +66,9 @@ CDsnDialog::CDsnDialog(const char **jdbcDrivers, const char **jdbcCharsets)
 
 CDsnDialog::~CDsnDialog()
 {
+	if ( instanceHtmlHelp && hwndHtmlHelp )
+		PostMessage( hwndHtmlHelp, WM_DESTROY, (WPARAM)0, (LPARAM)0 );
+
 	m_ptDsnDialog = NULL;
 }
 
@@ -163,8 +171,6 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 
         CheckDlgButton ( hDlg, IDC_CHECK_SENSITIVE, m_sensitive );
         CheckDlgButton ( hDlg, IDC_CHECK_AUTOQUOTED, m_autoQuoted );
-
-		SetDisabledDlgItem ( hDlg, IDC_HELP_ODBC);
 	}
 }
 
@@ -393,7 +399,52 @@ BOOL CDsnDialog::OnInitDialog(HWND hDlg)
 	return TRUE;
 }
 
-BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam)
+#ifdef _WIN32
+
+#ifndef _WIN64
+#define DWORD_PTR DWORD
+#endif
+
+void CDsnDialog::WinHtmlHelp( HWND hDlg )
+{
+#ifdef UNICODE
+	#define HTMLHELP_PROC "HtmlHelpW"
+#else
+	#define HTMLHELP_PROC "HtmlHelpA"
+#endif
+
+	if ( !instanceHtmlHelp )
+	{
+		instanceHtmlHelp = LoadLibrary("hhctrl.ocx");
+	
+		if ( !instanceHtmlHelp )
+			return;
+	}
+
+	typedef HWND (WINAPI *HtmlHelpProc)( HWND hwndCaller, LPCSTR pszFile, UINT uCommand, DWORD_PTR dwData);
+
+	HtmlHelpProc fn = (HtmlHelpProc)GetProcAddress( instanceHtmlHelp, HTMLHELP_PROC );
+
+	if ( !fn )
+	{
+		FreeLibrary( instanceHtmlHelp );
+		instanceHtmlHelp = NULL;
+		return;
+	}
+
+	char fileName [512];
+
+	GetModuleFileName( m_hInstance, fileName, sizeof ( fileName ) );
+
+	char *tail = strrchr( fileName, '\\' ) + 1;
+	sprintf( tail, "%s.chm", DRIVER_NAME );
+
+	hwndHtmlHelp = fn( hDlg, (LPCSTR)fileName, 0, 0 );
+}
+
+#endif
+
+BOOL CALLBACK wndprocDsnDialog( HWND hDlg, UINT message, WORD wParam, LONG lParam )
 {
 	switch (message) 
 	{
@@ -460,7 +511,7 @@ BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam
 			break;
 
         case IDC_HELP_ODBC:
-			WinHelp(hDlg, DRIVER_NAME, HELP_CONTEXT, 0x60000);
+			m_ptDsnDialog->WinHtmlHelp( hDlg );
 			break;
 
         case IDOK:

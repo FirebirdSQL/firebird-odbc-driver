@@ -33,6 +33,8 @@ using namespace classJString;
 
 class CDsnDialog
 {
+	HWND hwndHtmlHelp;
+
 	const char** drivers;
 	const char** charsets;
 
@@ -68,7 +70,8 @@ public:
 	void UpdateData(HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	BOOL OnInitDialog(HWND hDlg);
 #ifdef _WIN32
-	void OnTestConnection(HWND hDlg);
+	void OnTestConnection( HWND hDlg );
+	void WinHtmlHelp( HWND hDlg );
 #endif
 	int getDriverBuildKey();
 	void removeNameFileDBfromMessage(char * message);
