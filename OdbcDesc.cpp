@@ -152,8 +152,8 @@ OdbcDesc::~OdbcDesc()
 
 	removeRecords();
 	
-	if (convert)
-		delete convert;
+	delete convert;
+	delete listBind;
 }
 
 // 	Info -> ASSERT( headType == odtImplementationParameter )
