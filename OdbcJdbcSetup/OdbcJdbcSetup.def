@@ -7,3 +7,4 @@ EXPORTS
     ; Explicit exports can go here
 	ConfigDSN=ConfigDSN@16
 	DllRegisterServer
+	DllUnregisterServer
