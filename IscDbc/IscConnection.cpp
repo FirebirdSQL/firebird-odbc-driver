@@ -308,6 +308,8 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 			
 			if ( bConst )
 				*ptBeg = *ptOut = '\'';
+			else
+				*ptOut = *ptIn;
 
 			++ptIn;	++ptOut;
 			bModify = true;
@@ -326,17 +328,22 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 
 	while ( ptEndBracket )
 	{
-		ptIn = ptOut = ptEndBracket;
+		ptIn = ptEndBracket;
 
 		ptIn++; // '{'
-
+		
 		while( *ptIn == ' ' )ptIn++;
+
+		if ( *(long*)ptIn == 0x6c6c6163 || *(long*)ptIn == 0x4c4c4143 )
+			break; // { call }
 
 		// Check 'oj' or 'OJ'
 		if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
 			ptIn += 2; // 'oj'
 		else
 			ptIn += 2; // temp 'fn'
+
+		ptOut = ptEndBracket;
 
 		while( *ptIn && *ptIn != '}' )
 			*ptOut++ = *ptIn++;
