@@ -322,6 +322,7 @@ public:
 	virtual ResultSet*	executeQuery() = 0;
 	virtual int			executeUpdate() = 0;
 	virtual void		setString(int index, const char * string) = 0;
+    virtual void        setString(int index, const char * string, int length) = 0;
 	virtual void		setByte (int index, char value) = 0;
 	virtual void		setShort (int index, short value) = 0;
 	virtual void		setInt (int index, long value) = 0;

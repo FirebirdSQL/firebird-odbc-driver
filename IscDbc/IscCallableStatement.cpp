@@ -18,6 +18,9 @@
  *  All Rights Reserved.
  *
  *
+ *	2002-06-17	Submitted by C. G. Alvarez
+ *				Overloaded SetString with a length parameter.
+ *
  *	2002-06-04	IscCallableStatement.cpp
  *				Contributed by Robert Milharcic
  *				o Added beginDataTransfer(), putSegmentData()
@@ -122,6 +125,11 @@ void IscCallableStatement::setDouble(int index, double value)
 void IscCallableStatement::setString(int index, const char * string)
 {
 	Parent::setString(index, string);
+}
+
+void IscCallableStatement::setString(int index, const char * string, int length)
+{
+    Parent::setString(index, string, length);   
 }
 
 bool IscCallableStatement::execute()

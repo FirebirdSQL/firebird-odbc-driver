@@ -102,6 +102,11 @@ void IscPreparedStatement::setString(int index, const char * string)
 	getParameter (index - 1)->setString (string, true);
 }
 
+void IscPreparedStatement::setString(int index, const char * string, int length)
+{
+    getParameter (index - 1)->setString (length, string, true);
+}
+
 bool IscPreparedStatement::execute()
 {
 	int numberParameters = inputSqlda.getColumnCount();

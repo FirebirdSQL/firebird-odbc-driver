@@ -1144,8 +1144,21 @@ RETCODE OdbcStatement::setParameter(Binding * binding, int parameter)
 		switch (binding->cType)
 			{
 			case SQL_C_CHAR:
-				statement->setString (parameter, (char*) binding->pointer);
-				break;
+//Orig
+//				statement->setString (parameter, (char*) binding->pointer);
+//				break;
+//Suggested by CGA
+                switch( *binding->indicatorPointer )
+                {
+                    case SQL_NTS:
+                        statement->setString (parameter, (char*) binding->pointer );
+                        break;
+
+                    default:                       
+                        statement->setString (parameter, (char*)binding->pointer, *binding->indicatorPointer );
+                        break;
+                }
+
 
 			case SQL_C_SHORT:
 			case SQL_C_SSHORT:

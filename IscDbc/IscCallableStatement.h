@@ -84,6 +84,7 @@ public:
 
 	virtual void		setNull (int index, int type);
 	virtual void		setString(int index, const char * string);
+    virtual void        setString(int index, const char * string, int length);
 	virtual void		setByte (int index, char value);
 	virtual void		setShort (int index, short value);
 	virtual void		setInt (int index, long value);

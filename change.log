@@ -5,6 +5,19 @@ Changes made to OdbcJdbc codebase
 !!  using the format below and then paste them into this document. 
 
 
+ *	2002-06-17	OdbcStatement::setParameter()
+ *				Submitted by C. G. Alvarez
+ *				Added code to handle returning strings that are not
+ *				null terminated.
+
+ *	2002-06-17	IscCallableStatement.cpp 
+ *				Submitted by C. G. Alvarez
+ *				Overloaded SetString with a length parameter.
+
+ *	2002-06-17	IscPreparedStatement.cpp 
+ *				Submitted by C. G. Alvarez
+ *				Overloaded SetString with a length parameter.
+
  *	2002-06-08  OdbcConnection.cpp 
  *				Contributed by C. G. Alvarez
  *				sqlSetConnectAttr() and connect()
