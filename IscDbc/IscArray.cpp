@@ -24,7 +24,6 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "stdio.h"
-#include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 
@@ -51,7 +50,7 @@ extern char charTable [];
 
 void CAttrArray::loadAttributes ( IscConnection *connection, char * nameRelation, char * nameFields, int sqlsubtype )
 {
-    ISC_STATUS_ARRAY statusVector;
+	ISC_STATUS statusVector [20];
 	void *transactionHandle = connection->startTransaction();
 
 	if ( !connection->GDS->_array_lookup_bounds(statusVector,&connection->databaseHandle, &transactionHandle,

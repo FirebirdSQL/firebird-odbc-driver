@@ -26,6 +26,7 @@
 #if !defined(_IscArray_H_)
 #define _IscArray_H_
 
+#include <string.h>
 #include "BinaryBlob.h"
 #include "Connection.h"
 
