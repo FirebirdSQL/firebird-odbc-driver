@@ -39,7 +39,7 @@ class CAttrArray
 {
 public:
 	CAttrArray()	{ memset( this, 0, sizeof ( *this) ); }
-	void			loadAttributes ( IscConnection *connection, char * nameRelation, char * nameFields );
+	void			loadAttributes ( IscConnection *connection, char * nameRelation, char * nameFields, int sqlsubtype );
 	int				getPrecisionInternal();
 	int				getBufferLength();
 	JString			getFbSqlType();
@@ -51,13 +51,16 @@ public:
 	int				arrCountElement;
 	int				arrSizeElement;
 	int				arrTypeElement;
+	int				arrSubTypeElement;
 	int				arrOctetLength;
 };
 
 class IscArray : public BinaryBlob, public CAttrArray
 {
-public:
+protected:
+	void convStringToArray( char *data, long length );
 
+public:
 	void attach(char * pointBlob, bool fetched, bool clear);
 	void attach(CAttrArray * arr, bool fetchBinary = true, bool bClear = false);
 	void detach(CAttrArray * arr);
@@ -67,7 +70,7 @@ public:
 	void writeBlob(char * sqldata);
 	void writeStreamHexToBlob(char * sqldata) {};
 	void writeBlob(char * sqldata, char *data, long length);
-	void writeStringHexToBlob(char * sqldata, char *data, long length) {};
+	void writeStringHexToBlob(char * sqldata, char *data, long length);
 	void writeArray(Value * value);
 
 	void init();

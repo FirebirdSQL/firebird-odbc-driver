@@ -36,6 +36,7 @@
 #include "SQLError.h"
 
 #define SKIP_WHITE(p)	while (charTable [*p] == WHITE) ++p
+#define SET_INFO_FROM_SUBTYPE( a, b, c ) arrSubTypeElement == 1 ? (a) :  arrSubTypeElement == 2 ? (b) : (c)
 
 #define PUNCT			1
 #define WHITE			2
@@ -48,7 +49,7 @@ namespace IscDbcLibrary {
 
 extern char charTable [];
 
-void CAttrArray::loadAttributes ( IscConnection *connection, char * nameRelation, char * nameFields )
+void CAttrArray::loadAttributes ( IscConnection *connection, char * nameRelation, char * nameFields, int sqlsubtype )
 {
     ISC_STATUS_ARRAY statusVector;
 	void *transactionHandle = connection->startTransaction();
@@ -69,19 +70,28 @@ void CAttrArray::loadAttributes ( IscConnection *connection, char * nameRelation
 		arrSizeElement = arrDesc.array_desc_length;
 		arrTypeElement = arrDesc.array_desc_dtype;
 
-		if (arrTypeElement == blr_varying)
+		switch ( arrTypeElement )
 		{
+		case blr_varying:
+		case blr_varying2:
 			arrSizeElement += 2;
 			arrOctetLength += 2 * arrCountElement; // + ''
-		}
-		else if (arrTypeElement == blr_cstring)
-		{
+			break;
+		case blr_cstring:
+		case blr_cstring2:
 			arrSizeElement += 1;
 			arrOctetLength += 2 * arrCountElement; // + ''
+			break;
+		case blr_text:
+		case blr_text2:
+			arrOctetLength += 2 * arrCountElement; // + ''
+			break;
 		}
+
 		arrOctetLength += getPrecisionInternal() * arrCountElement;
 		arrBufDataSize = arrSizeElement * arrCountElement;
 		arrBufData = NULL;
+		arrSubTypeElement = sqlsubtype;
 	}
 	else
 	{
@@ -95,29 +105,29 @@ int CAttrArray::getPrecisionInternal()
 	switch ( arrTypeElement )
 	{
 	case blr_short:
-		if ( arrDesc.array_desc_scale < 0 )
-			return MAX_NUMERIC_LENGTH;
-		return MAX_SMALLINT_LENGTH;
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_SHORT_LENGTH,
+										MAX_DECIMAL_SHORT_LENGTH,
+										MAX_SMALLINT_LENGTH);
 
 	case blr_long:
-		if ( arrDesc.array_desc_scale < 0 )
-			return MAX_NUMERIC_LENGTH;
-		return MAX_INT_LENGTH;
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_LONG_LENGTH,
+										MAX_DECIMAL_LONG_LENGTH,
+										MAX_INT_LENGTH);
 
 	case blr_float:
 		return MAX_FLOAT_LENGTH;
 
 	case blr_d_float:
 	case blr_double:
-		if ( arrDesc.array_desc_scale < 0 )
-			return MAX_NUMERIC_LENGTH;
-		return MAX_DOUBLE_LENGTH;
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_DOUBLE_LENGTH,
+										MAX_DECIMAL_DOUBLE_LENGTH,
+										MAX_DOUBLE_LENGTH);
 
 	case blr_quad:
 	case blr_int64:
-		if ( arrDesc.array_desc_scale < 0 )
-			return MAX_NUMERIC_LENGTH;
-		return MAX_QUAD_LENGTH;
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_LENGTH,
+										MAX_DECIMAL_LENGTH,
+										MAX_QUAD_LENGTH);
 
 	case blr_sql_time:
 		return MAX_TIME_LENGTH;
@@ -134,7 +144,8 @@ int CAttrArray::getPrecisionInternal()
 
 int	CAttrArray::getBufferLength()
 {
-	return arrDesc.array_desc_length * arrCountElement;
+	return arrOctetLength;
+//	return arrDesc.array_desc_length * arrCountElement;
 }
 
 JString CAttrArray::getFbSqlType()
@@ -148,22 +159,28 @@ JString CAttrArray::getFbSqlType()
 	switch ( arrTypeElement )
 	{
 	case blr_short:
-		if ( sqlscale < 0 )
-			sprintf (temp, "NUMERIC(4,%d)",-sqlscale);
+		if ( arrSubTypeElement == 1 )
+			sprintf (temp, "NUMERIC(%d,%d)", MAX_NUMERIC_SHORT_LENGTH, -sqlscale);
+		else if ( arrSubTypeElement == 2 )
+			sprintf (temp, "DECIMAL(%d,%d)", MAX_DECIMAL_SHORT_LENGTH, -sqlscale);
 		else
 			ch = "SMALLINT";
 		break;
 
 	case blr_long:
-		if ( sqlscale < 0 )
-			sprintf (temp, "NUMERIC(9,%d)",-sqlscale);
+		if ( arrSubTypeElement == 1 )
+			sprintf (temp, "NUMERIC(%d,%d)", MAX_NUMERIC_LONG_LENGTH, -sqlscale);
+		else if ( arrSubTypeElement == 2 )
+			sprintf (temp, "DECIMAL(%d,%d)", MAX_DECIMAL_LONG_LENGTH, -sqlscale);
 		else
 			ch = "INTEGER";
 		break;
 
 	case blr_int64:
-		if ( sqlscale < 0 )
+		if ( arrSubTypeElement == 1 )
 			sprintf (temp, "NUMERIC(%d,%d)", MAX_NUMERIC_LENGTH, -sqlscale);
+		else if ( arrSubTypeElement == 2 )
+			sprintf (temp, "DECIMAL(%d,%d)", MAX_DECIMAL_LENGTH, -sqlscale);
 		else
 			ch = "BIGINT";
 		break;
@@ -190,8 +207,10 @@ JString CAttrArray::getFbSqlType()
 
 	case blr_d_float:
 	case blr_double:
-		if ( sqlscale < 0 )
-			sprintf (temp, "NUMERIC(15,%d)", -sqlscale);
+		if ( arrSubTypeElement == 1 )
+			sprintf (temp, "NUMERIC(%d,%d)", MAX_NUMERIC_DOUBLE_LENGTH, -sqlscale);
+		else if ( arrSubTypeElement == 2 )
+			sprintf (temp, "DECIMAL(%d,%d)", MAX_DECIMAL_DOUBLE_LENGTH, -sqlscale);
 		else
 			ch = "DOUBLE PRECISION";
 		break;
@@ -307,7 +326,7 @@ void IscArray::bind(IscConnection *connect,XSQLVAR *var)
 	fetchedBinary = false;
 	enType = enTypeArray;
 
-	loadAttributes ( connection, var->relname, var->sqlname );
+	loadAttributes ( connection, var->relname, var->sqlname, var->sqlsubtype );
 	arrBufData = (void*)malloc(arrBufDataSize);
 }
 
@@ -491,130 +510,157 @@ void IscArray::writeBlob(char * sqldata, char *data, long length)
 		THROW_ISC_EXCEPTION (connection, statusVector);
 }
 
+void IscArray::convStringToArray( char *data, long length )
+{
+	char *ptCh, *ptSrc = data, *ptEnd = data + length;
+	char * ptDst = (char*)arrBufData;
+	int i=0;
+
+	memset ( arrBufData, 0, arrBufDataSize);
+
+	while( ptSrc < ptEnd && i<arrCountElement)
+	{
+		if(*ptSrc=='{' || *ptSrc=='}' || *ptSrc==',')
+		{
+			ptSrc++;
+			continue;
+		}
+
+		ptCh=ptSrc;
+		SKIP_WHITE(ptCh);
+
+		if(*ptCh=='\'')
+		{
+			char * pt;
+			int len,lenSrc;
+			++ptCh;
+			while(*ptCh && *ptCh!='\'')
+				ptCh++;
+			if(*ptCh!='\'')
+				break;
+			else
+				++ptCh;
+
+			lenSrc=ptCh-ptSrc-2; // 2 is this ''
+			switch(arrTypeElement)
+			{
+			case blr_varying: 
+				len = arrSizeElement-2;
+				if(lenSrc > len)
+					lenSrc=len;
+				if(lenSrc > 0)
+				{
+					pt=ptDst;
+					++ptSrc; // >> first '
+					do
+						*pt++=*ptSrc++;
+					while(--lenSrc);
+					*pt='\0';
+				}
+				else 
+					*ptDst='\0';
+				break;
+			case blr_text:
+				len = arrSizeElement;
+				if(lenSrc > len)
+					lenSrc=len;
+				pt=ptDst;
+				if(lenSrc > 0)
+				{
+					++ptSrc; // >> first '
+					do
+						*pt++=*ptSrc++;
+					while(--lenSrc);
+				}
+
+				lenSrc=len-(pt-ptDst);
+
+				for(;lenSrc;--lenSrc)
+					*pt++=' ';
+
+				ptDst += arrSizeElement;
+				ptSrc=ptCh+1;
+				i++;
+				continue;
+			}
+		}
+
+		while(*ptCh && (isdigit(*ptCh) || *ptCh=='.'))
+			ptCh++;
+
+		if( ptCh != ptSrc )
+		{
+			*ptCh='\0';
+
+			switch (arrTypeElement)
+			{
+			case blr_short :
+				*(short*)ptDst = (short)atoi(ptSrc);
+				break;
+			case blr_long :
+				*(long*)ptDst = atol(ptSrc);
+				break;
+			case blr_quad :
+			case blr_int64 :
+				*(__int64*)ptDst = (__int64)atol(ptSrc);
+				break;
+			case blr_float :
+				*(float*)ptDst = (float)atof(ptSrc);
+				break;
+			case blr_double :
+				*(double*)ptDst = (double)atof(ptSrc);
+				break;
+			}
+
+			ptDst += arrSizeElement;
+			ptSrc=ptCh+1;
+			i++;
+		}
+		else
+			ptSrc++;
+
+	}
+}
+
+void IscArray::writeStringHexToBlob(char * sqldata, char *data, long length)
+{
+	ISC_STATUS statusVector [20];
+	CFbDll * GDS = connection->GDS;
+	void *transactionHandle = connection->startTransaction();
+	ISC_QUAD &arrayId = *(ISC_QUAD*)sqldata;
+
+	memset(&arrayId,0,sizeof(arrayId));
+
+	convStringToArray ( data, length );
+
+	long lenbuf = arrBufDataSize;
+
+	GDS->_array_put_slice ( statusVector, &connection->databaseHandle, &transactionHandle,
+		&arrayId, &arrDesc, arrBufData, &lenbuf );
+	if ( statusVector [1] )
+		THROW_ISC_EXCEPTION (connection, statusVector);
+}
+
 void IscArray::writeArray(Value * value)
 {
-	int i,offset;
-//	bool bString;
-	char * ptCh, * ptSrc;
-	char * ptDst = (char*)arrBufData;
 
 	switch (value->type)
 	{
 	case BlobPtr:
 		{
-			int len;
+			char * ptDst = (char*)arrBufData;
 			Blob *blob = value->data.blob;
-			for (offset = 0; len = blob->getSegmentLength(offset), len; offset += len)
+			for (int offset = 0, len; (len = blob->getSegmentLength(offset)); offset += len)
 				memcpy(&ptDst[offset],(char*) blob->getSegment (offset),len);
 		}
 		break;
+
 	case Varchar:
-		value->data.string.string[value->data.string.length]='\0';
+		convStringToArray ( value->data.string.string , value->data.string.length );
+		break;
+
 	case String:
-		ptSrc = value->data.string.string;
-		i=0;
-		while(*ptSrc && i<arrCountElement)
-		{
-			if(*ptSrc=='{' || *ptSrc=='}' || *ptSrc==',')
-			{
-				ptSrc++;
-				continue;
-			}
-			ptCh=ptSrc;
-			SKIP_WHITE(ptCh);
-			if(*ptCh=='\'')
-			{
-				char * pt;
-				int len,lenSrc;
-//				bString = true;
-				++ptCh;
-				while(*ptCh && *ptCh!='\'')
-					ptCh++;
-				if(*ptCh!='\'')
-					break;
-				else
-					++ptCh;
-
-				lenSrc=ptCh-ptSrc-2; // 2 is this ''
-				switch(arrTypeElement)
-				{
-				case blr_varying: 
-					len = arrSizeElement-2;
-					if(lenSrc > len)
-						lenSrc=len;
-					if(lenSrc > 0)
-					{
-						pt=ptDst;
-						++ptSrc; // >> first '
-						do
-							*pt++=*ptSrc++;
-						while(--lenSrc);
-						*pt='\0';
-					}
-					else 
-						*ptDst='\0';
-					break;
-				case blr_text:
-					len = arrSizeElement;
-					if(lenSrc > len)
-						lenSrc=len;
-					pt=ptDst;
-					if(lenSrc > 0)
-					{
-						++ptSrc; // >> first '
-						do
-							*pt++=*ptSrc++;
-						while(--lenSrc);
-					}
-
-					lenSrc=len-(pt-ptDst);
-
-					for(;lenSrc;--lenSrc)
-						*pt++=' ';
-
-					ptDst += arrSizeElement;
-					ptSrc=ptCh+1;
-					i++;
-					continue;
-				}
-			}
-//			else 
-//				bString = false;
-//
-			while(*ptCh && (isdigit(*ptCh) || *ptCh=='.'))
-				ptCh++;
-			if(ptCh!=ptSrc)
-			{
-				*ptCh='\0';
-
-				switch (arrTypeElement)
-				{
-				case blr_short :
-					*(short*)ptDst = (short)atoi(ptSrc);
-					break;
-				case blr_long :
-					*(long*)ptDst = atol(ptSrc);
-					break;
-				case blr_quad :
-				case blr_int64 :
-					*(__int64*)ptDst = (__int64)atol(ptSrc);
-					break;
-				case blr_float :
-					*(float*)ptDst = (float)atof(ptSrc);
-					break;
-				case blr_double :
-					*(double*)ptDst = (double)atof(ptSrc);
-					break;
-				}
-
-				ptDst += arrSizeElement;
-				ptSrc=ptCh+1;
-				i++;
-			}
-			else
-				ptSrc++;
-
-		}
+		convStringToArray ( value->data.string.string , strlen( value->data.string.string ) );
 		break;
 	} // End switch (value->type)
 
