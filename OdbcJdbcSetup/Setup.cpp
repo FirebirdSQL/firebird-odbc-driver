@@ -43,14 +43,15 @@
 #include "../SetupAttributes.h"
 
 const char *driverInfo =
-	"Firebird/InterBase(r) driver\0"
+	DRIVER_FULL_NAME"\0"
 	"Driver=OdbcJdbc.dll\0"
 	"Setup=OdbcJdbcSetup.dll\0"
-	"FileExtns=*.gdb\0"
+	"FileExtns=*.fdb,*.gdb\0"
 	"APILevel=1\0"
-	"ConnectFunctions=YYN\0"
+	"ConnectFunctions=YYY\0"
 	"FileUsage=0\0"
 	"DriverODBCVer=03.00\0"
+	"SQLLevel=1\0"
 	"\0";
 
 static const char *fileNames [] = {
