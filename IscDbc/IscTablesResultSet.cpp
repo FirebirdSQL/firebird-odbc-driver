@@ -48,10 +48,10 @@ IscTablesResultSet::IscTablesResultSet(IscDatabaseMetaData *metaData)
 
 void IscTablesResultSet::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char * * types)
 {
-	JString sql = "select cast (NULL as char(7)) as table_cat,\n"
-				          "cast (NULL as char(7)) as table_schem,\n"
-						  "tbl.rdb$relation_name as table_name,\n"
-						  "cast( 'TABLE' as char(13) ) as table_type,\n"
+	JString sql = "select cast (NULL as varchar(7)) as table_cat,\n"
+				          "cast (NULL as varchar(7)) as table_schem,\n"
+						  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,\n"
+						  "cast( 'TABLE' as varchar(13) ) as table_type,\n"
 						  "tbl.rdb$description as remarks,\n"
 						  "tbl.rdb$system_flag,\n"
 						  "tbl.rdb$view_blr as view_blr\n"
@@ -110,16 +110,10 @@ bool IscTablesResultSet::next()
 	if (!IscResultSet::next())
 		return false;
 
-	const char *type = "TABLE";
-
-	trimBlanks (3);							// table name
-
 	if ( sqlda->getShort (6) )
-		type = "SYSTEM TABLE";
+		sqlda->updateVarying (4, "SYSTEM TABLE");
 	else if ( !sqlda->isNull(7) )
-		type = "VIEW";
-
-	sqlda->updateText (4, type);
+		sqlda->updateVarying (4, "VIEW");
 
 	return true;
 }

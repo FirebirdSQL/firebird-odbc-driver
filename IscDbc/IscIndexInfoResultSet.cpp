@@ -63,15 +63,15 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 										 bool unique, bool approximate)
 {
 	JString tableStat = 
-		"select cast(NULL as char(7)) as table_cat,\n"							// 1
-				"\tcast(NULL as char(7)) as table_schem,\n"						// 2
-				"\tcast(rl.rdb$relation_name as char(31)) as table_name,\n"		// 3
+		"select cast(NULL as varchar(7)) as table_cat,\n"						// 1
+				"\tcast(NULL as varchar(7)) as table_schem,\n"					// 2
+				"\tcast(rl.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
 				"\tcast(0 as smallint) as non_unique,\n"						// 4
-				"\tcast(NULL as char(31)) as index_qualifier,\n"				// 5
-				"\tcast(NULL as char(31)) index_name,\n"						// 6
+				"\tcast(NULL as varchar(31)) as index_qualifier,\n"				// 5
+				"\tcast(NULL as varchar(31)) index_name,\n"						// 6
 				"\tcast(0 as smallint) as index_type,\n"						// 7  SQL_TABLE_STAT
 				"\tcast(NULL as smallint) as ordinal_position,\n"				// 8
-				"\tcast(NULL as char(31)) as column_name,\n"					// 9
+				"\tcast(NULL as varchar(31)) as column_name,\n"					// 9
 				"\tcast(NULL as char) as asc_or_desc,\n"						// 10
 				"\tcast(NULL as integer) as cardinality,\n"						// 11
 				"\tcast(NULL as integer) as index_pages,\n"						// 12
@@ -80,15 +80,15 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 		"from rdb$relations rl\n";
 
 	JString sql = 
-		"select cast(NULL as char(7)) as table_cat,\n"							// 1
-				"\tcast(NULL as char(7)) as table_schem,\n"						// 2
-				"\tcast(idx.rdb$relation_name as char(31)) as table_name,\n"	// 3
+		"select cast(NULL as varchar(7)) as table_cat,\n"						// 1
+				"\tcast(NULL as varchar(7)) as table_schem,\n"					// 2
+				"\tcast(idx.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
 				"\tcast((1-idx.rdb$unique_flag) as smallint) as non_unique,\n"	// 4
-				"\tcast(idx.rdb$index_name as char(31)) as index_qualifier,\n"	// 5
-				"\tcast(idx.rdb$index_name as char(31)) as index_name,\n"		// 6
+				"\tcast(idx.rdb$index_name as varchar(31)) as index_qualifier,\n"	// 5
+				"\tcast(idx.rdb$index_name as varchar(31)) as index_name,\n"	// 6
 				"\tcast(3 as smallint) as index_type,\n"						// 7 (SQL_INDEX_OTHER)
 				"\tcast(seg.rdb$field_position as smallint) as ordinal_position,\n"	// 8
-				"\tcast(seg.rdb$field_name as char(31)) as column_name,\n"		// 9
+				"\tcast(seg.rdb$field_name as varchar(31)) as column_name,\n"	// 9
 				"\tcast(NULL as char) as asc_or_desc,\n"						// 10
 				"\tcast(NULL as integer) as cardinality,\n"						// 11
 				"\tcast(NULL as integer) as index_pages,\n"						// 12
@@ -128,18 +128,12 @@ bool IscIndexInfoResultSet::next()
 	if (!IscResultSet::next())
 		return false;
 
-	trimBlanks (3);				// table name
-	trimBlanks (5);				// qualifier name
-	trimBlanks (6);				// index name
-	trimBlanks (9);				// field name
-
 	short type = sqlda->getShort(7);
 
 	if( type == 0 ) // #define SQL_TABLE_STAT 0
 		sqlda->setNull(4);
 	else 
 	{
-#pragma FB_COMPILER_MESSAGE("RDB$UNIQUE_FLAG Whether there be NULL?; FIXME!")
 		if ( sqlda->isNull(4) )
 			sqlda->updateShort(4,1);
 

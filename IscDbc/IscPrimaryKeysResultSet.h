@@ -32,10 +32,8 @@ namespace IscDbcLibrary {
 class IscPrimaryKeysResultSet : public IscMetaDataResultSet  
 {
 public:
-	virtual bool next();
 	void getPrimaryKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern);
 	IscPrimaryKeysResultSet(IscDatabaseMetaData *metaData);
-
 };
 
 }; // end namespace IscDbcLibrary

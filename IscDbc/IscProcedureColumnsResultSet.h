@@ -26,6 +26,7 @@
 #define _ISCPROCEDURECOLUMNSRESULTSET_H_
 
 #include "IscMetaDataResultSet.h"
+#include "IscSqlType.h"
 
 namespace IscDbcLibrary {
 
@@ -38,6 +39,8 @@ public:
 							  const char *procedureNamePattern, 
 							  const char *columnNamePattern);
 	IscProcedureColumnsResultSet(IscDatabaseMetaData *metaData);
+
+	void adjustResults (IscSqlType &sqlType);
 };
 
 }; // end namespace IscDbcLibrary

@@ -65,16 +65,6 @@ void IscMetaDataResultSet::prepareStatement(const char * sql)
 	initResultSet((IscStatement*)statement);
 }
 
-void IscMetaDataResultSet::trimBlanks(int id)
-{
-	int len;
-	char * data = sqlda->getText (id, len);
-	char * end = data + len - 1;
-
-	while (end > data && *end == ' ')
-		*end-- = '\0';
-}
-
 bool IscMetaDataResultSet::isWildcarded(const char * pattern)
 {
 	for (const char *p = pattern; *p; ++p)

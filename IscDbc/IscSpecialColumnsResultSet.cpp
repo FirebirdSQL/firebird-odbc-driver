@@ -60,9 +60,9 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 {
 	JString sql = 
 		"select distinct f.rdb$field_type as scope,\n"				// 1 
-				"\trfr.rdb$field_name as column_name, \n"			// 2
+				"\tcast (rfr.rdb$field_name as varchar(31)) as column_name, \n"	// 2
 				"\tf.rdb$field_type as data_type,\n"				// 3
-				"\trfr.rdb$field_name as type_name,\n"				// 4
+				"\tcast (rfr.rdb$field_name as varchar(31)) as type_name,\n"	// 4
 				"\t0 as column_size,\n"								// 5
 				"\t0 as buffer_length,\n"							// 6
 				"\t0 as decimal_digits,\n"							// 7
@@ -112,8 +112,6 @@ bool IscSpecialColumnsResultSet::next ()
 	else if (idx_id != index_id)
 		return false;
 
-	trimBlanks (2);
-
 	//translate to the SQL type information
 	int blrType = sqlda->getShort (3);	// field type
 	int subType = sqlda->getShort (14);
@@ -129,7 +127,7 @@ bool IscSpecialColumnsResultSet::next ()
 	sprintf (type, "%s", sqlType.typeName);
 
 	sqlda->updateShort (3, sqlType.type);
-	sqlda->updateText (4, type);
+	sqlda->updateVarying (4, type);
 
 	setCharLen (5, 6, sqlType);
 
@@ -159,6 +157,8 @@ void IscSpecialColumnsResultSet::setCharLen (int charLenInd,
 		charLen = sqlType.length;
 		fldLen  = sqlType.bufferLength;
 	}
+	else
+		charLen = fldLen = sqlType.length;
 	
 	sqlda->updateInt (fldLenInd, fldLen);
 

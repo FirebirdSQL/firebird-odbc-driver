@@ -42,14 +42,14 @@ IscProceduresResultSet::IscProceduresResultSet(IscDatabaseMetaData *metaData)
 void IscProceduresResultSet::getProcedures(const char * catalog, const char * schemaPattern, const char * procedureNamePattern)
 {
 	JString sql = 
-		"select cast (NULL as char(7)) as procedure_cat,\n"					// 1
-				"\tcast (NULL as char(7)) as procedure_schem,\n"			// 2
-				"\tproc.rdb$procedure_name as procedure_name,\n"			// 3
+		"select cast (NULL as varchar(7)) as procedure_cat,\n"				// 1
+				"\tcast (NULL as varchar(7)) as procedure_schem,\n"			// 2
+				"\tcast (proc.rdb$procedure_name as varchar(31)) as procedure_name,\n"	// 3
 				"\tproc.rdb$procedure_inputs as num_input_params,\n"		// 4
 				"\tproc.rdb$procedure_outputs as num_output_params,\n"		// 5
-				"\t0 as num_result_sets,\n"									// 6
+				"\t1 as num_result_sets,\n"									// 6
 				"\tproc.rdb$description as remarks,\n"						// 7
-				"\t0 as procedure_type\n"									// 8 SQL_PT_UNKNOWN
+				"\t1 as procedure_type\n"									// 8 SQL_PT_PROCEDURE
 		"from rdb$procedures proc\n";
 
 	const char *sep = " where ";
@@ -73,7 +73,8 @@ bool IscProceduresResultSet::next()
 	if (!IscResultSet::next())
 		return false;
 
-	trimBlanks (3);							// table name
+	if ( sqlda->isNull(4) )
+		sqlda->updateShort(4, 0);
 
 	return true;
 }

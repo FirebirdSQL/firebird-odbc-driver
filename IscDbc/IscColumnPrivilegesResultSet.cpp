@@ -45,14 +45,14 @@ IscColumnPrivilegesResultSet::IscColumnPrivilegesResultSet(IscDatabaseMetaData *
 
 void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * columnNamePattern)
 {
-	JString sql = "select cast (NULL as char(7)) as table_cat,"
-				          "cast (NULL as char(7)) as table_schem,"
-						  "tbl.rdb$relation_name as table_name,"
-						  "tbl.rdb$field_name as column_name,"
-						  "priv.rdb$grantor as grantor,"
-						  "priv.rdb$user as grantee,"
-						  "cast( priv.rdb$privilege as char(11) ) as privilege,"
-						  "cast ( priv.rdb$grant_option as char(4) ) as is_grantable "
+	JString sql = "select cast (NULL as varchar(7)) as table_cat,"
+				          "cast (NULL as varchar(7)) as table_schem,"
+						  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,"
+						  "cast (tbl.rdb$field_name as varchar(31)) as column_name,"
+						  "cast (priv.rdb$grantor as varchar(31)) as grantor,"
+						  "cast (priv.rdb$user as varchar(31)) as grantee,"
+						  "cast( priv.rdb$privilege as varchar(11) ) as privilege,"
+						  "cast ( priv.rdb$grant_option as varchar(3) ) as is_grantable "
 						  "from rdb$relation_fields tbl, rdb$user_privileges priv\n"
 						  " where tbl.rdb$relation_name = priv.rdb$relation_name\n";
 	
@@ -82,47 +82,43 @@ bool IscColumnPrivilegesResultSet::next()
 	if (!IscResultSet::next())
 		return false;
 
-	trimBlanks(3);
-	trimBlanks(4);
-	trimBlanks(5);
-	trimBlanks(6);
+	int len1, len2;
+	const char *grantor = sqlda->getVarying(5, len1);
+	const char *grantee = sqlda->getVarying(6, len2);
 
-	int len;
-	const char *grantor = sqlda->getText(5, len);
-	const char *grantee = sqlda->getText(6, len);
-	if(!strcmp(grantor,grantee))
-		sqlda->updateText( 5, "_SYSTEM" );
+	if( len1 == len2 && !strncmp(grantor,grantee,len1) )
+		sqlda->updateVarying (5, "_SYSTEM");
 
-	const char *privilege = sqlda->getText(7, len);
+	const char *privilege = sqlda->getVarying (7, len1);
 
 	switch ( *privilege )
 	{
 		case 'S':
-			sqlda->updateText( 7, "SELECT" );
+			sqlda->updateVarying ( 7, "SELECT" );
 			break;
 
 		case 'I':
-			sqlda->updateText( 7, "INSERT" );
+			sqlda->updateVarying ( 7, "INSERT" );
 			break;
 
 		case 'U':
-			sqlda->updateText( 7, "UPDATE" );
+			sqlda->updateVarying ( 7, "UPDATE" );
 			break;
 
 		case 'D':
-			sqlda->updateText( 7, "DELETE" );
+			sqlda->updateVarying ( 7, "DELETE" );
 			break;
 
 		case 'R':
-			sqlda->updateText( 7, "REFERENCES" );
+			sqlda->updateVarying ( 7, "REFERENCES" );
 			break;
 	}
 
-	char * nullable = sqlda->getText(8,len);
+	char * nullable = sqlda->getVarying (8, len1);
 	if ( *nullable == '1' )
-		sqlda->updateText( 8, "YES" );
+		sqlda->updateVarying ( 8, "YES" );
 	else
-		sqlda->updateText( 8, "NO" );
+		sqlda->updateVarying ( 8, "NO" );
 
 	return true;
 }

@@ -73,24 +73,24 @@ IscColumnsResultSet::IscColumnsResultSet(IscDatabaseMetaData *metaData)
 void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern)
 {
 	JString sql = 
-		"select cast (NULL as char(7)) as table_cat,\n"				// 1 - VARCHAR
-				"\tcast (NULL as char(7)) as table_schem,\n"		// 2 - VARCHAR
-				"\trfr.rdb$relation_name as table_name,\n"			// 3 - VARCHAR NOT NULL
-				"\trfr.rdb$field_name as column_name,\n"			// 4 - VARCHAR NOT NULL
+		"select cast (NULL as varchar(7)) as table_cat,\n"			// 1 - VARCHAR
+				"\tcast (NULL as varchar(7)) as table_schem,\n"		// 2 - VARCHAR
+				"\tcast (rfr.rdb$relation_name as varchar(31)) as table_name,\n"	// 3 - VARCHAR NOT NULL
+				"\tcast (rfr.rdb$field_name as varchar(31)) as column_name,\n"		// 4 - VARCHAR NOT NULL
 				"\tfld.rdb$field_type as data_type,\n"				// 5 - SMALLINT NOT NULL
-				"\tfld.rdb$field_name as type_name,\n"				// 6 - VARCHAR NOT NULL
+				"\tcast (fld.rdb$field_name as varchar(31)) as type_name,\n"		// 6 - VARCHAR NOT NULL
 				"\t10 as column_size,\n"							// 7 - INTEGER
 				"\t10 as buffer_length,\n"							// 8 - INTEGER
 				"\tcast (fld.rdb$field_scale as smallint) as decimal_digits,\n"		// 9 - SMALLINT
 				"\tfld.rdb$field_scale as num_prec_radix,\n"		// 10 - SMALLINT
 				"\trfr.rdb$null_flag as nullable,\n"				// 11 - SMALLINT NOT NULL
 				"\tcast (NULL as char(10)) as remarks,\n"			// 12 - VARCHAR
-				"\trfr.rdb$field_name as column_def,\n"				// 13 - VARCHAR
+				"\tcast (rfr.rdb$field_name as varchar(512)) as column_def,\n"				// 13 - VARCHAR
 				"\tfld.rdb$field_type as SQL_DATA_TYPE,\n"			// 14 - SMALLINT NOT NULL
 				"\tfld.rdb$field_sub_type as SQL_DATETIME_SUB,\n"	// 15 - SMALLINT
 				"\t10 as CHAR_OCTET_LENGTH,\n"						// 16 - INTEGER
 				"\t10 as ordinal_position,\n"						// 17 - INTEGER NOT NULL
-				"\t'YES' as IS_NULLABLE,\n"							// 18 - VARCHAR
+				"\tcast ('YES' as varchar(3)) as IS_NULLABLE,\n"	// 18 - VARCHAR
 				"\tfld.rdb$character_length as char_len,\n"			// 19
 				"\tfld.rdb$default_value as f_def_val,\n"			// 20
 				"\tfld.rdb$dimensions as array_dim,\n"				// 21
@@ -118,7 +118,7 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 #endif
 	prepareStatement (sql);
 
-// SELECT returns 25 columns,
+// SELECT returns 26 columns,
 // But all interests only 18 
 // This line is forbidden for modifying!!!
 	numberColumns = 18;
@@ -128,9 +128,6 @@ bool IscColumnsResultSet::next()
 {
 	if (!IscResultSet::next())
 		return false;
-
-	trimBlanks (3);							// table name
-	trimBlanks (4);							// field name
 
 	int len = sqlda->getShort (24);
 
@@ -157,12 +154,12 @@ bool IscColumnsResultSet::next()
 	{
 		JString type;
 		type.Format ("%s%s", "ARRAY OF ", sqlType.typeName);
-		sqlda->updateText (6, type);
+		sqlda->updateVarying (6, type);
 		sqlda->updateInt (8, MAX_ARRAY_LENGTH);
 	}
 	else
 	{
-		sqlda->updateText (6, sqlType.typeName);
+		sqlda->updateVarying (6, sqlType.typeName);
 		setCharLen (7, 8, sqlType);
 	}
 
@@ -177,7 +174,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 {
 	if ( sqlda->isNull (indexIn) )
 	{
-		sqlda->updateText (indexTarget, "NULL");
+		sqlda->updateVarying (indexTarget, "NULL");
 		return false;
 	}
 
@@ -192,7 +189,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 
 	if ((*stuff != blr_version4) && (*stuff != blr_version5))
 	{
-		sqlda->updateText (indexTarget, "unknown, not BLR");
+		sqlda->updateVarying (indexTarget, "unknown, not BLR");
 		delete[] s;
 		return false;
 	}
@@ -201,14 +198,14 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 	
 	if (*stuff == blr_null)
 	{
-		sqlda->updateText (indexTarget, "NULL");
+		sqlda->updateVarying (indexTarget, "NULL");
 		delete[] s;	
 		return true;
 	}
 
 	if (*stuff != blr_literal)
 	{
-		sqlda->updateText (indexTarget, "unknown, not literal");
+		sqlda->updateVarying (indexTarget, "unknown, not literal");
 		delete[] s;
 		return false;
 	}
@@ -317,8 +314,8 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 		break;
 
 	}
-	sqlda->updateText (indexTarget, stringVal);
-	delete[] s;	
+	sqlda->updateVarying (indexTarget, stringVal);
+	delete[] s;
 	return true;
 }								
 
@@ -389,10 +386,10 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 	switch (sqlType.type)
 	{
 	case JDBC_LONGVARCHAR:
-		sqlda->updateText (6, "BLOB SUB_TYPE TEXT");
+		sqlda->updateVarying (6, "BLOB SUB_TYPE TEXT");
 		break;
 	case JDBC_LONGVARBINARY:
-		sqlda->updateText (6, "BLOB SUB_TYPE BLR");
+		sqlda->updateVarying (6, "BLOB SUB_TYPE BLR");
 		break;
 	} 
 
@@ -469,7 +466,8 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 	} 
 
 	// Is Nullable - I'm seeing everything twice
-	sqlda->updateText (18, nullable == 0 ? "NO" : "YES");
+	if ( !nullable )
+		sqlda->updateVarying (18, "NO");
 }
 
 }; // end namespace IscDbcLibrary

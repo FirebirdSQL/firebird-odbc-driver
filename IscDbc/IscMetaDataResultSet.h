@@ -39,7 +39,6 @@ class IscMetaDataResultSet : public IscResultSet
 public:
 	JString expandPattern (const char *prefix, const char *string, const char *pattern);
 	bool isWildcarded (const char *pattern);
-	void trimBlanks (int id);
 	virtual void prepareStatement (const char *sql);
 	IscMetaDataResultSet(IscDatabaseMetaData *meta);
 	~IscMetaDataResultSet();

@@ -81,27 +81,26 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 													   const char * columnNamePattern)
 {
 	JString sql = 
-		"select cast (NULL as char(7)) as procedure_cat,\n"			// 1
-				"\tcast (NULL as char(7)) as procedure_schem,\n"	// 2
-				"\tpp.rdb$procedure_name as procedure_name,\n"		// 3
-				"\tpp.rdb$parameter_name as column_name,\n"			// 4
+		"select cast (NULL as varchar(7)) as procedure_cat,\n"		// 1
+				"\tcast (NULL as varchar(7)) as procedure_schem,\n"	// 2
+				"\tcast (pp.rdb$procedure_name as varchar(31)) as procedure_name,\n"	// 3
+				"\tcast (pp.rdb$parameter_name as varchar(31)) as column_name,\n"		// 4
 				"\tpp.rdb$parameter_type as column_type,\n"			// 5
 				"\tf.rdb$field_type as data_type,\n"				// 6
-				"\tpp.rdb$procedure_name as type_name,\n"			// 7
-				"\tf.rdb$field_length as column_size,\n"			// 8
+				"\tcast (pp.rdb$procedure_name as varchar(31)) as type_name,\n"			// 7
+				"\tcast ( f.rdb$field_length as integer ) as column_size,\n"			// 8
 				"\tcast ( null as integer ) as buffer_length,\n"	// 9
 				"\tf.rdb$field_scale as decimal_digits,\n"			// 10
 				"\t10 as num_prec_radix,\n"							// 11
 				"\t1 as nullable,\n"								// 12 #define SQL_NULLABLE 1
-				"\tf.rdb$description as remarks,\n"					// 13
-				"\tf.rdb$default_value as column_def,\n"			// 14
-				"\tcast (NULL as char(7)) as sql_data_type,\n"		// 15
-				"\tcast (NULL as char(7)) as sql_datetime_sub,\n"	// 16
-				"\tf.rdb$field_length as char_octet_length,\n"		// 17
-				"\tpp.rdb$parameter_number as ordinal_position,\n"	// 18
-				"\t'YES' as is_nullable,\n"							// 19
-				"\tf.rdb$field_precision as column_precision,\n"	// 20
-				"\tf.rdb$field_sub_type\n"							// 21
+				"\tcast (f.rdb$description as varchar(256)) as remarks,\n"				// 13
+				"\tcast (f.rdb$default_value as varchar(512)) as column_def,\n"			// 14
+				"\tf.rdb$field_type as sql_data_type,\n"			// 15 - SMALLINT NOT NULL
+				"\tf.rdb$field_sub_type as sql_datetime_sub,\n"		// 16 - SMALLINT
+				"\tcast ( f.rdb$field_length as integer ) as char_octet_length,\n"		// 17
+				"\tcast ( pp.rdb$parameter_number as integer )+1 as ordinal_position,\n"// 18
+				"\tcast ('YES' as varchar(3)) as is_nullable,\n"	// 19
+				"\tf.rdb$field_precision as column_precision\n"		// 20
 		"from rdb$procedure_parameters pp, rdb$fields f\n"
 		"where pp.rdb$field_source = f.rdb$field_name\n";
 
@@ -124,26 +123,83 @@ bool IscProcedureColumnsResultSet::next()
 	if (!IscResultSet::next())
 		return false;
 
-	trimBlanks (3);							// procedure name
-	trimBlanks (4);							// parameter name
-
 	int parameterType = sqlda->getShort (5);
 	int type = parameterType ? SQL_PARAM_OUTPUT : SQL_PARAM_INPUT;
 	sqlda->updateShort (5, type);
 
 	int blrType = sqlda->getShort (6);	// field type
-	int subType = sqlda->getShort (21);
-	int length = sqlda->getShort (8);
+	int subType = sqlda->getShort (16);
+	int length = sqlda->getInt (8);
 	int scale = sqlda->getShort (10);
 	int dialect	= statement->connection->getDatabaseDialect();
 	int precision = sqlda->getShort (20);
 	IscSqlType sqlType (blrType, subType, length, length, dialect, precision, scale);
 
 	sqlda->updateShort (6, sqlType.type);
-	sqlda->updateText (7, sqlType.typeName);
+	sqlda->updateVarying (7, sqlType.typeName);
 	sqlda->updateInt (9, length);
 
+	adjustResults (sqlType);
+
 	return true;
+}
+
+void IscProcedureColumnsResultSet::adjustResults (IscSqlType &sqlType)
+{
+	// decimal digits have no meaning for some columns
+	// radix - doesn't mean much for some colums either
+	switch (sqlType.type)
+	{
+	case JDBC_CHAR:
+	case JDBC_VARCHAR:
+	case JDBC_LONGVARCHAR:
+	case JDBC_LONGVARBINARY:
+	case JDBC_DATE:
+	case JDBC_SQL_DATE:
+		sqlda->setNull (10);
+		sqlda->setNull (11);
+		break;
+	case JDBC_TIME:
+	case JDBC_SQL_TIME:
+	case JDBC_TIMESTAMP:
+	case JDBC_SQL_TIMESTAMP:
+		sqlda->updateShort (10, -ISC_TIME_SECONDS_PRECISION_SCALE);
+	}	
+
+	switch (sqlType.type)
+	{
+	case JDBC_DATE:
+	case JDBC_SQL_DATE:
+		sqlda->updateShort (15, 9);
+		sqlda->updateShort (16, 1);
+		break;
+	case JDBC_TIME:
+	case JDBC_SQL_TIME:
+		sqlda->updateShort (15, 9);
+		sqlda->updateShort (16, 2);
+		break;
+	case JDBC_TIMESTAMP:
+	case JDBC_SQL_TIMESTAMP:
+		sqlda->updateShort (15, 9);
+		sqlda->updateShort (16, 3);
+		break;
+	default:
+		sqlda->updateShort (15, sqlda->getShort(6));
+		sqlda->setNull (16);
+	}
+
+	//Octet length
+	switch (sqlType.type)
+	{
+	case JDBC_LONGVARCHAR:
+	case JDBC_LONGVARBINARY:
+	case JDBC_VARCHAR:
+	case JDBC_CHAR:
+		sqlda->updateInt (17, sqlda->getInt (8));
+		break;
+	default:
+		sqlda->setNull (17);
+	} 
 }
 
 }; // end namespace IscDbcLibrary

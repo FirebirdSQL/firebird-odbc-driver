@@ -56,19 +56,19 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 													const char * foreignTable)
 {
 	JString sql = 
-		"select cast (NULL as char(7)) as pktable_cat,\n"		// 1
-				" cast (NULL as char(7)) as pktable_schem,\n"	// 2
-				" pidx.rdb$relation_name as pktable_name,\n"	// 3
-				" pseg.rdb$field_name as pkcolumn_name,\n"		// 4
-				" cast (NULL as char(7)) as fktable_cat,\n"		// 5
-				" cast (NULL as char(7)) as fktable_schem,\n"	// 6
-				" fidx.rdb$relation_name as fktable_name,\n"	// 7
-				" fseg.rdb$field_name as fkcolumn_name,\n"		// 8
+		"select cast (NULL as varchar(7)) as pktable_cat,\n"	// 1
+				" cast (NULL as varchar(7)) as pktable_schem,\n"// 2
+				" cast (pidx.rdb$relation_name as varchar(31)) as pktable_name,\n"	// 3
+				" cast (pseg.rdb$field_name as varchar(31)) as pkcolumn_name,\n"	// 4
+				" cast (NULL as varchar(7)) as fktable_cat,\n"	// 5
+				" cast (NULL as varchar(7)) as fktable_schem,\n"// 6
+				" cast (fidx.rdb$relation_name as varchar(31)) as fktable_name,\n"	// 7
+				" cast (fseg.rdb$field_name as varchar(31)) as fkcolumn_name,\n"	// 8
 				" pseg.rdb$field_position+1 as key_seq,\n"		// 9
 				" cast (0 as smallint) as update_rule,\n"		// 10
 				" cast (0 as smallint) as delete_rule,\n"		// 11
-				" fkey.rdb$constraint_name as fk_name,\n"		// 12
-				" refc.rdb$const_name_uq as pk_name,\n"			// 13
+				" cast (fkey.rdb$constraint_name as varchar(31)) as fk_name,\n"		// 12
+				" cast (refc.rdb$const_name_uq as varchar(31)) as pk_name,\n"		// 13
 				" 7 as deferrability,\n"						// 14	SQL_NOT_DEFERRABLE
 				" refc.rdb$update_rule,\n"						// 15
 				" refc.rdb$delete_rule\n"						// 16
@@ -114,13 +114,6 @@ bool IscCrossReferenceResultSet::next()
 	int len;
 	sqlda->updateShort ( 10, getRule ( sqlda->getText(15, len)) );
 	sqlda->updateShort ( 11, getRule ( sqlda->getText(16, len)) );
-
-	trimBlanks (3);			// primary key table name
-	trimBlanks (4);			// primary key field name
-	trimBlanks (7);			// foreign key table name
-	trimBlanks (8);			// foreign key field name
-	trimBlanks (12);		// foreign key name
-	trimBlanks (13);		// primary key name
 
 	return true;
 }
