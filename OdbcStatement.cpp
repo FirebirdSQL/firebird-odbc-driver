@@ -20,6 +20,15 @@
  *
  *	Changes
  *
+ *	2002-06-08	OdbcStatement.cpp
+ *				Submitted by B. Schulte
+ *				sqlNumResultCols().
+ *				This fixes the bug : ' I can't edit my remote-views 
+ *				in Visual FoxPro'. If the resultSet does not exist, 
+ *				execute it, to get a valid resultSet. Foxpro calls 
+ *				this function to get all column-descriptions for 
+ *				its remote-views. 
+ *
  *	2002-06-04	OdbcdStatement.cpp
  *				submitted by Robert Milharcic
  *				Extensive changes to improve writing and 
@@ -806,6 +815,15 @@ RETCODE OdbcStatement::sqlNumResultCols(SWORD * columns)
 {
 	clearErrors();
 
+	if (!resultSet ){
+		// Contributed by B. Schulte
+		// if the resultSet does not exist, execute it, to get a valid resultSet
+		// Foxpro calls this function to get all column-descriptions for its
+		// remote-views. 
+		// This fixes the bug : ' I can't edit my remote-views in Visial FoxPro'
+		this->executeStatement();
+	}
+	
 	if (resultSet)
 		try
 			{
