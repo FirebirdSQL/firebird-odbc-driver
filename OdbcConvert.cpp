@@ -726,7 +726,7 @@ ODBCCONVERT_TEMP_CONV(Time,String,char);
 
 int OdbcConvert::convTimeToTagTime(DescRecord * from, DescRecord * to)
 {
-	tagTIMESTAMP_STRUCT * tagTm = (tagTIMESTAMP_STRUCT*)getAdressData((char*)to->dataPtr);
+	tagTIME_STRUCT * tagTm = (tagTIME_STRUCT*)getAdressData((char*)to->dataPtr);
 	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL;
