@@ -39,6 +39,7 @@ public:
 	IscProceduresResultSet(IscDatabaseMetaData *metaData);
 
 	bool	addBlr;
+	bool	allTablesAreSelectable;
 };
 
 }; // end namespace IscDbcLibrary

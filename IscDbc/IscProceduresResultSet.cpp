@@ -41,6 +41,7 @@ IscProceduresResultSet::IscProceduresResultSet(IscDatabaseMetaData *metaData)
 		: IscMetaDataResultSet(metaData)
 {
 	addBlr = false;
+	allTablesAreSelectable = metaData->allTablesAreSelectable();
 }
 
 void IscProceduresResultSet::getProcedures(const char * catalog, const char * schemaPattern, const char * procedureNamePattern)
@@ -69,7 +70,7 @@ void IscProceduresResultSet::getProcedures(const char * catalog, const char * sc
 		sep = " and ";
 	}
 
-	if ( !metaData->allTablesAreSelectable() )
+	if ( !allTablesAreSelectable )
 		metaData->existsAccess(ptFirst, sep, "proc", 5, "");
 
 	addString(ptFirst, " order by proc.rdb$procedure_name");
