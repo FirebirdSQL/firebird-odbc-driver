@@ -20,7 +20,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="&quot;$(INTERBASE)/include&quot;;../..;$(NOINHERIT)"
+				AdditionalIncludeDirectories="$(INTERBASE)/include,../.."
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
@@ -38,7 +38,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="/EXPORT:createConnection $(NOINHERIT)"
+				AdditionalDependencies="/EXPORT:createConnection"
 				OutputFile=".\Release/IscDbc.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -78,7 +78,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(INTERBASE)\include&quot;;../..;$(NOINHERIT)"
+				AdditionalIncludeDirectories="$(INTERBASE)\include,../.."
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;DEBUG;LOGGING"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="2"
@@ -97,7 +97,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="/EXPORT:createConnection $(NOINHERIT)"
+				AdditionalDependencies="/EXPORT:createConnection"
 				OutputFile=".\Debug/IscDbc.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
@@ -116,7 +116,8 @@
 				TargetEnvironment="1"
 				TypeLibraryName=".\Debug/IscDbc.tlb"/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCPostBuildEventTool"
+				CommandLine="copy debug\IscDbc.dll c:\windows\system32\IscDbc.dll"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

@@ -9,7 +9,7 @@ CppCompiler=-D__GNUWIN32__ -D_WIN32_WINNT=0x0400 -DWINVER=0x0400 -DWIN32 -DNDEBU
 Includes=d:/firebird/include;../..;../../IscDbc
 Linker=-luser32 -lcomdlg32 -lstdc++ -lodbccp32_@@_--output-def Release/Obj/libOdbcJdbcSetup.def_@@_--output-lib Release/libOdbcJdbcSetup.a_@@_--def ../../OdbcJdbcSetup/OdbcJdbcSetup.def_@@_
 Libs=
-UnitCount=11
+UnitCount=10
 Folders="Header Files","Resource Files","Source Files"
 ObjFiles=
 PrivateResource=OdbcJdbcSetup_private.rc
@@ -118,16 +118,6 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit10]
-FileName=..\..\change.log
-Folder=
-Compile=0
-CompileCpp=1
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit11]
 FileName=..\..\OdbcJdbcSetup\OdbcJdbcSetup.rc
 Folder=Resource Files
 Compile=1

@@ -169,6 +169,10 @@ SOURCE=..\..\OdbcStatement.cpp
 
 SOURCE=..\..\SafeEnvThread.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=..\..\ConnectDialog.cpp
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -228,6 +232,10 @@ SOURCE=..\..\OdbcStatement.h
 # Begin Source File
 
 SOURCE=..\..\SafeEnvThread.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\ConnectDialog.h
 # End Source File
 # Begin Source File
 

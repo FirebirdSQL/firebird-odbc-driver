@@ -9,7 +9,7 @@ CppCompiler=-D__GNUWIN32__ -D_WIN32_WINNT=0x0400 -DWINVER=0x0400 -DWIN32 -DNDEBU
 Includes=d:/firebird/include;../../IscDbc
 Linker=-luser32 -lodbccp32_@@_--output-def Release/Obj/libOdbcJdbc.def_@@_--output-lib Release/libOdbcJdbc.a_@@_--def ../../OdbcJdbcMinGW.def_@@_Release/libIscDbc.a_@@_
 Libs=
-UnitCount=31
+UnitCount=33
 Folders="Header Files","Resource Files","Source Files"
 ObjFiles=
 PrivateResource=OdbcJdbc_private.rc
@@ -188,6 +188,16 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit17]
+FileName=..\..\ConnectDialog.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit18]
 FileName=..\..\DescRecord.h
 Folder="Header Files"
 Compile=1
@@ -197,7 +207,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit18]
+[Unit19]
 FileName=..\..\InfoItems.h
 Folder="Header Files"
 Compile=1
@@ -207,7 +217,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit19]
+[Unit20]
 FileName=..\..\IscDbc\JString.h
 Folder="Header Files"
 Compile=1
@@ -217,7 +227,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit20]
+[Unit21]
 FileName=..\..\Mlist.h
 Folder="Header Files"
 Compile=1
@@ -227,7 +237,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit21]
+[Unit22]
 FileName=..\..\OdbcConnection.h
 Folder="Header Files"
 Compile=1
@@ -237,7 +247,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit22]
+[Unit23]
 FileName=..\..\OdbcConvert.h
 Folder="Header Files"
 Compile=1
@@ -247,7 +257,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit23]
+[Unit24]
 FileName=..\..\OdbcDateTime.h
 Folder="Header Files"
 Compile=1
@@ -257,7 +267,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit24]
+[Unit25]
 FileName=..\..\OdbcDesc.h
 Folder="Header Files"
 Compile=1
@@ -267,7 +277,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit25]
+[Unit26]
 FileName=..\..\OdbcEnv.h
 Folder="Header Files"
 Compile=1
@@ -277,7 +287,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit26]
+[Unit27]
 FileName=..\..\OdbcError.h
 Folder="Header Files"
 Compile=1
@@ -287,7 +297,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit27]
+[Unit28]
 FileName=..\..\OdbcJdbc.h
 Folder="Header Files"
 Compile=1
@@ -297,7 +307,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit28]
+[Unit29]
 FileName=..\..\OdbcObject.h
 Folder="Header Files"
 Compile=1
@@ -307,7 +317,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit29]
+[Unit30]
 FileName=..\..\OdbcStatement.h
 Folder="Header Files"
 Compile=1
@@ -317,7 +327,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit30]
+[Unit31]
 FileName=..\..\SafeEnvThread.h
 Folder="Header Files"
 Compile=1
@@ -327,7 +337,17 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit31]
+[Unit32]
+FileName=..\..\ConnectDialog.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit33]
 FileName=..\..\SetupAttributes.h
 Folder="Header Files"
 Compile=1

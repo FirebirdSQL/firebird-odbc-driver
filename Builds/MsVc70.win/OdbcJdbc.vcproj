@@ -20,7 +20,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../IscDbc;$(NOINHERIT)"
+				AdditionalIncludeDirectories="../../IscDbc"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;DEBUG;LOGGING"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="2"
@@ -38,9 +38,9 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="Debug/IscDbc.lib user32.lib odbccp32.lib $(NOINHERIT)"
+				AdditionalDependencies="Debug/IscDbc.lib odbccp32.lib"
 				OutputFile=".\Debug/OdbcJdbc.dll"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="debug"
 				ModuleDefinitionFile="..\..\OdbcJdbc.def"
@@ -58,7 +58,10 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Registering Server"
-				CommandLine="regsvr32 /s $(TargetDir)OdbcJdbcSetup.dll"/>
+				CommandLine="regsvr32 /s $(TargetDir)OdbcJdbcSetup.dll
+copy debug\OdbcJdbc.dll c:\windows\system32\OdbcJdbc.dll
+copy debug\IscDbc.dll c:\windows\system32\IscDbc.dll
+"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -82,7 +85,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../IscDbc;$(NOINHERIT)"
+				AdditionalIncludeDirectories="../../IscDbc"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
@@ -100,7 +103,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="Release/IscDbc.lib user32.lib odbccp32.lib $(NOINHERIT)"
+				AdditionalDependencies="Release/IscDbc.lib odbccp32.lib"
 				OutputFile=".\Release/OdbcJdbc.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -202,6 +205,9 @@
 			<File
 				RelativePath="..\..\SafeEnvThread.cpp">
 			</File>
+			<File
+				RelativePath="..\..\ConnectDialog.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -247,6 +253,9 @@
 			</File>
 			<File
 				RelativePath="..\..\SafeEnvThread.h">
+			</File>
+			<File
+				RelativePath="..\..\ConnectDialog.h">
 			</File>
 			<File
 				RelativePath="..\..\SetupAttributes.h">

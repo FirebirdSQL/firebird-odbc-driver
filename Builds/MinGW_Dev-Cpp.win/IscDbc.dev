@@ -7,7 +7,7 @@ Type=3
 Compiler=-D__GNUWIN32__ -D_WIN32_WINNT=0x0400 -DWINVER=0x0400 -DWIN32 -D_WIN32 -DNDEBUG -D_WINDOWS_@@_
 CppCompiler=-D__GNUWIN32__ -D_WIN32_WINNT=0x0400 -DWINVER=0x0400 -DWIN32 -D_WIN32 -DNDEBUG -D_WINDOWS_@@_
 Includes=d:/firebird/include;../..
-Linker=--output-def Release/Obj/libIscDbc.def_@@_--output-lib Release/libIscDbc.a_@@_--def ../../IscDbc/IscDbc.def_@@_
+Linker= --output-def Release/Obj/libIscDbc.def_@@_--output-lib Release/libIscDbc.a_@@_--def ../../IscDbc/IscDbc.def_@@_
 Libs=d:/firebird/lib
 UnitCount=91
 Folders="Header Files","Resource Files","Source Files"
@@ -269,6 +269,16 @@ BuildCmd=
 
 [Unit25]
 FileName=..\..\IscDbc\IscResultSet.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit26]
+FileName=..\..\IscDbc\IscSpecialColumnsResultSet.h
 Folder="Header Files"
 Compile=1
 CompileCpp=1
@@ -717,6 +727,16 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
+[Unit71]
+FileName=..\..\IscDbc\IscSpecialColumnsResultSet.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
 [Unit72]
 FileName=..\..\IscDbc\IscSqlType.cpp
 Folder="Source Files"
@@ -917,26 +937,6 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit92]
-FileName=..\..\IscDbc\Value.cpp
-Folder="Source Files"
-Compile=1
-CompileCpp=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit93]
-FileName=..\..\IscDbc\Values.cpp
-Folder="Source Files"
-Compile=1
-CompileCpp=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
 [VersionInfo]
 Major=0
 Minor=1
@@ -954,24 +954,4 @@ OriginalFilename=IscDbc.exe
 ProductName=IscDbc
 ProductVersion=0.1
 AutoIncBuildNr=0
-
-[Unit26]
-FileName=..\..\IscDbc\IscSpecialColumnsResultSet.h
-CompileCpp=1
-Folder="Header Files"
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit71]
-FileName=..\..\IscDbc\IscSpecialColumnsResultSet.cpp
-CompileCpp=1
-Folder="Source Files"
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
 
