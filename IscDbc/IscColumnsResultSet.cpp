@@ -92,13 +92,13 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 				"\t10 as ordinal_position,\n"						// 17 - INTEGER NOT NULL
 				"\tcast ('YES' as varchar(3)) as IS_NULLABLE,\n"	// 18 - VARCHAR
 				"\tfld.rdb$character_length as char_len,\n"			// 19
-				"\tfld.rdb$default_value as f_def_val,\n"			// 20
+				"\tfld.rdb$default_source as f_def_source,\n"		// 20
 				"\tfld.rdb$dimensions as array_dim,\n"				// 21
 				"\tfld.rdb$null_flag as null_flag,\n"				// 22
 				"\trfr.rdb$field_position as column_position,\n"	// 23
 				"\tfld.rdb$field_length as column_length,\n"		// 24
 				"\tfld.rdb$field_precision as column_precision,\n"	// 25
-				"\trfr.rdb$default_value as column_def\n"			// 26
+				"\trfr.rdb$default_source as column_def\n"			// 26
 		"from rdb$relation_fields rfr, rdb$fields fld\n"
 		"where rfr.rdb$field_source = fld.rdb$field_name\n";
 
@@ -118,6 +118,7 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 #ifdef DEBUG
 	OutputDebugString (sql);
 #endif
+	blob.connection = metaData->connection;
 	prepareStatement (sql);
 
 // SELECT returns 26 columns,
@@ -201,9 +202,7 @@ bool IscColumnsResultSet::next()
 	return true;
 }
 
-bool IscColumnsResultSet::getBLRLiteral (int indexIn, 
-										 int indexTarget,
-										 IscSqlType &sqlType)
+bool IscColumnsResultSet::getDefSource (int indexIn, int indexTarget)
 {
 	if ( sqlda->isNull (indexIn) )
 	{
@@ -212,147 +211,30 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 	}
 
 	XSQLVAR *var = sqlda->Var(indexIn);
+	char buffer[1024];
+	char * beg = buffer + 7; // sizeof("default")
+	char * end;
+	int lenRead;
 
-	blob.bind(statement->connection,(char*)var->sqldata);
-	blob.setType(var->sqlsubtype);
-
-	char * stuff = new char [blob.length()];
-	char * s = stuff;
-
-	for (int offset = 0, length; 
-			length = blob.getSegmentLength(offset); 
-			offset += length)
-		memcpy (stuff + offset, blob.getSegment(offset), length);
-
-	if ((*stuff != blr_version4) && (*stuff != blr_version5))
-	{
-		sqlda->updateVarying (indexTarget, "unknown, not BLR");
-		delete[] s;
-		return false;
-	}
-
-	stuff++;
+	blob.directOpenBlob ((char*)var->sqldata);
+	blob.directFetchBlob (buffer, 1024, lenRead);
+	blob.directCloseBlob();
 	
-	if (*stuff == blr_null)
+	end = buffer + lenRead;
+
+	while ( *++beg == ' ' );
+	while ( *end == ' ' ) end--;
+
+	if ( *beg == '\'' )
 	{
-		sqlda->updateVarying (indexTarget, "NULL");
-		delete[] s;	
-		return true;
+		++beg;
+		--end;
 	}
 
-	if (*stuff != blr_literal)
-	{
-		sqlda->updateVarying (indexTarget, "unknown, not literal");
-		delete[] s;
-		return false;
-	}
+	*end = '\0';
+	
+	sqlda->updateVarying (indexTarget, beg);
 
-	stuff++;	
-	long	intVal, temp;
-	short	type, scale, mag;
-	char	stringTemp [BUFF_LEN];
-
-	CFbDll * GDS = statement->connection->GDS;
-	JString stringVal;
-	TimeStamp timestamp;	
-	type = *stuff++;
-
-	switch (type)
-	{
-	case (blr_short):
-	case (blr_long):
-		scale = (*stuff++) * -1;
-		mag = 1;
-
-		intVal = GDS->_vax_integer (stuff, (type == blr_short)? 2 : 4);
-
-		if (!scale)
-			stringVal.Format ("%d", intVal);
-		else
-		{
-			for (temp = intVal; scale; scale--)
-			{
-				temp /= 10;	
-				mag *= 10;
-			}
-			intVal %= mag;
-			scale = *--stuff * -1;			
-			stringVal.Format ("%d.%0*d", temp, scale, intVal);
-		}
-
-		break;
-
-	case (blr_quad):
-	case (blr_int64):
-		scale = (*stuff++) * -1;
-		intVal = GDS->_vax_integer (stuff, 4);
-		temp = GDS->_vax_integer (&stuff[4], 4);
-		stringVal.Format ("0x%x%x scale %d", intVal, temp, scale);
-		break;
-
-	case (blr_float):
-	case (blr_double):
-		stringVal.Format ("%g", stuff);
-		break;
-
-	case (blr_d_float):
-		stringVal.Format ("d_float is not an ODBC concept");
-		break;
-		
-	case (blr_timestamp):
-		timestamp.date = (long) stuff;
-		timestamp.nanos = (long) &stuff[4];
-		timestamp.getTimeString (BUFF_LEN, stringTemp);
-		stringVal.Format ("\'%s\'", stringTemp);
-		break;
-
-	case (blr_sql_date):
-		DateTime date;
-		date.date = (long) stuff;
-		date.getString (BUFF_LEN, stringTemp);
-		stringVal.Format ("\'%s\'", stringTemp);
-		break;
-
-	case (blr_sql_time):
-		SqlTime time;
-		time.timeValue = (long) stuff;
-		time.getString (BUFF_LEN, stringTemp);
-		stringVal.Format ("\'%s\'", stringTemp);
-		break;
-
-	case (blr_text2):
-	case (blr_varying2):
-	case (blr_cstring2):
-		stuff += 2;   // skip the type info
-	case (blr_text):
-	case (blr_varying):
-	case (blr_cstring):
-		switch (type)
-		{
-		case (blr_cstring):
-		case (blr_cstring2):
-			intVal = strlen (stuff);
-			break;
-		default:
-			intVal = GDS->_vax_integer (stuff, 2);
-		}
-		if ((intVal + 4) >= BUFF_LEN)
-		{
-			stringVal = "TRUNCATED";
-			break;
-		}
-		stringVal.setString (&stuff[2], intVal);
-		checkQuotes (sqlType, stringVal); 
-		break;
-		
-	case (blr_blob_id):
-	case (blr_blob):
-		stringVal = "blob type is not compatible";
-		break;
-
-	}
-	sqlda->updateVarying (indexTarget, stringVal);
-	delete[] s;
 	return true;
 }								
 
@@ -465,9 +347,9 @@ void IscColumnsResultSet::adjustResults (IscSqlType &sqlType)
 	short nullable = !sqlda->getShort (11) || sqlda->isNull(11);
 	sqlda->updateShort (11, nullable);
 
-	// default values
-	if (!getBLRLiteral (26, 13, sqlType))
-		getBLRLiteral (20, 13, sqlType);
+	// default source
+	if (!getDefSource (26, 13))
+		getDefSource (20, 13);
 
 	switch (sqlType.type)
 		{
