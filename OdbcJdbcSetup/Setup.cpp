@@ -26,16 +26,6 @@
  *
  */
 
-//--------------------------------------------------
-// CONFDSN: trivial configure DSN for the trival
-//            sample driver.
-//
-// Copyright (C) 1997 by Microsoft Corporation.
-//--------------------------------------------------
-// This doesn't do anything interesting, the sample
-// driver is really for testing the setup sample
-//--------------------------------------------------
-
 #include "OdbcJdbcSetup.h"
 #include <odbcinst.h>
 #include "DsnDialog.h"
@@ -63,6 +53,8 @@ static const char *fileNames [] = {
 
 static const char *drivers [] = { "IscDbc", NULL };
 extern HINSTANCE m_hInstance;
+void MessageBoxError(char * stageExecuted, char * pathFile);
+void MessageBoxInstallerError(char * stageExecuted, char * pathOut);
 
 /*
  *	To debug the control panel applet 
@@ -103,13 +95,13 @@ BOOL INSTAPI ConfigDSN(HWND		hWnd,
 /*
  *	Registration can be performed with the following command:
  *
- *		regsvr32 odbcjdbcsetup.dll
+ *		regsvr32 .\odbcjdbcsetup.dll
  *
  *	To debug registration the project settings to call regsvr32.exe
  *  with the full path.
  *
  *  Use 
- *		../debug/odbcjdbcsetup.dll
+ *		..\debug\odbcjdbcsetup.dll
  *
  *  as the program argument
  *
@@ -125,8 +117,9 @@ extern "C" __declspec( dllexport ) int DllRegisterServer (void)
 	char pathOut [256];
 	WORD length = sizeof (pathOut);
 	DWORD useCount;
+	BOOL fRemoveDSN = FALSE;
 
-	if (!SQLInstallDriverEx (
+	if ( !SQLInstallDriverEx (
 			driverInfo,
 			NULL, //fileName,
 			pathOut,
@@ -135,19 +128,12 @@ extern "C" __declspec( dllexport ) int DllRegisterServer (void)
 			ODBC_INSTALL_COMPLETE,
 			&useCount))
 	{
-		char message [SQL_MAX_MESSAGE_LENGTH];
-        WORD	errCodeIn = 1;
-		DWORD *	errCodeOut = 0L;
-		
-		SQLInstallerError(errCodeIn, errCodeOut, message, sizeof (message) - 1,
-			NULL);
-		
-		msg.Format ("Install Driver Complete (%s, %s) failed with %d\n%s\n", 
-						fileName, pathOut, errCodeOut, message);
-        MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
-		return FALSE;
+		MessageBoxError("Install Driver Complete", pathOut);
+		return S_FALSE;
 	}
 
+	if( useCount > 1 ) // On a case update
+		SQLRemoveDriver(DRIVER_FULL_NAME, fRemoveDSN, &useCount);
 
 	char *path = pathOut + strlen (pathOut);
 	if (path != strrchr (pathOut, '\\') + 1)
@@ -160,23 +146,10 @@ extern "C" __declspec( dllexport ) int DllRegisterServer (void)
 		strcpy (tail, *ptr);
 		if (!CopyFile (fileName, pathOut, false))
 		{
-			DWORD messageId = GetLastError();
-			char temp[256];
-			if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, messageId,
-					0, temp, sizeof(temp), NULL))
-			{
-				msg.Format ("Format message failed %d\n", GetLastError());
-				MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
-				return FALSE;
-			}
-
-			msg.Format ("CopyFile (%s, %s) failed with %d\n%s\n", 
-						fileName, pathOut, messageId, temp);
-	        MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
-			return FALSE;
+			MessageBoxError("CopyFile", pathOut);
+			return S_FALSE;
 		}
 	}
-
 
 	if (!SQLConfigDriver (
 			NULL,
@@ -187,22 +160,101 @@ extern "C" __declspec( dllexport ) int DllRegisterServer (void)
 			64,
 			NULL))
 	{
-        char message [SQL_MAX_MESSAGE_LENGTH];
-        WORD        errCodeIn = 1;
-        DWORD *    errCodeOut = 0L;
-
-        SQLInstallerError(errCodeIn, errCodeOut, message, sizeof (message) - 1,
-            NULL);
-
-        msg.Format ("Config Install (%s, %s) failed with %d\n%s\n",
-                        fileName, pathOut, errCodeOut, message);
-
-        MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
-
-        return FALSE;
+		MessageBoxInstallerError("Config Install", pathOut);
+        return S_FALSE;
 	} 	
 
-	return TRUE;
+	return S_OK;
+}
+
+extern "C" __declspec( dllexport ) int DllUnregisterServer (void)
+{
+	JString msg;
+	DWORD useCount = 0;
+	BOOL fRemoveDSN = FALSE;
+
+	if ( !SQLConfigDriver (
+			NULL,
+			ODBC_REMOVE_DRIVER,
+			DRIVER_FULL_NAME, 
+			NULL,
+			DRIVER_FULL_NAME" was Uninstalled successfully",
+			64,
+			NULL))
+	{
+		MessageBoxInstallerError("Config Uninstall", NULL);
+	} 	
+	else if ( !SQLRemoveDriver(DRIVER_FULL_NAME, fRemoveDSN, &useCount) )
+	{
+		MessageBoxInstallerError("Uninstall Driver", NULL);
+	}
+
+	if ( !useCount )
+	{
+		bool bContinue = true;
+		char pathFile[256], *path;
+		WORD length = sizeof (pathFile);
+		UINT lenSystemPath;
+
+		lenSystemPath = GetSystemDirectory(pathFile,length-1);
+		if ( !lenSystemPath )
+		{
+			MessageBoxError("GetSystemDirectory", pathFile);
+			bContinue = false;
+		}
+
+		path = pathFile + lenSystemPath;
+		*path++ = '\\';
+
+		for (const char **ptr = fileNames; bContinue && *ptr; ++ptr)
+		{
+			strcpy (path, *ptr);
+			if ( !DeleteFile (pathFile) )
+			{
+				MessageBoxError("DeleteFile", pathFile);
+				bContinue = false;
+			}
+		}
+	}
+
+	return S_OK;
+}
+
+void MessageBoxError(char * stageExecuted, char * pathFile)
+{
+	JString msg;
+	DWORD messageId = GetLastError();
+	char temp[256];
+	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, messageId,
+			0, temp, sizeof(temp), NULL))
+	{
+		msg.Format ("Format message failed %d\n", GetLastError());
+		MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
+		return;
+	}
+
+	msg.Format ("%s (%s, %s) failed with %d\n%s\n", 
+				stageExecuted, DRIVER_FULL_NAME, pathFile, messageId, temp);
+	MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
+}
+
+void MessageBoxInstallerError(char * stageExecuted, char * pathOut)
+{
+	JString msg;
+    char message [SQL_MAX_MESSAGE_LENGTH];
+    WORD        errCodeIn = 1;
+    DWORD *    errCodeOut = 0L;
+
+    SQLInstallerError(errCodeIn, errCodeOut, message, sizeof (message) - 1, NULL);
+
+	if ( pathOut && *pathOut )
+		msg.Format ("%s (%s, %s) failed with %d\n%s\n",
+		                stageExecuted, DRIVER_FULL_NAME, pathOut, errCodeOut, message);
+	else	
+	    msg.Format ("%s (%s) failed with %d\n%s\n",
+		                stageExecuted, DRIVER_FULL_NAME, errCodeOut, message);
+
+    MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
 }
 
 //////////////////////////////////////////////////////////////////////
