@@ -32,15 +32,15 @@
 
 <P>Example connection string for Applications that use the ODBC function <B>SQLDriverConnect</B>:</P>
 
-<P>1. Open("<B>DSN</B>=mcsAddress;")</P>
+<P>1. Open("<B>DSN</B>=myDb;")</P>
 
-<P>2. Open("<B>DSN</B>=mcsAddress; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite;")</P>
+<P>2. Open("<B>DSN</B>=myDb; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite;")</P>
 
-<P>3. Open("<B>DSN</B>=mcsAddress; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=172.17.2.10:/usr/local/efldata/mcsAddress.fdb;")</P>
+<P>3. Open("<B>DSN</B>=myDb; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=172.17.2.10:/usr/local/db/myDb.fdb;")</P>
 
-<P>4. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>DBNAME</B>=172.17.2.10:/usr/local/efldata/mcsAddress.fdb;")</P>
+<P>4. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>DBNAME</B>=172.17.2.10:/usr/local/db/myDb.fdb;")</P>
 
-<P>5. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=172.17.2.10:/usr/local/efldata/mcsAddress.fdb;")</P>
+<P>5. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=172.17.2.10:/usr/local/db/myDb.fdb;")</P>
 
 <P>also </P>
 
@@ -48,6 +48,189 @@
 
 <P>dummy – is an alias derived from the Firebird <B>aliases.conf</B> file.
 If the environment variables <B>ISC_PASSWORD</B> and <B>ISC_USER</B> are set then the driver will use these. </P>
+
+<A name=IND_DBNAME></A>
+
+<table width="100%" cellspacing=0 cellpadding=6 border=1 cols=2>
+  <tr>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+      	<B>DBNAME</B> string for remote connect
+    </td>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+	<B>Comments</B>
+    </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	using the server IP address, with a file name following Unix notation
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	using the server name, with a file name following Unix notation
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10/3051:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	using the server IP address and especifing an alternate port, with 
+	a file name following Unix notation
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver/3051:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	using the server name and especifing an alternate port, with 
+	a file name following Unix notation
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	using the server IP address, with a file name following Windows 
+	notation
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	using the server name, with a file name following Windows notation
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10/3051:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	using the server IP address and especifing an alternate port, 
+	with a file name following Windows notation
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver/3051:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	using the server name and especifing an alternate port, with a 
+	file name following Windows notation
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>127.0.0.1:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	using the loopback interface, with a file name following Unix notation
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>localhost:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	using the loopback interface, with a file name following Unix notation
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>127.0.0.1:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	using the loopback interface, with a file name following Windows notation
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>localhost:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	using the loopback interface, with a file name following Windows notation
+      </td>
+  </tr>
+</table>
+
+<P> </P>
+
+<table width="100%" cellspacing=0 cellpadding=6 border=1 cols=2>
+  <tr>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+      	<B>DBNAME</B> string for local connect
+    </td>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+	<B>Comments</B>
+    </td>
+  </tr>
+  <tr>
+    <td>
+	<B>C:\db\myDb.fdb</B>
+      </td>
+    <td>
+        local conection on a Windows Server
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+        local conection with a file name following Unix notation
+      </td>
+  </tr>
+</table>
+
+<P>Example alias: Using the Firebird aliases.conf e.g. set
+	<UL><B>
+	dummy = c:\data\myDb.fdb</B><BR>
+	or<BR><B>
+	dummy = /usr/local/db/myDb.fdb
+	</B></UL></P>
+
+<P> </P>
+
+<table width="100%" cellspacing=0 cellpadding=6 border=1 cols=2>
+  <tr>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+      	<B>DBNAME</B> string for use alias
+    </td>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+	<B>Comments</B>
+    </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10:dummy</B>
+      </td>
+    <td>
+        remote conection using the server IP address and an alias
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver:dummy</B>
+      </td>
+    <td>
+        remote conection using the server name and an alias
+      </td>
+  </tr>
+</table>
+
+<P>Note that does not matter for the client if the server are Unix or
+Windows, one should just specify the alias name, and on the aliases.conf
+you define the real file name.</P>
 
 </BODY>
 </HTML>
