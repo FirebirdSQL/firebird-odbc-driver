@@ -120,6 +120,11 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 
 	switch(from->conciseType)
 	{
+	case SQL_C_BIT:
+		if ( to->isIndicatorSqlDa )
+			return &OdbcConvert::transferStringToAllowedType;
+		break;
+
 	case SQL_C_TINYINT:
 	case SQL_C_UTINYINT:
 	case SQL_C_STINYINT:
@@ -158,7 +163,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_TIMESTAMP:
 		case SQL_C_TYPE_TIME:
 		case SQL_C_TIME:
-			break;
+			return &OdbcConvert::notYetImplemented;
 		}
 		break;
 
@@ -199,7 +204,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_TIMESTAMP:
 		case SQL_C_TYPE_TIME:
 		case SQL_C_TIME:
-			break;
+			return &OdbcConvert::notYetImplemented;
 		}
 		break;
 
@@ -233,6 +238,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convLongToTagNumeric;
+		default:
+			return &OdbcConvert::notYetImplemented;
 		}
 		break;
 
@@ -261,6 +268,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			return &OdbcConvert::convFloatToBigint;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convFloatToString;
+		default:
+			return &OdbcConvert::notYetImplemented;
 		}
 		break;
 
@@ -292,6 +301,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convDoubleToTagNumeric;
+		default:
+			return &OdbcConvert::notYetImplemented;
 		}
 		break;
 
@@ -326,6 +337,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convBigintToTagNumeric;
+		default:
+			return &OdbcConvert::notYetImplemented;
 		}
 		break;
 
@@ -370,6 +383,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 				return &OdbcConvert::convTagNumericToBigint;
 			bIdentity = true;
 			return &OdbcConvert::convNumericToTagNumeric;
+		default:
+			return &OdbcConvert::notYetImplemented;
 		}
 		break;
 
@@ -399,6 +414,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			return &OdbcConvert::convDateToTagTimestamp;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateToString;
+		default:
+			return &OdbcConvert::notYetImplemented;
 		}
 		break;
 
@@ -428,6 +445,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			return &OdbcConvert::convTimeToTagTimestamp;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convTimeToString;
+		default:
+			return &OdbcConvert::notYetImplemented;
 		}
 		break;
 
@@ -458,6 +477,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			return &OdbcConvert::convDateTimeToTagDateTime;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateTimeToString;
+		default:
+			return &OdbcConvert::notYetImplemented;
 		}
 		break;
 
@@ -500,6 +521,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			return &OdbcConvert::convBlobToBlob;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convBlobToString;
+		default:
+			return &OdbcConvert::notYetImplemented;
 		}
 		break;
 
@@ -535,6 +558,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			case SQL_C_BINARY:
 				if ( from->isIndicatorSqlDa && from->dataBlobPtr && from->dataBlobPtr->isArray() )
 					return &OdbcConvert::convBlobToString;
+			default:
+				return &OdbcConvert::notYetImplemented;
 			}
 		}
 		else 
@@ -631,9 +656,13 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 					return &OdbcConvert::transferStringToDateTime;
 				}
 #pragma FB_COMPILER_MESSAGE("Realized convStringToDateTime() FIXME!")
+			default:
+				return &OdbcConvert::notYetImplemented;
 			}
 		}
 		break;
+	default:
+		return &OdbcConvert::notYetImplemented;
 	}
 	return NULL;
 }
@@ -969,6 +998,12 @@ int OdbcConvert::conv##TYPE_FROM##ToBinary(DescRecord * from, DescRecord * to)		
 																								\
 	return SQL_SUCCESS;																			\
 }																								\
+
+int OdbcConvert::notYetImplemented(DescRecord * from, DescRecord * to)
+{ 
+	parentStmt->postError ("07006", "Restricted data type attribute violation");
+	return SQL_ERROR; 
+}
 
 ////////////////////////////////////////////////////////////////////////
 // TinyInt
@@ -2576,6 +2611,10 @@ void OdbcConvert::setHeadSqlVar ( DescRecord * to )
 		break;
 
 	case SQL_C_BIT:
+		to->headSqlVarPtr->setTypeText();
+		to->headSqlVarPtr->setSqlLen( 1 );
+		break;
+
 	case SQL_C_BINARY:
 		break;
 

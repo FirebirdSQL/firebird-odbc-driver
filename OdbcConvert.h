@@ -72,6 +72,7 @@ public:
 public:
 	bool isIdentity(){ return bIdentity; }
 	SQLINTEGER &getBindOffsetPtrTo() { return *bindOffsetPtrTo; }
+	int notYetImplemented(DescRecord * from, DescRecord * to);
 
 // TinyInt
 	int convTinyIntToTinyInt(DescRecord * from, DescRecord * to);
