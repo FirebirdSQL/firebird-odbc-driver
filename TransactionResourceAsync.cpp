@@ -24,6 +24,8 @@
 
 #ifdef _WIN32
 
+#if _MSC_VER > 1000
+
 #define _ATL_FREE_THREADED
 #include <atlbase.h>
 extern CComModule _Module;
@@ -265,5 +267,7 @@ STDMETHODIMP_ (ULONG)TransactionResourceAsync::Release( void )
 }
 
 }; // end namespace OdbcJdbcLibrary
+
+#endif // _MSC_VER > 1000
 
 #endif // _WIN32

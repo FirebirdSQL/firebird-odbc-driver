@@ -23,6 +23,8 @@
 //////////////////////////////////////////////////////////////////////
 #ifdef _WIN32
 
+#if _MSC_VER > 1000
+
 #if !defined(_TransactionResourceAsync_H_)
 #define _TransactionResourceAsync_H_
 
@@ -74,5 +76,7 @@ public:
 }; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(_TransactionResourceAsync_H_)
+
+#endif // _MSC_VER > 1000
 
 #endif // _WIN32
