@@ -66,6 +66,7 @@ public:
 	char*			transferRecord();
 	void			setMinSegment (int length);
 	void			attach(Stream &dst, bool clear);
+	void			setConsecutiveRead (bool status) { consecutiveRead = status; }
 
 	Stream();
 	Stream (int minSegmentSize);
@@ -73,6 +74,7 @@ public:
 
 	int		totalLength;
 	int		minSegment;
+	int		sizeStructSegment;
 	int		currentLength;
 	int		decompressedLength;
 	int		useCount;
@@ -82,6 +84,9 @@ public:
 	Segment	*ptFirst;
 	Segment	*segments;
 	Segment *current;
+	bool	consecutiveRead;
+	Segment *currentRead;
+	int		currentN;
 };
 
 }; // end namespace IscDbcLibrary

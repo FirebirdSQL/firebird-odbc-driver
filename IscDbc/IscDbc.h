@@ -50,6 +50,7 @@
 #define ISDIGIT(c)			((c) >= '0' && (c) <= '9')
 #define UPPER(c)			((ISLOWER (c)) ? (c) - 'a' + 'A' : (c))
 #define ROUNDUP(n,b)		(((n) + (b) - 1) & ~((b) - 1))
+#define BOUNDARY			4
 
 #define PUNCT				1
 #define WHITE				2

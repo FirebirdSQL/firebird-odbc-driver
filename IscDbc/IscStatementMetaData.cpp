@@ -170,6 +170,7 @@ void IscStatementMetaData::createBlobDataTransfer(int index, Blob *& ptDataBlob)
 			IscBlob * pt = new IscBlob;
 			pt->setType(sqlda->getSubType(index));
 			pt->setMinSegment( DEFAULT_BLOB_BUFFER_LENGTH );
+			pt->setConsecutiveRead( true );
 			pt->statement = statement;
 			ptDataBlob = pt;
 		}
