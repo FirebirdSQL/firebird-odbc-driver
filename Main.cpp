@@ -768,7 +768,7 @@ RETCODE SQL_API SQLDescribeParam  (HSTMT arg0,
 	TRACE("SQLDescribeParam");
 	GUARD_HSTMT(arg0);
 
-	return ((OdbcStatement*) arg0)->sqlDescribeParam (arg1, arg2, arg3, arg4, arg4);
+	return ((OdbcStatement*) arg0)->sqlDescribeParam (arg1, arg2, arg3, arg4, arg5);
 }
 
 ///// SQLExtendedFetch /////
