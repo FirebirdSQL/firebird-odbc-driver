@@ -33,14 +33,19 @@ process.
 o Configuration
 ---------------
 
-Database connections are configured from the Database Administator
+Database connections are configured from the Database Administrator
 applet in the Control Panel.
 
 
 o Known Issues
 --------------
 
-There are no known problems at this time.
+Applications such as OpenOffice Quickstarter retain a lock on the driver 
+libraries. Installation and Uninstallation will fail under these circumstances. 
+The only work around is to ensure that all applications that might be
+using the driver are closed before you start installation.
+
+There are no other known issues at this time.
 
 
 Feedback

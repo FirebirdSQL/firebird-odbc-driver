@@ -1,14 +1,14 @@
 /*
- *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
- *     http://www.ibphoenix.com/idpl.html. 
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
+ *     The contents of this file are subject to the Initial
+ *     Developer's Public License Version 1.0 (the "License");
+ *     you may not use this file except in compliance with the
+ *     License. You may obtain a copy of the License at
+ *     http://www.ibphoenix.com/idpl.html.
+ *
+ *     Software distributed under the License is distributed on
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+ *     express or implied.  See the License for the specific
  *     language governing rights and limitations under the License.
  *
  *
@@ -66,9 +66,9 @@
 
 #define BUILD_DRIVER_VERSION(major,minor,buildnum) major"."minor"."buildnum
 #ifdef __BORLANDC__
-#define BUILD_VERSION_STR(major,minor,revno,buildnum) major "," minor "," "0" "," buildnum
+#define BUILD_VERSION_STR(major,minor,revno,buildnum) major "." minor "." "0" "." buildnum
 #else
-#define BUILD_VERSION_STR(major,minor,revno,buildnum) major "," minor "," revno "," buildnum
+#define BUILD_VERSION_STR(major,minor,revno,buildnum) major "." minor "." revno "." buildnum
 #endif
 
 #define DRIVER_VERSION		BUILD_DRIVER_VERSION( "0" BUILD_STR2( MAJOR_VERSION ), "0" BUILD_STR2( MINOR_VERSION ), "00" BUILD_STR2( BUILDNUM_VERSION ) )
