@@ -71,7 +71,7 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 				"\ti.rdb$index_id,\n"								//10
 				"\tf.rdb$field_length as column_length,\n"			//11
 				"\tf.rdb$field_scale as column_digits,\n"			//12
-				"\tf.rdb$field_precision as column_precision\n,"	//13
+				"\tf.rdb$field_precision as column_precision,\n"	//13
 				"\tf.rdb$field_sub_type\n"							//14
 		"from rdb$fields f\n"
 			"\tjoin rdb$relation_fields rfr\n" 
@@ -94,11 +94,11 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 	if(table && *table)
 		expandPattern (ptFirst, "\t\tand ","rfr.rdb$relation_name", table);
 
-	addString(ptFirst, " order by rel.rdb$constraint_type, rdb$index_name, rdb$field_position");
+	addString(ptFirst, " order by rel.rdb$constraint_type, rdb$index_name, rdb$field_position\n");
 
+	index_id = -1;
 	prepareStatement (sql);
 	numberColumns = 8;
-	index_id = -1;
 }
 
 bool IscSpecialColumnsResultSet::next ()
