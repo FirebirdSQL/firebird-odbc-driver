@@ -255,7 +255,7 @@ signed long OdbcDateTime::ndate (signed long nday, signed long nsec, tm        *
 	times->tm_year = (int) year - 1900;
 	times->tm_hour = (int) seconds / (60 * 60);
 	times->tm_min = (int) (seconds / 60) - ((times->tm_hour) * 60);
-	times->tm_sec = (int) (seconds % (24 * 60));
+	times->tm_sec = (int) (seconds - ((times->tm_hour*60)+times->tm_min)*60);
 	return true;
 }
 
