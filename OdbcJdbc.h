@@ -58,6 +58,12 @@ void logMsg (const char *msg);
 #include <sqlext.h>
 #include "IscDbc/JavaType.h"
 
+#ifndef SQLLEN
+#define SQLLEN			SQLINTEGER
+#define SQLULEN			SQLUINTEGER
+#define SQLSETPOSIROW	SQLUSMALLINT
+#endif
+
 #ifndef NULL
 #define NULL				0
 #endif
