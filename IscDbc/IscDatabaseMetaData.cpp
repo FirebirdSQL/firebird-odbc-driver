@@ -367,7 +367,7 @@ bool IscDatabaseMetaData::supportsMixedCaseIdentifiers()
 
 bool IscDatabaseMetaData::storesUpperCaseIdentifiers()
 	{
-	return connection->attachment->databaseDialect < 3 || !connection->attachment->quotedIdentifiers;
+	return true;
 	}
 
 bool IscDatabaseMetaData::storesLowerCaseIdentifiers()
