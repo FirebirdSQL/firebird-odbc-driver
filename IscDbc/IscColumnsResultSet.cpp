@@ -79,8 +79,8 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 				"\tcast (rfr.rdb$field_name as varchar(31)) as column_name,\n"		// 4 - VARCHAR NOT NULL
 				"\tfld.rdb$field_type as data_type,\n"				// 5 - SMALLINT NOT NULL
 				"\tcast (fld.rdb$field_name as varchar(31)) as type_name,\n"		// 6 - VARCHAR NOT NULL
-				"\t10 as column_size,\n"							// 7 - INTEGER
-				"\t10 as buffer_length,\n"							// 8 - INTEGER
+				"\tcast (fld.rdb$collation_id as integer) as column_size,\n"		// 7 - INTEGER
+				"\tcast (fld.rdb$character_set_id as integer) as buffer_length,\n"	// 8 - INTEGER
 				"\tcast (fld.rdb$field_scale as smallint) as decimal_digits,\n"		// 9 - SMALLINT
 				"\tfld.rdb$field_scale as num_prec_radix,\n"		// 10 - SMALLINT
 				"\trfr.rdb$null_flag as nullable,\n"				// 11 - SMALLINT NOT NULL
@@ -132,24 +132,28 @@ bool IscColumnsResultSet::next()
 		return false;
 	}
 
-	int len = sqlda->getShort (24);
+	int &len = sqlType.lengthIn;
+	
+	len = sqlda->getShort (24);
+
+	sqlType.collationId = sqlda->getInt (7);		// COLLATION_ID
+	sqlType.characterId = sqlda->getInt (8);		// CHARACTER_SET_ID
 
 	sqlda->updateInt (7, len);						// COLUMN_SIZE
 	sqlda->updateInt (8, len);						// BUFFER_LENGTH
 	sqlda->updateShort (10, 10);					// NUM_PREC_RADIX
-	sqlda->updateInt (16, len);					// CHAR_OCTET_LENGTH
-	sqlda->updateInt (17, sqlda->getShort (23)+1);		// ORDINAL_POSITION
+	sqlda->updateInt (16, len);						// CHAR_OCTET_LENGTH
+	sqlda->updateInt (17, sqlda->getShort (23)+1);	// ORDINAL_POSITION
 	
 	//translate to the SQL type information
-	int blrType	  = sqlda->getShort (5);	// DATA_TYPE
-	int subType	  = sqlda->getShort (15);	// SUB_TYPE
-	int length	  = sqlda->getInt (7);		// COLUMN_SIZE
-	int scale	  = sqlda->getShort (9);	// DECIMAL_DIGITS
-	int array	  = sqlda->getShort (21);	// ARRAY_DIMENSION
-	int precision = sqlda->getShort (25);	// COLUMN_PRECISION
+	sqlType.blrType	  = sqlda->getShort (5);		// DATA_TYPE
+	sqlType.subType	  = sqlda->getShort (15);		// SUB_TYPE
+	sqlType.scale	  = sqlda->getShort (9);		// DECIMAL_DIGITS
+	int array	  = sqlda->getShort (21);			// ARRAY_DIMENSION
+	sqlType.precision = sqlda->getShort (25);		// COLUMN_PRECISION
+	sqlType.dialect = statement->connection->getDatabaseDialect();
 
-	int dialect = statement->connection->getDatabaseDialect();
-	IscSqlType sqlType (blrType, subType, length, length, dialect, precision, scale);
+	sqlType.buildType();
 
 	if ( array )
 	{
@@ -159,7 +163,7 @@ bool IscColumnsResultSet::next()
 		char * field_name = sqlda->getVarying ( 4, len);
 		field_name[len] = '\0';
 
-		arrAttr.loadAttributes ( statement->connection, relation_name, field_name, subType );
+		arrAttr.loadAttributes ( statement->connection, relation_name, field_name, sqlType.subType );
 
 		sqlda->updateVarying (6, arrAttr.getFbSqlType());
 		sqlda->updateInt (7, arrAttr.arrOctetLength );
@@ -197,7 +201,7 @@ bool IscColumnsResultSet::next()
 
 bool IscColumnsResultSet::getBLRLiteral (int indexIn, 
 										 int indexTarget,
-										 IscSqlType sqlType)
+										 IscSqlType &sqlType)
 {
 	if ( sqlda->isNull (indexIn) )
 	{
@@ -352,7 +356,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 
 void IscColumnsResultSet::setCharLen (int charLenInd, 
 								      int fldLenInd, 
-									  IscSqlType sqlType)
+									  IscSqlType &sqlType)
 {
 	int fldLen = sqlda->getInt (fldLenInd);
 	int charLen = sqlda->getInt (charLenInd);
@@ -375,7 +379,7 @@ void IscColumnsResultSet::setCharLen (int charLenInd,
 		sqlda->updateInt (charLenInd, charLen);
 }
 
-void IscColumnsResultSet::checkQuotes (IscSqlType sqlType, JString stringVal)
+void IscColumnsResultSet::checkQuotes (IscSqlType &sqlType, JString stringVal)
 {
 	// Revolting ODBC wants the default value quoted unless its a 
 	// number or a pseudo-literal
@@ -411,7 +415,7 @@ void IscColumnsResultSet::checkQuotes (IscSqlType sqlType, JString stringVal)
 	return;
 }
 
-void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
+void IscColumnsResultSet::adjustResults (IscSqlType &sqlType)
 {
 	// Data source–dependent data type name
 	switch (sqlType.type)

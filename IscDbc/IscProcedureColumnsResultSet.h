@@ -41,6 +41,9 @@ public:
 	IscProcedureColumnsResultSet(IscDatabaseMetaData *metaData);
 
 	void adjustResults (IscSqlType &sqlType);
+
+private:
+	IscSqlType sqlType;
 };
 
 }; // end namespace IscDbcLibrary

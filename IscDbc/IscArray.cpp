@@ -217,7 +217,12 @@ JString CAttrArray::getFbSqlType()
 	case blr_text:
 	case blr_text2:
 		if ( sqllen == 1 )
-			ch = "CHAR";
+		{
+			if ( arrSubTypeElement == 1 )
+				ch = "CHAR CHARACTER SET OCTETS";
+			else
+				ch = "CHAR";
+		}
 		else
 			sprintf (temp, "CHAR(%d)", sqllen);
 		break;

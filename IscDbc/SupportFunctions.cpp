@@ -270,7 +270,7 @@ void SupportFunctions::convertTranslator ( char *&ptIn, char *&ptOut )
 		else if ( !strncasecmp ( paramSqlType, "SQL_NUMERIC", lenSqlType) )
 			type = "bigint";
 		else if ( !strncasecmp ( paramSqlType, "SQL_TINYINT", lenSqlType) )
-			type = "char";
+			type = "char character set octets";
 		break;
 	case 12:
 		if ( !strncasecmp ( paramSqlType, "SQL_SMALLINT", lenSqlType) )

@@ -113,27 +113,21 @@ bool IscSpecialColumnsResultSet::next ()
 		return false;
 
 	//translate to the SQL type information
-	int blrType = sqlda->getShort (3);	// field type
-	int subType = sqlda->getShort (14);
-	int length = sqlda->getShort (11);
-	int scale = sqlda->getShort (12);
-	int precision = sqlda->getShort (13);
+	sqlType.blrType = sqlda->getShort (3);	// field type
+	sqlType.subType = sqlda->getShort (14);
+	sqlType.lengthIn = sqlda->getShort (11);
+	sqlType.scale = sqlda->getShort (12);
+	sqlType.precision = sqlda->getShort (13);
+	sqlType.dialect = statement->connection->getDatabaseDialect();
 
-	int dialect = statement->connection->getDatabaseDialect();
-	IscSqlType sqlType (blrType, subType, length, length, dialect, precision, scale);
-
-	char *type, t[50];
-	type = t;
-	sprintf (type, "%s", sqlType.typeName);
+	sqlType.buildType();
 
 	sqlda->updateShort (3, sqlType.type);
-	sqlda->updateVarying (4, type);
+	sqlda->updateVarying (4, sqlType.typeName);
 
 	setCharLen (5, 6, sqlType);
 
-	scale = sqlda->getShort(12)*-1;
-	sqlda->updateInt (7,scale);
-
+	sqlda->updateInt (7, -sqlType.scale);
 	sqlda->updateShort (8,1);
 
 	adjustResults (sqlType);
@@ -143,7 +137,7 @@ bool IscSpecialColumnsResultSet::next ()
 
 void IscSpecialColumnsResultSet::setCharLen (int charLenInd, 
 								      int fldLenInd, 
-									  IscSqlType sqlType)
+									  IscSqlType &sqlType)
 {
 	int fldLen = sqlda->getInt (fldLenInd);
 	int charLen = sqlda->getInt (charLenInd);
@@ -168,7 +162,7 @@ void IscSpecialColumnsResultSet::setCharLen (int charLenInd,
 		sqlda->updateInt (charLenInd, charLen);
 }
 
-void IscSpecialColumnsResultSet::adjustResults (IscSqlType sqlType)
+void IscSpecialColumnsResultSet::adjustResults (IscSqlType &sqlType)
 {
 	// decimal digits have no meaning for some columns
 	// radix - doesn't mean much for some colums either

@@ -39,13 +39,14 @@ public:
 	void getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern);
 	IscColumnsResultSet(IscDatabaseMetaData *metaData);
 private:
-	virtual bool getBLRLiteral (int indexIn, int indexTarget, IscSqlType sqlType);
-	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType sqlType);
-	virtual void checkQuotes (IscSqlType sqlType, JString stringVal);
-	virtual void adjustResults (IscSqlType sqlType);	
+	virtual bool getBLRLiteral (int indexIn, int indexTarget, IscSqlType &sqlType);
+	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType &sqlType);
+	virtual void checkQuotes (IscSqlType &sqlType, JString stringVal);
+	virtual void adjustResults (IscSqlType &sqlType);	
 
 	IscBlob blob;
 	CAttrArray arrAttr;
+	IscSqlType sqlType;
 };
 
 }; // end namespace IscDbcLibrary

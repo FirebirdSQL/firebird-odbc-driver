@@ -44,26 +44,15 @@ namespace IscDbcLibrary {
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscSqlType::IscSqlType(int blrType, int subType, int length, int bufferLen, int dialect, int precision, int scale)
+void IscSqlType::buildType ()
 {
-	getType (blrType, subType, length, bufferLen, dialect, precision, scale);
-}
-
-IscSqlType::~IscSqlType()
-{
-
-}
-
-void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int dialect, int precision, int scale)
-{
-	length = len;
-	bufferLength = bufferLen;
+	length = bufferLength = lengthIn;
 
 	switch (blrType)
 		{
 		case blr_text:
 		case blr_text2:
-			if ( length == 1 )
+			if ( length == 1 && characterId == 1 )
 			{
 			type = JDBC_TINYINT;
 			typeName = "TINYINT";
@@ -187,9 +176,12 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 			}
 		}
 
-	if (type == JDBC_SMALLINT || type == JDBC_INTEGER || 
-		type == JDBC_BIGINT || type == JDBC_DOUBLE)
+	switch ( type )
 	{	
+	case JDBC_SMALLINT:
+	case JDBC_INTEGER:
+	case JDBC_BIGINT:
+	case JDBC_DOUBLE:
 		if (subType == 2)
 		{
 			switch( type )

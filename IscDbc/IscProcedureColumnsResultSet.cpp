@@ -127,13 +127,14 @@ bool IscProcedureColumnsResultSet::next()
 	int type = parameterType ? SQL_PARAM_OUTPUT : SQL_PARAM_INPUT;
 	sqlda->updateShort (5, type);
 
-	int blrType = sqlda->getShort (6);	// field type
-	int subType = sqlda->getShort (16);
-	int length = sqlda->getInt (8);
-	int scale = sqlda->getShort (10);
-	int dialect	= statement->connection->getDatabaseDialect();
-	int precision = sqlda->getShort (20);
-	IscSqlType sqlType (blrType, subType, length, length, dialect, precision, scale);
+	sqlType.blrType = sqlda->getShort (6);	// field type
+	sqlType.subType = sqlda->getShort (16);
+	sqlType.lengthIn = sqlda->getInt (8);
+	sqlType.scale = sqlda->getShort (10);
+	sqlType.precision = sqlda->getShort (20);
+	sqlType.dialect = statement->connection->getDatabaseDialect();
+
+	sqlType.buildType();
 
 	sqlda->updateShort (6, sqlType.type);
 	sqlda->updateVarying (7, sqlType.typeName);
@@ -141,13 +142,13 @@ bool IscProcedureColumnsResultSet::next()
 	if (sqlType.type != JDBC_VARCHAR &&	sqlType.type != JDBC_CHAR)
 		sqlda->updateInt (9, sqlType.bufferLength);
 	else
-		sqlda->updateInt (9, length);
+		sqlda->updateInt (9, sqlType.lengthIn);
 
 	switch (sqlType.type)
 	{
 	case JDBC_NUMERIC:
 	case JDBC_DECIMAL:
-		sqlda->updateShort ( 10, -scale );
+		sqlda->updateShort ( 10, -sqlType.scale );
 	}
 	
 	adjustResults (sqlType);

@@ -38,9 +38,10 @@ public:
 	bool next();
 
 private:
-	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType sqlType);
-	virtual void adjustResults (IscSqlType sqlType);
+	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType &sqlType);
+	virtual void adjustResults (IscSqlType &sqlType);
 	int	index_id;	
+	IscSqlType sqlType;
 };
 
 }; // end namespace IscDbcLibrary

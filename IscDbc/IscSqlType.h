@@ -30,10 +30,21 @@ namespace IscDbcLibrary {
 class IscSqlType  
 {
 public:
-	void getType (int blrType, int subType, int length, int bufferLen, int dialect, int precision, int scale);
-	IscSqlType(int blrType, int subType, int length, int bufferLen, int dialect, int precision, int scale);
-	~IscSqlType();
+	IscSqlType() { memset ( this, 0, sizeof ( *this ) ); }
 
+	void buildType ();
+
+public:		// In
+	int		blrType;
+	int		subType;
+	int		lengthIn;
+	int		dialect;
+	int		precisionIn;
+	int		scale;
+	int		collationId;
+	int		characterId;
+
+public:		// Out
 	int		type;
 	char	*typeName;
 	int		length;

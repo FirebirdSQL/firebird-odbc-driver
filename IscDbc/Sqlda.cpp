@@ -620,7 +620,7 @@ int Sqlda::getColumnDisplaySize(int index)
 	switch (var->sqltype & ~1)
 	{
 	case SQL_TEXT:
-		if ( var->sqllen == 1 )
+		if ( var->sqllen == 1 && var->sqlsubtype == 1 )
 			return MAX_TINYINT_LENGTH + 1;
 		return var->sqllen;
 
@@ -686,7 +686,7 @@ int Sqlda::getPrecision(int index)
 	switch (var->sqltype & ~1)
 	{
 	case SQL_TEXT:
-		if ( var->sqllen == 1 )
+		if ( var->sqllen == 1 && var->sqlsubtype == 1 )
 			return MAX_TINYINT_LENGTH;
 		return var->sqllen;
 
@@ -776,7 +776,7 @@ int Sqlda::getSqlType(CAttrSqlVar *var, int &realSqlType)
 	switch (var->sqltype & ~1)
 	{
 	case SQL_TEXT:
-		if ( var->sqllen == 1 )
+		if ( var->sqllen == 1 && var->sqlsubtype == 1 )
 			return (realSqlType = JDBC_TINYINT);
 		return (realSqlType = JDBC_CHAR);
 
@@ -833,7 +833,7 @@ const char* Sqlda::getSqlTypeName ( CAttrSqlVar *var )
 	switch (var->sqltype & ~1)
 	{
 	case SQL_TEXT:
-		if ( var->sqllen == 1 )
+		if ( var->sqllen == 1 && var->sqlsubtype == 1 )
 			return "TINYINT";
 		return "CHAR";
 
