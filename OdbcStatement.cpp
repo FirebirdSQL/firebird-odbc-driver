@@ -3427,15 +3427,15 @@ RETCODE OdbcStatement::sqlMoreResults()
 	clearErrors();
 
 	try
-		{
-		if (!statement || !statement->getMoreResults())
+	{
+		if (!statement || !statement->getMoreResults() || statement->isActiveProcedure() )
 			return SQL_NO_DATA;
-		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	return sqlSuccess();
 }

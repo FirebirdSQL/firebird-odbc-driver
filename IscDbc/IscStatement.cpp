@@ -106,7 +106,7 @@ IscStatement::IscStatement(IscConnection *connect)
 	useCount = 1;
 	numberColumns = 0;
 	statementHandle = NULL;
-	selectActive = false;
+	typeStmt = stmtNone;
 }
 
 IscStatement::~IscStatement()
@@ -145,12 +145,10 @@ void IscStatement::close()
 		resultSet->close();
 	END_FOR;
 
-	if (selectActive)
-		{
-		selectActive = false;
-		if (connection->autoCommit)
-			connection->commitAuto();
-		}
+	if (typeStmt == stmtSelect && connection->autoCommit)
+		connection->commitAuto();
+
+	typeStmt = stmtNone;
 }
 
 bool IscStatement::execute(const char * sqlString)
@@ -179,10 +177,8 @@ ResultSet* IscStatement::getResultSet()
 	if (!statementHandle)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "no active statement");
 
-    if (!selectActive)
- 		if (outputSqlda.sqlda->sqld < 1)
-//		            throw SQLEXCEPTION (RUNTIME_ERROR, "current statement doesn't return results");
-		            throw SQLEXCEPTION (NO_RECORDS_FOR_FETCH, "current statement doesn't return results");
+    if ( typeStmt != stmtSelect && outputSqlda.sqlda->sqld < 1)
+		throw SQLEXCEPTION (NO_RECORDS_FOR_FETCH, "current statement doesn't return results");
 	
 	return createResultSet();
 }
@@ -245,7 +241,7 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 	resultSets.deleteItem (resultSet);
 	if (resultSets.isEmpty())
 	{
-		selectActive = false;
+		typeStmt = stmtNone;
 		if (connection->autoCommit)
 			connection->commitAuto();
 		// Close cursors too.
@@ -288,11 +284,14 @@ void IscStatement::prepareStatement(const char * sqlString)
 			THROW_ISC_EXCEPTION (connection, statusVector);
 	}
 
-	selectActive		= false;
+	typeStmt			= stmtNone;
 	resultsCount		= 1;
 	resultsSequence		= 0;
 	int statementType	= getUpdateCounts();
 	
+	if (statementType == isc_info_sql_stmt_exec_procedure )
+		typeStmt = stmtProcedure;
+
 	numberColumns		= outputSqlda.getColumnCount();
 	XSQLVAR *var		= outputSqlda.sqlda->sqlvar;
 
@@ -300,7 +299,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 
 bool IscStatement::execute()
 {
-	if (selectActive && connection->autoCommit && resultSets.isEmpty())
+	if ( typeStmt == stmtSelect && connection->autoCommit && resultSets.isEmpty())
 		clearSelect();
 
 	// Make sure there is a transaction
@@ -320,7 +319,9 @@ bool IscStatement::execute()
 	resultsCount		= 1;
 	resultsSequence		= 0;
 	int statementType	= getUpdateCounts();
-	selectActive = false;
+
+	if ( typeStmt == stmtSelect )
+		typeStmt = stmtNone;
 
 	switch (statementType)
 	{
@@ -333,10 +334,9 @@ bool IscStatement::execute()
 		}
 		break;
 
-	//case isc_info_sql_stmt_exec_procedure:
 	case isc_info_sql_stmt_select:
 	case isc_info_sql_stmt_select_for_upd:
-		selectActive = true;
+		typeStmt = stmtSelect;
 		break;
 
 	case isc_info_sql_stmt_insert:
@@ -554,9 +554,9 @@ ISC_TIME IscStatement::getIscTime(SqlTime value)
 
 void IscStatement::clearSelect()
 {
-	if (selectActive)
+	if ( typeStmt == stmtSelect )
 	{
-		selectActive = false;
+		typeStmt = stmtNone;
 		if(connection->autoCommit)
 			connection->commitAuto();
 		freeStatementHandle();

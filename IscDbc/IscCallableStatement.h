@@ -78,6 +78,7 @@ public:
 	virtual int			release();
 	virtual void		addRef();
 	virtual bool		isActiveSelect(){ return Parent::isActiveSelect(); }
+	virtual bool		isActiveProcedure(){ return Parent::isActiveProcedure(); }
 
 	virtual void		setNull (int index, int type);
 	virtual void		setString(int index, const char * string);

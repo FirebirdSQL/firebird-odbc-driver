@@ -61,6 +61,7 @@ public:
 	virtual int			release();
 	virtual void		addRef();
 	virtual bool		isActiveSelect(){ return IscStatement::isActiveSelect(); }
+	virtual bool		isActiveProcedure(){ return IscStatement::isActiveProcedure(); }
 
 	virtual void		setNull (int index, int type);
 	virtual void		setString(int index, const char * string);

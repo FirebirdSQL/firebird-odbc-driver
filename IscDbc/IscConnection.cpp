@@ -535,7 +535,7 @@ CallableStatement* IscConnection::prepareCall(const char * sqlString)
 void IscConnection::commitAuto()
 {
 	FOR_OBJECTS (IscStatement*, statement, &statements)
-		if (statement->selectActive)
+		if ( statement->isActiveSelect() )
 		{
 			commitRetaining();
 			return;
@@ -548,7 +548,7 @@ void IscConnection::commitAuto()
 void IscConnection::rollbackAuto()
 {
 	FOR_OBJECTS (IscStatement*, statement, &statements)
-		if (statement->selectActive)
+		if ( statement->isActiveSelect() )
 		{
 			rollbackRetaining();
 			return;

@@ -279,6 +279,8 @@ void IscPreparedStatement::getInputParameters()
 
 int IscPreparedStatement::getNumParams()
 {
+	if ( isActiveProcedure() )
+		return parameters.count + outputSqlda.getColumnCount();
 	return parameters.count;
 }
 

@@ -35,6 +35,8 @@ class IscResultSet;
 class IscStatement : public Statement  
 {
 public:
+	enum TypeStatement { stmtNone, stmtSelect, stmtProcedure };
+
 	void freeStatementHandle();
 	void clearSelect();
 	//void rollbackAuto();
@@ -62,7 +64,8 @@ public:
 	virtual void close();
 	virtual int release();
 	virtual void addRef();
-	virtual bool isActiveSelect(){ return selectActive; }
+	virtual bool isActiveSelect(){ return typeStmt == stmtSelect; }
+	virtual bool isActiveProcedure(){ return typeStmt == stmtProcedure; }
 	~IscStatement();
 
 	virtual int getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
@@ -85,7 +88,7 @@ public:
 	Sqlda			inputSqlda;
 	Sqlda			outputSqlda;
 	int				summaryUpdateCount;
-	bool			selectActive;
+	TypeStatement	typeStmt;
 };
 
 #endif // !defined(_ISCSTATEMENT_H_)
