@@ -365,7 +365,7 @@ bool IscDatabaseMetaData::storesMixedCaseQuotedIdentifiers()
 
 const char* IscDatabaseMetaData::getIdentifierQuoteString()
 	{
-	return (connection->attachment->quotedIdentifiers) ? "\"" : "";
+	return (connection->attachment->quotedIdentifiers) ? "\"" : " ";
 	}
 
 const char* IscDatabaseMetaData::getSQLKeywords()

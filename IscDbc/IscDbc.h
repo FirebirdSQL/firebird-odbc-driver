@@ -82,6 +82,10 @@ typedef unsigned __int64			UQUAD;
 #define JDBC_VARCHAR 	  12
 #define JDBC_LONGVARCHAR  -1
 
+#define JDBC_SQL_DATE 	  9
+#define JDBC_SQL_TIME 	  10
+#define JDBC_SQL_TIMESTAMP	  11
+
 #define JDBC_DATE 		  91
 #define JDBC_TIME 		  92
 #define JDBC_TIMESTAMP 	  93

@@ -599,7 +599,7 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 	bool info = false;
 	int length = binding->bufferLength;
 	int type = binding->cType;
-
+/*
 #ifdef DEBUG			
 //This is an attempt to understand why datatypes get mangled during
 //Metadata lookups. Not yet ready for prime time.
@@ -615,7 +615,7 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 							metaData->isSigned (column));
 		}
 #endif
-
+*/
 	OdbcError *error = NULL;
 
 	if (type == SQL_C_DEFAULT)

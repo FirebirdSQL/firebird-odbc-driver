@@ -18,6 +18,11 @@
  *  All Rights Reserved.
  *
  *
+ *  2002-11-22  IscSqlType.cpp
+ *              Contributed by C G Alvarez
+ *				Amended DATE/TIME datatypes 
+ *				from JDBC_***** to JDBC_SQL_*****
+ *
  *  2002-10-11  IscSqlType.cpp
  *              Contributed by C G Alvarez
  *              Extensive modifications to the getType()
@@ -109,15 +114,6 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 			}
 			break;
 
-		case blr_timestamp:
-			{
-			type = JDBC_TIMESTAMP;
-			typeName = "TIMESTAMP";
-			length = MAX_TIMESTAMP_LENGTH;
-			bufferLength = length;
-			}
-			break;
-
 		case blr_varying:
 		case blr_varying2:
 			{
@@ -145,7 +141,8 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 
 		case blr_sql_date:
 			{
-			type = JDBC_DATE;
+//			type = JDBC_DATE;
+			type = JDBC_SQL_DATE;
 			typeName = "DATE";
 			length = MAX_DATE_LENGTH;
 			bufferLength = length;
@@ -154,10 +151,21 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 
 		case blr_sql_time:
 			{
-			type = JDBC_TIME;
+//			type = JDBC_TIME;
+			type = JDBC_SQL_TIME;
 			typeName = "TIME";
 			length = MAX_TIME_LENGTH;
 			bufferLength = length-2;
+			}
+			break;
+
+		case blr_timestamp:
+			{
+//			type = JDBC_TIMESTAMP;
+			type = JDBC_SQL_TIMESTAMP;
+			typeName = "TIMESTAMP";
+			length = MAX_TIMESTAMP_LENGTH;
+			bufferLength = length;
 			}
 			break;
 
