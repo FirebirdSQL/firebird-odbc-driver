@@ -65,6 +65,7 @@ static const char *fileNames [] = {
 	"OdbcJdbcSetup.dll",
 	"OdbcJdbc.dll",
 	"IscDbc.dll",
+	"OdbcJdbc.chm",
 	NULL
 	};
 
@@ -250,8 +251,12 @@ extern "C" __declspec( dllexport ) int INSTAPI DllUnregisterServer (void)
 			strcpy (path, *ptr);
 			if ( !DeleteFile (pathFile) )
 			{
-				MessageBoxError("DeleteFile", pathFile);
-				bContinue = false;
+				//Best not to throw an error when we fail to remove ourself
+				if ( !strstr(pathFile,"OdbcJdbcSetup") )
+				{
+					MessageBoxError("DeleteFile", pathFile);
+					bContinue = false;
+				}
 			}
 		}
 	}
