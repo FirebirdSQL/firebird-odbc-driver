@@ -1,20 +1,17 @@
 /*
+ *  The contents of this file are subject to the J Public License 
+ *  Version 1.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at http://www.IBPhoenix.com/JPL.html
  *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
- *     http://www.ibphoenix.com/idpl.html. 
+ *  Software distributed under the License is distributed on an 
+ *  "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express 
+ *  or implied.  See the License for the specific language governing 
+ *  rights and limitations under the License. 
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
- *     language governing rights and limitations under the License.
+ *  The Original Code was created by James A. Starkey
  *
- *
- *  The Original Code was created by James A. Starkey for IBPhoenix.
- *
- *  Copyright (c) 1999, 2000, 2001 James A. Starkey
+ *  Copyright (c) 1999, 2000 James A. Starkey
  *  All Rights Reserved.
  */
 
@@ -33,7 +30,7 @@
 #include "LinkedList.h"
 #include "Values.h"
 #include "DateTime.h"	// Added by ClassView
-#include "Time.h"
+#include "SqlTime.h"
 #include "TimeStamp.h"	// Added by ClassView
 
 class IscStatement;
@@ -84,8 +81,8 @@ public:
 	virtual int objectVersion();
 	virtual TimeStamp getTimestamp (const char * columnName);
 	virtual TimeStamp getTimestamp (int index);
-	virtual Time getTime (const char * columnName);
-	virtual Time getTime (int index);
+	virtual SqlTime getTime (const char * columnName);
+	virtual SqlTime getTime (int index);
 	virtual DateTime getDate (const char * columnName);
 	virtual DateTime getDate (int index);
 	virtual float getFloat (const char * columnName);
@@ -130,7 +127,7 @@ public:
 	virtual void		updateString (int columnIndex, const char* value);
 	virtual void		updateBytes (int columnIndex, int length, const void *bytes);
 	virtual void		updateDate (int columnIndex, DateTime value);
-	virtual void		updateTime (int columnIndex, Time value);
+	virtual void		updateTime (int columnIndex, SqlTime value);
 	virtual void		updateTimeStamp (int columnIndex, TimeStamp value);
 	virtual void		updateBlob (int columnIndex, Blob* value);
 	virtual void		updateClob (int columnIndex, Clob* value);
@@ -145,7 +142,7 @@ public:
 	virtual void		updateString (const char *columnName, const char* value);
 	virtual void		updateBytes (const char *columnName, int length, const void *bytes);
 	virtual void		updateDate (const char *columnName, DateTime value);
-	virtual void		updateTime (const char *columnName, Time value);
+	virtual void		updateTime (const char *columnName, SqlTime value);
 	virtual void		updateTimeStamp (const char *columnName, TimeStamp value);
 	virtual void		updateBlob (const char *columnName, Blob* value);
 	virtual void		updateClob (const char *columnName, Clob* value);

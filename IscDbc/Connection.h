@@ -1,20 +1,17 @@
 /*
+ *  The contents of this file are subject to the J Public License 
+ *  Version 1.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at http://www.IBPhoenix.com/JPL.html
  *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
- *     http://www.ibphoenix.com/idpl.html. 
+ *  Software distributed under the License is distributed on an 
+ *  "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express 
+ *  or implied.  See the License for the specific language governing 
+ *  rights and limitations under the License. 
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
- *     language governing rights and limitations under the License.
+ *  The Original Code was created by James A. Starkey
  *
- *
- *  The Original Code was created by James A. Starkey for IBPhoenix.
- *
- *  Copyright (c) 1999, 2000, 2001 James A. Starkey
+ *  Copyright (c) 1999, 2000 James A. Starkey
  *  All Rights Reserved.
  */
 
@@ -55,7 +52,7 @@ class DatabaseMetaData;
 class ResultSetMetaData;
 class DateTime;
 class TimeStamp;
-class Time;
+class SqlTime;
 class Clob;
 
 #define CONNECTION_VERSION	1
@@ -322,7 +319,7 @@ public:
 	virtual void		setDouble (int index, double value) = 0;
 	virtual void		setNull (int index, int type) = 0;
 	virtual void		setDate (int index, DateTime value) = 0;
-	virtual void		setTime (int index, Time value) = 0;
+	virtual void		setTime (int index, SqlTime value) = 0;
 	virtual void		setTimestamp (int index, TimeStamp value) = 0;
 	virtual void		setBlob (int index, Blob *value) = 0;
 	virtual void		setClob (int index, Clob *value) = 0;
@@ -352,8 +349,8 @@ public:
 	virtual double		getDouble (const char *columnName) = 0;
 	virtual DateTime	getDate (int id) = 0;
 	virtual DateTime	getDate (const char *columnName) = 0;
-	virtual Time		getTime (int id) = 0;
-	virtual Time		getTime (const char *columnName) = 0;
+	virtual SqlTime		getTime (int id) = 0;
+	virtual SqlTime		getTime (const char *columnName) = 0;
 	virtual TimeStamp	getTimestamp (int id) = 0;
 	virtual TimeStamp	getTimestamp (const char *columnName) = 0;
 	virtual Blob*		getBlob (int index) = 0;
@@ -398,7 +395,7 @@ public:
 	virtual void		updateString (int columnIndex, const char* value) = 0;
 	virtual void		updateBytes (int columnIndex, int length, const void *bytes) = 0;
 	virtual void		updateDate (int columnIndex, DateTime value) = 0;
-	virtual void		updateTime (int columnIndex, Time value) = 0;
+	virtual void		updateTime (int columnIndex, SqlTime value) = 0;
 	virtual void		updateTimeStamp (int columnIndex, TimeStamp value) = 0;
 	virtual void		updateBlob (int columnIndex, Blob* value) = 0;
 	virtual void		updateClob (int columnIndex, Clob* value) = 0;
@@ -413,7 +410,7 @@ public:
 	virtual void		updateString (const char *columnName, const char* value) = 0;
 	virtual void		updateBytes (const char *columnName, int length, const void *bytes) = 0;
 	virtual void		updateDate (const char *columnName, DateTime value) = 0;
-	virtual void		updateTime (const char *columnName, Time value) = 0;
+	virtual void		updateTime (const char *columnName, SqlTime value) = 0;
 	virtual void		updateTimeStamp (const char *columnName, TimeStamp value) = 0;
 	virtual void		updateBlob (const char *columnName, Blob* value) = 0;
 	virtual void		updateClob (const char *columnName, Clob* value) = 0;
@@ -488,7 +485,7 @@ public:
 	virtual double		getDouble(int parameterIndex) = 0;
 	//virtual byte[]	getBytes(int parameterIndex) = 0;
 	virtual DateTime	getDate(int parameterIndex) = 0;
-	virtual Time		getTime(int parameterIndex) = 0;
+	virtual SqlTime		getTime(int parameterIndex) = 0;
 	virtual TimeStamp	getTimestamp(int parameterIndex) = 0;
 	virtual Blob*		getBlob (int i) = 0;
 	virtual Clob*		getClob (int i) = 0;

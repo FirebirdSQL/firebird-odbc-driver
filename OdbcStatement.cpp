@@ -1,20 +1,17 @@
 /*
+ *  The contents of this file are subject to the J Public License 
+ *  Version 1.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at http://www.IBPhoenix.com/JPL.html
  *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
- *     http://www.ibphoenix.com/idpl.html. 
+ *  Software distributed under the License is distributed on an 
+ *  "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express 
+ *  or implied.  See the License for the specific language governing 
+ *  rights and limitations under the License. 
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
- *     language governing rights and limitations under the License.
+ *  The Original Code was created by James A. Starkey
  *
- *
- *  The Original Code was created by James A. Starkey for IBPhoenix.
- *
- *  Copyright (c) 1999, 2000, 2001 James A. Starkey
+ *  Copyright (c) 1999, 2000 James A. Starkey
  *  All Rights Reserved.
  */
 
@@ -31,7 +28,7 @@
 #include "SQLException.h"
 #include "OdbcDateTime.h"
 #include <time.h>
-#include "Time.h"
+#include "IscDbc/SqlTime.h"
 #include "DateTime.h"
 #include "TimeStamp.h"
 
@@ -485,11 +482,11 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 
 		case SQL_C_TIME:
 			{
-			Time time = RESULTS (getTime (column));
+			SqlTime sqlTime = RESULTS (getTime (column));
 			tagTIME_STRUCT *var = (tagTIME_STRUCT*) binding->pointer;
-			var->hour = (unsigned short) (time.timeValue / 60 * 60) % 24;
-			var->minute = (unsigned short) (time.timeValue / 60) % 60;
-			var->second = (unsigned short) (time.timeValue % 60);
+			var->hour = (unsigned short) (sqlTime.timeValue / 60 * 60) % 24;
+			var->minute = (unsigned short) (sqlTime.timeValue / 60) % 60;
+			var->second = (unsigned short) (sqlTime.timeValue % 60);
 			length = sizeof (tagTIME_STRUCT);
 			}
 			break;
@@ -1051,7 +1048,7 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 			case SQL_C_TYPE_TIME:
 				{
 				tagTIME_STRUCT *var = (tagTIME_STRUCT*) binding->pointer;
-				Time dateTime;
+				SqlTime dateTime;
 				dateTime.timeValue = var->hour * 60 * 60 + var->minute * 60 + var->second;
 				statement->setTime (parameter, dateTime);
 				}
@@ -1906,9 +1903,7 @@ RETCODE OdbcStatement::sqlSpecialColumns(unsigned short rowId, SQLCHAR * catalog
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlPutData (SQLPOINTER  value, int valueSize)
+RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, int valueSize)
 {
-    clearErrors();
 	return sqlSuccess();
-
 }

@@ -1,20 +1,17 @@
 /*
+ *  The contents of this file are subject to the J Public License 
+ *  Version 1.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at http://www.IBPhoenix.com/JPL.html
  *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
- *     http://www.ibphoenix.com/idpl.html. 
+ *  Software distributed under the License is distributed on an 
+ *  "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express 
+ *  or implied.  See the License for the specific language governing 
+ *  rights and limitations under the License. 
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
- *     language governing rights and limitations under the License.
+ *  The Original Code was created by James A. Starkey
  *
- *
- *  The Original Code was created by James A. Starkey for IBPhoenix.
- *
- *  Copyright (c) 1999, 2000, 2001 James A. Starkey
+ *  Copyright (c) 1999, 2000 James A. Starkey
  *  All Rights Reserved.
  */
 
@@ -22,7 +19,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-// copyright (c) 1999 - 2000 by James A. Starkey for IBPhoenix.
+// copyright (c) 1999 - 2000 by James A. Starkey
 
 
 #if !defined(AFX_VALUE_H__02AD6A4B_A433_11D2_AB5B_0000C01D2301__INCLUDED_)
@@ -69,12 +66,12 @@ public:
 	void	setString (const char *value, bool copy);
 
 public:	
-	void setValue (Time value);
+	void setValue (SqlTime value);
 	static void convert (QUAD number, int scale, char *string);
 	Clob* getClob();
 	void setValue (Clob *blob);
 	TimeStamp getTimestamp();
-	Time getTime();
+	SqlTime getTime();
 	void setValue (TimeStamp value);
 	char getByte (int scale = 0);
 	void divide (Value *value);
@@ -134,7 +131,7 @@ public:
 		Clob		*clob;
 		DateTime	date;
 		TimeStamp	timestamp;
-		Time		time;
+		SqlTime		time;
 		} data;
 };
 

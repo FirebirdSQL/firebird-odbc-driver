@@ -1,20 +1,17 @@
 /*
+ *  The contents of this file are subject to the J Public License 
+ *  Version 1.0 (the "License"); you may not use this file except 
+ *  in compliance with the License. You may obtain a copy of the 
+ *  License at http://www.IBPhoenix.com/JPL.html
  *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
- *     http://www.ibphoenix.com/idpl.html. 
+ *  Software distributed under the License is distributed on an 
+ *  "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express 
+ *  or implied.  See the License for the specific language governing 
+ *  rights and limitations under the License. 
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
- *     language governing rights and limitations under the License.
+ *  The Original Code was created by James A. Starkey
  *
- *
- *  The Original Code was created by James A. Starkey for IBPhoenix.
- *
- *  Copyright (c) 1999, 2000, 2001 James A. Starkey
+ *  Copyright (c) 1999, 2000 James A. Starkey
  *  All Rights Reserved.
  */
 
@@ -23,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////
 
 
-// copyright (c) 1999 - 2000 by James A. Starkey for IBPhoenix.
+// copyright (c) 1999 - 2000 by James A. Starkey
 
 #include <string.h>
 #include <stdlib.h>
@@ -845,13 +842,13 @@ void Value::setValue(TimeStamp value)
 	data.timestamp = value;
 }
 
-Time Value::getTime()
+SqlTime Value::getTime()
 {
 	switch (type)
 		{
 		case Null:
 			{
-			Time time ;
+			SqlTime time ;
 			time = 0;
 			return time;
 			}
@@ -866,7 +863,7 @@ Time Value::getTime()
 
 		case Long:
 			{
-			Time time;
+			SqlTime time;
 			time.timeValue = data.integer;
 			return time;
 			}
@@ -875,7 +872,7 @@ Time Value::getTime()
 			NOT_YET_IMPLEMENTED;
 		}
 
-	return Time::convert (data.string.string, data.string.length);
+	return SqlTime::convert (data.string.string, data.string.length);
 }
 
 void Value::setValue(Clob * blob)
@@ -937,7 +934,7 @@ void Value::convert(QUAD value, int scale, char *string)
 	*q = 0;
 }
 
-void Value::setValue(Time value)
+void Value::setValue(SqlTime value)
 {
 	clear();
 	type = TimeType;

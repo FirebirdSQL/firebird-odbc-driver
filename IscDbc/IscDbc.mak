@@ -25,15 +25,16 @@ NULL=
 NULL=nul
 !ENDIF 
 
+CPP=cl.exe
+MTL=midl.exe
+RSC=rc.exe
+
 !IF  "$(CFG)" == "IscDbc - Win32 Release"
 
 OUTDIR=.\Release
 INTDIR=.\Release
-# Begin Custom Macros
-OutDir=.\Release
-# End Custom Macros
 
-ALL : "$(OUTDIR)\IscDbc.dll"
+ALL : "..\Release\IscDbc.dll"
 
 
 CLEAN :
@@ -57,6 +58,7 @@ CLEAN :
 	-@erase "$(INTDIR)\IscProceduresResultSet.obj"
 	-@erase "$(INTDIR)\IscResultSet.obj"
 	-@erase "$(INTDIR)\IscResultSetMetaData.obj"
+	-@erase "$(INTDIR)\IscSpecialColumnsResultSet.obj"
 	-@erase "$(INTDIR)\IscSqlType.obj"
 	-@erase "$(INTDIR)\IscStatement.obj"
 	-@erase "$(INTDIR)\IscStatementMetaData.obj"
@@ -71,58 +73,25 @@ CLEAN :
 	-@erase "$(INTDIR)\SQLError.obj"
 	-@erase "$(INTDIR)\Stream.obj"
 	-@erase "$(INTDIR)\TimeStamp.obj"
+	-@erase "$(INTDIR)\TypesResultSet.obj"
 	-@erase "$(INTDIR)\Value.obj"
 	-@erase "$(INTDIR)\Values.obj"
 	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(OUTDIR)\IscDbc.dll"
 	-@erase "$(OUTDIR)\IscDbc.exp"
 	-@erase "$(OUTDIR)\IscDbc.lib"
+	-@erase "..\Release\IscDbc.dll"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fp"$(INTDIR)\IscDbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-MTL=midl.exe
+CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "c:\Program Files\Interbase\SDK\include" /I ".." /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fp"$(INTDIR)\IscDbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
-RSC=rc.exe
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\IscDbc.bsc" 
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\IscDbc.pdb" /machine:I386 /def:".\IscDbc.def" /out:"$(OUTDIR)\IscDbc.dll" /implib:"$(OUTDIR)\IscDbc.lib" 
+LINK32_FLAGS=gds32_ms.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"$(OUTDIR)\IscDbc.pdb" /machine:I386 /def:".\IscDbc.def" /out:"..\Release/IscDbc.dll" /implib:"$(OUTDIR)\IscDbc.lib" /libpath:"c:\Program Files\Interbase\SDK\lib_ms" 
 DEF_FILE= \
 	".\IscDbc.def"
 LINK32_OBJS= \
@@ -146,6 +115,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\IscProceduresResultSet.obj" \
 	"$(INTDIR)\IscResultSet.obj" \
 	"$(INTDIR)\IscResultSetMetaData.obj" \
+	"$(INTDIR)\IscSpecialColumnsResultSet.obj" \
 	"$(INTDIR)\IscSqlType.obj" \
 	"$(INTDIR)\IscStatement.obj" \
 	"$(INTDIR)\IscStatementMetaData.obj" \
@@ -160,10 +130,11 @@ LINK32_OBJS= \
 	"$(INTDIR)\SQLError.obj" \
 	"$(INTDIR)\Stream.obj" \
 	"$(INTDIR)\TimeStamp.obj" \
+	"$(INTDIR)\TypesResultSet.obj" \
 	"$(INTDIR)\Value.obj" \
 	"$(INTDIR)\Values.obj"
 
-"$(OUTDIR)\IscDbc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+"..\Release\IscDbc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
@@ -197,6 +168,7 @@ CLEAN :
 	-@erase "$(INTDIR)\IscProceduresResultSet.obj"
 	-@erase "$(INTDIR)\IscResultSet.obj"
 	-@erase "$(INTDIR)\IscResultSetMetaData.obj"
+	-@erase "$(INTDIR)\IscSpecialColumnsResultSet.obj"
 	-@erase "$(INTDIR)\IscSqlType.obj"
 	-@erase "$(INTDIR)\IscStatement.obj"
 	-@erase "$(INTDIR)\IscStatementMetaData.obj"
@@ -211,6 +183,7 @@ CLEAN :
 	-@erase "$(INTDIR)\SQLError.obj"
 	-@erase "$(INTDIR)\Stream.obj"
 	-@erase "$(INTDIR)\TimeStamp.obj"
+	-@erase "$(INTDIR)\TypesResultSet.obj"
 	-@erase "$(INTDIR)\Value.obj"
 	-@erase "$(INTDIR)\Values.obj"
 	-@erase "$(INTDIR)\vc60.idb"
@@ -224,8 +197,62 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /I "c:\Program Files\Borland\Interbase\SDK\include" /I ".." /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /Fp"$(INTDIR)\IscDbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MTd /W3 /Gm /GX /Zi /Od /I "c:\Program Files\Interbase\SDK\include" /I ".." /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /Fp"$(INTDIR)\IscDbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32 
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\IscDbc.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"$(OUTDIR)\IscDbc.pdb" /debug /machine:I386 /def:".\IscDbc.def" /out:"..\Debug/IscDbc.dll" /implib:"$(OUTDIR)\IscDbc.lib" /pdbtype:sept /libpath:"c:\Program Files\Interbase\SDK\lib_ms" 
+DEF_FILE= \
+	".\IscDbc.def"
+LINK32_OBJS= \
+	"$(INTDIR)\AsciiBlob.obj" \
+	"$(INTDIR)\Attachment.obj" \
+	"$(INTDIR)\BinaryBlob.obj" \
+	"$(INTDIR)\Blob.obj" \
+	"$(INTDIR)\DateTime.obj" \
+	"$(INTDIR)\Error.obj" \
+	"$(INTDIR)\IscBlob.obj" \
+	"$(INTDIR)\IscCallableStatement.obj" \
+	"$(INTDIR)\IscColumnsResultSet.obj" \
+	"$(INTDIR)\IscConnection.obj" \
+	"$(INTDIR)\IscCrossReferenceResultSet.obj" \
+	"$(INTDIR)\IscDatabaseMetaData.obj" \
+	"$(INTDIR)\IscIndexInfoResultSet.obj" \
+	"$(INTDIR)\IscMetaDataResultSet.obj" \
+	"$(INTDIR)\IscPreparedStatement.obj" \
+	"$(INTDIR)\IscPrimaryKeysResultSet.obj" \
+	"$(INTDIR)\IscProcedureColumnsResultSet.obj" \
+	"$(INTDIR)\IscProceduresResultSet.obj" \
+	"$(INTDIR)\IscResultSet.obj" \
+	"$(INTDIR)\IscResultSetMetaData.obj" \
+	"$(INTDIR)\IscSpecialColumnsResultSet.obj" \
+	"$(INTDIR)\IscSqlType.obj" \
+	"$(INTDIR)\IscStatement.obj" \
+	"$(INTDIR)\IscStatementMetaData.obj" \
+	"$(INTDIR)\IscTablesResultSet.obj" \
+	"$(INTDIR)\JString.obj" \
+	"$(INTDIR)\LinkedList.obj" \
+	"$(INTDIR)\Lock.obj" \
+	"$(INTDIR)\Mutex.obj" \
+	"$(INTDIR)\Parameter.obj" \
+	"$(INTDIR)\Parameters.obj" \
+	"$(INTDIR)\Sqlda.obj" \
+	"$(INTDIR)\SQLError.obj" \
+	"$(INTDIR)\Stream.obj" \
+	"$(INTDIR)\TimeStamp.obj" \
+	"$(INTDIR)\TypesResultSet.obj" \
+	"$(INTDIR)\Value.obj" \
+	"$(INTDIR)\Values.obj"
+
+"..\Debug\IscDbc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+
+!ENDIF 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -257,62 +284,6 @@ CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /I "c:\Program Files\Borland\Interbase
    $(CPP_PROJ) $< 
 <<
 
-MTL=midl.exe
-MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32 
-RSC=rc.exe
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\IscDbc.bsc" 
-BSC32_SBRS= \
-	
-LINK32=link.exe
-LINK32_FLAGS=gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"$(OUTDIR)\IscDbc.pdb" /debug /machine:I386 /def:".\IscDbc.def" /out:"..\Debug/IscDbc.dll" /implib:"$(OUTDIR)\IscDbc.lib" /pdbtype:sept /libpath:"c:\Program Files\Borland\Interbase\SDK\lib_ms" 
-DEF_FILE= \
-	".\IscDbc.def"
-LINK32_OBJS= \
-	"$(INTDIR)\AsciiBlob.obj" \
-	"$(INTDIR)\Attachment.obj" \
-	"$(INTDIR)\BinaryBlob.obj" \
-	"$(INTDIR)\Blob.obj" \
-	"$(INTDIR)\DateTime.obj" \
-	"$(INTDIR)\Error.obj" \
-	"$(INTDIR)\IscBlob.obj" \
-	"$(INTDIR)\IscCallableStatement.obj" \
-	"$(INTDIR)\IscColumnsResultSet.obj" \
-	"$(INTDIR)\IscConnection.obj" \
-	"$(INTDIR)\IscCrossReferenceResultSet.obj" \
-	"$(INTDIR)\IscDatabaseMetaData.obj" \
-	"$(INTDIR)\IscIndexInfoResultSet.obj" \
-	"$(INTDIR)\IscMetaDataResultSet.obj" \
-	"$(INTDIR)\IscPreparedStatement.obj" \
-	"$(INTDIR)\IscPrimaryKeysResultSet.obj" \
-	"$(INTDIR)\IscProcedureColumnsResultSet.obj" \
-	"$(INTDIR)\IscProceduresResultSet.obj" \
-	"$(INTDIR)\IscResultSet.obj" \
-	"$(INTDIR)\IscResultSetMetaData.obj" \
-	"$(INTDIR)\IscSqlType.obj" \
-	"$(INTDIR)\IscStatement.obj" \
-	"$(INTDIR)\IscStatementMetaData.obj" \
-	"$(INTDIR)\IscTablesResultSet.obj" \
-	"$(INTDIR)\JString.obj" \
-	"$(INTDIR)\LinkedList.obj" \
-	"$(INTDIR)\Lock.obj" \
-	"$(INTDIR)\Mutex.obj" \
-	"$(INTDIR)\Parameter.obj" \
-	"$(INTDIR)\Parameters.obj" \
-	"$(INTDIR)\Sqlda.obj" \
-	"$(INTDIR)\SQLError.obj" \
-	"$(INTDIR)\Stream.obj" \
-	"$(INTDIR)\TimeStamp.obj" \
-	"$(INTDIR)\Value.obj" \
-	"$(INTDIR)\Values.obj"
-
-"..\Debug\IscDbc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
-!ENDIF 
-
 
 !IF "$(NO_EXTERNAL_DEPS)" != "1"
 !IF EXISTS("IscDbc.dep")
@@ -339,10 +310,9 @@ SOURCE=.\BinaryBlob.cpp
 "$(INTDIR)\BinaryBlob.obj" : $(SOURCE) "$(INTDIR)"
 
 
-SOURCE=..\..\netfrastructure\Engine\Blob.cpp
+SOURCE=.\Blob.cpp
 
 "$(INTDIR)\Blob.obj" : $(SOURCE) "$(INTDIR)"
-	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 SOURCE=.\DateTime.cpp
@@ -425,6 +395,11 @@ SOURCE=.\IscResultSetMetaData.cpp
 "$(INTDIR)\IscResultSetMetaData.obj" : $(SOURCE) "$(INTDIR)"
 
 
+SOURCE=.\IscSpecialColumnsResultSet.cpp
+
+"$(INTDIR)\IscSpecialColumnsResultSet.obj" : $(SOURCE) "$(INTDIR)"
+
+
 SOURCE=.\IscSqlType.cpp
 
 "$(INTDIR)\IscSqlType.obj" : $(SOURCE) "$(INTDIR)"
@@ -493,6 +468,11 @@ SOURCE=.\Stream.cpp
 SOURCE=.\TimeStamp.cpp
 
 "$(INTDIR)\TimeStamp.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\TypesResultSet.cpp
+
+"$(INTDIR)\TypesResultSet.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\Value.cpp

@@ -25,6 +25,10 @@ NULL=
 NULL=nul
 !ENDIF 
 
+CPP=cl.exe
+MTL=midl.exe
+RSC=rc.exe
+
 !IF  "$(CFG)" == "OdbcJdbc - Win32 Release"
 
 OUTDIR=.\Release
@@ -49,9 +53,11 @@ CLEAN :"IscDbc - Win32 ReleaseCLEAN"
 CLEAN :
 !ENDIF 
 	-@erase "$(INTDIR)\DescRecord.obj"
+	-@erase "$(INTDIR)\IscDbcTime.obj"
 	-@erase "$(INTDIR)\JString.obj"
 	-@erase "$(INTDIR)\Main.obj"
 	-@erase "$(INTDIR)\OdbcConnection.obj"
+	-@erase "$(INTDIR)\OdbcDateTime.obj"
 	-@erase "$(INTDIR)\OdbcDesc.obj"
 	-@erase "$(INTDIR)\OdbcEnv.obj"
 	-@erase "$(INTDIR)\OdbcError.obj"
@@ -65,42 +71,8 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fp"$(INTDIR)\OdbcJdbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
-
-.c{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.c{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cxx{$(INTDIR)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-MTL=midl.exe
+CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "IscDbc" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /Fp"$(INTDIR)\OdbcJdbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32 
-RSC=rc.exe
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\OdbcJdbc.bsc" 
 BSC32_SBRS= \
@@ -114,11 +86,13 @@ LINK32_OBJS= \
 	"$(INTDIR)\JString.obj" \
 	"$(INTDIR)\Main.obj" \
 	"$(INTDIR)\OdbcConnection.obj" \
+	"$(INTDIR)\OdbcDateTime.obj" \
 	"$(INTDIR)\OdbcDesc.obj" \
 	"$(INTDIR)\OdbcEnv.obj" \
 	"$(INTDIR)\OdbcError.obj" \
 	"$(INTDIR)\OdbcObject.obj" \
 	"$(INTDIR)\OdbcStatement.obj" \
+	"$(INTDIR)\IscDbcTime.obj" \
 	".\IscDbc\Release\IscDbc.lib"
 
 "$(OUTDIR)\OdbcJdbc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -150,9 +124,11 @@ CLEAN :"IscDbc - Win32 DebugCLEAN"
 CLEAN :
 !ENDIF 
 	-@erase "$(INTDIR)\DescRecord.obj"
+	-@erase "$(INTDIR)\IscDbcTime.obj"
 	-@erase "$(INTDIR)\JString.obj"
 	-@erase "$(INTDIR)\Main.obj"
 	-@erase "$(INTDIR)\OdbcConnection.obj"
+	-@erase "$(INTDIR)\OdbcDateTime.obj"
 	-@erase "$(INTDIR)\OdbcDesc.obj"
 	-@erase "$(INTDIR)\OdbcEnv.obj"
 	-@erase "$(INTDIR)\OdbcError.obj"
@@ -169,8 +145,36 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP=cl.exe
-CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /I "IscDbc" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "DEBUG" /Fp"$(INTDIR)\OdbcJdbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MTd /W3 /Gm /GX /Zi /Od /I "IscDbc" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "DEBUG" /D "LOGGING" /Fp"$(INTDIR)\OdbcJdbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32 
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\OdbcJdbc.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=IscDbc.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"$(OUTDIR)\OdbcJdbc.pdb" /debug /machine:I386 /def:".\OdbcJdbc.def" /out:"$(OUTDIR)\OdbcJdbc.dll" /implib:"$(OUTDIR)\OdbcJdbc.lib" /pdbtype:sept /libpath:"IscDbc\Debug" 
+DEF_FILE= \
+	".\OdbcJdbc.def"
+LINK32_OBJS= \
+	"$(INTDIR)\DescRecord.obj" \
+	"$(INTDIR)\JString.obj" \
+	"$(INTDIR)\Main.obj" \
+	"$(INTDIR)\OdbcConnection.obj" \
+	"$(INTDIR)\OdbcDateTime.obj" \
+	"$(INTDIR)\OdbcDesc.obj" \
+	"$(INTDIR)\OdbcEnv.obj" \
+	"$(INTDIR)\OdbcError.obj" \
+	"$(INTDIR)\OdbcObject.obj" \
+	"$(INTDIR)\OdbcStatement.obj" \
+	"$(INTDIR)\IscDbcTime.obj" \
+	".\IscDbc\Debug\IscDbc.lib"
+
+"$(OUTDIR)\OdbcJdbc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+
+!ENDIF 
 
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -201,36 +205,6 @@ CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /I "IscDbc" /D "WIN32" /D "_DEBUG" /D 
    $(CPP) @<<
    $(CPP_PROJ) $< 
 <<
-
-MTL=midl.exe
-MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32 
-RSC=rc.exe
-BSC32=bscmake.exe
-BSC32_FLAGS=/nologo /o"$(OUTDIR)\OdbcJdbc.bsc" 
-BSC32_SBRS= \
-	
-LINK32=link.exe
-LINK32_FLAGS=IscDbc.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"$(OUTDIR)\OdbcJdbc.pdb" /debug /machine:I386 /def:".\OdbcJdbc.def" /out:"$(OUTDIR)\OdbcJdbc.dll" /implib:"$(OUTDIR)\OdbcJdbc.lib" /pdbtype:sept /libpath:"IscDbc\Debug" 
-DEF_FILE= \
-	".\OdbcJdbc.def"
-LINK32_OBJS= \
-	"$(INTDIR)\DescRecord.obj" \
-	"$(INTDIR)\JString.obj" \
-	"$(INTDIR)\Main.obj" \
-	"$(INTDIR)\OdbcConnection.obj" \
-	"$(INTDIR)\OdbcDesc.obj" \
-	"$(INTDIR)\OdbcEnv.obj" \
-	"$(INTDIR)\OdbcError.obj" \
-	"$(INTDIR)\OdbcObject.obj" \
-	"$(INTDIR)\OdbcStatement.obj" \
-	".\IscDbc\Debug\IscDbc.lib"
-
-"$(OUTDIR)\OdbcJdbc.dll" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
-<<
-
-!ENDIF 
 
 
 !IF "$(NO_EXTERNAL_DEPS)" != "1"
@@ -275,6 +249,12 @@ SOURCE=.\DescRecord.cpp
 "$(INTDIR)\DescRecord.obj" : $(SOURCE) "$(INTDIR)"
 
 
+SOURCE=.\IscDbc\IscDbcTime.cpp
+
+"$(INTDIR)\IscDbcTime.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
 SOURCE=.\IscDbc\JString.cpp
 
 "$(INTDIR)\JString.obj" : $(SOURCE) "$(INTDIR)"
@@ -289,6 +269,11 @@ SOURCE=.\Main.cpp
 SOURCE=.\OdbcConnection.cpp
 
 "$(INTDIR)\OdbcConnection.obj" : $(SOURCE) "$(INTDIR)"
+
+
+SOURCE=.\OdbcDateTime.cpp
+
+"$(INTDIR)\OdbcDateTime.obj" : $(SOURCE) "$(INTDIR)"
 
 
 SOURCE=.\OdbcDesc.cpp
