@@ -2855,6 +2855,7 @@ RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 				break;
 			}
 		}
+		statement->setNull(parameterNeedData, 0);
 		*binding->indicatorPtr = SQL_NULL_DATA;
 		endPutData = true;
 	}
