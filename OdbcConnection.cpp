@@ -287,9 +287,6 @@ OdbcConnection::~OdbcConnection()
 	if (connection)
 		connection->close();
 
-	if (env)
-		env->connectionClosed (this);
-
 	while (statements)
 	{
 		OdbcStatement* statement = statements;
@@ -303,6 +300,9 @@ OdbcConnection::~OdbcConnection()
 		descriptors = (OdbcDesc*)descriptor->next;
 		delete descriptor;
 	}
+
+	if (env)
+		env->connectionClosed (this);
 }
 
 OdbcObjectType OdbcConnection::getType()
