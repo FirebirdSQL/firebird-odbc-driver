@@ -147,7 +147,6 @@ public:
 	Binding				*getDataBindings;
 	bool				eof;
 	bool				cancel;
-	bool				fetched;
 	enFetchType			enFetch;
 	JString				cursorName;
 	bool				setPreCursorName;

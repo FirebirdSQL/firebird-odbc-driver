@@ -216,7 +216,6 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	getDataBindings = NULL;	//added by RM
 	metaData = NULL;
 	cancel = false;
-	fetched = false;
 	enFetch = NoneFetch;
     parameterNeedData = 0;	
 	numberGetDataBindings = 0;	//added by RM
@@ -643,7 +642,6 @@ RETCODE OdbcStatement::sqlFetch()
 	if( enFetch == NoneFetch )
 		enFetch = Fetch;
 
-	fetched = true;
 	SET_NULL_DATAOFFSET;
 
 	try
@@ -873,7 +871,6 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 	if( enFetch == NoneFetch )
 		enFetch = FetchScroll;
 
-	fetched = true;
 	SET_NULL_DATAOFFSET;
 
 	if (!resultSet)
@@ -990,7 +987,6 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 	if( enFetch == NoneFetch )
 		enFetch = ExtendedFetch;
 
-	fetched = true;
 	SET_NULL_DATAOFFSET;
 
 	try
@@ -1052,7 +1048,6 @@ RETCODE OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQLU
 			rowNumber = row - 1;
 		if( resultSet )
 			resultSet->setPosRowInSet(rowNumber);
-		fetched = true;
 		SET_NULL_DATAOFFSET;
 		break;
 	case SQL_REFRESH:
