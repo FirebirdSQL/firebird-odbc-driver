@@ -144,6 +144,7 @@ void IscPreparedStatement::setBytes(int index, int length, const void* bytes)
 	char *idx = (char*)bytes;
 	BinaryBlob *blob = new BinaryBlob();
 	getParameter (index - 1)->setValue (blob);
+	blob->release();
 	while (length >= DEFAULT_BLOB_BUFFER_LENGTH) {
 		blob->putSegment(DEFAULT_BLOB_BUFFER_LENGTH, idx, true);
 		idx += DEFAULT_BLOB_BUFFER_LENGTH;

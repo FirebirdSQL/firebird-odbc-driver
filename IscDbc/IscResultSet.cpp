@@ -277,6 +277,7 @@ Value* IscResultSet::getValue(const char * columnName)
 
 void IscResultSet::close()
 {
+	deleteBlobs();
 	reset();
 
 	if (statement)
