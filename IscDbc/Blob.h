@@ -9,8 +9,7 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
-namespace IscDbcLibrary
-{
+namespace IscDbcLibrary {
 
 enum enumTypeBlob { enTypeBlob = 1, enTypeClob, enTypeArray };
 

@@ -28,6 +28,6 @@ public:
 	Value	*values;
 };
 
-}; // end namespace IscLibrary
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_VALUES_H__02AD6A4C_A433_11D2_AB5B_0000C01D2301__INCLUDED_)
