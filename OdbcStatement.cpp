@@ -2392,22 +2392,29 @@ void OdbcStatement::bindOutputColumn(int column, DescRecord * recordApp)
 	recordApp->isPrepared = true;
 }
 
-void OdbcStatement::registerOutParameter()
+bool OdbcStatement::registerOutParameter()
 {
 	registrationOutParameter = true;
 
 	int nCountApp = applicationParamDescriptor->headCount;
-	int paramApp = implementationParamDescriptor->metaDataIn->getColumnCount() + 1;
+	int param = implementationParamDescriptor->metaDataIn->getColumnCount() + 1;
 
-	for ( int param = 1; param <= numberColumns && paramApp <= nCountApp; ++param, ++paramApp)
+	if ( nCountApp >= param + numberColumns )
 	{
-		DescRecord * recordApp = applicationParamDescriptor->getDescRecord ( paramApp );
+		postError ("07002", "COUNT field incorrect");
+		return false;
+	}
+
+	for ( ; param <= nCountApp; ++param)
+	{
+		DescRecord * recordApp = applicationParamDescriptor->getDescRecord ( param );
 		if ( !recordApp->isPrepared && recordApp->isDefined )
 			bindInputOutputParam ( param, recordApp );
 	}
 
 	if ( !implementationParamDescriptor->headCount ) // count input param
 		convert->setBindOffsetPtrFrom ( applicationParamDescriptor->headBindOffsetPtr, applicationParamDescriptor->headBindOffsetPtr );
+	return true;
 }
 
 RETCODE OdbcStatement::inputParam()
@@ -2423,6 +2430,12 @@ RETCODE OdbcStatement::inputParam()
 			{
 				implementationParamDescriptor->setDefined(true);
 				rebindParam( true );
+			}
+
+			if ( listBindIn->GetCount() < nInputParam )
+			{
+				postError ("07002", "COUNT field incorrect");
+				return SQL_ERROR;
 			}
 
 			parameterNeedData = 1;
@@ -2473,8 +2486,10 @@ RETCODE OdbcStatement::inputParam()
 
 RETCODE OdbcStatement::executeStatement()
 {
-	if ( inputParam() )
-		return SQL_NEED_DATA;
+	RETCODE ret;
+
+	if ( (ret = inputParam()) )
+		return ret;
 
 	statement->executeStatement();
 	getResultSet();
@@ -2490,13 +2505,14 @@ RETCODE OdbcStatement::executeStatement()
 
 RETCODE OdbcStatement::executeProcedure()
 {
-	if ( inputParam() )
-		return SQL_NEED_DATA;
+	RETCODE ret;
 
-	RETCODE ret = SQL_SUCCESS;
+	if ( (ret = inputParam()) )
+		return ret;
 
 	if ( !registrationOutParameter )
-		registerOutParameter();
+		if ( !registerOutParameter() )
+			return SQL_ERROR;
 
 	if ( statement->executeProcedure() )
 	{

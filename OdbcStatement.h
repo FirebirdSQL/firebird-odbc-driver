@@ -66,7 +66,7 @@ public:
 	RETCODE sqlParamData(SQLPOINTER *ptr);	// Carlos Guzmán Álvarez
 	RETCODE	sqlPutData (SQLPOINTER value, SQLINTEGER valueSize);
 	RETCODE sqlGetTypeInfo (int dataType);
-	void	registerOutParameter();
+	bool 	registerOutParameter();
 	RETCODE inputParam();
 	RETCODE executeStatement();
 	RETCODE executeProcedure();

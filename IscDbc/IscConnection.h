@@ -95,7 +95,9 @@ public:
 	//virtual void freeHTML (const char *html);
 	virtual Blob* genHTML (Properties *context, long genHeaders);
 	virtual bool isConnected();
-	InternalStatement* IscConnection::createInternalStatement();
+	InternalStatement* createInternalStatement();
+	int getCountInputParamFromProcedure ( const char* procedureName );
+	int buildParamProcedure ( char *& string, int numInputParam );
 	virtual void prepareTransaction();
 	virtual bool getTransactionPending();
 	void	*getHandleDb();

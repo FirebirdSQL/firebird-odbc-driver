@@ -48,6 +48,7 @@
 #include <string.h>
 #include "IscDbc.h"
 #include "IscConnection.h"
+#include "IscProceduresResultSet.h"
 #include "SQLError.h"
 #include "IscOdbcStatement.h"
 #include "IscCallableStatement.h"
@@ -286,6 +287,152 @@ void IscConnection::freeHTML(const char * html)
 }
 ***/
 
+int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
+{
+	char * ptSrc = string;
+
+	if ( !numInputParam )
+	{
+		while( *ptSrc && *ptSrc != '}' )
+			ptSrc++;
+
+		if ( *ptSrc == '}' )
+			memmove(string, ptSrc, strlen(ptSrc) + 1 );
+
+		return 0;
+	}
+
+	while( *ptSrc && *ptSrc != '(' )
+		ptSrc++;
+
+	if ( *ptSrc != '(' )
+		return -1;
+
+	ptSrc++; // '('
+
+	int i = 0;
+	bool nextParam = false;
+	char * ptCh;
+
+	while( *ptSrc && i < numInputParam )
+	{
+		SKIP_WHITE ( ptSrc );
+
+		if ( *ptSrc == ')' )
+			return -1;
+
+		if ( *ptSrc == ',' )
+		{
+			if ( nextParam == true )
+			{
+				nextParam = false;
+				ptSrc++;
+			}
+			else
+			{
+				i++;
+				memmove(ptSrc + 1, ptSrc, strlen(ptSrc) + 1 );
+				*ptSrc = '?';
+				ptSrc += 2;
+			}
+			continue;
+		}
+
+		char delimiter;
+
+		ptCh = ptSrc;
+
+		if ( *ptCh == '\'' )
+		{
+			delimiter = *ptCh;
+			++ptCh; // '\''
+			ptSrc = ptCh;
+			while ( *ptCh && *ptCh != ',' && *ptCh != ')' )
+			{
+				if ( *ptCh == delimiter )
+				{
+					if ( *(ptCh+1) == delimiter )
+					{
+						ptCh += 2;
+						continue;
+					}
+					break;
+				}
+				++ptCh;
+			}
+
+			if ( *ptCh && *ptCh != delimiter && *ptCh != ',' )
+			{
+				ptSrc = ptCh;
+				i++;
+				break;
+			}
+
+			if ( *ptCh == delimiter )
+			{
+				nextParam = true;
+				ptCh++;
+			}
+		}
+		else
+		{
+			delimiter = ',';
+			ptSrc = ptCh;
+			while ( *ptCh && *ptCh != delimiter && *ptCh != ')' )
+				++ptCh;
+
+			if ( *ptCh && *ptCh != delimiter )
+			{
+				ptSrc = ptCh;
+				i++;
+				break;
+			}
+
+			nextParam = false;
+		}
+
+		if( ptCh == ptSrc )
+			ptSrc++;
+		else
+		{
+			ptSrc = ptCh + 1;
+			i++;
+		}
+	}
+
+	SKIP_WHITE(ptSrc);
+
+	if ( *ptSrc == ')' )
+	{
+		if ( i < numInputParam )
+		{
+			int offset = (numInputParam - i) * 2;
+			memmove(ptSrc + offset, ptSrc, strlen(ptSrc) + 1 );
+
+			while( i++ < numInputParam )
+			{
+				*ptSrc++ = ',';
+				*ptSrc++ = '?';
+			}
+		}
+		return 0;
+	}
+	else if ( !*ptSrc )
+		return -1;
+
+	ptCh = --ptSrc;
+
+//  ASSERT ( *ptCh == ',' );
+
+	while ( *ptCh && *ptCh != ')' )
+		ptCh++;
+
+	memmove(ptSrc, ptCh, strlen(ptCh) + 1 );
+	string = ptSrc + 1;
+
+	return 0;
+}
+
 bool IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 								char * outStatementText, long bufferLength,
 								long * textLength2Ptr)
@@ -421,6 +568,26 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 				ptIn += offset; 
 				ptOut += LENSTR_EXECUTE_PROCEDURE;
 
+				char procedureName[256];
+				char * end = procedureName;
+
+				SKIP_WHITE ( ptIn );
+
+				end = procedureName;
+
+				while ( !(IS_END_TOKEN(*ptIn)) )
+					*end++ = *ptIn++;
+
+				*end = '\0';
+
+				int count = getCountInputParamFromProcedure ( procedureName );
+				int ret = buildParamProcedure ( ptIn, count );
+				
+				if ( ret == -1 ) 
+					return false;
+
+				ptOut = ptIn;
+
 				do
 				{
 					while( *ptIn && *ptIn != '}' )
@@ -499,6 +666,24 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 		*textLength2Ptr = ptOut - outStatementText;
 
 	return bModify;
+}
+
+int IscConnection::getCountInputParamFromProcedure ( const char* procedureName )
+{
+	int num = 0;
+	IscProceduresResultSet * resultSet = 
+		(IscProceduresResultSet*)getMetaData()->getProcedures ( NULL, NULL, procedureName );
+
+	if ( resultSet )
+	{
+		if ( resultSet->next() )
+			num = resultSet->sqlda->getShort(4); // NUM_INPUT_PARAM
+		else
+			num = -1; // not found
+		resultSet->release();
+	}
+
+	return num;
 }
 
 DatabaseMetaData* IscConnection::getMetaData()
