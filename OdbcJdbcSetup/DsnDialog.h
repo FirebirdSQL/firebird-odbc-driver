@@ -58,6 +58,9 @@ public:
 	BOOL OnFindFileClient();
 	void UpdateData(HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	BOOL OnInitDialog(HWND hDlg);
+#ifdef _WIN32
+	void OnTestConnection(HWND hDlg);
+#endif
 };
 
 #endif // !defined(_DSNDIALOG_H_INCLUDED_)

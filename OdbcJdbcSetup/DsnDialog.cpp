@@ -20,8 +20,8 @@
 //
 // DsnDialog.cpp : implementation file
 //
-#include <windows.h>
 #include "OdbcJdbcSetup.h"
+#include "../IscDbc/Connection.h"
 #include "DsnDialog.h"
 
 extern HINSTANCE m_hInstance;
@@ -292,6 +292,10 @@ BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam
 				m_ptDsnDialog->UpdateData(hDlg, FALSE);
 			break;
 
+        case IDC_TEST_CONNECTION:
+			m_ptDsnDialog->OnTestConnection(hDlg);
+			break;
+
         case IDOK:
 			m_ptDsnDialog->UpdateData(hDlg);
             EndDialog(hDlg, TRUE);
@@ -301,6 +305,78 @@ BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam
 	}
     return FALSE ;
 }
+
+#ifdef _WIN32
+
+typedef Connection* (*ConnectFn)();
+
+void CDsnDialog::OnTestConnection(HWND hDlg)
+{
+	Connection	* connection = NULL;
+	Properties *properties = NULL;
+	HINSTANCE libraryHandle;
+    char strHeadDlg[256];
+
+	GetWindowText(hDlg,strHeadDlg,sizeof(strHeadDlg));
+
+	try
+	{
+		UpdateData(hDlg);
+
+		libraryHandle = LoadLibrary ((const char *)m_driver);
+		if ( !libraryHandle )
+		{
+			JString text;
+			text.Format ("Unable to connect to data source: library '%s' failed to load", (const char *)m_driver);
+			MessageBox(hDlg, text, TEXT(strHeadDlg), MB_ICONERROR|MB_OK);
+			return;
+		}
+#ifdef __BORLANDC__
+		ConnectFn fn = (ConnectFn) GetProcAddress (libraryHandle, "_createConnection");
+#else
+		ConnectFn fn = (ConnectFn) GetProcAddress (libraryHandle, "createConnection");
+#endif
+		if (!fn)
+		{
+			JString text;
+			text.Format ("Unable to connect to data source %s: can't find entrypoint 'createConnection'");
+			MessageBox(hDlg, text, TEXT(strHeadDlg), MB_ICONERROR|MB_OK);
+			return;
+		}
+
+		connection = (fn)();
+
+		properties = connection->allocProperties();
+		if ( !m_name.IsEmpty() )
+			properties->putValue ("user", (const char*)m_user);
+		if ( !m_password.IsEmpty() )
+			properties->putValue ("password", (const char*)m_password);
+		if ( !m_role.IsEmpty() )
+			properties->putValue ("role", (const char*)m_role);
+		if ( !m_charset.IsEmpty() )
+			properties->putValue ("charset", (const char*)m_charset);
+		if ( !m_client.IsEmpty() )
+			properties->putValue ("client", (const char*)m_client);
+
+		connection->openDatabase ( (const char*)m_database, properties );
+		delete properties;
+		connection->close();
+		connection = NULL;
+		MessageBox(hDlg, "Connection successful!", TEXT(strHeadDlg), MB_ICONINFORMATION|MB_OK);
+	}
+	catch (SQLException& exception)
+	{
+		JString text = exception.getText();
+		if (properties)
+			delete properties;
+		if ( connection )
+			connection->close();
+		MessageBox(hDlg, text, TEXT(strHeadDlg), MB_ICONERROR|MB_OK);
+	}
+
+	FreeLibrary ( libraryHandle );
+}
+#endif
 
 void ProcessCDError(DWORD dwErrorCode, HWND hWnd)
 {
@@ -444,7 +520,7 @@ int DialogBoxDynamic()
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 28;         // NumberOfItems
+	*p++ = 29;         // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
@@ -470,7 +546,7 @@ int DialogBoxDynamic()
     TMP_EDITTEXT      ( IDC_USER,7,89,66,12,ES_UPPERCASE | ES_AUTOHSCROLL )
     TMP_EDITTEXT      ( IDC_PASSWORD,77,89,73,12,ES_PASSWORD | ES_AUTOHSCROLL )
     TMP_EDITTEXT      ( IDC_ROLE,154,89,76,12,ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_CHARSET,56,109,94,12,ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_CHARSET,56,109,114,12,ES_AUTOHSCROLL )
     TMP_BUTTONCONTROL ( "read (default write)",IDC_CHECK_READ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,148,69,10 )
     TMP_BUTTONCONTROL ( "nowait (default wait)",IDC_CHECK_NOWAIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,158,72,10 )
     TMP_DEFPUSHBUTTON ( "OK",IDOK,43,183,50,14 )
@@ -489,6 +565,7 @@ int DialogBoxDynamic()
     TMP_RADIOCONTROL  ( "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,104,148,16,10 )
     TMP_RADIOCONTROL  ( "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,104,158,16,10 )
     TMP_BUTTONCONTROL ( "quoted identifiers",IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,136,148,66,10 )
+    TMP_PUSHBUTTON    ( "Test connection",IDC_TEST_CONNECTION,175,108,55,14 )
 
 	int nRet = DialogBoxIndirect(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hwnd, (DLGPROC)wndprocDsnDialog);
 	LocalFree (LocalHandle (pdlgtemplate));

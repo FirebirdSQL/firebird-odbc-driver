@@ -1,6 +1,7 @@
 //Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
+#include "../SetupAttributes.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -66,8 +67,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,2,0,4
- PRODUCTVERSION 1,2,0,4
+ FILEVERSION FILE_VERSION
+ PRODUCTVERSION PRODUCT_VERSION
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x21L
@@ -84,15 +85,15 @@ BEGIN
         BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "IBPhoenix Inc.\0"
-            VALUE "FileDescription", "OdbcJdbcSetup DLL\0"
-            VALUE "FileVersion", "1, 2, 0, 4\0"
+            VALUE "FileDescription", "OdbcJdbcSetup\0"
+            VALUE "FileVersion", FILE_VERSION_STR
             VALUE "InternalName", "OdbcJdbcSetup\0"
             VALUE "LegalCopyright", "Copyright © 2000 - 2003\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "OdbcJdbcSetup.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "OdbcJdbcSetup Dynamic Link Library\0"
-            VALUE "ProductVersion", "1, 2, 0, 4\0"
+            VALUE "ProductVersion", PRODUCT_VERSION_STR
             VALUE "SpecialBuild", "Beta\0"
         END
     END
@@ -125,7 +126,7 @@ BEGIN
     EDITTEXT        IDC_USER,7,89,66,12,ES_UPPERCASE | ES_AUTOHSCROLL
     EDITTEXT        IDC_PASSWORD,77,89,73,12,ES_PASSWORD | ES_AUTOHSCROLL
     EDITTEXT        IDC_ROLE,154,89,76,12,ES_AUTOHSCROLL
-    EDITTEXT        IDC_CHARSET,56,109,94,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_CHARSET,56,109,114,12,ES_AUTOHSCROLL
     CONTROL         "read (default write)",IDC_CHECK_READ,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,148,69,10
     CONTROL         "nowait (default wait)",IDC_CHECK_NOWAIT,"Button",
@@ -147,8 +148,9 @@ BEGIN
                     10
     CONTROL         "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,104,158,16,
                     10
-    CONTROL         "quoted identifiers",IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,136,148,66,10
+    CONTROL         "quoted identifiers",IDC_CHECK_QUOTED,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,136,148,66,10
+    PUSHBUTTON      "Test connection",IDC_TEST_CONNECTION,175,108,55,14
 END
 
 

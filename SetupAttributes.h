@@ -21,17 +21,18 @@
 #ifndef __SETUP_ATTRIBUTES_H
 #define __SETUP_ATTRIBUTES_H
 
-/* 
- * I'm reasonably sure this string should match the one in Setup.cpp 
- * for the declaration of driverInfo. It is only used in one place - 
- *   OdbcConnection::sqlDriverConnect()
- * however, if an attempt is made to create a FileDSN the system 
- * doesn't use 'OdbcJdbc' as the driver string.		PR 2002-06-04
- */
+
+#define BUILDNUM_VERSION 	0005
+
+
+#define BUILDTYPE_VERSION 	"WI_T"
+#define MAJOR_VERSION 		1
+#define MINOR_VERSION 		2
+#define REVNO_VERSION 		0
+
 #define DRIVER_FULL_NAME	"Firebird/InterBase(r) driver"
 #define DRIVER_NAME			"OdbcJdbc"
 
-#define DRIVER_VERSION		"01.00.0000"
 #define SETUP_DSN			"DSN"
 #define SETUP_DBNAME		"Dbname"
 #define SETUP_CLIENT		"Client"
@@ -45,4 +46,19 @@
 #define SETUP_NOWAIT_TPB	"NoWait"
 #define SETUP_DIALECT		"Dialect"
 #define SETUP_QUOTED		"QuotedIdentifier"
+
+#define BUILD_STR(x)	#x
+#define BUILD_STR1(x)	x
+#define BUILD_STR2(x)   BUILD_STR(x)
+
+#define BUILD_DRIVER_VERSION(major,minor,buildnum)	major"."minor"."buildnum
+#define BUILD_VERSION(major,minor,revno,buildnum)	major,minor,revno,buildnum
+#define BUILD_VERSION_STR(major,minor,revno,buildnum) major "," minor "," revno "," buildnum
+
+#define DRIVER_VERSION		BUILD_DRIVER_VERSION( BUILD_STR2( MAJOR_VERSION ), BUILD_STR2( MINOR_VERSION ), BUILD_STR2( BUILDNUM_VERSION ) )
+#define FILE_VERSION		BUILD_VERSION( MAJOR_VERSION, MINOR_VERSION, REVNO_VERSION, BUILDNUM_VERSION )
+#define FILE_VERSION_STR	BUILDTYPE_VERSION BUILD_VERSION_STR( BUILD_STR2( MAJOR_VERSION ), BUILD_STR2( MINOR_VERSION ), BUILD_STR2(REVNO_VERSION), BUILD_STR2(BUILDNUM_VERSION) )
+#define PRODUCT_VERSION		BUILD_VERSION ( MAJOR_VERSION, MINOR_VERSION, REVNO_VERSION, BUILDNUM_VERSION )
+#define PRODUCT_VERSION_STR	BUILD_VERSION_STR ( BUILD_STR2( MAJOR_VERSION ), BUILD_STR2( MINOR_VERSION ), BUILD_STR2( REVNO_VERSION ), BUILD_STR2( BUILDNUM_VERSION ) )
+
 #endif
