@@ -43,7 +43,7 @@ public:
 	void commitRetaining();
 	int getDatabaseDialect();
 	void rollbackAuto();
-	void commitAuto();
+	virtual void commitAuto();
 	virtual CallableStatement* prepareCall (const char *sql);
 	virtual int release();
 	virtual void addRef();

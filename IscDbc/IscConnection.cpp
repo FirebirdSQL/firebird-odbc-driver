@@ -185,7 +185,8 @@ void* IscConnection::startTransaction()
 
     ISC_STATUS statusVector [20];
 
-    static char    iscTpb[5];
+    char    iscTpb[5];
+	int		count = sizeof( iscTpb );
 
     iscTpb[0] = isc_tpb_version3;
     iscTpb[1] = transactionExtInit & TRA_ro ? isc_tpb_read : isc_tpb_write;
@@ -196,11 +197,13 @@ void* IscConnection::startTransaction()
         case 0x00000008L:
             // SQL_TXN_SERIALIZABLE:
             iscTpb[3] = isc_tpb_consistency;
+			count = 4;
             break;
 
         case 0x00000004L:
             // SQL_TXN_REPEATABLE_READ:
             iscTpb[3] = isc_tpb_concurrency;
+			count = 4;
             break;
 
         case 0x00000001L:
@@ -218,7 +221,7 @@ void* IscConnection::startTransaction()
     }
 
     GDS->_start_transaction( statusVector, &transactionHandle, 1, &attachment->databaseHandle,
-            sizeof( iscTpb ), &iscTpb);
+            count, &iscTpb);
 
     if (statusVector [1])
         throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
@@ -535,10 +538,10 @@ void IscConnection::commitAuto()
 {
 	FOR_OBJECTS (IscStatement*, statement, &statements)
 		if (statement->selectActive)
-			{
+		{
 			commitRetaining();
 			return;
-			}
+		}
 	END_FOR;
 
 	commit();
@@ -567,4 +570,5 @@ void IscConnection::commitRetaining()
 			throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
 		}
 	}
+	transactionPending = false;
 }
