@@ -995,6 +995,8 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 		return SQL_NO_DATA;
 	}
 
+	resultSet->setPosRowInSet(rowNumber);
+
 	switch(orientation)
 	{
 	case SQL_FETCH_RELATIVE: 
@@ -1012,7 +1014,6 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 		break;
 
 	case SQL_FETCH_NEXT:
-		resultSet->setPosRowInSet(rowNumber);
 	case SQL_FETCH_LAST:
 		resultSet->afterLast();
 		break;
