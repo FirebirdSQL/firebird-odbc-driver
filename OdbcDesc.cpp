@@ -1350,9 +1350,10 @@ int OdbcDesc::getConciseType(int type)
 		case JDBC_BIGINT:
 			return SQL_C_SBIGINT;
 
-		case JDBC_FLOAT:
+		case JDBC_REAL:
 			return SQL_C_FLOAT;
 
+		case JDBC_FLOAT:
 		case JDBC_DOUBLE:
 			return SQL_C_DOUBLE;
 
@@ -1404,9 +1405,10 @@ int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType)
 	case JDBC_BIGINT:
 		cType = SQL_C_SBIGINT;
 		break;
-	case JDBC_FLOAT:
+	case JDBC_REAL:
 		cType = SQL_C_FLOAT;
 		break;
+	case JDBC_FLOAT:
 	case JDBC_DOUBLE:
 		cType = SQL_C_DOUBLE;
 		break;

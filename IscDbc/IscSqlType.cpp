@@ -98,7 +98,7 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 
 		case blr_float:
 			{
-			type = JDBC_FLOAT;
+			type = JDBC_REAL;
 			typeName = "REAL";
 			length = MAX_FLOAT_LENGTH;
 			bufferLength = sizeof(float);
