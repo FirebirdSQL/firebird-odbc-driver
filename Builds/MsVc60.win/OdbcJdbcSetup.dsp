@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 user32.lib comdlg32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE
+# ADD LINK32 user32.lib comdlg32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "OdbcJdbcSetup - Win32 Debug"
@@ -80,7 +80,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 user32.lib comdlg32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE
+# ADD LINK32 user32.lib comdlg32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
