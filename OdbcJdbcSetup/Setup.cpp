@@ -36,6 +36,13 @@ extern HINSTANCE m_hInstance;
 
 namespace OdbcJdbcSetupLibrary {
 
+#ifdef _WIN32
+#define strncasecmp		strnicmp
+#endif
+
+#define ISLOWER(c)			((c) >= 'a' && (c) <= 'z')
+#define UPPER(c)			((ISLOWER (c)) ? (c) - 'a' + 'A' : (c))
+
 const char *driverInfo =
 	DRIVER_FULL_NAME"\0"
 	"Driver=OdbcJdbc.dll\0"
@@ -85,6 +92,12 @@ BOOL INSTAPI ConfigDSN(HWND		hWnd,
 			   LPCSTR	lpszDriver,
 			   LPCSTR	lpszAttributes)
 {
+	if ( !lpszDriver || strncmp (lpszDriver, DRIVER_FULL_NAME, strlen(DRIVER_FULL_NAME)) )
+	{
+		SQLPostInstallerError ( ODBC_ERROR_INVALID_NAME,"Invalid driver name");
+		return false;
+	}
+
 	Setup setup (hWnd, lpszDriver, lpszAttributes);
 	switch (fRequest)
 	{
@@ -358,10 +371,8 @@ Setup::Setup(HWND windowHandle, const char *drvr, const char *attr)
 
 	if (attr)
 	{
-		//MessageBox (hWnd, attr, "Attributes", 0);
 		attributes = attr;
 		dsn = getAttribute (SETUP_DSN);
-		readAttributes();
 	}
 }
 
@@ -372,17 +383,80 @@ Setup::~Setup()
 
 void Setup::configDsn()
 {
+	if ( !dsn.IsEmpty() )
+		readAttributes();
 	configureDialog();
 }
 
 void Setup::addDsn()
 {
-	configureDialog();
+	dbName = getAttribute (SETUP_DBNAME);
+	if ( dbName.IsEmpty() )
+		dbName = getAttribute (KEY_DSN_DATABASE);
+
+	client = getAttribute (SETUP_CLIENT);
+
+	user = getAttribute (SETUP_USER);
+	if ( user.IsEmpty() )
+		user = getAttribute (KEY_DSN_UID);
+
+	password = getAttribute (SETUP_PASSWORD);
+	if ( password.IsEmpty() )
+		password = getAttribute (KEY_DSN_PWD);
+
+	jdbcDriver = getAttribute (SETUP_JDBC_DRIVER);
+	if ( jdbcDriver.IsEmpty() )
+		jdbcDriver = getAttribute (KEY_DSN_JDBC_DRIVER);
+	if ( jdbcDriver.IsEmpty() )
+		jdbcDriver = drivers [0];
+
+	role = getAttribute (SETUP_ROLE);
+	
+	charset = getAttribute (SETUP_CHARSET);
+	if ( charset.IsEmpty() )
+		charset = getAttribute (KEY_DSN_CHARSET);
+
+	readonlyTpb = getAttribute (SETUP_READONLY_TPB);
+	nowaitTpb = getAttribute (SETUP_NOWAIT_TPB);
+	dialect = getAttribute (SETUP_DIALECT);
+
+	quoted = getAttribute (SETUP_QUOTED);
+	if ( quoted.IsEmpty() )
+		quoted = getAttribute (KEY_DSN_QUOTED);
+
+	char chCheck = UPPER( *(const char*)readonlyTpb );
+	
+	if ( chCheck != 'Y' && chCheck != 'N' )
+		readonlyTpb = "N";
+
+	chCheck = UPPER( *(const char*)nowaitTpb );
+	
+	if ( chCheck != 'Y' && chCheck != 'N' )
+		nowaitTpb = "N";
+
+	chCheck = *(const char*)dialect;
+	
+	if ( chCheck != '1' && chCheck != '3' )
+		dialect = "3";
+
+	chCheck = UPPER( *(const char*)quoted );
+	
+	if ( chCheck != 'Y' && chCheck != 'N' )
+		quoted = "Y";
+
+	if ( hWnd || dsn.IsEmpty() )
+		configureDialog();
+	else
+	{
+		SQLWriteDSNToIni(dsn, driver);
+		writeAttributes();
+	}
 }
 
 void Setup::removeDsn()
 {
-	SQLRemoveDSNFromIni (dsn);
+	if ( !dsn.IsEmpty() )
+		SQLRemoveDSNFromIni (dsn);
 }
 
 JString Setup::getAttribute(const char * attribute)
@@ -392,16 +466,25 @@ JString Setup::getAttribute(const char * attribute)
 
 	for (p = attributes; *p; ++p)
 	{
-		if (*p == *attribute && !strncmp (p, attribute, count) && p [count] == '=')
+		if (*p == *attribute && !strncasecmp (p, attribute, count) )
 		{
-			const char *q;
-			p += count + 1;
-			for (q = p; *q && *q != ';'; ++q)
-				;
-			return JString (p, q - p);
+			p += count;
+			while (*p && (*p == ' ' || *p == '\t') )
+				++p;
+			if ( *p == '=' )
+			{
+				++p;
+				while (*p && (*p == ' ' || *p == '\t') )
+					++p;
+
+				const char *q;
+				for (q = p; *q && *q != ';' && *q != '\n'; ++q)
+					;
+				return JString (p, q - p);
+			}
 		}
-		while (*p && *p++ != ';')
-			;
+		while (*p && *p != ';' && *p != '\n' )
+			++p;
 	}
 
 	return JString();
