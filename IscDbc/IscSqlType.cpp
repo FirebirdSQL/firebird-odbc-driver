@@ -73,6 +73,8 @@ void IscSqlType::buildType ()
 			typeName = "SMALLINT";
 			length = MAX_SMALLINT_LENGTH;
 			bufferLength = sizeof(short);
+			if ( !precision ) // for calculate fields
+				precision = length;
 			}
 			break;
 
@@ -82,6 +84,8 @@ void IscSqlType::buildType ()
 			typeName = "INTEGER";
 			length = MAX_INT_LENGTH;
 			bufferLength = sizeof(long);
+			if ( !precision ) // for calculate fields
+				precision = length;
 			}
 			break;
 
@@ -92,6 +96,8 @@ void IscSqlType::buildType ()
 			typeName = "BIGINT";
 			length = MAX_QUAD_LENGTH;
 			bufferLength = MAX_QUAD_LENGTH + 2;
+			if ( !precision ) // for calculate fields
+				precision = length;
 			}
 			break;
 
@@ -203,7 +209,7 @@ void IscSqlType::buildType ()
 			typeName = "DECIMAL";
 			length = precision;
 		}
-		else if (subType == 1)
+		else if (subType == 1 || (!subType && scale))
 		{
 			switch( type )
 			{
