@@ -51,7 +51,7 @@ public:
 
 	CFbDll		*GDS;
 	void		*databaseHandle;
-	void		*transactionHandle;
+	void		*transactionHandle; // for two phase
 	JString		databaseName;
 	JString		userName;
 	JString		userAccess;

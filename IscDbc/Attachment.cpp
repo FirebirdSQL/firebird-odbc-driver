@@ -60,6 +60,7 @@ Attachment::Attachment()
 	useCount = 1;
 	GDS = NULL;
 	databaseHandle = NULL;
+	transactionHandle = NULL;
 	admin = true;
 	isRoles = false;
 	userType = 8;
@@ -196,7 +197,6 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 				break;
 			
 			case isc_info_version:
-//				serverVersion = JString (p + 2, p [1]);
 				{
 					int level = 0;
 					int major = 0, minor = 0, version = 0;
@@ -207,7 +207,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 					{
 						if ( *beg >= '0' && *beg <= '9' )
 						{
-							switch ( level++ )
+							switch ( ++level )
 							{
 							case 1:
 								major = atoi(beg);
@@ -217,13 +217,12 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 								minor = atoi(beg);
 								while( *++beg != '.' );
 								break;
-							case 3:
-								while( *++beg != '.' );
-								break;
-							case 4:
+							default: // Firebird (##.##.##.####) and Yaffil(##.##.####)
 								version = atoi(beg);
 								while( *beg >= '0' && *beg <= '9' || *beg == ' ')
 									beg++;
+								if ( *beg == '.' )
+									break;
 								if ( beg < end )
 									databaseProductName = JString( beg, end - beg );
 								beg = end;
