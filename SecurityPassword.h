@@ -121,15 +121,39 @@ public:
 		memcpy ( pt, password, len );
 		make ( pt, len );
 		pt[len]=0;
+
+		// convert to hex string
+		len += sizeof(securityKey);
+		char *address = passkey + (len << 1);
+		char *end = (char *)passkey + len - 1;
+		*address-- = 0;
+		while( len-- )
+			*address-- = (((*end >> 4) & 0x0F) + 'A'),
+			*address-- = ((*end-- & 0x0F) + 'A');
 	}
 
 	void decode ( char *passkey, char *password )
 	{
+		if ( !*passkey )
+			return;
+
+		int lenkey = strlen ( passkey );
+		if ( lenkey % 2 )
+			return;
+
+		lenkey /=2;
+
+		int len = lenkey - sizeof(securityKey);
+		char *beg = passkey;
+		char *next = passkey;
+
+		while( lenkey-- )
+			*beg = *next++ - 'A',*beg++ += (*next++ - 'A') << 4;
+
 		char *pt = passkey;
 		memcpy ( securityKey, passkey, sizeof(securityKey) );
 		pt += sizeof(securityKey);
 		initShifts();
-		int len = strlen(pt);
 		make ( pt, len );
 		memcpy ( password, pt, len );
 		password[len]=0;
