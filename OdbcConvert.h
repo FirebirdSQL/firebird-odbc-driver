@@ -53,6 +53,7 @@ private:
 	void decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMALLINT &minute, SQLUSMALLINT &second);
 	void convertFloatToString(double value, char *string, int size, int *length, int precision = 15, char POINT_DIV = '.');
 	void convertStringDataToServerStringData(char * string, int &len);
+	void setHeadSqlVar ( DescRecord * to );
 
 public:
 

@@ -2464,4 +2464,81 @@ void OdbcConvert::convertStringDataToServerStringData(char * string, int &len)
 	// validate end string check Server
 }
 
+void OdbcConvert::setHeadSqlVar ( DescRecord * to )
+{
+	switch ( to->conciseType )
+	{
+	case SQL_C_CHAR:
+		if ( to->isIndicatorSqlDa && to->dataBlobPtr )
+		{
+			if ( to->dataBlobPtr->isArray() )
+				to->headSqlVarPtr->setTypeArray();
+			else
+				to->headSqlVarPtr->setTypeBlob();
+		}
+		else
+			to->headSqlVarPtr->setTypeText();
+		break;
+
+	case SQL_C_TINYINT:
+	case SQL_C_STINYINT:
+	case SQL_C_UTINYINT:
+		to->headSqlVarPtr->setTypeText();
+		to->headSqlVarPtr->setSqlLen( 1 );
+		break;
+
+	case SQL_C_SHORT:
+	case SQL_C_SSHORT:
+	case SQL_C_USHORT:
+		to->headSqlVarPtr->setTypeShort();
+		to->headSqlVarPtr->setSqlScale ( -to->scale );
+		break;
+
+	case SQL_C_LONG:
+	case SQL_C_SLONG:
+	case SQL_C_ULONG:
+		to->headSqlVarPtr->setTypeLong();
+		to->headSqlVarPtr->setSqlScale ( -to->scale );
+		break;
+
+	case SQL_C_FLOAT:
+		to->headSqlVarPtr->setTypeFloat();
+		break;
+
+	case SQL_C_DOUBLE:
+		to->headSqlVarPtr->setTypeDouble();
+		to->headSqlVarPtr->setSqlScale ( -to->scale );
+		break;
+
+	case SQL_C_SBIGINT:
+	case SQL_C_UBIGINT:
+		to->headSqlVarPtr->setTypeInt64();
+		to->headSqlVarPtr->setSqlScale ( -to->scale );
+		break;
+
+	case SQL_C_BIT:
+	case SQL_C_BINARY:
+		break;
+
+	case SQL_C_DATE:
+	case SQL_TYPE_DATE:
+		to->headSqlVarPtr->setTypeDate();
+		break;
+
+	case SQL_C_TIME:
+	case SQL_TYPE_TIME:
+		to->headSqlVarPtr->setTypeTime();
+		break;
+
+	case SQL_C_TIMESTAMP:
+	case SQL_TYPE_TIMESTAMP:
+		to->headSqlVarPtr->setTypeTimestamp();
+		break;
+
+	case SQL_C_NUMERIC:
+	case SQL_DECIMAL:
+		break;
+	}
+}
+
 }; // end namespace OdbcJdbcLibrary
