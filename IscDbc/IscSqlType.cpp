@@ -35,7 +35,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <windows.h>
+//#include <windows.h>
 #include "IscDbc.h"
 #include "IscSqlType.h"
 

@@ -9,8 +9,8 @@ main (int argc, char **argv)
 		{
 		connection = createConnection();
 		Properties *properties = connection->allocProperties();
-		properties->putValue ("user", "jas");
-		properties->putValue ("password", "in-your-dreams");
+                properties->putValue ("user", "sysdba");
+                properties->putValue ("password", "masterkey");
 		connection->openDatabase ("employee.gdb", properties);
 		delete properties;
 

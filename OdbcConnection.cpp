@@ -65,6 +65,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
+#include <string.h>
 #include "OdbcJdbc.h"
 #include "OdbcConnection.h"
 #include "OdbcEnv.h"

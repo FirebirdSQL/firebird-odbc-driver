@@ -245,7 +245,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 	char	stringTemp [BUFF_LEN];
 
 	JString stringVal;
-	
+	TimeStamp timestamp;	
 	type = *stuff++;
 
 	switch (type)
@@ -291,7 +291,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 			break;
 			
 		case (blr_timestamp):
-			TimeStamp timestamp;
+//			TimeStamp timestamp;
 			timestamp.date = (long) stuff;
 			timestamp.nanos = (long) &stuff[4];
 			timestamp.getTimeString (BUFF_LEN, stringTemp);

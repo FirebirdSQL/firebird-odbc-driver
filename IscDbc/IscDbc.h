@@ -52,6 +52,7 @@
 
 #define __int64			long long
 #define _stdcall
+#define OutputDebugString(string)	fputs (string, stdout)
 #endif
 
 typedef unsigned char	UCHAR;
