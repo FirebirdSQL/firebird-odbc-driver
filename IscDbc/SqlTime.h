@@ -25,6 +25,8 @@
 #if !defined(_TIME_H_INCLUDED_)
 #define _TIME_H_INCLUDED_
 
+namespace IscDbcLibrary {
+
 class SqlTime
 {
 public:
@@ -35,5 +37,7 @@ public:
 	unsigned long	timeValue;
 
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_TIME_H_INCLUDED_)

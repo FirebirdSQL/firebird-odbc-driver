@@ -25,6 +25,8 @@
 #if !defined(_SQLDA_H_INCLUDED_)
 #define _SQLDA_H_INCLUDED_
 
+namespace IscDbcLibrary {
+
 #define DEFAULT_SQLDA_COUNT		20
 
 struct TempVector {
@@ -103,5 +105,7 @@ public:
 	TempVector	*temps;
 	bool		needsbuffer;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_SQLDA_H_INCLUDED_)

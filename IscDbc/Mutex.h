@@ -29,6 +29,8 @@
 #include <pthread.h>
 #endif
 
+namespace classMutex {
+
 class Mutex  
 {
 public:
@@ -46,5 +48,7 @@ public:
 #endif
 
 };
+
+}; // end namespace classMutex
 
 #endif // !defined(_MUTEX_H_INCLUDED_)

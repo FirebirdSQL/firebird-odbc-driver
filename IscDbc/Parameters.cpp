@@ -35,6 +35,7 @@
 static char THIS_FILE[]=__FILE__;
 #endif
 
+namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -115,3 +116,5 @@ void Parameters::clear()
 		delete parameter;
 		}
 }
+
+}; // end namespace IscDbcLibrary

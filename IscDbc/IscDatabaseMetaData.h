@@ -28,6 +28,8 @@
 #include "Connection.h"
 #include "LinkedList.h"
 
+namespace IscDbcLibrary {
+
 class IscConnection;
 
 
@@ -226,5 +228,7 @@ public:
 	IscConnection	*connection;
 	LinkedList		resultSets;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCDATABASEMETADATA_H_)

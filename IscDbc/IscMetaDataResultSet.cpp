@@ -39,6 +39,8 @@
 #include "SQLError.h"
 #include "IscConnection.h"
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -108,3 +110,5 @@ JString IscMetaDataResultSet::expandPattern(const char *prefix, const char * str
 
 	return temp;
 }
+
+}; // end namespace IscDbcLibrary

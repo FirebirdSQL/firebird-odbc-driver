@@ -28,6 +28,8 @@
 #include "IscStatementMetaData.h"
 #include "Sqlda.h"
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -198,3 +200,5 @@ int IscStatementMetaData::objectVersion()
 {
 	return STATEMENTMETADATA_VERSION;
 }
+
+}; // end namespace IscDbcLibrary

@@ -29,6 +29,8 @@
 #include "BinaryBlob.h"
 #include "Connection.h"
 
+namespace IscDbcLibrary {
+
 class IscConnection;
 class IscStatement;
 class Value;
@@ -78,5 +80,7 @@ public:
 	int				arrSizeElement;
 	int				arrTypeElement;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_IscArray_H_)

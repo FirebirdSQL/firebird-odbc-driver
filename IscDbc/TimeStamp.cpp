@@ -36,10 +36,12 @@
 #else
 #include <stdio.h>
 #endif
-#include "IscDbc.h"
-#include "TimeStamp.h"
 #include <time.h>
 #include <string.h>
+#include "IscDbc.h"
+#include "TimeStamp.h"
+
+namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -80,3 +82,5 @@ int TimeStamp::decodeTime (long nanos, tm * times)
 
 	return true;
 }
+
+}; // end namespace IscDbcLibrary

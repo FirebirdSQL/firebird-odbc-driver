@@ -27,6 +27,8 @@
 
 #include "IscMetaDataResultSet.h"
 
+namespace IscDbcLibrary {
+
 class IscProcedureColumnsResultSet : public IscMetaDataResultSet  
 {
 public:
@@ -37,5 +39,7 @@ public:
 							  const char *columnNamePattern);
 	IscProcedureColumnsResultSet(IscDatabaseMetaData *metaData);
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCPROCEDURECOLUMNSRESULTSET_H_)

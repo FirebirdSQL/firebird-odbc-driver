@@ -25,6 +25,8 @@
 #if !defined(_STREAM_H_INCLUDED_)
 #define _STREAM_H_INCLUDED_
 
+namespace IscDbcLibrary {
+
 struct Segment
 {
 	int		length;
@@ -79,5 +81,7 @@ public:
 	Segment	*segments;
 	Segment *current;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_STREAM_H_INCLUDED_)

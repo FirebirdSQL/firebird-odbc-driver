@@ -28,6 +28,8 @@
 #include "BinaryBlob.h"
 #include "Connection.h"
 
+namespace IscDbcLibrary {
+
 class IscStatement;
 class IscConnection;
 
@@ -53,5 +55,7 @@ public:
 	ISC_QUAD		blobId;
 	bool			fetched;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCBLOB_H_)

@@ -46,11 +46,11 @@
 static char THIS_FILE[]=__FILE__;
 #endif
 
+namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
 
 BinaryBlob::BinaryBlob()
 {
@@ -226,3 +226,5 @@ void BinaryBlob::bind(Connection *connect, char * sqldata)
 {
 
 }
+
+}; // end namespace IscDbcLibrary

@@ -44,6 +44,8 @@
 #define TYPE_NAME  4
 
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -187,3 +189,5 @@ void IscSpecialColumnsResultSet::adjustResults (IscSqlType sqlType)
 		sqlda->updateShort (7, -ISC_TIME_SECONDS_PRECISION_SCALE);
 	}	
 }
+
+}; // end namespace IscDbcLibrary

@@ -26,6 +26,8 @@
 #if !defined(_PARAMETER_H_)
 #define _PARAMETER_H_
 
+namespace IscDbcLibrary {
+
 class Parameter
 {
 public:
@@ -38,5 +40,7 @@ public:
 	char		*value;
 	Parameter	*next;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_PARAMETER_H_)

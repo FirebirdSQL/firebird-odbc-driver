@@ -42,6 +42,8 @@
 static char THIS_FILE[]=__FILE__;
 #endif
 
+namespace classJString {
+
 
 JString::JString ()
 {
@@ -542,3 +544,5 @@ void JString::releaseBuffer()
 {
 
 }
+
+}; // end namespace classJString

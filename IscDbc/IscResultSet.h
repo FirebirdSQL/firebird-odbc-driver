@@ -33,6 +33,8 @@
 #include "TimeStamp.h"	// Added by ClassView
 #include "Sqlda.h"
 
+namespace IscDbcLibrary {
+
 class IscStatement;
 class IscDatabaseMetaData;
 
@@ -203,5 +205,7 @@ public:
 	long			sqldataOffsetPtr;
 	enStatysActivePositionRow statysPositionRow;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCRESULTSET_H_)

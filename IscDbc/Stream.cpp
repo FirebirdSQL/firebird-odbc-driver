@@ -37,6 +37,8 @@
 static char THIS_FILE[]=__FILE__;
 #endif
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -511,3 +513,5 @@ void Stream::putSegment(Blob * blob)
 	for (int n, offset = 0; n = blob->getSegmentLength (offset); offset += n)
 		putSegment (n, (const char*) blob->getSegment (offset), true);
 }
+
+}; // end namespace IscDbcLibrary

@@ -38,6 +38,8 @@
 #include "IscDbc.h"
 #include "IscSqlType.h"
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -199,3 +201,5 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 		}
 	}
 }
+
+}; // end namespace IscDbcLibrary

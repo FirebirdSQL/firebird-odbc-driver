@@ -34,6 +34,8 @@
 static char THIS_FILE[]=__FILE__;
 #endif
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -56,3 +58,5 @@ Parameter::~Parameter()
 	delete [] name;
 	delete [] value;
 }
+
+}; // end namespace IscDbcLibrary

@@ -34,6 +34,10 @@
 static char THIS_FILE[]=__FILE__;
 #endif
 
+namespace IscDbcLibrary {
+
+using namespace classJString;
+
 
 SQLError::SQLError (SqlCode code, const char *txt, ...)
 {
@@ -192,3 +196,5 @@ int SQLError::release()
 
 	return useCount;
 }
+
+}; // end namespace IscDbcLibrary

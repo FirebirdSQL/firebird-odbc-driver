@@ -15,6 +15,7 @@
 #define DllExport
 #endif
 
+namespace IscDbcLibrary {
 
 enum SqlCode {
     SYNTAX_ERROR = -1,
@@ -43,5 +44,7 @@ public:
 	virtual const char	*getText() = 0;
 	virtual const char	*getTrace() = 0;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif

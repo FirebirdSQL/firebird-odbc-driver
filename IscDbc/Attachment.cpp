@@ -48,6 +48,8 @@ static char databaseInfoItems [] = {
 	};
 
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -303,3 +305,5 @@ JString Attachment::existsAccess(const char *prefix, const char * relobject, int
 
 	return temp;
 }
+
+}; // end namespace IscDbcLibrary

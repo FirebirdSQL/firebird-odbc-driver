@@ -22,6 +22,8 @@
 #ifndef __JString_H
 #define __JString_H
 
+namespace classJString {
+
 #define ALLOC_FUDGE		100
 
 
@@ -75,6 +77,6 @@ protected:
 	char	*string;
 };
 
+}; // end namespace classJString
 
 #endif
-

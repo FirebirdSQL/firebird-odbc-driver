@@ -33,6 +33,8 @@
 #include "Blob.h"
 #include "Stream.h"
 
+namespace IscDbcLibrary {
+
 class Database;
 
 class BinaryBlob : public Blob, public Stream 
@@ -51,7 +53,7 @@ public:
 	void getBytes (long pos, long length, void *address);
 	BinaryBlob (int minSegmentSize);
 	BinaryBlob();
-	~BinaryBlob();
+	virtual ~BinaryBlob();
 	virtual int release();
 	virtual void addRef();
 	void populate();
@@ -68,5 +70,7 @@ public:
 	long		recordNumber;
 	bool		populated;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_BINARYBLOB_H_)

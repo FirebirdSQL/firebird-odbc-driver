@@ -8,8 +8,9 @@
 #if !defined(_VALUES_H_INCLUDED_)
 #define _VALUES_H_INCLUDED_
 
-class Value;
+namespace IscDbcLibrary {
 
+class Value;
 
 class Values  
 {
@@ -22,5 +23,7 @@ public:
 	int		count;
 	Value	*values;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_VALUES_H_INCLUDED_)

@@ -28,6 +28,8 @@
 #include "IscResultSet.h"
 #include "JString.h"	// Added by ClassView
 
+namespace IscDbcLibrary {
+
 class IscDatabaseMetaData;
 class IscPreparedStatement;
 class IscResultSet;
@@ -45,5 +47,7 @@ public:
 	IscDatabaseMetaData		*metaData;
 	IscPreparedStatement	*statement;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCMETADATARESULTSET_H_)

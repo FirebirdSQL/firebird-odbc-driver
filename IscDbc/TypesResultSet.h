@@ -29,6 +29,8 @@
 #include "IscResultSet.h"
 #include "Sqlda.h"
 
+namespace IscDbcLibrary {
+
 class TypesResultSet : public IscResultSet
 {
 public: // StatementMetaData
@@ -45,5 +47,7 @@ public:
 	Sqlda		outputSqlda;
 	short		*indicators;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_TYPESRESULTSET_H_)

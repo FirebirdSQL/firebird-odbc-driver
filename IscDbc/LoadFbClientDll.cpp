@@ -3,6 +3,8 @@
 #include <dlfcn.h>
 #endif
 
+namespace IscDbcLibrary {
+
 CFbDll::CFbDll() 
 { 
 	_Handle = NULL;
@@ -105,3 +107,5 @@ void CFbDll::Release(void)
 
 	_Handle = NULL;
 }
+
+}; // end namespace IscDbcLibrary

@@ -27,6 +27,8 @@
 
 #include "IscMetaDataResultSet.h"
 
+namespace IscDbcLibrary {
+
 class IscIndexInfoResultSet : public IscMetaDataResultSet  
 {
 public:
@@ -34,5 +36,7 @@ public:
 	virtual bool next();
 	IscIndexInfoResultSet(IscDatabaseMetaData *metaData);
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCINDEXINFORESULTSET_H_)

@@ -29,6 +29,10 @@
 #include "LinkedList.h"
 #include "JString.h"	// Added by ClassView
 
+namespace IscDbcLibrary {
+
+using namespace classJString;
+
 class IscStatement;
 class IscDatabaseMetaData;
 class Attachment;
@@ -93,5 +97,7 @@ public:
 	bool			transactionPending;
 	int				useCount;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCCONNECTION_H_)

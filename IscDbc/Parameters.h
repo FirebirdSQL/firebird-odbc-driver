@@ -30,6 +30,8 @@
 
 #include "Properties.h"
 
+namespace IscDbcLibrary {
+
 class Parameter;
 
 class Parameters : public Properties
@@ -49,5 +51,7 @@ public:
 	Parameter	*parameters;
 	int			count;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_PARAMETERS_H_)

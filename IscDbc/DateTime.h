@@ -26,6 +26,8 @@
 #if !defined(_DATETIME_H_)
 #define _DATETIME_H_
 
+namespace IscDbcLibrary {
+
 class DateTime  
 {
 public:
@@ -45,5 +47,6 @@ public:
 	signed long date;
 };
 
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_DATETIME_H_)

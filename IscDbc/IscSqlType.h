@@ -25,6 +25,8 @@
 #if !defined(_ISCSQLTYPE_H_)
 #define _ISCSQLTYPE_H_
 
+namespace IscDbcLibrary {
+
 class IscSqlType  
 {
 public:
@@ -38,5 +40,7 @@ public:
 	int		bufferLength;
 	int		precision;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCSQLTYPE_H_)

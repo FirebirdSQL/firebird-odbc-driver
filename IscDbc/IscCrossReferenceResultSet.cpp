@@ -36,6 +36,8 @@
 #define UPD_RULE		10
 #define DEL_RULE		11
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -154,3 +156,5 @@ bool IscCrossReferenceResultSet::stringEqual(const char * p1, const char * p2)
 
 	return true;
 }
+
+}; // end namespace IscDbcLibrary

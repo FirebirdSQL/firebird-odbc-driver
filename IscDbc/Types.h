@@ -20,6 +20,8 @@
 #ifndef __TYPE_H
 #define __TYPE_H
 
+namespace IscDbcLibrary {
+
 enum Type {
 	Null,
 	String,			// generic, null terminated
@@ -75,5 +77,7 @@ struct FieldType {
 	int scale;
 	};
 
+
+}; // end namespace IscDbcLibrary
 
 #endif

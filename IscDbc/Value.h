@@ -35,6 +35,8 @@
 #include "Blob.h"
 #include "DateTime.h"	// Added by ClassView
 
+namespace IscDbcLibrary {
+
 class Blob;
 
 class Value  
@@ -125,5 +127,7 @@ public:
 		SqlTime		time;
 		} data;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_VALUE_H_INCLUDED_)

@@ -35,6 +35,8 @@
 #include "IscStatement.h"
 #include "SQLError.h"
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -156,3 +158,4 @@ void* IscBlob::getSegment(int pos)
 	return BinaryBlob::getSegment (pos);
 }
 
+}; // end namespace IscDbcLibrary

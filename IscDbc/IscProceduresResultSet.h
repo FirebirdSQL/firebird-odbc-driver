@@ -27,6 +27,8 @@
 
 #include "IscMetaDataResultSet.h"
 
+namespace IscDbcLibrary {
+
 class IscProceduresResultSet : public IscMetaDataResultSet  
 {
 public:
@@ -35,5 +37,7 @@ public:
 	IscProceduresResultSet(IscDatabaseMetaData *metaData);
 
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCPROCEDURESRESULTSET_H_)

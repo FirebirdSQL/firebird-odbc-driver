@@ -27,6 +27,8 @@
 
 #include "IscMetaDataResultSet.h"
 
+namespace IscDbcLibrary {
+
 class IscTablesResultSet : public IscMetaDataResultSet  
 {
 public:
@@ -34,5 +36,7 @@ public:
 	void getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char **types);
 	IscTablesResultSet(IscDatabaseMetaData *metaData);
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCTABLESRESULTSET_H_)

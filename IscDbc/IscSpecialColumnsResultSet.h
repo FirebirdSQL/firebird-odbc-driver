@@ -28,6 +28,8 @@
 #include "IscMetaDataResultSet.h"
 #include "IscSqlType.h"
 
+namespace IscDbcLibrary {
+
 class IscSpecialColumnsResultSet : public IscMetaDataResultSet  
 {
 public:
@@ -40,5 +42,7 @@ private:
 	virtual void adjustResults (IscSqlType sqlType);
 	int	index_id;	
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif

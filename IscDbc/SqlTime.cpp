@@ -26,6 +26,8 @@
 #include <time.h>
 #include <string.h>
 
+namespace IscDbcLibrary {
+
 SqlTime SqlTime::convert(const char * string, int length)
 {
 	SqlTime time;
@@ -54,5 +56,4 @@ int SqlTime::getString(const char * format, int length, char * buffer)
 	return strftime (buffer, length, format, time);
 }
 
-
-
+}; // end namespace IscDbcLibrary

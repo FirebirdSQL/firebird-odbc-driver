@@ -5,6 +5,8 @@
 #if !defined(_BLOB_H_)
 #define _BLOB_H_
 
+namespace IscDbcLibrary {
+
 enum enumTypeBlob { enTypeBlob = 1, enTypeClob, enTypeArray };
 class Connection;
 
@@ -26,5 +28,7 @@ public:
 	virtual bool	isClob() = 0;
 	virtual bool	isArray() = 0;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_BLOB_H_)

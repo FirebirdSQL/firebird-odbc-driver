@@ -32,6 +32,8 @@
 #include "IscPreparedStatement.h"
 #include "IscBlob.h"
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -124,3 +126,5 @@ bool IscColumnPrivilegesResultSet::next()
 
 	return true;
 }
+
+}; // end namespace IscDbcLibrary

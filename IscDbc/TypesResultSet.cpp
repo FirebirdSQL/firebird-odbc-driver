@@ -32,6 +32,8 @@
 #include "TypesResultSet.h"
 #include "Types.h"
 
+namespace IscDbcLibrary {
+
 #define SET_SQLVAR(index, name, type, prec, offset)			\
 {															\
 	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar + index - 1;	\
@@ -238,3 +240,5 @@ int TypesResultSet::findType()
 
 	return 0;
 }
+
+}; // end namespace IscDbcLibrary

@@ -36,6 +36,8 @@
 #define TABLE_TYPE    4
 
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -123,3 +125,5 @@ bool IscTablePrivilegesResultSet::next()
 
     return true;
 }
+
+}; // end namespace IscDbcLibrary

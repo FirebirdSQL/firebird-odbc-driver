@@ -27,6 +27,8 @@
 
 #include "IscMetaDataResultSet.h"
 
+namespace IscDbcLibrary {
+
 class IscCrossReferenceResultSet : public IscMetaDataResultSet  
 {
 public:
@@ -36,5 +38,7 @@ public:
 	void getCrossReference(const char* primaryCatalog, const char* primarySchema, const char* primaryTable,const char* foreignCatalog, const char* foreignSchema, const char* foreignTable);
 	IscCrossReferenceResultSet(IscDatabaseMetaData *metaData);
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCCROSSREFERENCERESULTSET_H_)

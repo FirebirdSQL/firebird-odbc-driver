@@ -29,6 +29,8 @@
 #include "LinkedList.h"
 #include "Sqlda.h"
 
+namespace IscDbcLibrary {
+
 class IscConnection;
 class IscResultSet;
 
@@ -90,5 +92,7 @@ public:
 	int				summaryUpdateCount;
 	TypeStatement	typeStmt;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_ISCSTATEMENT_H_)

@@ -27,6 +27,8 @@
 
 #include "IscMetaDataResultSet.h"
 
+namespace IscDbcLibrary {
+
 class IscColumnPrivilegesResultSet : public IscMetaDataResultSet  
 {
 public:
@@ -34,5 +36,7 @@ public:
 	void getColumnPrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * columnNamePattern);
 	IscColumnPrivilegesResultSet(IscDatabaseMetaData *metaData);
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_IscColumnPrivilegesResultSet_H_)

@@ -25,7 +25,11 @@
 #if !defined(_LOCK_H_INCLUDED_)
 #define _LOCK_H_INCLUDED_
 
-class Mutex;
+#include "Mutex.h"
+
+namespace IscDbcLibrary {
+
+using namespace classMutex;
 
 class Lock  
 {
@@ -38,5 +42,7 @@ public:
 	Mutex	*mutex;
 	bool	locked;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_LOCK_H_INCLUDED_)

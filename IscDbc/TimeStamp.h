@@ -29,6 +29,8 @@
 #include "SqlTime.h"
 #include "DateTime.h"
 
+namespace IscDbcLibrary {
+
 class TimeStamp : public DateTime
 {
 public:
@@ -38,5 +40,7 @@ public:
 
 	long	nanos;					// nano seconds
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(_TIMESTAMP_H_INCLUDED_)

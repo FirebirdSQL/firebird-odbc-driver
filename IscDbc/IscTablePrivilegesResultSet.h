@@ -28,6 +28,8 @@
 
 #include "IscMetaDataResultSet.h"
 
+namespace IscDbcLibrary {
+
 class IscTablePrivilegesResultSet : public IscMetaDataResultSet
 {
 public:
@@ -36,6 +38,6 @@ public:
     IscTablePrivilegesResultSet(IscDatabaseMetaData *metaData);
 };
 
+}; // end namespace IscDbcLibrary
+
 #endif // !defined(_ISCTABLEPRIVILEGESRESULTSET_H_)
-
-
