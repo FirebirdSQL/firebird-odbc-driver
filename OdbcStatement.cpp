@@ -228,6 +228,8 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
     rowArraySize  = applicationRowDescriptor->headArraySize; //added by CGA
 	enableAutoIPD = SQL_FALSE;
 	useBookmarks = SQL_UB_OFF;
+	cursorSensitivity = SQL_INSENSITIVE;
+	fetchBookmarkPtr = NULL;
 }
 
 OdbcStatement::~OdbcStatement()
@@ -372,7 +374,7 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength, bool isExecDirec
 
 #ifdef DEBUG
 	char tempDebugStr [8196];
-	sprintf (tempDebugStr, "Preparing statement:\n\t%.8195s\n", string);
+	sprintf (tempDebugStr, "Preparing statement:\n\t%.8170s\n", string);
 	OutputDebugString (tempDebugStr);
 #endif
 
@@ -497,6 +499,35 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 			record->dataPtr = targetValuePtr;
 			record->length = bufferLength;
 			record->indicatorPtr = indPtr;
+
+			if ( !column )
+			{
+				record->autoUniqueValue = SQL_FALSE;
+				record->caseSensitive = SQL_FALSE;
+				record->catalogName = "";
+//				record->conciseType = SQL_BINARY;
+				record->datetimeIntervalCode = 0;
+				record->displaySize = 8;
+				record->fixedPrecScale = SQL_FALSE;
+				record->label = "";
+//				record->length = 0;
+				record->literalPrefix = "";
+				record->literalSuffix = "";
+				record->localTypeName = "";
+				record->name = "";
+				record->nullable = SQL_NO_NULLS;
+				record->octetLength = 4;
+				record->precision = 4;
+				record->scale = 0;
+				record->schemaName = "";
+				record->searchable = SQL_PRED_NONE;
+				record->tableName = "";
+//				record->type = SQL_BINARY;
+				record->typeName = "";
+				record->unNamed = SQL_UNNAMED;
+				record->unSigned = SQL_FALSE;
+				record->updaTable = SQL_ATTR_READONLY;
+			}
 		}
 		else
 		{
@@ -680,9 +711,208 @@ RETCODE OdbcStatement::sqlFetch()
 	return returnData();
 }
 
+char *strDebOrientFetch[]=
+{
+	"",
+	"SQL_FETCH_NEXT",
+	"SQL_FETCH_FIRST",
+	"SQL_FETCH_LAST",
+	"SQL_FETCH_PRIOR",
+	"SQL_FETCH_ABSOLUTE",
+	"SQL_FETCH_RELATIVE",
+	"",
+	"SQL_FETCH_BOOKMARK",
+	""
+};
+
+RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
+{
+	int rowsetSize = applicationRowDescriptor->headArraySize;
+	rowNumber = resultSet->getPosRowInSet();
+
+	switch(orientation) 
+	{
+	case SQL_FETCH_RELATIVE: 
+		break;
+
+	case SQL_FETCH_ABSOLUTE:
+		if( offset == -1 )
+		{
+			rowNumber = sqlDiagCursorRowCount - applicationRowDescriptor->headArraySize;
+			if ( rowNumber < 0 )
+				rowNumber = 0;
+		}
+		else if ( offset < 0 )
+		{
+			if( abs(offset) > sqlDiagCursorRowCount )
+			{
+				if ( abs(offset) > rowsetSize )
+				{
+					resultSet->beforeFirst();
+					resultSet->setPosRowInSet(0);
+					return SQL_NO_DATA;
+				}
+
+				rowNumber = 0;
+			}
+			else
+				rowNumber = sqlDiagCursorRowCount + offset + 1;
+//				rowNumber += offset + 1;
+		}
+		else if( !offset )
+		{
+			resultSet->beforeFirst();
+			resultSet->setPosRowInSet(0);
+			return SQL_NO_DATA;
+		}
+		else if( offset >= sqlDiagCursorRowCount )
+		{
+			resultSet->afterLast();
+			resultSet->setPosRowInSet(sqlDiagCursorRowCount);
+			return SQL_NO_DATA;
+		}
+		else
+			rowNumber = offset - 1;
+		break;
+
+	case SQL_FETCH_NEXT:
+	case SQL_FETCH_LAST:
+		break;
+
+	case SQL_FETCH_FIRST:
+	case SQL_FETCH_PRIOR:
+		break;
+	
+	case SQL_FETCH_BOOKMARK:
+
+		if ( fetchBookmarkPtr )
+		{
+			if ( *(long*)fetchBookmarkPtr + offset < 1 )
+			{
+				resultSet->beforeFirst();
+				resultSet->setPosRowInSet(0);
+				return SQL_NO_DATA;
+			}
+			rowNumber = *(long*)fetchBookmarkPtr + offset - 1;
+		}
+
+		if( rowNumber >= sqlDiagCursorRowCount && resultSet->isAfterLast())
+			return SQL_NO_DATA;
+
+		break;
+
+	default:
+		return sqlReturn (SQL_ERROR, "HY106", "Fetch type out of range");
+	}
+
+	if( rowNumber >= 0 && rowNumber < sqlDiagCursorRowCount )
+	{
+		int nRow = 0;
+		resultSet->setPosRowInSet(rowNumber);
+
+		if ( !eof )
+		{
+			SQLINTEGER	*bindOffsetPtrSave = bindOffsetPtr;
+			SQLUSMALLINT *statusPtr = implementationRowDescriptor->headArrayStatusPtr;
+			SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
+			bindOffsetPtr = &bindOffsetPtrTmp;
+			resultSet->setCurrentRowInBufferStaticCursor(rowNumber);
+			while ( nRow < rowsetSize && rowNumber < sqlDiagCursorRowCount )
+			{
+				resultSet->copyNextSqldaFromBufferStaticCursor();
+				setValue (applicationRowDescriptor->getDescRecord (0), 0);
+				returnData();
+				
+				if ( statusPtr )
+					statusPtr[nRow] = SQL_ROW_SUCCESS;
+				bindOffsetPtrTmp += rowBindType;
+				++nRow;
+			}
+			
+			if (implementationRowDescriptor->headRowsProcessedPtr)
+				*(SQLUINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = nRow;
+
+			if( !nRow )
+				eof = true;
+			else if( nRow < rowsetSize)
+			{
+				if( nRow && statusPtr)
+					while(nRow < rowsetSize)
+						statusPtr[nRow++] = SQL_ROW_NOROW;
+			}
+
+			bindOffsetPtr = bindOffsetPtrSave;
+		}
+
+		if ( eof )
+		{
+			if (implementationRowDescriptor->headRowsProcessedPtr)
+				*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
+			return SQL_NO_DATA;
+		}
+	}
+	else if ( rowNumber < 0 )
+	{
+		rowNumber = 0;
+		setValue (applicationRowDescriptor->getDescRecord (0), 0);
+		if (implementationRowDescriptor->headRowsProcessedPtr)
+			*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
+		return SQL_NO_DATA;
+	}
+	else 
+	{
+		rowNumber = sqlDiagCursorRowCount - 1;
+		setValue (applicationRowDescriptor->getDescRecord (0), 0);
+		if (implementationRowDescriptor->headRowsProcessedPtr)
+			*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
+		return SQL_NO_DATA;
+	}
+
+	switch(orientation) 
+	{
+	case SQL_FETCH_RELATIVE: 
+		if(offset<0) 
+			resultSet->beforeFirst();
+		else if(offset>0) 
+			resultSet->afterLast();
+		break;
+
+	case SQL_FETCH_ABSOLUTE:
+		if(offset==0)
+			resultSet->beforeFirst();
+		else
+			resultSet->afterLast();
+		break;
+
+	case SQL_FETCH_NEXT:
+	case SQL_FETCH_LAST:
+		resultSet->afterLast();
+		break;
+
+	case SQL_FETCH_FIRST:
+	case SQL_FETCH_PRIOR:
+		resultSet->beforeFirst();
+		break;
+
+	case SQL_FETCH_BOOKMARK:
+		resultSet->afterLast();
+		break;
+	}
+
+	return sqlSuccess();
+}
+
+
 RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 {
+#ifdef DEBUG
+	char strTmp[128];
+	sprintf(strTmp,"\t%s : offset %i : bookmark %i\n",strDebOrientFetch[orientation],offset,
+								fetchBookmarkPtr ? *(long*)fetchBookmarkPtr : 0);
+	OutputDebugString(strTmp); 
+#endif
 	clearErrors();
+
 	if (!resultSet)
 		return sqlReturn (SQL_ERROR, "24000", "Invalid cursor state");
 
@@ -694,6 +924,9 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 		releaseResultSet();
 		return sqlReturn (SQL_ERROR, "S1008", "Operation canceled");
 	}
+
+	if ( cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE )
+		return sqlFetchScrollCursorStatic(orientation,offset);
 
 	SQLINTEGER	*bindOffsetPtrSave = bindOffsetPtr;
 
@@ -732,7 +965,9 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 				}
 
 				if (implementationRowDescriptor->headRowsProcessedPtr)
-					*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = nRow;
+					*(SQLUINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = nRow;
+
+				setValue (applicationRowDescriptor->getDescRecord (0), 0);
 
 				bindOffsetPtr = bindOffsetPtrSave;
 			}
@@ -747,13 +982,23 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 			return sqlSuccess();
 		}
 		else
+		{
 			if (eof || !resultSet->next())
 			{
 				eof = true;
 				if (implementationRowDescriptor->headRowsProcessedPtr)
 					*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
+				
+				if(implementationRowDescriptor->headArrayStatusPtr)
+					implementationRowDescriptor->headArrayStatusPtr[0] = SQL_ROW_NOROW;
+
 				return SQL_NO_DATA;
 			}
+			if( implementationRowDescriptor->headArrayStatusPtr )
+				implementationRowDescriptor->headArrayStatusPtr[0] = SQL_ROW_SUCCESS;
+
+			setValue (applicationRowDescriptor->getDescRecord (0), 0);
+		}
 	}
 	catch (SQLException& exception)
 	{
@@ -815,6 +1060,27 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 
 }
 
+RETCODE OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQLUSMALLINT lockType)
+{
+	
+	switch ( operation )
+	{
+	case SQL_POSITION:
+		rowNumber = row;
+		if( resultSet )
+			resultSet->setPosRowInSet(rowNumber);
+		break;
+	case SQL_REFRESH:
+		break;
+	case SQL_UPDATE:
+		break;
+	case SQL_DELETE:
+		break;
+	}
+
+	return sqlSuccess();
+}
+
 bool OdbcStatement::setValue(DescRecord *record, int column)
 {
 	bool info = false;
@@ -823,6 +1089,9 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 	SQLPOINTER pointer = record->dataPtr;
 	SQLUINTEGER &bufferLength = record->length;
 	SQLINTEGER * indicatorPointer = record->indicatorPtr;
+
+	if( !pointer )
+		return info;
 
 	if ( bindOffsetPtr )
 	{
@@ -863,7 +1132,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 				((char*) (pointer)) [len] = 0;
 			}
 
-			if (len < dataRemaining)
+			if (len && len < dataRemaining)
 			{
 				error = postError (new OdbcError (0, "01004", "Data truncated"));
 				info = true;
@@ -887,7 +1156,10 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 		case SQL_C_LONG:
 		case SQL_C_SLONG:
 		case SQL_C_ULONG:
-			*((long*) pointer) = RESULTS (getInt (column));
+			if( column == 0 )
+				*((long*) pointer) = rowNumber+1;
+			else
+				*((long*) pointer) = RESULTS (getInt (column));
 			length = sizeof(long);
 			break;
 
@@ -988,7 +1260,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 	if (error)
 		error->setColumnNumber (column, rowNumber);
 
-	if (indicatorPointer)
+	if (indicatorPointer && column)
 		{
 		if (RESULTS (wasNull()))
 			*indicatorPointer = SQL_NULL_DATA;
@@ -1507,6 +1779,11 @@ RETCODE OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int buffer
 {
 	clearErrors();
 
+	if ( cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE )
+	{
+//		if ( cType == SQL_ARD_TYPE )
+		resultSet->getDataFromStaticCursor (column,cType,pointer,bufferLength,indicatorPointer);
+	}
 //Orig.
 /*	Binding binding;
 	binding.cType = cType;
@@ -1757,6 +2034,7 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 		record->length = bufferLength;
 		record->octetLengthPtr = length;
 		record->indicatorPtr = length;
+#pragma FB_COMPILER_MESSAGE("Definition data_at_exec!!! FIXME!")
 		record->data_at_exec = length && type != SQL_PARAM_OUTPUT 
 					&& (*length == SQL_DATA_AT_EXEC || *length < SQL_LEN_DATA_AT_EXEC_OFFSET );
 
@@ -2239,7 +2517,7 @@ RETCODE OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferL
 				break;
 
 			case SQL_ATTR_CONCURRENCY:
-				value = SQL_CONCUR_LOCK;
+				value = currency;
 				TRACE02(SQL_ATTR_CONCURRENCY,value);
 				break;
 
@@ -2304,7 +2582,7 @@ RETCODE OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferL
 		        break;
 
 		    case SQL_ATTR_CURSOR_SENSITIVITY:
-				value = SQL_UNSPECIFIED;
+				value = cursorSensitivity;
 				TRACE02(SQL_ATTR_CURSOR_SENSITIVITY,value);
 		        break;
 
@@ -2318,6 +2596,10 @@ RETCODE OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferL
 				TRACE02(SQL_ATTR_PARAMSET_SIZE,value);
 				break;
 
+			case SQL_ATTR_FETCH_BOOKMARK_PTR:		//	16
+				value = (long)fetchBookmarkPtr;
+				TRACE02(SQL_ATTR_FETCH_BOOKMARK_PTR,value);
+		        break;
 
 			/***
 			case SQL_ATTR_ENABLE_AUTO_IPD			15
@@ -2465,6 +2747,13 @@ RETCODE OdbcStatement::executeStatement()
         }
 
     getResultSet();
+
+	if ( cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE )
+	{
+		resultSet->readStaticCursor(); 
+		setCursorRowCount(resultSet->getCountRowsStaticCursor());
+	}
+
 	return SQL_SUCCESS;
 }
 
@@ -2856,16 +3145,52 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
  
  			case SQL_ATTR_CONCURRENCY:			// SQL_CONCURRENCY	7
 				currency = (int) ptr;
+				
+				if(currency == SQL_CONCUR_READ_ONLY)
+					cursorSensitivity = SQL_INSENSITIVE;
+				else
+					cursorSensitivity = SQL_UNSPECIFIED;
+
 				TRACE02(SQL_ATTR_CONCURRENCY,(int) ptr);
 				break;
 
 			case SQL_ATTR_CURSOR_TYPE:			// SQL_CURSOR_TYPE 6
 				cursorType = (int) ptr;
+				if ( cursorType == SQL_CURSOR_DYNAMIC )
+				{
+					cursorScrollable = SQL_SCROLLABLE;
+					if(currency != SQL_CONCUR_READ_ONLY)
+						cursorSensitivity = SQL_SENSITIVE;
+				}
+				else if ( cursorType == SQL_CURSOR_FORWARD_ONLY )
+				{
+					cursorScrollable = SQL_NONSCROLLABLE;
+				}
+				else if ( cursorType == SQL_CURSOR_KEYSET_DRIVEN )
+				{
+					cursorScrollable = SQL_SCROLLABLE;
+					if(currency != SQL_CONCUR_READ_ONLY)
+						cursorSensitivity = SQL_UNSPECIFIED;
+				}
+				else if ( cursorType == SQL_CURSOR_STATIC )
+				{
+					cursorScrollable = SQL_SCROLLABLE;
+					if(currency != SQL_CONCUR_READ_ONLY)
+						cursorSensitivity = SQL_UNSPECIFIED;
+					else
+						cursorSensitivity = SQL_INSENSITIVE;
+				}
 				TRACE02(SQL_ATTR_CURSOR_TYPE,(int) ptr);
 				break;
 
 			case SQL_ATTR_CURSOR_SCROLLABLE:
-				cursorScrollable = (int) ptr == SQL_SCROLLABLE;
+				cursorScrollable = SQL_SCROLLABLE;
+//TestNew02
+				if( !cursorScrollable )
+					cursorType = SQL_CURSOR_FORWARD_ONLY;
+				else
+					cursorType = SQL_CURSOR_STATIC;
+
 				TRACE02(SQL_ATTR_CURSOR_SCROLLABLE,(int) ptr);
 				break;
 
@@ -2893,8 +3218,26 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 
 
 			case SQL_ATTR_CURSOR_SENSITIVITY:    // (-2)
-				TRACE(SQL_ATTR_CURSOR_SENSITIVITY);
+				cursorSensitivity = (SQLINTEGER)ptr;
+				if ( cursorSensitivity == SQL_INSENSITIVE )
+				{
+					currency = SQL_CONCUR_READ_ONLY;
+					cursorType = SQL_CURSOR_STATIC;
+				}
+				else if ( cursorSensitivity == SQL_SENSITIVE )
+				{
+					currency = SQL_CONCUR_ROWVER;
+					cursorType = SQL_CURSOR_FORWARD_ONLY;
+				}
+				else // if ( cursorSensitivity == SQL_UNSPECIFIED )
+				{
+					currency = SQL_CONCUR_READ_ONLY;
+					cursorType = SQL_CURSOR_FORWARD_ONLY;
+				}
+
+				TRACE02(SQL_ATTR_CURSOR_SENSITIVITY,(int) ptr);
 		        break;
+
 			case SQL_ATTR_PARAM_OPERATION_PTR:		// 19
 				applicationParamDescriptor->headArrayStatusPtr = (SQLUSMALLINT*)ptr;
 				TRACE02(SQL_ATTR_PARAM_OPERATION_PTR,(int) ptr);
@@ -2915,12 +3258,16 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 				TRACE02(SQL_ATTR_ENABLE_AUTO_IPD,(int) ptr);
 		        break;
 
+			case SQL_ATTR_FETCH_BOOKMARK_PTR:		//	16
+				fetchBookmarkPtr = ptr;
+				TRACE02(SQL_ATTR_FETCH_BOOKMARK_PTR,(int) ptr);
+		        break;
+
 			/***
 			case SQL_ATTR_ASYNC_ENABLE				4
 			case SQL_ATTR_CONCURRENCY				SQL_CONCURRENCY	7
 			case SQL_ATTR_CURSOR_TYPE				SQL_CURSOR_TYPE 6
 			case SQL_ATTR_ENABLE_AUTO_IPD			15
-			case SQL_ATTR_FETCH_BOOKMARK_PTR			16
 			case SQL_ATTR_KEYSET_SIZE				SQL_KEYSET_SIZE 8
 			case SQL_ATTR_NOSCAN						SQL_NOSCAN 2
 			case SQL_ATTR_PARAM_BIND_OFFSET_PTR		17
@@ -2957,7 +3304,10 @@ RETCODE OdbcStatement::sqlRowCount(SQLINTEGER *rowCount)
 		{
 		if (!statement)
 			return sqlReturn (SQL_ERROR, "HY010", "Function sequence error");
-		*rowCount = statement->getUpdateCount();
+		if ( cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE )
+			*rowCount = sqlDiagCursorRowCount;
+		else
+			*rowCount = statement->getUpdateCount();
 		}
 	catch (SQLException& exception)
 		{
@@ -2993,7 +3343,9 @@ RETCODE OdbcStatement::sqlColAttributes(int column, int descType, SQLPOINTER buf
 				break;
 
 			case SQL_COLUMN_UPDATABLE:
-				value = (metaData->isWritable (column)) ? SQL_ATTR_WRITE : SQL_ATTR_READONLY;
+				value = SQL_ATTR_READWRITE_UNKNOWN;
+//				value = (metaData->isWritable (column)) ? SQL_ATTR_WRITE : SQL_ATTR_READONLY;
+				*length = sizeof(long);
 				break;
 
 			case SQL_COLUMN_COUNT:
@@ -3114,7 +3466,7 @@ RETCODE OdbcStatement::returnData()
 			setValue (applicationRowDescriptor->getDescRecord (columnNumber), columnNumber);
 
 		if (implementationRowDescriptor->headRowsProcessedPtr)
-			*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 1;
+			*(SQLUINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 1;
 		}
 	catch (SQLException& exception)
 		{

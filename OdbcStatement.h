@@ -66,6 +66,8 @@ public:
 	RETCODE sqlColAttribute (int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT* strLengthPtr, SQLPOINTER numericAttributePtr);
 	RETCODE returnData();
 	RETCODE sqlFetchScroll (int orientation, int offset);
+	RETCODE sqlFetchScrollCursorStatic(int orientation, int offset);
+	RETCODE sqlSetPos (SQLUSMALLINT rowNumber, SQLUSMALLINT operation, SQLUSMALLINT lockType);
 	RETCODE sqlExtendedFetch (int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray);
 	RETCODE sqlColAttributes (int column, int descType, SQLPOINTER buffer, int bufferSize, SWORD *length, SDWORD *value);
 	RETCODE sqlRowCount (SQLINTEGER *rowCount);
@@ -156,6 +158,8 @@ public:
 	SQLUSMALLINT		*rowStatusPtr;
 	SQLUINTEGER			enableAutoIPD;
 	SQLINTEGER			useBookmarks;
+	SQLINTEGER			cursorSensitivity;
+	SQLPOINTER			fetchBookmarkPtr;
 	int					currency;
 	int					cursorType;
 	bool				cursorScrollable;

@@ -1537,11 +1537,6 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 		value = asyncEnabled;
 		break;
 
-	case SQL_CURRENT_QUALIFIER:		//   109
-		string = const_cast<char *>(databaseName.getString());
-		bufferLength = databaseName.length();
-		break;
-
 	case SQL_ATTR_ACCESS_MODE:			//   101		
 		value = accessMode;
 		break;

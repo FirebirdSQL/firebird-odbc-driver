@@ -103,6 +103,7 @@ extern "C"
 #define GUARD_HSTMT(arg)	GUARD
 #define GUARD_HDBC(arg)		GUARD
 #define GUARD_HDESC(arg)	GUARD
+#define GUARD_HTYPE(arg1,arg2)	GUARD
 
 #elif(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_CONNECT)
 
@@ -110,6 +111,10 @@ extern "C"
 #define GUARD_HSTMT(arg)		SafeConnectThread wt(((OdbcStatement*)arg)->connection)
 #define GUARD_HDBC(arg) 		SafeConnectThread wt((OdbcConnection*)arg)
 #define GUARD_HDESC(arg)		SafeConnectThread wt(((OdbcDesc*)arg)->connection)
+#define GUARD_HTYPE(arg,arg1)	SafeConnectThread wt( \
+									arg1==SQL_HANDLE_DBC?(OdbcConnection*)arg: \
+									arg1==SQL_HANDLE_STMT?((OdbcStatement*)arg)->connection: \
+								arg1==SQL_HANDLE_DESC?((OdbcDesc*)arg)->connection:NULL )
 
 #else
 
@@ -117,6 +122,7 @@ extern "C"
 #define GUARD_HSTMT(arg)
 #define GUARD_HDBC(arg)
 #define GUARD_HDESC(arg)	
+#define GUARD_HTYPE(arg1,arg2)
 
 #endif
 
@@ -225,7 +231,6 @@ RETCODE SQL_API SQLBindCol  (HSTMT arg0,
 RETCODE SQL_API SQLCancel  (HSTMT arg0)
 {
 	TRACE ("SQLCancel");
-	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlCancel ();
 }
@@ -482,7 +487,7 @@ RETCODE SQL_API SQLTransact  (HENV arg0,
 {
 	TRACE ("SQLTransact");
 
-	if (arg0 == SQL_NULL_HDBC)
+	if (arg0 == SQL_NULL_HENV)
 	{
 		GUARD_HDBC(arg1);
 		return ((OdbcConnection*) arg1)->sqlEndTran (arg2);
@@ -939,8 +944,7 @@ RETCODE SQL_API SQLSetPos  (HSTMT arg0,
 		 UWORD arg3)
 {
 	GUARD_HSTMT(arg0);
-	notYetImplemented("SQLSetPos called\n");
-	return(SQL_SUCCESS);
+	return ((OdbcStatement*) arg0)->sqlSetPos (arg1, arg2, arg3);
 }
 
 ///// SQLSetScrollOptions /////
@@ -1232,7 +1236,7 @@ RETCODE SQL_API SQLGetDiagField  (SQLSMALLINT arg0,
 		 SQLSMALLINT * arg6)
 {
 	TRACE ("SQLGetDiagField");
-
+	GUARD_HTYPE(arg1,arg0);
 	return ((OdbcObject*) arg1)->sqlGetDiagField (arg2,arg3,arg4,arg5,arg6);
 }
 
@@ -1248,7 +1252,7 @@ RETCODE SQL_API SQLGetDiagRec  (SQLSMALLINT arg0,
 		 SQLSMALLINT * arg7)
 {
 	TRACE ("SQLGetDiagRec");
-
+	GUARD_HTYPE(arg1,arg0);
 	return ((OdbcObject*) arg1)->sqlGetDiagRec (arg0, arg2,arg3,arg4,arg5,arg6,arg7);
 }
 
@@ -1361,6 +1365,7 @@ RETCODE SQL_API SQLBulkOperations  (SQLHSTMT arg0,
 			SQLSMALLINT arg1)
 {
 	GUARD_HSTMT(arg0);
+#pragma FB_COMPILER_MESSAGE("SQLBulkOperations - Implemented; FIXME!")
 	notYetImplemented("SQLBulkOperations called\n");
 	return(SQL_SUCCESS);
 }
