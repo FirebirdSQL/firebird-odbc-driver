@@ -162,11 +162,19 @@ SOURCE=..\..\IscDbc\IscDbc.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\IscHeadSqlVar.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\IscIndexInfoResultSet.h
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\IscDbc\IscMetaDataResultSet.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\IscOdbcStatement.h
 # End Source File
 # Begin Source File
 
@@ -347,6 +355,10 @@ SOURCE=..\..\IscDbc\IscIndexInfoResultSet.cpp
 # Begin Source File
 
 SOURCE=..\..\IscDbc\IscMetaDataResultSet.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\IscOdbcStatement.cpp
 # End Source File
 # Begin Source File
 

@@ -207,6 +207,9 @@
 				RelativePath="..\..\IscDbc\IscMetaDataResultSet.h">
 			</File>
 			<File
+				RelativePath="..\..\IscDbc\IscOdbcStatement.h">
+			</File>
+			<File
 				RelativePath="..\..\IscDbc\IscPreparedStatement.h">
 			</File>
 			<File
@@ -338,6 +341,9 @@
 			</File>
 			<File
 				RelativePath="..\..\IscDbc\IscMetaDataResultSet.cpp">
+			</File>
+			<File
+				RelativePath="..\..\IscDbc\IscOdbcStatement.cpp">
 			</File>
 			<File
 				RelativePath="..\..\IscDbc\IscPreparedStatement.cpp">
