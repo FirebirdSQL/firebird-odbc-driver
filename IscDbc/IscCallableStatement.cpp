@@ -57,7 +57,7 @@
 
 namespace IscDbcLibrary {
 
-char charTable [256];
+char charTable [256] = {0};
 static int init();
 static int foo = init();
 

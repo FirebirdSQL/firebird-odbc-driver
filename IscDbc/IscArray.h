@@ -55,15 +55,17 @@ public:
 	void getBytesFromArray();
 	void fetchArrayToString();
 	void writeBlob(char * sqldata);
+	void writeStreamHexToBlob(char * sqldata) {};
 	void writeBlob(char * sqldata, char *data, long length);
+	void writeStringHexToBlob(char * sqldata, char *data, long length) {};
 	void writeArray(Value * value);
 
 	void bind(IscConnection	*parentConnection,XSQLVAR *var);
 	void bind(Connection *connect, char * sqldata){};
-	virtual void getBytes(long pos, long length, void * address);
-	virtual int length();
-	virtual int getSegment (int offset, int length, void *address);
-	virtual int	getLength();
+	void getBytes(long pos, long length, void * address);
+	int length();
+	int getSegment (int offset, int length, void *address);
+	int	getLength();
 
 	IscArray();
 	IscArray(SIscArrayData * ptArr);

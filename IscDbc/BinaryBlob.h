@@ -45,11 +45,14 @@ public:
 	virtual int	  getSegment (int offset, int length, void* address);
 	virtual int	  getSegmentLength (int pos);
 	virtual void  writeBlob(char * sqldata) {};
+	virtual void  writeStreamHexToBlob(char * sqldata) {};
 	virtual void  writeBlob(char * sqldata, char *data, long length) {};
+	virtual void  writeStringHexToBlob(char * sqldata, char *data, long length) {};
 	void putSegment (int length, const char *data, bool copyFlag);
 	int length();
 	void getHexString(long pos, long length, void * address);
 	void getBytes (long pos, long length, void *address);
+	void getBinary (long pos, long length, void * address);
 	BinaryBlob (int minSegmentSize);
 	BinaryBlob();
 	virtual ~BinaryBlob();

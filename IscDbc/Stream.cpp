@@ -39,6 +39,26 @@ static char THIS_FILE[]=__FILE__;
 
 namespace IscDbcLibrary {
 
+char charTableHexToDigit [256] = {0};
+static int initCharHexToDigit();
+static int foo = initCharHexToDigit();
+
+int initCharHexToDigit ()
+{
+	int n;
+
+	for (n = 'a'; n <= 'f'; ++n)
+		charTableHexToDigit [n] = n - 'a' + 10;
+
+	for (n = 'A'; n <= 'F'; ++n)
+		charTableHexToDigit [n] = n - 'A' + 10;
+
+	for (n = '0'; n <= '9'; ++n)
+		charTableHexToDigit [n] = n - '0';
+
+	return 0;
+}
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -140,6 +160,45 @@ void Stream::putSegment(int length, const char *ptr, bool copy)
 	}
 }
 
+char* Stream::convStrHexToBinary (char * orgptr, int len)
+{
+	char * ptr = orgptr;
+	char * binstr = ptr;
+	int n = len/2;
+
+	while ( n-- )
+		*binstr =	charTableHexToDigit[ *ptr++ ] << 4,
+		*binstr++ += charTableHexToDigit[ *ptr++ ];
+	
+	return orgptr;
+}
+
+int Stream::getSegmentToBinary (int offset, int len, void * ptr)
+{
+	int n = 0;
+	int length = len;
+	short *address = (short*) ptr;
+
+	for (Segment *segment = segments; segment; n += segment->length, segment = segment->next)
+		if (n + segment->length >= offset)
+		{
+			int off = offset - n;
+			int l = MIN (length, segment->length - off);
+			unsigned char * ptSours = (unsigned char *)segment->address + off;
+
+			length -= l;
+			offset += l;
+
+			while( l-- > 0 )
+				*address++ = (short)*ptSours++;
+
+			if (!length)
+				break;
+		}
+
+	return len - length;
+}
+
 int Stream::getSegmentToHexStr(int offset, int len, void * ptr)
 {
 	int n = 0;
@@ -156,8 +215,8 @@ int Stream::getSegmentToHexStr(int offset, int len, void * ptr)
 			length -= l;
 			offset += l;
 
-			while( l > 0 )
-				*address++ = conwBinToHexStr[*ptSours++],--l;
+			while( l-- > 0 )
+				*address++ = conwBinToHexStr[*ptSours++];
 
 			if (!length)
 				break;

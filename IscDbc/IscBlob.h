@@ -37,18 +37,20 @@ class IscConnection;
 class IscBlob : public BinaryBlob
 {
 public:
-	virtual void* getSegment (int pos);
-	virtual int getSegmentLength (int pos);
-	virtual char* getString();
+	void* getSegment (int pos);
+	int getSegmentLength (int pos);
+	char* getString();
 
 	void bind(Connection *connect, char * sqldata);
 	void attach(char * pointBlob, bool fetched, bool clear);
 	void setType(short sqlsubtype);
 	void fetchBlob();
-	virtual int getSegment (int offset, int length, void *address);
+	int getSegment (int offset, int length, void *address);
 	void writeBlob(char * sqldata);
+	void writeStreamHexToBlob(char * sqldata);
 	void writeBlob(char * sqldata, char *data, long length);
-	virtual int length();
+	void  writeStringHexToBlob(char * sqldata, char *data, long length);
+	int length();
 	IscBlob();
 	IscBlob(IscConnection *connect, XSQLVAR *var);
 	~IscBlob();

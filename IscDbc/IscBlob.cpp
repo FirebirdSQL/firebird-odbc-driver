@@ -186,6 +186,34 @@ void IscBlob::writeBlob(char * sqldata)
 		THROW_ISC_EXCEPTION (connection, statusVector);
 }
 
+void IscBlob::writeStreamHexToBlob(char * sqldata)
+{
+	ISC_STATUS statusVector [20];
+	CFbDll * GDS = connection->GDS;
+	isc_blob_handle blobHandle = NULL;
+	isc_tr_handle transactionHandle = connection->startTransaction();
+	GDS->_create_blob2 ( statusVector, 
+					  &connection->databaseHandle,
+					  &transactionHandle,
+					  &blobHandle,
+					  (ISC_QUAD*) sqldata,
+					  0, NULL);
+
+	if ( statusVector [1] )
+		THROW_ISC_EXCEPTION (connection, statusVector);
+
+	for ( int len, offset = 0; len = getSegmentLength (offset); offset += len )
+	{
+		GDS->_put_segment ( statusVector, &blobHandle, len/2, convStrHexToBinary ( (char*)getSegment (offset), len ) );
+		if ( statusVector [1] )
+			THROW_ISC_EXCEPTION (connection, statusVector);
+	}
+
+	GDS->_close_blob ( statusVector, &blobHandle);
+	if ( statusVector [1] )
+		THROW_ISC_EXCEPTION (connection, statusVector);
+}
+
 void IscBlob::writeBlob(char * sqldata, char *data, long length)
 {
 	ISC_STATUS statusVector [20];
@@ -226,6 +254,17 @@ void IscBlob::writeBlob(char * sqldata, char *data, long length)
 	GDS->_close_blob ( statusVector, &blobHandle);
 	if ( statusVector [1] )
 		THROW_ISC_EXCEPTION ( connection, statusVector);
+}
+
+void  IscBlob::writeStringHexToBlob(char * sqldata, char *data, long length)
+{
+	if ( isBlob() )
+	{
+		Stream::convStrHexToBinary (data, length);
+		writeBlob(sqldata, data, length/2);
+	}
+	else
+		writeBlob(sqldata, data, length);
 }
 
 }; // end namespace IscDbcLibrary

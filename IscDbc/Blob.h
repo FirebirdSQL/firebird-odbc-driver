@@ -18,13 +18,16 @@ public:
 	virtual int		release() = 0;
 	virtual void	clear() = 0;
 	virtual void	getBytes (long pos, long length, void *buffer) = 0;
+	virtual void	getBinary (long pos, long length, void *buffer) = 0;
 	virtual void	getHexString (long pos, long length, void *buffer) = 0;
 	virtual int		length() = 0;
 	virtual int		getSegmentLength (int pos) = 0;
 	virtual void	putSegment (int length, const char *data, bool copyFlag) = 0;
 	virtual void	*getSegment (int pos) = 0;
 	virtual void	writeBlob(char * sqldata) = 0;
+	virtual void	writeStreamHexToBlob(char * sqldata) = 0;
 	virtual void	writeBlob(char * sqldata, char *data, long length) = 0;
+	virtual void	writeStringHexToBlob(char * sqldata, char *data, long length) = 0;
 
 	virtual void	bind(Connection *connect, char * sqldata) = 0;
 	virtual void	attach(char * pointBlob, bool fetched, bool clear) = 0;

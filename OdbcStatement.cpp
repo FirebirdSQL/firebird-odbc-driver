@@ -2363,9 +2363,18 @@ RETCODE OdbcStatement::inputParam()
 				
 				if ( record->startedTransfer )
 				{
+					RETCODE ret;
 					record->endBlobDataTransfer();
 					CBindColumn &bindCol = (*listBindIn)[n-1];
-					RETCODE ret = convert->convStreamToBlob(bindCol.appRecord,bindCol.impRecord);
+					switch (record->conciseType)
+					{
+					case SQL_C_CHAR:
+						ret = convert->convStreamHexStringToBlob(bindCol.appRecord,bindCol.impRecord);
+						break;
+					case SQL_C_BINARY:
+						ret = convert->convStreamToBlob(bindCol.appRecord,bindCol.impRecord);
+						break;
+					}
 					continue;
 				}
 

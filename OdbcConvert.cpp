@@ -431,7 +431,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			return &OdbcConvert::convBlobToBigint;
 		case SQL_C_BINARY:
 			bIdentity = true;
-			return &OdbcConvert::convBlobToBinary;
+			return &OdbcConvert::convBlobToBlob;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convBlobToString;
 		}
@@ -1211,28 +1211,8 @@ ODBCCONVERT_TEMP_CONV(Blob,Double,double);
 ODBCCONVERT_TEMP_CONV(Blob,Bigint,QUAD);
 //ODBCCONVERT_TEMP_CONV(Blob,Blob,short);
 //ODBCCONVERT_TEMP_CONV(Blob,String,char);
-/*
-int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
-{
-	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressBindIndTo((char*)to->indicatorPtr);
 
-//	ODBCCONVERT_CHECKNULL;
-	if( *(short*)getAdressBindDataFrom((char*)from->indicatorPtr) == -1 )
-	{
-		if ( indicatorPointer )
-			*indicatorPointer = -1;
-		return SQL_SUCCESS;
-	}
-
-	if ( indicatorPointer )
-		*indicatorPointer = 0;
-
-	return SQL_SUCCESS;
-}
-*/
-
-int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
+int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 {
 	RETCODE ret = SQL_SUCCESS;
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
@@ -1292,6 +1272,63 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 
 	if ( indicatorPointer )
 		*indicatorPointer = length;
+
+	return ret;
+}
+
+int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
+{
+	RETCODE ret = SQL_SUCCESS;
+	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressBindIndTo((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	char * ptBlob = (char*)getAdressBindDataFrom((char*)from->dataPtr);
+	Blob *& blob = from->dataBlobPtr;
+	int dataRemaining = 0;
+
+	if ( blob )
+	{
+		if ( from->currentFetched != parentStmt->getCurrentFetched() )
+		{ // attach new blob
+			from->dataOffset = 0;
+			if ( parentStmt->isStaticCursor() )
+				blob->attach((char*)from->dataPtr,parentStmt->isStaticCursor(),false);
+			else
+				blob->bind(parentStmt->connection->connection,(char*)from->dataPtr);
+
+			from->currentFetched = parentStmt->getCurrentFetched();
+		}
+
+		dataRemaining = blob->length() - from->dataOffset;
+
+		if ( !to->length )
+			;
+		else if (!dataRemaining && from->dataOffset)
+		{
+			from->dataOffset = 0;
+			ret = SQL_NO_DATA;
+		}
+		else if ( pointer )
+		{
+			int len = MIN(dataRemaining, MAX(0, (long)to->length-1)>>1);
+		 
+			if ( len > 0 ) 
+				blob->getBinary (from->dataOffset, len, pointer);
+
+			from->dataOffset += len;
+
+			if ( len && len < dataRemaining )
+			{
+				OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
+				ret = SQL_SUCCESS_WITH_INFO;
+			}
+		}
+	}
+
+	if ( indicatorPointer )
+		*indicatorPointer = dataRemaining;
 
 	return ret;
 }
@@ -1373,7 +1410,6 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 
 	return ret;
 }
-
 
 ////////////////////////////////////////////////////////////////////////
 // String
@@ -1544,12 +1580,33 @@ int OdbcConvert::convStringToBlob(DescRecord * from, DescRecord * to)
 		len = MIN( from->length ? (int)from->length : (int)strlen(pointerFrom), (int)MAX(0, (int)to->length-1));
 
 	if( len >= 0 )
-		to->dataBlobPtr->writeBlob(pointerTo, pointerFrom, len);
+		to->dataBlobPtr->writeStringHexToBlob(pointerTo, pointerFrom, len);
 
 	if ( indicatorPointer )
 		*(short*)indicatorPointer = 0;
 
 	return ret;
+}
+
+// for use App to SqlDa
+int OdbcConvert::convStreamHexStringToBlob(DescRecord * from, DescRecord * to)
+{	
+	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointerFrom = (SQLINTEGER *)getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressBindIndTo((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL_SQLDA;
+
+	Blob * blob = from->dataBlobPtr;
+	if ( blob->isBlob() )
+		from->dataBlobPtr->writeStreamHexToBlob( pointerTo );
+	else
+		from->dataBlobPtr->writeBlob( pointerTo );
+
+	if ( indicatorPointer )
+		*(short*)indicatorPointer = 0;
+
+	return SQL_SUCCESS;
 }
 
 // for use App to SqlDa
@@ -1659,8 +1716,8 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 	int len;
 
 	char * src = pointerFrom + 2,
-		 * end = src + lenVar - 1;
-	while ( lenVar-- && *end == ' ') --end;
+		 * end = src + lenVar;
+	while ( lenVar-- && *(--end) == ' ');
 	len = end - src + 1;
 	len = MIN(len, MAX(0,(int)to->length-1));
 

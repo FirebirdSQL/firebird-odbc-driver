@@ -153,8 +153,10 @@ public:
 	int convBlobToFloat(DescRecord * from, DescRecord * to);
 	int convBlobToDouble(DescRecord * from, DescRecord * to);
 	int convBlobToBigint(DescRecord * from, DescRecord * to);
+	int convBlobToBlob(DescRecord * from, DescRecord * to);
 	int convBlobToBinary(DescRecord * from, DescRecord * to);
 	int convBlobToString(DescRecord * from, DescRecord * to);
+	int convStreamToBlob(DescRecord * from, DescRecord * to);
 
 // Text
 	int convStringToLong(DescRecord * from, DescRecord * to);
@@ -168,7 +170,7 @@ public:
 
 	int transferStringToDateTime(DescRecord * from, DescRecord * to);
 	int transferStringToAllowedType(DescRecord * from, DescRecord * to);
-	int convStreamToBlob(DescRecord * from, DescRecord * to);
+	int convStreamHexStringToBlob(DescRecord * from, DescRecord * to);
 
 // Varying
 	int convVarStringToLong(DescRecord * from, DescRecord * to);
