@@ -47,7 +47,7 @@ namespace IscDbcLibrary {
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscResultSet::IscResultSet(IscStatement *iscStatement)
+IscResultSet::IscResultSet( IscStatement *iscStatement ) : IscStatementMetaData( NULL , NULL )
 {
 	initResultSet(iscStatement);
 }
@@ -75,6 +75,7 @@ void IscResultSet::initResultSet(IscStatement *iscStatement)
 	{
 		statement->addRef();
 		sqlda = &statement->outputSqlda;
+		connection = statement->connection;
 		numberColumns = sqlda->getColumnCount();
 		values.alloc (numberColumns);
 		allocConversions();
@@ -322,151 +323,7 @@ int IscResultSet::getColumnCount()
 	return numberColumns;
 }
 
-int IscResultSet::getColumnType(int index, int &realSqlType)
-{
-	return sqlda->getColumnType (index, realSqlType);
-}
-
-int IscResultSet::getPrecision(int index)
-{
-	if (index < 1 || index > sqlda->getColumnCount())
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->getPrecision (index);
-}
-
-int IscResultSet::getScale(int index)
-{
-	if (index < 1 || index > sqlda->getColumnCount())
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return -sqlda->getScale (index);
-}
-
-bool IscResultSet::isNullable(int index)
-{
-	if (index < 1 || index > sqlda->getColumnCount())
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->isNullable (index);
-}
-
-int IscResultSet::getColumnDisplaySize(int index)
-{
-	if (index < 1 || index > sqlda->getColumnCount())
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->getColumnDisplaySize(index);
-}
-
-const char* IscResultSet::getColumnLabel(int index)
-{
-	if (index < 1 || index > sqlda->getColumnCount())
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->getColumnName(index);
-}
-
-const char* IscResultSet::getSqlTypeName(int index)
-{
-	return sqlda->getColumnTypeName(index);
-}
-
-const char* IscResultSet::getColumnName(int index)
-{
-	return sqlda->getColumnName(index);
-}
-
-const char* IscResultSet::getTableName(int index)
-{
-	return sqlda->getTableName(index);
-}
-
-const char* IscResultSet::getColumnTypeName(int index)
-{
-	return sqlda->getColumnTypeName(index);
-}
-
-bool IscResultSet::isSigned(int index)
-{
-	return true;
-}
-
-bool IscResultSet::isReadOnly(int index)
-{
-	return false;
-}
-
-bool IscResultSet::isWritable(int index)
-{
-	return true;
-}
-
-bool IscResultSet::isDefinitelyWritable(int index)
-{
-	return false;
-}
-
-bool IscResultSet::isCurrency(int index)
-{
-	return false;
-}
-
-bool IscResultSet::isCaseSensitive(int index)
-{
-	return true;
-}
-
-bool IscResultSet::isAutoIncrement(int index)
-{
-	return false;
-}
-
-bool IscResultSet::isSearchable(int index)
-{
-	int realSqlType;
-	int type = sqlda->getColumnType (index, realSqlType);
-
-	return type != JDBC_LONGVARCHAR && type != JDBC_LONGVARBINARY;
-}
-
-int IscResultSet::isBlobOrArray(int index)
-{
-	return sqlda->isBlobOrArray(index);
-}
-
-const char* IscResultSet::getSchemaName(int index)
-{
-	if (index < 1 || index > sqlda->getColumnCount())
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->getOwnerName (index);
-}
-
-const char* IscResultSet::getCatalogName(int index)
-{
-	return "";	
-}
-
-void IscResultSet::getSqlData(int index, char *& ptData, short *& ptIndData, Blob *& ptDataBlob)
-{
-	sqlda->getSqlData(index, ptData, ptIndData);
-
-	int isRet = sqlda->isBlobOrArray(index);
-
-	if ( ptDataBlob )
-	{
-		delete (BinaryBlob *)ptDataBlob;
-		ptDataBlob = NULL;
-	}
-	if ( isRet )
-	{
-		if ( isRet == SQL_BLOB )
-		{
-			IscBlob * pt = new IscBlob;
-			pt->setType(sqlda->getSubType(index));
-			ptDataBlob = pt;
-		}
-		else // if ( isRet == SQL_ARRAY )
-			ptDataBlob = new IscArray;
-	}
-}
-
-///////////////////////////////////////
+// Used class Value
 void IscResultSet::allocConversions()
 {
 	conversions = new char* [numberColumns];

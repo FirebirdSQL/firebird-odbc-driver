@@ -31,6 +31,7 @@
 #include "DateTime.h"	// Added by ClassView
 #include "SqlTime.h"
 #include "TimeStamp.h"	// Added by ClassView
+#include "IscStatementMetaData.h"
 #include "Sqlda.h"
 
 namespace IscDbcLibrary {
@@ -40,7 +41,7 @@ class IscDatabaseMetaData;
 
 enum enStatysActivePositionRow { enSUCCESS, enUNKNOWN, enINSERT_ROW, enAFTER_LAST, enBEFORE_FIRST };
 
-class IscResultSet : public ResultSet, public StatementMetaData
+class IscResultSet : public ResultSet, public IscStatementMetaData
 {
 public:
 	void allocConversions();
@@ -56,33 +57,7 @@ public:
 	virtual int			release();
 	virtual void		addRef();
 	virtual bool		wasNull();
-
-//public StatementMetaData
 	virtual int			getColumnCount();
-	virtual int			getColumnType (int index, int &realSqlType);
-	virtual int			getPrecision(int index);
-	virtual int			getScale(int index);
-	virtual bool		isNullable (int index);
-	virtual int			getColumnDisplaySize(int index);
-	virtual const char* getColumnLabel(int index);
-	virtual const char* getSqlTypeName(int index);
-	virtual const char* getColumnName(int index);
-	virtual const char* getTableName(int index);
-	virtual const char* getColumnTypeName(int index);
-	virtual bool		isSigned (int index);
-	virtual bool		isReadOnly (int index);
-	virtual bool		isWritable (int index);
-	virtual bool		isDefinitelyWritable (int index);
-	virtual bool		isCurrency (int index);
-	virtual bool		isCaseSensitive (int index);
-	virtual bool		isAutoIncrement (int index);
-	virtual bool		isSearchable (int index);
-	virtual int			isBlobOrArray(int index);
-	virtual const char*	getSchemaName (int index);
-	virtual const char*	getCatalogName (int index);
-
-	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData, Blob *& ptDataBlob);
-// end public StatementMetaData
 
 	void		deleteBlobs();
 	void		reset();
@@ -196,7 +171,6 @@ public:
 	bool			valueWasNull;
 	LinkedList		blobs;
 	LinkedList		clobs;
-	Sqlda			*sqlda;
 	IscStatement	*statement;
 	int				activePosRowInSet;
 	long			sqldataOffsetPtr;
