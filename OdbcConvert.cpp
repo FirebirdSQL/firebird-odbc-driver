@@ -531,6 +531,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 				return &OdbcConvert::convBinaryToBlob;
 			return &OdbcConvert::convBlobToBlob;
 		case SQL_C_CHAR:
+			if ( to->isIndicatorSqlDa && to->isBlobOrArray )
+				return &OdbcConvert::convBinaryToBlob;
 			return &OdbcConvert::convBlobToString;
 		default:
 			return &OdbcConvert::notYetImplemented;
@@ -571,7 +573,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 					return &OdbcConvert::convVarStringToString;
 			case SQL_C_BINARY:
 				if ( from->isIndicatorSqlDa && from->dataBlobPtr && from->dataBlobPtr->isArray() )
-					return &OdbcConvert::convBlobToString;
+					return &OdbcConvert::convBlobToBlob;
 				return &OdbcConvert::convVarStringToString;
 			default:
 				return &OdbcConvert::notYetImplemented;

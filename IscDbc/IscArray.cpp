@@ -280,7 +280,8 @@ void IscArray::init()
 	enType = enTypeArray;
 
 	statement = NULL;
-	memset ( &arrayId, ~0, sizeof(ISC_QUAD) );
+	memset ( &arrayTempId, ~0, sizeof ( ISC_QUAD ) );
+	arrayId = &arrayTempId;
 	clearData = false;
 	fetched = false;
 	fetchedBinary = false;
@@ -311,7 +312,7 @@ void IscArray::detach(CAttrArray * arr)
 
 void IscArray::bind(IscStatement *stmt, XSQLVAR *var)
 {
-	if ( !memcmp(&arrayId,&*(ISC_QUAD*) var->sqldata,sizeof(arrayId)) )
+	if ( !memcmp( arrayId, (ISC_QUAD*)var->sqldata, sizeof ( ISC_QUAD ) ) )
 		return;
 
 	clear();
@@ -319,7 +320,7 @@ void IscArray::bind(IscStatement *stmt, XSQLVAR *var)
 
 	clearData = true;
 	statement = stmt;
-	arrayId = *(ISC_QUAD*)var->sqldata;
+	arrayId = (ISC_QUAD*)var->sqldata;
 	fetched = false;
 	fetchedBinary = false;
 	offset = 0;
@@ -334,7 +335,7 @@ void IscArray::bind(Statement *stmt, char * sqldata)
 	clear();
 	clearData = true;
 
-	arrayId = *(ISC_QUAD*)sqldata;
+	arrayId = (ISC_QUAD*)sqldata;
 	fetched = false;
 	fetchedBinary = false;
 	offset = 0;
@@ -362,7 +363,7 @@ void IscArray::getBytesFromArray()
 	long lenbuf = arrBufDataSize;
 
 	int ret = connection->GDS->_array_get_slice(statusVector, &connection->databaseHandle, &transactionHandle,
-		&arrayId, &arrDesc, arrBufData, &lenbuf);
+		arrayId, &arrDesc, arrBufData, &lenbuf);
 
 	if ( ret )
 		THROW_ISC_EXCEPTION (connection, statusVector);
@@ -488,12 +489,12 @@ void IscArray::writeBlob(char * sqldata)
 	CFbDll * GDS = connection->GDS;
 	void *transactionHandle = connection->startTransaction();
 
-	arrayId = *(ISC_QUAD*)sqldata;
-	memset( &arrayId, 0, sizeof(arrayId) );
+	arrayId = (ISC_QUAD*)sqldata;
+	memset( arrayId, 0, sizeof ( ISC_QUAD ) );
 
 	long len = getSegmentLength(0);
 	GDS->_array_put_slice ( statusVector, &connection->databaseHandle, &transactionHandle,
-			&arrayId, &arrDesc, (char*) Stream::getSegment(0), &len );
+			arrayId, &arrDesc, (char*) Stream::getSegment(0), &len );
 	if ( statusVector [1] )
 		THROW_ISC_EXCEPTION (connection, statusVector);
 }
@@ -505,11 +506,11 @@ void IscArray::writeBlob(char * sqldata, char *data, long length)
 	CFbDll * GDS = connection->GDS;
 	void *transactionHandle = connection->startTransaction();
 
-	arrayId = *(ISC_QUAD*)sqldata;
-	memset(&arrayId,0,sizeof(arrayId));
+	arrayId = (ISC_QUAD*)sqldata;
+	memset( arrayId, 0, sizeof ( ISC_QUAD ) );
 
 	GDS->_array_put_slice ( statusVector, &connection->databaseHandle, &transactionHandle,
-		&arrayId, &arrDesc, data, &length );
+		arrayId, &arrDesc, data, &length );
 	if ( statusVector [1] )
 		THROW_ISC_EXCEPTION (connection, statusVector);
 }
@@ -673,16 +674,16 @@ void IscArray::writeStringHexToBlob(char * sqldata, char *data, long length)
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 	void *transactionHandle = connection->startTransaction();
-	ISC_QUAD &arrayId = *(ISC_QUAD*)sqldata;
+	ISC_QUAD *arrayId = (ISC_QUAD*)sqldata;
 
-	memset(&arrayId,0,sizeof(arrayId));
+	memset( arrayId, 0, sizeof ( ISC_QUAD ) );
 
 	convStringToArray ( data, length );
 
 	long lenbuf = arrBufDataSize;
 
 	GDS->_array_put_slice ( statusVector, &connection->databaseHandle, &transactionHandle,
-		&arrayId, &arrDesc, arrBufData, &lenbuf );
+		arrayId, &arrDesc, arrBufData, &lenbuf );
 	if ( statusVector [1] )
 		THROW_ISC_EXCEPTION (connection, statusVector);
 }
@@ -715,10 +716,10 @@ void IscArray::writeArray(Value * value)
 	void *transactionHandle = connection->startTransaction();
 	long lenbuf = arrBufDataSize;
 
-	memset(&arrayId,0,sizeof(arrayId));
+	memset( arrayId, 0, sizeof ( ISC_QUAD ));
 
 	int ret = connection->GDS->_array_put_slice(statusVector, &connection->databaseHandle, &transactionHandle,
-		&arrayId, &arrDesc, arrBufData, &lenbuf);
+		arrayId, &arrDesc, arrBufData, &lenbuf);
 	if (ret || lenbuf != arrBufDataSize)
 		THROW_ISC_EXCEPTION (connection, statusVector);
 }

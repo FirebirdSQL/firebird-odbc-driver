@@ -1095,7 +1095,7 @@ void Sqlda::setArray(XSQLVAR * var, Value * value, IscStatement *stmt)
 	
 	IscArray arr(stmt,var);
 	arr.writeArray(value);
-	*(ISC_QUAD*)var->sqldata=arr.arrayId;
+	*(ISC_QUAD*)var->sqldata = *arr.arrayId;
 }
 
 int Sqlda::findColumn(const char * columnName)

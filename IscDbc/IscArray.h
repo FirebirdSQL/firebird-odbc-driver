@@ -88,7 +88,8 @@ public:
 	~IscArray();
 
 	IscStatement	*statement;
-	ISC_QUAD		arrayId;
+	ISC_QUAD		arrayTempId;
+	ISC_QUAD		*arrayId;
 	bool			clearData;
 	bool			fetched;
 	bool			fetchedBinary;
