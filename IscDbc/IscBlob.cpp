@@ -50,12 +50,14 @@ IscBlob::IscBlob()
 	directBlobHandle = NULL;
 	fetched = false;
 	directBlob = false;
+	offset = 0;
 
 	enType = enTypeBlob;
 }
 
 IscBlob::IscBlob(IscConnection *connect, XSQLVAR *var)
 {
+	directBlob = false;
 	bind(connect, (char*)var->sqldata);
 	setType(var->sqlsubtype);
 }
@@ -79,6 +81,7 @@ void IscBlob::bind(Connection *connect, char * sqldata)
 	connection = (IscConnection *) connect;
 	blobId = *(ISC_QUAD*) sqldata;
 	fetched = false;
+	offset = 0;
 }
 
 void IscBlob::attach(char * pointBlob, bool bFetched, bool clear)
@@ -89,6 +92,7 @@ void IscBlob::attach(char * pointBlob, bool bFetched, bool clear)
 	memcpy(&blobId,&ptBlob->blobId, sizeof(blobId));
 	fetched = bFetched;
 	Stream::attach(*((Stream *)((BinaryBlob*)ptBlob)),clear);
+	offset = 0;
 }
 
 int IscBlob::length()
@@ -308,6 +312,7 @@ void IscBlob::directOpenBlob( char * sqldata )
 	else
 		directLength = 0;
 	directBlob = true;
+	offset = 0;
 }
 
 bool IscBlob::directFetchBlob( char * bufData, int lenData, int &lenRead )
@@ -343,6 +348,7 @@ bool IscBlob::directFetchBlob( char * bufData, int lenData, int &lenRead )
 		}
 
 		lenRead = data - bufData;
+		offset += lenRead;
 	}
 	return bEndData;
 }
@@ -387,6 +393,7 @@ bool IscBlob::directGetSegmentToHexStr( char * bufData, int lenData, int &lenRea
 		}
 
 		lenRead = data - bufData;
+		offset += lenRead;
 	}
 	return bEndData;
 }

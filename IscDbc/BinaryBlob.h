@@ -54,6 +54,7 @@ public:
 	virtual bool  directGetSegmentToHexStr( char * bufData, int lenData, int &lenRead ) { return false; }
 	virtual void  directWriteBlob( char *data, long length ) {};
 	virtual void  directCloseBlob() {};
+	virtual int	  getOffset() { return offset; }
 	void putSegment (int length, const char *data, bool copyFlag);
 	void putLongSegment(int length, const char * data);
 	int length();

@@ -290,6 +290,7 @@ void IscArray::attach(CAttrArray * arr, bool fetchBinary, bool bClear)
 {
 	memcpy ( (CAttrArray *)this, arr, sizeof(*(CAttrArray *)this) );
 	fetchedBinary = fetchBinary;
+	offset = 0;
 	clearData = bClear;
 }
 
@@ -320,6 +321,7 @@ void IscArray::bind(IscConnection *connect,XSQLVAR *var)
 	arrayId = *(ISC_QUAD*)var->sqldata;
 	fetched = false;
 	fetchedBinary = false;
+	offset = 0;
 	enType = enTypeArray;
 
 	loadAttributes ( connection, var->relname, var->sqlname, var->sqlsubtype );
@@ -334,6 +336,7 @@ void IscArray::bind(Connection *connect, char * sqldata)
 	arrayId = *(ISC_QUAD*)sqldata;
 	fetched = false;
 	fetchedBinary = false;
+	offset = 0;
 }
 
 void IscArray::removeBufData()
@@ -371,6 +374,7 @@ void IscArray::getBinary(long pos, long length, void * address)
 		getBytesFromArray();
 
 	memcpy(address, (char*)arrBufData+pos, length);
+	offset += length;
 }
 
 int IscArray::getLength()

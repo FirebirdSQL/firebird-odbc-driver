@@ -1461,7 +1461,6 @@ RETCODE OdbcStatement::prepareGetData(int column, DescRecord *recordARD)
 	}
 
 	recordARD->isPrepared = true;
-	recordIRD->currentFetched = 0;
 	(*listBindGetData)(column) = CBindColumn(column,recordIRD,recordARD);
 
 	return SQL_SUCCESS;

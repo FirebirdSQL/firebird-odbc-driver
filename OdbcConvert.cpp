@@ -1574,15 +1574,20 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 
 	if ( blob )
 	{
-		if ( from->currentFetched != parentStmt->getCurrentFetched() || !from->dataOffset )
+		bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
+
+		if ( !fetched || !from->dataOffset )
 		{ // attach new blob
 			from->dataOffset = 0;
-			if ( parentStmt->isStaticCursor() )
-				blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
-			else if ( blob->isArray() )
-				blob->bind ( parentStmt->connection->connection, ptBlob );
-			else
-				blob->directOpenBlob ( ptBlob );
+			if ( !(fetched && !blob->getOffset()) )
+			{
+				if ( parentStmt->isStaticCursor() )
+					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
+				else if ( blob->isArray() )
+					blob->bind ( parentStmt->connection->connection, ptBlob );
+				else
+					blob->directOpenBlob ( ptBlob );
+			}
 			from->currentFetched = parentStmt->getCurrentFetched();
 		}
 
@@ -1656,16 +1661,20 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 
 	if ( blob )
 	{
-		if ( from->currentFetched != parentStmt->getCurrentFetched() || !from->dataOffset )
+		bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
+
+		if ( !fetched || !from->dataOffset )
 		{ // attach new blob
 			from->dataOffset = 0;
-			if ( parentStmt->isStaticCursor() )
-				blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
-			else if ( blob->isArray() )
-				blob->bind ( parentStmt->connection->connection, ptBlob );
-			else
-				blob->directOpenBlob ( ptBlob );
-
+			if ( !(fetched && !blob->getOffset()) )
+			{
+				if ( parentStmt->isStaticCursor() )
+					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
+				else if ( blob->isArray() )
+					blob->bind ( parentStmt->connection->connection, ptBlob );
+				else
+					blob->directOpenBlob ( ptBlob );
+			}
 			from->currentFetched = parentStmt->getCurrentFetched();
 		}
 
@@ -1726,16 +1735,20 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 
 	if ( blob )
 	{
-		if ( from->currentFetched != parentStmt->getCurrentFetched() || !from->dataOffset )
+		bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
+
+		if ( !fetched || !from->dataOffset )
 		{ // attach new blob
 			from->dataOffset = 0;
-			if ( parentStmt->isStaticCursor() )
-				blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
-			else if ( blob->isArray() )
-				blob->bind ( parentStmt->connection->connection, ptBlob );
-			else
-				blob->directOpenBlob ( ptBlob );
-
+			if ( !(fetched && !blob->getOffset()) )
+			{
+				if ( parentStmt->isStaticCursor() )
+					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
+				else if ( blob->isArray() )
+					blob->bind ( parentStmt->connection->connection, ptBlob );
+				else
+					blob->directOpenBlob ( ptBlob );
+			}
 			from->currentFetched = parentStmt->getCurrentFetched();
 		}
 
