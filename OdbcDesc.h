@@ -28,6 +28,7 @@
 #include "IscDbc/Connection.h"
 #include "OdbcObject.h"
 #include "IscDbc/Mlist.h"
+#include "DescRecord.h"
 
 namespace OdbcJdbcLibrary {
 
@@ -134,6 +135,42 @@ public:
 
 	bool				bDefined;
 };
+
+inline
+DescRecord* OdbcDesc::getDescRecord(int number, bool bCashe)
+{
+	if (number >= recordSlots)
+	{
+		int oldSlots = recordSlots;
+		DescRecord **oldRecords = records;
+		recordSlots = number + (bCashe ? 20 : 1);
+		records = new DescRecord* [recordSlots];
+		memset (records, 0, sizeof (DescRecord*) * recordSlots);
+		if (oldSlots)
+		{
+			memcpy (records, oldRecords, sizeof (DescRecord*) * oldSlots);
+			delete [] oldRecords;
+		}
+	}
+
+	if (number > headCount)
+		headCount = number;
+
+	DescRecord * &record = records[number];
+
+	if (record == NULL)
+	{
+		record = new DescRecord;
+		switch(headType)
+		{
+		case odtImplementationRow:
+		case odtImplementationParameter:
+			record->isIndicatorSqlDa = true;
+		}
+	}
+
+	return record;		
+}
 
 }; // end namespace OdbcJdbcLibrary
 
