@@ -25,7 +25,11 @@
 #if !defined(_ODBCDESC_H_)
 #define _ODBCDESC_H_
 
+#include "IscDbc/Connection.h"
 #include "OdbcObject.h"
+#include "Mlist.h"
+
+namespace OdbcJdbcLibrary {
 
 enum OdbcDescType {
 	odtApplication,
@@ -37,12 +41,9 @@ enum OdbcDescType {
 	};
 
 class OdbcConnection;
-class StatementMetaData;
 class DescRecord;
 class OdbcConvert;
 class OdbcStatement;
-
-#include "Mlist.h"
 
 class CBindColumn
 {
@@ -148,5 +149,7 @@ public:
 	OdbcConvert			*convert;
 	ListBindColumn		*listBind;
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(_ODBCDESC_H_)

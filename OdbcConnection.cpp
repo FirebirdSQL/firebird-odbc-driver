@@ -100,11 +100,13 @@
 #define SQL_FBGETWALDB			181
 #define SQL_FBGETSTATINFODB		182
 
-typedef Connection* (*ConnectFn)();
-
 #define ODBC_DRIVER_VERSION	"03.00"
 //#define ODBC_DRIVER_VERSION	SQL_SPEC_STRING
 #define ODBC_VERSION_NUMBER	"03.00.0000"
+
+namespace OdbcJdbcLibrary {
+
+typedef Connection* (*ConnectFn)();
 
 static const int supportedFunctions [] = {
             // Deprecated but important stuff
@@ -1781,3 +1783,5 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 
 	return sqlSuccess();
 }
+
+}; // end namespace OdbcJdbcLibrary

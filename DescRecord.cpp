@@ -27,6 +27,8 @@
 #include "OdbcDesc.h"
 #include "DescRecord.h"
 
+namespace OdbcJdbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -147,3 +149,5 @@ void DescRecord::initZeroColumn()
 	unSigned = SQL_FALSE;
 	updaTable = SQL_ATTR_READONLY;
 }
+
+}; // end namespace OdbcJdbcLibrary

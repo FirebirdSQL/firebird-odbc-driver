@@ -27,6 +27,8 @@
 
 #include "OdbcObject.h"
 
+namespace OdbcJdbcLibrary {
+
 class DescRecord;
 class OdbcConvert;
 class OdbcStatement;
@@ -168,5 +170,7 @@ public:
 	int convVarStringToBigint(DescRecord * from, DescRecord * to);
 	int convVarStringToString(DescRecord * from, DescRecord * to);
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(_OdbcConvert__INCLUDED_)

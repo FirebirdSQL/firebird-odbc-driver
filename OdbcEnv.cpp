@@ -42,6 +42,9 @@
 #ifndef _WIN32
 #include <dlfcn.h>
 #endif
+
+namespace OdbcJdbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -465,3 +468,5 @@ BOOL OdbcEnv::getDataSources(UWORD wConfigMode)
 	return TRUE;
 }
 #endif
+
+}; // end namespace OdbcJdbcLibrary

@@ -166,6 +166,8 @@ BOOL APIENTRY DllMain(  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID )
 }
 #endif
 
+using namespace OdbcJdbcLibrary;
+
 static RETCODE __SQLAllocHandle  (SQLSMALLINT arg0, SQLHANDLE arg1, SQLHANDLE * arg2)
 {
 	TRACE ("__SQLAllocHandle");

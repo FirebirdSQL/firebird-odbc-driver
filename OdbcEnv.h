@@ -28,6 +28,11 @@
 #include "OdbcObject.h"
 #include "IscDbc/Mutex.h"
 
+namespace OdbcJdbcLibrary {
+
+using namespace classMutex;
+using namespace IscDbcLibrary;
+
 class OdbcConnection;
 
 class OdbcEnv : public OdbcObject  
@@ -92,5 +97,7 @@ public:
 			env->UnLockEnv();
 	}
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(_ODBCENV_H_)

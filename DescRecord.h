@@ -27,7 +27,10 @@
 #define _DESCRECORD_H_
 
 #include "OdbcConvert.h"
-class Blob;
+
+namespace OdbcJdbcLibrary {
+
+using namespace IscDbcLibrary;
 
 class DescRecord
 {
@@ -88,5 +91,7 @@ public:
 
 	ADRESS_FUNCTION fnConv;
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(_DESCRECORD_H_)

@@ -43,10 +43,15 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "OdbcDateTime.h"
-#include "IscDbc/Connection.h"
 #include <memory.h>
+#include "IscDbc/Connection.h"
+#include "IscDbc/SQLException.h"
 #include "OdbcStatement.h"
+#include "OdbcDateTime.h"
+
+namespace OdbcJdbcLibrary {
+
+using namespace IscDbcLibrary;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -314,3 +319,4 @@ signed long OdbcDateTime::yday (struct tm	*times)
 	return day - 2;
 }
 
+}; // end namespace OdbcJdbcLibrary

@@ -7,6 +7,8 @@
 #include <pthread.h>
 #endif
 
+namespace OdbcJdbcLibrary {
+
 class MutexEnvThread
 {
 public:
@@ -62,6 +64,8 @@ public:
 #endif 
 	}
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // #if(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_ENV || DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_CONNECT)
 

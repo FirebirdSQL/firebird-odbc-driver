@@ -33,13 +33,15 @@
 
 #include "OdbcObject.h"
 
+namespace OdbcJdbcLibrary {
+
+using namespace classJString;
+using namespace IscDbcLibrary;
+
 class OdbcConnection;
 class OdbcDesc;
 class DescRecord;
-class ResultSet;
-class StatementMetaData;
-class PreparedStatement;
-class CallableStatement;
+class OdbcStatement;
 
 enum enFetchType { NoneFetch, Fetch, ExtendedFetch, FetchScroll };
 
@@ -157,5 +159,7 @@ public:
 	int					maxRows;
 	int					maxLength;
 };
+
+}; // end namespace OdbcJdbcLibrary
 
 #endif // !defined(_ODBCSTATEMENT_H_)
