@@ -219,7 +219,7 @@ void* IscConnection::startTransaction()
         case 0x00000002L:
         default:
             // SQL_TXN_READ_COMMITTED:
-			if ( TRA_nw )
+			if ( transactionExtInit & TRA_nw )
 			{
 				iscTpb[3] = isc_tpb_no_rec_version;
 				count = 4;
