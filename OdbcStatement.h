@@ -111,7 +111,9 @@ public:
 
 	OdbcConnection		*connection;
 	OdbcDesc			*applicationRowDescriptor;
+	OdbcDesc			*saveApplicationRowDescriptor;
 	OdbcDesc			*applicationParamDescriptor;
+	OdbcDesc			*saveApplicationParamDescriptor;
 	OdbcDesc			*implementationRowDescriptor;
 	OdbcDesc			*implementationParamDescriptor;
 	OdbcDesc			*implementationGetDataDescriptor;

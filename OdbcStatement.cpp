@@ -213,8 +213,10 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	maxLength = 0;
 	applicationRowDescriptor = connection->allocDescriptor (odtApplicationRow);
 	applicationRowDescriptor->setParent(this);
+	saveApplicationRowDescriptor = applicationRowDescriptor;
 	applicationParamDescriptor = connection->allocDescriptor (odtApplicationParameter);
 	applicationParamDescriptor->setParent(this);
+	saveApplicationParamDescriptor = applicationParamDescriptor;
 	implementationRowDescriptor = connection->allocDescriptor (odtImplementationRow);
 	implementationRowDescriptor->setParent(this);
 	implementationParamDescriptor = connection->allocDescriptor (odtImplementationParameter);
@@ -3078,6 +3080,29 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 				TRACE02(SQL_ATTR_NOSCAN,(int) ptr);
 		        break;
 
+			case SQL_ATTR_APP_ROW_DESC:
+				applicationRowDescriptor = (OdbcDesc *)ptr;
+				if ( !applicationRowDescriptor )
+					applicationRowDescriptor = saveApplicationRowDescriptor;
+				if ( applicationRowDescriptor->headAllocType == SQL_DESC_ALLOC_AUTO )
+				{
+					applicationRowDescriptor = saveApplicationRowDescriptor;
+					return sqlReturn (SQL_ERROR, "HY017", "Invalid use of an automatically allocated descriptor handle");
+				}
+				TRACE02(SQL_ATTR_APP_ROW_DESC,(int) applicationRowDescriptor);
+				break;
+
+			case SQL_ATTR_APP_PARAM_DESC:
+				applicationParamDescriptor = (OdbcDesc *)ptr;
+				if ( !applicationParamDescriptor )
+					applicationParamDescriptor = saveApplicationParamDescriptor;
+				if ( applicationParamDescriptor->headAllocType == SQL_DESC_ALLOC_AUTO )
+				{
+					applicationParamDescriptor = saveApplicationParamDescriptor;
+					return sqlReturn (SQL_ERROR, "HY017", "Invalid use of an automatically allocated descriptor handle");
+				}
+				TRACE02(SQL_ATTR_APP_PARAM_DESC,(int) applicationParamDescriptor);
+				break;
 			/***
 			case SQL_ATTR_ASYNC_ENABLE				4
 			case SQL_ATTR_CONCURRENCY				SQL_CONCURRENCY	7
