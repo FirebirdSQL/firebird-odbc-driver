@@ -281,6 +281,8 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	accessMode			= SQL_MODE_READ_WRITE;
 	transactionIsolation = SQL_TXN_READ_COMMITTED; //suggested by CGA.
 	optTpb				= 0;
+	dialect3			= true;
+	quotedIdentifiers	= true;
 }
 
 OdbcConnection::~OdbcConnection()
@@ -1649,17 +1651,20 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 			properties->putValue ("role", role);
 		if (charset)
 			properties->putValue ("charset", charset);
+		if (client)
+			properties->putValue ("client", client);
+
+		properties->putValue ("dialect", dialect3 ? "3" : "1");
+
+		properties->putValue ("quoted", quotedIdentifiers ? "Y" : "N");
+
 		connection->openDatabase (databaseName, properties);
 		delete properties;
-		DatabaseMetaData *metaData = connection->getMetaData();
-		const char *quoteString = metaData->getIdentifierQuoteString();
-		quotedIdentifiers = quoteString [0] == '"';
 
 		// Next two lines added by CA
 		connection->setAutoCommit( autoCommit );
 		connection->setTransactionIsolation( transactionIsolation );
 		connection->setExtInitTransaction( optTpb );
-
 	}
 	catch (SQLException& exception)
 	{
@@ -1716,10 +1721,13 @@ void OdbcConnection::expandConnectParameters()
 {
 	if (!dsn.IsEmpty())
 	{
-		const char * optionsTpb;
+		JString options;
 
 		if (databaseName.IsEmpty())
 			databaseName = readAttribute (SETUP_DBNAME);
+
+		if (client.IsEmpty())
+			client = readAttribute (SETUP_CLIENT);
 
 		if (account.IsEmpty())
 			account = readAttribute (SETUP_USER);
@@ -1737,15 +1745,25 @@ void OdbcConnection::expandConnectParameters()
 			charset = readAttribute(SETUP_CHARSET);
 
 		optTpb = 0;
-		optionsTpb = (const char *)readAttribute(SETUP_READONLY_TPB);
+		options = readAttribute(SETUP_READONLY_TPB);
 
-		if(optionsTpb && *optionsTpb == 'Y')
+		if(*(const char *)options == 'Y')
 			optTpb |=TRA_ro;
 
-		optionsTpb = (const char *)readAttribute(SETUP_NOWAIT_TPB);
+		options = readAttribute(SETUP_NOWAIT_TPB);
 
-		if(optionsTpb && *optionsTpb == 'Y')
+		if(*(const char *)options == 'Y')
 			optTpb |=TRA_nw;
+
+		options = readAttribute(SETUP_DIALECT);
+
+		if(*(const char *)options == '1')
+			dialect3 = false;
+
+		options = readAttribute(SETUP_QUOTED);
+
+		if(*(const char *)options == 'N')
+			quotedIdentifiers = false;
 	}
 
 	if (jdbcDriver.IsEmpty())

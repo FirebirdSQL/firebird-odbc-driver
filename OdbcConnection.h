@@ -78,6 +78,7 @@ public:
 	int			connectionTimeout;
 	JString		dsn;
 	JString		databaseName;
+	JString		client;
 	JString		account;
 	JString		password;
 	JString		role;
@@ -85,6 +86,7 @@ public:
 	JString		jdbcDriver;
 	int			optTpb;
 	bool		quotedIdentifiers;
+	bool		dialect3;
 	SQLUINTEGER	asyncEnabled;
 	bool		autoCommit;
 	int			accessMode;

@@ -34,6 +34,7 @@
 #define DRIVER_VERSION		"01.00.0000"
 #define SETUP_DSN			"DSN"
 #define SETUP_DBNAME		"Dbname"
+#define SETUP_CLIENT		"Client"
 #define SETUP_DRIVER		"Driver"
 #define SETUP_USER			"User"
 #define SETUP_PASSWORD		"Password"
@@ -42,4 +43,6 @@
 #define SETUP_JDBC_DRIVER	"JdbcDriver"
 #define SETUP_READONLY_TPB	"ReadOnly"
 #define SETUP_NOWAIT_TPB	"NoWait"
+#define SETUP_DIALECT		"Dialect"
+#define SETUP_QUOTED		"QuotedIdentifier"
 #endif
