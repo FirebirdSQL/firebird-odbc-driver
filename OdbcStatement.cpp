@@ -606,12 +606,20 @@ RETCODE OdbcStatement::sqlFetch()
 
 	fetched = true;
 
-	if (eof || !resultSet->next())
+	try
 	{
-		eof = true;
-		if (implementationRowDescriptor->headRowsProcessedPtr)
-			*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
-		return SQL_NO_DATA;
+		if (eof || !resultSet->next())
+		{
+			eof = true;
+			if (implementationRowDescriptor->headRowsProcessedPtr)
+				*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
+			return SQL_NO_DATA;
+		}
+	}
+	catch (SQLException& exception)
+	{
+		postError ("HY000", exception);
+		return SQL_ERROR;
 	}
 
 	return returnData();
