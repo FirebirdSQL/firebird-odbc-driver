@@ -421,6 +421,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			return &OdbcConvert::convDateToTagDate;
 		case SQL_C_TYPE_TIMESTAMP:
 		case SQL_C_TIMESTAMP:
+			if ( to->isIndicatorSqlDa )
+				return &OdbcConvert::transferTagDateToDateTime;
 			return &OdbcConvert::convDateToTagTimestamp;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateToString;
@@ -452,6 +454,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			return &OdbcConvert::convTimeToTagTime;
 		case SQL_C_TYPE_TIMESTAMP:
 		case SQL_C_TIMESTAMP:
+			if ( to->isIndicatorSqlDa )
+				return &OdbcConvert::transferTagTimeToDateTime;
 			return &OdbcConvert::convTimeToTagTimestamp;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convTimeToString;
@@ -1294,6 +1298,25 @@ int OdbcConvert::transferTagDateToDate(DescRecord * from, DescRecord * to)
 	return SQL_SUCCESS;
 }
 
+// for use App to SqlDa
+int OdbcConvert::transferTagDateToDateTime(DescRecord * from, DescRecord * to)
+{
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL_SQLDA;
+
+	tagDATE_STRUCT * tagDt = (tagDATE_STRUCT*)getAdressBindDataFrom((char*)from->dataPtr);
+	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
+
+	long nday = encode_sql_date ( tagDt->day, tagDt->month, tagDt->year );
+
+	*(QUAD*)pointer = MAKEQUAD( nday, 0 );
+
+	return SQL_SUCCESS;
+}
+
+// for use App from SqlDa
 int OdbcConvert::convDateToTagTimestamp(DescRecord * from, DescRecord * to)
 {
 	tagTIMESTAMP_STRUCT * tagTs = (tagTIMESTAMP_STRUCT*)getAdressBindDataTo((char*)to->dataPtr);
@@ -1381,6 +1404,25 @@ int OdbcConvert::transferTagTimeToTime(DescRecord * from, DescRecord * to)
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
 	*(long*)pointer = encode_sql_time ( tagTm->hour, tagTm->minute, tagTm->second );
+
+	return SQL_SUCCESS;
+}
+
+// for use App to SqlDa
+int OdbcConvert::transferTagTimeToDateTime(DescRecord * from, DescRecord * to)
+{
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL_SQLDA;
+
+	tagTIME_STRUCT * tagTm = (tagTIME_STRUCT*)getAdressBindDataFrom((char*)from->dataPtr);
+	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
+
+	long ntime = encode_sql_time ( tagTm->hour, tagTm->minute, tagTm->second );
+	long nday = encode_sql_date ( 1, 1, 100 ); // min validate date for server
+
+	*(QUAD*)pointer = MAKEQUAD( nday, ntime );
 
 	return SQL_SUCCESS;
 }

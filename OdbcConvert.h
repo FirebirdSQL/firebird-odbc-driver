@@ -171,6 +171,7 @@ public:
 	int convDateToString(DescRecord * from, DescRecord * to);
 
 	int transferTagDateToDate(DescRecord * from, DescRecord * to);
+	int transferTagDateToDateTime(DescRecord * from, DescRecord * to);
 
 // Time
 	int convTimeToLong(DescRecord * from, DescRecord * to);
@@ -182,6 +183,7 @@ public:
 	int convTimeToString(DescRecord * from, DescRecord * to);
 
 	int transferTagTimeToTime(DescRecord * from, DescRecord * to);
+	int transferTagTimeToDateTime(DescRecord * from, DescRecord * to);
 
 // DateTime
 	int convDateTimeToDouble(DescRecord * from, DescRecord * to);
