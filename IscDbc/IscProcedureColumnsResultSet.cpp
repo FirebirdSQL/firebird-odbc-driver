@@ -73,11 +73,6 @@ IscProcedureColumnsResultSet::IscProcedureColumnsResultSet(IscDatabaseMetaData *
 
 }
 
-IscProcedureColumnsResultSet::~IscProcedureColumnsResultSet()
-{
-
-}
-
 void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog, 
 													   const char * schemaPattern, 
 													   const char * procedureNamePattern, 

@@ -33,7 +33,6 @@ public:
 	void getIndexInfo(const char * catalog, const char * schemaPattern, const char * tableNamePattern, bool unique, bool approximate);
 	virtual bool next();
 	IscIndexInfoResultSet(IscDatabaseMetaData *metaData);
-	virtual ~IscIndexInfoResultSet();
 };
 
 #endif // !defined(_ISCINDEXINFORESULTSET_H_)

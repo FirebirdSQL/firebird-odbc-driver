@@ -33,7 +33,6 @@ public:
 	virtual bool next();
 	void getProcedures(const char * catalog, const char * schemaPattern, const char * procedureNamePattern);
 	IscProceduresResultSet(IscDatabaseMetaData *metaData);
-	virtual ~IscProceduresResultSet();
 
 };
 

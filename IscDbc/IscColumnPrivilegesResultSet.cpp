@@ -41,10 +41,6 @@ IscColumnPrivilegesResultSet::IscColumnPrivilegesResultSet(IscDatabaseMetaData *
 {
 }
 
-IscColumnPrivilegesResultSet::~IscColumnPrivilegesResultSet()
-{
-}
-
 void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * columnNamePattern)
 {
 	JString sql = "select NULL as table_cat,"

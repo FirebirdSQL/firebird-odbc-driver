@@ -69,11 +69,6 @@ IscColumnsResultSet::IscColumnsResultSet(IscDatabaseMetaData *metaData)
 
 }
 
-IscColumnsResultSet::~IscColumnsResultSet()
-{
-
-}
-
 void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern)
 {
 	JString sql = 

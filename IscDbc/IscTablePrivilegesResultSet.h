@@ -34,7 +34,6 @@ public:
     virtual bool next();
     void getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern);
     IscTablePrivilegesResultSet(IscDatabaseMetaData *metaData);
-    virtual ~IscTablePrivilegesResultSet();
 };
 
 #endif // !defined(_ISCTABLEPRIVILEGESRESULTSET_H_)

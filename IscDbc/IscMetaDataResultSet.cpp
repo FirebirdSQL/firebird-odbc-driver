@@ -50,7 +50,8 @@ IscMetaDataResultSet::IscMetaDataResultSet(IscDatabaseMetaData *meta) : IscResul
 
 IscMetaDataResultSet::~IscMetaDataResultSet()
 {
-
+	if ( statement )
+		statement->release();
 }
 
 void IscMetaDataResultSet::prepareStatement(const char * sql)

@@ -33,7 +33,6 @@ public:
 	virtual bool next();
 	void getColumnPrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * columnNamePattern);
 	IscColumnPrivilegesResultSet(IscDatabaseMetaData *metaData);
-	virtual ~IscColumnPrivilegesResultSet();
 };
 
 #endif // !defined(_IscColumnPrivilegesResultSet_H_)

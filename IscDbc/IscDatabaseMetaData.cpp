@@ -93,7 +93,6 @@ IscDatabaseMetaData::IscDatabaseMetaData(IscConnection *connect)
 
 IscDatabaseMetaData::~IscDatabaseMetaData()
 {
-
 }
 
 void IscDatabaseMetaData::LockThread()

@@ -44,10 +44,6 @@ IscTablesResultSet::IscTablesResultSet(IscDatabaseMetaData *metaData)
 {
 }
 
-IscTablesResultSet::~IscTablesResultSet()
-{
-}
-
 void IscTablesResultSet::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char * * types)
 {
 	JString sql = "select NULL as table_cat,\n"

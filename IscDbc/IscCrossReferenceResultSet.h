@@ -35,7 +35,6 @@ public:
 	virtual bool next();
 	void getCrossReference(const char* primaryCatalog, const char* primarySchema, const char* primaryTable,const char* foreignCatalog, const char* foreignSchema, const char* foreignTable);
 	IscCrossReferenceResultSet(IscDatabaseMetaData *metaData);
-	virtual ~IscCrossReferenceResultSet();
 };
 
 #endif // !defined(_ISCCROSSREFERENCERESULTSET_H_)
