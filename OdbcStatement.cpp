@@ -145,6 +145,18 @@
 #define RESULTS(fn)		(resultSet) ? resultSet->fn : callableStatement->fn
 #define SKIP_WHITE(p)	while (charTable [*p] == WHITE) ++p
 
+#define SET_NULL_DATAOFFSET									\
+	if ( getDataBindings )									\
+	{														\
+		int i;												\
+		for( i = 1; i <= numberGetDataBindings; i++ )		\
+		{													\
+			struct Binding * binding = getDataBindings + i;	\
+			if ( binding )									\
+				binding->dataOffset = 0;					\
+		}													\
+	}														\
+
 void TraceOutput(char * msg,long val)
 {
 	char buf[80];
@@ -629,6 +641,7 @@ RETCODE OdbcStatement::sqlFetch()
 		enFetch = Fetch;
 
 	fetched = true;
+	SET_NULL_DATAOFFSET;
 
 	try
 	{
@@ -858,6 +871,7 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 		enFetch = FetchScroll;
 
 	fetched = true;
+	SET_NULL_DATAOFFSET;
 
 	if (!resultSet)
 		return sqlReturn (SQL_ERROR, "24000", "Invalid cursor state");
@@ -974,6 +988,7 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 		enFetch = ExtendedFetch;
 
 	fetched = true;
+	SET_NULL_DATAOFFSET;
 
 	try
 	{
@@ -1035,6 +1050,7 @@ RETCODE OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQLU
 		if( resultSet )
 			resultSet->setPosRowInSet(rowNumber);
 		fetched = true;
+		SET_NULL_DATAOFFSET;
 		break;
 	case SQL_REFRESH:
 		break;
@@ -1375,12 +1391,6 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 			{
 			const char *string = RESULTS (getString (column));
 			
-			if ( fetched == true )
-			{
-				fetched = false;
-				binding->dataOffset = 0;
-			}
-
 			int dataRemaining = strlen(string) - binding->dataOffset;
 
 			if (!dataRemaining && binding->dataOffset)
@@ -1499,12 +1509,6 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 			{
 			Blob* blob = RESULTS (getBlob(column));
 			
-			if ( fetched == true )
-			{
-				fetched = false;
-				binding->dataOffset = 0;
-			}
-
 			int dataRemaining = blob->length() - binding->dataOffset;
 
 			if (!dataRemaining && binding->dataOffset)
