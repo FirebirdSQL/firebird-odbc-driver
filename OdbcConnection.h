@@ -42,7 +42,7 @@ class OdbcConnection : public OdbcObject
 		DEF_DIALECT = 4,
 		DEF_QUOTED = 8,
 		DEF_SENSITIVE = 16,
-		DEF_AVTOQUOTED = 32
+		DEF_AUTOQUOTED = 32
 	};
 
 public:
@@ -98,7 +98,7 @@ public:
 	int			defOptions;
 	bool		quotedIdentifier;
 	bool		sensitiveIdentifier;
-	bool		avtoQuotedIdentifier;
+	bool		autoQuotedIdentifier;
 	bool		dialect3;
 	SQLUINTEGER	asyncEnabled;
 	bool		autoCommit;

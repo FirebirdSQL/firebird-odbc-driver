@@ -31,7 +31,7 @@ static const char *szHelpReadOnly = "Init transaction (default Write)";
 static const char *szHelpNoWait = "Init transaction (default Wait)";
 static const char *szHelpQuotedIdentifier = "Quoted identifier (default Yes)";
 static const char *szHelpSensitiveIdentifier = "Sensitive identifier (default No)";
-static const char *szHelpAvtoQuotedIdentifier = "On avto quoted identifier (default No)";
+static const char *szHelpAutoQuotedIdentifier = "On auto quoted identifier (default No)";
 
 int ODBCINSTGetProperties( HODBCINSTPROPERTY hLastProperty )
 { 
@@ -140,12 +140,12 @@ int ODBCINSTGetProperties( HODBCINSTPROPERTY hLastProperty )
     hLastProperty->pNext            = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
     hLastProperty                   = hLastProperty->pNext;
     memset( hLastProperty, 0, sizeof(ODBCINSTPROPERTY) );
-    hLastProperty->pszHelp	    = (char *)strdup( szHelpAvtoQuotedIdentifier );
+    hLastProperty->pszHelp	    = (char *)strdup( szHelpAutoQuotedIdentifier );
     hLastProperty->nPromptType      = ODBCINST_PROMPTTYPE_COMBOBOX;
     hLastProperty->bRefresh	    = TRUE;
     hLastProperty->aPromptData      = (char**)malloc( sizeof(aYesNo) );
     memcpy( hLastProperty->aPromptData, aYesNo, sizeof(aYesNo) );
-    strncpy( hLastProperty->szName, SETUP_AVTOQUOTED, INI_MAX_PROPERTY_NAME );
+    strncpy( hLastProperty->szName, SETUP_AUTOQUOTED, INI_MAX_PROPERTY_NAME );
     strcpy( hLastProperty->szValue, "No" );
 
     return 1;

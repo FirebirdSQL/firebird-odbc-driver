@@ -151,7 +151,7 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,145,143,67,9
     CONTROL         "sensitive identifier",IDC_CHECK_SENSITIVE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,145,154,74,9
-    CONTROL         "avtoquoted identifier",IDC_CHECK_AVTOQUOTED,"Button",
+    CONTROL         "autoquoted identifier",IDC_CHECK_AUTOQUOTED,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,145,165,77,9
     PUSHBUTTON      "Test connection",IDC_TEST_CONNECTION,172,108,58,14
     PUSHBUTTON      "Help",IDC_HELP_ODBC,27,183,50,14

@@ -266,12 +266,12 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	else
 		sensitiveIdentifier = false;
 
-	property = properties->findValue ("avtoQuoted", NULL);
+	property = properties->findValue ("autoQuoted", NULL);
 
 	if ( property && *property == 'Y')
-		avtoQuotedIdentifier = true;
+		autoQuotedIdentifier = true;
 	else
-		avtoQuotedIdentifier = false;
+		autoQuotedIdentifier = false;
 
 	checkAdmin();
 }

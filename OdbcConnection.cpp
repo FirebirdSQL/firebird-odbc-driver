@@ -295,7 +295,7 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	dialect3			= true;
 	quotedIdentifier	= true;
 	sensitiveIdentifier  = false;
-	avtoQuotedIdentifier = false;
+	autoQuotedIdentifier = false;
 }
 
 OdbcConnection::~OdbcConnection()
@@ -489,12 +489,12 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 
 			defOptions |= DEF_SENSITIVE;
 		}
-		else if ( !strncasecmp (name, SETUP_AVTOQUOTED, LEN_KEY(SETUP_AVTOQUOTED)) )
+		else if ( !strncasecmp (name, SETUP_AUTOQUOTED, LEN_KEY(SETUP_AUTOQUOTED)) )
 		{
 			if( *value == 'Y')
-				avtoQuotedIdentifier = true;
+				autoQuotedIdentifier = true;
 
-			defOptions |= DEF_AVTOQUOTED;
+			defOptions |= DEF_AUTOQUOTED;
 		}
 		else if (!strncasecmp (name, "ODBC", 4))
 			;
@@ -1483,7 +1483,7 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 
 		properties->putValue ("quoted", quotedIdentifier ? "Y" : "N");
 		properties->putValue ("sensitive", sensitiveIdentifier ? "Y" : "N");
-		properties->putValue ("avtoQuoted", avtoQuotedIdentifier ? "Y" : "N");
+		properties->putValue ("autoQuoted", autoQuotedIdentifier ? "Y" : "N");
 
 		connection->openDatabase (databaseName, properties);
 		properties->release();
@@ -1626,12 +1626,12 @@ void OdbcConnection::expandConnectParameters()
 				sensitiveIdentifier = true;
 		}
 
-		if ( !(defOptions & DEF_AVTOQUOTED) )
+		if ( !(defOptions & DEF_AUTOQUOTED) )
 		{
-			options = readAttribute(SETUP_AVTOQUOTED);
+			options = readAttribute(SETUP_AUTOQUOTED);
 
 			if(*(const char *)options == 'Y')
-				avtoQuotedIdentifier = true;
+				autoQuotedIdentifier = true;
 		}
 	}
 	else if (!filedsn.IsEmpty())
@@ -1710,12 +1710,12 @@ void OdbcConnection::expandConnectParameters()
 				sensitiveIdentifier = true;
 		}
 
-		if ( !(defOptions & DEF_AVTOQUOTED) )
+		if ( !(defOptions & DEF_AUTOQUOTED) )
 		{
-			options = readAttribute(SETUP_AVTOQUOTED);
+			options = readAttribute(SETUP_AUTOQUOTED);
 
 			if(*(const char *)options == 'Y')
-				avtoQuotedIdentifier = true;
+				autoQuotedIdentifier = true;
 		}
 
 		if (dsn.IsEmpty())
@@ -1744,7 +1744,7 @@ void OdbcConnection::saveConnectParameters()
 	writeAttributeFileDSN (SETUP_DIALECT, dialect3 ? "3" : "1");
 	writeAttributeFileDSN (SETUP_QUOTED, quotedIdentifier ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_SENSITIVE, sensitiveIdentifier ? "Y" : "N");
-	writeAttributeFileDSN (SETUP_AVTOQUOTED, avtoQuotedIdentifier ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_AUTOQUOTED, autoQuotedIdentifier ? "Y" : "N");
 
 	char buffer[256];
 	CSecurityPassword security;

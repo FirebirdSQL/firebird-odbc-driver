@@ -55,7 +55,7 @@ public:
 	BOOL	m_dialect3;
 	BOOL	m_quoted;
 	BOOL	m_sensitive;
-	BOOL	m_avtoQuoted;
+	BOOL	m_autoQuoted;
 
 public:
 	int DoModal();

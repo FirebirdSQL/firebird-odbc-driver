@@ -60,7 +60,7 @@ public:
 	JString		dialect;
 	JString		quoted;
 	JString		sensitive;
-	JString		avtoQuoted;
+	JString		autoQuoted;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

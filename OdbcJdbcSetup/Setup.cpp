@@ -431,7 +431,7 @@ void Setup::addDsn()
 		quoted = getAttribute (KEY_DSN_QUOTED);
 
 	sensitive = getAttribute ( SETUP_SENSITIVE );
-	avtoQuoted = getAttribute ( SETUP_AVTOQUOTED );
+	autoQuoted = getAttribute ( SETUP_AUTOQUOTED );
 
 	char chCheck = UPPER( *(const char*)readonlyTpb );
 	
@@ -458,10 +458,10 @@ void Setup::addDsn()
 	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
 		sensitive = "N";
 
-	chCheck = UPPER( *(const char*)avtoQuoted );
+	chCheck = UPPER( *(const char*)autoQuoted );
 	
 	if ( !IS_CHECK_YES(chCheck) && !IS_CHECK_NO(chCheck) )
-		avtoQuoted = "N";
+		autoQuoted = "N";
 
 	if ( hWnd || dsn.IsEmpty() )
 		configureDialog();
@@ -552,10 +552,10 @@ bool Setup::configureDialog()
 	else 
 		dialog.m_sensitive = FALSE;
 
-	if ( IS_CHECK_YES ( *(const char*)avtoQuoted ) )
-		dialog.m_avtoQuoted = TRUE;
+	if ( IS_CHECK_YES ( *(const char*)autoQuoted ) )
+		dialog.m_autoQuoted = TRUE;
 	else 
-		dialog.m_avtoQuoted = FALSE;
+		dialog.m_autoQuoted = FALSE;
 
 	if ( dialog.DoModal() != IDOK )
 		return false;
@@ -584,8 +584,8 @@ bool Setup::configureDialog()
 	if( dialog.m_sensitive ) sensitive = "Y";
 	else sensitive = "N";
 
-	if( dialog.m_avtoQuoted ) avtoQuoted = "Y";
-	else avtoQuoted = "N";
+	if( dialog.m_autoQuoted ) autoQuoted = "Y";
+	else autoQuoted = "N";
 
 	SQLWriteDSNToIni(dialog.m_name, driver);
 	writeAttributes();
@@ -606,7 +606,7 @@ void Setup::writeAttributes()
 	writeAttribute (SETUP_DIALECT, dialect);
 	writeAttribute (SETUP_QUOTED, quoted);
 	writeAttribute (SETUP_SENSITIVE, sensitive);
-	writeAttribute (SETUP_AVTOQUOTED, avtoQuoted);
+	writeAttribute (SETUP_AUTOQUOTED, autoQuoted);
 
 	char buffer[256];
 	CSecurityPassword security;
@@ -627,7 +627,7 @@ void Setup::readAttributes()
 	dialect = readAttribute (SETUP_DIALECT);
 	quoted = readAttribute (SETUP_QUOTED);
 	sensitive = readAttribute (SETUP_SENSITIVE);
-	avtoQuoted = readAttribute (SETUP_AVTOQUOTED);
+	autoQuoted = readAttribute (SETUP_AUTOQUOTED);
 
 	JString pass = readAttribute (SETUP_PASSWORD);
 	if ( pass.length() > 40 )

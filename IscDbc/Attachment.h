@@ -63,7 +63,7 @@ public:
 	int			databaseDialect;
 	bool		quotedIdentifier;
 	bool		sensitiveIdentifier;
-	bool		avtoQuotedIdentifier;
+	bool		autoQuotedIdentifier;
 	int			transactionIsolation;
 	int			useCount;
 	bool		admin;

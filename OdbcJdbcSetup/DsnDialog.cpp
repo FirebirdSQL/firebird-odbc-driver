@@ -52,7 +52,7 @@ CDsnDialog::CDsnDialog(const char **jdbcDrivers, const char **jdbcCharsets)
 	m_dialect3 = TRUE;
 	m_quoted = TRUE;
 	m_sensitive = FALSE;
-	m_avtoQuoted = FALSE;
+	m_autoQuoted = FALSE;
 
 	drivers = jdbcDrivers;
 	charsets = jdbcCharsets;
@@ -111,7 +111,7 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 
 		m_quoted = SendDlgItemMessage(hDlg, IDC_CHECK_QUOTED, BM_GETCHECK, 0, 0);
 		m_sensitive = SendDlgItemMessage(hDlg, IDC_CHECK_SENSITIVE, BM_GETCHECK, 0, 0);
-		m_avtoQuoted = SendDlgItemMessage(hDlg, IDC_CHECK_AVTOQUOTED, BM_GETCHECK, 0, 0);
+		m_autoQuoted = SendDlgItemMessage(hDlg, IDC_CHECK_AUTOQUOTED, BM_GETCHECK, 0, 0);
 	}
 	else
 	{
@@ -146,23 +146,23 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 			if ( m_quoted )
 			{
 				SetDisabledDlgItem ( hDlg, IDC_CHECK_SENSITIVE, FALSE );
-				SetDisabledDlgItem ( hDlg, IDC_CHECK_AVTOQUOTED, FALSE );
+				SetDisabledDlgItem ( hDlg, IDC_CHECK_AUTOQUOTED, FALSE );
 			}
 			else
 			{
 				SetDisabledDlgItem ( hDlg, IDC_CHECK_SENSITIVE );
-				SetDisabledDlgItem ( hDlg, IDC_CHECK_AVTOQUOTED );
+				SetDisabledDlgItem ( hDlg, IDC_CHECK_AUTOQUOTED );
 			}
 		}
 		else
 		{
 			SetDisabledDlgItem ( hDlg, IDC_CHECK_QUOTED );
 			SetDisabledDlgItem ( hDlg, IDC_CHECK_SENSITIVE );
-			SetDisabledDlgItem ( hDlg, IDC_CHECK_AVTOQUOTED );
+			SetDisabledDlgItem ( hDlg, IDC_CHECK_AUTOQUOTED );
 		}
 
         CheckDlgButton ( hDlg, IDC_CHECK_SENSITIVE, m_sensitive );
-        CheckDlgButton ( hDlg, IDC_CHECK_AVTOQUOTED, m_avtoQuoted );
+        CheckDlgButton ( hDlg, IDC_CHECK_AUTOQUOTED, m_autoQuoted );
 
 		SetDisabledDlgItem ( hDlg, IDC_HELP_ODBC);
 	}
@@ -432,7 +432,7 @@ BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam
 		case IDC_DIALECT1:
 			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_QUOTED);
 			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE);
-			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AVTOQUOTED);
+			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AUTOQUOTED);
 			break;
 
 		case IDC_DIALECT3:
@@ -441,7 +441,7 @@ BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam
 			if ( m_ptDsnDialog->m_quoted )
 			{
 				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE, FALSE);
-				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AVTOQUOTED, FALSE);
+				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AUTOQUOTED, FALSE);
 			}
 			break;
 
@@ -450,12 +450,12 @@ BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam
 			if ( !m_ptDsnDialog->m_quoted )
 			{
 				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE);
-				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AVTOQUOTED);
+				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AUTOQUOTED);
 			}
 			else
 			{
 				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE, FALSE);
-				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AVTOQUOTED, FALSE);
+				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AUTOQUOTED, FALSE);
 			}
 			break;
 
@@ -781,7 +781,7 @@ int DialogBoxDynamic()
     TMP_GROUPBOX      ( "Extend property identifier",IDC_STATIC,140,134,86,43 )
     TMP_BUTTONCONTROL ( "quoted identifiers",IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,143,67,9 )
     TMP_BUTTONCONTROL ( "sensitive identifier",IDC_CHECK_SENSITIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,154,74,9 )
-    TMP_BUTTONCONTROL ( "avtoquoted identifier",IDC_CHECK_AVTOQUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,165,77,9 )
+    TMP_BUTTONCONTROL ( "autoquoted identifier",IDC_CHECK_AUTOQUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,165,77,9 )
     TMP_PUSHBUTTON    ( "Test connection",IDC_TEST_CONNECTION,172,108,58,14 )
     TMP_PUSHBUTTON    ( "Help",IDC_HELP_ODBC,27,183,50,14 )
 
