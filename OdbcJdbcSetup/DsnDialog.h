@@ -67,6 +67,8 @@ public:
 #ifdef _WIN32
 	void OnTestConnection(HWND hDlg);
 #endif
+	int getDriverBuildKey();
+	void removeNameFileDBfromMessage(char * message);
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

@@ -23,6 +23,7 @@
 #include "OdbcJdbcSetup.h"
 #include "../IscDbc/Connection.h"
 #include "DsnDialog.h"
+#include "../SetupAttributes.h"
 
 extern HINSTANCE m_hInstance;
 
@@ -404,6 +405,34 @@ BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam
 
 typedef Connection* (*ConnectFn)();
 
+int CDsnDialog::getDriverBuildKey()
+{
+	return MAJOR_VERSION * 1000000 + MINOR_VERSION * 10000 + BUILDNUM_VERSION;
+}
+
+void CDsnDialog::removeNameFileDBfromMessage(char * message)
+{
+	char * pt = message;
+
+	while ( (pt = strstr ( pt, "for file" )) )
+	{
+		while ( *pt && *pt != '"' ) ++pt;
+		if ( *pt && *pt == '"' )
+		{
+			char * beg = pt++;
+
+			while ( *pt && *pt != '"' ) ++pt;
+			if ( *pt && *pt == '"' )
+			{
+				++pt;
+				*beg++ = 'D';
+				*beg++ = 'B';
+				memmove ( beg, pt, strlen(pt) + 1 );
+			}
+		}
+	}
+}
+
 void CDsnDialog::OnTestConnection(HWND hDlg)
 {
 	Connection	* connection = NULL;
@@ -440,6 +469,20 @@ void CDsnDialog::OnTestConnection(HWND hDlg)
 
 		connection = (fn)();
 
+		if ( getDriverBuildKey() != connection->getDriverBuildKey() )
+		{
+			connection->close();
+			connection = NULL;
+
+			FreeLibrary(libraryHandle);
+			libraryHandle = NULL;
+
+			JString text;
+			text.Format (" Unable to load %s Library : can't find ver. %s ", (const char *)m_driver, DRIVER_VERSION);
+			MessageBox(hDlg, "Connection failed!", (const char*)text, MB_ICONINFORMATION|MB_OK);
+			return;
+		}
+
 		properties = connection->allocProperties();
 		if ( !m_name.IsEmpty() )
 			properties->putValue ("user", (const char*)m_user);
@@ -460,12 +503,17 @@ void CDsnDialog::OnTestConnection(HWND hDlg)
 	}
 	catch (SQLException& exception)
 	{
+		char buffer[2048];
 		JString text = exception.getText();
 		if (properties)
 			properties->release();
 		if ( connection )
 			connection->close();
-		MessageBox(hDlg, text, TEXT(strHeadDlg), MB_ICONERROR|MB_OK);
+
+		strcpy ( buffer, (const char*)text );
+		removeNameFileDBfromMessage ( buffer );
+
+		MessageBox(hDlg, TEXT(buffer), TEXT(strHeadDlg), MB_ICONERROR|MB_OK);
 	}
 
 	FreeLibrary ( libraryHandle );
