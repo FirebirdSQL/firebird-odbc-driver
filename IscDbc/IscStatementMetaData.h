@@ -65,7 +65,7 @@ public:
 	virtual void restoreSqlData(int index);
 
 	IscStatementMetaData(Sqlda	* ptSqlda);
-	virtual ~IscStatementMetaData();
+	~IscStatementMetaData();
 
 	Sqlda					*sqlda;
 };

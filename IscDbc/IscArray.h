@@ -64,7 +64,7 @@ public:
 
 	IscArray(SIscArrayData * ptArr);
 	IscArray(IscConnection	*parentConnection,XSQLVAR *var);
-	virtual ~IscArray();
+	~IscArray();
 
 	IscConnection	*connection;
 	ISC_QUAD		arrayId;

@@ -35,7 +35,7 @@ public:
 	SQLError (int sqlcode, const char *text, ...);
 	SQLError (SqlCode sqlcode, const char *text, ...);
 	SQLError (Stream *trace, SqlCode code, const char *txt,...);
-	virtual ~SQLError();
+	~SQLError();
 
 	virtual int			getSqlcode ();
 	virtual const char	*getText();

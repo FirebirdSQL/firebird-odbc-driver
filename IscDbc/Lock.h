@@ -37,7 +37,7 @@ public:
 	void release();
 	void lock();
 	Lock(Mutex *mutex);
-	virtual ~Lock();
+	~Lock();
 
 	Mutex	*mutex;
 	bool	locked;

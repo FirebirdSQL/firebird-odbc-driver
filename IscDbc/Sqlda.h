@@ -78,7 +78,7 @@ public:
 	void deleteSqlda();
 	operator XSQLDA*();
 	Sqlda();
-	virtual ~Sqlda();
+	~Sqlda();
 
 	int isBlobOrArray(int index);
 

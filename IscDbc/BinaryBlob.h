@@ -55,7 +55,7 @@ public:
 	void getBytes (long pos, long length, void *address);
 	 BinaryBlob (int minSegmentSize);
 	BinaryBlob();
-	virtual ~BinaryBlob();
+	~BinaryBlob();
 	virtual int release();
 	virtual void addRef();
 	void populate();

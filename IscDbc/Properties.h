@@ -10,7 +10,6 @@ public:
 	virtual int	 getCount () = 0;
 	virtual const char *getName (int index) = 0;
 	virtual const char *getValue (int index) = 0;
-	virtual ~Properties() {};
 };
 
 #endif

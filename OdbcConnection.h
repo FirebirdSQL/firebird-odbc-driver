@@ -66,7 +66,7 @@ public:
 	RETCODE sqlSetConnectAttr (SQLINTEGER arg1, SQLPOINTER arg2, SQLINTEGER stringLength);
 	virtual OdbcObjectType getType();
 	OdbcConnection(OdbcEnv *parent);
-	virtual ~OdbcConnection();
+	~OdbcConnection();
 	void Lock();
 	void UnLock();
 
@@ -110,7 +110,7 @@ public:
 		else
 			connection = NULL;
 	}
-	virtual ~SafeConnectThread()
+	~SafeConnectThread()
 	{
 		if(connection && connection->connected)
 			connection->UnLock();

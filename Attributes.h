@@ -13,7 +13,7 @@ class Attributes
 {
 public:
 	Attributes();
-	virtual ~Attributes();
+	~Attributes();
 
 };
 

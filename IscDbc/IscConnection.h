@@ -67,7 +67,7 @@ public:
 	void* startTransaction();
 	void deleteStatement (IscStatement *statement);
 	IscConnection();
-	virtual ~IscConnection();
+	~IscConnection();
 	virtual void openDatabase (const char *dbName, Properties *properties);
 	virtual void createDatabase (const char *host, const char * dbName, Properties *properties);
 	virtual void ping();

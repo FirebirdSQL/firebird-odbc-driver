@@ -45,7 +45,7 @@ public:
 	virtual Value* getValue (int index);
 	virtual int findColumn (const char *columnName);
 	IscMetaDataResultSet(IscDatabaseMetaData *meta);
-	virtual ~IscMetaDataResultSet();
+	~IscMetaDataResultSet();
 
 	virtual bool		isNullable (int index);
 	virtual int			getScale (int index);

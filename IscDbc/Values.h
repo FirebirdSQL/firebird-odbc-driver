@@ -21,7 +21,7 @@ public:
 	void clear();
 	void alloc (int n);
 	Values();
-	virtual ~Values();
+	~Values();
 
 	int		count;
 	Value	*values;

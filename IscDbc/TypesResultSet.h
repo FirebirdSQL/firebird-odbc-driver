@@ -47,7 +47,7 @@ public:
 	virtual const char* getTableName(int index);
 	virtual bool next();
 	TypesResultSet(int dataType);
-	virtual ~TypesResultSet();
+	~TypesResultSet();
 	int findType();
 
 	int			recordNumber;

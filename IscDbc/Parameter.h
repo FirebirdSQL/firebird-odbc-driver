@@ -34,7 +34,7 @@ class Parameter
 {
 public:
 	Parameter (Parameter *nxt, const char *nam, int namLen, const char *val, int valLen);
-	virtual ~Parameter();
+	~Parameter();
 
 	int			nameLength;
 	char		*name;

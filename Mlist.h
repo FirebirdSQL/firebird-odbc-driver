@@ -79,7 +79,7 @@ public:
 		OnInitList();
 	}
 
-	virtual ~MList()
+	~MList()
 	{
 		clear();
 	}

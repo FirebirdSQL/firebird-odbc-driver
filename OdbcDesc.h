@@ -101,7 +101,7 @@ public:
 
 	virtual OdbcObjectType getType();
 	OdbcDesc(OdbcDescType type, OdbcConnection *connect);
-	virtual ~OdbcDesc();
+	~OdbcDesc();
 
 	void removeRecords();
 	void setDefaultImplDesc (StatementMetaData * ptMetaData);

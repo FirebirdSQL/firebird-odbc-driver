@@ -51,7 +51,7 @@ public:
 	virtual int objectVersion();
 	virtual StatementMetaData* getStatementMetaDataIPD();
 	virtual StatementMetaData* getStatementMetaDataIRD();
-	virtual ~IscPreparedStatement();
+	~IscPreparedStatement();
 	virtual bool		execute (const char *sqlString);
 	virtual ResultSet*	executeQuery (const char *sqlString);
 	virtual void		clearResults();

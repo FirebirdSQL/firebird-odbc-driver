@@ -52,7 +52,7 @@ public:
 	void UnLockEnv();
 	virtual OdbcObjectType getType();
 	OdbcEnv();
-	virtual ~OdbcEnv();
+	~OdbcEnv();
 
 #ifdef _WIN32
 	HINSTANCE		libraryHandle;
@@ -90,7 +90,7 @@ public:
 		else 
 			env = NULL;
 	}
-	virtual ~SafeEnvThread()
+	~SafeEnvThread()
 	{
 		if(env)
 			env->UnLockEnv();
