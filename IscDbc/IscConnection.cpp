@@ -266,37 +266,82 @@ void IscConnection::freeHTML(const char * html)
 	delete [] (char*) html;
 }
 ***/
+/*
+SELECT *
+ FROM  {oj DEPARTMENT Department LEFT OUTER JOIN EMPLOYEE Employee
+   ON  Department.DEPT_NO = Employee.DEPT_NO }
+ WHERE Employee.DEPT_NO = Department.DEPT_NO
+*/
 
 bool IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 								char * outStatementText, long bufferLength,
 								long * textLength2Ptr)
 {
-	char * ptStart;
-
-	if ( ptStart = strchr((char*)inStatementText, '{'), !ptStart )
-		return false;
+	bool bModify = false;
+	char * ptIn = (char*)inStatementText;
+	char * ptInEnd = ptIn + textLength1;
+	char * ptBeg, * ptOut = outStatementText;
+	char * ptEndBracket = NULL;
 
 #pragma FB_COMPILER_MESSAGE("IscConnection::getNativeSql - The temporary decision; FIXME!")
 
-	const char * ptIn = inStatementText;
-	char * ptOut = outStatementText;
-
-	while(ptIn < ptStart)
-		*ptOut++ = *ptIn++;
-	
-	ptIn++; // '{'
-
-	while(*ptIn==' ')ptIn++;
-
-	// Check 'oj' or 'OJ'
-	if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
+	while ( ptIn < ptInEnd )
 	{
-		ptIn += 2; // 'oj'
+		if ( *ptIn == '\"' )
+		{
+			// replace "123" to '123'
+			bool bConst = false;
+			ptBeg = ptOut;
+			*ptOut++ = *ptIn++;
+			
+			while( *ptIn == ' ')
+				*ptOut++ = *ptIn++;
 
-		while(*ptIn && *ptIn!='}')
+			if ( *ptIn >= '0' && *ptIn <= '9' )
+				bConst = true;
+
+			while( *ptIn && *ptIn != '\"' )
+				*ptOut++ = *ptIn++;
+
+			if ( *ptIn != '\"' )
+				return false;
+			
+			if ( bConst )
+				*ptBeg = *ptOut = '\'';
+
+			++ptIn;	++ptOut;
+			bModify = true;
+			continue;
+		}
+		else
+		{
+			if ( *ptIn == '{' )
+				ptEndBracket = ptOut;
+
+			*ptOut++ = *ptIn++;
+		}
+	}
+
+	*ptOut = '\0';
+
+	while ( ptEndBracket )
+	{
+		ptIn = ptOut = ptEndBracket;
+
+		ptIn++; // '{'
+
+		while( *ptIn == ' ' )ptIn++;
+
+		// Check 'oj' or 'OJ'
+		if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
+			ptIn += 2; // 'oj'
+		else
+			ptIn += 2; // temp 'fn'
+
+		while( *ptIn && *ptIn != '}' )
 			*ptOut++ = *ptIn++;
 
-		if(*ptIn!='}')
+		if(*ptIn != '}')
 			return false;
 
 		ptIn++; // '}'
@@ -304,15 +349,20 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 		while( *ptIn )
 			*ptOut++ = *ptIn++;
 
-		if ( textLength2Ptr )
-			*textLength2Ptr = ptOut - outStatementText;
-
 		*ptOut = '\0';
-		// validate end string check Server
-		return true;
+		bModify = true;
+
+		while ( ptEndBracket > outStatementText && *ptEndBracket != '{')
+			--ptEndBracket;
+
+		if(*ptEndBracket != '{')
+			ptEndBracket = NULL;
 	}
 
-	return false;
+	if ( textLength2Ptr )
+		*textLength2Ptr = ptOut - outStatementText;
+
+	return bModify;
 }
 
 DatabaseMetaData* IscConnection::getMetaData()
