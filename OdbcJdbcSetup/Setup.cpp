@@ -40,7 +40,7 @@
 #include <odbcinst.h>
 #include "DsnDialog.h"
 #include "Setup.h"
-#include "SetupAttributes.h"
+#include "../SetupAttributes.h"
 
 const char *driverInfo =
 	"Firebird/InterBase(r) driver\0"
