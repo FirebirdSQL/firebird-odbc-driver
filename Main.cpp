@@ -549,12 +549,23 @@ RETCODE SQL_API SQLGetConnectOption  (HDBC arg0,
 		 UWORD arg1,
 		 PTR arg2)
 {
-//Added by C. G. A.
 	TRACE ("SQLGetConnectOption");
 	GUARD_HDBC(arg0);
 
-	return ((OdbcConnection*) arg0)->sqlGetConnectAttr (arg1, arg2, 0, NULL);
+	int bufferLength;
 
+	switch ( arg1 )
+	{
+	case SQL_ATTR_CURRENT_CATALOG:
+	case SQL_ATTR_TRACEFILE:
+	case SQL_ATTR_TRANSLATE_LIB:
+		bufferLength = SQL_MAX_OPTION_STRING_LENGTH;
+		break;
+	default:
+		bufferLength = 0;
+	}
+
+	return ((OdbcConnection*) arg0)->sqlGetConnectAttr (arg1, arg2, bufferLength, NULL);
 }
 
 ///// SQLGetData /////
