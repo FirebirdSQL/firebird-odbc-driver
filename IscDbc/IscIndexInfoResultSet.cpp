@@ -65,6 +65,23 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 										 const char * tableNamePattern, 
 										 bool unique, bool approximate)
 {
+	JString tableStat = 
+		"select NULL as table_cat,\n"								// 1
+				"\tNULL as table_schem,\n"							// 2
+				"\trl.rdb$relation_name as table_name,\n"			// 3
+				"\tcast(NULL as smallint) as non_unique,\n"			// 4 
+				"\tcast(NULL as char(31)) as index_qualifier,\n"	// 5 
+				"\tcast(NULL as char(31)) index_name,\n"			// 6
+				"\tcast(0 as smallint) as \"TYPE\",\n"				// 7  SQL_TABLE_STAT
+				"\tcast(NULL as smallint) as ordinal_position,\n"	// 8
+				"\tcast(NULL as char(31)) as column_name,\n"		// 9
+				"\tNULL as asc_or_desc,\n"							// 10
+				"\tNULL as cardinality,\n"							// 11
+				"\tNULL as \"PAGES\",\n"							// 12
+				"\tNULL as filter_condition,\n"						// 13
+				"\tcast(NULL as smallint) as index_type\n"			// 14
+		"from rdb$relations rl\n";
+
 	const char *v6 = 
 		"select NULL as table_cat,\n"								// 1
 				"\tNULL as table_schem,\n"							// 2
@@ -72,7 +89,7 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 				"\tidx.rdb$unique_flag as non_unique,\n"			// 4
 				"\tidx.rdb$index_name as index_qualifier,\n"		// 5
 				"\tidx.rdb$index_name as index_name,\n"				// 6
-				"\tseg.rdb$field_position as \"TYPE\",\n"			// 7 (SQL_INDEX_OTHER)
+				"\tcast(3 as smallint) as \"TYPE\",\n"				// 7 (SQL_INDEX_OTHER)
 				"\tseg.rdb$field_position as ordinal_position,\n"	// 8
 				"\tseg.rdb$field_name as column_name,\n"			// 9
 				"\tNULL as asc_or_desc,\n"							// 10
@@ -103,19 +120,24 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 
 	JString sql = (metaData->storesMixedCaseQuotedIdentifiers()) ? v6 : preV6;
 
-	if (tableNamePattern)
+	if (tableNamePattern && *tableNamePattern)
+	{
+		tableStat += expandPattern (" where rl.rdb$relation_name %s '%s'\n", tableNamePattern);
 		sql += expandPattern (" and idx.rdb$relation_name %s '%s'\n", tableNamePattern);
+	}
 
 	if (unique)
 		sql += " and idx.rdb$unique_flag = 1\n";
 
-	if (isWildcarded(tableNamePattern)) // all tables
-		sql += " order by idx.rdb$relation_name, idx.rdb$unique_flag desc, idx.rdb$index_name, seg.rdb$field_position\n";
-	else
-		sql += " order by idx.rdb$unique_flag desc, idx.rdb$index_name, seg.rdb$field_position\n";
+	sql += " order by 3, 7, 4 desc, 6, 8\n";
+	sql = tableStat + "\tunion\n" + sql;
 
 	prepareStatement (sql);
-	numberColumns = 13;
+
+// SELECT returns 14 columns,
+// But all interests only 13 (SQL 92,99)
+// This line is forbidden for modifying!!!
+	numberColumns = 13; 
 }
 
 bool IscIndexInfoResultSet::next()
@@ -127,12 +149,9 @@ bool IscIndexInfoResultSet::next()
 	trimBlanks (5);				// qualifier name
 	trimBlanks (6);				// index name
 	trimBlanks (9);				// field name
-	trimBlanks (10);			// asc or desc
 
 	int uniqueFlag = resultSet->getInt (4);
 	resultSet->setValue (4, (uniqueFlag) ? 0 : 1);
-
-	resultSet->setValue( 7, (short)3 );
 
 	int position = resultSet->getInt(8);
 	resultSet->setValue(8,position+1);
@@ -147,6 +166,9 @@ int IscIndexInfoResultSet::getColumnDisplaySize(int index)
 {
 	switch (index)
 		{
+		case 1:
+			return 31;
+
 		case ASC_DSC:					//	currently 10
 			return 1;
 		}
@@ -165,7 +187,7 @@ int IscIndexInfoResultSet::getColumnType(int index)
 	return Parent::getColumnType (index);
 }
 
-int IscIndexInfoResultSet::getColumnPrecision(int index)
+int IscIndexInfoResultSet::getPrecision(int index)
 {
 	switch (index)
 		{

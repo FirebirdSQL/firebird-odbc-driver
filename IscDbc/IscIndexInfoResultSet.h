@@ -42,7 +42,7 @@ public:
 	typedef IscMetaDataResultSet Parent;
 	virtual int getColumnDisplaySize(int index);
 	virtual int getColumnType(int index);
-	virtual int getColumnPrecision(int index);
+	virtual int getPrecision(int index);
 
 };
 
