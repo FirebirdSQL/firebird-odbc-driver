@@ -293,6 +293,16 @@ public:
 
 Sqlda::Sqlda()
 {
+	init();
+}
+
+Sqlda::~Sqlda()
+{
+	remove();
+}
+
+void Sqlda::init()
+{
 	memset(tempSqlda,0,sizeof(tempSqlda));
 	sqlda = (XSQLDA*) tempSqlda;
 	sqlda->version = SQLDA_VERSION1;
@@ -305,21 +315,19 @@ Sqlda::Sqlda()
 	needsbuffer = true;
 }
 
-Sqlda::~Sqlda()
+void Sqlda::remove()
 {
-	if (buffer)
-		delete [] buffer;
-	if ( dataStaticCursor )
-		delete 	dataStaticCursor;
-	if ( offsetSqldata )
-		delete [] offsetSqldata;
+	delete dataStaticCursor;
+	delete [] buffer;
+	delete [] offsetSqldata;
 
 	deleteSqlda(); // Should stand only here!!!
 }
 
-Sqlda::operator XSQLDA* ()
+void Sqlda::clearSqlda()
 {
-	return sqlda;
+	remove();
+	init();
 }
 
 void Sqlda::deleteSqlda()
@@ -362,14 +370,8 @@ void Sqlda::allocBuffer()
 	if ( orgsqlvar ) 
 		free (orgsqlvar);
 
-	if (buffer)
-	{
-		delete [] buffer;
-		buffer = NULL;
-	}
-
-	if ( offsetSqldata )
-		delete [] offsetSqldata;
+	delete [] buffer;
+	delete [] offsetSqldata;
 
 	int offset = 0;
 	int n = 0;
@@ -433,7 +435,6 @@ void Sqlda::allocBuffer()
 			throw SQLEXCEPTION (COMPILE_ERROR, "Sqlda variable has zero length");
 		offset = ROUNDUP (offset, boundary);
 		var->sqldata = (char*)(offsetSqldata[n] = offset);
-		var->sqllen = length;
 		offset += length;
 	}
 
@@ -563,53 +564,47 @@ int Sqlda::getColumnDisplaySize(int index)
 	ORGSQLVAR *var = orgVar(index);
 
 	switch (var->sqltype & ~1)
-		{
-		case SQL_SHORT:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH + 2;
-			return MAX_SMALLINT_LENGTH + 1;
-			
-		case SQL_LONG:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH + 2;
-			return MAX_INT_LENGTH + 1;
+	{
+	case SQL_SHORT:
+		if ( var->sqlscale < 0 )
+			return MAX_NUMERIC_LENGTH + 2;
+		return MAX_SMALLINT_LENGTH + 1;
+		
+	case SQL_LONG:
+		if ( var->sqlscale < 0 )
+			return MAX_NUMERIC_LENGTH + 2;
+		return MAX_INT_LENGTH + 1;
 
-		case SQL_FLOAT:
-			return MAX_FLOAT_LENGTH + 4;			
+	case SQL_FLOAT:
+		return MAX_FLOAT_LENGTH + 4;			
 
-		case SQL_D_FLOAT:
-		case SQL_DOUBLE:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH + 2;
-			return MAX_DOUBLE_LENGTH + 4;			
+	case SQL_D_FLOAT:
+	case SQL_DOUBLE:
+		if ( var->sqlscale < 0 )
+			return MAX_NUMERIC_LENGTH + 2;
+		return MAX_DOUBLE_LENGTH + 4;			
 
-		case SQL_QUAD:
-		case SQL_INT64:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH + 2;
-			return MAX_QUAD_LENGTH + 1;
-			
-		case SQL_ARRAY:
-			return MAX_ARRAY_LENGTH;
+	case SQL_QUAD:
+	case SQL_INT64:
+		if ( var->sqlscale < 0 )
+			return MAX_NUMERIC_LENGTH + 2;
+		return MAX_QUAD_LENGTH + 1;
+		
+	case SQL_ARRAY:
+		return MAX_ARRAY_LENGTH;
 
-		case SQL_BLOB:
-			return MAX_BLOB_LENGTH;
+	case SQL_BLOB:
+		return MAX_BLOB_LENGTH;
 
-		case SQL_TYPE_TIME:
-			return MAX_TIME_LENGTH;
+	case SQL_TYPE_TIME:
+		return MAX_TIME_LENGTH;
 
-		case SQL_TYPE_DATE:
-			return MAX_DATE_LENGTH;
+	case SQL_TYPE_DATE:
+		return MAX_DATE_LENGTH;
 
-		case SQL_TIMESTAMP:
-			return MAX_TIMESTAMP_LENGTH;
-        
-        case SQL_TEXT: 
-            return var->sqllen-1; 
-
-        case SQL_VARYING: 
-            return var->sqllen-2;
-		}
+	case SQL_TIMESTAMP:
+		return MAX_TIMESTAMP_LENGTH;
+	}
 
 	return var->sqllen;
 }
@@ -629,54 +624,47 @@ int Sqlda::getPrecision(int index)
 	ORGSQLVAR *var = orgVar(index);
 
 	switch (var->sqltype & ~1)
-		{
-		case SQL_SHORT:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH;
-			return MAX_SMALLINT_LENGTH;
+	{
+	case SQL_SHORT:
+		if ( var->sqlscale < 0 )
+			return MAX_NUMERIC_LENGTH;
+		return MAX_SMALLINT_LENGTH;
 
-		case SQL_LONG:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH;
-			return MAX_INT_LENGTH;
+	case SQL_LONG:
+		if ( var->sqlscale < 0 )
+			return MAX_NUMERIC_LENGTH;
+		return MAX_INT_LENGTH;
 
-		case SQL_FLOAT:
-			return MAX_FLOAT_LENGTH;
+	case SQL_FLOAT:
+		return MAX_FLOAT_LENGTH;
 
-		case SQL_D_FLOAT:
-		case SQL_DOUBLE:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH;
-			return MAX_DOUBLE_LENGTH;
+	case SQL_D_FLOAT:
+	case SQL_DOUBLE:
+		if ( var->sqlscale < 0 )
+			return MAX_NUMERIC_LENGTH;
+		return MAX_DOUBLE_LENGTH;
 
-		case SQL_QUAD:
-		case SQL_INT64:
-			if ( var->sqlscale < 0 )
-				return MAX_NUMERIC_LENGTH;
-			return MAX_QUAD_LENGTH;
+	case SQL_QUAD:
+	case SQL_INT64:
+		if ( var->sqlscale < 0 )
+			return MAX_NUMERIC_LENGTH;
+		return MAX_QUAD_LENGTH;
 
-		case SQL_ARRAY:		
-			return MAX_ARRAY_LENGTH;
-		
-		case SQL_BLOB:		
-			return MAX_BLOB_LENGTH;
+	case SQL_ARRAY:		
+		return MAX_ARRAY_LENGTH;
+	
+	case SQL_BLOB:		
+		return MAX_BLOB_LENGTH;
 
-		case SQL_TYPE_TIME:
-			return MAX_TIME_LENGTH;
+	case SQL_TYPE_TIME:
+		return MAX_TIME_LENGTH;
 
-		case SQL_TYPE_DATE:
-			return MAX_DATE_LENGTH;
+	case SQL_TYPE_DATE:
+		return MAX_DATE_LENGTH;
 
-		case SQL_TIMESTAMP:
-			return MAX_TIMESTAMP_LENGTH;
-
-        case SQL_TEXT: 
-            return var->sqllen-1; 
-
-        case SQL_VARYING: 
-            return var->sqllen-2;
-
-		}
+	case SQL_TIMESTAMP:
+		return MAX_TIMESTAMP_LENGTH;
+	}
 
 	return var->sqllen;
 }

@@ -69,10 +69,13 @@ public:
 	void copyNextSqldaFromBufferStaticCursor();
 	int getCountRowsStaticCursor();
 	int getColumnCount();
+	void init();
+	void remove();
 	void allocBuffer();
 	bool checkOverflow();
 	void deleteSqlda();
-	operator XSQLDA*();
+	void clearSqlda();
+	operator XSQLDA*(){ return sqlda; }
 	XSQLVAR * Var(int index){ return sqlda->sqlvar + index - 1; }
 	ORGSQLVAR * orgVar(int index){ return orgsqlvar + index - 1; }
 
