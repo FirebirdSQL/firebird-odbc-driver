@@ -122,7 +122,7 @@ bool DescRecord::operator =(DescRecord *rec)
 	return true;
 }
 
-void DescRecord::setZeroColumn()
+void DescRecord::initZeroColumn()
 {
 	autoUniqueValue = SQL_FALSE;
 	caseSensitive = SQL_FALSE;

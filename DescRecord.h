@@ -36,7 +36,7 @@ public:
 	virtual ~DescRecord();
 	void setDefault(DescRecord *recTo);
 	bool operator =(DescRecord *rec);
-	void setZeroColumn();
+	void initZeroColumn();
 
 public:
 	bool			isDefined;

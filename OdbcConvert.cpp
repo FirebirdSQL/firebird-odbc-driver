@@ -129,6 +129,16 @@ void OdbcConvert::setParent(OdbcStatement *parent)
 	parentStmt = parent;
 }
 
+void OdbcConvert::setZeroColumn(DescRecord * to, long rowNumber)
+{
+	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER *indicatorPointer = (SQLINTEGER *)getAdressBindIndTo((char*)to->indicatorPtr);
+
+	*(long*)pointer = rowNumber + 1;
+	if ( indicatorPointer )
+		*indicatorPointer = sizeof(long);
+}
+
 void OdbcConvert::setBindOffsetPtrTo(SQLINTEGER	*bindOffsetPtr, SQLINTEGER	*bindOffsetPtrInd)
 {
 	if( bindOffsetPtr )
@@ -814,10 +824,17 @@ int OdbcConvert::convDateToString(DescRecord * from, DescRecord * to)
 	SQLSMALLINT year;
 
 	decode_sql_date(*(long*)getAdressBindDataFrom((char*)from->dataPtr), mday, month, year);
-	int len = sprintf(pointer,"%04d-%02d-%02d",year,month,mday);
+	int len, outlen = to->length-1;
+
+	len = snprintf(pointer, outlen, "%04d-%02d-%02d",year,month,mday);
 
 	if ( indicatorPointer )
-		*indicatorPointer = len;
+	{
+		if ( len == -1 )
+			*indicatorPointer = outlen;
+		else
+			*indicatorPointer = len;
+	}
 
 	return SQL_SUCCESS;
 }
@@ -876,15 +893,20 @@ int OdbcConvert::convTimeToString(DescRecord * from, DescRecord * to)
 
 	decode_sql_time(ntime, hour, minute, second);
 
-	int len;
+	int len, outlen = to->length-1;
 
 	if ( nnano )
-		len = sprintf(pointer,"%02d:%02d:%02d.%lu",hour, minute, second, nnano);
+		len = snprintf(pointer, outlen, "%02d:%02d:%02d.%lu",hour, minute, second, nnano);
 	else
-		len = sprintf(pointer,"%02d:%02d:%02d",hour, minute, second);
+		len = snprintf(pointer, outlen, "%02d:%02d:%02d",hour, minute, second);
 
 	if ( indicatorPointer )
-		*indicatorPointer = len;
+	{
+		if ( len == -1 )
+			*indicatorPointer = outlen;
+		else
+			*indicatorPointer = len;
+	}
 
 	return SQL_SUCCESS;
 }
@@ -947,15 +969,20 @@ int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 
 	decode_sql_date(ndate, mday, month, year);
 	decode_sql_time(ntime, hour, minute, second);
-	int len;
+	int len, outlen = to->length-1;
 
 	if ( nnano )
-		len = sprintf(pointer,"%04d-%02d-%02d %02d:%02d:%02d.%lu",year,month,mday,hour, minute, second, nnano);
+		len = snprintf(pointer, outlen, "%04d-%02d-%02d %02d:%02d:%02d.%lu",year,month,mday,hour, minute, second, nnano);
 	else
-		len = sprintf(pointer,"%04d-%02d-%02d %02d:%02d:%02d",year,month,mday,hour, minute, second);
+		len = snprintf(pointer, outlen, "%04d-%02d-%02d %02d:%02d:%02d",year,month,mday,hour, minute, second);
 
 	if ( indicatorPointer )
-		*indicatorPointer = len;
+	{
+		if ( len == -1 )
+			*indicatorPointer = outlen;
+		else
+			*indicatorPointer = len;
+	}
 
 	return SQL_SUCCESS;
 }

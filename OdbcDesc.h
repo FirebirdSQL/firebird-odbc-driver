@@ -125,6 +125,7 @@ public:
 	RETCODE returnData();
 	RETCODE returnDataFromExtededFetch();
 	RETCODE returnGetData(int recNumber);
+	void setZeroColumn(int rowNumber);
 
 //Head
 	SQLSMALLINT			headAllocType;

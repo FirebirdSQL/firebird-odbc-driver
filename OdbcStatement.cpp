@@ -509,7 +509,7 @@ void OdbcStatement::rebindColumn()
 				imprec->dataPtr = &rowNumber;
 				imprec->indicatorPtr = &indicatorRowNumber;
 				record->octetLengthPtr = &indicatorRowNumber;
-				record->setZeroColumn();
+				record->initZeroColumn();
 			}
 
 			int ret = implementationRowDescriptor->setConvFn(column, record);
@@ -597,7 +597,7 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 				imprec->dataPtr = &rowNumber;
 				imprec->indicatorPtr = &indicatorRowNumber;
 				record->octetLengthPtr = &indicatorRowNumber;
-				record->setZeroColumn();
+				record->initZeroColumn();
 			}
 
 			int ret = implementationRowDescriptor->setConvFn(column, record);
@@ -681,8 +681,7 @@ RETCODE OdbcStatement::sqlFetch()
 				if (implementationRowDescriptor->headRowsProcessedPtr)
 					*(SQLUINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = nRow;
 
-				setValue (applicationRowDescriptor->getDescRecord (0), 0);
-
+				implementationRowDescriptor->setZeroColumn(rowNumber);
 				bindOffsetPtr = bindOffsetPtrSave;
 			}
 
@@ -695,6 +694,8 @@ RETCODE OdbcStatement::sqlFetch()
 		}
 		else
 		{
+			implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
+
 			if (eof || !resultSet->next())
 			{
 				eof = true;
@@ -778,7 +779,6 @@ RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 			}
 			else
 				rowNumber = sqlDiagCursorRowCount + offset + 1;
-//				rowNumber += offset + 1;
 		}
 		else if( !offset )
 		{
@@ -805,7 +805,6 @@ RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 		break;
 	
 	case SQL_FETCH_BOOKMARK:
-
 		if ( fetchBookmarkPtr )
 		{
 			if ( *(long*)fetchBookmarkPtr + offset < 1 )
@@ -817,9 +816,12 @@ RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 			rowNumber = *(long*)fetchBookmarkPtr + offset - 1;
 		}
 
-		if( rowNumber >= sqlDiagCursorRowCount && resultSet->isAfterLast())
+		if( rowNumber >= sqlDiagCursorRowCount )
+		{
+			resultSet->afterLast();
+			resultSet->setPosRowInSet(sqlDiagCursorRowCount ? sqlDiagCursorRowCount - 1 : 0);
 			return SQL_NO_DATA;
-
+		}
 		break;
 
 	default:
@@ -831,7 +833,14 @@ RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 		int nRow = 0;
 		resultSet->setPosRowInSet(rowNumber);
 
-		if ( !eof )
+		if ( fetchRetData == SQL_RD_OFF )
+		{
+			implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
+			implementationRowDescriptor->setZeroColumn(rowNumber);
+			if (implementationRowDescriptor->headRowsProcessedPtr)
+				*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
+		}
+		else if ( !eof )
 		{
 			SQLINTEGER	*bindOffsetPtrSave = bindOffsetPtr;
 			SQLUSMALLINT *statusPtr = implementationRowDescriptor->headArrayStatusPtr;
@@ -876,7 +885,8 @@ RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 	else if ( rowNumber < 0 )
 	{
 		rowNumber = 0;
-		setValue (applicationRowDescriptor->getDescRecord (0), 0);
+		implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
+		implementationRowDescriptor->setZeroColumn(rowNumber);
 		if (implementationRowDescriptor->headRowsProcessedPtr)
 			*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
 		return SQL_NO_DATA;
@@ -884,7 +894,8 @@ RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 	else 
 	{
 		rowNumber = sqlDiagCursorRowCount - 1;
-		setValue (applicationRowDescriptor->getDescRecord (0), 0);
+		implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
+		implementationRowDescriptor->setZeroColumn(rowNumber);
 		if (implementationRowDescriptor->headRowsProcessedPtr)
 			*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
 		return SQL_NO_DATA;
@@ -992,8 +1003,7 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 				if (implementationRowDescriptor->headRowsProcessedPtr)
 					*(SQLUINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = nRow;
 
-				setValue (applicationRowDescriptor->getDescRecord (0), 0);
-
+				implementationRowDescriptor->setZeroColumn(rowNumber);
 				bindOffsetPtr = bindOffsetPtrSave;
 			}
 
@@ -1008,6 +1018,8 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 		}
 		else
 		{
+			implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
+
 			if (eof || !resultSet->next())
 			{
 				eof = true;
@@ -1025,8 +1037,7 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 			++countFetched;
 			++rowNumber;
 			implementationRowDescriptor->returnData(); 
-
-			setValue (applicationRowDescriptor->getDescRecord (0), 0);
+			implementationRowDescriptor->setZeroColumn(rowNumber);
 		}
 	}
 	catch (SQLException& exception)
@@ -1838,24 +1849,27 @@ RETCODE OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int buffer
 	record->length = bufferLength;
 	record->indicatorPtr = indicatorPointer;
 
-	if ( isStaticCursor() )
-		resultSet->getDataFromStaticCursor (column/*, record->dataBlobPtr*/);
-
-	try
+	if ( fetchRetData == SQL_RD_ON )
 	{
-		int retcode;
+		if ( isStaticCursor() )
+			resultSet->getDataFromStaticCursor (column/*, record->dataBlobPtr*/);
 
-		if (retcode = implementationGetDataDescriptor->returnGetData(column),retcode)
+		try
 		{
-			if ( retcode == SQL_NO_DATA )
-				return SQL_NO_DATA;
-			return SQL_SUCCESS_WITH_INFO;
+			int retcode;
+
+			if (retcode = implementationGetDataDescriptor->returnGetData(column),retcode)
+			{
+				if ( retcode == SQL_NO_DATA )
+					return SQL_NO_DATA;
+				return SQL_SUCCESS_WITH_INFO;
+			}
 		}
-	}
-	catch (SQLException& exception)
-	{
-		postError ("HY000", exception);
-		return SQL_ERROR;
+		catch (SQLException& exception)
+		{
+			postError ("HY000", exception);
+			return SQL_ERROR;
+		}
 	}
 
 	return sqlSuccess();

@@ -54,6 +54,7 @@ public:
 	OdbcConvert(OdbcStatement * parent);
 
 	void setParent(OdbcStatement *parent);
+	void setZeroColumn(DescRecord * to, long rowNumber);
 	void setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd);
 	void setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr);
 	ADRESS_FUNCTION getAdresFunction(DescRecord * from, DescRecord * to);

@@ -302,7 +302,7 @@ void OdbcDesc::addGetDataColumn(int recNumber, DescRecord * recordImp)
 
 RETCODE OdbcDesc::returnGetData(int recNumber)
 {
-	CBindColumn bindCol = (*listBind)[recNumber];
+	CBindColumn &bindCol = (*listBind)[recNumber];
 	return (convert->*bindCol.appRecord->fnConv)(bindCol.impRecord,bindCol.appRecord);
 }
 
@@ -323,6 +323,14 @@ void OdbcDesc::delBindColumn(int recNumber)
 void OdbcDesc::delAllBindColumn()
 {
 	listBind->removeAll();
+}
+
+// 	Info -> ASSERT( headType == odtImplementationRow )
+void OdbcDesc::setZeroColumn(int rowNumber)
+{
+	CBindColumn * bindCol = listBind->GetHeadPosition();
+	if ( bindCol && !bindCol->column )
+		convert->setZeroColumn(bindCol->appRecord, rowNumber);
 }
 
 RETCODE OdbcDesc::returnData()
