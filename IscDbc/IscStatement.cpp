@@ -109,6 +109,8 @@ IscStatement::IscStatement(IscConnection *connect)
 	numberColumns = 0;
 	statementHandle = NULL;
 	typeStmt = stmtNone;
+	resultsCount = 0;
+	resultsSequence	= 0;
 }
 
 IscStatement::~IscStatement()
@@ -352,6 +354,27 @@ bool IscStatement::execute()
 	return outputSqlda.sqlda->sqld > 0;
 }
 
+bool IscStatement::executeProcedure()
+{
+	ISC_STATUS statusVector [20];
+	void *transHandle = connection->startTransaction();
+
+	int dialect = connection->getDatabaseDialect ();
+	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle,
+			dialect, inputSqlda, outputSqlda))
+	{
+		if (connection->autoCommit)
+			connection->rollbackAuto();
+		THROW_ISC_EXCEPTION (connection, statusVector);
+	}
+
+	resultsCount		= 1;
+	resultsSequence		= 0;
+	getUpdateCounts();
+
+	return outputSqlda.sqlda->sqld > 0;
+}
+
 void IscStatement::clearResults()
 {
 }
@@ -543,6 +566,8 @@ void IscStatement::clearSelect()
 {
 	if ( typeStmt == stmtSelect )
 	{
+		resultsCount = 0;
+		resultsSequence	= 0;
 		typeStmt = stmtNone;
 		if(connection->autoCommit)
 			connection->commitAuto();

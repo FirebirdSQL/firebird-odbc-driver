@@ -76,6 +76,7 @@ public:
 	virtual Blob* genHTML (Properties *context, long genHeaders);
 	virtual bool isConnected();
 	virtual Statement* createStatement();
+	InternalStatement* IscConnection::createInternalStatement();
 	virtual void prepareTransaction();
 	virtual bool getTransactionPending();
 	virtual void rollback();

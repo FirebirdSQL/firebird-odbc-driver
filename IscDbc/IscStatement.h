@@ -52,7 +52,8 @@ public:
 	virtual int objectVersion();
 	void clearResults();
 	virtual bool execute();
-	void prepareStatement (const char *sqlString);
+	bool executeProcedure();
+	virtual void prepareStatement (const char *sqlString);
 	void deleteResultSet (IscResultSet *resultSet);
 	IscStatement(IscConnection *connect);
 	virtual int getUpdateCount();

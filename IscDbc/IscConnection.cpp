@@ -49,6 +49,7 @@
 #include "IscDbc.h"
 #include "IscConnection.h"
 #include "SQLError.h"
+#include "IscOdbcStatement.h"
 #include "IscCallableStatement.h"
 #include "IscDatabaseMetaData.h"
 #include "Parameters.h"
@@ -250,7 +251,6 @@ void* IscConnection::startTransaction()
     return transactionHandle;
 }
 
-
 Statement* IscConnection::createStatement()
 {
 	IscStatement *statement = new IscStatement (this);
@@ -259,6 +259,13 @@ Statement* IscConnection::createStatement()
 	return statement;
 }
 
+InternalStatement* IscConnection::createInternalStatement()
+{
+	IscOdbcStatement *statement = new IscOdbcStatement (this);
+	statements.append (statement);
+
+	return statement;
+}
 
 Blob* IscConnection::genHTML(Properties * parameters, long genHeaders)
 {

@@ -102,6 +102,7 @@ public:
 										long * textLength2Ptr) = 0;
 
 	virtual Statement*	createStatement() = 0;
+	virtual InternalStatement* createInternalStatement() = 0;
 	virtual PreparedStatement* prepareStatement (const char *sqlString) = 0;
 	virtual DatabaseMetaData* getMetaData() = 0;
 	virtual void		ping() = 0;
@@ -581,6 +582,24 @@ public:
 	virtual TimeStamp	getTimestamp(int parameterIndex) = 0;
 	virtual QUAD		getLong(int parameterIndex) = 0;
 	virtual Blob*		getBlob (int i) = 0;
+};
+
+#define INTERNALSTATEMENT_VERSION	1
+
+class InternalStatement : public Statement  
+{
+public:
+	virtual bool		isActive() = 0;
+	virtual void		prepareStatement(const char * sqlString) = 0;
+	virtual bool		executeStatement() = 0;
+	virtual bool		executeProcedure() = 0;
+	virtual StatementMetaData*	
+						getStatementMetaDataIPD() = 0;
+	virtual StatementMetaData*	
+						getStatementMetaDataIRD() = 0;
+	virtual int			getNumParams() = 0;
+	virtual void		drop() = 0;
+	virtual int			objectVersion() = 0;
 };
 
 #ifdef __BORLANDC__
