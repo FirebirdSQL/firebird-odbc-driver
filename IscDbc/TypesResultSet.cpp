@@ -164,7 +164,7 @@ bool TypesResultSet::next()
 			return false;
 
 		recordNumber = findType();
-		if( recordNumber == NULL)
+		if( recordNumber == 0 )
 		{
 			recordNumber = 1;
 			return false;
@@ -242,6 +242,6 @@ int TypesResultSet::findType()
 			return i;		
 	}
 
-	return NULL;
+	return 0;
 }
 
