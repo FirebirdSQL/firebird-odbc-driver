@@ -56,21 +56,20 @@ RETCODE OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLS
 	--maxLength;
 
 	if (ptr)
-		{
+	{
 		if (count <= maxLength)
-			{
+		{
 			strcpy ((char*) ptr, value);
 			return sqlSuccess();
-			}
+		}
 
 		memcpy (ptr, value, maxLength);
 		((char*) ptr) [maxLength] = 0;
 		*returnLength = maxLength;
-		}
+	}
 
 	return sqlReturn (SQL_SUCCESS_WITH_INFO, "01004", "String data, right truncated");
 }
-
 
 RETCODE OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLINTEGER *returnLength, const char *value)
 {
@@ -79,17 +78,17 @@ RETCODE OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLI
 	--maxLength;
 
 	if (ptr)
-		{
+	{
 		if (count <= maxLength)
-			{
+		{
 			strcpy ((char*) ptr, value);
 			return sqlSuccess();
-			}
+		}
 
 		memcpy (ptr, value, maxLength);
 		((char*) ptr) [maxLength] = 0;
 		*returnLength = maxLength;
-		}
+	}
 
 	return sqlReturn (SQL_SUCCESS_WITH_INFO, "01004", "String data, right truncated");
 }
