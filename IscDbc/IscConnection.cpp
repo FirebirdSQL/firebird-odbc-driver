@@ -325,28 +325,6 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 			++ptIn;	++ptOut;
 			bModify = true;
 		}
-		else if ( *ptIn == '?' )
-		{
-			// replace ?+? to ?||?
-			*ptOut++ = *ptIn++;
-			
-			while( *ptIn == ' ')
-				*ptOut++ = *ptIn++;
-
-			if ( *ptIn == '+' )
-			{
-				ptBeg = ptIn + 1;
-				while( *ptBeg == ' ')
-					ptBeg++;
-				if ( *ptBeg == '?' )
-				{
-					*ptOut++ = '|';
-					*ptOut++ = '|';
-					ptIn++;
-					bModify = true;
-				}
-			}
-		}
 		else
 		{
 			if ( *ptIn == '{' )
