@@ -199,7 +199,11 @@ void* IscConnection::startTransaction()
 	if ( shareConnected )
 	{
 		if ( !attachment->transactionHandle )
+		{
 			environmentShare.startTransaction();
+			// ASSERT (!autoCommit)
+			transactionPending = true;
+		}
 
 		return attachment->transactionHandle;
 	}
@@ -480,19 +484,37 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 	char * ptInEnd = ptIn + textLength1;
 	char * ptOut = outStatementText;
 	char * ptEndBracket = NULL;
+	int ignoreBracket = 0;
+	int statusQuote = 0;
+	char quote;
 
 #pragma FB_COMPILER_MESSAGE("IscConnection::getNativeSql - The temporary decision; FIXME!")
 
 	while ( ptIn < ptInEnd )
 	{
-		if ( *ptIn == '{' )
-			ptEndBracket = ptOut;
+		if ( !statusQuote )
+		{
+			if ( IS_QUOTE( *ptIn ) )
+			{
+				quote = *ptIn;
+				statusQuote ^= 1;
+			}
+			else if ( *ptIn == '{' )
+				ptEndBracket = ptOut;
+		}
+		else if ( quote == *ptIn )
+		{
+			quote = 0;
+			statusQuote ^= 1;
+		}
 
 		*ptOut++ = *ptIn++;
 	}
 
+	if ( statusQuote ) // There is no '"' or '\'' a syntactic mistake
+		return statysModify;
+
 	*ptOut = '\0';
-	int ignoreBracket = 0;
 
 	if ( !ptEndBracket )
 	{
@@ -625,10 +647,31 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 
 				ptOut = ptIn;
 
+				statusQuote = 0;
+				quote = 0;
+
 				do
 				{
-					while( *ptIn && *ptIn != '}' )
+					while( *ptIn )
+					{
+						if ( !statusQuote )
+						{
+							if ( IS_QUOTE( *ptIn ) )
+							{
+								quote = *ptIn;
+								statusQuote ^= 1;
+							}
+							else if ( *ptIn == '}' )
+								break;
+						}
+						else if ( quote == *ptIn )
+						{
+							quote = 0;
+							statusQuote ^= 1;
+						}
+
 						*ptOut++ = *ptIn++;
+					}
 
 					if( ignoreBr )
 						*ptOut++ = *ptIn++;
@@ -666,11 +709,31 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 				}
 
 				int ignoreBr = ignoreBracket;
+				statusQuote = 0;
+				quote = 0;
 
 				do
 				{
-					while( *ptIn && *ptIn != '}' )
+					while( *ptIn )
+					{
+						if ( !statusQuote )
+						{
+							if ( IS_QUOTE( *ptIn ) )
+							{
+								quote = *ptIn;
+								statusQuote ^= 1;
+							}
+							else if ( *ptIn == '}' )
+								break;
+						}
+						else if ( quote == *ptIn )
+						{
+							quote = 0;
+							statusQuote ^= 1;
+						}
+
 						*ptOut++ = *ptIn++;
+					}
 
 					if( ignoreBr )
 						*ptOut++ = *ptIn++;
@@ -691,8 +754,29 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 
 			--ptEndBracket; // '{'
 
-			while ( ptEndBracket > outStatementText && *ptEndBracket != '{')
+			statusQuote = 0;
+			quote = 0;
+
+			while ( ptEndBracket > outStatementText )
+			{
+				if ( !statusQuote )
+				{
+					if ( IS_QUOTE( *ptEndBracket ) )
+					{
+						quote = *ptEndBracket;
+						statusQuote ^= 1;
+					}
+					else if ( *ptEndBracket == '{' )
+						break;
+				}
+				else if ( quote == *ptEndBracket )
+				{
+					quote = 0;
+					statusQuote ^= 1;
+				}
+
 				--ptEndBracket;
+			}
 
 			if(*ptEndBracket != '{')
 				ptEndBracket = NULL;
