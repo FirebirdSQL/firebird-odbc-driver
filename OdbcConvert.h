@@ -53,6 +53,7 @@ private:
 	void decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMALLINT &minute, SQLUSMALLINT &second);
 	void convertFloatToString(double value, char *string, int size, int *length, int precision = 15, char POINT_DIV = '.');
 	void convertStringDataToServerStringData(char * string, int &len);
+	void getFirstElementFromArrayString(char * string, char *& firstChar, int &len);
 	void setHeadSqlVar ( DescRecord * to );
 
 public:
@@ -207,6 +208,7 @@ public:
 	int transferStringToTinyInt(DescRecord * from, DescRecord * to);
 	int transferStringToDateTime(DescRecord * from, DescRecord * to);
 	int transferStringToAllowedType(DescRecord * from, DescRecord * to);
+	int transferArrayStringToAllowedType(DescRecord * from, DescRecord * to);
 	int transferBinaryStringToAllowedType(DescRecord * from, DescRecord * to);
 	int convStreamHexStringToBlob(DescRecord * from, DescRecord * to);
 
