@@ -12,7 +12,7 @@ main (int argc, char **argv)
                 properties->putValue ("user", "sysdba");
                 properties->putValue ("password", "masterkey");
 		connection->openDatabase ("employee.gdb", properties);
-		delete properties;
+		properties->release();
 
 
 		PreparedStatement *statement = connection->prepareStatement (

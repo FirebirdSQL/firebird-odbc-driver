@@ -1675,7 +1675,7 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 		properties->putValue ("quoted", quotedIdentifiers ? "Y" : "N");
 
 		connection->openDatabase (databaseName, properties);
-		delete properties;
+		properties->release();
 
 		// Next two lines added by CA
 		connection->setAutoCommit( autoCommit );
@@ -1685,7 +1685,7 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 	catch (SQLException& exception)
 	{
 		if (properties)
-			delete properties;
+			properties->release();
 		JString text = exception.getText();
 		connection->close();
 		connection = NULL;

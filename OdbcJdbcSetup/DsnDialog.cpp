@@ -434,7 +434,7 @@ void CDsnDialog::OnTestConnection(HWND hDlg)
 			properties->putValue ("client", (const char*)m_client);
 
 		connection->openDatabase ( (const char*)m_database, properties );
-		delete properties;
+		properties->release();
 		connection->close();
 		connection = NULL;
 		MessageBox(hDlg, "Connection successful!", TEXT(strHeadDlg), MB_ICONINFORMATION|MB_OK);
@@ -443,7 +443,7 @@ void CDsnDialog::OnTestConnection(HWND hDlg)
 	{
 		JString text = exception.getText();
 		if (properties)
-			delete properties;
+			properties->release();
 		if ( connection )
 			connection->close();
 		MessageBox(hDlg, text, TEXT(strHeadDlg), MB_ICONERROR|MB_OK);

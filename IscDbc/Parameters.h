@@ -42,6 +42,7 @@ class Parameters : public Properties
 {
 public:
 	void clear();
+	void release();
 	void copy (Properties *properties);
 	virtual const char* getValue (int index);
 	virtual const char* getName (int index);

@@ -111,10 +111,15 @@ void Parameters::copy(Properties * properties)
 void Parameters::clear()
 {
 	for (Parameter *parameter; parameter = parameters;)
-		{
+	{
 		parameters = parameter->next;
 		delete parameter;
-		}
+	}
+}
+
+void Parameters::release()
+{
+	delete this;
 }
 
 }; // end namespace IscDbcLibrary
