@@ -1,4 +1,6 @@
 #
+#DEBUG=1
+#
 .PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean
 #
 GCC		= g++

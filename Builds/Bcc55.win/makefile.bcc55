@@ -1,7 +1,7 @@
 #
 .PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean
 #
-DEBUG		= 1
+#DEBUG		= 1
 #
 COMPDIR		= D:\BC55
 #
