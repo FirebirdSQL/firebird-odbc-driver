@@ -1,6 +1,6 @@
 // number of entering of updatings in the current version
 // for the new version new readout
 // DIG number
-#define BUILDNUM_VERSION 	0038
+#define BUILDNUM_VERSION 	0039
 // HEX number
-#define BUILDHEX_VERSION 	0x0026
+#define BUILDHEX_VERSION 	0x0027
