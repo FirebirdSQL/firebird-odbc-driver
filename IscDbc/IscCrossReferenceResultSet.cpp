@@ -61,7 +61,7 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 				" NULL as fktable_cat,\n"					// 5
 				" NULL as fktable_schem,\n"					// 6
 				" fidx.rdb$relation_name as fktable_name,\n"// 7
-				" fseg.rdb$field_name as pkcolumn_name,\n"	// 8
+				" fseg.rdb$field_name as fkcolumn_name,\n"	// 8
 				" pseg.rdb$field_position as key_seq,\n"	// 9
 				" refc.rdb$update_rule as update_rule,\n"	// 10
 				" refc.rdb$delete_rule as delete_rule,\n"	// 11
