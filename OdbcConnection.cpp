@@ -414,8 +414,12 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 		*q = 0;
 		q = value;
 		if (c == '=')
+		{
+			while (p < end && *p == ' ') p++;
+
 			while (p < end && (c = *p++) != ';')
 				*q++ = c;
+		}
 		*q = 0;
 		if (!strncasecmp (name, SETUP_DSN, LEN_KEY(SETUP_DSN)) )
 			dsn = value;
