@@ -107,6 +107,7 @@ void IscConnection::close()
 {
 	FOR_OBJECTS (IscStatement*, statement, &statements)
 		statement->close();
+		statement->freeStatementHandle();
 		statement->connection = NULL; // NOMEY
 	END_FOR;
 

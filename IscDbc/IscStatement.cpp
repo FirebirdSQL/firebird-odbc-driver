@@ -567,8 +567,12 @@ void IscStatement::clearSelect()
 
 void IscStatement::freeStatementHandle()
 {
-	ISC_STATUS statusVector [20];
-	connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_drop);
+	if ( connection && statementHandle )
+	{
+		ISC_STATUS statusVector [20];
+		connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_drop);
+		statementHandle = NULL;
+	}
 }
 
 }; // end namespace IscDbcLibrary
