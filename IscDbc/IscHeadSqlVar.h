@@ -47,8 +47,8 @@ public:
 	void		setTypeDouble()		{ MAKEHEAD(SQL_DOUBLE, 0, 0, sizeof (double)); }
 	void		setType_D_Float()	{ MAKEHEAD(SQL_D_FLOAT, 0, 0, sizeof (double)); }
 	void		setTypeTimestamp()	{ MAKEHEAD(SQL_TIMESTAMP, 0, 0, sizeof (ISC_TIMESTAMP)); }
-	void		setTypeBlob()		{ MAKEHEAD(SQL_BLOB, 0, 0, 0); }
-	void		setTypeArray()		{ MAKEHEAD(SQL_ARRAY, 0, 0, 0); }
+	void		setTypeBlob()		{ MAKEHEAD(SQL_BLOB, 0, 0, sizeof (ISC_QUAD)); }
+	void		setTypeArray()		{ MAKEHEAD(SQL_ARRAY, 0, 0, sizeof (ISC_QUAD)); }
 	void		setTypeQuad()		{ MAKEHEAD(SQL_QUAD, 0, 0, sizeof (QUAD)); }
 	void		setTypeTime()		{ MAKEHEAD(SQL_TYPE_TIME, 0, 0, sizeof (ISC_TIME)); }
 	void		setTypeDate()		{ MAKEHEAD(SQL_TYPE_DATE, 0, 0, sizeof (ISC_DATE)); }
