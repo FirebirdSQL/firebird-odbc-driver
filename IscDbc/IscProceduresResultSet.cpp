@@ -76,6 +76,8 @@ bool IscProceduresResultSet::next()
 
 	if ( sqlda->isNull(4) )
 		sqlda->updateShort(4, 0);
+	if ( sqlda->isNull(5) )
+		sqlda->updateShort(5, 0);
 
 	return true;
 }
