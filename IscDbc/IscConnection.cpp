@@ -54,8 +54,12 @@
 #include "IscDatabaseMetaData.h"
 #include "Parameters.h"
 #include "Attachment.h"
+#include "Mlist.h"
+#include "SupportFunctions.h"
 
 namespace IscDbcLibrary {
+
+extern SupportFunctions supportFn;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -400,13 +404,23 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 		}
 		else
 		{
+			ptOut = ptEndBracket;
+
 			// Check 'oj' or 'OJ'
 			if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
 				ptIn += 2; // 'oj'
 			else
-				ptIn += 2; // temp 'fn'
+			{
+				ptIn += 2; // 'fn'
+//
+// select "FIRST_NAME" from "EMPLOYEE" where { fn UCASE("FIRST_NAME") } = { fn UCASE('robert') }
+// to
+// select "FIRST_NAME" from "EMPLOYEE" where UPPER("FIRST_NAME") = UPPER('robert')
+//
+// ATTENTION! ptIn and ptOut pointer of outStatementText
+				supportFn.translateNativeFunction ( ptIn, ptOut );
+			}
 
-			ptOut = ptEndBracket;
 			int ignoreBr = ignoreBracket;
 
 			do
