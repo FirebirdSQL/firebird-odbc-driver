@@ -54,7 +54,8 @@ ODBCJDBCSRC = \
 	OdbcEnv.cpp \
 	OdbcError.cpp \
 	OdbcObject.cpp \
-	OdbcStatement.cpp
+	OdbcStatement.cpp \
+	SafeEnvThread.cpp
 
 ODBCJDBCSETUPSRC_LINUX = \
 	OdbcInstGetProp.cpp

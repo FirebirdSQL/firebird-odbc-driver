@@ -83,7 +83,6 @@ LINK32=link.exe
 # SUBTRACT LINK32 /incremental:no
 # Begin Special Build Tool
 TargetDir=.\Debug
-SOURCE="$(InputPath)"
 PostBuild_Desc=Registering Server
 PostBuild_Cmds=regsvr32 /s $(TargetDir)/OdbcJdbcSetup.dll
 # End Special Build Tool
@@ -149,10 +148,6 @@ SOURCE=..\..\OdbcEnv.cpp
 # Begin Source File
 
 SOURCE=..\..\OdbcError.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\OdbcInstGetProp.cpp
 # End Source File
 # Begin Source File
 
