@@ -1133,7 +1133,7 @@ int OdbcConvert::convFloatToString(DescRecord * from, DescRecord * to)
 	int len = to->length;
 
 	if ( len )	// MAX_FLOAT_DIGIT_LENGTH = 7
-		convertFloatToString(*(float*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len-1, &len, 7);
+		convertFloatToString(*(float*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len, &len, 7);
 
 	if ( indicatorTo )
 		*indicatorTo = len;
@@ -1164,7 +1164,7 @@ int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 	int len = to->length;
 
 	if ( len )	// MAX_DOUBLE_DIGIT_LENGTH = 15
-		convertFloatToString(*(double*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len-1, &len);
+		convertFloatToString(*(double*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len, &len);
 
 	if ( indicatorTo )
 		*indicatorTo = len;
@@ -2681,6 +2681,7 @@ void OdbcConvert::convertFloatToString(double value, char *string, int size, int
 			*(end + 1) = '\0';
 			*pt++ = POINT_DIV;
 			while ( (*pt++ = *pt1++) );
+			--pt;
 		}
 	} 
 	else if ( value > 0 ) 
@@ -2735,6 +2736,7 @@ void OdbcConvert::convertFloatToString(double value, char *string, int size, int
 					*pt++ = '0';
 
 				while ( (*pt++ = *beg++) );
+				--pt;
 			}
 			else
 				*pt = '\0';

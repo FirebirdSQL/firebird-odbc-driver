@@ -1215,6 +1215,7 @@ void Value::convertFloatToString(double value, char *string, int size, int *leng
 			*(end + 1) = '\0';
 			*pt++ = POINT_DIV;
 			while ( (*pt++ = *pt1++) );
+			--pt;
 		}
 	} 
 	else if ( value > 0 ) 
@@ -1269,6 +1270,7 @@ void Value::convertFloatToString(double value, char *string, int size, int *leng
 					*pt++ = '0';
 
 				while ( (*pt++ = *beg++) );
+				--pt;
 			}
 			else
 				*pt = '\0';
