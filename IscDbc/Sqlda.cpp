@@ -163,7 +163,7 @@ public:
 							char * pt = listBlocks[n] + (var->sqldata - sqlvar[0].sqldata);
 							for (int l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
 							{
-								if ( pt )
+								if ( pt && *(long*)pt )
 								{
 									free ( ((CAttrArray *)*(long*)pt)->arrBufData );
 									delete (CAttrArray *)*(long*)pt;
@@ -178,7 +178,7 @@ public:
 						{
 							char * pt = listBlocks[n] + (var->sqldata - sqlvar[0].sqldata);
 							for (int l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
-								if ( pt )delete (IscBlob *)*(long*)pt;
+								if ( pt && *(long*)pt )delete (IscBlob *)*(long*)pt;
 						}
 				}
 			}
