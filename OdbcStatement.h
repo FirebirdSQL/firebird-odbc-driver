@@ -47,13 +47,15 @@ class OdbcConvert;
 enum enFetchType { NoneFetch, Fetch, ExtendedFetch, FetchScroll };
 
 typedef RETCODE (OdbcStatement::*EXECUTE_FUNCTION)();
+typedef bool (ResultSet::*FETCH_FUNCTION)();
 
 class OdbcStatement : public OdbcObject  
 {
 public:
 	RETCODE sqlMoreResults();
-	RETCODE returnData();
-	RETCODE returnDataFromExtededFetch();
+	inline RETCODE fetchData();
+	inline RETCODE returnData();
+	inline RETCODE returnDataFromExtendedFetch();
 	RETCODE sqlColAttribute (int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT* strLengthPtr, SQLPOINTER numericAttributePtr);
 	RETCODE sqlFetchScroll (int orientation, int offset);
 	RETCODE sqlFetchScrollCursorStatic(int orientation, int offset);
@@ -116,6 +118,7 @@ public:
 	~OdbcStatement();
 	bool isStaticCursor(){ return cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE || isResultSetFromSystemCatalog; }
 	long getCurrentFetched(){ return countFetched; }
+	bool getSchemaFetchData(){ return rowBindType || bindOffsetPtr; }
 	inline StatementMetaData	*getStatementMetaDataIRD();
 	inline void clearErrors();
 	RETCODE prepareGetData(int column, DescRecord *recordARD);
@@ -138,6 +141,7 @@ public:
 	ListBindColumn		*listBindGetData;
 	ResultSet			*resultSet;
 	EXECUTE_FUNCTION	execute;
+	FETCH_FUNCTION		fetchNext;
 	InternalStatement	*statement;
 	StatementMetaData	*metaData;
 	int					numberColumns;
@@ -150,6 +154,8 @@ public:
 	JString				cursorName;
 	bool				setPreCursorName;
 	bool				isResultSetFromSystemCatalog;
+	bool				isFetchStaticCursor;
+	bool				schemaFetchData;
 	int					rowBindType;
 	int					paramBindType;
 	int					rowArraySize;
@@ -160,7 +166,6 @@ public:
 	int					paramsetSize;
 	SQLINTEGER			*sqldataOutOffsetPtr;
 	SQLINTEGER			*bindOffsetPtr;
-	SQLUSMALLINT		*rowStatusPtr;
 	SQLUINTEGER			enableAutoIPD;
 	SQLINTEGER			useBookmarks;
 	SQLINTEGER			cursorSensitivity;
