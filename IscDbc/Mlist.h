@@ -116,6 +116,8 @@ public:
 	T & operator ()(int pos)
 	{ 
 		reInit(pos);
+		if ( count <= pos )
+			count = pos + 1;
 		return  ptRoot[pos];
 	}
 
