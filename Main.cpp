@@ -17,9 +17,17 @@
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
  *
- *	Added suggestions by Carlos G Alvarez 2002-04-30
- *		o Test for logfile before trying to close it.
- *		o Changed parameter types for SQLSetConnectOption
+ *	2002-07-02	main.cpp
+ *				Contributed by C G Alvarez
+ *				Mapped calls to SQLGetConnectOption to SQLGetConnectAttr
+ *				Mapped calls SQLGetStmtOption to SQLGetStmtAttr
+ *				Mapped calls SQLSetStmtOption to SQLSetStmtAttr
+
+ *
+ *	2002-04-30  main.cpp
+ *				Added suggestions by Carlos G Alvarez 
+ *				o Test for logfile before trying to close it.
+ *				o Changed parameter types for SQLSetConnectOption
  *	
  */
 
@@ -454,8 +462,14 @@ RETCODE SQL_API SQLGetConnectOption  (HDBC arg0,
 		 UWORD arg1,
 		 PTR arg2)
 {
+/*
 	notYetImplemented("SQLGetConnectOption called\n");
 	return(SQL_SUCCESS);
+*/
+//Added by C. G. A.
+    TRACE ("SQLGetConnectOption");
+	return SQLGetConnectAttr (arg0, arg1, arg2, 0, NULL);
+
 }
 
 ///// SQLGetData /////
@@ -502,8 +516,14 @@ RETCODE SQL_API SQLGetStmtOption  (HSTMT arg0,
 		 UWORD arg1,
 		 PTR arg2)
 {
+/*
 	notYetImplemented("SQLGetStmtOption called\n");
 	return(SQL_SUCCESS);
+ */
+
+	TRACE ("SQLGetStmtOption");
+	return ((OdbcStatement*) arg0)->sqlGetStmtAttr (arg1, arg2, 0, NULL);
+
 }
 
 ///// SQLGetTypeInfo /////
@@ -554,7 +574,9 @@ RETCODE SQL_API SQLSetConnectOption  (HDBC arg0,
 {
         TRACE ("SQLSetConnectOption");
 
-        return SQLSetConnectAttr (arg0, arg1, (SQLPOINTER *)arg2, 0);
+//        return SQLSetConnectAttr (arg0, arg1, (SQLPOINTER *)arg2, 0);
+		return SQLSetConnectAttr (arg0, arg1, (SQLPOINTER)arg2, 0);
+
 }
 
 
@@ -565,8 +587,14 @@ RETCODE SQL_API SQLSetStmtOption  (HSTMT arg0,
 		 UWORD arg1,
 		 UDWORD arg2)
 {
+/*
 	notYetImplemented("SQLSetStmtOption called\n");
 	return(SQL_SUCCESS);
+*/
+	//Suggested by CGA - map calls to sqlSetStmtAttr
+	TRACE ("SQLSetStmtOption");
+	return ((OdbcStatement*) arg0)->sqlSetStmtAttr (arg1, (SQLPOINTER) arg2, 0);
+
 }
 
 ///// SQLSpecialColumns /////

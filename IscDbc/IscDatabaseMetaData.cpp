@@ -18,6 +18,12 @@
  *  All Rights Reserved.
  *
  *
+ *	2002-07-02	IscDatabaseMetaData.cpp
+ *				C. G.Alvarez
+ *				Return TRANSACTION_READ_COMMITTED from 
+ *				IscDatabaseMetaData::getDefaultTransactionIsolation()
+ *
+ *
  *	2002-06-25	IscDatabaseMetaData.cpp
  *				C. G.Alvarez
  *				Implement getDatabaseServerName()
@@ -781,7 +787,7 @@ int IscDatabaseMetaData::getMaxUserNameLength()
 
 int IscDatabaseMetaData::getDefaultTransactionIsolation()
 	{
-	return TRANSACTION_SERIALIZABLE;
+    return TRANSACTION_READ_COMMITTED; 
 	}
 
 bool IscDatabaseMetaData::supportsTransactions()

@@ -20,6 +20,12 @@
  *
  *	Changes
  *
+*	2002-07-02	IscProcedureColumnsResultSet.cpp
+*				Contributed by C. G. Alvarez
+*				Fixed invalid table alias in typos in 
+*				getProcedureColumns()
+ *
+ *
  *	2002-05-20	IscProcedureColumnsResultSet.cpp
  *
  *				Contributed by C. G. Alvarez
@@ -76,9 +82,9 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 				"\tpp.rdb$procedure_name as procedure_name,\n"			// 3
 				"\tpp.rdb$parameter_name as column_name,\n"			// 4
 				"\tpp.rdb$parameter_type as column_type,\n"			// 5
-				"\tpp.rdb$field_type as data_type,\n"					// 5 + 1
-				"\tpp.rdb$field_sub_type as type_name,\n"				// 6 + 1
-				"\tpp.rdb$field_length as column_size,\n"				// 7 + 1
+				"\tf.rdb$field_type as data_type,\n"					// 5 + 1
+				"\tf.rdb$field_sub_type as type_name,\n"				// 6 + 1
+				"\tf.rdb$field_length as column_size,\n"				// 7 + 1
 				"\tnull as buffer_length,\n"						// 8 + 1
 				"\tf.rdb$field_scale as decimal_digits,\n"			// 9 + 1
 				"\t10 as num_prec_radix,\n"							// 10 + 1

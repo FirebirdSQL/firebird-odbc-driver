@@ -18,6 +18,15 @@
  *  All Rights Reserved.
  *
  *
+ *  2002-07-02  OdbcConnection.cpp 
+ *				Added better management of txn isolation
+ *				Added fix to enable setting the asyncEnable property
+ *				contributed by C. G. Alvarez
+ *
+ *  2002-07-01  OdbcConnection.cpp 
+ *				Added SQL_API_SQLSETCONNECTOPTION to 
+ *				supportedFunctions	C. G. Alvarez
+ *
  *	2002-06-26	OdbcConnection::sqlGetInfo
  *				Added call to clearErrors() at start of 
  *				the method(Roger Gammans).
@@ -83,6 +92,7 @@ static const int supportedFunctions [] = {
 		SQL_API_SQLERROR,
 		SQL_API_SQLSETPARAM,
 		SQL_API_SQLTRANSACT,
+		SQL_API_SQLSETCONNECTOPTION,
 
 		SQL_API_SQLENDTRAN,
 
@@ -128,14 +138,14 @@ static const int supportedFunctions [] = {
 		SQL_API_SQLSETSTMTATTR,
 		SQL_API_SQLGETDATA,
 
-		// The following is a list of valid values for FunctionId for functions conforming to the X/Open standards – compliance level,,
+		// The following is a list of valid values for FunctionId for functions conforming to the X/Open standards - compliance level,,
 
 		SQL_API_SQLCOLUMNS,
 		SQL_API_SQLSTATISTICS,
 		SQL_API_SQLSPECIALCOLUMNS,
 		SQL_API_SQLTABLES,
 
-		//The following is a list of valid values for FunctionId for functions conforming to the ODBC standards – compliance level,,
+		//The following is a list of valid values for FunctionId for functions conforming to the ODBC standards - compliance level,,
 		SQL_API_SQLBINDPARAMETER,
 		SQL_API_SQLNATIVESQL,
 		SQL_API_SQLBROWSECONNECT,
@@ -239,6 +249,7 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	autoCommit = true;
 	cursors = SQL_CUR_USE_DRIVER;
 	statementNumber = 0;
+    transactionIsolation = SQL_TXN_READ_COMMITTED; //suggested by CGA.
 }
 
 OdbcConnection::~OdbcConnection()
@@ -288,8 +299,14 @@ RETCODE OdbcConnection::sqlSetConnectAttr (SQLINTEGER attribute, SQLPOINTER valu
 
 //Added by CA
 	    case SQL_ATTR_TXN_ISOLATION:
+			transactionIsolation = (int)value;
 			if( connection )
 	            connection->setTransactionIsolation( (int) value );
+			break;
+
+//Added by CA
+		case SQL_ATTR_ASYNC_ENABLE:
+			asyncEnabled = (int) value == SQL_ASYNC_ENABLE_ON;
 			break;
 
 	}
@@ -879,7 +896,7 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 		quotedIdentifiers = quoteString [0] == '"';
 //Next two lines added by CA
         connection->setAutoCommit( autoCommit );
-        connection->setTransactionIsolation( SQL_TXN_READ_COMMITTED );
+	    connection->setTransactionIsolation( transactionIsolation ); 
         }
     catch (SQLException& exception) 
 		{

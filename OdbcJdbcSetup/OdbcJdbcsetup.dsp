@@ -80,6 +80,12 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
+# Begin Special Build Tool
+TargetPath=\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\OdbcJdbcSetup.dll
+SOURCE="$(InputPath)"
+PostBuild_Desc=Registering successfully built driver
+PostBuild_Cmds=regsvr32 $(TargetPath)
+# End Special Build Tool
 
 !ENDIF 
 

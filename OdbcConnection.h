@@ -85,6 +85,7 @@ public:
 	void		*libraryHandle;
 	int			cursors;			// default is SQL_CUR_USE_DRIVER
 	int			statementNumber;
+    int			transactionIsolation; //suggested by CGA.
 };
 
 #endif // !defined(AFX_ODBCCONNECTION_H__ED260D96_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)

@@ -370,6 +370,8 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 //		Binding *binding = bindings + column;
 //From RM
 		Binding *binding = *_bindings + column;	
+		if ( metaData->getColumnType (column) == SQL_CHAR || metaData->getColumnType (column) == SQL_VARCHAR )
+			binding->dataOffset            = 0; 
 		binding->type = SQL_PARAM_OUTPUT;
 		binding->cType = targetType;
 		binding->pointer = targetValuePtr;
@@ -1012,18 +1014,19 @@ RETCODE OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, UDWORD *
 
 	return sqlSuccess();
 }
+
 RETCODE OdbcStatement::sqlSetParam (int parameter, int cType, int sqlType, int precision, int scale, PTR ptr, SDWORD * length)
 {	clearErrors();
 	return sqlBindParameter (parameter, SQL_PARAM_INPUT_OUTPUT, cType, sqlType, precision, scale, ptr, SQL_SETPARAM_VALUE_MAX, length);
 }
-
 
 RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType, int sqlType, int precision, int scale, PTR ptr, int bufferLength, SDWORD * length)
 {
 	clearErrors();
 
 	if (parameter <= 0)
-		return sqlReturn (SQL_ERROR, "S1093", "Invalid parameter number");
+//		return sqlReturn (SQL_ERROR, "S1093", "Invalid parameter number");
+		return sqlReturn (SQL_ERROR, "S1093", "Invalid parameter number :: OdbcStatement::sqlBindParameter");
 
 	int parametersNeeded = parameter;
 

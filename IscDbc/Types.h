@@ -28,21 +28,29 @@ enum Type {
 enum JdbcType {
 	jdbcNULL	= 0,
 
-	TINYINT		= -7,	// byte / C char
+	TINYINT		= (-7),	// byte / C char
 	SMALLINT	= 5,	// short
 	INTEGER		= 4,
-	BIGINT		= -5,	// QUAD (64 bit)
+	BIGINT		= (-5),	// QUAD (64 bit)
 
 	jdbcFLOAT	= 6,
 	jdbcDOUBLE		= 8,
 
 	jdbcCHAR	= 1,
 	VARCHAR		= 12,
-	LONGVARCHAR	= -1,
+	LONGVARCHAR	= (-1),
 
 	jdbcDATE		= 91,
 	TIME		= 92,
 	TIMESTAMP	= 93,
+
+	TYPE_SQL_NUMERIC		= 2,
+	TYPE_SQL_DECIMAL		= 3,
+	TYPE_SQL_LONGVARBINARY	= -4,
+	TYPE_SQL_LONGVARCHAR	= -1,
+	TYPE_SQL_DATE			= 9,
+	TYPE_SQL_TIME			= 10,
+	TYPE_SQL_TIMESTAMP		= 11,
 
 	jdbcBLOB	= 2004,
 	jdbcCLOB	= 2005,

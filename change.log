@@ -4,6 +4,30 @@ Changes made to OdbcJdbc codebase
 !!  First, document the changes in the source code header template 
 !!  using the format below and then paste them into this document. 
 
+ *	2002-07-06	OdbcJdbcSetup.dsp
+ *				Added post-build step to automatically register 
+ *				newly built driver if debug build is successful. (PR)
+ *				
+
+ *  2002-07-02  OdbcConnection.cpp 
+ *				Added better management of txn isolation
+ *				contributed by C. G. Alvarez
+
+ *	2002-07-02	IscProcedureColumnsResultSet.cpp
+ *				Contributed by C. G. Alvarez
+ *				Fixed invalid table alias in typos in 
+ *				getProcedureColumns()
+
+ *	2002-07-01	TypesResultSet.h
+ *				Extended and amended to support SQLGetTypeInfo
+ *				with OleDb and .Net.			C. G. Alvarez
+
+ *	2002-07-01	Types.h
+ *				Added some type definitions.	C. G. Alvarez
+
+ *  2002-07-01  OdbcConnection.cpp 
+ *				Added SQL_API_SQLSETCONNECTOPTION to 
+ *				supportedFunctions	C. G. Alvarez
 
  *	2002-06-26	OdbcStatement.cpp
  *				Added changes from C. G. Alvarez to provide 
