@@ -103,6 +103,9 @@ class SupportFunctions
 public:
 	enum ScalarFunctions { STR_FN, NUM_FN, TD_FN, SYS_FN };
 	CSupportFunction * supportFn;
+	int lenSqlFn;
+	int lenFbFn;
+	int lenOut;
 
 	SupportFunctions();
 
@@ -110,23 +113,46 @@ public:
 
 	void translateNativeFunction ( char *&ptIn, char *&ptOut );
 
-	void defaultTranslator (  char *&ptIn, char *&ptOut )
+	void writeResult ( const char * src, char *&ptOut )
 	{
-		int lenSqlFn = supportFn->lenSqlFn;
-		int lenFbFn = supportFn->lenFbFn;
-		int offset = ptIn - ptOut;
-		int lendst = strlen ( ptOut );
-
-		lenSqlFn += offset;
-
 		if ( lenSqlFn > lenFbFn )
-			memmove ( ptOut, ptOut + lenSqlFn - lenFbFn, lendst + lenFbFn - lenSqlFn + 1 );
+			memmove ( ptOut, ptOut + lenSqlFn - lenFbFn, lenOut + lenFbFn - lenSqlFn + 1 );
 		else if ( lenSqlFn < lenFbFn )
-			memmove ( ptOut - lenSqlFn + lenFbFn, ptOut, lendst + 1 );
+			memmove ( ptOut - lenSqlFn + lenFbFn, ptOut, lenOut + 1 );
 
-		const char * src = supportFn->nameFbFn;
 		while ( *src )
 			*ptOut++ = *src++;
+	}
+
+	void defaultTranslator ( char *&ptIn, char *&ptOut )
+	{
+		int offset = ptIn - ptOut;
+		lenOut = strlen ( ptOut );
+		lenSqlFn = supportFn->lenSqlFn;
+		lenFbFn = supportFn->lenFbFn;
+
+		lenSqlFn += offset;
+		writeResult ( supportFn->nameFbFn, ptOut );
+		ptIn = ptOut;
+	}
+
+	void fullreplaceTranslator ( char *&ptIn, char *&ptOut )
+	{
+		lenFbFn = supportFn->lenFbFn;
+		lenOut = strlen ( ptOut );
+
+		while( *ptIn && *ptIn != ')' && *ptIn != '}' )ptIn++;
+
+		if( *ptIn != ')' && *ptIn != '}' )
+			return;
+
+		lenSqlFn = ptIn - ptOut;
+
+		if( *ptIn == ')' )
+			lenSqlFn++;
+
+		writeResult ( supportFn->nameFbFn, ptOut );
+		ptIn = ptOut;
 	}
 };
 

@@ -107,16 +107,16 @@ SupportFunctions::SupportFunctions()
 
 //	Time and Date functions
 
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURRENT_DATE, 		"CURRENT_DATE", 	"CURRENT_DATE",		defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURRENT_TIME, 		"CURRENT_TIME", 	"CURRENT_TIME",		defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURRENT_TIMESTAMP, "CURRENT_TIMESTAMP","CURRENT_TIMESTAMP",defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_EXTRACT, 			"EXTRACT", 			"EXTRACT",			defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURDATE, 			"CURDATE", 			"CURDATE",			defaultTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURTIME, 			"CURTIME", 			"CURTIME",			defaultTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURRENT_DATE, 		"CURRENT_DATE", 	"cast('now' as date)",		fullreplaceTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURRENT_TIME, 		"CURRENT_TIME", 	"cast('now' as time)",		fullreplaceTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURRENT_TIMESTAMP, "CURRENT_TIMESTAMP","cast('now' as timestamp)",	fullreplaceTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURDATE, 			"CURDATE", 			"cast('now' as date)",		fullreplaceTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURTIME, 			"CURTIME", 			"cast('now' as time)",		fullreplaceTranslator);
     ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYNAME, 			"DAYNAME", 			"DAYNAME",			defaultTranslator);
     ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFMONTH, 		"DAYOFMONTH", 		"DAYOFMONTH",		defaultTranslator); 
     ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFWEEK, 		"DAYOFWEEK", 		"DAYOFWEEK",		defaultTranslator);
     ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFYEAR, 		"DAYOFYEAR", 		"DAYOFYEAR",		defaultTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_EXTRACT, 			"EXTRACT", 			"EXTRACT",			defaultTranslator);
     ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_HOUR, 				"HOUR", 			"HOUR",				defaultTranslator);
     ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_MINUTE, 			"MINUTE", 			"MINUTE",			defaultTranslator);
     ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_MONTH, 			"MONTH", 			"MONTH",			defaultTranslator);
@@ -131,9 +131,9 @@ SupportFunctions::SupportFunctions()
 
 //  System functions
 
-    ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_DBNAME, 			"DBNAME", 			"DBNAME",	defaultTranslator);
-    ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_IFNULL, 			"IFNULL", 			"IFNULL",	defaultTranslator);
-    ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_USERNAME, 		"USERNAME", 		"USERNAME", defaultTranslator);
+    ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_DBNAME, 			"DBNAME", 			"DBNAME",			defaultTranslator);
+    ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_IFNULL, 			"IFNULL", 			"IFNULL",			defaultTranslator);
+    ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_USERNAME, 		"USER", 			"CURRENT_USER",		fullreplaceTranslator);
 }
 
 void SupportFunctions::translateNativeFunction ( char *&ptIn, char *&ptOut )
