@@ -30,6 +30,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
+#include <string.h>
 #include "IscDbc.h"
 #include "IscMetaDataResultSet.h"
 #include "IscDatabaseMetaData.h"
@@ -84,12 +85,26 @@ bool IscMetaDataResultSet::isWildcarded(const char * pattern)
 JString IscMetaDataResultSet::expandPattern(const char *prefix, const char * string, const char * pattern)
 {
 	char temp [256];
+	char nameObj [80], * ch;
+	const char * ptObj;
+	int dialect = metaData->connection->getDatabaseDialect();
+
+	if ( dialect == 1 )
+	{
+		strcpy( nameObj, pattern );
+		ch = nameObj;
+		while ( (*ch = UPPER ( *ch )) )
+			++ch;
+		ptObj = nameObj;
+	}
+	else
+		ptObj = pattern;
 
 	if (isWildcarded (pattern))
 		sprintf (temp, "%s (%s like '%s %%' ESCAPE '\\' or %s like '%s' ESCAPE '\\')\n",
-							prefix, string, pattern, string, pattern);
+							prefix, string, ptObj, string, ptObj);
 	else
-		sprintf (temp, "%s %s = \'%s\'\n",prefix, string, pattern);
+		sprintf (temp, "%s %s = \'%s\'\n",prefix, string, ptObj);
 
 	return temp;
 }
