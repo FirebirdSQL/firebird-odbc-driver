@@ -376,10 +376,7 @@ void IscColumnsResultSet::setCharLen (int charLenInd,
 		fldLen  = sqlType.bufferLength;
 	}
 	
-	if (sqlType.type == JDBC_VARCHAR)
-		resultSet->setValue (fldLenInd, fldLen + 2);
-	else
-		resultSet->setValue (fldLenInd, fldLen);
+	resultSet->setValue (fldLenInd, fldLen);
 
 	if (!charLen)
 		resultSet->setNull (charLenInd);
