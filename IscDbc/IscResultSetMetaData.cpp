@@ -54,9 +54,9 @@ int IscResultSetMetaData::getColumnCount()
 	return numberColumns;
 }
 
-int IscResultSetMetaData::getColumnType(int index)
+int IscResultSetMetaData::getColumnType(int index, int &realSqlType)
 {
-	return resultSet->getColumnType (index);
+	return resultSet->getColumnType (index, realSqlType);
 }
 
 const char* IscResultSetMetaData::getColumnTypeName(int index)
@@ -136,7 +136,8 @@ bool IscResultSetMetaData::isAutoIncrement(int index)
 
 bool IscResultSetMetaData::isSearchable(int index)
 {
-	int type = getColumnType (index);
+	int realSqlType;
+	int type = getColumnType (index, realSqlType);
 
 	return type != JDBC_LONGVARCHAR && type != JDBC_LONGVARBINARY;
 }

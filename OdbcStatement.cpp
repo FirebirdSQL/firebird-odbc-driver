@@ -158,6 +158,11 @@ void TraceOutput(char * msg,long val)
 #define LETTER			8
 #define IDENT			(LETTER | DIGIT)
 
+#ifdef __GNUWIN32__
+extern double listScale[]; // from OdbcConvert.cpp
+#else
+extern unsigned __int64 listScale[]; // from OdbcConvert.cpp
+#endif
 static char charTable [256];
 static int init();
 static int foo = init();
@@ -536,6 +541,7 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 		}
 		else
 		{
+			int realSqlType;
 			int count = MAX (column, numberColumns);
 			if (count >= *_numberBindings)
 			{
@@ -556,8 +562,8 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 				columnPrevGetDataBinding = column;
 			}
 			else if ( metaData &&
-				 ( metaData->getColumnType (column) == SQL_CHAR || 
-				   metaData->getColumnType (column) == SQL_VARCHAR ))
+				 ( metaData->getColumnType (column, realSqlType) == SQL_CHAR || 
+				   metaData->getColumnType (column, realSqlType) == SQL_VARCHAR ))
 				binding->dataOffset			= 0;
 #ifdef DEBUG
 			char tempDebugStr [128];
@@ -1026,6 +1032,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 		indicatorPointer = (SQLINTEGER *)((char*)indicatorPointer + *bindOffsetPtr);
 	}
 
+	int realSqlType;
 	SQLINTEGER	dataOffset = 0;
 	int length = bufferLength;
 
@@ -1035,11 +1042,11 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 		return info;
 
 	if (type == SQL_C_DEFAULT)
-		{
+	{
 		ResultSetMetaData *metaData = resultSet->getMetaData();
-		type = getCType (metaData->getColumnType (column), 
+		type = getCType (metaData->getColumnType (column, realSqlType), 
 						 metaData->isSigned (column));
-		}
+	}
 
 	switch (type)
 		{
@@ -1177,14 +1184,35 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 		case SQL_C_NUMERIC:
 			{
 				char *var = (char*) pointer;
-				QUAD number = RESULTS (getQuad(column));
+				QUAD &number = *(QUAD*)(var+3) = RESULTS (getQuad(column));
 				*var++=(char)metaData->getPrecision (column);
-				*var++=(char)metaData->getScale (column);
+				*var=(char)metaData->getScale (column);
+
+				if( number && *var )
+				{
+					metaData->getColumnType (column, realSqlType);
+					switch ( realSqlType )
+					{
+					case SQL_C_SHORT:
+					case SQL_C_USHORT:
+					case SQL_C_SSHORT:
+					case SQL_C_LONG:
+					case SQL_C_ULONG:
+					case SQL_C_SLONG:
+					case SQL_C_DOUBLE:
+						number *= (QUAD)listScale[*var];
+						break;
+					}
+				}
+
+				++var;
+
 				if ( number < 0 )
+					number = -number,
 					*var++=0;
 				else
 					*var++=1;
-				*(QUAD*)var = number;
+				
 				length = 0;
 			}
 			break;	
@@ -1220,12 +1248,13 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 	RETCODE retinfo = SQL_SUCCESS;
 	int length = binding->bufferLength;
 	int type = binding->cType;
+	int realSqlType;
 	OdbcError *error = NULL;
 
 	if (type == SQL_C_DEFAULT)
 	{
 		ResultSetMetaData *metaData = resultSet->getMetaData();
-		type = getCType (metaData->getColumnType (column), 
+		type = getCType (metaData->getColumnType (column, realSqlType), 
 						 metaData->isSigned (column));
 	}
 
@@ -1310,7 +1339,6 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 			length = sizeof(QUAD);
 			break;
 
-//		case SQL_TYPE_DATE:
 		case SQL_C_TYPE_DATE:
 		case SQL_C_DATE:
 			{
@@ -1322,7 +1350,6 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 			}
 			break;
 
-//		case SQL_TYPE_TIMESTAMP:
 		case SQL_C_TYPE_TIMESTAMP:
 		case SQL_C_TIMESTAMP:
 			{
@@ -1388,14 +1415,35 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 		case SQL_C_NUMERIC:
 			{
 				char *var = (char*) binding->pointer;
-				QUAD number = RESULTS (getQuad(column));
+				QUAD &number = *(QUAD*)(var+3) = RESULTS (getQuad(column));
 				*var++=(char)metaData->getPrecision (column);
-				*var++=(char)metaData->getScale (column);
+				*var=(char)metaData->getScale (column);
+
+				if( number && *var )
+				{
+					metaData->getColumnType (column, realSqlType);
+					switch ( realSqlType )
+					{
+					case SQL_C_SHORT:
+					case SQL_C_USHORT:
+					case SQL_C_SSHORT:
+					case SQL_C_LONG:
+					case SQL_C_ULONG:
+					case SQL_C_SLONG:
+					case SQL_C_DOUBLE:
+						number *= (QUAD)listScale[*var];
+						break;
+					}
+				}
+
+				++var;
+
 				if ( number < 0 )
+					number = -number,
 					*var++=0;
 				else
 					*var++=1;
-				*(QUAD*)var = number;
+				
 				length = 0;
 			}
 			break;	
@@ -1684,12 +1732,13 @@ RETCODE OdbcStatement::sqlDescribeCol(int col,
 	clearErrors();
 
 	try
-		{
+	{
+		int realSqlType;
 		ResultSetMetaData *metaData = resultSet->getMetaData();
 		const char *name = metaData->getColumnName (col);
 		setString (name, colName, nameSize, nameLength);
 		if (sqlType)
-			*sqlType = metaData->getColumnType (col);
+			*sqlType = metaData->getColumnType (col, realSqlType);
 		if (scale)
 			*scale = metaData->getScale (col);
 		if (precision)
@@ -1697,22 +1746,22 @@ RETCODE OdbcStatement::sqlDescribeCol(int col,
 		if (nullable)
 			*nullable = (metaData->isNullable (col)) ? SQL_NULLABLE : SQL_NO_NULLS;
 #ifdef DEBUG
-		char tempDebugStr [8196];
+		char tempDebugStr [128];
 		sprintf (tempDebugStr, "Column %.2d %31s has type %.3d, scale %.3d, precision %.3d \n", 
 				col,
 				metaData->getColumnName(col),
-				metaData->getColumnType (col),
+				metaData->getColumnType (col, realSqlType),
 				metaData->getScale (col),
 				metaData->getPrecision (col)
 				);
 		OutputDebugString (tempDebugStr);
 #endif
-		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	return sqlSuccess();
 }
@@ -1827,11 +1876,12 @@ RETCODE OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, UDWORD *
 {
 	clearErrors();
 	StatementMetaData *metaData = statement->getStatementMetaDataIPD();
+	int realSqlType;
 
 	try
-		{
+	{
 		if (sqlType)
-			*sqlType = metaData->getType (parameter);
+			*sqlType = metaData->getType (parameter, realSqlType);
 
 		if (precision)
 			*precision = metaData->getPrecision (parameter);
@@ -1841,12 +1891,12 @@ RETCODE OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, UDWORD *
 
 		if (nullable)
 			*nullable = (metaData->isNullable (parameter)) ? SQL_NULLABLE : SQL_NO_NULLS;
-		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	return sqlSuccess();
 }
@@ -3252,128 +3302,129 @@ RETCODE OdbcStatement::sqlColAttributes(int column, int descType, SQLPOINTER buf
 	clearErrors();
 	int value = 0;
 	const char *string = NULL;
+	int realSqlType;
 
 	try
-		{
+	{
 		ResultSetMetaData *metaData = resultSet->getMetaData();
 		switch (descType)
-			{
-			case SQL_COLUMN_LABEL:
-				string = metaData->getColumnLabel (column);
-				break;
+		{
+		case SQL_COLUMN_LABEL:
+			string = metaData->getColumnLabel (column);
+			break;
 
-			case SQL_DESC_BASE_COLUMN_NAME:
-			case SQL_COLUMN_NAME:
-				string = metaData->getColumnName (column);
-				break;
+		case SQL_DESC_BASE_COLUMN_NAME:
+		case SQL_COLUMN_NAME:
+			string = metaData->getColumnName (column);
+			break;
 
-			case SQL_COLUMN_UNSIGNED:
-				value = (metaData->isSigned (column)) ? SQL_FALSE : SQL_TRUE;
-				break;
+		case SQL_COLUMN_UNSIGNED:
+			value = (metaData->isSigned (column)) ? SQL_FALSE : SQL_TRUE;
+			break;
 
-			case SQL_COLUMN_UPDATABLE:
-				value = SQL_ATTR_READWRITE_UNKNOWN;
+		case SQL_COLUMN_UPDATABLE:
+			value = SQL_ATTR_READWRITE_UNKNOWN;
 //				value = (metaData->isWritable (column)) ? SQL_ATTR_WRITE : SQL_ATTR_READONLY;
-				*length = sizeof(long);
-				break;
+			*length = sizeof(long);
+			break;
 
-			case SQL_COLUMN_COUNT:
-				value = metaData->getColumnCount();
-				break;
+		case SQL_COLUMN_COUNT:
+			value = metaData->getColumnCount();
+			break;
 
-			case SQL_COLUMN_TYPE:
-				value = metaData->getColumnType (column);
-				break;
+		case SQL_COLUMN_TYPE:
+			value = metaData->getColumnType (column, realSqlType);
+			break;
 
-			case SQL_COLUMN_LENGTH:
-				value = metaData->getColumnDisplaySize (column);
-				break;
+		case SQL_COLUMN_LENGTH:
+			value = metaData->getColumnDisplaySize (column);
+			break;
 
-			case SQL_COLUMN_PRECISION:
-				value = metaData->getPrecision (column);
-				break;
+		case SQL_COLUMN_PRECISION:
+			value = metaData->getPrecision (column);
+			break;
 
-			case SQL_COLUMN_SCALE:
-				value = metaData->getScale (column);
-				break;
+		case SQL_COLUMN_SCALE:
+			value = metaData->getScale (column);
+			break;
 
-			case SQL_COLUMN_DISPLAY_SIZE:
-				value = metaData->getColumnDisplaySize (column);
-				break;
+		case SQL_COLUMN_DISPLAY_SIZE:
+			value = metaData->getColumnDisplaySize (column);
+			break;
 
-			case SQL_COLUMN_NULLABLE:
-				value = (metaData->isNullable (column)) ? SQL_NULLABLE : SQL_NO_NULLS ;
-				break;
+		case SQL_COLUMN_NULLABLE:
+			value = (metaData->isNullable (column)) ? SQL_NULLABLE : SQL_NO_NULLS ;
+			break;
 
-			case SQL_COLUMN_MONEY:
-				value = (metaData->isCurrency (column)) ? 1 : 0;
-				break;
+		case SQL_COLUMN_MONEY:
+			value = (metaData->isCurrency (column)) ? 1 : 0;
+			break;
 
-			case SQL_COLUMN_AUTO_INCREMENT:
-				value = (metaData->isAutoIncrement (column)) ? 1 : 0;
-				break;
+		case SQL_COLUMN_AUTO_INCREMENT:
+			value = (metaData->isAutoIncrement (column)) ? 1 : 0;
+			break;
 
-			case SQL_COLUMN_CASE_SENSITIVE:
-				value = (metaData->isCaseSensitive (column)) ? SQL_TRUE : SQL_FALSE;
-				break;
+		case SQL_COLUMN_CASE_SENSITIVE:
+			value = (metaData->isCaseSensitive (column)) ? SQL_TRUE : SQL_FALSE;
+			break;
 
-			case SQL_COLUMN_SEARCHABLE:
-				value = (metaData->isSearchable (column)) ? SQL_PRED_SEARCHABLE : SQL_PRED_NONE;
-				break;
+		case SQL_COLUMN_SEARCHABLE:
+			value = (metaData->isSearchable (column)) ? SQL_PRED_SEARCHABLE : SQL_PRED_NONE;
+			break;
 
-			case SQL_COLUMN_TYPE_NAME:
-                string = metaData->getColumnTypeName (column);
-                break;
+		case SQL_COLUMN_TYPE_NAME:
+            string = metaData->getColumnTypeName (column);
+            break;
 
-			case SQL_COLUMN_TABLE_NAME:
-				string = metaData->getTableName (column);
-				break;
+		case SQL_COLUMN_TABLE_NAME:
+			string = metaData->getTableName (column);
+			break;
 
-			case SQL_COLUMN_OWNER_NAME:
-				string = metaData->getSchemaName (column);
-				break;
+		case SQL_COLUMN_OWNER_NAME:
+			string = metaData->getSchemaName (column);
+			break;
 
-			case SQL_COLUMN_QUALIFIER_NAME:
-				string = metaData->getCatalogName (column);
-				break;
+		case SQL_COLUMN_QUALIFIER_NAME:
+			string = metaData->getCatalogName (column);
+			break;
 
 
-			/***
-			case SQL_COLUMN_COUNT                0
-			case SQL_COLUMN_NAME                 1
-			case SQL_COLUMN_TYPE                 2
-			case SQL_COLUMN_LENGTH               3
-			case SQL_COLUMN_PRECISION            4
-			case SQL_COLUMN_SCALE                5
-			case SQL_COLUMN_DISPLAY_SIZE         6
-			case SQL_COLUMN_NULLABLE             7
-			case SQL_COLUMN_UNSIGNED             8
-			case SQL_COLUMN_MONEY                9
-			case SQL_COLUMN_UPDATABLE            10
-			case SQL_COLUMN_AUTO_INCREMENT       11
-			case SQL_COLUMN_CASE_SENSITIVE       12
-			case SQL_COLUMN_SEARCHABLE           13
-			case SQL_COLUMN_TYPE_NAME            14
-			case SQL_COLUMN_TABLE_NAME           15
-			case SQL_COLUMN_OWNER_NAME           16
-			case SQL_COLUMN_QUALIFIER_NAME       17
-			case SQL_COLUMN_LABEL                18
-			case SQL_COLATT_OPT_MAX              SQL_COLUMN_LABEL
-			***/
-			default:
-				{
-				JString msg;
-				msg.Format ("Descriptor type (%d) out of range", descType);
-				return sqlReturn (SQL_ERROR, "S1091", (const char*) msg);
-				//return sqlReturn (SQL_ERROR, "S1091", "Descriptor type out of range");
-				}
+		/***
+		case SQL_COLUMN_COUNT                0
+		case SQL_COLUMN_NAME                 1
+		case SQL_COLUMN_TYPE                 2
+		case SQL_COLUMN_LENGTH               3
+		case SQL_COLUMN_PRECISION            4
+		case SQL_COLUMN_SCALE                5
+		case SQL_COLUMN_DISPLAY_SIZE         6
+		case SQL_COLUMN_NULLABLE             7
+		case SQL_COLUMN_UNSIGNED             8
+		case SQL_COLUMN_MONEY                9
+		case SQL_COLUMN_UPDATABLE            10
+		case SQL_COLUMN_AUTO_INCREMENT       11
+		case SQL_COLUMN_CASE_SENSITIVE       12
+		case SQL_COLUMN_SEARCHABLE           13
+		case SQL_COLUMN_TYPE_NAME            14
+		case SQL_COLUMN_TABLE_NAME           15
+		case SQL_COLUMN_OWNER_NAME           16
+		case SQL_COLUMN_QUALIFIER_NAME       17
+		case SQL_COLUMN_LABEL                18
+		case SQL_COLATT_OPT_MAX              SQL_COLUMN_LABEL
+		***/
+		default:
+			{
+			JString msg;
+			msg.Format ("Descriptor type (%d) out of range", descType);
+			return sqlReturn (SQL_ERROR, "S1091", (const char*) msg);
+			//return sqlReturn (SQL_ERROR, "S1091", "Descriptor type out of range");
 			}
 		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	if (string)
 		setString (string, (SQLCHAR*) buffer, bufferSize, length);
@@ -3442,139 +3493,140 @@ RETCODE OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attri
 	clearErrors();
 	int value;
 	const char *string = NULL;
+	int realSqlType;
 
 	try
-		{
+	{
 		ResultSetMetaData *metaData = resultSet->getMetaData();
 		switch (fieldId)
-			{
-			case SQL_DESC_LABEL:
-				string = metaData->getColumnLabel (column);
-				break;
+		{
+		case SQL_DESC_LABEL:
+			string = metaData->getColumnLabel (column);
+			break;
 
-			case SQL_DESC_BASE_COLUMN_NAME:
-			case SQL_DESC_NAME:
-				string = metaData->getColumnName (column);
-				break;
-			case SQL_DESC_UNNAMED:
-				value = (metaData->getColumnName (column)) ? SQL_NAMED : SQL_UNNAMED;
-				break;
+		case SQL_DESC_BASE_COLUMN_NAME:
+		case SQL_DESC_NAME:
+			string = metaData->getColumnName (column);
+			break;
+		case SQL_DESC_UNNAMED:
+			value = (metaData->getColumnName (column)) ? SQL_NAMED : SQL_UNNAMED;
+			break;
 
-			case SQL_DESC_UNSIGNED:
-				value = (metaData->isSigned (column)) ? SQL_FALSE : SQL_TRUE;
-				break;
+		case SQL_DESC_UNSIGNED:
+			value = (metaData->isSigned (column)) ? SQL_FALSE : SQL_TRUE;
+			break;
 
-			case SQL_DESC_UPDATABLE:
-				value = (metaData->isWritable (column)) ? SQL_ATTR_WRITE : SQL_ATTR_READONLY;
-				break;
+		case SQL_DESC_UPDATABLE:
+			value = (metaData->isWritable (column)) ? SQL_ATTR_WRITE : SQL_ATTR_READONLY;
+			break;
 
-			case SQL_DESC_COUNT:
-				value = metaData->getColumnCount();
-				break;
+		case SQL_DESC_COUNT:
+			value = metaData->getColumnCount();
+			break;
 
-			case SQL_DESC_TYPE:
-			case SQL_DESC_CONCISE_TYPE:
-				value = metaData->getColumnType (column);
-				break;
+		case SQL_DESC_TYPE:
+		case SQL_DESC_CONCISE_TYPE:
+			value = metaData->getColumnType (column, realSqlType);
+			break;
 
-			case SQL_DESC_LENGTH:
-				value = metaData->getColumnDisplaySize (column);
-				break;
+		case SQL_DESC_LENGTH:
+			value = metaData->getColumnDisplaySize (column);
+			break;
 
-			case SQL_DESC_PRECISION:
-				value = metaData->getPrecision (column);
-				break;
+		case SQL_DESC_PRECISION:
+			value = metaData->getPrecision (column);
+			break;
 
-			case SQL_DESC_SCALE:
-				value = metaData->getScale (column);
-				break;
+		case SQL_DESC_SCALE:
+			value = metaData->getScale (column);
+			break;
 
-			case SQL_DESC_DISPLAY_SIZE:
-				value = metaData->getColumnDisplaySize (column);
-				break;
+		case SQL_DESC_DISPLAY_SIZE:
+			value = metaData->getColumnDisplaySize (column);
+			break;
 
-			case SQL_DESC_NULLABLE:
-				value = (metaData->isNullable (column)) ? SQL_NULLABLE : SQL_NO_NULLS;
-				break;
-
-			/***
-			case SQL_DESC_MONEY:
-				value = (metaData->isCurrency (column)) ? 1 : 0;
-				break;
-
-			***/
-
-			case SQL_DESC_AUTO_UNIQUE_VALUE: // REVISAR
-		        value = (metaData->isAutoIncrement (column)) ? 1 : 0;
-		        break;
-
-			case SQL_DESC_CASE_SENSITIVE:
-				value = (metaData->isCaseSensitive (column)) ? SQL_TRUE : SQL_FALSE;
-				break;
-
-			case SQL_DESC_SEARCHABLE:
-				value = (metaData->isSearchable (column)) ? SQL_PRED_SEARCHABLE : SQL_PRED_NONE;
-				break;
-
-			//case SQL_DESC_TYPE_NAME:
-			//	value = metaData->getColumnType (column);
-			//	break;
-
-			case SQL_DESC_TYPE_NAME:
-			    string = metaData->getColumnTypeName (column);               
-				break; 
-
-			case SQL_DESC_BASE_TABLE_NAME:
-			case SQL_DESC_TABLE_NAME:
-				string = metaData->getTableName (column);
-				break;
-
-
+		case SQL_DESC_NULLABLE:
+			value = (metaData->isNullable (column)) ? SQL_NULLABLE : SQL_NO_NULLS;
+			break;
 
 		/***
-			case SQL_DESC_OWNER_NAME:
-				string = metaData->getSchemaName (column);
-				break;
+		case SQL_DESC_MONEY:
+			value = (metaData->isCurrency (column)) ? 1 : 0;
+			break;
 
-			case SQL_DESC_QUALIFIER_NAME:
-				string = metaData->getCatalogName (column);
-				break;
+		***/
 
-			case SQL_DESC_COUNT                0
-			case SQL_DESC_NAME                 1
-			case SQL_DESC_TYPE                 2
-			case SQL_DESC_CONCISE_TYPE         2
-			case SQL_DESC_LENGTH               3
-			case SQL_DESC_PRECISION            4
-			case SQL_DESC_SCALE                5
-			case SQL_DESC_DISPLAY_SIZE         6
-			case SQL_DESC_NULLABLE             7
-			case SQL_DESC_UNSIGNED             8
-			case SQL_DESC_MONEY                9
-			case SQL_DESC_UPDATABLE            10
-			case SQL_DESC_AUTO_INCREMENT       11
-			case SQL_DESC_CASE_SENSITIVE       12
-			case SQL_DESC_SEARCHABLE           13
-			case SQL_DESC_TYPE_NAME            14
-			case SQL_DESC_TABLE_NAME           15
-			case SQL_DESC_OWNER_NAME           16
-			case SQL_DESC_QUALIFIER_NAME       17
-			case SQL_DESC_LABEL                18
-			case SQL_COLATT_OPT_MAX              SQL_DESC_LABEL
-			***/
-			default:
-				{
-				JString msg;
-				msg.Format ("field id (%d) out of range", fieldId);
-				return sqlReturn (SQL_ERROR, "HY091", (const char*) msg);
-				}
+		case SQL_DESC_AUTO_UNIQUE_VALUE: // REVISAR
+		    value = (metaData->isAutoIncrement (column)) ? 1 : 0;
+		    break;
+
+		case SQL_DESC_CASE_SENSITIVE:
+			value = (metaData->isCaseSensitive (column)) ? SQL_TRUE : SQL_FALSE;
+			break;
+
+		case SQL_DESC_SEARCHABLE:
+			value = (metaData->isSearchable (column)) ? SQL_PRED_SEARCHABLE : SQL_PRED_NONE;
+			break;
+
+		//case SQL_DESC_TYPE_NAME:
+		//	value = metaData->getColumnType (column, realSqlType);
+		//	break;
+
+		case SQL_DESC_TYPE_NAME:
+			string = metaData->getColumnTypeName (column);               
+			break; 
+
+		case SQL_DESC_BASE_TABLE_NAME:
+		case SQL_DESC_TABLE_NAME:
+			string = metaData->getTableName (column);
+			break;
+
+
+
+	/***
+		case SQL_DESC_OWNER_NAME:
+			string = metaData->getSchemaName (column);
+			break;
+
+		case SQL_DESC_QUALIFIER_NAME:
+			string = metaData->getCatalogName (column);
+			break;
+
+		case SQL_DESC_COUNT                0
+		case SQL_DESC_NAME                 1
+		case SQL_DESC_TYPE                 2
+		case SQL_DESC_CONCISE_TYPE         2
+		case SQL_DESC_LENGTH               3
+		case SQL_DESC_PRECISION            4
+		case SQL_DESC_SCALE                5
+		case SQL_DESC_DISPLAY_SIZE         6
+		case SQL_DESC_NULLABLE             7
+		case SQL_DESC_UNSIGNED             8
+		case SQL_DESC_MONEY                9
+		case SQL_DESC_UPDATABLE            10
+		case SQL_DESC_AUTO_INCREMENT       11
+		case SQL_DESC_CASE_SENSITIVE       12
+		case SQL_DESC_SEARCHABLE           13
+		case SQL_DESC_TYPE_NAME            14
+		case SQL_DESC_TABLE_NAME           15
+		case SQL_DESC_OWNER_NAME           16
+		case SQL_DESC_QUALIFIER_NAME       17
+		case SQL_DESC_LABEL                18
+		case SQL_COLATT_OPT_MAX              SQL_DESC_LABEL
+		***/
+		default:
+			{
+			JString msg;
+			msg.Format ("field id (%d) out of range", fieldId);
+			return sqlReturn (SQL_ERROR, "HY091", (const char*) msg);
 			}
 		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	if (string)
 		setString (string, (SQLCHAR*) attributePtr, bufferLength, strLengthPtr);

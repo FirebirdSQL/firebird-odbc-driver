@@ -406,6 +406,7 @@ void Sqlda::allocBuffer()
 			length = sizeof (float);
 			break;
 
+		case SQL_D_FLOAT:
 		case SQL_DOUBLE:
 			length = sizeof (double);
 			break;
@@ -562,6 +563,7 @@ void Sqlda::print()
 					printf ("%g", *(float*) p);
 					break;
 
+				case SQL_D_FLOAT:
 				case SQL_DOUBLE:
 					printf ("%g", *(double*) p);
 					break;
@@ -608,6 +610,7 @@ int Sqlda::getDisplaySize(int index)
 		case SQL_FLOAT:
 			return MAX_FLOAT_LENGTH + 4;			
 
+		case SQL_D_FLOAT:
 		case SQL_DOUBLE:
 			if ( var->sqlscale < 0 )
 				return MAX_NUMERIC_LENGTH + 2;
@@ -673,6 +676,7 @@ int Sqlda::getPrecision(int index)
 		case SQL_FLOAT:
 			return MAX_FLOAT_LENGTH;
 
+		case SQL_D_FLOAT:
 		case SQL_DOUBLE:
 			if ( var->sqlscale < 0 )
 				return MAX_NUMERIC_LENGTH;
@@ -724,11 +728,11 @@ bool Sqlda::isNullable(int index)
 	return (var->sqltype & 1) ? true : false;
 }
 
-int Sqlda::getColumnType(int index)
+int Sqlda::getColumnType(int index, int &realSqlType)
 {
 	XSQLVAR *var = sqlda->sqlvar + index - 1;
 
-	return getSqlType (var->sqltype, var->sqlsubtype, var->sqlscale);
+	return getSqlType (var->sqltype, var->sqlsubtype, var->sqlscale, realSqlType);
 }
 
 const char* Sqlda::getColumnTypeName(int index)
@@ -743,191 +747,180 @@ int Sqlda::getSubType(int index)
 	return sqlda->sqlvar[index - 1].sqlsubtype;
 }
 
-int Sqlda::getSqlType(int iscType, int subType, int sqlScale)
+int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
 {
 	switch (iscType & ~1)
+	{
+	case SQL_TEXT:
+		return (realSqlType = JDBC_CHAR);
+
+	case SQL_VARYING:
+		return (realSqlType = JDBC_VARCHAR);
+
+	case SQL_SHORT:
+		realSqlType = JDBC_SMALLINT;
+		if ( sqlScale < 0 )
 		{
-		case SQL_TEXT:
-			return JDBC_CHAR;
-
-		case SQL_VARYING:
-			return JDBC_VARCHAR;
-
-		case SQL_SHORT:
-			if ( sqlScale < 0 )
-			{
-				if(subType == 2)
-				{
-					return JDBC_DECIMAL;
-				}
-				else
-				{
-					return JDBC_NUMERIC;
-				}
-			}
-			return JDBC_SMALLINT;
-
-		case SQL_LONG:
-			if ( sqlScale < 0 )
-			{
-				if(subType == 2)
-				{
-					return JDBC_DECIMAL;
-				}
-				else
-				{
-					return JDBC_NUMERIC;
-				}
-			}
-			return JDBC_INTEGER;
-
-		case SQL_FLOAT:
-			return JDBC_FLOAT;
-
-		case SQL_DOUBLE:
-			if ( sqlScale < 0 )
-			{
-				if(subType == 2)
-				{
-					return JDBC_DECIMAL;
-				}
-				else
-				{
-					return JDBC_NUMERIC;
-				}
-			}
-			return JDBC_DOUBLE;
-
-		case SQL_QUAD:
-			return JDBC_BIGINT;
-
-		case SQL_INT64:
-			if ( sqlScale < 0 )
-			{
-				if(subType == 2)
-				{
-					return JDBC_DECIMAL;
-				}
-				else
-				{
-					return JDBC_NUMERIC;
-				}
-			}
-			return JDBC_BIGINT;
-
-		case SQL_BLOB:
-			if (subType == 1)
-				return JDBC_LONGVARCHAR;
-			return JDBC_LONGVARBINARY;
-
-		case SQL_TIMESTAMP:
-			return JDBC_TIMESTAMP;
-
-		case SQL_TYPE_TIME:
-			return JDBC_TIME;
-
-		case SQL_TYPE_DATE:
-			return JDBC_DATE;
-
-		case SQL_ARRAY:
-			return JDBC_ARRAY;
+			if(subType == 2)
+				return JDBC_DECIMAL;
+			else
+				return JDBC_NUMERIC;
 		}
+		return realSqlType;
 
-	return 0;
+	case SQL_LONG:
+		realSqlType = JDBC_INTEGER;
+		if ( sqlScale < 0 )
+		{
+			if(subType == 2)
+				return JDBC_DECIMAL;
+			else
+				return JDBC_NUMERIC;
+		}
+		return realSqlType;
+
+	case SQL_FLOAT:
+		return (realSqlType = JDBC_FLOAT);
+
+	case SQL_DOUBLE:
+		realSqlType = JDBC_DOUBLE;
+		if ( sqlScale < 0 )
+		{
+			if(subType == 2)
+				return JDBC_DECIMAL;
+			else
+				return JDBC_NUMERIC;
+		}
+		return realSqlType;
+
+	case SQL_QUAD:
+		return JDBC_BIGINT;
+
+	case SQL_INT64:
+		realSqlType = JDBC_BIGINT;
+		if ( sqlScale < 0 )
+		{
+			if(subType == 2)
+				return JDBC_DECIMAL;
+			else
+				return JDBC_NUMERIC;
+		}
+		return realSqlType;
+
+	case SQL_BLOB:
+		if (subType == 1)
+			return (realSqlType = JDBC_LONGVARCHAR);
+		return (realSqlType = JDBC_LONGVARBINARY);
+
+	case SQL_TIMESTAMP:
+		return (realSqlType = JDBC_TIMESTAMP);
+
+	case SQL_TYPE_TIME:
+		return (realSqlType = JDBC_TIME);
+
+	case SQL_TYPE_DATE:
+		return (realSqlType = JDBC_DATE);
+
+	case SQL_ARRAY:
+		return (realSqlType = JDBC_ARRAY);
+	}
+
+	return (realSqlType = 0);
 }
 
 const char* Sqlda::getSqlTypeName(int iscType, int subType, int sqlScale)
 {
 	switch (iscType & ~1)
+	{
+	case SQL_TEXT:
+		return "CHAR";
+
+	case SQL_VARYING:
+		return "VARCHAR";
+
+	case SQL_SHORT:
+		if ( sqlScale < 0 )
 		{
-		case SQL_TEXT:
-			return "CHAR";
-
-		case SQL_VARYING:
-			return "VARCHAR";
-
-		case SQL_SHORT:
-			if ( sqlScale < 0 )
+			if(subType == 2)
 			{
-				if(subType == 2)
-				{
-					return "DECIMAL";
-				}
-				else
-				{
-					return "NUMERIC";
-				}
+				return "DECIMAL";
 			}
-			return "SMALLINT";
-
-		case SQL_LONG:
-			if ( sqlScale < 0 )
+			else
 			{
-				if(subType == 2)
-				{
-					return "DECIMAL";
-				}
-				else
-				{
-					return "NUMERIC";
-				}
+				return "NUMERIC";
 			}
-			return "INTEGER";
-
-		case SQL_FLOAT:
-			return "FLOAT";
-
-		case SQL_DOUBLE:
-			if ( sqlScale < 0 )
-			{
-				if(subType == 2)
-				{
-					return "DECIMAL";
-				}
-				else
-				{
-					return "NUMERIC";
-				}
-			}
-			return "DOUBLE PRECISION";
-
-		case SQL_QUAD:
-			return "BIGINT";
-
-		case SQL_INT64:
-			if ( sqlScale < 0 )
-			{
-				if(subType == 2)
-				{
-					return "DECIMAL";
-				}
-				else
-				{
-					return "NUMERIC";
-				}
-			}
-			return "BIGINT";
-
-		case SQL_BLOB:
-			if (subType == 1)
-				return "LONG VARCHAR";
-			return "LONG VARBINARY";
-
-		case SQL_TIMESTAMP:
-			return "TIMESTAMP";
-
-		case SQL_TYPE_TIME:
-			return "TIME";
-
-		case SQL_TYPE_DATE:
-			return "DATE";
-
-		case SQL_ARRAY:
-			return "ARRAY";
-
-		default:
-			NOT_YET_IMPLEMENTED;
 		}
+		return "SMALLINT";
+
+	case SQL_LONG:
+		if ( sqlScale < 0 )
+		{
+			if(subType == 2)
+			{
+				return "DECIMAL";
+			}
+			else
+			{
+				return "NUMERIC";
+			}
+		}
+		return "INTEGER";
+
+	case SQL_FLOAT:
+		return "FLOAT";
+
+	case SQL_D_FLOAT:
+	case SQL_DOUBLE:
+		if ( sqlScale < 0 )
+		{
+			if(subType == 2)
+			{
+				return "DECIMAL";
+			}
+			else
+			{
+				return "NUMERIC";
+			}
+		}
+		return "DOUBLE PRECISION";
+
+	case SQL_QUAD:
+		return "BIGINT";
+
+	case SQL_INT64:
+		if ( sqlScale < 0 )
+		{
+			if(subType == 2)
+			{
+				return "DECIMAL";
+			}
+			else
+			{
+				return "NUMERIC";
+			}
+		}
+		return "BIGINT";
+
+	case SQL_BLOB:
+		if (subType == 1)
+			return "LONG VARCHAR";
+		return "LONG VARBINARY";
+
+	case SQL_TIMESTAMP:
+		return "TIMESTAMP";
+
+	case SQL_TYPE_TIME:
+		return "TIME";
+
+	case SQL_TYPE_DATE:
+		return "DATE";
+
+	case SQL_ARRAY:
+		return "ARRAY";
+
+	default:
+		NOT_YET_IMPLEMENTED;
+	}
 
 	return "*unknown type*";
 }

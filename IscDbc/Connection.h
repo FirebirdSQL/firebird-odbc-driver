@@ -331,7 +331,7 @@ class StatementMetaData
 {
 public:
 	virtual int			getCount() = 0;
-	virtual int			getType (int index) = 0;
+	virtual int			getType (int index, int &realSqlType) = 0;
 	virtual int			getPrecision(int index) = 0;
 	virtual int			getScale(int index) = 0;
 	virtual bool		isNullable (int index) = 0;
@@ -494,7 +494,7 @@ public:
 	virtual const char*	getTableName (int index) = 0;
 	virtual const char*	getColumnName (int index) = 0;
 	virtual int			getColumnDisplaySize (int index) = 0;
-	virtual int			getColumnType (int index) = 0;
+	virtual int			getColumnType (int index, int &realSqlType) = 0;
 	virtual const char*	getColumnTypeName (int index) = 0;
 	virtual int			getColumnCount() = 0;
 	virtual int			getPrecision(int index) = 0;

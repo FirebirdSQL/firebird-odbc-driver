@@ -148,7 +148,7 @@ bool IscCrossReferenceResultSet::stringEqual(const char * p1, const char * p2)
 	return true;
 }
 
-int IscCrossReferenceResultSet::getColumnType(int index)
+int IscCrossReferenceResultSet::getColumnType(int index, int &realSqlType)
 {
 	switch (index)
 		{
@@ -157,7 +157,7 @@ int IscCrossReferenceResultSet::getColumnType(int index)
 			return JDBC_INTEGER;
 		}
 
-	return Parent::getColumnType (index);
+	return Parent::getColumnType (index, realSqlType);
 }
 
 int IscCrossReferenceResultSet::getColumnDisplaySize(int index)

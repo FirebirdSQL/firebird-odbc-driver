@@ -39,7 +39,7 @@ public:
 	virtual int getColumnDisplaySize(int index);
 	typedef IscMetaDataResultSet Parent;
 
-	virtual int getColumnType (int index);
+	virtual int getColumnType (int index, int &realSqlType);
 	virtual bool next();
 	void getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern);
 	IscColumnsResultSet(IscDatabaseMetaData *metaData);

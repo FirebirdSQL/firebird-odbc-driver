@@ -209,9 +209,9 @@ const char* TypesResultSet::getColumnName(int index)
 	return fields [index - 1].name;
 }
 
-int TypesResultSet::getColumnType(int index)
+int TypesResultSet::getColumnType(int index, int &realSqlType)
 {
-	return fields [index - 1].type;
+	return (realSqlType = fields [index - 1].type);
 }
 
 int TypesResultSet::getColumnDisplaySize(int index)

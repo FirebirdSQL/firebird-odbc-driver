@@ -144,7 +144,7 @@ bool IscSpecialColumnsResultSet::next ()
 	return true;
 }
 
-int IscSpecialColumnsResultSet::getColumnType(int index)
+int IscSpecialColumnsResultSet::getColumnType(int index, int &realSqlType)
 {
 	switch (index)
 		{
@@ -152,7 +152,7 @@ int IscSpecialColumnsResultSet::getColumnType(int index)
 			return JDBC_VARCHAR;
 		}
 
-	return Parent::getColumnType (index);
+	return Parent::getColumnType (index, realSqlType);
 }
 
 int IscSpecialColumnsResultSet::getColumnDisplaySize(int index)

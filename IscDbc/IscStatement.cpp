@@ -488,6 +488,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				value->setValue (*(float*) var->sqldata);
 				break;
 
+			case SQL_D_FLOAT:
 			case SQL_DOUBLE:
 				value->setValue (*(double*) var->sqldata);
 				break;
@@ -528,10 +529,6 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				time.timeValue = data;
 				value->setValue (time);
 				}
-				break;
-
-			case SQL_D_FLOAT:
-				NOT_SUPPORTED("d_float", var->relname_length, var->relname, var->aliasname_length, var->aliasname);
 				break;
 
 			case SQL_ARRAY:

@@ -128,7 +128,7 @@ int IscTablePrivilegesResultSet::getColumnDisplaySize(int index)
     return Parent::getColumnDisplaySize (index);
 }
 
-int IscTablePrivilegesResultSet::getColumnType(int index)
+int IscTablePrivilegesResultSet::getColumnType(int index, int &realSqlType)
 {
     switch (index)
         {
@@ -136,7 +136,7 @@ int IscTablePrivilegesResultSet::getColumnType(int index)
             return JDBC_VARCHAR;
         }
 
-    return Parent::getColumnType (index);
+    return Parent::getColumnType (index, realSqlType);
 }
 
 int IscTablePrivilegesResultSet::getColumnPrecision(int index)

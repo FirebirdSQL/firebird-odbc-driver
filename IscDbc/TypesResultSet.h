@@ -39,7 +39,7 @@ public:
 	virtual int getPrecision(int index);
 	virtual int getScale(int index);
 	int getColumnDisplaySize(int index);
-	virtual int getColumnType(int index);
+	virtual int getColumnType(int index, int &realSqlType);
 	virtual const char* getColumnName(int index);
 	virtual bool next();
 	TypesResultSet(int dataType);

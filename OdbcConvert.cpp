@@ -35,6 +35,54 @@
 #define LO_LONG(l)           ((long)(l))
 #define HI_LONG(l)           ((long)(((UQUAD)(l) >> 32) & 0xFFFFFFFF))
 
+#ifdef __GNUWIN32__
+double listScale[] =
+{
+	1.0,
+	10.0,
+	100.0,
+	1000.0,
+	10000.0,
+	100000.0,
+	1000000.0,
+	10000000.0,
+	100000000.0,
+	1000000000.0,
+	10000000000.0,
+	100000000000.0,
+	1000000000000.0,
+	10000000000000.0,
+	100000000000000.0,
+	1000000000000000.0,
+	10000000000000000.0,
+	100000000000000000.0,
+	1000000000000000000.0
+};
+#else
+unsigned __int64 listScale[] =
+{
+	0x0000000000000001,
+	0x000000000000000a,
+	0x0000000000000064,
+	0x00000000000003e8,
+	0x00000000000186a0,
+	0x00000000000f4240,
+	0x0000000000989680,
+	0x0000000005f5e100,
+	0x000000003b9aca00,
+	0x00000002540be400,
+	0x000000174876e800,
+	0x000000e8d4a51000,
+	0x000009184e72a000,
+	0x00005af3107a4000,
+	0x00038d7ea4c68000,
+	0x002386f26fc10000,
+	0x016345785d8a0000,
+	0x0de0b6b3a7640000,
+	0x8ac7230489e80000
+};
+#endif
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -79,6 +127,9 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			return &OdbcConvert::convShortToBigint;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convShortToString;
+		case SQL_DECIMAL:
+		case SQL_C_NUMERIC:
+			return &OdbcConvert::convShortToTagNumeric;
 		case SQL_C_BINARY:
 		case SQL_C_TYPE_DATE:
 		case SQL_C_DATE:
@@ -86,7 +137,6 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_TIMESTAMP:
 		case SQL_C_TYPE_TIME:
 		case SQL_C_TIME:
-		case SQL_C_NUMERIC:
 			break;
 		}
 
@@ -113,6 +163,9 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			return &OdbcConvert::convLongToBigint;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convLongToString;
+		case SQL_DECIMAL:
+		case SQL_C_NUMERIC:
+			return &OdbcConvert::convLongToTagNumeric;
 		}
 
 	case SQL_C_FLOAT:
@@ -159,6 +212,9 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			return &OdbcConvert::convDoubleToBigint;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDoubleToString;
+		case SQL_DECIMAL:
+		case SQL_C_NUMERIC:
+			return &OdbcConvert::convDoubleToTagNumeric;
 		}
 
 	case SQL_C_SBIGINT:
@@ -183,6 +239,9 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			return &OdbcConvert::convBigintToBigint;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convBigintToString;
+		case SQL_DECIMAL:
+		case SQL_C_NUMERIC:
+			return &OdbcConvert::convBigintToTagNumeric;
 		}
 
 	case SQL_DECIMAL:
@@ -351,6 +410,33 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 	return 0;																				\
 }																							\
 
+#define ODBCCONVERT_CONVTAGNUMERIC(TYPE_FROM,C_TYPE_FROM)									\
+int OdbcConvert::conv##TYPE_FROM##ToTagNumeric(DescRecord * from, DescRecord * to)			\
+{																							\
+	char* pointer = (char*)getAdressData((char*)to->dataPtr);								\
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);	\
+																							\
+	ODBCCONVERT_CHECKNULL;																	\
+																							\
+	QUAD &number = *(QUAD*)(pointer+3) = (QUAD)*(##C_TYPE_FROM*)from->dataPtr;				\
+	*pointer++=(char)from->precision;														\
+	*pointer++=(char)from->scale;															\
+																							\
+	if ( number < 0 )																		\
+		number = -number,																	\
+		*pointer++=0;																		\
+	else																					\
+		*pointer++=1;																		\
+																							\
+	if ( from->scale )																		\
+		number *= (QUAD)listScale[from->scale];													\
+																							\
+	if ( indicatorPointer )																	\
+		*indicatorPointer = 0;																\
+																							\
+	return 0;																				\
+}																							\
+
 #define ODBCCONVERT_CONVROUND(TYPE_FROM,C_TYPE_FROM,TYPE_TO,C_TYPE_TO)						\
 int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)			\
 {																							\
@@ -450,6 +536,7 @@ ODBCCONVERT_CONV(Short,short,Float,float);
 ODBCCONVERT_CONV(Short,short,Double,double);
 ODBCCONVERT_CONV(Short,short,Bigint,QUAD);
 ODBCCONVERT_CONV_TO_STRING(Short,short,5);
+ODBCCONVERT_CONVTAGNUMERIC(Short,short);
 
 ////////////////////////////////////////////////////////////////////////
 // Long
@@ -461,6 +548,7 @@ ODBCCONVERT_CONV(Long,long,Float,float);
 ODBCCONVERT_CONV(Long,long,Double,double);
 ODBCCONVERT_CONV(Long,long,Bigint,QUAD);
 ODBCCONVERT_CONV_TO_STRING(Long,long,10);
+ODBCCONVERT_CONVTAGNUMERIC(Long,long);
 
 ////////////////////////////////////////////////////////////////////////
 // Float
@@ -497,6 +585,7 @@ ODBCCONVERT_CONVROUND(Double,double,Long,long);
 ODBCCONVERT_CONV(Double,double,Float,float);
 ODBCCONVERT_CONV(Double,double,Double,double);
 ODBCCONVERT_CONVROUND(Double,double,Bigint,QUAD);
+ODBCCONVERT_CONVTAGNUMERIC(Double,double);
 
 int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 {
@@ -525,6 +614,29 @@ ODBCCONVERT_CONV(Bigint,QUAD,Double,double);
 ODBCCONVERT_CONV(Bigint,QUAD,Bigint,QUAD);
 ODBCCONVERT_CONV_TO_STRING(Bigint,QUAD,18);
 
+int OdbcConvert::convBigintToTagNumeric(DescRecord * from, DescRecord * to)
+{
+	char* pointer = (char*)getAdressData((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	QUAD &number = *(QUAD*)(pointer+3) = *(QUAD*)from->dataPtr;
+	*pointer++=(char)from->precision;
+	*pointer++=(char)from->scale;
+
+	if ( number < 0 )
+		number = -number,
+		*pointer++=0;
+	else
+		*pointer++=1;
+
+	if ( indicatorPointer )
+		*indicatorPointer = 0;
+
+	return 0;
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Numeric,Decimal
 ////////////////////////////////////////////////////////////////////////
@@ -543,24 +655,24 @@ int OdbcConvert::convNumericToTagNumeric(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL;
 
-	QUAD &number = *(QUAD*)from->dataPtr;
+	QUAD &number = *(QUAD*)(pointer+3) = *(QUAD*)from->dataPtr;
 	*pointer++=(char)from->precision;
 	*pointer++=(char)from->scale;
+
 	if ( number < 0 )
 		number = -number,
 		*pointer++=0;
 	else
 		*pointer++=1;
-	*(QUAD*)pointer = number;
+
 	if ( indicatorPointer )
 		*indicatorPointer = 0;
 
 	return 0;
 }
 
-
 ////////////////////////////////////////////////////////////////////////
-#define ODBCCONVERT_TEMP_CONV(TYPE_FROM,TYPE_TO,C_TYPE_TO)						\
+#define ODBCCONVERT_TEMP_CONV(TYPE_FROM,TYPE_TO,C_TYPE_TO)									\
 int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)			\
 {																							\
 	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);									\

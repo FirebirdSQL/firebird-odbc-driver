@@ -101,6 +101,7 @@ public:
 	RETCODE operator =(OdbcDesc &sour);
 	int setConvFn(int recNumber, DescRecord * recordTo);
 	int getConciseType(int type);
+	int getDefaultFromSQLToConciseType(int sqlType);
 	void addBindColumn(int recNumber, DescRecord * recordApp);
 	void delBindColumn(int recNumber);
 	void delAllBindColumn();

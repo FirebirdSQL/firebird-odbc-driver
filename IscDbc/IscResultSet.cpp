@@ -455,11 +455,11 @@ float IscResultSet::getFloat(const char * columnName)
 	return (float) getValue (columnName)->getDouble();
 }
 
-int IscResultSet::getColumnType(int index)
+int IscResultSet::getColumnType(int index, int &realSqlType)
 {
 	if (index < 1 || index > numberColumns)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->getColumnType (index);
+	return sqlda->getColumnType (index, realSqlType);
 }
 
 int IscResultSet::getColumnDisplaySize(int index)

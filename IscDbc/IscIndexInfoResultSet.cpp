@@ -162,7 +162,7 @@ int IscIndexInfoResultSet::getColumnDisplaySize(int index)
 	return Parent::getColumnDisplaySize (index);
 }
 
-int IscIndexInfoResultSet::getColumnType(int index)
+int IscIndexInfoResultSet::getColumnType(int index, int &realSqlType)
 {
 	switch (index)
 		{
@@ -170,7 +170,7 @@ int IscIndexInfoResultSet::getColumnType(int index)
 			return JDBC_CHAR;
 		}
 
-	return Parent::getColumnType (index);
+	return Parent::getColumnType (index, realSqlType);
 }
 
 int IscIndexInfoResultSet::getPrecision(int index)

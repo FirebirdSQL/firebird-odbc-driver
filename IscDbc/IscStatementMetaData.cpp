@@ -45,9 +45,9 @@ int IscStatementMetaData::getCount()
 	return sqlda->getColumnCount();
 }
 
-int IscStatementMetaData::getType(int index)
+int IscStatementMetaData::getType(int index, int &realSqlType)
 {
-	return sqlda->getColumnType (index);
+	return sqlda->getColumnType (index, realSqlType);
 }
 
 int IscStatementMetaData::getPrecision(int index)

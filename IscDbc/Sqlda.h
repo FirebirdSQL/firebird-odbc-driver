@@ -53,7 +53,7 @@ public:
 	const char* getTableName (int index);
 //	static const char* getSqlTypeName (int iscType, int subType);
 //	static int getSqlType (int iscType, int subType);
-	static int getSqlType (int iscType, int subType, int sqlScale);
+	static int getSqlType (int iscType, int subType, int sqlScale, int &realSqlType);
 	static const char* getSqlTypeName (int iscType, int subType, int sqlScale);
 	bool isNullable (int index);
 	int getScale (int index);
@@ -61,7 +61,7 @@ public:
 	const char* getColumnName (int index);
 	int getDisplaySize (int index);
 	int getSubType(int index);
-	int getColumnType (int index);
+	int getColumnType (int index, int &realSqlType);
 	const char * getColumnTypeName (int index);
 	void getSqlData(int index, char *& ptData, short *& ptIndData);
 	void setSqlData(int index, long ptData, long ptIndData);

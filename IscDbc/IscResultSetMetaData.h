@@ -67,7 +67,7 @@ public:
 	virtual const char* getTableName (int index);
 	virtual const char* getColumnName (int index);
 	virtual int getColumnDisplaySize (int index);
-	virtual int getColumnType (int index);
+	virtual int getColumnType (int index, int &realSqlType);
 	virtual const char* getColumnTypeName (int index); 
 	virtual int getColumnCount();
 

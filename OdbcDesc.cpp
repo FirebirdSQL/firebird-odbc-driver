@@ -163,6 +163,7 @@ int OdbcDesc::setConvFn(int recNumber, DescRecord * recordTo)
 		return -1;
 
 	DescRecord *record = getDescRecord(recNumber);
+	int realSqlType;
 
 	if( recNumber == 0 )
 		recordTo->setDefault(record);
@@ -189,15 +190,18 @@ int OdbcDesc::setConvFn(int recNumber, DescRecord * recordTo)
 		record->searchable = SQL_PRED_NONE;
 		record->tableName = metaData->getTableName(recNumber);
 		record->baseTableName = metaData->getTableName(recNumber);
-		record->type = metaData->getType(recNumber);
-		record->conciseType = getConciseType(record->type);
+		record->type = metaData->getType(recNumber, realSqlType);
+		record->conciseType = getConciseType(realSqlType);
 		record->typeName = metaData->getColumnTypeName(recNumber);
 		record->unNamed = !record->name.IsEmpty() ? SQL_NAMED : SQL_UNNAMED;
 		record->unSigned = SQL_FALSE;
 		record->updaTable = SQL_ATTR_WRITE;
 		
 		if( recordTo->conciseType == SQL_C_DEFAULT )
+		{
 			record->setDefault(recordTo);
+			recordTo->conciseType = getDefaultFromSQLToConciseType(record->type);
+		}
 
 		metaData->getSqlData(recNumber, (char *&)record->dataPtr, (short *&)record->indicatorPtr);
 	}
@@ -1223,4 +1227,60 @@ int OdbcDesc::getConciseType(int type)
 		}
 
 	return type;
+}
+
+int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType)
+{
+	int cType;
+
+	switch (sqlType)
+	{
+	case JDBC_CHAR:
+	case JDBC_VARCHAR:
+	case JDBC_LONGVARCHAR:
+	case JDBC_DECIMAL:
+	case JDBC_NUMERIC:
+	case JDBC_ARRAY:
+		cType = SQL_C_CHAR;
+		break;
+	case JDBC_SMALLINT:
+		cType = SQL_C_SSHORT;
+		break;
+	case JDBC_INTEGER:
+		cType = SQL_C_SLONG;
+		break;
+	case JDBC_BIGINT:
+		cType = SQL_C_SBIGINT;
+		break;
+	case JDBC_FLOAT:
+		cType = SQL_C_FLOAT;
+		break;
+	case JDBC_DOUBLE:
+		cType = SQL_C_DOUBLE;
+		break;
+	case JDBC_BINARY:
+	case JDBC_VARBINARY:
+	case JDBC_LONGVARBINARY:
+		cType = SQL_C_BINARY;
+		break;
+	case JDBC_SQL_DATE:
+		cType = SQL_C_DATE;
+		break;
+	case JDBC_SQL_TIME:
+		cType = SQL_C_TIME;
+		break;
+	case JDBC_TIMESTAMP:
+		cType = SQL_C_TYPE_TIMESTAMP;
+		break;
+	case JDBC_DATE:
+		cType = SQL_C_TYPE_DATE;
+		break;
+	case JDBC_TIME:
+		cType = SQL_C_TYPE_TIME;
+		break;
+	default:
+		cType = SQL_C_DEFAULT;
+		break;
+	}
+	return cType;
 }

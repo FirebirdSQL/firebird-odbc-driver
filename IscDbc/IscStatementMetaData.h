@@ -40,7 +40,7 @@ public:
 	virtual bool isNullable (int index);
 	virtual int getScale (int index);
 	virtual int getPrecision (int index);
-	virtual int getType (int index);
+	virtual int getType (int index, int &realSqlType);
 	virtual int getCount();
 	virtual int getDisplaySize(int index);
 	virtual const char* getColumnLabel(int index);

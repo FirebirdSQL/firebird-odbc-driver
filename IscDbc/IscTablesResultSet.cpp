@@ -137,7 +137,7 @@ int IscTablesResultSet::getColumnDisplaySize(int index)
 	return Parent::getColumnDisplaySize (index);
 }
 
-int IscTablesResultSet::getColumnType(int index)
+int IscTablesResultSet::getColumnType(int index, int &realSqlType)
 {
 	switch (index)
 		{
@@ -145,7 +145,7 @@ int IscTablesResultSet::getColumnType(int index)
 			return JDBC_VARCHAR;
 		}
 
-	return Parent::getColumnType (index);
+	return Parent::getColumnType (index, realSqlType);
 }
 
 int IscTablesResultSet::getPrecision(int index)

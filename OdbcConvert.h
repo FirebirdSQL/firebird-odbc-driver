@@ -63,6 +63,7 @@ public:
 	int convShortToDouble(DescRecord * from, DescRecord * to);
 	int convShortToBigint(DescRecord * from, DescRecord * to);
 	int convShortToString(DescRecord * from, DescRecord * to);
+	int convShortToTagNumeric(DescRecord * from, DescRecord * to);
 
 // Long
 	int convLongToLong(DescRecord * from, DescRecord * to);
@@ -71,6 +72,7 @@ public:
 	int convLongToDouble(DescRecord * from, DescRecord * to);
 	int convLongToBigint(DescRecord * from, DescRecord * to);
 	int convLongToString(DescRecord * from, DescRecord * to);
+	int convLongToTagNumeric(DescRecord * from, DescRecord * to);
 
 // Float
 	int convFloatToLong(DescRecord * from, DescRecord * to);
@@ -87,6 +89,7 @@ public:
 	int convDoubleToDouble(DescRecord * from, DescRecord * to);
 	int convDoubleToBigint(DescRecord * from, DescRecord * to);
 	int convDoubleToString(DescRecord * from, DescRecord * to);
+	int convDoubleToTagNumeric(DescRecord * from, DescRecord * to);
 
 // Bigint
 	int convBigintToLong(DescRecord * from, DescRecord * to);
@@ -95,6 +98,7 @@ public:
 	int convBigintToDouble(DescRecord * from, DescRecord * to);
 	int convBigintToBigint(DescRecord * from, DescRecord * to);
 	int convBigintToString(DescRecord * from, DescRecord * to);
+	int convBigintToTagNumeric(DescRecord * from, DescRecord * to);
 
 // Numeric, Decimal
 	int convNumericToLong(DescRecord * from, DescRecord * to);

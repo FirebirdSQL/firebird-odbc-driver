@@ -115,9 +115,9 @@ JString IscMetaDataResultSet::expandPattern(const char * string, const char * pa
 	return temp;
 }
 
-int IscMetaDataResultSet::getColumnType(int index)
+int IscMetaDataResultSet::getColumnType(int index, int &realSqlType)
 {
-	return resultSet->getColumnType (index);
+	return resultSet->getColumnType (index, realSqlType);
 }
 
 const char* IscMetaDataResultSet::getColumnTypeName(int index)

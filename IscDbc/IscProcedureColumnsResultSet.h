@@ -37,7 +37,7 @@ public:
 	typedef IscMetaDataResultSet Parent;
 
 	virtual int getPrecision (int index);
-	virtual int getColumnType (int index);
+	virtual int getColumnType (int index, int &realSqlType);
 	virtual int getColumnDisplaySize(int index);
 	virtual bool next();
 	void getProcedureColumns (const char *catalog, 

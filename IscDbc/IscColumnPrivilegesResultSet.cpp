@@ -122,9 +122,9 @@ int IscColumnPrivilegesResultSet::getColumnDisplaySize(int index)
 	return Parent::getColumnDisplaySize (index);
 }
 
-int IscColumnPrivilegesResultSet::getColumnType(int index)
+int IscColumnPrivilegesResultSet::getColumnType(int index, int &realSqlType)
 {
-	return Parent::getColumnType (index);
+	return Parent::getColumnType (index, realSqlType);
 }
 
 int IscColumnPrivilegesResultSet::getColumnPrecision(int index)
