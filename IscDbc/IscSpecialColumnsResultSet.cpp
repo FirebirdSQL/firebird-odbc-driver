@@ -58,7 +58,7 @@ IscSpecialColumnsResultSet::IscSpecialColumnsResultSet(IscDatabaseMetaData *meta
 
 void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const char * schema, const char * table, int scope, int nullable)
 {
-	JString sql = 
+	char sql[2048] =
 		"select distinct f.rdb$field_type as scope,\n"				// 1 
 				"\tcast (rfr.rdb$field_name as varchar(31)) as column_name, \n"	// 2
 				"\tf.rdb$field_type as data_type,\n"				// 3
@@ -86,13 +86,15 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 				"\t\tand rel.rdb$index_name = i.rdb$index_name\n"
 		"where i.rdb$unique_flag = 1\n";
 
+	char * ptFirst = sql + strlen(sql);
+
 	if ( !metaData->allTablesAreSelectable() )
-		sql += metaData->existsAccess("\t\tand ", "rfr", 0, "\n");
+		metaData->existsAccess(ptFirst, "\t\tand ", "rfr", 0, "\n");
 
 	if(table && *table)
-		sql += expandPattern ("\t\tand ","rfr.rdb$relation_name", table);
+		expandPattern (ptFirst, "\t\tand ","rfr.rdb$relation_name", table);
 
-	sql += " order by rel.rdb$constraint_type, rdb$index_name, rdb$field_position";
+	addString(ptFirst, " order by rel.rdb$constraint_type, rdb$index_name, rdb$field_position");
 
 	prepareStatement (sql);
 	numberColumns = 8;

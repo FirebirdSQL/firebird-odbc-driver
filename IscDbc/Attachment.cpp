@@ -330,19 +330,16 @@ int Attachment::getUserType()
 	return userType;
 }
 
-JString Attachment::existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix)
+void Attachment::existsAccess(char *& stringOut, const char *prefix, const char * relobject, int typeobject, const char *suffix)
 {
-	char temp [300];
-
-	sprintf (temp,	" %s exists( select cast(1 as integer) from rdb$user_privileges priv\n"
+	int len = sprintf (stringOut,	" %s exists( select cast(1 as integer) from rdb$user_privileges priv\n"
 					"\t\twhere %s.rdb$%s = priv.rdb$relation_name\n"
 					"\t\t\tand priv.rdb$privilege = 'S' and priv.rdb$object_type = %d\n"
 					"\t\t\tand priv.rdb$user = '%s' and priv.rdb$user_type = %d ) %s \n",
 						prefix, relobject, 
 						!typeobject ? "relation_name" : "procedure_name",
 						typeobject, (const char *)userAccess, userType, suffix);
-
-	return temp;
+	stringOut += len;
 }
 
 }; // end namespace IscDbcLibrary

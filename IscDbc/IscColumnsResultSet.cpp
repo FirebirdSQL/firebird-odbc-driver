@@ -72,7 +72,7 @@ IscColumnsResultSet::IscColumnsResultSet(IscDatabaseMetaData *metaData)
 
 void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern)
 {
-	JString sql = 
+	char sql[4096] =
 		"select cast (NULL as varchar(7)) as table_cat,\n"			// 1 - VARCHAR
 				"\tcast (NULL as varchar(7)) as table_schem,\n"		// 2 - VARCHAR
 				"\tcast (rfr.rdb$relation_name as varchar(31)) as table_name,\n"	// 3 - VARCHAR NOT NULL
@@ -102,19 +102,21 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 		"from rdb$relation_fields rfr, rdb$fields fld\n"
 		"where rfr.rdb$field_source = fld.rdb$field_name\n";
 
+	char * ptFirst = sql + strlen(sql);
+
 	if ( !metaData->allTablesAreSelectable() )
-		sql += metaData->existsAccess(" and ", "rfr", 0, "\n");
+		metaData->existsAccess(ptFirst, " and ", "rfr", 0, "\n");
 
 	if (tableNamePattern && *tableNamePattern)
-		sql += expandPattern (" and ","rfr.rdb$relation_name", tableNamePattern);
+		expandPattern (ptFirst, " and ","rfr.rdb$relation_name", tableNamePattern);
 
 	if (fieldNamePattern && *fieldNamePattern)
-		sql += expandPattern (" and ","rfr.rdb$field_name", fieldNamePattern);
+		expandPattern (ptFirst, " and ","rfr.rdb$field_name", fieldNamePattern);
 
-	sql += " order by rfr.rdb$relation_name, rfr.rdb$field_position\n";
+	addString(ptFirst, " order by rfr.rdb$relation_name, rfr.rdb$field_position\n");
 	
 #ifdef DEBUG
-	OutputDebugString (sql.getString());
+	OutputDebugString (sql);
 #endif
 	prepareStatement (sql);
 

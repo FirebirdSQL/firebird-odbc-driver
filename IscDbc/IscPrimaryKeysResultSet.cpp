@@ -41,7 +41,7 @@ IscPrimaryKeysResultSet::IscPrimaryKeysResultSet(IscDatabaseMetaData *metaData)
 
 void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
-	JString sql = 
+	char sql[2048] =
 		"select cast (NULL as varchar(7)) as table_cat,\n"							// 1
 				"\tcast (NULL as varchar(7)) as table_schem,\n"						// 2
 				"\tcast (rel.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
@@ -53,13 +53,15 @@ void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * 
 			" and rel.rdb$index_name = idx.rdb$index_name\n"
 			" and idx.rdb$index_name = seg.rdb$index_name\n";
 
+	char * ptFirst = sql + strlen(sql);
+
 	if ( !metaData->allTablesAreSelectable() )
-		sql += metaData->existsAccess(" and ", "rel", 0, "\n");
+		metaData->existsAccess(ptFirst, " and ", "rel", 0, "\n");
 
 	if (tableNamePattern && *tableNamePattern)
-		sql += expandPattern (" and ","rel.rdb$relation_name", tableNamePattern);
+		expandPattern (ptFirst, " and ","rel.rdb$relation_name", tableNamePattern);
 
-	sql += " order by rel.rdb$relation_name, idx.rdb$index_name, seg.rdb$field_position";
+	addString(ptFirst, " order by rel.rdb$relation_name, idx.rdb$index_name, seg.rdb$field_position");
 	prepareStatement (sql);
 	numberColumns = 6;
 }

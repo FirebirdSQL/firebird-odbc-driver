@@ -55,7 +55,7 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 													const char * foreignSchema, 
 													const char * foreignTable)
 {
-	JString sql = 
+	char sql[4096] =
 		"select cast (NULL as varchar(7)) as pktable_cat,\n"	// 1
 				" cast (NULL as varchar(7)) as pktable_schem,\n"// 2
 				" cast (pidx.rdb$relation_name as varchar(31)) as pktable_name,\n"	// 3
@@ -81,27 +81,28 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 		"     rdb$ref_constraints refc\n"
 		"where fkey.rdb$constraint_type = 'FOREIGN KEY'\n";
 
+	char * ptFirst = sql + strlen(sql);
+
 	if ( !metaData->allTablesAreSelectable() )
 	{
-		sql += metaData->existsAccess("  and ", "pidx", 0, "\n");
-		sql += metaData->existsAccess("  and ", "fidx", 0, "\n");
+		metaData->existsAccess(ptFirst, "  and ", "pidx", 0, "\n");
+		metaData->existsAccess(ptFirst, "  and ", "fidx", 0, "\n");
 	}
 
-	sql += "  and fkey.rdb$index_name = fidx.rdb$index_name\n"
+	addString(ptFirst, "  and fkey.rdb$index_name = fidx.rdb$index_name\n"
 		"  and fidx.rdb$foreign_key = pidx.rdb$index_name\n"
 		"  and fidx.rdb$index_name = fseg.rdb$index_name\n"
 		"  and pidx.rdb$index_name = pseg.rdb$index_name\n"
 		"  and pseg.rdb$field_position = fseg.rdb$field_position"
-		"  and refc.rdb$constraint_name = fkey.rdb$constraint_name"
-		;
+		"  and refc.rdb$constraint_name = fkey.rdb$constraint_name" );
 
 	if (primaryTable && *primaryTable)
-		sql += expandPattern (" and ","pidx.rdb$relation_name", primaryTable);
+		expandPattern (ptFirst, " and ","pidx.rdb$relation_name", primaryTable);
 
 	if (foreignTable && *foreignTable)
-		sql += expandPattern (" and ","fkey.rdb$relation_name", foreignTable);
+		expandPattern (ptFirst, " and ","fkey.rdb$relation_name", foreignTable);
 
-	sql += " order by pidx.rdb$relation_name, pseg.rdb$field_position";
+	addString(ptFirst, " order by pidx.rdb$relation_name, pseg.rdb$field_position\n");
 	prepareStatement (sql);
 	numberColumns = 14;
 }

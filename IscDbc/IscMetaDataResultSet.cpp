@@ -74,12 +74,12 @@ bool IscMetaDataResultSet::isWildcarded(const char * pattern)
 	return false;
 }
 
-JString IscMetaDataResultSet::expandPattern(const char *prefix, const char * string, const char * pattern)
+void IscMetaDataResultSet::expandPattern(char *& stringOut, const char *prefix, const char * string, const char * pattern)
 {
-	char temp [256];
-	char nameObj [80], * ch;
+	char nameObj [256], * ch;
 	const char * ptObj;
 	int dialect = metaData->connection->getDatabaseDialect();
+	int len;
 
 	if ( dialect == 1 || *metaData->getIdentifierQuoteString() == ' ' )
 	{
@@ -93,12 +93,19 @@ JString IscMetaDataResultSet::expandPattern(const char *prefix, const char * str
 		ptObj = pattern;
 
 	if (isWildcarded (pattern))
-		sprintf (temp, "%s (%s like '%s %%' ESCAPE '\\' or %s like '%s' ESCAPE '\\')\n",
+		len = sprintf (stringOut, "%s (%s like '%s %%' ESCAPE '\\' or %s like '%s' ESCAPE '\\')\n",
 							prefix, string, ptObj, string, ptObj);
 	else
-		sprintf (temp, "%s %s = \'%s\'\n",prefix, string, ptObj);
+		len = sprintf (stringOut, "%s %s = \'%s\'\n",prefix, string, ptObj);
 
-	return temp;
+	stringOut += len;
+}
+
+void IscMetaDataResultSet::addString(char *& stringOut, const char * string, int length)
+{
+	int len = length ? length : strlen(string);
+	memcpy ( stringOut, string, len);
+	stringOut += len;
 }
 
 }; // end namespace IscDbcLibrary

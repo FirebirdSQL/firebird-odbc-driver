@@ -48,58 +48,59 @@ IscTablesResultSet::IscTablesResultSet(IscDatabaseMetaData *metaData)
 
 void IscTablesResultSet::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char * * types)
 {
-	JString sql = "select cast (NULL as varchar(7)) as table_cat,\n"
-				          "cast (NULL as varchar(7)) as table_schem,\n"
-						  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,\n"
-						  "cast( 'TABLE' as varchar(13) ) as table_type,\n"
-						  "tbl.rdb$description as remarks,\n"
-						  "tbl.rdb$system_flag,\n"
-						  "tbl.rdb$view_blr as view_blr\n"
-						  "from rdb$relations tbl\n";
+	char sql[2048] =  "select cast (NULL as varchar(7)) as table_cat,\n"
+			          "cast (NULL as varchar(7)) as table_schem,\n"
+					  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,\n"
+					  "cast( 'TABLE' as varchar(13) ) as table_type,\n"
+					  "tbl.rdb$description as remarks,\n"
+					  "tbl.rdb$system_flag,\n"
+					  "tbl.rdb$view_blr as view_blr\n"
+					  "from rdb$relations tbl\n";
 
+	char * ptFirst = sql + strlen(sql);
 	const char *sep = " where (";
 
 	if (tableNamePattern && *tableNamePattern)
 	{
-		sql += expandPattern (" where ","tbl.rdb$relation_name", tableNamePattern);
+		expandPattern (ptFirst, " where ","tbl.rdb$relation_name", tableNamePattern);
 		sep = " and (";
 	}
 
 	if ( !metaData->allTablesAreSelectable() )
 	{
-		sql += metaData->existsAccess(sep, "tbl", 0, ")\n");
+		metaData->existsAccess(ptFirst, sep, "tbl", 0, ")\n");
 		sep = " and (";
 	}
 
-	JString adjunct;
+	char * pt = ptFirst;
 		
 	for (int n = 0; n < typeCount; ++n)
 		if (!strcmp (types [n], "TABLE"))
 			{
-			adjunct += sep;
-			adjunct += "(tbl.rdb$view_blr is null and tbl.rdb$system_flag = 0)";
+			addString(pt, sep);
+			addString(pt, "(tbl.rdb$view_blr is null and tbl.rdb$system_flag = 0)");
 			sep = " or ";
 			}
 		else if (!strcmp (types [n], "VIEW"))
 			{
-			adjunct += sep;
-			adjunct += "tbl.rdb$view_blr is not null";
+			addString(pt, sep);
+			addString(pt, "tbl.rdb$view_blr is not null");
 			sep = " or ";
 			}
 		else if (!strcmp (types [n], "SYSTEM TABLE"))
 			{
-			adjunct += sep;
-			adjunct += "(tbl.rdb$view_blr is null and tbl.rdb$system_flag = 1)";
+			addString(pt, sep);
+			addString(pt, "(tbl.rdb$view_blr is null and tbl.rdb$system_flag = 1)");
 			sep = " or ";
 			}
 
-	if (!adjunct.IsEmpty())
+	if ( pt > ptFirst )
 		{
-		sql += adjunct;
-		sql += ")\n";
+		ptFirst = pt;
+		addString(ptFirst, ")\n");
 		}
 
-	sql += " order by tbl.rdb$system_flag desc, tbl.rdb$owner_name, tbl.rdb$relation_name";
+	addString(ptFirst, " order by tbl.rdb$system_flag desc, tbl.rdb$owner_name, tbl.rdb$relation_name");
 
 	prepareStatement (sql);
 	numberColumns = 5;

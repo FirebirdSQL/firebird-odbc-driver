@@ -45,7 +45,7 @@ IscColumnPrivilegesResultSet::IscColumnPrivilegesResultSet(IscDatabaseMetaData *
 
 void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * columnNamePattern)
 {
-	JString sql = "select cast (NULL as varchar(7)) as table_cat,"
+	char sql[4096] = "select cast (NULL as varchar(7)) as table_cat,"
 				          "cast (NULL as varchar(7)) as table_schem,"
 						  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,"
 						  "cast (tbl.rdb$field_name as varchar(31)) as column_name,"
@@ -56,22 +56,24 @@ void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, con
 						  "from rdb$relation_fields tbl, rdb$user_privileges priv\n"
 						  " where tbl.rdb$relation_name = priv.rdb$relation_name\n";
 	
+	char * ptFirst = sql + strlen(sql);
+
 	if ( !metaData->allTablesAreSelectable() )
 	{
 		char buf[128];
-		sprintf (buf, "and priv.rdb$object_type = 0\n"
+		int len = sprintf (buf, "and priv.rdb$object_type = 0\n"
 					  "and priv.rdb$user = '%s' and priv.rdb$user_type = %d\n",
 						metaData->getUserAccess(),metaData->getUserType());
-		sql +=	buf;
+		addString(ptFirst, buf, len);
 	}
 
 	if (tableNamePattern && *tableNamePattern)
-		sql += expandPattern (" and ","tbl.rdb$relation_name", tableNamePattern);
+		expandPattern (ptFirst, " and ","tbl.rdb$relation_name", tableNamePattern);
 
 	if (columnNamePattern && *columnNamePattern)
-		sql += expandPattern (" and ","tbl.rdb$field_name", columnNamePattern);
+		expandPattern (ptFirst, " and ","tbl.rdb$field_name", columnNamePattern);
 
-	sql += " order by tbl.rdb$relation_name, tbl.rdb$field_name, priv.rdb$privilege";
+	addString(ptFirst, " order by tbl.rdb$relation_name, tbl.rdb$field_name, priv.rdb$privilege");
 
 	prepareStatement (sql);
 	numberColumns = 8;

@@ -80,7 +80,7 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 													   const char * procedureNamePattern, 
 													   const char * columnNamePattern)
 {
-	JString sql = 
+	char sql[4096] =
 		"select cast (NULL as varchar(7)) as procedure_cat,\n"		// 1
 				"\tcast (NULL as varchar(7)) as procedure_schem,\n"	// 2
 				"\tcast (pp.rdb$procedure_name as varchar(31)) as procedure_name,\n"	// 3
@@ -104,16 +104,18 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 		"from rdb$procedure_parameters pp, rdb$fields f\n"
 		"where pp.rdb$field_source = f.rdb$field_name\n";
 
+	char * ptFirst = sql + strlen(sql);
+
 	if (procedureNamePattern && *procedureNamePattern)
-		sql += expandPattern (" and ","pp.rdb$procedure_name", procedureNamePattern);
+		expandPattern (ptFirst, " and ","pp.rdb$procedure_name", procedureNamePattern);
 
 	if ( !metaData->allTablesAreSelectable() )
-		sql += metaData->existsAccess(" and ", "pp", 5, "\n");
+		metaData->existsAccess(ptFirst, " and ", "pp", 5, "\n");
 
 	if (columnNamePattern && *columnNamePattern)
-		sql += expandPattern (" and ","pp.rdb$parameter_name", columnNamePattern);
+		expandPattern (ptFirst, " and ","pp.rdb$parameter_name", columnNamePattern);
 
-	sql += " order by pp.rdb$procedure_name, pp.rdb$parameter_type, pp.rdb$parameter_number";
+	addString(ptFirst, " order by pp.rdb$procedure_name, pp.rdb$parameter_type, pp.rdb$parameter_number");
 	prepareStatement (sql);
 	numberColumns = 19;
 }

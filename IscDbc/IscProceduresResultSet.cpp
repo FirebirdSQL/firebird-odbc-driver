@@ -41,7 +41,7 @@ IscProceduresResultSet::IscProceduresResultSet(IscDatabaseMetaData *metaData)
 
 void IscProceduresResultSet::getProcedures(const char * catalog, const char * schemaPattern, const char * procedureNamePattern)
 {
-	JString sql = 
+	char sql[2048] =
 		"select cast (NULL as varchar(7)) as procedure_cat,\n"				// 1
 				"\tcast (NULL as varchar(7)) as procedure_schem,\n"			// 2
 				"\tcast (proc.rdb$procedure_name as varchar(31)) as procedure_name,\n"	// 3
@@ -52,18 +52,19 @@ void IscProceduresResultSet::getProcedures(const char * catalog, const char * sc
 				"\t1 as procedure_type\n"									// 8 SQL_PT_PROCEDURE
 		"from rdb$procedures proc\n";
 
+	char * ptFirst = sql + strlen(sql);
 	const char *sep = " where ";
 
 	if (procedureNamePattern && *procedureNamePattern)
 	{
-		sql += expandPattern (sep,"proc.rdb$procedure_name", procedureNamePattern);
+		expandPattern (ptFirst, sep,"proc.rdb$procedure_name", procedureNamePattern);
 		sep = " and ";
 	}
 
 	if ( !metaData->allTablesAreSelectable() )
-		sql += metaData->existsAccess(sep, "proc", 5, "");
+		metaData->existsAccess(ptFirst, sep, "proc", 5, "");
 
-	sql += " order by proc.rdb$procedure_name";
+	addString(ptFirst, " order by proc.rdb$procedure_name");
 	prepareStatement (sql);
 	numberColumns = 8;
 }

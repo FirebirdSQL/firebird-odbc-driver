@@ -40,7 +40,7 @@ public:
 	void checkAdmin();
 	JString& getUserAccess();
 	int getUserType();
-	JString existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix);
+	void existsAccess(char *& stringOut, const char *prefix, const char * relobject, int typeobject, const char *suffix);
 	int getDatabaseDialect();
 	JString getIscStatusText (ISC_STATUS *statusVector);
 	int release();

@@ -62,7 +62,7 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 										 const char * tableNamePattern, 
 										 bool unique, bool approximate)
 {
-	JString tableStat = 
+	char sqlQuery[4096] =
 		"select cast(NULL as varchar(7)) as table_cat,\n"						// 1
 				"\tcast(NULL as varchar(7)) as table_schem,\n"					// 2
 				"\tcast(rl.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
@@ -79,7 +79,8 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 				"\tcast(NULL as smallint) as index_type\n"						// 14
 		"from rdb$relations rl\n";
 
-	JString sql = 
+	char sql[2048] =
+		"\tunion\n" 
 		"select cast(NULL as varchar(7)) as table_cat,\n"						// 1
 				"\tcast(NULL as varchar(7)) as table_schem,\n"					// 2
 				"\tcast(idx.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
@@ -97,25 +98,28 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 		"from rdb$indices idx, rdb$index_segments seg\n"
 		"where idx.rdb$index_name = seg.rdb$index_name\n";
 
+	char * ptFirst = sqlQuery + strlen(sqlQuery);
+	char * ptSecond = sql + strlen(sql);
+
 	if (tableNamePattern && *tableNamePattern)
 	{
-		tableStat += expandPattern (" where ","rl.rdb$relation_name", tableNamePattern);
-		sql += expandPattern (" and ","idx.rdb$relation_name", tableNamePattern);
+		expandPattern (ptFirst, " where ","rl.rdb$relation_name", tableNamePattern);
+		expandPattern (ptSecond, " and ","idx.rdb$relation_name", tableNamePattern);
 
 		if ( !metaData->allTablesAreSelectable() )
 		{
-			tableStat += metaData->existsAccess(" and ", "rl", 0, "\n");
-			sql += metaData->existsAccess(" and ", "idx", 0, "\n");
+			metaData->existsAccess(ptFirst, " and ", "rl", 0, "\n");
+			metaData->existsAccess(ptSecond, " and ", "idx", 0, "\n");
 		}
 	}
 
 	if (unique)
-		sql += " and idx.rdb$unique_flag = 1\n";
+		addString(ptSecond, " and idx.rdb$unique_flag = 1\n");
 
-	sql += " order by 4, 7, 5, 6, 8\n";
-	sql = tableStat + "\tunion\n" + sql;
+	addString(ptSecond, " order by 4, 7, 5, 6, 8\n");
+	addString(ptFirst, sql);
 
-	prepareStatement (sql);
+	prepareStatement (sqlQuery);
 
 // SELECT returns 14 columns,
 // But all interests only 13 (SQL 92,99)
