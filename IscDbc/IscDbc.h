@@ -22,7 +22,7 @@
 #define __ISCDBC_H_
 
 #include <ibase.h>
-#include "Jstring.h"
+#include "JString.h"
 
 #ifndef NULL
 #define NULL		0
