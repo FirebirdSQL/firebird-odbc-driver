@@ -45,6 +45,7 @@ class SQLException;
 class OdbcObject  
 {
 public:
+	void setCursorRowCount (int count);
 	int getCType (int type, bool isSigned);
 	virtual RETCODE sqlGetDiagField (int recNumber, int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
 	RETCODE returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLINTEGER* returnLength, const char * value);
@@ -71,6 +72,13 @@ public:
 	OdbcError	*errors;
 	bool		infoPosted;
 	OdbcObject	*next;
+	// Header Fields
+	SQLINTEGER	sqlDiagCursorRowCount;			// SQL_DIAG_CURSOR_ROW_COUNT 
+	SQLCHAR *	sqlDiagDynamicFunction;			// SQL_DIAG_DYNAMIC_FUNCTION 
+	SQLINTEGER	sqlDiagDynamicFunctionCode;		// SQL_DIAG_DYNAMIC_FUNCTION_CODE
+	SQLINTEGER	sqlDiagNumber;					// SQL_DIAG_NUMBER 
+	SQLRETURN	sqlDiagReturnCode;				// SQL_DIAG_RETURNCODE
+	SQLINTEGER	sqlDiagRowCount;				// SQL_DIAG_ROW_COUNT
 };
 
 #endif // !defined(AFX_ODBCOBJECT_H__ED260D94_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)

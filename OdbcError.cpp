@@ -107,7 +107,6 @@ OdbcError::OdbcError(int code, const char *state, JString errorMsg)
 	nativeCode = code;
 	msg = errorMsg;
 	next = NULL;
-	rowCount = 0;
 	rowNumber = 0;
 	columnNumber = 0;
 }
@@ -204,10 +203,6 @@ RETCODE OdbcError::sqlGetDiagField(int diagId, SQLPOINTER ptr, int msgBufferLeng
 			string = sqlState;
 			break;			
 
-		case SQL_DIAG_CURSOR_ROW_COUNT:
-			value = rowCount;
-			break;
-
 		case SQL_DIAG_ROW_NUMBER:
 			value = rowNumber;
 			break;
@@ -257,9 +252,4 @@ void OdbcError::setColumnNumber(int column, int row)
 {
 	columnNumber = column;
 	rowNumber = row;
-}
-
-void OdbcError::setRowCount(int count)
-{
-	rowCount = count;
 }

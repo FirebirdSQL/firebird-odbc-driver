@@ -271,6 +271,40 @@ RETCODE OdbcObject::sqlGetDiagField(int recNumber, int diagId, SQLPOINTER ptr, i
 {
 	int n = 1;
 
+	switch( diagId )
+	{
+	case SQL_DIAG_CURSOR_ROW_COUNT:
+		*(SQLINTEGER*)ptr = sqlDiagCursorRowCount;
+		return SQL_SUCCESS;
+
+	case SQL_DIAG_DYNAMIC_FUNCTION:
+		*(SQLCHAR *)ptr = 0; // sqlDiagDynamicFunction
+		return SQL_SUCCESS;
+
+	case SQL_DIAG_DYNAMIC_FUNCTION_CODE:
+		*(SQLINTEGER*)ptr = sqlDiagDynamicFunctionCode;
+		return SQL_SUCCESS;
+
+	case SQL_DIAG_NUMBER:
+		*(SQLINTEGER*)ptr = sqlDiagNumber;
+		if( ptr )
+		{
+			SQLSMALLINT &nCount = *stringLength;
+			n = 0;
+			for (OdbcError *error = errors; error; error = error->next, ++n);
+			*(SDWORD*)ptr = n;
+		}
+		return SQL_SUCCESS;
+
+	case SQL_DIAG_RETURNCODE:
+		*(SQLRETURN*)ptr = sqlDiagReturnCode;
+		return SQL_SUCCESS;
+
+	case SQL_DIAG_ROW_COUNT:
+		*(SQLINTEGER*)ptr = sqlDiagRowCount;
+		return SQL_SUCCESS;
+	}
+
 	if ( diagId == SQL_DIAG_NUMBER )
 	{
 		if( ptr )
@@ -338,4 +372,9 @@ int OdbcObject::getCType(int type, bool isSigned)
 		}
 
 	return type;
+}
+
+void OdbcObject::setCursorRowCount(int count)
+{
+	sqlDiagCursorRowCount = count;
 }
