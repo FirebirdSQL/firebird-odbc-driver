@@ -81,9 +81,28 @@ bool IscMetaDataResultSet::next()
 
 	XSQLVAR *var = sqlda->sqlda->sqlvar;
     Value *value = values.values;
+	int count = sqlda->sqlda->sqld;
 
-	for (int n = 0; n < sqlda->sqlda->sqld; ++n, ++var, ++value)
-		statement->setValue (value, var);
+	for ( ; count--; ++var, ++value )
+	{
+		statement->setValue( value, var );
+
+		if ( *var->sqlind != -1 && (var->sqltype & ~1) == SQL_VARYING )
+		{
+			int	&length = value->data.string.length;
+			char *beg = value->data.string.string;
+			char *end = beg + length;
+			char *save = end;
+
+			while ( end > beg && *(--end) == ' ');
+
+			if ( save != end )
+			{
+				length = end - beg + 1;
+				*(end+1) = '\0';
+			}
+		}
+	}
 
 	return true;
 }
