@@ -21,8 +21,9 @@
 // OdbcConvert.cpp: OdbcConvert class.
 //
 //////////////////////////////////////////////////////////////////////
-
+#include <memory.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "OdbcJdbc.h"
 #include "OdbcDesc.h"
 #include "OdbcConnection.h"
@@ -64,20 +65,20 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_USHORT:
 		case SQL_C_SSHORT:
 			bIdentity = true;
-			return convShortToShort;
+			return &OdbcConvert::convShortToShort;
 		case SQL_C_LONG:
 		case SQL_C_ULONG:
 		case SQL_C_SLONG:
-			return convShortToLong;
+			return &OdbcConvert::convShortToLong;
 		case SQL_C_FLOAT:
-			return convShortToFloat;
+			return &OdbcConvert::convShortToFloat;
 		case SQL_C_DOUBLE:
-			return convShortToDouble;
+			return &OdbcConvert::convShortToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			return convShortToBigint;
+			return &OdbcConvert::convShortToBigint;
 		case SQL_C_CHAR:
-			return convShortToString;
+			return &OdbcConvert::convShortToString;
 		case SQL_C_BINARY:
 		case SQL_C_TYPE_DATE:
 		case SQL_C_DATE:
@@ -97,21 +98,21 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_SHORT:
 		case SQL_C_USHORT:
 		case SQL_C_SSHORT:
-			return convLongToShort;
+			return &OdbcConvert::convLongToShort;
 		case SQL_C_LONG:
 		case SQL_C_ULONG:
 		case SQL_C_SLONG:
 			bIdentity = true;
-			return convLongToLong;
+			return &OdbcConvert::convLongToLong;
 		case SQL_C_FLOAT:
-			return convLongToFloat;
+			return &OdbcConvert::convLongToFloat;
 		case SQL_C_DOUBLE:
-			return convLongToDouble;
+			return &OdbcConvert::convLongToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			return convLongToBigint;
+			return &OdbcConvert::convLongToBigint;
 		case SQL_C_CHAR:
-			return convLongToString;
+			return &OdbcConvert::convLongToString;
 		}
 
 	case SQL_C_FLOAT:
@@ -120,21 +121,21 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_SHORT:
 		case SQL_C_USHORT:
 		case SQL_C_SSHORT:
-			return convFloatToShort;
+			return &OdbcConvert::convFloatToShort;
 		case SQL_C_LONG:
 		case SQL_C_ULONG:
 		case SQL_C_SLONG:
-			return convFloatToLong;
+			return &OdbcConvert::convFloatToLong;
 		case SQL_C_FLOAT:
 			bIdentity = true;
-			return convFloatToFloat;
+			return &OdbcConvert::convFloatToFloat;
 		case SQL_C_DOUBLE:
-			return convFloatToDouble;
+			return &OdbcConvert::convFloatToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			return convFloatToBigint;
+			return &OdbcConvert::convFloatToBigint;
 		case SQL_C_CHAR:
-			return convFloatToString;
+			return &OdbcConvert::convFloatToString;
 		}
 
 	case SQL_C_DOUBLE:
@@ -143,21 +144,21 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_SHORT:
 		case SQL_C_USHORT:
 		case SQL_C_SSHORT:
-			return convDoubleToShort;
+			return &OdbcConvert::convDoubleToShort;
 		case SQL_C_LONG:
 		case SQL_C_ULONG:
 		case SQL_C_SLONG:
-			return convDoubleToLong;
+			return &OdbcConvert::convDoubleToLong;
 		case SQL_C_FLOAT:
-			return convDoubleToFloat;
+			return &OdbcConvert::convDoubleToFloat;
 		case SQL_C_DOUBLE:
 			bIdentity = true;
-			return convDoubleToDouble;
+			return &OdbcConvert::convDoubleToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			return convDoubleToBigint;
+			return &OdbcConvert::convDoubleToBigint;
 		case SQL_C_CHAR:
-			return convDoubleToString;
+			return &OdbcConvert::convDoubleToString;
 		}
 
 	case SQL_C_SBIGINT:
@@ -167,21 +168,21 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_SHORT:
 		case SQL_C_USHORT:
 		case SQL_C_SSHORT:
-			return convBigintToShort;
+			return &OdbcConvert::convBigintToShort;
 		case SQL_C_LONG:
 		case SQL_C_ULONG:
 		case SQL_C_SLONG:
-			return convBigintToLong;
+			return &OdbcConvert::convBigintToLong;
 		case SQL_C_FLOAT:
-			return convBigintToFloat;
+			return &OdbcConvert::convBigintToFloat;
 		case SQL_C_DOUBLE:
-			return convBigintToDouble;
+			return &OdbcConvert::convBigintToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
 			bIdentity = true;
-			return convBigintToBigint;
+			return &OdbcConvert::convBigintToBigint;
 		case SQL_C_CHAR:
-			return convBigintToString;
+			return &OdbcConvert::convBigintToString;
 		}
 
 	case SQL_DECIMAL:
@@ -191,22 +192,22 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_SHORT:
 		case SQL_C_USHORT:
 		case SQL_C_SSHORT:
-			return convNumericToShort;
+			return &OdbcConvert::convNumericToShort;
 		case SQL_C_LONG:
 		case SQL_C_ULONG:
 		case SQL_C_SLONG:
-			return convNumericToLong;
+			return &OdbcConvert::convNumericToLong;
 		case SQL_C_FLOAT:
-			return convNumericToFloat;
+			return &OdbcConvert::convNumericToFloat;
 		case SQL_C_DOUBLE:
-			return convNumericToDouble;
+			return &OdbcConvert::convNumericToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			return convNumericToBigint;
+			return &OdbcConvert::convNumericToBigint;
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			bIdentity = true;
-			return convNumericToTagNumeric;
+			return &OdbcConvert::convNumericToTagNumeric;
 		}
 
 	case SQL_C_DATE:
@@ -216,20 +217,20 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_LONG:
 		case SQL_C_ULONG:
 		case SQL_C_SLONG:
-			return convDateToLong;
+			return &OdbcConvert::convDateToLong;
 		case SQL_C_FLOAT:
-			return convDateToFloat;
+			return &OdbcConvert::convDateToFloat;
 		case SQL_C_DOUBLE:
-			return convDateToDouble;
+			return &OdbcConvert::convDateToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			return convDateToBigint;
+			return &OdbcConvert::convDateToBigint;
 		case SQL_C_DATE:
 		case SQL_C_TYPE_DATE:
 			bIdentity = true;
-			return convDateToTagDate;
+			return &OdbcConvert::convDateToTagDate;
 		case SQL_C_CHAR:
-			return convDateToString;
+			return &OdbcConvert::convDateToString;
 		}
 
 	case SQL_C_TIME:
@@ -239,20 +240,20 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_LONG:
 		case SQL_C_ULONG:
 		case SQL_C_SLONG:
-			return convTimeToLong;
+			return &OdbcConvert::convTimeToLong;
 		case SQL_C_FLOAT:
-			return convTimeToFloat;
+			return &OdbcConvert::convTimeToFloat;
 		case SQL_C_DOUBLE:
-			return convTimeToDouble;
+			return &OdbcConvert::convTimeToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			return convTimeToBigint;
+			return &OdbcConvert::convTimeToBigint;
 		case SQL_C_TIME:
 		case SQL_C_TYPE_TIME:
 			bIdentity = true;
-			return convTimeToTagTime;
+			return &OdbcConvert::convTimeToTagTime;
 		case SQL_C_CHAR:
-			return convTimeToString;
+			return &OdbcConvert::convTimeToString;
 		}
 
 	case SQL_C_TYPE_TIMESTAMP:
@@ -260,16 +261,16 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		switch(to->conciseType)
 		{
 		case SQL_C_DOUBLE:
-			return convDateTimeToDouble;
+			return &OdbcConvert::convDateTimeToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			return convDateTimeToBigint;
+			return &OdbcConvert::convDateTimeToBigint;
 		case SQL_C_TYPE_TIMESTAMP:
 		case SQL_C_TIMESTAMP:
 			bIdentity = true;
-			return convDateTimeToTagDateTime;
+			return &OdbcConvert::convDateTimeToTagDateTime;
 		case SQL_C_CHAR:
-			return convDateTimeToString;
+			return &OdbcConvert::convDateTimeToString;
 		}
 
 	case SQL_C_BINARY:
@@ -278,19 +279,19 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_LONG:
 		case SQL_C_ULONG:
 		case SQL_C_SLONG:
-			return convBlobToLong;
+			return &OdbcConvert::convBlobToLong;
 		case SQL_C_FLOAT:
-			return convBlobToFloat;
+			return &OdbcConvert::convBlobToFloat;
 		case SQL_C_DOUBLE:
-			return convBlobToDouble;
+			return &OdbcConvert::convBlobToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			return convBlobToBigint;
+			return &OdbcConvert::convBlobToBigint;
 		case SQL_C_BINARY:
 			bIdentity = true;
-			return convBlobToBlob;
+			return &OdbcConvert::convBlobToBlob;
 		case SQL_C_CHAR:
-			return convBlobToString;
+			return &OdbcConvert::convBlobToString;
 		}
 
 	case SQL_C_CHAR:
@@ -299,23 +300,23 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_LONG:
 		case SQL_C_ULONG:
 		case SQL_C_SLONG:
-			return convStringToLong;
+			return &OdbcConvert::convStringToLong;
 		case SQL_C_SHORT:
 		case SQL_C_USHORT:
 		case SQL_C_SSHORT:
-			return convStringToShort;
+			return &OdbcConvert::convStringToShort;
 		case SQL_C_FLOAT:
-			return convStringToFloat;
+			return &OdbcConvert::convStringToFloat;
 		case SQL_C_DOUBLE:
-			return convStringToDouble;
+			return &OdbcConvert::convStringToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			return convStringToBigint;
+			return &OdbcConvert::convStringToBigint;
 		case SQL_C_CHAR:
 			if ( from->type == JDBC_VARCHAR )
-				return convVarStringToString;
+				return &OdbcConvert::convVarStringToString;
 			bIdentity = true;
-			return convStringToString;
+			return &OdbcConvert::convStringToString;
 		}
 	}
 	return NULL;
@@ -488,8 +489,8 @@ int OdbcConvert::convFloatToString(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL;
 	
-	int len = _snprintf((char*)to->dataPtr,to->octetLength,"%f",*(float*)from->dataPtr);
-//	int len = _snprintf((char*)to->dataPtr,to->octetLength,"%.*f",from->scale,*(float*)from->dataPtr);
+	int len = snprintf((char*)to->dataPtr,to->octetLength,"%f",*(float*)from->dataPtr);
+//	int len = snprintf((char*)to->dataPtr,to->octetLength,"%.*f",from->scale,*(float*)from->dataPtr);
 
 	if ( indicatorPointer )
 		*indicatorPointer = len;
@@ -514,8 +515,8 @@ int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL;
 	
-	int len = _snprintf((char*)to->dataPtr,to->octetLength,"%f",*(double*)from->dataPtr);
-//	int len = _snprintf((char*)to->dataPtr,to->octetLength,"%.*f",from->scale,*(double*)from->dataPtr);
+	int len = snprintf((char*)to->dataPtr,to->octetLength,"%f",*(double*)from->dataPtr);
+//	int len = snprintf((char*)to->dataPtr,to->octetLength,"%.*f",from->scale,*(double*)from->dataPtr);
 
 	if ( indicatorPointer )
 		*indicatorPointer = len;

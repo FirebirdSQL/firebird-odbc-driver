@@ -59,6 +59,8 @@ class ResultSetMetaData;
 class PreparedStatement;
 class CallableStatement;
 
+enum enFetchType { NoneFetch, Fetch, ExtendedFetch, FetchScroll };
+
 class OdbcStatement : public OdbcObject  
 {
 public:
@@ -106,7 +108,7 @@ public:
 	void releaseParameters();
 	void releaseBindings();
 	RETCODE sqlFreeStmt (int option);
-	bool setValue (Binding *binding, int column);
+	RETCODE setValue (Binding *binding, int column);
 	bool setValue (DescRecord *record, int column);
 
 	RETCODE sqlFetch();
@@ -146,6 +148,8 @@ public:
 	Binding				*getDataBindings;
 	bool				eof;
 	bool				cancel;
+	bool				fetched;
+	enFetchType			enFetch;
 	JString				cursorName;
 	int					rowBindType;
 	int					paramBindType;

@@ -204,6 +204,8 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	getDataBindings = NULL;	//added by RM
 	metaData = NULL;
 	cancel = false;
+	fetched = false;
+	enFetch = NoneFetch;
     parameterNeedData = 0;	
 	numberGetDataBindings = 0;	//added by RM
 	maxRows = 0;
@@ -584,20 +586,25 @@ RETCODE OdbcStatement::sqlFetch()
 		return sqlReturn (SQL_ERROR, "24000", "Invalid cursor state");
 
 	if (cancel)
-		{
+	{
 		releaseResultSet();
 		return sqlReturn (SQL_ERROR, "S1008", "Operation canceled");
-		}
+	}
 
-		SET_ClearBindDataOffset
+	SET_ClearBindDataOffset
 
-		if (eof || !resultSet->next())
-			{
-			eof = true;
-			if (implementationRowDescriptor->headRowsProcessedPtr)
-				*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
-			return SQL_NO_DATA;
-			}
+	if( enFetch == NoneFetch )
+		enFetch = Fetch;
+
+	fetched = true;
+
+	if (eof || !resultSet->next())
+	{
+		eof = true;
+		if (implementationRowDescriptor->headRowsProcessedPtr)
+			*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
+		return SQL_NO_DATA;
+	}
 
 	return returnData();
 }
@@ -714,7 +721,7 @@ RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 				resultSet->copyNextSqldaFromBufferStaticCursor();
 				++rowNumber; // Should stand only here!!!
 				implementationRowDescriptor->returnData(); 
-				
+
 				if ( statusPtr )
 					statusPtr[nRow] = SQL_ROW_SUCCESS;
 				bindOffsetPtrTmp += rowBindType;
@@ -804,6 +811,11 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 	OutputDebugString(strTmp); 
 #endif
 	clearErrors();
+
+	if( enFetch == NoneFetch )
+		enFetch = FetchScroll;
+
+	fetched = true;
 
 	if (!resultSet)
 		return sqlReturn (SQL_ERROR, "24000", "Invalid cursor state");
@@ -918,6 +930,11 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 
 	if( cursorType == SQL_CURSOR_FORWARD_ONLY && orientation != SQL_FETCH_NEXT )
 		return sqlReturn (SQL_ERROR, "HY106", "Fetch type out of range");
+
+	if( enFetch == NoneFetch )
+		enFetch = ExtendedFetch;
+
+	fetched = true;
 
 	try
 	{
@@ -1182,83 +1199,59 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 }
 
 
-bool OdbcStatement::setValue(Binding * binding, int column)
+RETCODE OdbcStatement::setValue(Binding * binding, int column)
 {
-	bool info = false;
+	RETCODE retinfo = SQL_SUCCESS;
 	int length = binding->bufferLength;
 	int type = binding->cType;
-/*
-#ifdef DEBUG			
-//This is an attempt to understand why datatypes get mangled during
-//Metadata lookups. Not yet ready for prime time.
-	if ((type  != getCType (metaData->getColumnType (column), 
-							metaData->isSigned (column)) && (type != SQL_C_DEFAULT) ))
-		{
-		char tempDebugStr [8196];
-		sprintf (tempDebugStr, "CType and Firebird Type don't match: %d and %d\n",
-								binding->cType,binding->type);
-		OutputDebugString (tempDebugStr);
-		//force the type to use the underlying column type
-		type = getCType (metaData->getColumnType (column), 
-							metaData->isSigned (column));
-		}
-#endif
-*/
 	OdbcError *error = NULL;
 
 	if (type == SQL_C_DEFAULT)
-		{
+	{
 		ResultSetMetaData *metaData = resultSet->getMetaData();
 		type = getCType (metaData->getColumnType (column), 
 						 metaData->isSigned (column));
-		}
+	}
 
 	switch (type)
 		{
 		case SQL_C_CHAR:
-//Orig
-/*			{
-			int len = length - 1;
-			const char *string = RESULTS (getString (column));
-			length = strlen (string);
-			if (length < len)
-				strcpy ((char*) binding->pointer, string);
-			else
-				{
-				memcpy (binding->pointer, string, len);
-				((char*) (binding->pointer)) [len] = 0;
-				error = postError (new OdbcError (0, "01004", "Data truncated"));
-				info = true;
-				}
-			}
-*/
-//Added by PG
 			{
-
 			const char *string = RESULTS (getString (column));
+			
+			if ( fetched == true )
+			{
+				fetched = false;
+				binding->dataOffset = 0;
+			}
 
 			int dataRemaining = strlen(string) - binding->dataOffset;
-			int len = MIN(dataRemaining, binding->bufferLength);
-			 
-			//Added by PR. If len is negative we get an AV
-			//Added by NOMEY. and empty strings have len = 0
-			if ( len ) 
-				memcpy (binding->pointer, string+binding->dataOffset, len);
 
-			if( binding->bufferLength )
-				((char*) (binding->pointer)) [len] = 0;
-
-			if (len < dataRemaining)
+			if (!dataRemaining && binding->dataOffset)
 			{
-				error = postError (new OdbcError (0, "01004", "Data truncated"));
-				info = true;
-			}
-				
-			length = dataRemaining;
-			binding->dataOffset += len;
-
-			if (!info)
 				binding->dataOffset = 0;
+				if( binding->bufferLength )
+					retinfo = SQL_NO_DATA;
+			}
+			else
+			{
+				int len = MIN(dataRemaining, binding->bufferLength);
+				 
+				if ( len > 0 ) 
+				{
+					memcpy (binding->pointer, string+binding->dataOffset, len);
+					((char*) (binding->pointer)) [len] = 0;
+				}
+
+				if (!binding->bufferLength && len < dataRemaining)
+				{
+					error = postError (new OdbcError (0, "01004", "Data truncated"));
+					retinfo = SQL_SUCCESS_WITH_INFO;
+					binding->dataOffset += len;
+				}
+					
+				length = dataRemaining;
+				}
 			}
 			break;
 
@@ -1337,30 +1330,37 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 
 		case SQL_C_BINARY:
 			{
-			//for now, just get value so the wasNull check will work
 			Blob* blob = RESULTS (getBlob(column));
-//Orig
-/*			length = blob->length();
-
-			blob->getBytes (0, length, binding->pointer);
-*/
-//From RM
-			int dataRemaining = blob->length() - binding->dataOffset;
-			int len = MIN(dataRemaining, binding->bufferLength);
-			 
-			blob->getBytes (binding->dataOffset, len, binding->pointer);
-
-			if (len < dataRemaining)
+			
+			if ( fetched == true )
 			{
-				error = postError (new OdbcError (0, "01004", "Data truncated"));
-				info = true;
-			}
-				
-			length = dataRemaining;
-			binding->dataOffset += len;
-
-			if (!info)
+				fetched = false;
 				binding->dataOffset = 0;
+			}
+
+			int dataRemaining = blob->length() - binding->dataOffset;
+
+			if (!dataRemaining && binding->dataOffset)
+			{
+				binding->dataOffset = 0;
+				if( binding->bufferLength )
+					retinfo = SQL_NO_DATA;
+			}
+			else
+			{
+				int len = MIN(dataRemaining, binding->bufferLength);
+			 
+				blob->getBytes (binding->dataOffset, len, binding->pointer);
+				 
+				if (!binding->bufferLength && len < dataRemaining)
+				{
+					error = postError (new OdbcError (0, "01004", "Data truncated"));
+					retinfo = SQL_SUCCESS_WITH_INFO;
+					binding->dataOffset += len;
+				}
+					
+				length = dataRemaining;
+			}
 			}
 			break;	
 
@@ -1387,21 +1387,21 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 
 		default:
 			error = postError (new OdbcError (0, "HYC00", "Optional feature not implemented"));
-			info = true;
+			retinfo = SQL_SUCCESS_WITH_INFO;
 		}
 
 	if (error)
 		error->setColumnNumber (column, rowNumber);
 
 	if (binding->indicatorPointer)
-		{
+	{
 		if (RESULTS (wasNull()))
 			*binding->indicatorPointer = SQL_NULL_DATA;
 		else
 			*binding->indicatorPointer = length;
-		}
+	}
 
-	return info;
+	return retinfo;
 }
 
 RETCODE OdbcStatement::sqlColumns(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, SQLCHAR * column, int columnLength)
@@ -1704,13 +1704,6 @@ RETCODE OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int buffer
 //		if ( cType == SQL_ARD_TYPE )
 		resultSet->getDataFromStaticCursor (column,cType,pointer,bufferLength,indicatorPointer);
 	}
-//Orig.
-/*	Binding binding;
-	binding.cType = cType;
-	binding.pointer = pointer;
-	binding.bufferLength = bufferLength;
-	binding.indicatorPointer = indicatorPointer;
-*/
 //From RM
 	int retcode = sqlBindCol(column, cType, pointer, bufferLength, indicatorPointer, &getDataBindings, &numberGetDataBindings);
 
@@ -1720,18 +1713,19 @@ RETCODE OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int buffer
 	Binding* binding = getDataBindings + column;
 
 	try
+	{
+		if (retcode = setValue (binding, column),retcode)
 		{
-//Orig.
-//		if (setValue (&binding, column))
-//From RM
-		if (setValue (binding, column))
+			if ( retcode == SQL_NO_DATA )
+				return SQL_NO_DATA;
 			return SQL_SUCCESS_WITH_INFO;
 		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	return sqlSuccess();
 }
@@ -1743,6 +1737,7 @@ RETCODE OdbcStatement::sqlExecute()
 
 	try
 	{
+		enFetch = NoneFetch;
 		releaseResultSet();
 		parameterNeedData = 0;
 		retcode = executeStatement();
@@ -1766,6 +1761,7 @@ RETCODE OdbcStatement::sqlExecuteDirect(SQLCHAR * sql, int sqlLength)
 		return retcode;
 	try
 	{
+		enFetch = NoneFetch;
 		parameterNeedData = 0;
 		retcode = executeStatement();
 	}

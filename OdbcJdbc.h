@@ -26,6 +26,7 @@
 #include <windows.h>
 #define strcasecmp		stricmp
 #define strncasecmp		strnicmp
+#define snprintf		_snprintf
 
 #else
 #define OutputDebugString(string)	fputs (string, stdout)

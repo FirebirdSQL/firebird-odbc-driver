@@ -69,6 +69,7 @@ ODBCJDBC= \
 	DescRecord.o \
 	Main.o \
 	OdbcConnection.o \
+	OdbcConvert.o \
 	OdbcDateTime.o \
 	OdbcDesc.o \
 	OdbcEnv.o \
@@ -209,6 +210,8 @@ Main.o:
 	 $(CXX) $(CXXFLAGS) -c $(ODBCJDBCDIR)/Main.cpp -I$(ISCDBCDIR) -I$(ODBCJDBCDIR)
 OdbcConnection.o:
 	 $(CXX) $(CXXFLAGS) -c $(ODBCJDBCDIR)/OdbcConnection.cpp -I$(ISCDBCDIR) -I$(ODBCJDBCDIR)
+OdbcConvert.o:
+	 $(CXX) $(CXXFLAGS) -c $(ODBCJDBCDIR)/OdbcConvert.cpp -I$(ISCDBCDIR) -I$(ODBCJDBCDIR)
 OdbcDateTime.o:
 	 $(CXX) $(CXXFLAGS) -c $(ODBCJDBCDIR)/OdbcDateTime.cpp -I$(ISCDBCDIR) -I$(ODBCJDBCDIR)
 OdbcDesc.o:
