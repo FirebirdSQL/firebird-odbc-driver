@@ -358,9 +358,9 @@ int OdbcObject::getCType(int type, bool isSigned)
 			return (isSigned) ? SQL_C_SBIGINT : SQL_C_UBIGINT;
 
 		case SQL_REAL:
+		case SQL_FLOAT:
 			return SQL_C_FLOAT;
 
-		case SQL_FLOAT:
 		case SQL_DOUBLE:
 			return SQL_C_DOUBLE;
 
