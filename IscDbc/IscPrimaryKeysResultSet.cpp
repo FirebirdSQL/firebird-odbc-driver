@@ -46,7 +46,7 @@ void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * 
 				"\tcast (NULL as varchar(7)) as table_schem,\n"						// 2
 				"\tcast (rel.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
 				"\tcast (seg.rdb$field_name as varchar(31)) as column_name,\n"		// 4
-				"\tseg.rdb$field_position+1 as key_seq,\n"							// 5
+				"\tcast (seg.rdb$field_position+1 as smallint) as key_seq,\n"							// 5
 				"\tcast (rel.rdb$constraint_name as varchar(31)) as pk_name\n"		// 6
 		"from rdb$relation_constraints rel, rdb$indices idx, rdb$index_segments seg\n"
 		" where rel.rdb$constraint_type = 'PRIMARY KEY'\n"
