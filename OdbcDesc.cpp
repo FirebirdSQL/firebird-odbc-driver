@@ -82,8 +82,7 @@ void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaData)
 		return;
 
 	bDefined = false;
-	recordSlots = 0;
-	records = NULL;
+	removeRecords();
 
 	headAllocType = SQL_DESC_ALLOC_AUTO;
 	headArraySize = 1;
@@ -112,7 +111,7 @@ void OdbcDesc::removeRecords()
 {
 	if (records)
 	{
-		for (int n = 0; n < recordSlots; ++n)
+		for (int n = 0; n < recordSlots; n++)
 			if (records [n])
 				delete records [n];
 		delete [] records;
