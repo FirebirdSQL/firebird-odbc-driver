@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCSQLTYPE_H__32C6E499_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
-#define AFX_ISCSQLTYPE_H__32C6E499_2C14_11D4_98E0_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCSQLTYPE_H_)
+#define _ISCSQLTYPE_H_
 
 class IscSqlType  
 {
@@ -43,4 +39,4 @@ public:
 	int		precision;
 };
 
-#endif // !defined(AFX_ISCSQLTYPE_H__32C6E499_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCSQLTYPE_H_)

@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_STREAM_H__02AD6A53_A433_11D2_AB5B_0000C01D2301__INCLUDED_)
-#define AFX_STREAM_H__02AD6A53_A433_11D2_AB5B_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_STREAM_H_INCLUDED_)
+#define _STREAM_H_INCLUDED_
 
 struct Segment
 {
@@ -65,6 +61,7 @@ public:
 	Segment*		allocSegment (int tail);
 	char*			transferRecord();
 	void			setMinSegment (int length);
+	void			attach(Stream &dst, bool clear);
 
 	Stream();
 	Stream (int minSegmentSize);
@@ -76,9 +73,11 @@ public:
 	int		decompressedLength;
 	int		useCount;
 	bool	copyFlag;
+	bool	bClear;
 	Segment	first;
+	Segment	*ptFirst;
 	Segment	*segments;
 	Segment *current;
 };
 
-#endif // !defined(AFX_STREAM_H__02AD6A53_A433_11D2_AB5B_0000C01D2301__INCLUDED_)
+#endif // !defined(_STREAM_H_INCLUDED_)

@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_SQLDA_H__6C3E2AB9_229F_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_SQLDA_H__6C3E2AB9_229F_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_SQLDA_H_INCLUDED_)
+#define _SQLDA_H_INCLUDED_
 
 #define DEFAULT_SQLDA_COUNT		20
 
@@ -49,8 +45,6 @@ public:
 	void setArray (XSQLVAR *var, Value *value, IscConnection *connection);
 	void setValue (int slot, Value *value, IscConnection *connection);
 	const char* getTableName (int index);
-//	static const char* getSqlTypeName (int iscType, int subType);
-//	static int getSqlType (int iscType, int subType);
 	static int getSqlType (int iscType, int subType, int sqlScale, int &realSqlType);
 	static const char* getSqlTypeName (int iscType, int subType, int sqlScale);
 	bool isNullable (int index);
@@ -58,12 +52,12 @@ public:
 	int getPrecision (int index);
 	const char* getColumnName (int index);
 	int getColumnDisplaySize (int index);
-	int getSubType(int index);
+	short getSubType(int index);
 	int getColumnType (int index, int &realSqlType);
 	const char * getColumnTypeName (int index);
 	void getSqlData(int index, char *& ptData, short *& ptIndData);
 	void setSqlData(int index, long ptData, long ptIndData);
-	void saveSqlData(int index, long ptData, long ptIndData);
+	void saveSqlData(int index);
 	void restoreSqlData(int index);
 	void print();
 	void initStaticCursor(IscConnection *connect);
@@ -77,10 +71,24 @@ public:
 	bool checkOverflow();
 	void deleteSqlda();
 	operator XSQLDA*();
+	XSQLVAR * Var(int index){ return sqlda->sqlvar + index - 1; }
+
 	Sqlda();
 	virtual ~Sqlda();
 
 	int isBlobOrArray(int index);
+	bool isNull(int index);
+	void setNull(int index);
+
+	short getShort (int index);
+	long getInt (int index);
+	char * getText (int index, int &len);
+	char * getVarying (int index, int &len);
+
+	void updateShort (int index, short value);
+	void updateInt (int index, int value);
+	void updateText (int index, const char* value);
+	void updateVarying (int index, const char* dst);
 
 	CDataStaticCursor * dataStaticCursor;
 	int			lengthBufferRows;
@@ -96,4 +104,4 @@ public:
 	bool		needsbuffer;
 };
 
-#endif // !defined(AFX_SQLDA_H__6C3E2AB9_229F_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_SQLDA_H_INCLUDED_)

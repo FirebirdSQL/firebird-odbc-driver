@@ -2,14 +2,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_BLOB_H__84FD196A_A97F_11D2_AB5C_0000C01D2301__INCLUDED_)
-#define AFX_BLOB_H__84FD196A_A97F_11D2_AB5C_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_BLOB_H_)
+#define _BLOB_H_
 
 enum enumTypeBlob { enTypeBlob = 1, enTypeClob, enTypeArray };
+class Connection;
 
 class Blob
 {
@@ -22,6 +19,12 @@ public:
 	virtual int		length() = 0;
 	virtual int		getSegmentLength (int pos) = 0;
 	virtual void	*getSegment (int pos) = 0;
+
+	virtual void	bind(Connection *connect, char * sqldata) = 0;
+	virtual void	attach(char * pointBlob, bool fetched, bool clear) = 0;
+	virtual bool	isBlob() = 0;
+	virtual bool	isClob() = 0;
+	virtual bool	isArray() = 0;
 };
 
-#endif // !defined(AFX_BLOB_H__84FD196A_A97F_11D2_AB5C_0000C01D2301__INCLUDED_)
+#endif // !defined(_BLOB_H_)

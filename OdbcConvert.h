@@ -25,19 +25,21 @@
 #if !defined(_OdbcConvert__INCLUDED_)
 #define _OdbcConvert__INCLUDED_
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#include "OdbcObject.h"
 
 class DescRecord;
 class OdbcConvert;
+class OdbcStatement;
 
 typedef int (OdbcConvert::*ADRESS_FUNCTION)(DescRecord * from, DescRecord * to);
 
 class OdbcConvert
 {
+	OdbcStatement	*parentStmt;
 	bool			bIdentity;
-	SQLINTEGER		**bindOffsetPtr;
+	SQLINTEGER		tempBindOffsetPtr;
+	SQLINTEGER		*bindOffsetPtrTo;
+	SQLINTEGER		*bindOffsetPtrFrom;
 
 private:
 
@@ -48,10 +50,14 @@ private:
 
 public:
 
-	OdbcConvert();
-	void setBindOffsetPtr(SQLINTEGER **ptBindOffsetPtr);
+	OdbcConvert(OdbcStatement * parent);
+
+	void setParent(OdbcStatement *parent);
+	void setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr);
+	void setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr);
 	ADRESS_FUNCTION getAdresFunction(DescRecord * from, DescRecord * to);
-	inline SQLPOINTER getAdressData(char * pointer);
+	inline SQLPOINTER getAdressBindDataFrom(char * pointer);
+	inline SQLPOINTER getAdressBindDataTo(char * pointer);
 
 public:
 	bool isIdentity(){ return bIdentity; }
@@ -114,6 +120,7 @@ public:
 	int convDateToDouble(DescRecord * from, DescRecord * to);
 	int convDateToBigint(DescRecord * from, DescRecord * to);
 	int convDateToTagDate(DescRecord * from, DescRecord * to);
+	int convDateToTagTimestamp(DescRecord * from, DescRecord * to);
 	int convDateToString(DescRecord * from, DescRecord * to);
 
 // Time
@@ -139,13 +146,20 @@ public:
 	int convBlobToBlob(DescRecord * from, DescRecord * to);
 	int convBlobToString(DescRecord * from, DescRecord * to);
 
-// String
+// Text
 	int convStringToLong(DescRecord * from, DescRecord * to);
 	int convStringToShort(DescRecord * from, DescRecord * to);
 	int convStringToFloat(DescRecord * from, DescRecord * to);
 	int convStringToDouble(DescRecord * from, DescRecord * to);
 	int convStringToBigint(DescRecord * from, DescRecord * to);
 	int convStringToString(DescRecord * from, DescRecord * to);
+
+// Varying
+	int convVarStringToLong(DescRecord * from, DescRecord * to);
+	int convVarStringToShort(DescRecord * from, DescRecord * to);
+	int convVarStringToFloat(DescRecord * from, DescRecord * to);
+	int convVarStringToDouble(DescRecord * from, DescRecord * to);
+	int convVarStringToBigint(DescRecord * from, DescRecord * to);
 	int convVarStringToString(DescRecord * from, DescRecord * to);
 };
 

@@ -40,7 +40,7 @@
 #define NOT_YET_IMPLEMENTED	throw SQLEXCEPTION (FEATURE_NOT_YET_IMPLEMENTED, "not yet implemented")
 #define NOT_SUPPORTED(type,rellen,rel,collen,col) throw SQLEXCEPTION (UNSUPPORTED_DATATYPE, "datatype is not supported in ODBC: %s column %*s.%*s", type,rellen,rel,collen,col)
 #define THROW_ISC_EXCEPTION(connection, statusVector) throw SQLEXCEPTION (statusVector [1], connection->getIscStatusText (statusVector))
-#define OFFSET(type,fld)	(int)&(((type)0)->fld)
+#define OFFSET(type,fld)	(int)&(((type*)0)->fld)
 #define MAX(a,b)			((a > b) ? a : b)
 #define MIN(a,b)			((a < b) ? a : b)
 #define ABS(n)				(((n) >= 0) ? (n) : -(n))
@@ -55,6 +55,14 @@
 #define FB_COMPILER_MESSAGE_STR2(x)   FB_COMPILER_MESSAGE_STR(x)
 #define FB_COMPILER_MESSAGE(desc) message(__FILE__ "("	\
 									FB_COMPILER_MESSAGE_STR2(__LINE__) "):" desc)
+
+#ifdef DEBUG
+#define CONVERSION_CHECK_DEBUG(bool_assign)							\
+	if ( !(bool_assign) )												\
+		throw SQLEXCEPTION (CONVERSION_ERROR, "Error conversion")
+#else
+#define CONVERSION_CHECK_DEBUG(bool_assign)
+#endif																
 
 #ifdef _WIN32
 
@@ -85,10 +93,10 @@ typedef unsigned __int64			UQUAD;
 #define MAX_DECIMAL_LENGTH		18
 #define MAX_SMALLINT_LENGTH		5
 #define MAX_INT_LENGTH			10
-#define MAX_FLOAT_LENGTH		24
-#define MAX_DOUBLE_LENGTH		53
+#define MAX_FLOAT_LENGTH		7
+#define MAX_DOUBLE_LENGTH		15
 #define MAX_DATE_LENGTH			10
-#define MAX_TIME_LENGTH			8
+#define MAX_TIME_LENGTH			12
 #define MAX_TIMESTAMP_LENGTH	24
 #define MAX_QUAD_LENGTH			19
 

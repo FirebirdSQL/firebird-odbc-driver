@@ -128,7 +128,7 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 
 bool IscIndexInfoResultSet::next()
 {
-	if (!resultSet->next())
+	if (!IscResultSet::next())
 		return false;
 
 	trimBlanks (3);				// table name
@@ -136,60 +136,22 @@ bool IscIndexInfoResultSet::next()
 	trimBlanks (6);				// index name
 	trimBlanks (9);				// field name
 
-	int type = resultSet->getInt(7);
+	short type = sqlda->getShort(7);
 
 	if( type == 0 ) // #define SQL_TABLE_STAT 0
-		resultSet->setNull(4);
+		sqlda->setNull(4);
 	else 
 	{
 #pragma FB_COMPILER_MESSAGE("RDB$UNIQUE_FLAG Whether there be NULL?; FIXME!")
-		if ( resultSet->isNull(4) )
-			resultSet->setValue(4, (short)1);
+		if ( sqlda->isNull(4) )
+			sqlda->updateShort(4,1);
 
-		int position = resultSet->getInt(8);
-		resultSet->setValue(8,position+1);
+		short position = sqlda->getShort(8);
+		sqlda->updateShort(8,position+1);
 
-		int type = resultSet->getInt (14);
-		resultSet->setValue (10, (type) ? "D" : "A");	
+		short type = sqlda->getShort (14);
+		sqlda->updateText (10, (type) ? "D" : "A");	
 	}
 
 	return true;
-}
-
-int IscIndexInfoResultSet::getColumnDisplaySize(int index)
-{
-	switch (index)
-		{
-		case 1:
-			return 31;
-
-		case ASC_DSC:					//	currently 10
-			return 1;
-		}
-
-	return Parent::getColumnDisplaySize (index);
-}
-
-int IscIndexInfoResultSet::getColumnType(int index, int &realSqlType)
-{
-	switch (index)
-		{
-		case ASC_DSC:					//	currently 10
-			return JDBC_CHAR;
-		}
-
-	return Parent::getColumnType (index, realSqlType);
-}
-
-int IscIndexInfoResultSet::getPrecision(int index)
-{
-	switch (index)
-		{
-		case ASC_DSC:					//	currently 10
-			return 10;
-		default:
-			return 31;
-		}
-
-//	return Parent::getPrecision (index);
 }

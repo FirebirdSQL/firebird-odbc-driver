@@ -25,12 +25,8 @@
 // copyright (c) 1999 - 2000 by James A. Starkey for IBPhoenix.
 
 
-#if !defined(AFX_PARAMETERS_H__13461881_1D25_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_PARAMETERS_H__13461881_1D25_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_PARAMETERS_H_)
+#define _PARAMETERS_H_
 
 #include "Properties.h"
 
@@ -54,4 +50,4 @@ public:
 	int			count;
 };
 
-#endif // !defined(AFX_PARAMETERS_H__13461881_1D25_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_PARAMETERS_H_)

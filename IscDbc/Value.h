@@ -25,12 +25,8 @@
 // copyright (c) 1999 - 2000 by James A. Starkey
 
 
-#if !defined(AFX_VALUE_H__02AD6A4B_A433_11D2_AB5B_0000C01D2301__INCLUDED_)
-#define AFX_VALUE_H__02AD6A4B_A433_11D2_AB5B_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_VALUE_H_INCLUDED_)
+#define _VALUE_H_INCLUDED_
 
 #include "Types.h"
 #include "TimeStamp.h"
@@ -129,4 +125,4 @@ public:
 		} data;
 };
 
-#endif // !defined(AFX_VALUE_H__02AD6A4B_A433_11D2_AB5B_0000C01D2301__INCLUDED_)
+#endif // !defined(_VALUE_H_INCLUDED_)

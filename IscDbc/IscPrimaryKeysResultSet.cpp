@@ -69,7 +69,7 @@ void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * 
 
 bool IscPrimaryKeysResultSet::next()
 {
-	if (!resultSet->next())
+	if (!IscResultSet::next())
 		return false;
 
 	trimBlanks (3);			// table name

@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCCONNECTION_H__C19738B7_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCCONNECTION_H__C19738B7_1C87_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCCONNECTION_H_)
+#define _ISCCONNECTION_H_
 
 #include "Connection.h"
 #include "LinkedList.h"
@@ -97,4 +93,4 @@ public:
 	int				useCount;
 };
 
-#endif // !defined(AFX_ISCCONNECTION_H__C19738B7_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCCONNECTION_H_)

@@ -36,14 +36,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_CONNECTION_H__BD560E62_B194_11D3_AB9F_0000C01D2301__INCLUDED_)
-#define AFX_CONNECTION_H__BD560E62_B194_11D3_AB9F_0000C01D2301__INCLUDED_
+#if !defined(_CONNECTION_H_)
+#define _CONNECTION_H_
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
-
-#include "Blob.h"
+#include "BinaryBlob.h"
 #include "Properties.h"
 #include "SQLException.h"
 
@@ -290,6 +286,7 @@ public:
 		) = 0;
 
 	virtual ResultSet* getTypeInfo(int dataType) = 0;
+	virtual StatementMetaData* getMetaDataTypeInfo(ResultSet* setTypeInfo) = 0;
 	virtual bool supportsResultSetConcurrency(int type, int concurrency) = 0;
 	virtual bool ownUpdatesAreVisible(int type) = 0;
 	virtual bool ownDeletesAreVisible(int type) = 0;
@@ -357,14 +354,15 @@ public:
 	virtual bool		isCaseSensitive (int index) = 0;
 	virtual bool		isAutoIncrement (int index) = 0;
 	virtual bool		isSearchable (int index) = 0;
+	virtual int			isBlobOrArray(int index) = 0;
 	virtual const char*	getSchemaName (int index) = 0;
 	virtual const char*	getCatalogName (int index) = 0;
-	virtual int			isBlobOrArray(int index) = 0;
 
-	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData) = 0;
+	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData, Blob *& ptDataBlob) = 0;
 	virtual void		setSqlData(int index, long ptData, long ptIndData) = 0;
-	virtual void		saveSqlData(int index, long ptData, long ptIndData) = 0;
+	virtual void		saveSqlData(int index) = 0;
 	virtual void		restoreSqlData(int index) = 0;
+
 	virtual int			objectVersion() = 0;
 };
 
@@ -375,6 +373,7 @@ class PreparedStatement : public Statement
 public:
 	virtual bool		execute() = 0;
 	virtual ResultSet*	executeQuery() = 0;
+	virtual void		executeMetaDataQuery() = 0;
 	virtual int			executeUpdate() = 0;
 	virtual void		setString(int index, const char * string) = 0;
     virtual void        setString(int index, const char * string, int length) = 0;
@@ -432,18 +431,20 @@ public:
 	virtual Blob*		getBlob (const char *columnName) = 0;
 	virtual QUAD		getQuad (int id) = 0;
 	virtual QUAD		getQuad (const char *columnName) = 0;
+
 	virtual int			findColumn (const char *columName) = 0;
 	virtual StatementMetaData* getMetaData() = 0;
 	virtual void		close() = 0;
 	virtual void		setPosRowInSet(int posRow) = 0;
 	virtual int			getPosRowInSet() = 0;
+	virtual long*		getSqlDataOffsetPtr() = 0;
 	virtual bool		readStaticCursor() = 0;
 	virtual bool		readForwardCursor() = 0;
 	virtual bool		setCurrentRowInBufferStaticCursor(int nRow) = 0;
 	virtual void		copyNextSqldaInBufferStaticCursor() = 0;
 	virtual void		copyNextSqldaFromBufferStaticCursor() = 0;
 	virtual int			getCountRowsStaticCursor() = 0;
-	virtual bool		getDataFromStaticCursor (int column, int cType, void * pointer, int bufferLength, long * indicatorPointer) = 0;
+	virtual bool		getDataFromStaticCursor (int column/*, Blob * pointerBlobData*/) = 0;
 	virtual bool		next() = 0;
 	virtual int			release() = 0;
 	virtual void		addRef() = 0;
@@ -543,7 +544,6 @@ public:
 	virtual TimeStamp	getTimestamp(int parameterIndex) = 0;
 	virtual QUAD		getQuad(int parameterIndex) = 0;
 	virtual Blob*		getBlob (int i) = 0;
-    //void		registerOutParameter (int paramIndex, int sqlType, const char* typeName) = 0;
 };
 
 #ifdef __BORLANDC__
@@ -552,4 +552,4 @@ extern "C" __declspec( dllexport ) Connection*	createConnection();
 extern "C" Connection*	createConnection();
 #endif
 
-#endif // !defined(AFX_CONNECTION_H__BD560E62_B194_11D3_AB9F_0000C01D2301__INCLUDED_)
+#endif // !defined(_CONNECTION_H_)

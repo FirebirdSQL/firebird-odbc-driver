@@ -22,6 +22,7 @@
 // IscArray.cpp: IscArray class.
 //
 //////////////////////////////////////////////////////////////////////
+
 #include "stdio.h"
 #include <string.h>
 #include <stdlib.h>
@@ -48,18 +49,73 @@ extern char charTable [];
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+
+IscArray::IscArray()
+{
+	enType = enTypeArray;
+
+	connection = NULL;
+	memset(&arrayId,0,sizeof(ISC_QUAD));
+	clearData = false;
+	fetched = false;
+	fetchedBinary = false;
+	memset(&arrDesc,0,sizeof(ISC_ARRAY_DESC));
+	arrBufData = NULL;
+	arrBufDataSize = 0;
+	arrCountElement = 0;
+	arrSizeElement = 0;
+	arrTypeElement = 0;
+}
+
 IscArray::IscArray(SIscArrayData * ptArr)
 {
 	attach(ptArr);
 	connection = NULL;
 	fetched = false;
-	fetchedBinary = true;
 	enType = enTypeArray;
 }
 
 IscArray::IscArray(IscConnection *connect,XSQLVAR *var)
 {
-	clear = true;
+	clearData = false;
+	bind(connect, var);
+}
+
+IscArray::~IscArray()
+{
+	removeBufData();
+}
+
+void IscArray::attach(SIscArrayData * arr, bool fetchBinary, bool bClear)
+{
+	arrBufData = arr->arrBufData;
+	arrBufDataSize = arr->arrBufDataSize;
+	arrCountElement = arr->arrCountElement;
+	arrSizeElement = arr->arrSizeElement;
+	arrTypeElement = arr->arrTypeElement;
+	fetchedBinary = fetchBinary;
+	clearData = bClear;
+}
+
+void IscArray::detach(SIscArrayData * arr)
+{
+	arr->arrBufData = arrBufData;
+	arr->arrBufDataSize = arrBufDataSize;
+	arr->arrCountElement = arrCountElement;
+	arr->arrSizeElement = arrSizeElement;
+	arr->arrTypeElement = arrTypeElement;
+	clearData = false;
+}
+
+void IscArray::bind(IscConnection *connect,XSQLVAR *var)
+{
+	if ( !memcmp(&arrayId,&*(ISC_QUAD*) var->sqldata,sizeof(arrayId)) )
+		return;
+
+	clear();
+	removeBufData();
+
+	clearData = true;
 	connection = connect;
 	arrayId = *(ISC_QUAD*)var->sqldata;
 	fetched = false;
@@ -95,35 +151,9 @@ IscArray::IscArray(IscConnection *connect,XSQLVAR *var)
 	arrBufData = (void*)malloc(arrBufDataSize);
 }
 
-IscArray::~IscArray()
-{
-	removeBufData();
-}
-
-void IscArray::attach(SIscArrayData * arr, bool bClear)
-{
-	arrBufData = arr->arrBufData;
-	arrBufDataSize = arr->arrBufDataSize;
-	arrCountElement = arr->arrCountElement;
-	arrSizeElement = arr->arrSizeElement;
-	arrTypeElement = arr->arrTypeElement;
-	fetchedBinary = true;
-	clear = bClear;
-}
-
-void IscArray::detach(SIscArrayData * arr)
-{
-	arr->arrBufData = arrBufData;
-	arr->arrBufDataSize = arrBufDataSize;
-	arr->arrCountElement = arrCountElement;
-	arr->arrSizeElement = arrSizeElement;
-	arr->arrTypeElement = arrTypeElement;
-	clear = false;
-}
-
 void IscArray::removeBufData()
 {
-	if( arrBufData && clear)
+	if( arrBufData && clearData)
 	{
 		free(arrBufData);
 		arrBufData = NULL;

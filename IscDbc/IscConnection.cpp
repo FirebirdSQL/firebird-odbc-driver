@@ -114,20 +114,18 @@ void IscConnection::close()
 PreparedStatement* IscConnection::prepareStatement(const char * sqlString)
 {
 	IscPreparedStatement *statement = NULL;
-	IscPreparedStatement *statementSearch = NULL;
-	bool found = false;
 
 	try
-		{
-			statement = new IscPreparedStatement (this);
-			statement->prepare (sqlString);
-		}
+	{
+		statement = new IscPreparedStatement (this);
+		statement->prepare (sqlString);
+	}
 	catch (...)
-		{
+	{
 		if (statement)
 			delete statement;
 		throw;
-		}
+	}
 
 //From R. Milharcic
 	statements.append (statement);
@@ -154,13 +152,13 @@ void IscConnection::commit()
 void IscConnection::rollback()
 {
 	if (transactionHandle)
-		{
+	{
 		ISC_STATUS statusVector [20];
 		GDS->_rollback_transaction (statusVector, &transactionHandle);
 
 		if (statusVector [1])
 			throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
-		}
+	}
 	transactionPending = false;
 }
 

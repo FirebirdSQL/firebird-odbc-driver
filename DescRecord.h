@@ -23,14 +23,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_DESCRECORD_H__F3F1D3A4_4083_11D4_98E8_0000C01D2301__INCLUDED_)
-#define AFX_DESCRECORD_H__F3F1D3A4_4083_11D4_98E8_0000C01D2301__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#if !defined(_DESCRECORD_H_)
+#define _DESCRECORD_H_
 
 #include "OdbcConvert.h"
+class Blob;
 
 class DescRecord
 {
@@ -41,10 +38,16 @@ public:
 	bool operator =(DescRecord *rec);
 
 public:
+	bool			isDefined;
+	bool			isPrepared;
+	SQLSMALLINT		callType; // use sqlGetData
+
 	int				isBlobOrArray;
 	bool			data_at_exec;
 	bool			startedTransfer;
-
+	SQLINTEGER		dataOffset;
+	long			currentFetched;
+	Blob			*dataBlobPtr; // for blob or array 
 
 	SQLSMALLINT		type;
 	SQLSMALLINT		datetimeIntervalCode;
@@ -84,4 +87,4 @@ public:
 	ADRESS_FUNCTION fnConv;
 };
 
-#endif // !defined(AFX_DESCRECORD_H__F3F1D3A4_4083_11D4_98E8_0000C01D2301__INCLUDED_)
+#endif // !defined(_DESCRECORD_H_)

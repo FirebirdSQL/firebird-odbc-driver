@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ATTACHMENT_H__F3F1D3A9_4083_11D4_98E8_0000C01D2301__INCLUDED_)
-#define AFX_ATTACHMENT_H__F3F1D3A9_4083_11D4_98E8_0000C01D2301__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#if !defined(_ATTACHMENT_H_)
+#define _ATTACHMENT_H_
 
 #include "Mutex.h"
 
@@ -68,4 +64,4 @@ public:
 	Mutex		mutex;
 };
 
-#endif // !defined(AFX_ATTACHMENT_H__F3F1D3A9_4083_11D4_98E8_0000C01D2301__INCLUDED_)
+#endif // !defined(_ATTACHMENT_H_)

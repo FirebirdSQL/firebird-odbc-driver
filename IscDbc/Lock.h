@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_LOCK_H__F3F1D3A8_4083_11D4_98E8_0000C01D2301__INCLUDED_)
-#define AFX_LOCK_H__F3F1D3A8_4083_11D4_98E8_0000C01D2301__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#if !defined(_LOCK_H_INCLUDED_)
+#define _LOCK_H_INCLUDED_
 
 class Mutex;
 
@@ -43,4 +39,4 @@ public:
 	bool	locked;
 };
 
-#endif // !defined(AFX_LOCK_H__F3F1D3A8_4083_11D4_98E8_0000C01D2301__INCLUDED_)
+#endif // !defined(_LOCK_H_INCLUDED_)

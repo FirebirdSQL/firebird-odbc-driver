@@ -23,12 +23,8 @@
 //////////////////////////////////////////////////////////////////////
 
 
-#if !defined(AFX_TIMESTAMP_H__35227BA2_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
-#define AFX_TIMESTAMP_H__35227BA2_2C14_11D4_98E0_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_TIMESTAMP_H_INCLUDED_)
+#define _TIMESTAMP_H_INCLUDED_
 
 #include "SqlTime.h"
 #include "DateTime.h"
@@ -43,4 +39,4 @@ public:
 	long	nanos;					// nano seconds
 };
 
-#endif // !defined(AFX_TIMESTAMP_H__35227BA2_2C14_11D4_98E0_0000C01D2301__INCLUDED_)
+#endif // !defined(_TIMESTAMP_H_INCLUDED_)

@@ -5,12 +5,8 @@
 // copyright (c) 1999 - 2000 by James A. Starkey for IBPhoenix.
 
 
-#if !defined(AFX_VALUES_H__02AD6A4C_A433_11D2_AB5B_0000C01D2301__INCLUDED_)
-#define AFX_VALUES_H__02AD6A4C_A433_11D2_AB5B_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_VALUES_H_INCLUDED_)
+#define _VALUES_H_INCLUDED_
 
 class Value;
 
@@ -27,4 +23,4 @@ public:
 	Value	*values;
 };
 
-#endif // !defined(AFX_VALUES_H__02AD6A4C_A433_11D2_AB5B_0000C01D2301__INCLUDED_)
+#endif // !defined(_VALUES_H_INCLUDED_)

@@ -109,11 +109,11 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 
 bool IscCrossReferenceResultSet::next()
 {
-	if (!resultSet->next())
+	if (!IscResultSet::next())
 		return false;
 
-	resultSet->setValue (10, getRule (resultSet->getString (10)));
-	resultSet->setValue (11, getRule (resultSet->getString (11)));
+	setValue (10, getRule (getString (10)));
+	setValue (11, getRule (getString (11)));
 
 	trimBlanks (3);			// primary key table name
 	trimBlanks (4);			// primary key field name
@@ -154,40 +154,4 @@ bool IscCrossReferenceResultSet::stringEqual(const char * p1, const char * p2)
 			return false;
 
 	return true;
-}
-
-int IscCrossReferenceResultSet::getColumnType(int index, int &realSqlType)
-{
-	switch (index)
-		{
-		case UPD_RULE:					// update rule
-		case DEL_RULE:					// delete rule
-			return JDBC_INTEGER;
-		}
-
-	return Parent::getColumnType (index, realSqlType);
-}
-
-int IscCrossReferenceResultSet::getColumnDisplaySize(int index)
-{
-	switch (index)
-		{
-		case UPD_RULE:					// update rule
-		case DEL_RULE:					// delete rule
-			return 9;
-		}
-
-	return Parent::getColumnDisplaySize (index);
-}
-
-int IscCrossReferenceResultSet::getPrecision(int index)
-{
-	switch (index)
-		{
-		case UPD_RULE:					// update rule
-		case DEL_RULE:					// delete rule
-			return 9;
-		}
-
-	return Parent::getPrecision (index);
 }

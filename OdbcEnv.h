@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ODBCENV_H__ED260D95_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ODBCENV_H__ED260D95_1BC4_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ODBCENV_H_)
+#define _ODBCENV_H_
 
 #include "OdbcObject.h"
 #include "IscDbc/Mutex.h"
@@ -97,4 +93,4 @@ public:
 	}
 };
 
-#endif // !defined(AFX_ODBCENV_H__ED260D95_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ODBCENV_H_)

@@ -34,9 +34,9 @@
 #include "IscMetaDataResultSet.h"
 #include "IscDatabaseMetaData.h"
 #include "IscResultSet.h"
+#include "IscPreparedStatement.h"
 #include "SQLError.h"
 #include "IscConnection.h"
-#include "Value.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -45,7 +45,6 @@
 IscMetaDataResultSet::IscMetaDataResultSet(IscDatabaseMetaData *meta) : IscResultSet (NULL)
 {
 	metaData = meta;
-	resultSet = NULL;
 	statement = NULL;
 }
 
@@ -54,41 +53,22 @@ IscMetaDataResultSet::~IscMetaDataResultSet()
 
 }
 
-
-int IscMetaDataResultSet::findColumn(const char * columnName)
-{
-	return resultSet->findColumn (columnName);
-}
-
-Value* IscMetaDataResultSet::getValue(int index)
-{
-	Value *value = resultSet->getValue (index);
-	valueWasNull = value->type == Null;
-
-	return value;
-}
-
 void IscMetaDataResultSet::prepareStatement(const char * sql)
 {
-	statement = metaData->connection->prepareStatement (sql);
-	resultSet = (IscResultSet*) statement->executeQuery();
-	sqlda = resultSet->sqlda;
-	numberColumns = resultSet->numberColumns;
-	allocConversions();
+	close();
+	statement = (IscPreparedStatement *)metaData->connection->prepareStatement (sql);
+	statement->executeMetaDataQuery();
+	initResultSet((IscStatement*)statement);
 }
 
 void IscMetaDataResultSet::trimBlanks(int id)
 {
-	Value *value = getValue (id);
+	int len;
+	char * data = sqlda->getText (id, len);
+	char * end = data + len - 1;
 
-	if (value->type == String)
-		{
-		char *data = value->data.string.string;
-		int l = value->data.string.length;
-		while (l && data [l - 1] == ' ')
-			data [--l] = 0;
-		value->data.string.length = l;
-		}
+	while (end > data && *end == ' ')
+		*end-- = '\0';
 }
 
 bool IscMetaDataResultSet::isWildcarded(const char * pattern)
@@ -111,44 +91,4 @@ JString IscMetaDataResultSet::expandPattern(const char *prefix, const char * str
 		sprintf (temp, "%s %s = \'%s\'\n",prefix, string, pattern);
 
 	return temp;
-}
-
-int IscMetaDataResultSet::getColumnType(int index, int &realSqlType)
-{
-	return resultSet->getColumnType (index, realSqlType);
-}
-
-const char* IscMetaDataResultSet::getColumnTypeName(int index)
-{
-    return resultSet->getColumnTypeName (index);
-}
-
-int IscMetaDataResultSet::getColumnDisplaySize(int index)
-{
-	return resultSet->getColumnDisplaySize (index);
-}
-
-const char* IscMetaDataResultSet::getColumnName(int index)
-{
-	return resultSet->getColumnName (index);
-}
-
-const char* IscMetaDataResultSet::getTableName(int index)
-{
-	return resultSet->getTableName (index);
-}
-
-int IscMetaDataResultSet::getPrecision(int index)
-{
-	return resultSet->getPrecision (index);
-}
-
-int IscMetaDataResultSet::getScale(int index)
-{
-	return resultSet->getScale (index);
-}
-
-bool IscMetaDataResultSet::isNullable(int index)
-{
-	return resultSet->isNullable (index);
 }

@@ -23,32 +23,59 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "stdio.h"
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+
 #include "IscDbc.h"
 #include "TypesResultSet.h"
 #include "Types.h"
 
-#define SET_VALUE(col,value)	if (value == -1) setNull(col); else setValue (col, value);
+#define SET_SQLVAR(index, name, type, prec, offset)			\
+{															\
+	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar + index - 1;	\
+	char	*src = var->sqlname,							\
+			*dst = name;									\
+	do														\
+		*src++=*dst;										\
+	while(*dst++);											\
+															\
+	var->sqlname_length = src - var->sqlname - 1;			\
+	var->sqltype = type + 1;								\
+	var->sqllen = prec;										\
+	var->sqldata = (char*)offset;							\
+}															\
+
+#define SET_INDICATOR_VAL(col,type,isNull)  if ( isNull && (*(type*)(var[col].sqldata + sqldataOffsetPtr)) == -1 ) *var[col].sqlind = -1; else *var[col].sqlind = 0;
+#define SET_INDICATOR_STR(col)  if ( ((char*)(var[col].sqldata + sqldataOffsetPtr)) == NULL ) *var[col].sqlind = -1; else *var[col].sqlind = strlen((char*)(var[col].sqldata + sqldataOffsetPtr)) + 1;
 
 struct Types {
-    char    *typeName;
-	long	typeType;
+	char	label;
+    short   lenTypeName;
+    char    typeName[31];
+	short	typeType;
     long    typePrecision;
-    char    *typePrefix;
-    char    *typeSuffix;
-    char    *typeParams;
-	long	typeNullable;
-	long	typeCaseSensitive;
-	long	typeSearchable;
-	long	typeUnsigned;
-	long	typeMoney;
-	long	typeAutoIncrement;
-    char    *typeLocalName;
-	long	typeMinScale;
-	long	typeMaxScale;
-	long	typeSqlDataType;
-	long	typeDateTimeSub;
+    short   lenTypePrefix;
+    char    typePrefix[6];
+    short   lenTypeSuffix;
+    char    typeSuffix[6];
+    short   lenTypeParams;
+    char    typeParams[20];
+	short	typeNullable;
+	short	typeCaseSensitive;
+	short	typeSearchable;
+	short	typeUnsigned;
+	short	typeMoney;
+	short	typeAutoIncrement;
+    short   lenTypeLocalName;
+    char    typeLocalName[31];
+	short	typeMinScale;
+	short	typeMaxScale;
+	short	typeSqlDataType;
+	short	typeDateTimeSub;
 	long	typeNumPrecRadix;
-	long	typeIntervalPrecision;
+	short	typeIntervalPrecision;
     };
 
 #define NO_NULLS			0		// SQL_NO_NULLS
@@ -68,59 +95,30 @@ struct Types {
 
 #define TYPE_SQL_DATETIME	9
 
-#define ALPHA(type,code,prec) type,code,prec,"'","'","length",NULLABLE,CASE_SENSITIVE,SEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
-#define BLOB(type,code,prefix,suffix,casesensitive) type,code,MAX_BLOB_LENGTH,prefix,suffix,NULL,NULLABLE,casesensitive,UNSEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
-#define NUMERIC(type,code,prec,attr,min,max,numprecradix) type,code,prec,"<n/a>","<n/a>",attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,IS_SIGNED,NOT_MONEY,NOT_AUTO_INCR,type,min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
-#define DATETIME(type,code,prec,prefix,suffix,datetimesub) type,code,prec,prefix,suffix,NULL,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_NUMERIC,NOT_MONEY,NOT_AUTO_INCR,type,UNSCALED,UNSCALED,TYPE_SQL_DATETIME,datetimesub,NOT_NUMERIC,NOT_NUMERIC
+#define ALPHA(type,code,prec) 0,sizeof(type)-1,type,code,prec,1,"'",1,"'",6,"length",NULLABLE,CASE_SENSITIVE,SEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
+#define BLOB(type,code,prefix,suffix,casesensitive) 0,sizeof(type)-1,type,code,MAX_BLOB_LENGTH,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",NULLABLE,casesensitive,UNSEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
+//#define NUMERIC_TINYINT(type,code,prec,attr,min,max,numprecradix) 0,sizeof(type)-1,type,code,prec,5,"<n/a>",5,"<n/a>",sizeof(attr)-1,attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE,NOT_SIGNED,NOT_MONEY,NOT_AUTO_INCR,4,"CHAR",min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
+#define NUMERIC(type,code,prec,attr,min,max,numprecradix) 0,sizeof(type)-1,type,code,prec,5,"<n/a>",5,"<n/a>",sizeof(attr)-1,attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,IS_SIGNED,NOT_MONEY,NOT_AUTO_INCR,sizeof(type)-1,type,min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
+#define DATETIME(type,code,prec,prefix,suffix,datetimesub) 0,sizeof(type)-1,type,code,prec,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_NUMERIC,NOT_MONEY,NOT_AUTO_INCR,sizeof(type)-1,type,UNSCALED,UNSCALED,TYPE_SQL_DATETIME,datetimesub,NOT_NUMERIC,NOT_NUMERIC
 
-static const Types types [] = {
-	BLOB ("BLOB", JDBC_LONGVARBINARY,NULL,NULL,CASE_INSENSITIVE),
+static Types types [] = {
+	BLOB ("BLOB", JDBC_LONGVARBINARY,"","",CASE_INSENSITIVE),
 	BLOB ("BLOB SUB_TYPE 1", JDBC_LONGVARCHAR,"'","'",CASE_SENSITIVE),
 	ALPHA ("CHAR", JDBC_CHAR,MAX_CHAR_LENGTH),
 	NUMERIC ("NUMERIC", JDBC_NUMERIC, MAX_NUMERIC_LENGTH, "precision,scale", 0, MAX_NUMERIC_LENGTH, 10),
 	NUMERIC ("DECIMAL", JDBC_DECIMAL, MAX_DECIMAL_LENGTH, "precision,scale", 0, MAX_DECIMAL_LENGTH, 10),
-	NUMERIC ("INTEGER", JDBC_INTEGER, MAX_INT_LENGTH, NULL, 0, 0, 10),	
-	NUMERIC ("SMALLINT", JDBC_SMALLINT, MAX_SMALLINT_LENGTH, NULL, 0, 0, 10),	
-	NUMERIC ("FLOAT", JDBC_FLOAT, MAX_FLOAT_LENGTH, NULL, UNSCALED, UNSCALED, 2),
-	NUMERIC ("DOUBLE PRECISION", JDBC_DOUBLE, MAX_DOUBLE_LENGTH, NULL, UNSCALED, UNSCALED, 2),
-	NUMERIC ("BIGINT", JDBC_BIGINT, MAX_QUAD_LENGTH,NULL, 0, 0, 19),
+	NUMERIC ("INTEGER", JDBC_INTEGER, MAX_INT_LENGTH, "", 0, 0, 10),	
+//	NUMERIC_TINYINT ("TINYINT", JDBC_TINYINT, 3, NULL, 0, 0, 10),
+	NUMERIC ("SMALLINT", JDBC_SMALLINT, MAX_SMALLINT_LENGTH, "", 0, 0, 10),	
+	NUMERIC ("FLOAT", JDBC_FLOAT, MAX_FLOAT_LENGTH, "", UNSCALED, UNSCALED, 2),
+	NUMERIC ("DOUBLE PRECISION", JDBC_DOUBLE, MAX_DOUBLE_LENGTH, "", UNSCALED, UNSCALED, 2),
+	NUMERIC ("BIGINT", JDBC_BIGINT, MAX_QUAD_LENGTH,"", 0, 0, 19),
 	ALPHA ("VARCHAR", JDBC_VARCHAR,MAX_VARCHAR_LENGTH),
 	DATETIME("DATE",JDBC_DATE,MAX_DATE_LENGTH,"'","'",1),
 	DATETIME("TIME",JDBC_TIME,MAX_TIME_LENGTH,"'","'",2),
 	DATETIME("TIMESTAMP",JDBC_TIMESTAMP,MAX_TIMESTAMP_LENGTH,"'","'",3)
 //    DATETIME("TIMESTAMP",TIMESTAMP,23,"{ts'","'}"),
     };
-
-
-struct Fields {
-   const char	*name;
-   int			type;
-   int			precision;
-	};
-
-#define FIELD(name,type,prec)	name, type, prec
-
-static const Fields fields [] = {
-	FIELD ("TYPE_NAME"			, JDBC_VARCHAR	, 128),
-	FIELD ("DATA_TYPE"			, JDBC_SMALLINT	, 5),
-	FIELD ("PRECISION"			, JDBC_INTEGER	, 10),
-	FIELD ("LITERAL_PREFIX"		, JDBC_VARCHAR	, 128),
-	FIELD ("LITERAL_SUFFIX"		, JDBC_VARCHAR	, 128),
-	FIELD ("CREATE_PARAMS"		, JDBC_VARCHAR	, 128),
-	FIELD ("NULLABLE"			, JDBC_SMALLINT	, 5),
-	FIELD ("CASE_SENSITIVE"		, JDBC_SMALLINT	, 5),
-	FIELD ("SEARCHABLE"			, JDBC_SMALLINT	, 5),
-	FIELD ("UNSIGNED_ATTRIBUTE"	, JDBC_SMALLINT	, 5),
-	FIELD ("MONEY"				, JDBC_SMALLINT	, 5),
-	FIELD ("AUTO_INCREMENT"		, JDBC_SMALLINT	, 5),
-	FIELD ("LOCAL_TYPE_NAME"	, JDBC_VARCHAR	, 128),
-	FIELD ("MINIMUM_SCALE"		, JDBC_SMALLINT	, 5),
-	FIELD ("MAXIMUM_SCALE"		, JDBC_SMALLINT	, 5),
-	FIELD ("SQL_DATA_TYPE"		, JDBC_SMALLINT	, 5),
-	FIELD ("SQL_DATETIME_SUB"	, JDBC_SMALLINT	, 5),
-	FIELD ("NUM_PREC_RADIX"		, JDBC_INTEGER	, 10),	
-	FIELD ("SQL_INTERVAL_PRECISION", JDBC_SMALLINT, 5),	
-	};
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -146,14 +144,46 @@ TypesResultSet::TypesResultSet(int dataType) : IscResultSet (NULL)
 	}
 
 	recordNumber = 0;
-	numberColumns = sizeof (fields) / sizeof (fields [0]);
+	numberColumns = 19;
 	values.alloc (numberColumns);
 	allocConversions();
+
+	indicators = (short*)calloc(1,sizeof(short)*numberColumns);
+	sqlda = &outputSqlda;
+	((XSQLDA*)*sqlda)->sqld = numberColumns;
+	sqldataOffsetPtr = (unsigned long)types - sizeof (*types);
+
+	SET_SQLVAR( 1, "TYPE_NAME"			, SQL_VARYING	,	33  , OFFSET(Types,lenTypeName)				)
+	SET_SQLVAR( 2, "DATA_TYPE"			, SQL_SHORT		,	 5	, OFFSET(Types,typeType)				)
+	SET_SQLVAR( 3, "PRECISION"			, SQL_LONG		,	10	, OFFSET(Types,typePrecision)			)
+	SET_SQLVAR( 4, "LITERAL_PREFIX"		, SQL_VARYING	,	 8	, OFFSET(Types,lenTypePrefix)			)
+	SET_SQLVAR( 5, "LITERAL_SUFFIX"		, SQL_VARYING	,	 8	, OFFSET(Types,lenTypeSuffix)			)
+	SET_SQLVAR( 6, "CREATE_PARAMS"		, SQL_VARYING	,	22	, OFFSET(Types,lenTypeParams)			)
+	SET_SQLVAR( 7, "NULLABLE"			, SQL_SHORT		,	 5	, OFFSET(Types,typeNullable)			)
+	SET_SQLVAR( 8, "CASE_SENSITIVE"		, SQL_SHORT		,	 5	, OFFSET(Types,typeCaseSensitive)		)
+	SET_SQLVAR( 9, "SEARCHABLE"			, SQL_SHORT		,	 5	, OFFSET(Types,typeSearchable)			)
+	SET_SQLVAR(10, "UNSIGNED_ATTRIBUTE"	, SQL_SHORT		,	 5	, OFFSET(Types,typeUnsigned)			)
+	SET_SQLVAR(11, "MONEY"				, SQL_SHORT		,	 5	, OFFSET(Types,typeMoney)				)
+	SET_SQLVAR(12, "AUTO_INCREMENT"		, SQL_SHORT		,	 5	, OFFSET(Types,typeAutoIncrement)		)
+	SET_SQLVAR(13, "LOCAL_TYPE_NAME"	, SQL_VARYING	,	33	, OFFSET(Types,lenTypeLocalName)		)
+	SET_SQLVAR(14, "MINIMUM_SCALE"		, SQL_SHORT		,	 5	, OFFSET(Types,typeMinScale)			)
+	SET_SQLVAR(15, "MAXIMUM_SCALE"		, SQL_SHORT		,	 5	, OFFSET(Types,typeMaxScale)			)
+	SET_SQLVAR(16, "SQL_DATA_TYPE"		, SQL_SHORT		,	 5	, OFFSET(Types,typeSqlDataType)			)
+	SET_SQLVAR(17, "SQL_DATETIME_SUB"	, SQL_SHORT		,	 5	, OFFSET(Types,typeDateTimeSub)			)
+	SET_SQLVAR(18, "NUM_PREC_RADIX"		, SQL_LONG		,	10	, OFFSET(Types,typeNumPrecRadix)		)
+	SET_SQLVAR(19, "SQL_INTERVAL_PRECISION", SQL_SHORT	,	 5	, OFFSET(Types,typeIntervalPrecision)	)
+
+	int i = numberColumns;
+	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar;
+	short *ind = indicators;
+
+	for( ; i-- ; ++var, ++ind )
+		var->sqlind = ind;
 }
 
 TypesResultSet::~TypesResultSet()
 {
-
+	free(indicators);
 }
 
 bool TypesResultSet::next()
@@ -174,93 +204,38 @@ bool TypesResultSet::next()
 	if (++recordNumber > sizeof (types) / sizeof (types [0]))
 		return false;
 
-	reset();
-	allocConversions();
+	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar;
 
-	const Types *type = types + recordNumber - 1;
-	int col = 1;
+	SET_INDICATOR_STR(0);						// TYPE_NAME
+	SET_INDICATOR_VAL(1,short,false);			// DATA_TYPE
+	SET_INDICATOR_VAL(2,long,true);				// PRECISION
+	SET_INDICATOR_STR(3);						// LITERAL_PREFIX
+	SET_INDICATOR_STR(4);						// LITERAL_SUFFIX
+	SET_INDICATOR_STR(5);						// CREATE_PARAMS
+	SET_INDICATOR_VAL(6,short,false);			// NULLABLE
+	SET_INDICATOR_VAL(7,short,false);			// CASE_SENSITIVE
+	SET_INDICATOR_VAL(8,short,false);			// SEARCHABLE
+	SET_INDICATOR_VAL(9,short,true);			// UNSIGNED_ATTRIBUTE
+	SET_INDICATOR_VAL(10,short,false);			// MONEY
+	SET_INDICATOR_VAL(11,short,true);			// AUTO_INCREMENT
+	SET_INDICATOR_STR(12);						// LOCAL_TYPE_NAME
+	SET_INDICATOR_VAL(13,short,true);			// MINIMUM_SCALE
+	SET_INDICATOR_VAL(14,short,true);			// MAXIMUM_SCALE
+	SET_INDICATOR_VAL(15,short,false);			// SQL_DATA_TYPE
+	SET_INDICATOR_VAL(16,short,true);			// SQL_DATETIME_SUB
+	SET_INDICATOR_VAL(17,long,true);			// NUM_PREC_RADIX
+	SET_INDICATOR_VAL(18,short,true);			// INTERVAL_PRECISION	
 
-	setValue (col++, type->typeName);			// TYPE_NAME
-	setValue (col++, type->typeType);			// DATA_TYPE
-	setValue (col++, type->typePrecision);		// PRECISION
-	setValue (col++, type->typePrefix);			// LITERAL_PREFIX
-	setValue (col++, type->typeSuffix);			// LITERAL_SUFFIX
-	setValue (col++, type->typeParams);			// CREATE_PARAMS
-	setValue (col++, type->typeNullable);		// NULLABLE
-	SET_VALUE (col++, type->typeCaseSensitive);	// CASE_SENSITIVE
-	SET_VALUE (col++, type->typeSearchable);	// SEARCHABLE
-	SET_VALUE (col++, type->typeUnsigned);		// UNSIGNED_ATTRIBUTE
-	SET_VALUE (col++, type->typeMoney);			// MONEY
-	SET_VALUE (col++, type->typeAutoIncrement); // AUTO_INCREMENT
-	setValue (col++, type->typeLocalName);		// LOCAL_TYPE_NAME
-	SET_VALUE (col++, type->typeMinScale);		// MINIMUM_SCALE
-	SET_VALUE (col++, type->typeMaxScale);		// MAXIMUM_SCALE
-	setValue (col++, type->typeSqlDataType);	// SQL_DATA_TYPE
-	SET_VALUE (col++, type->typeDateTimeSub);	// SQL_DATETIME_SUB
-	SET_VALUE (col++, type->typeNumPrecRadix);	// NUM_PREC_RADIX
-	SET_VALUE (col++, type->typeIntervalPrecision);	// INTERVAL_PRECISION	
+	sqldataOffsetPtr += sizeof (*types);
 
 	return true;
-}
-
-const char* TypesResultSet::getColumnName(int index)
-{
-	return fields [index - 1].name;
-}
-
-const char* TypesResultSet::getColumnTypeName(int index)
-{
-	return fields [index - 1].name;
-}
-
-const char* TypesResultSet::getSqlTypeName(int index)
-{
-	return fields [index - 1].name;
-}
-
-int TypesResultSet::getColumnType(int index, int &realSqlType)
-{
-	return (realSqlType = fields [index - 1].type);
-}
-
-const char* TypesResultSet::getColumnLabel(int index)
-{
-	return fields [index - 1].name;
-}
-
-int TypesResultSet::getColumnDisplaySize(int index)
-{
-	return fields [index - 1].precision;
-}
-
-int TypesResultSet::getScale(int index)
-{
-	return 0;
-}
-
-int TypesResultSet::getPrecision(int index)
-{
-	return fields [index - 1].precision;
-}
-
-bool TypesResultSet::isNullable(int index)
-{
-	return true;
-}
-
-const char* TypesResultSet::getTableName(int index)
-{
-	return "";
 }
 
 int TypesResultSet::findType()
 {	
-	for(int i=0;i<sizeof (fields)/sizeof (fields [0]);i++)
-	{
+	for(int i=0; i<sizeof (types)/sizeof (types [0]) ; i++)
 		if (types[i].typeType == dataTypes)
 			return i;		
-	}
 
 	return 0;
 }
-

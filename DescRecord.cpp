@@ -22,6 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "OdbcConnection.h"
+#include "IscDbc/Connection.h"
 #include "OdbcDesc.h"
 #include "DescRecord.h"
 
@@ -31,9 +33,16 @@
 
 DescRecord::DescRecord()
 {
+	isDefined = false;
+	isPrepared = false;
+	callType = SQL_C_DEFAULT;
+
 	isBlobOrArray = 0;
 	data_at_exec = false;
 	startedTransfer	= false;
+	dataOffset = 0;
+	currentFetched = 0;
+	dataBlobPtr = NULL;
 
 	type = SQL_C_DEFAULT;
 	datetimeIntervalCode = 0;
@@ -61,7 +70,8 @@ DescRecord::DescRecord()
 
 DescRecord::~DescRecord()
 {
-
+	if ( dataBlobPtr )
+		dataBlobPtr->release();
 }
 
 void DescRecord::setDefault(DescRecord *recTo)

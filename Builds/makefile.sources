@@ -43,7 +43,6 @@ ISCDBCSRC = \
 	Values.cpp
 
 ODBCJDBCSRC = \
-	Attributes.cpp \
 	DescRecord.cpp \
 	Main.cpp \
 	OdbcConnection.cpp \

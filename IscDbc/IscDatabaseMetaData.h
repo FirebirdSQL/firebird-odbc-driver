@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCDATABASEMETADATA_H__C19738BD_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCDATABASEMETADATA_H__C19738BD_1C87_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCDATABASEMETADATA_H_)
+#define _ISCDATABASEMETADATA_H_
 
 #include "Connection.h"
 #include "LinkedList.h"
@@ -209,6 +205,8 @@ public:
 		);
 
 	virtual ResultSet* getTypeInfo(int dataType);
+	virtual StatementMetaData* getMetaDataTypeInfo(ResultSet* setTypeInfo);
+
 	virtual bool supportsResultSetConcurrency(int type, int concurrency);
 	virtual bool ownUpdatesAreVisible(int type);
 	virtual bool ownDeletesAreVisible(int type);
@@ -229,4 +227,4 @@ public:
 	LinkedList		resultSets;
 };
 
-#endif // !defined(AFX_ISCDATABASEMETADATA_H__C19738BD_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCDATABASEMETADATA_H_)

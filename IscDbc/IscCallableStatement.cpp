@@ -106,6 +106,11 @@ ResultSet* IscCallableStatement::executeQuery()
 	return Parent::executeQuery();
 }
 
+void IscCallableStatement::executeMetaDataQuery()
+{
+	Parent::executeMetaDataQuery();
+}
+
 void IscCallableStatement::setInt(int index, long value)
 {
 	Parent::setInt(index, value);

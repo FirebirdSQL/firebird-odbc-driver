@@ -39,13 +39,10 @@
 IscColumnPrivilegesResultSet::IscColumnPrivilegesResultSet(IscDatabaseMetaData *metaData)
 		: IscMetaDataResultSet(metaData)
 {
-	resultSet = NULL;
 }
 
 IscColumnPrivilegesResultSet::~IscColumnPrivilegesResultSet()
 {
-	if (resultSet)
-		resultSet->release();
 }
 
 void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * columnNamePattern)
@@ -84,7 +81,7 @@ void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, con
 
 bool IscColumnPrivilegesResultSet::next()
 {
-	if (!resultSet->next())
+	if (!IscResultSet::next())
 		return false;
 
 	trimBlanks(3);
@@ -92,56 +89,42 @@ bool IscColumnPrivilegesResultSet::next()
 	trimBlanks(5);
 	trimBlanks(6);
 
-	const char *grantor = resultSet->getString(5);
-	const char *grantee = resultSet->getString(6);
+	int len;
+	const char *grantor = sqlda->getText(5, len);
+	const char *grantee = sqlda->getText(6, len);
 	if(!strcmp(grantor,grantee))
-		resultSet->setValue( 5, "_SYSTEM" );
+		sqlda->updateText( 5, "_SYSTEM" );
 
-	const char *privilege = resultSet->getString(7);
+	const char *privilege = sqlda->getText(7, len);
 
 	switch ( *privilege )
 	{
 		case 'S':
-			resultSet->setValue( 7, "SELECT" );
+			sqlda->updateText( 7, "SELECT" );
 			break;
 
 		case 'I':
-			resultSet->setValue( 7, "INSERT" );
+			sqlda->updateText( 7, "INSERT" );
 			break;
 
 		case 'U':
-			resultSet->setValue( 7, "UPDATE" );
+			sqlda->updateText( 7, "UPDATE" );
 			break;
 
 		case 'D':
-			resultSet->setValue( 7, "DELETE" );
+			sqlda->updateText( 7, "DELETE" );
 			break;
 
 		case 'R':
-			resultSet->setValue( 7, "REFERENCES" );
+			sqlda->updateText( 7, "REFERENCES" );
 			break;
 	}
 
-	int nullable = resultSet->getInt(8);
-	if ( nullable )
-		resultSet->setValue( 8, "YES" );
+	char * nullable = sqlda->getText(8,len);
+	if ( *nullable == '1' )
+		sqlda->updateText( 8, "YES" );
 	else
-		resultSet->setValue( 8, "NO" );
+		sqlda->updateText( 8, "NO" );
 
 	return true;
-}
-
-int IscColumnPrivilegesResultSet::getColumnDisplaySize(int index)
-{
-	return Parent::getColumnDisplaySize (index);
-}
-
-int IscColumnPrivilegesResultSet::getColumnType(int index, int &realSqlType)
-{
-	return Parent::getColumnType (index, realSqlType);
-}
-
-int IscColumnPrivilegesResultSet::getColumnPrecision(int index)
-{
-	return Parent::getPrecision (index);
 }

@@ -26,12 +26,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCPREPAREDSTATEMENT_H__C19738B9_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCPREPAREDSTATEMENT_H__C19738B9_1C87_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCPREPAREDSTATEMENT_H_)
+#define _ISCPREPAREDSTATEMENT_H_
 
 #include "Connection.h"
 #include "IscStatement.h"
@@ -90,6 +86,7 @@ public:
 	virtual int			executeUpdate();
 	virtual bool		execute();
 	virtual ResultSet*	executeQuery();
+	virtual void		executeMetaDataQuery();
 
 	void				getInputParameters();
 	virtual int			getNumParams();
@@ -110,4 +107,4 @@ public:
 	{ return getInfoCountRecordsStatement(connection, statementHandle, value,bufferLength,lengthPtr); }  
 };
 
-#endif // !defined(AFX_ISCPREPAREDSTATEMENT_H__C19738B9_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCPREPAREDSTATEMENT_H_)

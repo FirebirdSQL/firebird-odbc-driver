@@ -43,30 +43,41 @@ static char THIS_FILE[]=__FILE__;
 
 Stream::Stream()
 {
+	bClear = true;
 	segments = NULL;
 	current = NULL;
 	totalLength = 0;
 	minSegment = 0;
+	ptFirst = &first;
 }
 
 Stream::Stream(int minSegmentSize)
 {
+	bClear = true;
 	segments = NULL;
 	current = NULL;
 	totalLength = 0;
 	minSegment = minSegmentSize;
+	ptFirst = &first;
 }
 
 Stream::~Stream()
 {
-	Segment *segment;
+	clear();
+}
 
-	while (segment = segments)
-		{
-		segments = segment->next;
-		if (segment != &first)
-			free (segment);
-		}
+void Stream::attach(Stream &dst, bool clear)
+{
+	bClear = clear;
+	ptFirst = &dst.first;
+	segments = dst.segments;
+	current = dst.current;
+	totalLength = dst.totalLength;
+	minSegment = dst.minSegment;
+	currentLength = dst.currentLength;
+	decompressedLength = dst.decompressedLength;
+	useCount = dst.useCount;
+	copyFlag = dst.copyFlag;
 }
 
 void Stream::putCharacter(char c)
@@ -85,46 +96,46 @@ void Stream::putSegment(int length, const char *ptr, bool copy)
 	totalLength += length;
 
 	if (!segments)
+	{
+		if ( (copyFlag = copy),copyFlag )
 		{
-		if (copyFlag = copy)
-			{
 			allocSegment (MAX (length, minSegment));
 			current->length = length;
 			memcpy (current->address, address, length);
-			}
+		}
 		else
-			{
-			//copyFlag = copy;
+		{
+			//copyFlag = false;
 			current = segments = &first;
 			current->length = length;
 			current->address = (char*) address;
 			current->next = NULL;
-			}
 		}
+	}
 	else if (copyFlag)
-		{
+	{
 		int l = currentLength - current->length;
 		if (l > 0)
-			{
+		{
 			int l2 = MIN (l, length);
 			memcpy (current->address + current->length, address, l2);
 			current->length += l2;
 			length -= l2;
 			address += l2;
-			}
+		}
 		if (length)
-			{
+		{
 			allocSegment (MAX (length, minSegment));
 			current->length = length;
 			memcpy (current->address, address, length);
-			}
 		}
+	}
 	else
-		{
+	{
 		allocSegment (0);
 		current->address = (char*) address;
 		current->length = length;
-		}
+	}
 }
 
 int Stream::getSegmentToHexStr(int offset, int len, void * ptr)
@@ -181,10 +192,10 @@ void Stream::setSegment(Segment * segment, int length, void* address)
 	totalLength += length;
 
 	if (copyFlag)
-		{
+	{
 		segment->address = new char [length];
 		memcpy (segment->address, address, length);
-		}
+	}
 	else
 		segment->address = (char*) address;
 }
@@ -383,14 +394,17 @@ void Stream::printShorts(const char * msg, int length, short * data)
 
 void Stream::clear()
 {
+	if ( !bClear )
+		return;
+
 	Segment *segment;
 
-	while (segment = segments)
-		{
+	while ( (segment = segments),segment )
+	{
 		segments = segment->next;
 		if (segment != &first)
 			free (segment);
-		}
+	}
 
 	current = NULL;
 	totalLength = 0;

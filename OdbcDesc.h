@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ODBCDESC_H__73DA784A_3271_11D4_98E1_0000C01D2301__INCLUDED_)
-#define AFX_ODBCDESC_H__73DA784A_3271_11D4_98E1_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ODBCDESC_H_)
+#define _ODBCDESC_H_
 
 #include "OdbcObject.h"
 
@@ -36,13 +32,15 @@ enum OdbcDescType {
 	odtApplicationParameter,
 	odtImplementationParameter,
 	odtApplicationRow,
-	odtImplementationRow
+	odtImplementationRow,
+	odtImplementationGetData
 	};
 
 class OdbcConnection;
 class StatementMetaData;
 class DescRecord;
 class OdbcConvert;
+class OdbcStatement;
 
 #include "Mlist.h"
 
@@ -79,9 +77,10 @@ class OdbcDesc : public OdbcObject
 {
 public:
 	// Use to odtImplementationParameter and odtImplementationRow
-	void setBindOffsetPtr(SQLINTEGER	**ptBindOffsetPtr);
+	void setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr);
+	void setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr);
 
-	DescRecord* getDescRecord (int number);
+	DescRecord*	getDescRecord(int number, bool bCashe = true);
 	RETCODE sqlGetDescField(int recNumber, int fieldId, SQLPOINTER value, int length, SQLINTEGER *lengthPtr);
 	RETCODE sqlSetDescField (int recNumber, int fieldId, SQLPOINTER value, int length);
 	RETCODE sqlGetDescRec(SQLSMALLINT recNumber, SQLCHAR *Name, SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, 
@@ -95,17 +94,25 @@ public:
 	OdbcDesc(OdbcDescType type, OdbcConnection *connect);
 	virtual ~OdbcDesc();
 
+	void updateDefined();
+	void clearDefined();
 	void removeRecords();
 	void setDefaultImplDesc (StatementMetaData * ptMetaData);
 	void allocBookmarkField();
 	RETCODE operator =(OdbcDesc &sour);
+	void defFromMetaData(int recNumber, DescRecord * record);
 	int setConvFn(int recNumber, DescRecord * recordTo);
+	int setConvFnForGetData(int recNumber, DescRecord * recordTo, DescRecord *& recordIRD);
 	int getConciseType(int type);
 	int getDefaultFromSQLToConciseType(int sqlType);
 	void addBindColumn(int recNumber, DescRecord * recordApp);
 	void delBindColumn(int recNumber);
+	void addGetDataColumn(int recNumber, DescRecord * recordImp);
 	void delAllBindColumn();
-	void returnData();
+	void setParent(OdbcStatement *parent);
+
+	RETCODE returnData();
+	RETCODE returnGetData(int recNumber);
 
 //Head
 	SQLSMALLINT			headAllocType;
@@ -118,6 +125,7 @@ public:
 //
 
 	OdbcConnection		*connection;
+	OdbcStatement		*parentStmt;
 	StatementMetaData	*metaData;
 	OdbcDescType		headType;
 	int					recordSlots;
@@ -128,4 +136,4 @@ public:
 	ListBindColumn		*listBind;
 };
 
-#endif // !defined(AFX_ODBCDESC_H__73DA784A_3271_11D4_98E1_0000C01D2301__INCLUDED_)
+#endif // !defined(_ODBCDESC_H_)

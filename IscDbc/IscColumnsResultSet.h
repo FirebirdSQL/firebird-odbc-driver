@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCCOLUMNSMETADATA_H__6C3E2ABA_229F_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCCOLUMNSMETADATA_H__6C3E2ABA_229F_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCCOLUMNSMETADATA_H_)
+#define _ISCCOLUMNSMETADATA_H_
 
 #include "IscMetaDataResultSet.h"
 #include "IscSqlType.h"
@@ -35,11 +31,6 @@
 class IscColumnsResultSet : public IscMetaDataResultSet  
 {
 public:
-	virtual int getPrecision (int index);
-	virtual int getColumnDisplaySize(int index);
-	typedef IscMetaDataResultSet Parent;
-
-	virtual int getColumnType (int index, int &realSqlType);
 	virtual bool next();
 	void getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern);
 	IscColumnsResultSet(IscDatabaseMetaData *metaData);
@@ -51,4 +42,4 @@ private:
 	virtual void adjustResults (IscSqlType sqlType);	
 };
 
-#endif // !defined(AFX_ISCCOLUMNSMETADATA_H__6C3E2ABA_229F_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCCOLUMNSMETADATA_H_)

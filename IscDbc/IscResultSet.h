@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCRESULTSET_H__C19738BA_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCRESULTSET_H__C19738BA_1C87_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCRESULTSET_H_)
+#define _ISCRESULTSET_H_
 
 #include "Connection.h"
 #include "LinkedList.h"
@@ -35,10 +31,10 @@
 #include "DateTime.h"	// Added by ClassView
 #include "SqlTime.h"
 #include "TimeStamp.h"	// Added by ClassView
+#include "Sqlda.h"
 
 class IscStatement;
 class IscDatabaseMetaData;
-class Sqlda;
 
 enum enStatysActivePositionRow { enSUCCESS, enUNKNOWN, enINSERT_ROW, enAFTER_LAST, enBEFORE_FIRST };
 
@@ -83,9 +79,9 @@ public:
 	virtual const char*	getSchemaName (int index);
 	virtual const char*	getCatalogName (int index);
 
-	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData);
+	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData, Blob *& ptDataBlob);
 	virtual void		setSqlData(int index, long ptData, long ptIndData);
-	virtual void		saveSqlData(int index, long ptData, long ptIndData);
+	virtual void		saveSqlData(int index);
 	virtual void		restoreSqlData(int index);
 // end public StatementMetaData
 
@@ -93,11 +89,11 @@ public:
 	void		reset();
 
 public:
-	void				setNull (int index);
-	virtual int			objectVersion();
+	virtual int objectVersion();
+
 	virtual Value*		getValue (int index);
 	virtual Value*		getValue (const char *columnName);
-	virtual bool		isNull(int index);
+	virtual void		setNull (int index);
 	virtual const char* getString (int index);
 	virtual const char* getString (const char *columnName);
 	virtual TimeStamp	getTimestamp (int index);
@@ -121,6 +117,7 @@ public:
 	virtual short		getShort (int index);
 	virtual short		getShort (const char * columnName);
 
+	virtual bool		nextSqlDa();
 	virtual bool		isBeforeFirst();
 	virtual bool		isAfterLast();
 	virtual bool		isFirst();
@@ -148,6 +145,7 @@ public:
 	virtual void		updateLong (int columnIndex, QUAD value);
 	virtual void		updateFloat (int columnIndex, float value);
 	virtual void		updateDouble (int columnIndex, double value);
+	virtual void		updateText (int columnIndex, const char* value);
 	virtual void		updateString (int columnIndex, const char* value);
 	virtual void		updateBytes (int columnIndex, int length, const void *bytes);
 	virtual void		updateDate (int columnIndex, DateTime value);
@@ -178,13 +176,14 @@ public:
 	virtual Statement	*getStatement();
 	virtual void		setPosRowInSet(int posRow);
 	virtual int			getPosRowInSet();
+	virtual long		*getSqlDataOffsetPtr();
 	virtual bool		readStaticCursor();
 	virtual bool		readForwardCursor();
 	virtual bool		setCurrentRowInBufferStaticCursor(int nRow);
 	virtual void		copyNextSqldaInBufferStaticCursor();
 	virtual void		copyNextSqldaFromBufferStaticCursor();
 	virtual int			getCountRowsStaticCursor();
-	virtual bool		getDataFromStaticCursor (int column, int cType, void * pointer, int bufferLength, long * indicatorPointer);
+	virtual bool		getDataFromStaticCursor (int column);
 
 	void setValue (int index, long value);
 	void setValue (int index, const char *value);
@@ -201,7 +200,8 @@ public:
 	Sqlda			*sqlda;
 	IscStatement	*statement;
 	int				activePosRowInSet;
+	long			sqldataOffsetPtr;
 	enStatysActivePositionRow statysPositionRow;
 };
 
-#endif // !defined(AFX_ISCRESULTSET_H__C19738BA_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCRESULTSET_H_)

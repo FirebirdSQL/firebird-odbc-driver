@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCBLOB_H__C19738BC_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCBLOB_H__C19738BC_1C87_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCBLOB_H_)
+#define _ISCBLOB_H_
 
 #include "BinaryBlob.h"
 #include "Connection.h"
@@ -43,9 +39,13 @@ public:
 	virtual int getSegmentLength (int pos);
 	virtual char* getString();
 
+	void bind(Connection *connect, char * sqldata);
+	void attach(char * pointBlob, bool fetched, bool clear);
+	void setType(short sqlsubtype);
 	void fetchBlob();
 	virtual int getSegment (int offset, int length, void *address);
 	virtual int length();
+	IscBlob();
 	IscBlob(IscConnection *connect, XSQLVAR *var);
 	virtual ~IscBlob();
 
@@ -54,4 +54,4 @@ public:
 	bool			fetched;
 };
 
-#endif // !defined(AFX_ISCBLOB_H__C19738BC_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCBLOB_H_)

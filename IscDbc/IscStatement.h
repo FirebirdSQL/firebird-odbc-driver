@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ISCSTATEMENT_H__C19738B8_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ISCSTATEMENT_H__C19738B8_1C87_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ISCSTATEMENT_H_)
+#define _ISCSTATEMENT_H_
 
 #include "Connection.h"
 #include "LinkedList.h"
@@ -91,4 +87,4 @@ public:
 	bool			selectActive;
 };
 
-#endif // !defined(AFX_ISCSTATEMENT_H__C19738B8_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ISCSTATEMENT_H_)

@@ -27,12 +27,8 @@
  */
 
 
-#if !defined(AFX_BINARYBLOB_H__74F68A11_3271_11D4_98E1_0000C01D2301__INCLUDED_)
-#define AFX_BINARYBLOB_H__74F68A11_3271_11D4_98E1_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_BINARYBLOB_H_)
+#define _BINARYBLOB_H_
 
 #include "Blob.h"
 #include "Stream.h"
@@ -44,7 +40,7 @@ class BinaryBlob : public Blob, public Stream
 public:
 	void putSegment (Blob *blob);
 #ifdef ENGINE
-	 BinaryBlob (Database *db, long recordNumber, long sectId);
+	BinaryBlob (Database *db, long recordNumber, long sectId);
 #endif
 	virtual void* getSegment (int pos);
 	virtual int	  getSegment (int offset, int length, void* address);
@@ -53,12 +49,17 @@ public:
 	int length();
 	void getHexString(long pos, long length, void * address);
 	void getBytes (long pos, long length, void *address);
-	 BinaryBlob (int minSegmentSize);
+	BinaryBlob (int minSegmentSize);
 	BinaryBlob();
 	virtual ~BinaryBlob();
 	virtual int release();
 	virtual void addRef();
 	void populate();
+	virtual void bind(Connection *connect, char * sqldata);
+	void attach(char * pointBlob, bool fetched, bool clear);
+	bool isBlob(){ return enType == enTypeBlob; }
+	bool isClob(){ return enType == enTypeClob; }
+	bool isArray(){ return enType == enTypeArray; }
 
 	int			useCount;
 	int			offset;
@@ -68,4 +69,4 @@ public:
 	bool		populated;
 };
 
-#endif // !defined(AFX_BINARYBLOB_H__74F68A11_3271_11D4_98E1_0000C01D2301__INCLUDED_)
+#endif // !defined(_BINARYBLOB_H_)

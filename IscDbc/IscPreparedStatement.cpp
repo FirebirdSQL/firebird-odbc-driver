@@ -78,6 +78,15 @@ ResultSet* IscPreparedStatement::executeQuery()
 	return getResultSet();
 }
 
+void IscPreparedStatement::executeMetaDataQuery()
+{
+	if (outputSqlda.sqlda->sqld < 1)
+		throw SQLEXCEPTION (RUNTIME_ERROR, "statement is not a Select");
+
+	execute();
+	getMoreResults();
+}
+
 Value* IscPreparedStatement::getParameter(int index)
 {
 	if (index < 0 || index >= parameters.count)
@@ -238,7 +247,6 @@ void IscPreparedStatement::addRef()
 {
 	IscStatement::addRef ();
 }
-
 
 void IscPreparedStatement::prepare(const char * sqlString)
 {

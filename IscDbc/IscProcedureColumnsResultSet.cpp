@@ -49,6 +49,7 @@
 #include "IscSqlType.h"
 #include "IscStatement.h"
 #include "IscConnection.h"
+#include "IscPreparedStatement.h"
 #include "IscDatabaseMetaData.h"
 
 #ifndef SQL_PARAM_INPUT
@@ -89,13 +90,12 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 				"\tpp.rdb$parameter_name as column_name,\n"			// 4
 				"\tpp.rdb$parameter_type as column_type,\n"			// 5
 				"\tf.rdb$field_type as data_type,\n"				// 6
-				"\tf.rdb$field_sub_type as type_name,\n"			// 7
+				"\tpp.rdb$procedure_name as type_name,\n"			// 7
 				"\tf.rdb$field_length as column_size,\n"			// 8
-				"\tnull as buffer_length,\n"						// 9
+				"\tcast ( null as integer ) as buffer_length,\n"	// 9
 				"\tf.rdb$field_scale as decimal_digits,\n"			// 10
 				"\t10 as num_prec_radix,\n"							// 11
 				"\t1 as nullable,\n"								// 12 #define SQL_NULLABLE 1
-//				"\tf.rdb$null_flag as nullable,\n"					// 12
 				"\tf.rdb$description as remarks,\n"					// 13
 				"\tf.rdb$default_value as column_def,\n"			// 14
 				"\tnull as sql_data_type,\n"						// 15
@@ -103,7 +103,8 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 				"\tf.rdb$field_length as char_octet_length,\n"		// 17
 				"\tpp.rdb$parameter_number as ordinal_position,\n"	// 18
 				"\t'YES' as is_nullable,\n"							// 19
-				"\tf.rdb$field_precision as column_precision\n"		// 20
+				"\tf.rdb$field_precision as column_precision,\n"	// 20
+				"\tf.rdb$field_sub_type\n"							// 21
 		"from rdb$procedure_parameters pp, rdb$fields f\n"
 		"where pp.rdb$field_source = f.rdb$field_name\n";
 
@@ -116,70 +117,34 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 	if (columnNamePattern && *columnNamePattern)
 		sql += expandPattern (" and ","pp.rdb$parameter_name", columnNamePattern);
 
-	sql += " order by pp.rdb$procedure_name, pp.rdb$parameter_number";
+	sql += " order by pp.rdb$procedure_name, pp.rdb$parameter_type, pp.rdb$parameter_number";
 	prepareStatement (sql);
 	numberColumns = 19;
 }
 
 bool IscProcedureColumnsResultSet::next()
 {
-	if (!resultSet->next())
+	if (!IscResultSet::next())
 		return false;
 
 	trimBlanks (3);							// procedure name
 	trimBlanks (4);							// parameter name
 
-	int parameterType = resultSet->getInt (5);
-	int type = (parameterType) ? SQL_PARAM_INPUT : SQL_PARAM_OUTPUT;
-	resultSet->setValue (5, type);
+	int parameterType = sqlda->getShort (5);
+	int type = parameterType ? SQL_PARAM_OUTPUT : SQL_PARAM_INPUT;
+	sqlda->updateShort (5, type);
 
-	int blrType = resultSet->getInt (6);	// field type
-	int subType = resultSet->getInt (7);
-	int length = resultSet->getInt (8);
-	int scale = resultSet->getInt (10);
-	int dialect	= resultSet->statement->connection->getDatabaseDialect();
-	int precision = resultSet->getInt (20);
+	int blrType = sqlda->getShort (6);	// field type
+	int subType = sqlda->getShort (21);
+	int length = sqlda->getShort (8);
+	int scale = sqlda->getShort (10);
+	int dialect	= statement->connection->getDatabaseDialect();
+	int precision = sqlda->getShort (20);
 	IscSqlType sqlType (blrType, subType, length, length, dialect, precision, scale);
 
-	resultSet->setValue (6, sqlType.type);
-	resultSet->setValue (7, sqlType.typeName);
-	resultSet->setValue (9, length);
+	sqlda->updateShort (6, sqlType.type);
+	sqlda->updateText (7, sqlType.typeName);
+	sqlda->updateInt (9, length);
 
 	return true;
-}
-
-int IscProcedureColumnsResultSet::getColumnDisplaySize(int index)
-{
-	switch (index)
-		{
-		case TYPE_NAME:					//	TYPE_NAME
-			return 128;
-		}
-
-	return Parent::getColumnDisplaySize (index);
-}
-
-int IscProcedureColumnsResultSet::getColumnType(int index, int &realSqlType)
-{
-	switch (index)
-		{
-		case TYPE_NAME:					//	TYPE_NAME
-			return JDBC_VARCHAR;
-		}
-
-	return Parent::getColumnType (index, realSqlType);
-}
-
-int IscProcedureColumnsResultSet::getPrecision(int index)
-{
-	return 31;
-/*
-	switch (index)
-		{
-		case TYPE_NAME:					//	TYPE_NAME
-			return 128;
-		}
-
-	return Parent::getPrecision (index);
-*/
 }

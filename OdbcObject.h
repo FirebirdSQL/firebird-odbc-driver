@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ODBCOBJECT_H__ED260D94_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ODBCOBJECT_H__ED260D94_1BC4_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ODBCOBJECT_H_)
+#define _ODBCOBJECT_H_
 
 #include "OdbcJdbc.h"
 #include "IscDbc/JString.h"
@@ -36,7 +32,7 @@ enum OdbcObjectType {
     odbcTypeEnv,
 	odbcTypeConnection,
 	odbcTypeStatement,
-	odbcTypeDescriptor,
+	odbcTypeDescriptor
 	};
 
 class OdbcError;
@@ -81,4 +77,4 @@ public:
 	SQLINTEGER	sqlDiagRowCount;				// SQL_DIAG_ROW_COUNT
 };
 
-#endif // !defined(AFX_ODBCOBJECT_H__ED260D94_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ODBCOBJECT_H_)

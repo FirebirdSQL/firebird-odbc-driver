@@ -26,10 +26,6 @@
 #if !defined(_IscArray_H_)
 #define _IscArray_H_
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
-
 #include "BinaryBlob.h"
 #include "Connection.h"
 
@@ -50,25 +46,29 @@ class IscArray : public BinaryBlob
 {
 public:
 
-	void attach(SIscArrayData * arr, bool bClear = false);
+	void attach(char * pointBlob, bool fetched, bool clear){};
+	void attach(SIscArrayData * arr, bool fetchBinary = true, bool bClear = false);
 	void detach(SIscArrayData * arr);
 	void removeBufData();
 	void getBytesFromArray();
 	void fetchArrayToString();
 	void writeArray(Value * value);
 
+	void bind(IscConnection	*parentConnection,XSQLVAR *var);
+	void bind(Connection *connect, char * sqldata){};
 	virtual void getBytes(long pos, long length, void * address);
 	virtual int length();
 	virtual int getSegment (int offset, int length, void *address);
 	virtual int	getLength();
 
+	IscArray();
 	IscArray(SIscArrayData * ptArr);
 	IscArray(IscConnection	*parentConnection,XSQLVAR *var);
 	virtual ~IscArray();
 
 	IscConnection	*connection;
 	ISC_QUAD		arrayId;
-	bool			clear;
+	bool			clearData;
 	bool			fetched;
 	bool			fetchedBinary;
 	ISC_ARRAY_DESC	arrDesc;

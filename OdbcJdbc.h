@@ -34,7 +34,13 @@
 
 #ifdef DEBUG 
 #ifdef LOGGING
+
+#ifdef _WIN32
 #define LOG_FILE "c:\\odbc.log"
+#else
+#define LOG_FILE "/tmp/odbc.log"
+#endif
+
 void logMsg (const char *msg);
 #define LOG_MSG(msg)	logMsg (msg)
 

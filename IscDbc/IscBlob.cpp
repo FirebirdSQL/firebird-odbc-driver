@@ -22,7 +22,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "stdio.h"
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+
 #include "IscDbc.h"
+#include "Connection.h"
 #include "IscBlob.h"
 #include "IscResultSet.h"
 #include "IscConnection.h"
@@ -33,21 +39,50 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscBlob::IscBlob(IscConnection *connect, XSQLVAR *var)
+IscBlob::IscBlob()
 {
-	connection = connect;
-	blobId = *(ISC_QUAD*) var->sqldata;
+	connection = NULL;
+	memset(&blobId,0,sizeof(ISC_QUAD));
 	fetched = false;
 
-	if ( var->sqlsubtype == 1 )
-		enType = enTypeClob;
-	else
-		enType = enTypeBlob;
+	enType = enTypeBlob;
+}
+
+IscBlob::IscBlob(IscConnection *connect, XSQLVAR *var)
+{
+	bind(connect, (char*)var->sqldata);
+	setType(var->sqlsubtype);
 }
 
 IscBlob::~IscBlob()
 {
 
+}
+
+void IscBlob::setType(short sqlsubtype)
+{
+	if ( sqlsubtype == 1 )
+		enType = enTypeClob;
+	else
+		enType = enTypeBlob;
+}
+
+void IscBlob::bind(Connection *connect, char * sqldata)
+{
+	clear();
+	connection = (IscConnection *) connect;
+	blobId = *(ISC_QUAD*) sqldata;
+	fetched = false;
+}
+
+void IscBlob::attach(char * pointBlob, bool bFetched, bool clear)
+{
+	IscBlob * ptBlob = (IscBlob *)*(long*)pointBlob;
+
+	connection = ptBlob->connection;
+	memcpy(&blobId,&ptBlob->blobId, sizeof(blobId));
+	fetched = bFetched;
+	Stream::attach(*((Stream *)((BinaryBlob*)ptBlob)),clear);
 }
 
 int IscBlob::length()

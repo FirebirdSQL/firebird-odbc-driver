@@ -28,29 +28,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ODBCSTATEMENT_H__ED260D97_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ODBCSTATEMENT_H__ED260D97_1BC4_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ODBCSTATEMENT_H_)
+#define _ODBCSTATEMENT_H_
 
 #include "OdbcObject.h"
 
-struct Binding {
-	int			type;
-	int			cType;
-	int			sqlType;
-	void		*pointer;
-	void		*pointerOrg;
-	SQLINTEGER	bufferLength;
-//Suggested by R. Milharcic
-	SQLINTEGER	dataOffset;
-	bool		startedTransfer;		// Carlos G.A.
-	bool		data_at_exec;
-	SQLINTEGER	*indicatorPointer;
-	};
-    
 class OdbcConnection;
 class OdbcDesc;
 class DescRecord;
@@ -78,7 +60,6 @@ public:
 	RETCODE sqlParamData(SQLPOINTER *ptr);	// Carlos Guzmán Álvarez
 	RETCODE	sqlPutData (SQLPOINTER value, SQLINTEGER valueSize);
 	RETCODE sqlGetTypeInfo (int dataType);
-	Binding* allocBindings (int count, int oldCount, Binding *oldBindings);
 	RETCODE executeStatement();	//Changed return type 2002-06-04 RM 
 	char* getToken (const char** ptr, char *token);
 	bool isStoredProcedureEscape (const char *sqlString);
@@ -106,12 +87,10 @@ public:
 	void releaseParameters();
 	void releaseBindings();
 	RETCODE sqlFreeStmt (int option);
-	RETCODE setValue (Binding *binding, int column);
 	bool setValue (DescRecord *record, int column);
 
 	RETCODE sqlFetch();
-//	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
-	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr, Binding** _bindings = NULL, int* _numberBindings = NULL); //From RM
+	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
 	void setResultSet (ResultSet *results);
 	void releaseResultSet();
 	void releaseStatement();
@@ -128,12 +107,14 @@ public:
 	OdbcStatement(OdbcConnection *connect, int statementNumber);
 	virtual ~OdbcStatement();
 	bool isStaticCursor(){ return cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE; }
+	long getCurrentFetched(){ return countFetched; }
 
 	OdbcConnection		*connection;
 	OdbcDesc			*applicationRowDescriptor;
 	OdbcDesc			*applicationParamDescriptor;
 	OdbcDesc			*implementationRowDescriptor;
 	OdbcDesc			*implementationParamDescriptor;
+	OdbcDesc			*implementationGetDataDescriptor;
 	ResultSet			*resultSet;
 	PreparedStatement	*statement;
 	CallableStatement	*callableStatement;
@@ -142,12 +123,10 @@ public:
 	int					numberParameters;
 //Added 2002-06-04	RM
     int                 parameterNeedData;
- 	int					numberGetDataBindings;
- 	int					maxColumnGetDataBinding;
-	Binding				*getDataBindings;
 	bool				eof;
 	bool				cancel;
 	bool				fetched;
+	long				countFetched;
 	enFetchType			enFetch;
 	JString				cursorName;
 	bool				setPreCursorName;
@@ -159,6 +138,7 @@ public:
 	void				*paramBindOffset;
 	void				*paramsProcessedPtr;
 	int					paramsetSize;
+	SQLINTEGER			*sqldataOutOffsetPtr;
 	SQLINTEGER			*bindOffsetPtr;
 	SQLUSMALLINT		*rowStatusPtr;
 	SQLUINTEGER			enableAutoIPD;
@@ -176,4 +156,4 @@ public:
 	int					maxLength;
 };
 
-#endif // !defined(AFX_ODBCSTATEMENT_H__ED260D97_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ODBCSTATEMENT_H_)

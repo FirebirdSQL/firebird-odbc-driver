@@ -41,7 +41,7 @@
  *
  *	2002-06-04	Sqlda.cpp
  *				Contributed by Robert Milharcic
- *				Amended getDisplaySize() and getPrecision()
+ *				Amended getColumnDisplaySize() and getPrecision()
  *				to return char and varchar lengths more correctly.
  *
  */
@@ -291,6 +291,7 @@ public:
 
 Sqlda::Sqlda()
 {
+	memset(tempSqlda,0,sizeof(tempSqlda));
 	sqlda = (XSQLDA*) tempSqlda;
 	sqlda->version = SQLDA_VERSION1;
 	sqlda->sqln = DEFAULT_SQLDA_COUNT;
@@ -490,12 +491,12 @@ void Sqlda::getSqlData(int index, char *& ptData, short *& ptIndData)
 
 void Sqlda::setSqlData(int index, long ptData, long ptIndData)
 {
-	saveSqlData(index, ptData, ptIndData);
+	saveSqlData(index);
 	sqlda->sqlvar[index - 1].sqldata = (char*)ptData;
 	sqlda->sqlvar[index - 1].sqlind = (short*)ptIndData;
 }
 
-void Sqlda::saveSqlData(int index, long ptData, long ptIndData)
+void Sqlda::saveSqlData(int index)
 {
 	if ( !saveOrgAdressSqlData )
 	{
@@ -507,8 +508,8 @@ void Sqlda::saveSqlData(int index, long ptData, long ptIndData)
 	}
 	if ( !saveOrgAdressSqlData[index-1] )
 	{
-		saveOrgAdressSqlData[index-1] = ptData;
-		saveOrgAdressSqlInd[index-1] = ptIndData;
+		saveOrgAdressSqlData[index-1] = (long)sqlda->sqlvar[index - 1].sqldata;
+		saveOrgAdressSqlInd[index-1] = (long)sqlda->sqlvar[index - 1].sqlind;
 	}
 }
 
@@ -753,7 +754,7 @@ const char* Sqlda::getColumnTypeName(int index)
 	return getSqlTypeName (var->sqltype, var->sqlsubtype, var->sqlscale);
 }
 
-int Sqlda::getSubType(int index)
+short Sqlda::getSubType(int index)
 {
 	return sqlda->sqlvar[index - 1].sqlsubtype;
 }
@@ -1169,14 +1170,14 @@ int Sqlda::findColumn(const char * columnName)
 
 const char* Sqlda::getOwnerName(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	XSQLVAR *var = Var(index);
 
 	return var->ownname;
 }
 
 int Sqlda::isBlobOrArray(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	XSQLVAR *var = Var(index);
 	int type = var->sqltype & ~1;
 
 	switch (type)
@@ -1189,3 +1190,110 @@ int Sqlda::isBlobOrArray(int index)
 	return 0;
 }
 
+bool Sqlda::isNull(int index)
+{
+	XSQLVAR *var = Var(index);
+	return *(short*)var->sqlind == -1;
+}
+
+void Sqlda::setNull(int index)
+{
+	XSQLVAR *var = Var(index);
+	*(short*)var->sqlind = -1;
+}
+
+short Sqlda::getShort (int index)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_SHORT);
+	return *(short*)var->sqldata;
+}
+
+long Sqlda::getInt (int index)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_LONG);
+	return *(long*)var->sqldata;
+}
+
+char * Sqlda::getText (int index, int &len)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_TEXT);
+	if( *var->sqlind == -1 )
+	{
+		len = 0;
+		return "";
+	}
+	len = var->sqllen - 1;
+	return var->sqldata;
+}
+
+char * Sqlda::getVarying (int index, int &len)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_VARYING);
+	if( *var->sqlind == -1 )
+	{
+		len = 0;
+		return "";
+	}
+	len = *(short*)var->sqldata;
+	return var->sqldata+2;
+}
+
+////////////////////////////////////////////////////////
+
+void Sqlda::updateShort (int index, short value)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_SHORT);
+	*(short*)var->sqldata = value;
+	*var->sqlind = 0;
+}
+
+void Sqlda::updateInt (int index, int value)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_LONG);
+	*(int*)var->sqldata = value;
+	*var->sqlind = 0;
+}
+
+void Sqlda::updateText (int index, const char* dst)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_TEXT);
+    char * src = var->sqldata;
+	int n = var->sqllen;
+	*var->sqlind = 0;
+
+    if ( n < 1)
+       return;
+
+    while ( --n && *dst)
+        *src++ = *dst++;
+
+//	if( n )
+//		while ( n-- )
+//			*src++ = ' ';
+
+	*src = '\0';
+}
+
+void Sqlda::updateVarying (int index, const char* dst)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_VARYING);
+    char * src = var->sqldata + sizeof(short);
+	int n = var->sqllen - 2;
+	*var->sqlind = 0;
+
+    if ( n < 1)
+       return;
+
+    while ( --n && *dst)
+        *src++ = *dst++;
+
+	*(unsigned short*)var->sqldata = (unsigned short)(var->sqllen - n - 3);
+}

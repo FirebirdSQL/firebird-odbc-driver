@@ -155,9 +155,28 @@ const char* IscStatementMetaData::getCatalogName(int index)
 	return "";	
 }
 
-void IscStatementMetaData::getSqlData(int index, char *& ptData, short *& ptIndData)
+void IscStatementMetaData::getSqlData(int index, char *& ptData, short *& ptIndData, Blob *& ptDataBlob)
 {
 	sqlda->getSqlData(index, ptData, ptIndData);
+
+	int isRet = sqlda->isBlobOrArray(index);
+
+	if ( ptDataBlob )
+	{
+		ptDataBlob->release();
+		ptDataBlob = NULL;
+	}
+	if ( isRet )
+	{
+		if ( isRet == SQL_BLOB )
+		{
+			IscBlob * pt = new IscBlob;
+			pt->setType(sqlda->getSubType(index));
+			ptDataBlob = pt;
+		}
+		else // if ( isRet == SQL_ARRAY )
+			ptDataBlob = new IscArray;
+	}
 }
 
 void IscStatementMetaData::setSqlData(int index, long ptData, long ptIndData)
@@ -165,9 +184,9 @@ void IscStatementMetaData::setSqlData(int index, long ptData, long ptIndData)
 	sqlda->setSqlData(index, ptData, ptIndData);
 }
 
-void IscStatementMetaData::saveSqlData(int index, long ptData, long ptIndData)
+void IscStatementMetaData::saveSqlData(int index)
 {
-	sqlda->saveSqlData(index, ptData, ptIndData);
+	sqlda->saveSqlData(index);
 }
 
 void IscStatementMetaData::restoreSqlData(int index)

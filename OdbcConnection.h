@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ODBCCONNECTION_H__ED260D96_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_ODBCCONNECTION_H__ED260D96_1BC4_11D4_98DF_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_ODBCCONNECTION_H_)
+#define _ODBCCONNECTION_H_
 
 #include "OdbcDesc.h"
 #include "IscDbc/JString.h"	// Added by ClassView
@@ -118,4 +114,4 @@ public:
 };
 
 
-#endif // !defined(AFX_ODBCCONNECTION_H__ED260D96_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_ODBCCONNECTION_H_)

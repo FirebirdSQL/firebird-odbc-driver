@@ -23,12 +23,8 @@
 //////////////////////////////////////////////////////////////////////
 
 
-#if !defined(AFX_PARAMETER_H__BD560E65_B194_11D3_AB9F_0000C01D2301__INCLUDED_)
-#define AFX_PARAMETER_H__BD560E65_B194_11D3_AB9F_0000C01D2301__INCLUDED_
-
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#if !defined(_PARAMETER_H_)
+#define _PARAMETER_H_
 
 class Parameter
 {
@@ -43,4 +39,4 @@ public:
 	Parameter	*next;
 };
 
-#endif // !defined(AFX_PARAMETER_H__BD560E65_B194_11D3_AB9F_0000C01D2301__INCLUDED_)
+#endif // !defined(_PARAMETER_H_)

@@ -29,12 +29,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_ODBCDATETIME_H__9DD752F8_BEC1_41C9_B27B_1AA040E944E7__INCLUDED_)
-#define AFX_ODBCDATETIME_H__9DD752F8_BEC1_41C9_B27B_1AA040E944E7__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#if !defined(_ODBCDATETIME_H_)
+#define _ODBCDATETIME_H_
 
 #include <time.h>
 #include "IscDbc/Connection.h"
@@ -66,4 +62,4 @@ private:
 
 };
 
-#endif // !defined(AFX_ODBCDATETIME_H__9DD752F8_BEC1_41C9_B27B_1AA040E944E7__INCLUDED_)
+#endif // !defined(_ODBCDATETIME_H_)

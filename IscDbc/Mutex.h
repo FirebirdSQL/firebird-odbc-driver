@@ -22,12 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_MUTEX_H__F3F1D3A7_4083_11D4_98E8_0000C01D2301__INCLUDED_)
-#define AFX_MUTEX_H__F3F1D3A7_4083_11D4_98E8_0000C01D2301__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#if !defined(_MUTEX_H_INCLUDED_)
+#define _MUTEX_H_INCLUDED_
 
 #ifdef _PTHREADS
 #include <pthread.h>
@@ -51,4 +47,4 @@ public:
 
 };
 
-#endif // !defined(AFX_MUTEX_H__F3F1D3A7_4083_11D4_98E8_0000C01D2301__INCLUDED_)
+#endif // !defined(_MUTEX_H_INCLUDED_)

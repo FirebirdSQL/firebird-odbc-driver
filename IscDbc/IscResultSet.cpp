@@ -41,7 +41,6 @@
 #include "SQLError.h"
 #include "Value.h"
 
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -68,6 +67,7 @@ void IscResultSet::initResultSet(IscStatement *iscStatement)
 	conversions = NULL;
 	sqlda		= NULL;
 	numberColumns = 0;
+	sqldataOffsetPtr = 0;
 
 	if (statement)
 	{
@@ -86,6 +86,29 @@ void IscResultSet::initResultSet(IscStatement *iscStatement)
 // Is used only for cursors OdbcJdbc
 // It is forbidden to use in IscDbc
 bool IscResultSet::readForwardCursor()
+{
+	if (!statement)
+		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
+
+	ISC_STATUS statusVector [20];
+
+	int dialect = statement->connection->getDatabaseDialect ();
+	int ret = statement->connection->GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
+
+	if (ret)
+	{
+		if (ret == 100)
+		{
+			close();
+			return false;
+		}
+		THROW_ISC_EXCEPTION (statement->connection, statusVector);
+	}
+
+	return true;
+}
+
+bool IscResultSet::nextSqlDa()
 {
 	if (!statement)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
@@ -186,88 +209,24 @@ int IscResultSet::getCountRowsStaticCursor()
 	return sqlda->getCountRowsStaticCursor();
 }
 
-bool IscResultSet::getDataFromStaticCursor (int column, int cType, void * pointer, int bufferLength, long * indicatorPointer)
+bool IscResultSet::getDataFromStaticCursor (int column/*, Blob * pointerBlobData*/)
 {
 	if ( !(activePosRowInSet >= 0 && activePosRowInSet < sqlda->getCountRowsStaticCursor()) )
 		return false;
 
-	char * sqldata;
-	short * sqlind;
-	XSQLVAR *var = sqlda->sqlda->sqlvar + column - 1;
-    Value *value = values.values + column - 1;
-
 	sqlda->setCurrentRowInBufferStaticCursor(activePosRowInSet);
-	sqlda->getAdressFieldFromCurrentRowInBufferStaticCursor(column,sqldata,sqlind);
-
-	if ( *sqlind == -1 )
-		value->type = Null;
-	else if ( (var->sqltype & ~1) == SQL_ARRAY )
-	{
-		SIscArrayData * ptArr = (SIscArrayData *)*(long*)sqldata;
-		IscArray iscArr(ptArr);
-		iscArr.fetchArrayToString();
-		value->setString(iscArr.getString(),false);
-	}
-	else if ( (var->sqltype & ~1) == SQL_BLOB )
-	{
-		IscBlob * ptBlob = (IscBlob *)*(long*)sqldata;
-		value->setString(ptBlob->getString(),false);
-	}
-	else
-	{
-		XSQLVAR Var = *var;
-		Var.sqlind = sqlind;
-		Var.sqldata = sqldata;
-		statement->setValue (value, &Var);
-	}
-
 	return true;
-}
-
-const char* IscResultSet::getString(int id)
-{
-	if (id < 1 || id > getColumnCount())
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-
-	/*if (conversions [id - 1])
-		return conversions [id - 1];*/
-	return getValue (id)->getString(conversions + id - 1);
-}
-
-
-const char* IscResultSet::getString(const char * columnName)
-{
-	return getString (findColumn (columnName));
-}
-
-long IscResultSet::getInt(int id)
-{
-	return getValue (id)->getLong();
-}
-
-long IscResultSet::getInt(const char * columnName)
-{
-	return getValue (columnName)->getLong();
 }
 
 Value* IscResultSet::getValue(int index)
 {
-	if (index < 1 || index > getColumnCount())
+	if (index < 1 || index > values.count)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
 
 	Value *value = values.values + index - 1;
 	valueWasNull = value->type == Null;
 
 	return value;
-}
-
-bool IscResultSet::isNull(int index)
-{
-	if (index < 1 || index > getColumnCount())
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-
-	Value *value = values.values + index - 1;
-	return value->type == Null;
 }
 
 Value* IscResultSet::getValue(const char * columnName)
@@ -285,22 +244,6 @@ void IscResultSet::close()
 		statement->release();
 		statement = NULL;
 		}
-}
-
-Blob* IscResultSet::getBlob(int index)
-{
-	Blob *blob = getValue (index)->getBlob();
-	blobs.append (blob);
-
-	return blob;
-}
-
-Blob* IscResultSet::getBlob(const char * columnName)
-{
-	Blob *blob = getValue (columnName)->getBlob();
-	blobs.append (blob);
-
-	return blob;
 }
 
 void IscResultSet::deleteBlobs()
@@ -362,19 +305,10 @@ int IscResultSet::findColumn(const char * columnName)
 	if (n >= 0)
 		return n + 1;
 
-	/***
-	for (int n = 0; n < numberColumns; ++n)
-		if (!strcasecmp (columnNames [n], columnName))
-			return n + 1;
-	***/
-
 	throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column name %s for result set",
 							columnName);
-
 	return -1;
 }
-
-
 
 bool IscResultSet::wasNull()
 {
@@ -386,95 +320,37 @@ int IscResultSet::getColumnCount()
 	return numberColumns;
 }
 
-void IscResultSet::allocConversions()
-{
-	conversions = new char* [numberColumns];
-	memset (conversions, 0, sizeof (char*) * numberColumns);
-}
-
-void IscResultSet::setNull(int index)
-{
-	if (index < 1 || index > getColumnCount())
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	values.values [index - 1].setNull();
-}
-
-void IscResultSet::setValue(int index, const char * value)
-{
-	if (index < 1 || index > getColumnCount())
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	values.values [index - 1].setString (value, true);
-}
-
-void IscResultSet::setValue(int index, long value)
-{
-	if (index < 1 || index > getColumnCount())
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	values.values [index - 1].setValue (value, true);
-}
-
-short IscResultSet::getShort(int id)
-{
-	return getValue (id)->getShort();
-}
-
-short IscResultSet::getShort(const char * columnName)
-{
-	return getValue (columnName)->getShort();
-}
-
-QUAD IscResultSet::getQuad(int id)
-{
-	return getValue (id)->getQuad();
-}
-
-QUAD IscResultSet::getQuad(const char * columnName)
-{
-	return getValue (columnName)->getQuad();
-}
-
-double IscResultSet::getDouble(int id)
-{
-	return getValue (id)->getDouble();
-}
-
-double IscResultSet::getDouble(const char * columnName)
-{
-	return getValue (columnName)->getDouble();
-}
-
-char IscResultSet::getByte(int id)
-{
-	return getValue (id)->getByte();
-}
-
-char IscResultSet::getByte(const char * columnName)
-{
-	return getValue (columnName)->getByte();
-}
-
-float IscResultSet::getFloat(int id)
-{
-	return getValue (id)->getFloat();
-}
-
-float IscResultSet::getFloat(const char * columnName)
-{
-	return getValue (columnName)->getFloat();
-}
-
 int IscResultSet::getColumnType(int index, int &realSqlType)
+{
+	return sqlda->getColumnType (index, realSqlType);
+}
+
+int IscResultSet::getPrecision(int index)
 {
 	if (index < 1 || index > sqlda->getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->getColumnType (index, realSqlType);
+	return sqlda->getPrecision (index);
+}
+
+int IscResultSet::getScale(int index)
+{
+	if (index < 1 || index > sqlda->getColumnCount())
+		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
+	return -sqlda->getScale (index);
+}
+
+bool IscResultSet::isNullable(int index)
+{
+	if (index < 1 || index > sqlda->getColumnCount())
+		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
+	return sqlda->isNullable (index);
 }
 
 int IscResultSet::getColumnDisplaySize(int index)
 {
 	if (index < 1 || index > sqlda->getColumnCount())
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->getColumnDisplaySize (index);
+	return sqlda->getColumnDisplaySize(index);
 }
 
 const char* IscResultSet::getColumnLabel(int index)
@@ -491,19 +367,17 @@ const char* IscResultSet::getSqlTypeName(int index)
 
 const char* IscResultSet::getColumnName(int index)
 {
-	if (index < 1 || index > sqlda->getColumnCount())
-		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->getColumnName (index);
+	return sqlda->getColumnName(index);
 }
 
 const char* IscResultSet::getTableName(int index)
 {
-	return sqlda->getTableName (index);
+	return sqlda->getTableName(index);
 }
 
 const char* IscResultSet::getColumnTypeName(int index)
 {
-	return sqlda->getColumnTypeName (index);
+	return sqlda->getColumnTypeName(index);
 }
 
 bool IscResultSet::isSigned(int index)
@@ -566,60 +440,91 @@ const char* IscResultSet::getCatalogName(int index)
 	return "";	
 }
 
-void IscResultSet::getSqlData(int index, char *& ptData, short *& ptIndData)
+void IscResultSet::getSqlData(int index, char *& ptData, short *& ptIndData, Blob *& ptDataBlob)
 {
-	if ( !sqlda )
-		return;
 	sqlda->getSqlData(index, ptData, ptIndData);
+
+	int isRet = sqlda->isBlobOrArray(index);
+
+	if ( ptDataBlob )
+	{
+		delete (BinaryBlob *)ptDataBlob;
+		ptDataBlob = NULL;
+	}
+	if ( isRet )
+	{
+		if ( isRet == SQL_BLOB )
+		{
+			IscBlob * pt = new IscBlob;
+			pt->setType(sqlda->getSubType(index));
+			ptDataBlob = pt;
+		}
+		else // if ( isRet == SQL_ARRAY )
+			ptDataBlob = new IscArray;
+	}
 }
 
 void IscResultSet::setSqlData(int index, long ptData, long ptIndData)
 {
-	if ( !sqlda )
-		return;
 	sqlda->setSqlData(index, ptData, ptIndData);
 }
 
-void IscResultSet::saveSqlData(int index, long ptData, long ptIndData)
+void IscResultSet::saveSqlData(int index)
 {
-
+	sqlda->saveSqlData(index);
 }
 
 void IscResultSet::restoreSqlData(int index)
 {
-
+	sqlda->restoreSqlData(index);
 }
 ///////////////////////////////////////
-
-int IscResultSet::getPrecision(int index)
+void IscResultSet::allocConversions()
 {
-	if (index < 1 || index > sqlda->getColumnCount())
+	conversions = new char* [numberColumns];
+	memset (conversions, 0, sizeof (char*) * numberColumns);
+}
+
+void IscResultSet::setValue(int index, const char * value)
+{
+	if (index < 1 || index > values.count)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->getPrecision (index);
+	values.values [index - 1].setString (value, true);
 }
 
-int IscResultSet::getScale(int index)
+void IscResultSet::setValue(int index, long value)
 {
-	if (index < 1 || index > sqlda->getColumnCount())
+	if (index < 1 || index > values.count)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return -sqlda->getScale (index);
+	values.values [index - 1].setValue (value, true);
 }
 
-bool IscResultSet::isNullable(int index)
+void IscResultSet::setNull(int index)
 {
-	if (index < 1 || index > sqlda->getColumnCount())
+	if (index < 1 || index > values.count)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
-	return sqlda->isNullable (index);
+	values.values [index - 1].setNull();
 }
 
-DateTime IscResultSet::getDate(int id)
+const char* IscResultSet::getString(int id)
 {
-	return getValue (id)->getDate();
+	return getValue (id)->getString(conversions + id - 1);
 }
 
-DateTime IscResultSet::getDate(const char * columnName)
+
+const char* IscResultSet::getString(const char * columnName)
 {
-	return getValue (columnName)->getDate();
+	return getString (findColumn (columnName));
+}
+
+TimeStamp IscResultSet::getTimestamp(int id)
+{
+	return getValue (id)->getTimestamp();
+}
+
+TimeStamp IscResultSet::getTimestamp(const char * columnName)
+{
+	return getValue (columnName)->getTimestamp();
 }
 
 SqlTime IscResultSet::getTime(int id)
@@ -632,14 +537,90 @@ SqlTime IscResultSet::getTime(const char * columnName)
 	return getValue (columnName)->getTime();
 }
 
-TimeStamp IscResultSet::getTimestamp(int id)
+DateTime IscResultSet::getDate(int id)
 {
-	return getValue (id)->getTimestamp();
+	return getValue (id)->getDate();
 }
 
-TimeStamp IscResultSet::getTimestamp(const char * columnName)
+DateTime IscResultSet::getDate(const char * columnName)
 {
-	return getValue (columnName)->getTimestamp();
+	return getValue (columnName)->getDate();
+}
+
+long IscResultSet::getInt(int id)
+{
+	return getValue (id)->getLong();
+}
+
+long IscResultSet::getInt(const char * columnName)
+{
+	return getValue (columnName)->getLong();
+}
+
+float IscResultSet::getFloat(int id)
+{
+	return getValue (id)->getFloat();
+}
+
+float IscResultSet::getFloat(const char * columnName)
+{
+	return getValue (columnName)->getFloat();
+}
+
+char IscResultSet::getByte(int id)
+{
+	return getValue (id)->getByte();
+}
+
+char IscResultSet::getByte(const char * columnName)
+{
+	return getValue (columnName)->getByte();
+}
+
+Blob* IscResultSet::getBlob(int index)
+{
+	Blob *blob = getValue (index)->getBlob();
+	blobs.append (blob);
+
+	return blob;
+}
+
+Blob* IscResultSet::getBlob(const char * columnName)
+{
+	Blob *blob = getValue (columnName)->getBlob();
+	blobs.append (blob);
+
+	return blob;
+}
+
+double IscResultSet::getDouble(int id)
+{
+	return getValue (id)->getDouble();
+}
+
+double IscResultSet::getDouble(const char * columnName)
+{
+	return getValue (columnName)->getDouble();
+}
+
+QUAD IscResultSet::getQuad(int id)
+{
+	return getValue (id)->getQuad();
+}
+
+QUAD IscResultSet::getQuad(const char * columnName)
+{
+	return getValue (columnName)->getQuad();
+}
+
+short IscResultSet::getShort(int id)
+{
+	return getValue (id)->getShort();
+}
+
+short IscResultSet::getShort(const char * columnName)
+{
+	return getValue (columnName)->getShort();
 }
 
 int IscResultSet::objectVersion()
@@ -655,6 +636,11 @@ void IscResultSet::setPosRowInSet(int posRow)
 int IscResultSet::getPosRowInSet()
 {
 	return activePosRowInSet;
+}	
+
+long* IscResultSet::getSqlDataOffsetPtr()
+{
+	return &sqldataOffsetPtr;
 }	
 
 bool IscResultSet::isBeforeFirst()
@@ -783,12 +769,12 @@ void IscResultSet::updateByte (int columnIndex, char value)
 
 void IscResultSet::updateShort (int columnIndex, short value)
 {
-	NOT_YET_IMPLEMENTED;
+	sqlda->updateShort (columnIndex, value);
 }
 
 void IscResultSet::updateInt (int columnIndex, int value)
 {
-	NOT_YET_IMPLEMENTED;
+	sqlda->updateInt (columnIndex, value);
 }
 
 void IscResultSet::updateLong (int columnIndex, QUAD value)
@@ -806,9 +792,14 @@ void IscResultSet::updateDouble (int columnIndex, double value)
 	NOT_YET_IMPLEMENTED;
 }
 
+void IscResultSet::updateText (int columnIndex, const char* value)
+{
+	sqlda->updateText (columnIndex, value);
+}
+
 void IscResultSet::updateString (int columnIndex, const char* value)
 {
-	NOT_YET_IMPLEMENTED;
+	sqlda->updateVarying (columnIndex, value);
 }
 
 void IscResultSet::updateBytes (int columnIndex, int length, const void *bytes)

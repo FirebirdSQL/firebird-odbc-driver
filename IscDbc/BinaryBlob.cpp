@@ -91,10 +91,10 @@ void BinaryBlob::addRef()
 int BinaryBlob::release()
 {
 	if (--useCount == 0)
-		{
+	{
 		delete this;
 		return 0;
-		}
+	}
 
 	return useCount;
 }
@@ -215,4 +215,14 @@ void BinaryBlob::populate()
 void BinaryBlob::putSegment(Blob * blob)
 {
 	Stream::putSegment (blob);
+}
+
+void BinaryBlob::attach(char * pointBlob, bool fetched, bool clear)
+{
+
+}
+
+void BinaryBlob::bind(Connection *connect, char * sqldata)
+{
+
 }

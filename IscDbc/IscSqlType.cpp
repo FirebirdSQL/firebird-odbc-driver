@@ -35,7 +35,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-//#include <windows.h>
 #include "IscDbc.h"
 #include "IscSqlType.h"
 
@@ -74,7 +73,7 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 			type = JDBC_SMALLINT;
 			typeName = "SMALLINT";
 			length = MAX_SMALLINT_LENGTH;
-			bufferLength = length + 1; 
+			bufferLength = sizeof(short);
 			}
 			break;
 
@@ -83,7 +82,7 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 			type = JDBC_INTEGER;
 			typeName = "INTEGER";
 			length = MAX_INT_LENGTH;
-			bufferLength = length + 1;
+			bufferLength = sizeof(long);
 			}
 			break;
 
@@ -93,15 +92,16 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 			type = JDBC_BIGINT;
 			typeName = "BIGINT";
 			length = MAX_QUAD_LENGTH;
+			bufferLength = sizeof(QUAD);
 			}
 			break;
 
 		case blr_float:
 			{
-			type = JDBC_REAL;
+			type = JDBC_FLOAT;
 			typeName = "REAL";
 			length = MAX_FLOAT_LENGTH;
-			bufferLength = length;
+			bufferLength = sizeof(float);
 			}
 			break;
 
@@ -111,7 +111,7 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 			type = JDBC_DOUBLE;
 			typeName = "DOUBLE PRECISION";
 			length = MAX_DOUBLE_LENGTH;
-			bufferLength = length;
+			bufferLength = sizeof(double);
 			}
 			break;
 
@@ -166,7 +166,7 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 			type = JDBC_SQL_TIMESTAMP;
 			typeName = "TIMESTAMP";
 			length = MAX_TIMESTAMP_LENGTH;
-			bufferLength = 16; // sizeof(tagTIMESTAMP_STRUCT)
+			bufferLength = 16; // sizeof(tagTIMESTAMP_STRUCT); 
 			}
 			break;
 

@@ -484,39 +484,63 @@ bool IscDatabaseMetaData::supportsConvert()
 
 bool IscDatabaseMetaData::supportsConvert(int fromType, int toType)
 	{
-	if ( fromType == JDBC_NUMERIC )
-		if ( toType == JDBC_CHAR || toType == JDBC_VARCHAR || toType == JDBC_DATE ||
-			 toType == JDBC_TIME || toType == JDBC_TIMESTAMP )
+	switch( fromType )
+	{
+	case JDBC_NUMERIC:
+		switch( toType )
+		{
+		case JDBC_CHAR:
+		case JDBC_VARCHAR:
+		case JDBC_DATE:
+		case JDBC_TIME:
+		case JDBC_TIMESTAMP:
 			return true;
-		else
-			return false;
+		}
+		return false;
 
-	if ( fromType == JDBC_CHAR || fromType == JDBC_VARCHAR )
-		if ( toType == JDBC_NUMERIC || toType == JDBC_DATE ||
-			toType == JDBC_TIME || toType == JDBC_TIMESTAMP )
+	case JDBC_CHAR:
+	case JDBC_VARCHAR:
+		switch( toType )
+		{
+		case JDBC_NUMERIC:
+		case JDBC_DATE:
+		case JDBC_TIME:
+		case JDBC_TIMESTAMP:
 			return true;
-		else
-			return false;
+		}
+		return false;
 
-	if ( fromType == JDBC_DATE )
-		if ( toType == JDBC_CHAR || toType == JDBC_VARCHAR || toType == JDBC_TIMESTAMP )
+	case JDBC_DATE:
+		switch( toType )
+		{
+		case JDBC_CHAR:
+		case JDBC_VARCHAR:
+		case JDBC_TIMESTAMP:
 			return true;
-		else
-			return false;
+		}
+		return false;
 
-	if ( fromType == JDBC_TIME )
-		if ( toType == JDBC_CHAR || toType == JDBC_VARCHAR || toType == JDBC_TIMESTAMP )
+	case JDBC_TIME:
+		switch( toType )
+		{
+		case JDBC_CHAR:
+		case JDBC_VARCHAR:
+		case JDBC_TIMESTAMP:
 			return true;
-		else
-			return false;
+		}
+		return false;
 
-	if ( fromType == JDBC_TIMESTAMP )
-		if ( toType == JDBC_CHAR || toType == JDBC_VARCHAR || toType == JDBC_DATE || 
-			 toType == JDBC_TIME )
+	case JDBC_TIMESTAMP:
+		switch( toType )
+		{
+		case JDBC_CHAR:
+		case JDBC_VARCHAR:
+		case JDBC_DATE:
+		case JDBC_TIME:
 			return true;
-		else
-			return false;
-
+		}
+		return false;
+	}
 	return false;
 	}
 
@@ -1086,6 +1110,11 @@ ResultSet* IscDatabaseMetaData::getCrossReference(
 ResultSet* IscDatabaseMetaData::getTypeInfo(int dataType)
 	{
 	return new TypesResultSet(dataType);
+	}
+
+StatementMetaData* IscDatabaseMetaData::getMetaDataTypeInfo(ResultSet* setTypeInfo)
+	{
+	return (StatementMetaData*)(TypesResultSet*)setTypeInfo;
 	}
 
 bool IscDatabaseMetaData::supportsResultSetConcurrency(int type, int concurrency)

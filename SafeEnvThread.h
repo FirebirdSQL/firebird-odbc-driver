@@ -1,10 +1,6 @@
 #if !defined(_SafeEnvThread__INCLUDED_)
 #define _SafeEnvThread__INCLUDED_
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
-
 #if(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_ENV || DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_CONNECT)
 
 #ifdef _PTHREADS

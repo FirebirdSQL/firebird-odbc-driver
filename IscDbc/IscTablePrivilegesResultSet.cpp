@@ -43,13 +43,10 @@
 IscTablePrivilegesResultSet::IscTablePrivilegesResultSet(IscDatabaseMetaData *metaData)
         : IscMetaDataResultSet(metaData)
 {
-    resultSet = NULL;
 }
 
 IscTablePrivilegesResultSet::~IscTablePrivilegesResultSet()
 {
-    if (resultSet)
-        resultSet->release();
 }
 
 void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
@@ -85,82 +82,48 @@ void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const
 
 bool IscTablePrivilegesResultSet::next()
 {
-    if (!resultSet->next())
+    if (!IscResultSet::next())
         return false;
 
 	trimBlanks(3);
 	trimBlanks(4);
 	trimBlanks(5);
 
-	const char *grantor = resultSet->getString(4);
-	const char *grantee = resultSet->getString(5);
+	int len;
+	const char *grantor = sqlda->getText(4, len);
+	const char *grantee = sqlda->getText(5, len);
 	if(!strcmp(grantor,grantee))
-		resultSet->setValue( 4, "_SYSTEM" );
+		sqlda->updateText( 4, "_SYSTEM" );
 
-    const char *privilege = resultSet->getString(6);
+	const char *privilege = sqlda->getText(6, len);
 
     switch ( *privilege )
     {
         case 'S':
-            resultSet->setValue( 6, "SELECT" );
+            sqlda->updateText( 6, "SELECT" );
             break;
 
         case 'I':
-            resultSet->setValue( 6, "INSERT" );
+            sqlda->updateText( 6, "INSERT" );
             break;
 
         case 'U':
-            resultSet->setValue( 6, "UPDATE" );
+            sqlda->updateText( 6, "UPDATE" );
             break;
 
         case 'D':
-            resultSet->setValue( 6, "DELETE" );
+            sqlda->updateText( 6, "DELETE" );
             break;
 
         case 'R':
-            resultSet->setValue( 6, "REFERENCES" );
+            sqlda->updateText( 6, "REFERENCES" );
             break;
     }
 
-	int isGrantable = resultSet->getInt(8);
-	if ( isGrantable )
-		resultSet->setValue( 7, "YES" );
-	else
-		resultSet->setValue( 7, "NO" );
+	int isGrantable = sqlda->getShort(8);
+
+	if ( !isGrantable )
+		sqlda->updateText( 7, "NO" );
 
     return true;
 }
-
-int IscTablePrivilegesResultSet::getColumnDisplaySize(int index)
-{
-    switch (index)
-        {
-        case TABLE_TYPE:                // change from blob to text
-            return 128;
-        }
-
-    return Parent::getColumnDisplaySize (index);
-}
-
-int IscTablePrivilegesResultSet::getColumnType(int index, int &realSqlType)
-{
-    switch (index)
-        {
-        case TABLE_TYPE:                // change from blob to text
-            return JDBC_VARCHAR;
-        }
-
-    return Parent::getColumnType (index, realSqlType);
-}
-
-int IscTablePrivilegesResultSet::getColumnPrecision(int index)
-{
-    switch (index)
-        {
-        case TABLE_TYPE:                // change from blob to text
-            return 128;
-        }
-
-    return Parent::getPrecision (index);
-}
-
