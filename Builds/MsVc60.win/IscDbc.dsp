@@ -126,6 +126,10 @@ SOURCE=..\..\IscDbc\DateTime.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\EnvShare.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\IscArray.h
 # End Source File
 # Begin Source File
@@ -323,6 +327,10 @@ SOURCE=..\..\IscDbc\Blob.cpp
 # Begin Source File
 
 SOURCE=..\..\IscDbc\DateTime.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\EnvShare.cpp
 # End Source File
 # Begin Source File
 
