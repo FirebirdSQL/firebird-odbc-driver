@@ -1166,7 +1166,7 @@ SQLRETURN OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTE
 	if ( bOk == false )
 		return sqlReturn (SQL_ERROR, "S1C00", "Driver not capable");
 
-	sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)(int)InfoType, 0);
+	sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)crowKeyset, 0);
 	sqlSetStmtAttr(SQL_ATTR_CONCURRENCY, (SQLPOINTER)(int)fConcurrency, 0);
 
 	if ( crowKeyset > 0 )
