@@ -69,7 +69,7 @@ public:
 
 	Stream();
 	Stream (int minSegmentSize);
-	~Stream();
+	virtual ~Stream();
 
 	int		totalLength;
 	int		minSegment;
