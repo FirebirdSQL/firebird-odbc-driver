@@ -33,7 +33,7 @@
 #include "IscBlob.h"
 
 #define TABLE_TYPE	4
-
+#define REMARKS		5
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -53,21 +53,27 @@ IscTablesResultSet::~IscTablesResultSet()
 
 void IscTablesResultSet::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char * * types)
 {
-	JString sql = "select NULL as table_cat,"
-				          "NULL as table_schem,"
-						  "rdb$relation_name as table_name,"
-						  "rdb$view_blr as table_type,"
-						  "rdb$description as remarks,"
-						  "rdb$system_flag "
-						  "from rdb$relations\n";
+	JString sql = "select NULL as table_cat,\n"
+				          "NULL as table_schem,\n"
+						  "tbl.rdb$relation_name as table_name,\n"
+						  "tbl.rdb$view_blr as table_type,\n"
+						  "tbl.rdb$description as remarks,\n"
+						  "tbl.rdb$system_flag\n"
+						  "from rdb$relations tbl\n";
 
 	const char *sep = " where (";
 
-	if (tableNamePattern)
-		{
-		sql += expandPattern (" where rdb$relation_name %s '%s'\n", tableNamePattern);
+	if (tableNamePattern && *tableNamePattern)
+	{
+		sql += expandPattern (" where ","tbl.rdb$relation_name", tableNamePattern);
 		sep = " and (";
-		}
+	}
+
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		sql += metaData->existsAccess(sep, "tbl", 0, ")\n");
+		sep = " and (";
+	}
 
 	JString adjunct;
 		
@@ -137,7 +143,7 @@ int IscTablesResultSet::getColumnDisplaySize(int index)
 	return Parent::getColumnDisplaySize (index);
 }
 
-int IscTablesResultSet::getColumnType(int index)
+int IscTablesResultSet::getColumnType(int index, int &realSqlType)
 {
 	switch (index)
 		{
@@ -145,16 +151,21 @@ int IscTablesResultSet::getColumnType(int index)
 			return JDBC_VARCHAR;
 		}
 
-	return Parent::getColumnType (index);
+	return Parent::getColumnType (index, realSqlType);
 }
 
-int IscTablesResultSet::getColumnPrecision(int index)
+int IscTablesResultSet::getPrecision(int index)
 {
 	switch (index)
 		{
 		case TABLE_TYPE:				// change from blob to text
-			return 128;
-		}
+			return 12;
+//			return 128;
+		case REMARKS:
+			return 254;
+		default:
+			return 31;
 
-	return Parent::getPrecision (index);
+		}
+//	return Parent::getPrecision (index);
 }

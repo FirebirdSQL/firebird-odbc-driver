@@ -37,6 +37,8 @@
 #include "IscStatement.h"
 #include "Values.h"
 
+#define DEFAULT_BLOB_BUFFER_LENGTH 16384
+
 class IscConnection;
 class IscStatementMetaData;
 //Added by RM
@@ -47,11 +49,12 @@ class IscPreparedStatement : public IscStatement, public PreparedStatement
 {
 public:
 	virtual int objectVersion();
-	virtual void setClob (int index, Clob *value);
-	virtual StatementMetaData* getStatementMetaData();
+	virtual StatementMetaData* getStatementMetaDataIPD();
+	virtual StatementMetaData* getStatementMetaDataIRD();
 	virtual ~IscPreparedStatement();
 	virtual bool		execute (const char *sqlString);
 	virtual ResultSet*	executeQuery (const char *sqlString);
+	virtual void		clearResults();
 	virtual int			getUpdateCount();
 	virtual bool		getMoreResults();
 	virtual void		setCursorName (const char *name);
@@ -65,19 +68,16 @@ public:
 	virtual void		setNull (int index, int type);
 	virtual void		setString(int index, const char * string);
     virtual void        setString(int index, const char * string, int length);
+	virtual void        convStringData(int index);
 	virtual void		setByte (int index, char value);
 //Added by RM
     virtual void        beginBlobDataTransfer(int index);
     virtual void        putBlobSegmentData (int length, const void *bytes);
     virtual void        endBlobDataTransfer();	
 
-    virtual void        beginClobDataTransfer(int index);
-    virtual void        putClobSegmentData (int length, const void *bytes);
-    virtual void        endClobDataTransfer();
-
 	virtual void		setShort (int index, short value);
 	virtual void		setInt (int index, long value);
-	virtual void		setLong (int index, QUAD value);
+	virtual void		setQuad (int index, QUAD value);
 	virtual void		setFloat (int index, float value);
 	virtual void		setDouble (int index, double value);
 	virtual void		setDate (int index, DateTime value);
@@ -85,6 +85,7 @@ public:
 	virtual void		setTime (int index, SqlTime value);
 	virtual void		setBlob (int index, Blob *value);
 	virtual void		setBytes (int index, int length, const void *bytes);
+	virtual void		setArray (int index, Blob *value);
 
 	virtual int			executeUpdate();
 	virtual bool		execute();
@@ -97,9 +98,16 @@ public:
 	Value* getParameter (int index);
 
 	Values				parameters;
-	IscStatementMetaData	*statementMetaData;
+	IscStatementMetaData	*statementMetaDataIPD;
+	IscStatementMetaData	*statementMetaDataIRD;
     BinaryBlob              *segmentBlob;
 	AsciiBlob				*segmentClob;
+	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
+	{ return getPlanStatement(statementHandle,value,bufferLength,lengthPtr); }  
+	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr)
+	{ return getTypeStatement(statementHandle,value,bufferLength,lengthPtr); }  
+	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr)
+	{ return getInfoCountRecordsStatement(statementHandle,value,bufferLength,lengthPtr); }  
 };
 
 #endif // !defined(AFX_ISCPREPAREDSTATEMENT_H__C19738B9_1C87_11D4_98DF_0000C01D2301__INCLUDED_)

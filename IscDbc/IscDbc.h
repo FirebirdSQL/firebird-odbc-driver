@@ -30,6 +30,7 @@
 
 #include <ibase.h>
 #include "JString.h"
+#include "LoadFbClientDll.h"
 
 #ifndef NULL
 #define NULL		0
@@ -39,9 +40,21 @@
 #define NOT_YET_IMPLEMENTED	throw SQLEXCEPTION (FEATURE_NOT_YET_IMPLEMENTED, "not yet implemented")
 #define NOT_SUPPORTED(type,rellen,rel,collen,col) throw SQLEXCEPTION (UNSUPPORTED_DATATYPE, "datatype is not supported in ODBC: %s column %*s.%*s", type,rellen,rel,collen,col)
 #define THROW_ISC_EXCEPTION(statusVector)			throw SQLEXCEPTION (statusVector [1], IscConnection::getIscStatusText (statusVector))
-#define ROUNDUP(a,b)		((a + b - 1) / b * b)
-#define MIN(a,b)			(((a) < (b)) ? (a) : (b))
-#define MAX(a,b)			(((a) > (b)) ? (a) : (b))
+#define OFFSET(type,fld)	(int)&(((type)0)->fld)
+#define MAX(a,b)			((a > b) ? a : b)
+#define MIN(a,b)			((a < b) ? a : b)
+#define ABS(n)				(((n) >= 0) ? (n) : -(n))
+#define MASK(n)				(1 << (n))
+#define ISLOWER(c)			((c) >= 'a' && (c) <= 'z')
+#define ISUPPER(c)			((c) >= 'A' && (c) <= 'Z')
+#define ISDIGIT(c)			((c) >= '0' && (c) <= '9')
+#define UPPER(c)			((ISLOWER (c)) ? (c) - 'a' + 'A' : (c))
+#define ROUNDUP(n,b)		(((n) + (b) - 1) & ~((b) - 1))
+
+#define FB_COMPILER_MESSAGE_STR(x) #x
+#define FB_COMPILER_MESSAGE_STR2(x)   FB_COMPILER_MESSAGE_STR(x)
+#define FB_COMPILER_MESSAGE(desc) message(__FILE__ "("	\
+									FB_COMPILER_MESSAGE_STR2(__LINE__) "):" desc)
 
 #ifdef _WIN32
 
@@ -60,40 +73,8 @@ typedef unsigned long	ULONG;
 typedef __int64			QUAD;
 typedef unsigned __int64			UQUAD;
 
-/*
- *		Sql types (actually from java.sql.types)
- */
-
-#define JDBC_NULL		   0 
-
-#define JDBC_BIT 		  -7
-#define JDBC_TINYINT 	  -6
-#define JDBC_SMALLINT	   5
-#define JDBC_INTEGER 	   4
-#define JDBC_BIGINT 	  -5
-
-#define JDBC_FLOAT 		   6
-#define JDBC_REAL 		   7
-#define JDBC_DOUBLE 	   8
-
-#define JDBC_NUMERIC 	   2
-#define JDBC_DECIMAL	   3
-
-#define JDBC_CHAR		   1
-#define JDBC_VARCHAR 	  12
-#define JDBC_LONGVARCHAR  -1
-
-#define JDBC_SQL_DATE 	  9
-#define JDBC_SQL_TIME 	  10
-#define JDBC_SQL_TIMESTAMP	  11
-
-#define JDBC_DATE 		  91
-#define JDBC_TIME 		  92
-#define JDBC_TIMESTAMP 	  93
-
-#define JDBC_BINARY		  -2
-#define JDBC_VARBINARY 	  -3
-#define JDBC_LONGVARBINARY 	  -4
+#include "JavaType.h"
+#include "Connection.h"
 
 #define MAX_ARRAY_LENGTH		100000000
 #define MAX_BLOB_LENGTH			2147483647
@@ -107,7 +88,20 @@ typedef unsigned __int64			UQUAD;
 #define MAX_DOUBLE_LENGTH		53
 #define MAX_DATE_LENGTH			10
 #define MAX_TIME_LENGTH			8
-#define MAX_TIMESTAMP_LENGTH	19
+#define MAX_TIMESTAMP_LENGTH	24
 #define MAX_QUAD_LENGTH			19
+
+int getTypeStatement(isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);
+int getInfoCountRecordsStatement(isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);
+int getPlanStatement(isc_stmt_handle statementHandle,const void * value, int bufferLength,long *lengthPtr);
+int getPageDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr);
+int getWalDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr);
+int strBuildStatInformations(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr);
+void getStatInformations(isc_db_handle Db,char bVanCall);
+int getStatInformations(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr);
+
+extern CFbDll * GDS;
+void initDll();
+
 
 #endif

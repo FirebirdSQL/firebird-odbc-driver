@@ -25,7 +25,7 @@
 #include <string.h>
 #include "OdbcObject.h"
 #include "OdbcError.h"
-#include "SQLException.h"
+#include "IscDbc/SQLException.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -35,6 +35,13 @@ OdbcObject::OdbcObject()
 {
 	next = NULL; // NOMEY
 	errors = NULL;
+	infoPosted = false;
+	sqlDiagCursorRowCount = 0;			// SQL_DIAG_CURSOR_ROW_COUNT 
+	sqlDiagDynamicFunction = NULL;		// SQL_DIAG_DYNAMIC_FUNCTION 
+	sqlDiagDynamicFunctionCode = 0;		// SQL_DIAG_DYNAMIC_FUNCTION_CODE
+	sqlDiagNumber = 0;					// SQL_DIAG_NUMBER 
+	sqlDiagReturnCode = SQL_SUCCESS;	// SQL_DIAG_RETURNCODE
+	sqlDiagRowCount = 0;				// SQL_DIAG_ROW_COUNT
 }
 
 OdbcObject::~OdbcObject()
@@ -219,6 +226,11 @@ void OdbcObject::clearErrors()
 		}
 
 	infoPosted = false;
+	sqlDiagDynamicFunction = NULL;		// SQL_DIAG_DYNAMIC_FUNCTION 
+	sqlDiagDynamicFunctionCode = 0;		// SQL_DIAG_DYNAMIC_FUNCTION_CODE
+	sqlDiagNumber = 0;					// SQL_DIAG_NUMBER 
+	sqlDiagReturnCode = SQL_SUCCESS;	// SQL_DIAG_RETURNCODE
+	sqlDiagRowCount = 0;				// SQL_DIAG_ROW_COUNT
 }
 
 
@@ -270,6 +282,51 @@ RETCODE OdbcObject::sqlGetDiagField(int recNumber, int diagId, SQLPOINTER ptr, i
 {
 	int n = 1;
 
+	switch( diagId )
+	{
+	case SQL_DIAG_CURSOR_ROW_COUNT:
+		*(SQLINTEGER*)ptr = sqlDiagCursorRowCount;
+		return SQL_SUCCESS;
+
+	case SQL_DIAG_DYNAMIC_FUNCTION:
+		*(SQLCHAR *)ptr = 0; // sqlDiagDynamicFunction
+		return SQL_SUCCESS;
+
+	case SQL_DIAG_DYNAMIC_FUNCTION_CODE:
+		*(SQLINTEGER*)ptr = sqlDiagDynamicFunctionCode;
+		return SQL_SUCCESS;
+
+	case SQL_DIAG_NUMBER:
+		*(SQLINTEGER*)ptr = sqlDiagNumber;
+		if( ptr )
+		{
+			SQLSMALLINT &nCount = *stringLength;
+			n = 0;
+			for (OdbcError *error = errors; error; error = error->next, ++n);
+			*(SDWORD*)ptr = n;
+		}
+		return SQL_SUCCESS;
+
+	case SQL_DIAG_RETURNCODE:
+		*(SQLRETURN*)ptr = sqlDiagReturnCode;
+		return SQL_SUCCESS;
+
+	case SQL_DIAG_ROW_COUNT:
+		*(SQLINTEGER*)ptr = sqlDiagRowCount;
+		return SQL_SUCCESS;
+	}
+
+	if ( diagId == SQL_DIAG_NUMBER )
+	{
+		if( ptr )
+		{
+			SQLSMALLINT &nCount = *stringLength;
+			n = 0;
+			for (OdbcError *error = errors; error; error = error->next, ++n);
+			*(SDWORD*)ptr = n;
+		}
+		return SQL_SUCCESS;
+	}
 	for (OdbcError *error = errors; error; error = error->next, ++n)
 		if (n == recNumber)
 			return error->sqlGetDiagField (diagId, ptr, bufferLength, stringLength);
@@ -301,9 +358,9 @@ int OdbcObject::getCType(int type, bool isSigned)
 			return (isSigned) ? SQL_C_SBIGINT : SQL_C_UBIGINT;
 
 		case SQL_REAL:
+		case SQL_FLOAT:
 			return SQL_C_FLOAT;
 
-		case SQL_FLOAT:
 		case SQL_DOUBLE:
 			return SQL_C_DOUBLE;
 
@@ -318,12 +375,26 @@ int OdbcObject::getCType(int type, bool isSigned)
 		case SQL_DATE:
 			return SQL_C_DATE;
 
+		case SQL_TYPE_DATE:
+			return SQL_C_TYPE_DATE;
+
 		case SQL_TIME:
 			return SQL_C_TIME;
 
+		case SQL_TYPE_TIME:
+			return SQL_C_TYPE_TIME;
+
 		case SQL_TIMESTAMP:
 			return SQL_C_TIMESTAMP;
+
+		case SQL_TYPE_TIMESTAMP:
+			return SQL_C_TYPE_TIMESTAMP;
 		}
 
 	return type;
+}
+
+void OdbcObject::setCursorRowCount(int count)
+{
+	sqlDiagCursorRowCount = count;
 }

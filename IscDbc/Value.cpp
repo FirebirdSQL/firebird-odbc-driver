@@ -50,11 +50,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "Engine.h"
+#include "IscDbc.h"
 #include "Value.h"
 #include "SQLError.h"
 #include "BinaryBlob.h"
-#include "AsciiBlob.h"
 
 #define DECIMAL_POINT		'.'
 #define DIGIT_SEPARATOR		','
@@ -152,28 +151,17 @@ void Value::setValue(Value * value)
 			data.quad = value->data.quad;
 			break;
 
+		case Float:
+			data.flt = value->data.flt;
+			break;
+
 		case Double:
 			data.dbl = value->data.dbl;
 			break;
 
-		/***
-		case Asciiblob:
-			data.blobId = value->data.blobId;
-			break;
-		
-		case Binaryblob:
-			data.blobId = value->data.blobId;
-			break;
-		***/
-
 		case BlobPtr:
 			data.blob = value->data.blob;
 			data.blob->addRef();
-			break;
-
-		case ClobPtr:
-			data.clob = value->data.clob;
-			data.clob->addRef();
 			break;
 
 		case Date:
@@ -201,6 +189,35 @@ void Value::setString(int length, const char * string, bool copy)
 		}
 	else
 		data.string.string = (char*) string;
+}
+
+void Value::convertStringData()
+{
+	char * pt, * ptTmp = data.string.string;
+
+	if (!ptTmp || !*ptTmp)
+		return;
+
+	while(*ptTmp==' ')ptTmp++;
+
+	if(*ptTmp!='{')
+		return;
+
+	pt = data.string.string;
+
+	while(*ptTmp && *ptTmp!='\'')ptTmp++;
+
+	if(*ptTmp!='\'')
+		return;
+
+	ptTmp++; // ch \'
+
+	while(*ptTmp && *ptTmp!='\'')
+		*pt++=*ptTmp++;
+
+	data.string.length = pt-data.string.string;
+	*pt = '\0';
+	// validate end string check Server
 }
 
 char* Value::getString()
@@ -257,6 +274,9 @@ double Value::getDouble()
 		case Null:
 			return 0;
 
+		case Float:
+			return (double)data.flt;
+
 		case Double:
 			return data.dbl;
 
@@ -282,6 +302,41 @@ double Value::getDouble()
 	return number / divisor;
 }
 
+float Value::getFloat()
+{
+	switch (type)
+		{
+		case Null:
+			return 0;
+
+		case Float:
+			return data.flt;
+
+		case Double:
+			return (float)data.dbl;
+
+		case Short:
+		case Long:
+		case Quad:
+			return (float) getQuad();
+
+		case Char:
+		case Varchar:
+		case String:
+			break;
+
+		case Date:
+			return (float) data.date.date;
+
+		default:
+			NOT_YET_IMPLEMENTED;
+		}
+
+	double divisor;
+	QUAD number = convertToQuad (divisor);
+	return (float)(number / divisor);
+}
+
 int Value::compare(Value * value)
 {
 	if (type == value->type)
@@ -292,6 +347,9 @@ int Value::compare(Value * value)
 
 			case Long:
 				return data.integer - value->data.integer;
+
+			case Float:
+				return (int) (data.flt - value->data.flt);
 
 			case Double:
 				return (int) (data.dbl - value->data.dbl);
@@ -358,6 +416,13 @@ int Value::compare(Value * value)
 	return 0;						
 }
 
+void Value::setValue(float value)
+{
+	clear();
+	type = Float;
+	data.flt = value;
+}
+
 void Value::setValue(double value)
 {
 	clear();
@@ -380,6 +445,9 @@ QUAD Value::getQuad(int scale)
 
 		case Quad:
 			return data.quad;
+
+		case Float:
+			return (QUAD) data.flt;
 
 		case Double:
 			return (QUAD) data.dbl;
@@ -498,6 +566,10 @@ char* Value::getString(char **tempPtr)
 			convert (data.quad, scale, temp);
 			break;
 
+		case Float:
+			sprintf (temp, "%f", data.flt);
+			break;
+
 		case Double:
 			sprintf (temp, "%f", data.dbl);
 			break;
@@ -515,32 +587,38 @@ char* Value::getString(char **tempPtr)
 			break;
 
 		case BlobPtr:
-			{
 			if (!tempPtr)	// NOMEY +
 				throw SQLEXCEPTION (BUG_CHECK, "NULL-Pointer in Value::getString, case BlobPtr:"); // NOMEY +
 
  			if (*tempPtr)
 				delete [] *tempPtr;
-			int length = data.blob->length();
-			*tempPtr = new char [length + 1];
-			data.blob->getBytes (0, length, *tempPtr);
-			(*tempPtr) [length] = 0;
-			return *tempPtr;
-			}
 
-		case ClobPtr:
+			if(data.blob->enType == enTypeBlob)
 			{
-			if (!tempPtr)	// NOMEY +
-				throw SQLEXCEPTION (BUG_CHECK, "NULL-Pointer in Value::getString, case ClobPtr:"); // NOMEY +
-
-			if (*tempPtr)
-				delete [] *tempPtr;
-			int length = data.clob->length();
-			*tempPtr = new char [length + 1];
-			data.clob->getSubString (0, length, *tempPtr);
-			(*tempPtr) [length] = 0;
-			return *tempPtr;
+				int length = data.blob->length();
+				*tempPtr = new char [length*2 + 1];
+				if( length > 0 )
+					data.blob->getHexString (0, length, *tempPtr);
+				(*tempPtr) [length*2] = 0;
 			}
+			else if(data.blob->enType == enTypeClob)
+			{
+				int length = data.blob->length();
+				*tempPtr = new char [length + 1];
+				if( length > 0 )
+					data.blob->getBytes (0, length, *tempPtr);
+				(*tempPtr) [length] = 0;
+			}
+			else // if(data.blob->enType == enTypeArray)
+			{
+				BinaryBlob * ptArr = (BinaryBlob *)data.blob;
+				int length = ptArr->getLength();
+				*tempPtr = new char [length + 1];
+				if( length > 0 )
+					ptArr->getSegment ((int)0, length,(void*)*tempPtr);
+				(*tempPtr) [length] = 0;
+			}
+			return *tempPtr;
 
 		default:
 			NOT_YET_IMPLEMENTED;
@@ -575,9 +653,6 @@ Blob* Value::getBlob()
 			data.blob->addRef();
 			return data.blob;
 
-		case ClobPtr:
-			return new BinaryBlob (data.clob);
-
 		case String:
 			blob = new BinaryBlob;
 			blob->putSegment (data.string.length, data.string.string, false);	
@@ -587,33 +662,6 @@ Blob* Value::getBlob()
 
 	NOT_YET_IMPLEMENTED;
 
-	return NULL;
-}
-
-
-Clob* Value::getClob()
-{
-	AsciiBlob *blob;
-
-	switch (type)
-		{
-		case Null:
-			return new AsciiBlob;
-
-		case ClobPtr:
-			data.clob->addRef();
-			return data.clob;
-
-		case BlobPtr:
-			return new AsciiBlob (data.blob);
-
-		case String:
-			blob = new AsciiBlob;
-			blob->putSegment (data.string.length, data.string.string, false);	
-			return blob;
-		}
-
-	NOT_YET_IMPLEMENTED;
 	return NULL;
 }
 
@@ -684,7 +732,7 @@ DateTime Value::getDate()
 		case Null:
 			{
 			DateTime date;
-			date = (long) 0;
+			date.date = (long) 0;
 			return date;
 			}
 
@@ -718,13 +766,45 @@ DateTime Value::getDate()
 
 TimeStamp Value::getTimestamp()
 {
-	if (type == Timestamp)
+	switch (type)
+	{
+	case Null:
+		{
+		TimeStamp timestamp;
+		timestamp.date = 0;
+		timestamp.nanos = 0;
+		return timestamp;
+		}
+
+	case Char:
+	case String:
+	case Varchar:
+		break;
+
+	case Date:
+		{
+		TimeStamp timestamp;
+		timestamp.date = getDate().date;
+		timestamp.nanos = 0;
+		return timestamp;
+		}
+
+	case TimeType:
+		{
+		TimeStamp timestamp;
+		timestamp.date = 0;
+		timestamp.nanos = getTime().timeValue;
+		return timestamp;
+		}
+
+	case Timestamp:
 		return data.timestamp;
 
-	TimeStamp timestamp;
-	timestamp = getDate();
+	default:
+		NOT_YET_IMPLEMENTED;
+	}
 
-	return timestamp;
+	return TimeStamp::convert (data.string.string, data.string.length);
 }
 
 void Value::setValue(DateTime value)
@@ -738,7 +818,7 @@ void Value::setDate(long value)
 {
 	clear();
 	type = Date;
-	data.date = value;
+	data.date.date = value;
 }
 
 void Value::allocString(Type typ, int length)
@@ -889,10 +969,7 @@ void Value::setValue(TimeStamp value)
 {
 	clear();
 	type = Timestamp;
-//Orig.
-//	data.timestamp = value;
-//From B. Schulte
-    data.timestamp = value.date;
+    data.timestamp.date = value.date;
     data.timestamp.nanos = value.nanos;
 }
 
@@ -903,7 +980,7 @@ SqlTime Value::getTime()
 		case Null:
 			{
 			SqlTime time ;
-			time = 0;
+			time.timeValue = 0;
 			return time;
 			}
 
@@ -927,14 +1004,6 @@ SqlTime Value::getTime()
 		}
 
 	return SqlTime::convert (data.string.string, data.string.length);
-}
-
-void Value::setValue(Clob * blob)
-{
-	clear();
-	type = ClobPtr;
-	data.clob = blob;
-	data.clob->addRef();
 }
 
 void Value::convert(QUAD value, int scale, char *string)
@@ -994,3 +1063,4 @@ void Value::setValue(SqlTime value)
 	type = TimeType;
 	data.time = value;
 }
+

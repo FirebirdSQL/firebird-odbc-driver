@@ -42,6 +42,7 @@ struct Binding {
 	int			cType;
 	int			sqlType;
 	void		*pointer;
+	void		*pointerOrg;
 	SQLINTEGER	bufferLength;
 //Suggested by R. Milharcic
 	SQLINTEGER	dataOffset;
@@ -52,10 +53,13 @@ struct Binding {
     
 class OdbcConnection;
 class OdbcDesc;
+class DescRecord;
 class ResultSet;
-class ResultSetMetaData;
+class StatementMetaData;
 class PreparedStatement;
 class CallableStatement;
+
+enum enFetchType { NoneFetch, Fetch, ExtendedFetch, FetchScroll };
 
 class OdbcStatement : public OdbcObject  
 {
@@ -64,6 +68,9 @@ public:
 	RETCODE sqlColAttribute (int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT* strLengthPtr, SQLPOINTER numericAttributePtr);
 	RETCODE returnData();
 	RETCODE sqlFetchScroll (int orientation, int offset);
+	RETCODE sqlFetchScrollCursorStatic(int orientation, int offset);
+	RETCODE sqlSetPos (SQLUSMALLINT rowNumber, SQLUSMALLINT operation, SQLUSMALLINT lockType);
+	RETCODE sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGER crowKeyset, SQLUSMALLINT crowRowset);
 	RETCODE sqlExtendedFetch (int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray);
 	RETCODE sqlColAttributes (int column, int descType, SQLPOINTER buffer, int bufferSize, SWORD *length, SDWORD *value);
 	RETCODE sqlRowCount (SQLINTEGER *rowCount);
@@ -72,8 +79,6 @@ public:
 	RETCODE	sqlPutData (SQLPOINTER value, SQLINTEGER valueSize);
 	RETCODE sqlGetTypeInfo (int dataType);
 	Binding* allocBindings (int count, int oldCount, Binding *oldBindings);
-//	RETCODE setParameters();	//Added 2002-06-04 RM
-//	void executeSQL();			//Added 2002-06-04 RM
 	RETCODE executeStatement();	//Changed return type 2002-06-04 RM 
 	char* getToken (const char** ptr, char *token);
 	bool isStoredProcedureEscape (const char *sqlString);
@@ -84,7 +89,7 @@ public:
 	RETCODE sqlProcedureColumns(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength, SQLCHAR*col,int colLength);
 	RETCODE sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength);
 	RETCODE sqlCancel();
-	void setParameter (Binding *binding, int parameter);
+	void setParameter(DescRecord *record,int parameter);
 	RETCODE sqlBindParameter (int parameter, int type, int cType, int sqlType, int precision, int scale, PTR ptr, int bufferLength, SDWORD *length);
 	RETCODE sqlDescribeParam (int parameter, SWORD* sqlType, UDWORD*precision, SWORD*scale,SWORD*nullable);
 	RETCODE OdbcStatement::formatParameter( int parameter );
@@ -101,7 +106,9 @@ public:
 	void releaseParameters();
 	void releaseBindings();
 	RETCODE sqlFreeStmt (int option);
-	bool setValue (Binding *binding, int column);
+	RETCODE setValue (Binding *binding, int column);
+	bool setValue (DescRecord *record, int column);
+
 	RETCODE sqlFetch();
 //	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
 	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr, Binding** _bindings = NULL, int* _numberBindings = NULL); //From RM
@@ -120,6 +127,7 @@ public:
 	virtual OdbcObjectType getType();
 	OdbcStatement(OdbcConnection *connect, int statementNumber);
 	virtual ~OdbcStatement();
+	bool isStaticCursor(){ return cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE; }
 
 	OdbcConnection		*connection;
 	OdbcDesc			*applicationRowDescriptor;
@@ -129,34 +137,42 @@ public:
 	ResultSet			*resultSet;
 	PreparedStatement	*statement;
 	CallableStatement	*callableStatement;
-	ResultSetMetaData	*metaData;
+	StatementMetaData	*metaData;
 	int					numberColumns;
 	int					numberParameters;
 //Added 2002-06-04	RM
     int                 parameterNeedData;
-	int					numberBindings;
  	int					numberGetDataBindings;
-	Binding				*bindings;
+ 	int					maxColumnGetDataBinding;
 	Binding				*getDataBindings;
-	Binding				*parameters;
 	bool				eof;
 	bool				cancel;
+	bool				fetched;
+	enFetchType			enFetch;
 	JString				cursorName;
 	int					rowBindType;
 	int					paramBindType;
 	int					rowArraySize;
+
+	int					fetchRetData;
 	void				*paramBindOffset;
 	void				*paramsProcessedPtr;
 	int					paramsetSize;
 	SQLINTEGER			*bindOffsetPtr;
 	SQLUSMALLINT		*rowStatusPtr;
+	SQLUINTEGER			enableAutoIPD;
+	SQLINTEGER			useBookmarks;
+	SQLINTEGER			cursorSensitivity;
+	SQLPOINTER			fetchBookmarkPtr;
+	SQLUINTEGER			noscanSQL;
 	int					currency;
 	int					cursorType;
 	bool				cursorScrollable;
 	bool				asyncEnable;
 	int					rowNumber;
+	long				indicatorRowNumber;
 	int					maxRows;
-//	bool				updatePreparedResultSet;
+	int					maxLength;
 };
 
 #endif // !defined(AFX_ODBCSTATEMENT_H__ED260D97_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)

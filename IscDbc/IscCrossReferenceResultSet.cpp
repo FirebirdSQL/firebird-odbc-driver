@@ -25,6 +25,7 @@
 #include <string.h>
 #include "IscDbc.h"
 #include "IscCrossReferenceResultSet.h"
+#include "IscDatabaseMetaData.h"
 
 #define SQL_CASCADE                      0
 #define SQL_RESTRICT                     1
@@ -79,8 +80,15 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 		"     rdb$index_segments fseg,\n"
 		"     rdb$index_segments pseg,\n"
 		"     rdb$ref_constraints refc\n"
-		"where fkey.rdb$constraint_type = 'FOREIGN KEY'\n"
-		"  and fkey.rdb$index_name = fidx.rdb$index_name\n"
+		"where fkey.rdb$constraint_type = 'FOREIGN KEY'\n";
+
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		sql += metaData->existsAccess("  and ", "pidx", 0, "\n");
+		sql += metaData->existsAccess("  and ", "fidx", 0, "\n");
+	}
+
+	sql += "  and fkey.rdb$index_name = fidx.rdb$index_name\n"
 		"  and fidx.rdb$foreign_key = pidx.rdb$index_name\n"
 		"  and fidx.rdb$index_name = fseg.rdb$index_name\n"
 		"  and pidx.rdb$index_name = pseg.rdb$index_name\n"
@@ -88,11 +96,11 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 		"  and refc.rdb$constraint_name = fkey.rdb$constraint_name"
 		;
 
-	if (primaryTable)
-		sql += expandPattern (" and pidx.rdb$relation_name %s '%s'", primaryTable);
+	if (primaryTable && *primaryTable)
+		sql += expandPattern (" and ","pidx.rdb$relation_name", primaryTable);
 
-	if (foreignTable)
-		sql += expandPattern (" and fkey.rdb$relation_name %s '%s'", foreignTable);
+	if (foreignTable && *foreignTable)
+		sql += expandPattern (" and ","fkey.rdb$relation_name", foreignTable);
 
 	sql += " order by pidx.rdb$relation_name, pseg.rdb$field_position";
 	prepareStatement (sql);
@@ -148,7 +156,7 @@ bool IscCrossReferenceResultSet::stringEqual(const char * p1, const char * p2)
 	return true;
 }
 
-int IscCrossReferenceResultSet::getColumnType(int index)
+int IscCrossReferenceResultSet::getColumnType(int index, int &realSqlType)
 {
 	switch (index)
 		{
@@ -157,7 +165,7 @@ int IscCrossReferenceResultSet::getColumnType(int index)
 			return JDBC_INTEGER;
 		}
 
-	return Parent::getColumnType (index);
+	return Parent::getColumnType (index, realSqlType);
 }
 
 int IscCrossReferenceResultSet::getColumnDisplaySize(int index)

@@ -26,7 +26,7 @@
 #include <memory.h>
 #include <string.h>
 #include <stdlib.h>
-#include "Engine.h"
+#include "IscDbc.h"
 #include "DateTime.h"
 #include "SQLError.h"
 
@@ -108,7 +108,7 @@ DateTime DateTime::convert(const char *dateString, int length)
 	const char *end = dateString + length;
 	char string [100], *q = string;
 	bool numeric = true;
-	bool sign = false;
+//	bool sign = false;
 	int		year = -1;
 	int		month = 0;
 	int		day = 0;
@@ -135,7 +135,7 @@ DateTime DateTime::convert(const char *dateString, int length)
 		switch (c)
 			{
 			case '-':
-				sign = true;
+//				sign = true;
 			case ' ':
 			case ',':
 			case '/':
@@ -196,7 +196,7 @@ DateTime DateTime::convert(const char *dateString, int length)
 					}
 				q = string;
 				numeric = true;
-				sign = false;
+//				sign = false;
 				break;
 
 			case '(':
@@ -216,7 +216,7 @@ DateTime DateTime::convert(const char *dateString, int length)
 				break;
 
 			case '+':
-				sign = true;
+//				sign = true;
 				break;
 
 			default:
@@ -298,19 +298,6 @@ int DateTime::getString (const char * format, int length, char *buffer)
 	return strftime (buffer, length, format, time);
 	
 }
-DateTime& DateTime::operator =(long value)
-{
-	date = value;
-
-	return *this;
-}
-
-DateTime& DateTime::operator =(QUAD value)
-{
-	date = (long) (value / 1000);
-
-	return *this;
-}
 
 long DateTime::getToday()
 {
@@ -356,22 +343,26 @@ signed long DateTime::decodeDate (signed long nday, tm	*times)
  * There is a further cycle of 100 4 year cycles.
  * Every 100 years, the normally expected leap year
  * is not present.  Every 400 years it is.
- * This cycle takes 100 * 1461 - 3 == 146097 days.
+ * This cycle takes 100 * 1461 - 3 == 146097 days
  *
- * 719469 is the number of days from 1/1/0000 to
- * 01/01/1970.
+ * The origin of the constant 2400001 is unknown.
+ * The origin of the constant 1721119 is unknown.
  *
+ * The difference between 2400001 and 1721119 is the
+ * number of days From 0/0/0000 to our base date of
+ * 11/xx/1858. (678882)
  * The origin of the constant 153 is unknown.
  *
  * This whole routine has problems with ndates
- * less than -719469 (Approx 2/1/0000).
+ * less than -678882 (Approx 2/1/0000).
  *
  **************************************/
 	signed long	year, month, day;
 	signed long	century;
 
-//	nday = nday / (60 * 60 * 24);	//NOMEY -
-	nday += 719469;
+//	nday -= 1721119 - 2400001;
+	nday += 678882;
+
 	century = (4 * nday - 1) / 146097;
 	nday = 4 * nday - 1 - 146097 * century;
 	day = nday / 4;
@@ -441,7 +432,6 @@ signed long DateTime::encodeDate (struct tm	*times)
 
 
 signed long DateTime::yday (struct tm	*times)
-
 {
 /**************************************
  *
@@ -459,33 +449,18 @@ signed long DateTime::yday (struct tm	*times)
  *	view.)   
  *
  **************************************/
-	signed short day, month, year;
-	const unsigned char	*days;
-	static const unsigned char	month_days [] = {31,28,31,30,31,30,31,31,30,31,30,31};
+	signed short	day, month, year;
 
-	day = times->tm_mday;
 	month = times->tm_mon;
 	year = times->tm_year + 1900;
 
-	--day;
-
-	for (days = month_days; days < month_days + month; days++)
-		day += *days;
+	day = (214 * month + 3) / 7 + times->tm_mday - 1;
 
 	if (month < 2)
 		return day;
 
-	/* Add a day as we're past the leap-day */
-	if (! (year % 4))
-		day++;
+	if ( year%4 == 0 && year%100 != 0 || year%400 == 0 )
+		return day - 1;
 
-	/* Ooops - year's divisible by 100 aren't leap years */
-	if (! (year % 100))
-		day--;
-
-	/* Unless they are also divisible by 400! */
-	if (! (year % 400))
-		day++;
-
-	return day;
+	return day - 2;
 }

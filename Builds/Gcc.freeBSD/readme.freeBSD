@@ -1,0 +1,12 @@
+
+1) Uses -pthread flag
+
+Problem: 
+	But my simple client working over OTL-wrapper (otl.sf.net) sigfaults on exit,
+	and on linux works fine.
+
+Writen by Dmitriy Nikitinskiy
+All clients *must be* complied with -pthread flag:
+g++ -pthread -o client client.cpp
+
+2)

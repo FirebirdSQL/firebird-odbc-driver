@@ -72,6 +72,7 @@ void IscMetaDataResultSet::prepareStatement(const char * sql)
 {
 	statement = metaData->connection->prepareStatement (sql);
 	resultSet = (IscResultSet*) statement->executeQuery();
+	sqlda = resultSet->sqlda;
 	numberColumns = resultSet->numberColumns;
 	allocConversions();
 }
@@ -93,27 +94,28 @@ void IscMetaDataResultSet::trimBlanks(int id)
 bool IscMetaDataResultSet::isWildcarded(const char * pattern)
 {
 	for (const char *p = pattern; *p; ++p)
-		if (*p == '%' || *p == '*')
+		if (*p == '%' || *p == '\\' || *p == '*')
 			return true;
 
 	return false;
 }
 
-JString IscMetaDataResultSet::expandPattern(const char * string, const char * pattern)
+JString IscMetaDataResultSet::expandPattern(const char *prefix, const char * string, const char * pattern)
 {
-	char temp [128];
+	char temp [256];
 
 	if (isWildcarded (pattern))
-		sprintf (temp, string, "like", pattern);
+		sprintf (temp, "%s (%s like '%s %%' ESCAPE '\\' or %s like '%s' ESCAPE '\\')\n",
+							prefix, string, pattern, string, pattern);
 	else
-		sprintf (temp, string, "= ", pattern);
+		sprintf (temp, "%s %s = \'%s\'\n",prefix, string, pattern);
 
 	return temp;
 }
 
-int IscMetaDataResultSet::getColumnType(int index)
+int IscMetaDataResultSet::getColumnType(int index, int &realSqlType)
 {
-	return resultSet->getColumnType (index);
+	return resultSet->getColumnType (index, realSqlType);
 }
 
 const char* IscMetaDataResultSet::getColumnTypeName(int index)
@@ -150,9 +152,3 @@ bool IscMetaDataResultSet::isNullable(int index)
 {
 	return resultSet->isNullable (index);
 }
-
-bool IscMetaDataResultSet::next()
-{
-	return resultSet->next();
-}
-

@@ -5,5 +5,5 @@ DESCRIPTION  'OdbcJdbcSetup Windows Dynamic Link Library'
 
 EXPORTS
     ; Explicit exports can go here
-	ConfigDSN			@1
-	DllRegisterServer	@2	PRIVATE
+	ConfigDSN=ConfigDSN@16
+	DllRegisterServer

@@ -44,20 +44,9 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "OdbcDateTime.h"
-#include "Connection.h"
+#include "IscDbc/Connection.h"
 #include <memory.h>
 #include "OdbcStatement.h"
-#include <time.h>
-#include "DateTime.h"
-#include "IscDbc/SqlTime.h"
-#include "TimeStamp.h"
-
-
-#define SECONDS_PRECISION          10000L
-#define SECONDS_PRECISION_SCALE    -4
-typedef signed long		INTERNAL_DATE;
-typedef __int64			SINT64;
-
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -111,11 +100,6 @@ int OdbcDateTime::convert (tagTIMESTAMP_STRUCT * tagTimeStampIn, TimeStamp * tim
 	struct tm timeBuffer;
 	struct tm* times = &timeBuffer;
 
-/*	Original conversion
-	timeStampOut->nanos = ((times->tm_hour * 60 + times->tm_min) * 60 + 
-		times->tm_sec) * SECONDS_PRECISION;
-*/
-//New conversion supplied by Bernard Schulte
 	times->tm_hour = tagTimeStampIn->hour;
 	times->tm_min  = tagTimeStampIn->minute;
 	times->tm_sec  = tagTimeStampIn->second;
@@ -124,7 +108,7 @@ int OdbcDateTime::convert (tagTIMESTAMP_STRUCT * tagTimeStampIn, TimeStamp * tim
 	times->tm_year = tagTimeStampIn->year-1900;
 
 	timeStampOut->nanos = ((tagTimeStampIn->hour * 60 + tagTimeStampIn->minute) * 60 + 
-		tagTimeStampIn->second) ; 
+		tagTimeStampIn->second) * ISC_TIME_SECONDS_PRECISION + tagTimeStampIn->fraction / STD_TIME_SECONDS_PRECISION; 
 
 	timeStampOut->date = nday(times);
 
@@ -174,7 +158,7 @@ int OdbcDateTime::convert (TimeStamp *timeStampIn, tagTIMESTAMP_STRUCT * tagTime
 	tagTimeStampOut->hour = times->tm_hour;
 	tagTimeStampOut->minute = times->tm_min;
 	tagTimeStampOut->second = times->tm_sec;
-	tagTimeStampOut->fraction = timeStampIn->nanos * 10;
+	tagTimeStampOut->fraction = (timeStampIn->nanos % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
 	return true;
 }
 
@@ -216,20 +200,10 @@ signed long OdbcDateTime::ndate (signed long nday, signed long nsec, tm *times)
  **************************************/
 	SLONG	year, month, day;
 	SLONG	century;
-	SLONG	seconds;
+	SLONG	minutes;
 
-/*  Orig.
-	seconds = nday % (60 * 60 * 24);
-	nday = nday / (60 * 60 * 24);
-*/
-// From B. Schulte:
-	seconds = nsec;
-	
-
-/*	adjust first from the IB base date to the SQL base date*/
-	nday += 40587; 
-
-	nday -= 1721119 - 2400001;
+//	nday -= 1721119 - 2400001;
+	nday += 678882;
 
 	century = (4 * nday - 1) / 146097;
 	nday = 4 * nday - 1 - 146097 * century;
@@ -256,14 +230,17 @@ signed long OdbcDateTime::ndate (signed long nday, signed long nsec, tm *times)
 	times->tm_mday = (int) day;
 	times->tm_mon = (int) month - 1;
 	times->tm_year = (int) year - 1900;
-	times->tm_hour = (int) seconds / (60 * 60);
-	times->tm_min = (int) (seconds / 60) - ((times->tm_hour) * 60);
-	times->tm_sec = (int) (seconds - ((times->tm_hour*60)+times->tm_min)*60);
+
+	minutes = nsec / (ISC_TIME_SECONDS_PRECISION * 60);
+	times->tm_hour = minutes / 60;
+	times->tm_min = minutes % 60;
+	times->tm_sec = (nsec / ISC_TIME_SECONDS_PRECISION) % 60;
+
 	return true;
 }
 
 
-INTERNAL_DATE OdbcDateTime::nday (struct tm	*times)
+signed long OdbcDateTime::nday (struct tm	*times)
 {
 /**************************************
  *
@@ -294,7 +271,7 @@ INTERNAL_DATE OdbcDateTime::nday (struct tm	*times)
 	c = year / 100;
 	ya = year - 100 * c;
 
-	return (INTERNAL_DATE) (((SINT64) 146097 * c) / 4 + 
+	return (signed long) (((QUAD) 146097 * c) / 4 + 
 		(1461 * ya) / 4 + 
 		(153 * month + 2) / 5 + 
 		day + 1721119 - 2400001);
@@ -322,33 +299,18 @@ signed long OdbcDateTime::yday (struct tm	*times)
  *
  **************************************/
 	signed short	day, month, year;
-	const unsigned char	*days;
-	static const unsigned char month_days [] = {31,28,31,30,31,30,31,31,30,31,30,31};
 
-	day = times->tm_mday;
 	month = times->tm_mon;
 	year = times->tm_year + 1900;
 
-	--day;
-
-	for (days = month_days; days < month_days + month; days++)
-		day += *days;
+	day = (214 * month + 3) / 7 + times->tm_mday - 1;
 
 	if (month < 2)
 		return day;
 
-	/* Add a day as we're past the leap-day */
-	if (! (year % 4))
-		day++;
+	if ( year%4 == 0 && year%100 != 0 || year%400 == 0 )
+		return day - 1;
 
-	/* Ooops - year's divisible by 100 aren't leap years */
-	if (! (year % 100))
-		day--;
-
-	/* Unless they are also divisible by 400! */
-	if (! (year % 400))
-		day++;
-
-	return day;
+	return day - 2;
 }
 

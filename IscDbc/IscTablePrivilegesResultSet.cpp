@@ -54,20 +54,30 @@ IscTablePrivilegesResultSet::~IscTablePrivilegesResultSet()
 
 void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
-	JString sql = "select NULL as table_cat,"						//1
-				          "NULL as table_schem,"					//2
-						  "tbl.rdb$relation_name as table_name,"	//3
-						  "usp.rdb$grantor as grantor,"				//4
-						  "usp.rdb$user as grantee,"				//5
-						  "usp.rdb$privilege as privilege,"			//6
-						  "'YES' as isgrantable, "					//7
-						  "usp.rdb$grant_option as GRANT_OPTION "	//8
-                          "from rdb$relations tbl, rdb$user_privileges usp\n"
-                          " where tbl.rdb$relation_name = usp.rdb$relation_name\n";
-    if (tableNamePattern)
-        sql += expandPattern (" and tbl.rdb$relation_name %s '%s'", tableNamePattern);
+	JString sql = "select NULL as table_cat,"										//1
+				          "NULL as table_schem,"									//2
+						  "tbl.rdb$relation_name as table_name,"					//3
+						  "priv.rdb$grantor as grantor,"							//4
+						  "priv.rdb$user as grantee,"								//5
+						  "cast( priv.rdb$privilege as char(11) ) as privilege,"	//6
+						  "'YES' as isgrantable, "									//7
+						  "priv.rdb$grant_option as GRANT_OPTION "					//8
+                          "from rdb$relations tbl, rdb$user_privileges priv\n"
+                          "where tbl.rdb$relation_name = priv.rdb$relation_name\n";
 
-    sql += " order by tbl.rdb$relation_name, usp.rdb$privilege, usp.rdb$user";
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		char buf[128];
+		sprintf (buf, "and priv.rdb$object_type = 0\n"
+					  "and priv.rdb$user = '%s' and priv.rdb$user_type = %d\n",
+						metaData->getUserAccess(),metaData->getUserType());
+		sql +=	buf;
+	}
+
+    if (tableNamePattern && *tableNamePattern)
+        sql += expandPattern (" and ","tbl.rdb$relation_name", tableNamePattern);
+
+    sql += " order by tbl.rdb$relation_name, priv.rdb$privilege, priv.rdb$user";
 
     prepareStatement (sql);
     numberColumns = 7;
@@ -81,6 +91,11 @@ bool IscTablePrivilegesResultSet::next()
 	trimBlanks(3);
 	trimBlanks(4);
 	trimBlanks(5);
+
+	const char *grantor = resultSet->getString(4);
+	const char *grantee = resultSet->getString(5);
+	if(!strcmp(grantor,grantee))
+		resultSet->setValue( 4, "_SYSTEM" );
 
     const char *privilege = resultSet->getString(6);
 
@@ -127,7 +142,7 @@ int IscTablePrivilegesResultSet::getColumnDisplaySize(int index)
     return Parent::getColumnDisplaySize (index);
 }
 
-int IscTablePrivilegesResultSet::getColumnType(int index)
+int IscTablePrivilegesResultSet::getColumnType(int index, int &realSqlType)
 {
     switch (index)
         {
@@ -135,7 +150,7 @@ int IscTablePrivilegesResultSet::getColumnType(int index)
             return JDBC_VARCHAR;
         }
 
-    return Parent::getColumnType (index);
+    return Parent::getColumnType (index, realSqlType);
 }
 
 int IscTablePrivilegesResultSet::getColumnPrecision(int index)

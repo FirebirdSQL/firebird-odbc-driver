@@ -85,7 +85,7 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 				"\tfld.rdb$field_sub_type as type_name,\n"			// 6 - VARCHAR NOT NULL
 				"\t10 as column_size,\n"							// 7 - INTEGER
 				"\t10 as buffer_length,\n"							// 8 - INTEGER
-				"\tfld.rdb$field_scale as decimal_digits,\n"		// 9 - SMALLINT
+				"\tcast (fld.rdb$field_scale as smallint) as decimal_digits,\n"		// 9 - SMALLINT
 				"\tfld.rdb$field_scale as num_prec_radix,\n"		// 10 - SMALLINT
 				"\trfr.rdb$null_flag as nullable,\n"				// 11 - SMALLINT NOT NULL
 				"\tNULL as remarks,\n"								// 12 - VARCHAR
@@ -103,13 +103,16 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 				"\tfld.rdb$field_length as column_length,\n"		// 24
 				"\tfld.rdb$field_precision as column_precision\n"	// 25
 		"from rdb$relation_fields rfr, rdb$fields fld\n"
-		" where rfr.rdb$field_source = fld.rdb$field_name\n";
+		"where rfr.rdb$field_source = fld.rdb$field_name\n";
 
-	if (tableNamePattern)
-		sql += expandPattern (" and rfr.rdb$relation_name %s '%s'\n", tableNamePattern);
+	if ( !metaData->allTablesAreSelectable() )
+		sql += metaData->existsAccess(" and ", "rfr", 0, "\n");
 
-	if (fieldNamePattern)
-		sql += expandPattern (" and rfr.rdb$field_name %s '%s'\n", fieldNamePattern);
+	if (tableNamePattern && *tableNamePattern)
+		sql += expandPattern (" and ","rfr.rdb$relation_name", tableNamePattern);
+
+	if (fieldNamePattern && *fieldNamePattern)
+		sql += expandPattern (" and ","rfr.rdb$field_name", fieldNamePattern);
 
 	sql += " order by rfr.rdb$relation_name, rfr.rdb$field_position\n";
 	
@@ -117,6 +120,10 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 	OutputDebugString (sql.getString());
 #endif
 	prepareStatement (sql);
+
+// SELECT returns 25 columns,
+// But all interests only 18 
+// This line is forbidden for modifying!!!
 	numberColumns = 18;
 }
 
@@ -144,8 +151,8 @@ bool IscColumnsResultSet::next()
 	int array	  = resultSet->getInt (21);	// ARRAY_DIMENSION
 	int precision = resultSet->getInt (25);	// COLUMN_PRECISION
 
-	if (resultSet->valueWasNull)
-		array = 0;
+//	if (resultSet->valueWasNull)
+//		array = 0;
 
 	int dialect = resultSet->statement->connection->getDatabaseDialect();
 //	IscSqlType sqlType (blrType, subType, length, length, dialect, precision);
@@ -165,7 +172,7 @@ bool IscColumnsResultSet::next()
 	return true;
 }
 
-int IscColumnsResultSet::getColumnType(int index)
+int IscColumnsResultSet::getColumnType(int index, int &realSqlType)
 {
 	switch (index)
 		{
@@ -174,7 +181,7 @@ int IscColumnsResultSet::getColumnType(int index)
 			return JDBC_VARCHAR;
 		}
 
-	return Parent::getColumnType (index);
+	return Parent::getColumnType (index, realSqlType);
 }
 
 int IscColumnsResultSet::getColumnDisplaySize(int index)
@@ -191,6 +198,8 @@ int IscColumnsResultSet::getColumnDisplaySize(int index)
 
 int IscColumnsResultSet::getPrecision(int index)
 {
+	return 31;
+/*
 	switch (index)
 		{
 		case TYPE_NAME:					//	TYPE_NAME
@@ -199,6 +208,7 @@ int IscColumnsResultSet::getPrecision(int index)
 		}
 
 	return Parent::getPrecision (index);
+*/
 }
 
 
@@ -265,7 +275,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 			scale = (*stuff++) * -1;
 			mag = 1;
 
-			intVal = isc_vax_integer (stuff, (type == blr_short)? 2 : 4);
+			intVal = GDS->_vax_integer (stuff, (type == blr_short)? 2 : 4);
 
 			if (!scale)
 				stringVal.Format ("%d", intVal);
@@ -286,8 +296,8 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 		case (blr_quad):
 		case (blr_int64):
 			scale = (*stuff++) * -1;
-			intVal = isc_vax_integer (stuff, 4);
-			temp = isc_vax_integer (&stuff[4], 4);
+			intVal = GDS->_vax_integer (stuff, 4);
+			temp = GDS->_vax_integer (&stuff[4], 4);
 			stringVal.Format ("0x%x%x scale %d", intVal, temp, scale);
 			break;
 
@@ -336,7 +346,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 					intVal = strlen (stuff);
 					break;
 				default:
-					intVal = isc_vax_integer (stuff, 2);
+					intVal = GDS->_vax_integer (stuff, 2);
 				}
 			if ((intVal + 4) >= BUFF_LEN)
 				{
@@ -383,7 +393,8 @@ void IscColumnsResultSet::setCharLen (int charLenInd,
 	if (!charLen)
 		resultSet->setNull (charLenInd);
 	else
-		resultSet->setValue (charLenInd, charLen);}
+		resultSet->setValue (charLenInd, charLen);
+}
 
 void IscColumnsResultSet::checkQuotes (IscSqlType sqlType, JString stringVal)
 {
@@ -396,8 +407,11 @@ void IscColumnsResultSet::checkQuotes (IscSqlType sqlType, JString stringVal)
 	switch (sqlType.type)
 		{
 		case JDBC_DATE:
-		case JDBC_TIMESTAMP:
+		case JDBC_SQL_DATE:
 		case JDBC_TIME:
+		case JDBC_SQL_TIME:
+		case JDBC_TIMESTAMP:
+		case JDBC_SQL_TIMESTAMP:
 			if (string == "CURRENT DATE" ||
 				string == "CURRENT TIME" ||
 				string == "CURRENT TIMESTAMP" ||
@@ -449,12 +463,15 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 		case JDBC_LONGVARCHAR:
 		case JDBC_LONGVARBINARY:
 		case JDBC_DATE:
+		case JDBC_SQL_DATE:
 			resultSet->setNull (9);
 			resultSet->setNull (10);
 			break;
 		case JDBC_TIME:
+		case JDBC_SQL_TIME:
 		case JDBC_TIMESTAMP:
-			resultSet->setValue (9, (long)0);
+		case JDBC_SQL_TIMESTAMP:
+			resultSet->setValue (9, (long)-ISC_TIME_SECONDS_PRECISION_SCALE);
 			resultSet->setNull (10);
 		}	
 
@@ -469,18 +486,20 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 	if (!getBLRLiteral (13, 13, sqlType))
 		getBLRLiteral (20, 13, sqlType);
 
-	// SQL_DATA_TYPE & DateTimeSubType - why make this easy?
 	switch (sqlType.type)
 		{
 		case JDBC_DATE:
+		case JDBC_SQL_DATE:
 			resultSet->setValue (14, (long) 9);
 			resultSet->setValue (15, (long) 1);
 			break;
 		case JDBC_TIME:
+		case JDBC_SQL_TIME:
 			resultSet->setValue (14, (long) 9);
 			resultSet->setValue (15, (long) 2);
 			break;
 		case JDBC_TIMESTAMP:
+		case JDBC_SQL_TIMESTAMP:
 			resultSet->setValue (14, (long) 9);
 			resultSet->setValue (15, (long) 3);
 			break;

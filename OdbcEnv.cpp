@@ -33,27 +33,54 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <stdlib.h>
+#include "SetupAttributes.h"
 #include "OdbcJdbc.h"
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
-#include "SQLException.h"
+#include "IscDbc/SQLException.h"
+#include <odbcinst.h>
+#ifndef _WIN32
+#include <dlfcn.h>
+#endif
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
 OdbcEnv::OdbcEnv()
 {
+	libraryHandle = NULL;
 	connections = NULL;
+#ifdef _WIN32
+	activeDrv = NULL;
+	endDrv = NULL;
+	activeDSN = NULL;
+	endDSN = NULL;
+#endif
 
 #ifndef _WIN32
 	if (!(odbcIniFileName = getenv ("ODBCINI")))
 #endif
 		odbcIniFileName = "ODBC.INI";
+
+#ifndef _WIN32
+	if (!(odbcInctFileName = getenv ("ODBCINST")))
+#endif
+		odbcInctFileName = "ODBCINST.INI";
 }
 
 OdbcEnv::~OdbcEnv()
 {
 
+}
+
+void OdbcEnv::LockEnv()
+{
+	mutex.lock();
+}
+
+void OdbcEnv::UnLockEnv()
+{
+	mutex.release();
 }
 
 OdbcObjectType OdbcEnv::getType()
@@ -98,12 +125,26 @@ RETCODE OdbcEnv::sqlEndTran(int operation)
 
 void OdbcEnv::connectionClosed(OdbcConnection * connection)
 {
-	for (OdbcObject **ptr = (OdbcObject**) &connections; *ptr; ptr =&((*ptr)->next))
+	OdbcObject **ptr;
+
+	for (ptr = (OdbcObject**) &connections; *ptr; ptr = &((*ptr)->next))
 		if (*ptr == connection)
-			{
+		{
 			*ptr = connection->next;
 			break;
-			}
+		}
+
+	if( !connections )
+	{
+		if ( libraryHandle )
+#ifdef _WIN32
+			FreeLibrary(libraryHandle);
+#endif
+#ifdef ELF
+			dlclose (libraryHandle);
+#endif
+		libraryHandle = NULL;
+	}
 }
 
 RETCODE OdbcEnv::sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
@@ -170,3 +211,257 @@ RETCODE OdbcEnv::sqlSetEnvAttr(int attribute, SQLPOINTER value, int length)
 			
 	return sqlSuccess();
 }
+
+RETCODE OdbcEnv::sqlDrivers(SQLUSMALLINT direction,
+							SQLCHAR * serverName,
+							SQLSMALLINT	bufferLength1,
+							SQLSMALLINT * nameLength1Ptr,
+							SQLCHAR * description,
+							SQLSMALLINT bufferLength2,
+							SQLSMALLINT * nameLength2Ptr )
+{
+#ifdef _WIN32
+	switch( direction )
+	{
+	case SQL_FETCH_NEXT:
+		if ( activeDrv == NULL )
+			getDrivers ();
+		else if ( endDrv && !*endDrv )
+		{
+			activeDrv = endDrv = listDrv;
+			return SQL_NO_DATA;
+		}
+		else
+			activeDrv = endDrv;
+		break;
+
+	case SQL_FETCH_FIRST:
+		getDrivers ();
+		break;
+
+	default :
+		return sqlReturn (SQL_ERROR, "HY103", "Invalid retrieval code");
+	}
+	
+	if ( endDrv && *endDrv )
+	{
+		while( *endDrv )
+			++endDrv;
+		++endDrv;
+	}
+
+	if ( activeDrv && !*activeDrv )
+	{
+		activeDrv = NULL;
+		return SQL_NO_DATA;
+	}
+
+	if ( serverName && bufferLength1)
+	{
+		int lenDrv = strlen(activeDrv);
+		int len = MIN(lenDrv, (int)MAX(0, (int)bufferLength1-1));
+		 
+		if ( len > 0 ) 
+			memcpy (serverName, activeDrv, len);
+
+		((char*) (serverName)) [len] = 0;
+		
+		if ( nameLength1Ptr )
+			*nameLength1Ptr = len;
+
+		if (len && len < lenDrv)
+			postError ("01004", "String data, right truncated");
+	}
+
+	if ( description && bufferLength2)
+	{
+		int lenDes = strlen(DRIVER_FULL_NAME);
+		int len = MIN(lenDes, (int)MAX(0, (int)bufferLength2-1));
+		 
+		if ( len > 0 ) 
+			memcpy (description, DRIVER_FULL_NAME, len);
+
+		((char*) (description)) [len] = 0;
+
+		if ( nameLength2Ptr )
+			*nameLength2Ptr = len;
+
+		if (len && len < lenDes)
+			postError ("01004", "String data, right truncated");
+	}
+
+#endif
+
+	return sqlSuccess();
+}
+
+RETCODE OdbcEnv::sqlDataSources(SQLUSMALLINT direction,
+								SQLCHAR * serverName,
+								SQLSMALLINT	bufferLength1,
+								SQLSMALLINT * nameLength1Ptr,
+								SQLCHAR * description,
+								SQLSMALLINT bufferLength2,
+								SQLSMALLINT * nameLength2Ptr )
+{
+#ifdef _WIN32
+	switch( direction )
+	{
+	case SQL_FETCH_NEXT:
+		if ( activeDSN == NULL )
+			getDataSources ( ODBC_BOTH_DSN );
+		else if ( endDSN && !*endDSN )
+		{
+			activeDSN = endDSN = listDSN;
+			return SQL_NO_DATA;
+		}
+		else
+			activeDSN = endDSN;
+		break;
+
+	case SQL_FETCH_FIRST:
+		getDataSources ( ODBC_BOTH_DSN );
+		break;
+
+	case SQL_FETCH_FIRST_USER:
+		getDataSources ( ODBC_USER_DSN );
+		break;
+
+	case SQL_FETCH_FIRST_SYSTEM:
+		getDataSources ( ODBC_SYSTEM_DSN );
+		break;
+
+	default :
+		return sqlReturn (SQL_ERROR, "HY103", "Invalid retrieval code");
+	}
+	
+	if ( endDSN && *endDSN )
+	{
+		while( *endDSN )
+			++endDSN;
+		++endDSN;
+	}
+
+	if ( activeDSN && !*activeDSN )
+	{
+		activeDSN = NULL;
+		return SQL_NO_DATA;
+	}
+
+	if ( serverName && bufferLength1)
+	{
+		int lenDSN = strlen(activeDSN);
+		int len = MIN(lenDSN, (int)MAX(0, (int)bufferLength1-1));
+		 
+		if ( len > 0 ) 
+			memcpy (serverName, activeDSN, len);
+
+		((char*) (serverName)) [len] = 0;
+		
+		if ( nameLength1Ptr )
+			*nameLength1Ptr = len;
+
+		if (len && len < lenDSN)
+			postError ("01004", "String data, right truncated");
+	}
+
+	if ( description && bufferLength2)
+	{
+		int lenDes = strlen(DRIVER_FULL_NAME);
+		int len = MIN(lenDes, (int)MAX(0, (int)bufferLength2-1));
+		 
+		if ( len > 0 ) 
+			memcpy (description, DRIVER_FULL_NAME, len);
+
+		((char*) (description)) [len] = 0;
+
+		if ( nameLength2Ptr )
+			*nameLength2Ptr = len;
+
+		if (len && len < lenDes)
+			postError ("01004", "String data, right truncated");
+	}
+
+#endif
+
+	return sqlSuccess();
+}
+
+#ifdef _WIN32
+BOOL OdbcEnv::getDrivers()
+{
+	const char	* odbcDrivers = "ODBC Drivers";
+	char * ptStr, * ptStrEnd, * ptStrSave;
+	char bufferDrv[SQL_MAX_DSN_LENGTH + 1];
+	int lenName = strlen(DRIVER_FULL_NAME);
+	int n=0, nRead, nLen;
+
+	clearErrors();
+
+    nRead = SQLGetPrivateProfileString(odbcDrivers, NULL, "", listDrv, sizeof(listDrv),odbcInctFileName);
+	ptStrSave = ptStrEnd = ptStr = listDrv;
+
+	while( nRead > 0 && *ptStrEnd )
+	{
+		while( *ptStrEnd )
+			++ptStrEnd;
+		++ptStrEnd;
+		nLen = ptStrEnd - ptStr; 
+		nRead -= nLen;
+
+		n = SQLGetPrivateProfileString(ptStr, "FileExtns", "", bufferDrv, sizeof(bufferDrv),odbcInctFileName);
+
+		if ( strstr(bufferDrv, "*.fdb") || strstr(bufferDrv, "*.gdb") )
+		{
+			memcpy(ptStrSave,ptStr,nLen);
+			ptStrSave += nLen;
+		}
+
+		ptStr = ptStrEnd;
+	}
+	
+	*ptStrSave = '\0';
+	activeDrv = endDrv = listDrv;
+
+	return TRUE;
+}
+
+BOOL OdbcEnv::getDataSources(UWORD wConfigMode)
+{
+	const char	* odbcDataSources = "ODBC Data Sources";
+	char * ptStr, * ptStrEnd, * ptStrSave;
+	char bufferDSN[SQL_MAX_DSN_LENGTH + 1];
+	int lenName = strlen(DRIVER_FULL_NAME);
+	int n=0, nRead, nLen;
+
+	clearErrors();
+
+	SQLSetConfigMode( wConfigMode );
+
+    nRead = SQLGetPrivateProfileString(odbcDataSources, NULL, "", listDSN, sizeof(listDSN),odbcIniFileName);
+	ptStrSave = ptStrEnd = ptStr = listDSN;
+
+	while( nRead > 0 && *ptStrEnd )
+	{
+		while( *ptStrEnd )
+			++ptStrEnd;
+		++ptStrEnd;
+		nLen = ptStrEnd - ptStr; 
+		nRead -= nLen;
+
+		n = SQLGetPrivateProfileString(odbcDataSources, ptStr, "", bufferDSN, sizeof(bufferDSN),odbcIniFileName);
+
+		if ( !memcmp(bufferDSN, DRIVER_FULL_NAME, lenName) )
+		{
+			memcpy(ptStrSave,ptStr,nLen);
+			ptStrSave += nLen;
+		}
+
+		ptStr = ptStrEnd;
+	}
+	
+	*ptStrSave = '\0';
+	activeDSN = endDSN = listDSN;
+
+	return TRUE;
+}
+#endif

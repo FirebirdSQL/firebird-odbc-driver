@@ -32,9 +32,6 @@
 #include "IscPreparedStatement.h"
 #include "IscBlob.h"
 
-#define TABLE_TYPE	4
-
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -56,21 +53,30 @@ void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, con
 	JString sql = "select NULL as table_cat,"
 				          "NULL as table_schem,"
 						  "tbl.rdb$relation_name as table_name,"
-						  "usp.rdb$field_name as column_name,"
-						  "usp.rdb$grantor as grantor,"
-						  "usp.rdb$user as grantee,"
-						  "usp.rdb$privilege as privilege,"
-						  "usp.rdb$grant_option as isgrantable "
-						  "from rdb$relations tbl, rdb$user_privileges usp\n"
-						  " where tbl.rdb$relation_name = usp.rdb$relation_name\n";
+						  "tbl.rdb$field_name as column_name,"
+						  "priv.rdb$grantor as grantor,"
+						  "priv.rdb$user as grantee,"
+						  "cast( priv.rdb$privilege as char(11) ) as privilege,"
+						  "cast ( priv.rdb$grant_option as char(4) ) as is_grantable "
+						  "from rdb$relation_fields tbl, rdb$user_privileges priv\n"
+						  " where tbl.rdb$relation_name = priv.rdb$relation_name\n";
 	
-	if (tableNamePattern)
-		sql += expandPattern (" and tbl.rdb$relation_name %s '%s'", tableNamePattern);
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		char buf[128];
+		sprintf (buf, "and priv.rdb$object_type = 0\n"
+					  "and priv.rdb$user = '%s' and priv.rdb$user_type = %d\n",
+						metaData->getUserAccess(),metaData->getUserType());
+		sql +=	buf;
+	}
 
-	if (columnNamePattern)
-		sql += expandPattern (" and usp.rdb$field_name %s '%s'", columnNamePattern);
+	if (tableNamePattern && *tableNamePattern)
+		sql += expandPattern (" and ","tbl.rdb$relation_name", tableNamePattern);
 
-	sql += " order by tbl.rdb$relation_name, usp.rdb$field_name, usp.rdb$privilege";
+	if (columnNamePattern && *columnNamePattern)
+		sql += expandPattern (" and ","tbl.rdb$field_name", columnNamePattern);
+
+	sql += " order by tbl.rdb$relation_name, tbl.rdb$field_name, priv.rdb$privilege";
 
 	prepareStatement (sql);
 	numberColumns = 8;
@@ -85,6 +91,11 @@ bool IscColumnPrivilegesResultSet::next()
 	trimBlanks(4);
 	trimBlanks(5);
 	trimBlanks(6);
+
+	const char *grantor = resultSet->getString(5);
+	const char *grantee = resultSet->getString(6);
+	if(!strcmp(grantor,grantee))
+		resultSet->setValue( 5, "_SYSTEM" );
 
 	const char *privilege = resultSet->getString(7);
 
@@ -122,33 +133,15 @@ bool IscColumnPrivilegesResultSet::next()
 
 int IscColumnPrivilegesResultSet::getColumnDisplaySize(int index)
 {
-	switch (index)
-		{
-		case TABLE_TYPE:				// change from blob to text
-			return 128;
-		}
-
 	return Parent::getColumnDisplaySize (index);
 }
 
-int IscColumnPrivilegesResultSet::getColumnType(int index)
+int IscColumnPrivilegesResultSet::getColumnType(int index, int &realSqlType)
 {
-	switch (index)
-		{
-		case TABLE_TYPE:				// change from blob to text
-			return JDBC_VARCHAR;
-		}
-
-	return Parent::getColumnType (index);
+	return Parent::getColumnType (index, realSqlType);
 }
 
 int IscColumnPrivilegesResultSet::getColumnPrecision(int index)
 {
-	switch (index)
-		{
-		case TABLE_TYPE:				// change from blob to text
-			return 128;
-		}
-
 	return Parent::getPrecision (index);
 }

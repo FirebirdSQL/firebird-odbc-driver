@@ -1,0 +1,9 @@
+1)
+    For connect from unixODBC :
+    create the reference IscDbc on IscDbc.so
+
+    Into share folder :
+    IscDbc         <------------      reference IscDbc on IscDbc.so
+    IscDbc.so
+    OdbcJdbc.so
+    OdbcJdbcS.so

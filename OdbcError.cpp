@@ -107,7 +107,6 @@ OdbcError::OdbcError(int code, const char *state, JString errorMsg)
 	nativeCode = code;
 	msg = errorMsg;
 	next = NULL;
-	rowCount = 0;
 	rowNumber = 0;
 	columnNumber = 0;
 }
@@ -162,8 +161,9 @@ RETCODE OdbcError::sqlGetDiagField(int diagId, SQLPOINTER ptr, int msgBufferLeng
 
 		case SQL_DIAG_SUBCLASS_ORIGIN:
 			{
+			Hash *code;
 			string = CLASS_ODBC;
-			for (Hash *code = hashTable [JString::hash (sqlState, HASH_SIZE)]; code;
+			for (code = hashTable [JString::hash (sqlState, HASH_SIZE)]; code;
 				 code = code->collision)
 				try
 				{
@@ -181,11 +181,8 @@ RETCODE OdbcError::sqlGetDiagField(int diagId, SQLPOINTER ptr, int msgBufferLeng
 					break;
 				}
 
-//				if (!strcmp (sqlState, code->string))
-//					{
-//					string = CLASS_ODBC;
-//					break;
-//					}
+			if ( !code )
+				string = CLASS_ISO;
 			}
 			break;
 
@@ -205,10 +202,6 @@ RETCODE OdbcError::sqlGetDiagField(int diagId, SQLPOINTER ptr, int msgBufferLeng
 		case SQL_DIAG_SQLSTATE:
 			string = sqlState;
 			break;			
-
-		case SQL_DIAG_CURSOR_ROW_COUNT:
-			value = rowCount;
-			break;
 
 		case SQL_DIAG_ROW_NUMBER:
 			value = rowNumber;
@@ -259,9 +252,4 @@ void OdbcError::setColumnNumber(int column, int row)
 {
 	columnNumber = column;
 	rowNumber = row;
-}
-
-void OdbcError::setRowCount(int count)
-{
-	rowCount = count;
 }

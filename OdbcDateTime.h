@@ -37,10 +37,10 @@
 #endif // _MSC_VER > 1000
 
 #include <time.h>
-#include "Connection.h"
-#include "TimeStamp.h"
+#include "IscDbc/Connection.h"
+#include "IscDbc/TimeStamp.h"
 #include "IscDbc/SqlTime.h"
-#include "DateTime.h"
+#include "IscDbc/DateTime.h"
 
 struct tagTIMESTAMP_STRUCT;
 struct tagDATE_STRUCT;
@@ -60,9 +60,9 @@ private:
 //Orig.
 //	static signed long OdbcDateTime::ndate (signed long nday, tm *times);
 //From B. Schulte
-	static signed long OdbcDateTime::ndate (signed long nday,signed long nsec, tm *times);
-	static signed long OdbcDateTime::nday (tm *times);
-	static signed long OdbcDateTime::yday (tm *times);
+	signed long ndate (signed long nday,signed long nsec, tm *times);
+	signed long nday (tm *times);
+	signed long yday (tm *times);
 
 };
 

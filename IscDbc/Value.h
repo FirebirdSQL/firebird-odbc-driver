@@ -40,13 +40,10 @@
 #include "DateTime.h"	// Added by ClassView
 
 class Blob;
-class Clob;
 
 class Value  
 {
 public:
-	//void setBinaryBlob (long recordNumber, long sectionId);
-	//void setAsciiBlob (long recordNumber, long sectionId);
 	void setValue (Blob *blb);
 	Blob* getBlob();
 	char* getString (char **tempPtr);
@@ -56,10 +53,12 @@ public:
 	short	getShort(int scale = 0);
 	long	getLong(int scale = 0);
 	QUAD	getQuad(int scale = 0);
+	float	getFloat();
 	double	getDouble();
 	char	*getString();
 	int		getString (int bufferSize, char *buffer);
 
+	void	setValue (float value);
 	void	setValue (double value);
 	void	setValue (long value, int scale = 0);
 	void	setValue (Value *value);
@@ -67,12 +66,11 @@ public:
 //protected:
 	void	setString (int length, const char *string, bool copy);
 	void	setString (const char *value, bool copy);
+	void	convertStringData();
 
 public:	
 	void setValue (SqlTime value);
 	static void convert (QUAD number, int scale, char *string);
-	Clob* getClob();
-	void setValue (Clob *blob);
 	TimeStamp getTimestamp();
 	SqlTime getTime();
 	void setValue (TimeStamp value);
@@ -89,21 +87,21 @@ public:
 	void allocString (Type typ, int length);
 	void getStream (Stream *stream, bool copyFlag);
 	void setValue (DateTime value);
+
 	DateTime getDate();
 	QUAD convertToQuad (double& divisor);
 	inline void clear()
-		{
+	{
 		if (type == String && copyFlag && data.string.string)
-			{
+		{
 			delete [] data.string.string;
 			data.string.string = NULL;
-			}
+		}
 		else if (type == BlobPtr)
 			data.blob->release();
-		else if (type == ClobPtr)
-			data.clob->release();
+
 		type = Null;
-		}
+	}
 
 	Value();
 	virtual ~Value();
@@ -119,19 +117,12 @@ public:
 			char	*string;
 			int		length;
 			}	string;
-		/***
-		struct
-			{
-			long	recordNumber;
-			long	sectionId;
-			}	blobId;
-		***/
 		short		smallInt;
 		long		integer;
+		float		flt;
 		double		dbl;
 		QUAD		quad;
 		Blob		*blob;
-		Clob		*clob;
 		DateTime	date;
 		TimeStamp	timestamp;
 		SqlTime		time;

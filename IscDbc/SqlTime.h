@@ -32,7 +32,6 @@
 class SqlTime
 {
 public:
-	SqlTime& operator = (long value);
 	static SqlTime convert (const char *string, int length);
 	int getString (int length, char *buffer);
 	int getString (const char * format, int length, char *buffer);

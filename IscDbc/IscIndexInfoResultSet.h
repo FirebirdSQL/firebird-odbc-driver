@@ -41,8 +41,8 @@ public:
 
 	typedef IscMetaDataResultSet Parent;
 	virtual int getColumnDisplaySize(int index);
-	virtual int getColumnType(int index);
-	virtual int getColumnPrecision(int index);
+	virtual int getColumnType(int index, int &realSqlType);
+	virtual int getPrecision(int index);
 
 };
 

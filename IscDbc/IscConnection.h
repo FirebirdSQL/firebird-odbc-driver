@@ -49,6 +49,7 @@ public:
 	virtual void addRef();
 	virtual int getTransactionIsolation();
 	virtual void setTransactionIsolation (int level);
+	virtual void setExtInitTransaction (int optTpb);
 	virtual bool getAutoCommit();
 	virtual void setAutoCommit (bool setting);
 	void init();
@@ -59,6 +60,9 @@ public:
 	JString getInfoString (char *buffer, int item, const char *defaultString);
 	int getInfoItem (char *buffer, int item, int defaultValue);
 	static JString getIscStatusText (ISC_STATUS *statusVector);
+	virtual bool getNativeSql (const char * inStatementText, long textLength1,
+								char * outStatementText, long bufferLength,
+								long * textLength2Ptr);
 	void* startTransaction();
 	void deleteStatement (IscStatement *statement);
 	IscConnection();
@@ -68,10 +72,11 @@ public:
 	virtual void ping();
 	virtual int hasRole (const char *schemaName, const char *roleName);
 	//virtual void freeHTML (const char *html);
-	virtual Clob* genHTML (Properties *context, long genHeaders);
+	virtual Blob* genHTML (Properties *context, long genHeaders);
 	virtual bool isConnected();
 	virtual Statement* createStatement();
 	virtual void prepareTransaction();
+	virtual bool getTransactionPending();
 	virtual void rollback();
 	virtual void commit();
 	virtual PreparedStatement* prepareStatement (const char *sqlString);
@@ -84,7 +89,9 @@ public:
 	LinkedList		statements;
 	IscDatabaseMetaData	*metaData;
 	int				transactionIsolation;
+	int				transactionExtInit;
 	bool			autoCommit;
+	bool			transactionPending;
 	int				useCount;
 };
 

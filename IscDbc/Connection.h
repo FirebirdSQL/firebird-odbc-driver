@@ -60,17 +60,26 @@ typedef __int64			QUAD;
 typedef unsigned __int64			UQUAD;
 #endif
 
+#define ISC_TIME_SECONDS_PRECISION          10000L
+#define ISC_TIME_SECONDS_PRECISION_SCALE    (-4)
+// Default standart size of fraction it's 9 number  
+// It's 9 = ISC_TIME_SECONDS_PRECISION * STD_TIME_SECONDS_PRECISION
+#define STD_TIME_SECONDS_PRECISION          100000L
+
+/* values for tra_flags */
+#define TRA_ro			1
+#define TRA_nw			2
+
 class Statement;
 class PreparedStatement;
 class CallableStatement;
 class ResultSet;
 class ResultList;
 class DatabaseMetaData;
-class ResultSetMetaData;
 class DateTime;
 class TimeStamp;
 class SqlTime;
-class Clob;
+class StatementMetaData;
 
 #define CONNECTION_VERSION	1
 
@@ -86,7 +95,10 @@ public:
 	virtual void		rollback() = 0;
 	virtual void		commit() = 0;
 
-	virtual Clob*		genHTML (Properties *context, long genHeaders) = 0;
+	virtual Blob*		genHTML (Properties *context, long genHeaders) = 0;
+	virtual bool		getNativeSql (const char * inStatementText, long textLength1,
+										char * outStatementText, long bufferLength,
+										long * textLength2Ptr) = 0;
 
 	virtual Statement*	createStatement() = 0;
 	virtual PreparedStatement* prepareStatement (const char *sqlString) = 0;
@@ -102,6 +114,8 @@ public:
 	virtual bool		getAutoCommit() = 0;
 	virtual void		setTransactionIsolation (int level) = 0;
 	virtual int			getTransactionIsolation() = 0;
+	virtual bool		getTransactionPending() = 0;
+	virtual void		setExtInitTransaction (int optTpb) = 0;
 	virtual CallableStatement* prepareCall (const char *sql) = 0;
 };
 
@@ -110,6 +124,9 @@ public:
 class DatabaseMetaData 
 {
 public:
+	virtual short getSqlStrPageSizeBd(const void * info_buffer, int bufferLength,short *lengthPtr) = 0;
+	virtual short getSqlStrWalInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr) = 0;
+	virtual short getStrStatInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr) = 0;
 	virtual ResultSet* getIndexInfo (const char * catalog, const char * schemaPattern, const char * tableNamePattern, bool unique, bool approximate) = 0;
 	virtual ResultSet* getImportedKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern) = 0;
 	virtual ResultSet* getPrimaryKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern) = 0;
@@ -125,6 +142,7 @@ public:
 	virtual bool allTablesAreSelectable() = 0;
 	virtual const char* getURL() = 0;
 	virtual const char* getUserName() = 0;
+	virtual const char* getUserAccess() = 0;
 	virtual bool isReadOnly() = 0;
 	virtual bool nullsAreSortedHigh() = 0;
 	virtual bool nullsAreSortedLow() = 0;
@@ -286,6 +304,8 @@ public:
 			  const char* typeNamePattern, int* types) = 0;
 	virtual int		objectVersion() = 0;
 	virtual bool supportsStatementMetaData() = 0;
+	virtual void LockThread() = 0;
+	virtual void UnLockThread() = 0;
 };
 
 #define STATEMENT_VERSION	1
@@ -296,6 +316,7 @@ public:
 	virtual bool		execute (const char *sqlString) = 0;
 	virtual ResultSet*	executeQuery (const char *sqlString) = 0;
 	virtual int			getUpdateCount() = 0;
+	virtual void		clearResults() = 0;
 	virtual bool		getMoreResults() = 0;
 	virtual void		setCursorName (const char *name) = 0;
 	virtual ResultSet*	getResultSet() = 0;
@@ -305,6 +326,10 @@ public:
 	virtual int			release() = 0;
 	virtual void		addRef() = 0;
 	virtual int			objectVersion() = 0;
+	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) = 0;
+	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr) = 0;
+	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr) = 0;
+	
 };
 
 #define STATEMENTMETADATA_VERSION	1
@@ -312,11 +337,33 @@ public:
 class StatementMetaData  
 {
 public:
-	virtual int			getParameterCount() = 0;
-	virtual int			getParameterType (int index) = 0;
+	virtual int			getColumnCount() = 0;
+	virtual int			getColumnType (int index, int &realSqlType) = 0;
 	virtual int			getPrecision(int index) = 0;
 	virtual int			getScale(int index) = 0;
 	virtual bool		isNullable (int index) = 0;
+	virtual int			getColumnDisplaySize(int index) = 0;
+	virtual const char* getColumnLabel(int index) = 0;
+	virtual const char* getSqlTypeName(int index) = 0;
+	virtual const char* getColumnName(int index) = 0;
+	virtual const char* getTableName(int index) = 0;
+	virtual const char* getColumnTypeName(int index) = 0;
+	virtual bool		isSigned (int index) = 0;
+	virtual bool		isReadOnly (int index) = 0;
+	virtual bool		isWritable (int index) = 0;
+	virtual bool		isDefinitelyWritable (int index) = 0;
+	virtual bool		isCurrency (int index) = 0;
+	virtual bool		isCaseSensitive (int index) = 0;
+	virtual bool		isAutoIncrement (int index) = 0;
+	virtual bool		isSearchable (int index) = 0;
+	virtual const char*	getSchemaName (int index) = 0;
+	virtual const char*	getCatalogName (int index) = 0;
+	virtual int			isBlobOrArray(int index) = 0;
+
+	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData) = 0;
+	virtual void		setSqlData(int index, long ptData, long ptIndData) = 0;
+	virtual void		saveSqlData(int index, long ptData, long ptIndData) = 0;
+	virtual void		restoreSqlData(int index) = 0;
 	virtual int			objectVersion() = 0;
 };
 
@@ -330,19 +377,16 @@ public:
 	virtual int			executeUpdate() = 0;
 	virtual void		setString(int index, const char * string) = 0;
     virtual void        setString(int index, const char * string, int length) = 0;
+	virtual void        convStringData(int index) = 0;
 	virtual void		setByte (int index, char value) = 0;
 	virtual void		setShort (int index, short value) = 0;
 	virtual void		setInt (int index, long value) = 0;
-	virtual void		setLong (int index, QUAD value) = 0;
+	virtual void		setQuad (int index, QUAD value) = 0;
 	virtual void		setBytes (int index, int length, const void *bytes) = 0;
 //Next three lines added by RM 2002-06-4
     virtual void        beginBlobDataTransfer(int index) = 0;
     virtual void        putBlobSegmentData (int length, const void *bytes) = 0;
     virtual void        endBlobDataTransfer() = 0;
-
-    virtual void        beginClobDataTransfer(int index) = 0;
-    virtual void        putClobSegmentData (int length, const void *bytes) = 0;
-    virtual void        endClobDataTransfer() = 0;
 
 	virtual void		setFloat (int index, float value) = 0;
 	virtual void		setDouble (int index, double value) = 0;
@@ -351,9 +395,11 @@ public:
 	virtual void		setTime (int index, SqlTime value) = 0;
 	virtual void		setTimestamp (int index, TimeStamp value) = 0;
 	virtual void		setBlob (int index, Blob *value) = 0;
-	virtual void		setClob (int index, Clob *value) = 0;
+	virtual void		setArray (int index, Blob *value) = 0;
 	virtual StatementMetaData*
-						getStatementMetaData() = 0;
+						getStatementMetaDataIPD() = 0;
+	virtual StatementMetaData*
+						getStatementMetaDataIRD() = 0;
 	virtual	int			getNumParams() = 0;
 	virtual int			objectVersion() = 0;
 };
@@ -371,8 +417,6 @@ public:
 	virtual short		getShort (const char *columnName) = 0;
 	virtual long		getInt (int id) = 0;
 	virtual long		getInt (const char *columnName) = 0;
-	virtual QUAD		getLong (int id) = 0;
-	virtual QUAD		getLong (const char *columnName) = 0;
 	virtual float		getFloat (int id) = 0;
 	virtual float		getFloat (const char *columnName) = 0;
 	virtual double		getDouble (int id) = 0;
@@ -385,11 +429,20 @@ public:
 	virtual TimeStamp	getTimestamp (const char *columnName) = 0;
 	virtual Blob*		getBlob (int index) = 0;
 	virtual Blob*		getBlob (const char *columnName) = 0;
-	virtual Clob*		getClob (int index) = 0;
-	virtual Clob*		getClob (const char *columnName) = 0;
+	virtual QUAD		getQuad (int id) = 0;
+	virtual QUAD		getQuad (const char *columnName) = 0;
 	virtual int			findColumn (const char *columName) = 0;
-	virtual ResultSetMetaData* getMetaData() = 0;
+	virtual StatementMetaData* getMetaData() = 0;
 	virtual void		close() = 0;
+	virtual void		setPosRowInSet(int posRow) = 0;
+	virtual int			getPosRowInSet() = 0;
+	virtual bool		readStaticCursor() = 0;
+	virtual bool		readForwardCursor() = 0;
+	virtual bool		setCurrentRowInBufferStaticCursor(int nRow) = 0;
+	virtual void		copyNextSqldaInBufferStaticCursor() = 0;
+	virtual void		copyNextSqldaFromBufferStaticCursor() = 0;
+	virtual int			getCountRowsStaticCursor() = 0;
+	virtual bool		getDataFromStaticCursor (int column, int cType, void * pointer, int bufferLength, long * indicatorPointer) = 0;
 	virtual bool		next() = 0;
 	virtual int			release() = 0;
 	virtual void		addRef() = 0;
@@ -428,7 +481,6 @@ public:
 	virtual void		updateTime (int columnIndex, SqlTime value) = 0;
 	virtual void		updateTimeStamp (int columnIndex, TimeStamp value) = 0;
 	virtual void		updateBlob (int columnIndex, Blob* value) = 0;
-	virtual void		updateClob (int columnIndex, Clob* value) = 0;
 	virtual void		updateNull (const char *columnName) = 0;
 	virtual void		updateBoolean (const char *columnName, bool value) = 0;
 	virtual void		updateByte (const char *columnName, char value) = 0;
@@ -443,7 +495,6 @@ public:
 	virtual void		updateTime (const char *columnName, SqlTime value) = 0;
 	virtual void		updateTimeStamp (const char *columnName, TimeStamp value) = 0;
 	virtual void		updateBlob (const char *columnName, Blob* value) = 0;
-	virtual void		updateClob (const char *columnName, Clob* value) = 0;
 	virtual void		insertRow() = 0;
 	virtual void		updateRow() = 0;
 	virtual void		deleteRow() = 0;
@@ -452,34 +503,6 @@ public:
 	virtual void		moveToInsertRow() = 0;
 	virtual void		moveToCurrentRow() = 0;
 	virtual Statement	*getStatement() = 0;
-};
-
-#define RESULTSETMETADATA_VERSION	1
-
-class ResultSetMetaData  
-{
-public:
-	virtual const char*	getTableName (int index) = 0;
-	virtual const char*	getColumnName (int index) = 0;
-	virtual int			getColumnDisplaySize (int index) = 0;
-	virtual int			getColumnType (int index) = 0;
-	virtual const char*	getColumnTypeName (int index) = 0;
-	virtual int			getColumnCount() = 0;
-	virtual int			getPrecision(int index) = 0;
-	virtual int			getScale(int index) = 0;
-	virtual bool		isNullable (int index) = 0;
-	virtual int			objectVersion() = 0;
-	virtual const char*	getColumnLabel (int index) = 0;
-	virtual bool		isSigned (int index) = 0;
-	virtual bool		isReadOnly (int index) = 0;
-	virtual bool		isWritable (int index) = 0;
-	virtual bool		isDefinitelyWritable (int index) = 0;
-	virtual bool		isCurrency (int index) = 0;
-	virtual bool		isCaseSensitive (int index) = 0;
-	virtual bool		isAutoIncrement (int index) = 0;
-	virtual bool		isSearchable (int index) = 0;
-	virtual const char*	getSchemaName (int index) = 0;
-	virtual const char*	getCatalogName (int index) = 0;
 };
 
 #define RESULTLIST_VERSION		1
@@ -511,18 +534,21 @@ public:
 	virtual char		getByte(int parameterIndex) = 0;
 	virtual short		getShort(int parameterIndex) = 0;
 	virtual long		getInt(int parameterIndex) = 0;
-	virtual QUAD		getLong(int parameterIndex) = 0;
 	virtual float		getFloat(int parameterIndex) = 0;
 	virtual double		getDouble(int parameterIndex) = 0;
 	//virtual byte[]	getBytes(int parameterIndex) = 0;
 	virtual DateTime	getDate(int parameterIndex) = 0;
 	virtual SqlTime		getTime(int parameterIndex) = 0;
 	virtual TimeStamp	getTimestamp(int parameterIndex) = 0;
+	virtual QUAD		getQuad(int parameterIndex) = 0;
 	virtual Blob*		getBlob (int i) = 0;
-	virtual Clob*		getClob (int i) = 0;
     //void		registerOutParameter (int paramIndex, int sqlType, const char* typeName) = 0;
 };
 
+#ifdef __BORLANDC__
+extern "C" __declspec( dllexport ) Connection*	createConnection();
+#else
 extern "C" Connection*	createConnection();
+#endif
 
 #endif // !defined(AFX_CONNECTION_H__BD560E62_B194_11D3_AB9F_0000C01D2301__INCLUDED_)

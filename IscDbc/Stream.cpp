@@ -24,13 +24,13 @@
 
 #include <memory.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <stdio.h>
-#include "Engine.h"
+#include "IscDbc.h"
 #include "Stream.h"
 #include "SQLError.h"
 #include "Blob.h"
-
+#include "BinToHexStr.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -127,6 +127,31 @@ void Stream::putSegment(int length, const char *ptr, bool copy)
 		}
 }
 
+int Stream::getSegmentToHexStr(int offset, int len, void * ptr)
+{
+	int n = 0;
+	int length = len;
+	short *address = (short*) ptr;
+
+	for (Segment *segment = segments; segment; n += segment->length, segment = segment->next)
+		if (n + segment->length >= offset)
+		{
+			int off = offset - n;
+			int l = MIN (length, segment->length - off);
+			unsigned char * ptSours = (unsigned char *)segment->address + off;
+
+			length -= l;
+			offset += l;
+
+			while( l > 0 )
+				*address++ = conwBinToHexStr[*ptSours++],--l;
+
+			if (!length)
+				break;
+		}
+
+	return len - length;
+}
 
 int Stream::getSegment(int offset, int len, void * ptr)
 {
@@ -468,12 +493,6 @@ void* Stream::getSegment(int offset)
 }
 
 void Stream::putSegment(Blob * blob)
-{
-	for (int n, offset = 0; n = blob->getSegmentLength (offset); offset += n)
-		putSegment (n, (const char*) blob->getSegment (offset), true);
-}
-
-void Stream::putSegment(Clob * blob)
 {
 	for (int n, offset = 0; n = blob->getSegmentLength (offset); offset += n)
 		putSegment (n, (const char*) blob->getSegment (offset), true);

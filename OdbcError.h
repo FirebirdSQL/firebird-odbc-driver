@@ -29,12 +29,11 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
-#include "JString.h"
+#include "IscDbc/JString.h"
 
 class OdbcError  
 {
 public:
-	void setRowCount (int count);
 	void setColumnNumber (int column, int row);
 	void setRowNumber (int number);
 	RETCODE sqlGetDiagField (int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
@@ -46,7 +45,6 @@ public:
 	char			sqlState [128];
 	JString			msg;
 	int				nativeCode;
-	int				rowCount;
 	int				rowNumber;
 	int				columnNumber;
 };

@@ -80,10 +80,11 @@
 #include "OdbcEnv.h"
 #include <odbcinst.h>
 #include "SetupAttributes.h"
-#include "Connection.h"
-#include "SQLException.h"
+#include "IscDbc/Connection.h"
+#include "IscDbc/SQLException.h"
 #include "OdbcStatement.h"
 #include "OdbcDesc.h"
+#include "ConnectDialog.h"
 
 #ifndef _WIN32
 #define ELF
@@ -94,6 +95,10 @@
 #endif
 
 #define DEFAULT_DRIVER		"IscDbc"
+
+#define SQL_FBGETPAGEDB			180
+#define SQL_FBGETWALDB			181
+#define SQL_FBGETSTATINFODB		182
 
 typedef Connection* (*ConnectFn)();
 
@@ -141,7 +146,6 @@ static const int supportedFunctions [] = {
             SQL_API_SQLNUMRESULTCOLS,
             SQL_API_SQLDRIVERS,
             SQL_API_SQLPARAMDATA,
-            SQL_API_SQLENDTRAN,
             SQL_API_SQLPREPARE,
             SQL_API_SQLEXECDIRECT,
             SQL_API_SQLPUTDATA,
@@ -160,6 +164,7 @@ static const int supportedFunctions [] = {
             SQL_API_SQLGETCURSORNAME,
             SQL_API_SQLSETSTMTATTR,
             SQL_API_SQLGETDATA,
+			SQL_API_SQLSETSCROLLOPTIONS,
 
 			SQL_API_SQLEXTENDEDFETCH,	//Deprecated ODBC 1.0 call. Replaced by SQL_API_SQLFETCHSCROLL in ODBC 3.0
 
@@ -264,34 +269,24 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 {
 	env					= parent;
 	connected			= false;
+	levelBrowseConnect	= 0;
 	connectionTimeout	= 0;
 	connection			= NULL;
-	transactionPending	= false;
 	statements			= NULL;
 	descriptors			= NULL;
-	libraryHandle		= NULL;
-	asyncEnabled		= false;
+	asyncEnabled		= SQL_ASYNC_ENABLE_OFF;
 	autoCommit			= true;
-	cursors				= SQL_CUR_USE_DRIVER;
+	cursors				= SQL_CUR_USE_DRIVER; //Org
 	statementNumber		= 0;
-	accessMode			= SQL_MODE_READ_ONLY;
+	accessMode			= SQL_MODE_READ_WRITE;
 	transactionIsolation = SQL_TXN_READ_COMMITTED; //suggested by CGA.
+	optTpb				= 0;
 }
 
 OdbcConnection::~OdbcConnection()
 {
 	if (connection)
 		connection->close();
-
-	if (env)
-		env->connectionClosed (this);
-
-// NOMEY begin
-//	while (statements)
-//		delete statements;
-
-//	while (descriptors)
-//		delete descriptors;
 
 	while (statements)
 	{
@@ -306,14 +301,9 @@ OdbcConnection::~OdbcConnection()
 		descriptors = (OdbcDesc*)descriptor->next;
 		delete descriptor;
 	}
-// NOMEY end
 
-
-
-#ifdef ELF
-	if (libraryHandle)
-		dlclose (libraryHandle);
-#endif
+	if (env)
+		env->connectionClosed (this);
 }
 
 OdbcObjectType OdbcConnection::getType()
@@ -350,7 +340,7 @@ RETCODE OdbcConnection::sqlSetConnectAttr (SQLINTEGER attribute, SQLPOINTER valu
 
 		//Added by CA
 	case SQL_ATTR_ASYNC_ENABLE:
-		asyncEnabled = (int) value == SQL_ASYNC_ENABLE_ON;
+		asyncEnabled = (int) value;
 		break;
 
 	case SQL_ATTR_ACCESS_MODE:
@@ -411,6 +401,8 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 			password = value;
 		else if (!strcmp (name, "ROLE"))
 			role = value;
+		else if (!strcmp (name, "CHARSET"))
+			charset = value;
 		else if (!strcmp (name, "DRIVER"))
 			driver = value;
 		else if (!strcmp (name, "ODBC"))
@@ -423,34 +415,7 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 
 	char returnString [1024], *r = returnString;
 
-	/* Removed at suggestion of CGA
-		r = appendString (r, "DRIVER=");
-		r = appendString (r, driver);
-
-		if (!dsn.IsEmpty())
-			{
-			r = appendString (r, ";DSN=");
-			r = appendString (r, dsn);
-			}
-
-		if (!account.IsEmpty())
-			{
-			r = appendString (r, ";UID=");
-			r = appendString (r, account);
-			}
-
-		if (!password.IsEmpty())
-			{
-			r = appendString (r, ";PWD=");
-			r = appendString (r, password);
-			}
-
-		if (!role.IsEmpty())
-			{
-			r = appendString (r, ";ROLE=");
-			r = appendString (r, role);
-			}
-	*/
+	*r = '\0';
 	//Block suggested by CGA
 	r = appendString (r, "DSN=");
 	r = appendString (r, dsn);
@@ -485,13 +450,260 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 		r = appendString (r, role);
 	}
 
+	if (!charset.IsEmpty())
+	{
+		r = appendString (r, ";CHARSET=");
+		r = appendString (r, charset);
+	}
+
 	if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
 		postError ("01004", "String data, right truncated");
 
-	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role);
+#ifdef _WIN32
+	if ( account.IsEmpty() || password.IsEmpty() )
+	{
+		CConnectDialog dlg;
+		dlg.m_user = account;
+		dlg.m_password = password;
+		dlg.m_role = role;
+
+		if ( IDOK != dlg.DoModal() )
+		{
+			postError ("28000", "Invalid authorization specification");
+			return SQL_ERROR;
+		}
+
+		account = dlg.m_user;
+		password = dlg.m_password;
+		role = dlg.m_role;
+	}
+#endif // _WIN32
+
+	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
 	if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
 		return ret;
+
+	if ( levelBrowseConnect )
+		levelBrowseConnect = 0;
+
+	return sqlSuccess();
+}
+
+RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, 
+										 SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, 
+										 SQLSMALLINT * stringLength2Ptr)
+{
+	bool bFullConnectionString = false;
+	clearErrors();
+
+	if ( !levelBrowseConnect && connected)
+		return sqlReturn (SQL_ERROR, "08002", "Connection name is use");
+
+	if (stringLength1 < 0 && stringLength1 != SQL_NTS)
+		return sqlReturn (SQL_ERROR, "HY090", "Invalid string or buffer length");
+
+	int length = stringLength (inConnectionString, stringLength1);
+	const char *end = (const char*) inConnectionString + length;
+	JString driver = DRIVER_NAME;
+
+	levelBrowseConnect = 0;
+
+	for (const char *p = (const char*) inConnectionString; p < end;)
+	{
+		char name [256];
+		char value [256];
+		char *q = name;
+		char c;
+
+		while (p < end && ((c = *p),c == ' ' || c == '*'))
+			++p;
+
+		while (p < end && (c = *p++),c != '=' && c != ';')
+			*q++ = c;
+
+		*q = 0;
+		q = value;
+		if (c == '=')
+			while (p < end && (c = *p++) != ';')
+				*q++ = c;
+		*q = 0;
+		if (!strcmp (name, "DSN"))
+		{
+			if (dsn != (const char *)value)
+			{
+				dsn = value;
+				levelBrowseConnect = 1;
+				break;
+			}
+		}
+		else if (!strcmp (name, "DRIVER"))
+		{
+			if (driver != (const char *)value)
+			{
+				driver = value;
+				levelBrowseConnect = 1;
+				break;
+			}
+		}
+		else if (!strcmp (name, "DBNAME"))
+		{
+			levelBrowseConnect = 3;
+			databaseName = value;
+			bFullConnectionString = true;
+		}
+		else if (!strcmp (name, "UID"))
+		{
+			account = value;
+			levelBrowseConnect = 2;
+		}
+		else if (!strcmp (name, "PWD"))
+		{
+			password = value;
+			levelBrowseConnect = 2;
+		}
+		else if (!strcmp (name, "ROLE"))
+		{
+			role = value;
+			levelBrowseConnect = 2;
+		}
+		else if (!strcmp (name, "CHARSET"))
+		{
+			charset = value;
+			levelBrowseConnect = 2;
+		}
+		else if (!strcmp (name, "ODBC"))
+			;
+		else
+			postError ("01S00", "Invalid connection string attribute");
+	}
+
+	if( levelBrowseConnect == 1 )
+		expandConnectParameters();
+
+	char returnString [1024], *r = returnString;
+	*r = '\0';
+
+	switch ( levelBrowseConnect )
+	{
+	case 1:
+		r = appendString (r, "*ROLE=");
+		if (!role.IsEmpty())
+			r = appendString (r, role);
+		else
+			r = appendString (r, "?");
+
+		r = appendString (r, "*CHARSET=");
+		if (!charset.IsEmpty())
+			r = appendString (r, charset);
+		else
+			r = appendString (r, "?");
+
+		r = appendString (r, ";UID=");
+		if (!account.IsEmpty())
+			r = appendString (r, account);
+		else
+			r = appendString (r, "?");
+
+		r = appendString (r, ";PWD=");
+		if (!password.IsEmpty())
+			r = appendString (r, password);
+		else
+			r = appendString (r, "?");
+
+		break;
+
+	case 2:
+		r = appendString (r, "DBNAME=");
+		if (!databaseName.IsEmpty())
+			r = appendString (r, databaseName);
+		else
+			r = appendString (r, "?");
+		break;
+
+	case 3:
+		if (!dsn.IsEmpty())
+		{
+			r = appendString (r, "DSN=");
+			r = appendString (r, dsn);
+		}
+
+		if (!driver.IsEmpty())
+		{
+			r = appendString (r, ";DRIVER=");
+			r = appendString (r, driver);
+		}
+
+		if (!role.IsEmpty())
+		{
+			r = appendString (r, ";ROLE=");
+			r = appendString (r, role);
+		}
+
+		if (!charset.IsEmpty())
+		{
+			r = appendString (r, ";CHARSET=");
+			r = appendString (r, charset);
+		}
+
+		if (!account.IsEmpty())
+		{
+			r = appendString (r, ";UID=");
+			r = appendString (r, account);
+		}
+
+		if (!password.IsEmpty())
+		{
+			r = appendString (r, ";PWD=");
+			r = appendString (r, password);
+		}
+
+		if (!databaseName.IsEmpty())
+		{
+			r = appendString (r, ";DBNAME=");
+			r = appendString (r, databaseName);
+		}
+		break;
+	}
+
+	if ( outConnectionString && bufferLength )
+	{
+		if (setString ((UCHAR*) returnString, r - returnString, outConnectionString, bufferLength, stringLength2Ptr))
+			postError ("01004", "String data, right truncated");
+	}
+
+	if ( bFullConnectionString == false )
+		return SQL_NEED_DATA;
+	else
+	{
+		RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
+
+		if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
+			return ret;
+	}
+
+	return sqlSuccess();
+}
+
+RETCODE OdbcConnection::sqlNativeSql(SQLCHAR * inStatementText, SQLINTEGER textLength1,
+										SQLCHAR * outStatementText, SQLINTEGER bufferLength,
+										SQLINTEGER * textLength2Ptr)
+{
+	clearErrors();
+
+	if ( outStatementText )
+	{
+		if ( textLength1 <= bufferLength )
+		{
+			if ( !connection->getNativeSql((const char *)inStatementText,textLength1,(char *)outStatementText,bufferLength,textLength2Ptr) )
+			{	
+				memcpy(outStatementText,inStatementText,textLength1);
+				outStatementText[textLength1]='\0';
+				if( textLength2Ptr )
+					*textLength2Ptr = textLength1;
+			}
+		}
+	}
 
 	return sqlSuccess();
 }
@@ -513,7 +725,6 @@ RETCODE OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * 
 	{
 	case SQL_API_ODBC3_ALL_FUNCTIONS:
 		memcpy (supportedPtr, functionsBitmap, sizeof (functionsBitmap));
-		//memset (supportedPtr, -1, sizeof (functionsBitmap));
 		return sqlSuccess();
 
 	case SQL_API_ALL_FUNCTIONS:
@@ -534,10 +745,17 @@ RETCODE OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * 
 RETCODE OdbcConnection::sqlDisconnect()
 {
 	if (!connected)
-		sqlReturn (SQL_ERROR, "08003", "Connection does not exist");
+	{
+		if ( levelBrowseConnect )
+		{
+			levelBrowseConnect = 0;
+			return sqlSuccess();
+		}
+		return sqlReturn (SQL_ERROR, "08003", "Connection does not exist");
+	}
 
-	if (transactionPending)
-		sqlReturn (SQL_ERROR, "25000", "Invalid transaction state");
+	if (connection->getTransactionPending())
+		return sqlReturn (SQL_ERROR, "25000", "Invalid transaction state");
 
 	try
 	{
@@ -592,6 +810,18 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 
 	switch (type)
 	{
+	case SQL_FBGETPAGEDB:
+		metaData->getSqlStrPageSizeBd(ptr,maxLength,actualLength);
+		return SQL_SUCCESS;
+
+	case SQL_FBGETWALDB:
+		metaData->getSqlStrWalInfoBd(ptr,maxLength,actualLength);
+		return SQL_SUCCESS;
+
+	case SQL_FBGETSTATINFODB:
+		metaData->getStrStatInfoBd(ptr,maxLength,actualLength);
+		return SQL_SUCCESS;
+
 	case SQL_CURSOR_COMMIT_BEHAVIOR:
 		if (metaData->supportsOpenCursorsAcrossCommit())
 			value = SQL_CB_PRESERVE;
@@ -1189,7 +1419,6 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 		         SQL_SFKU_SET_NULL;
 		break;
 
-
 	case SQL_SQL92_RELATIONAL_JOIN_OPERATORS:
 		{
 			value = 0;
@@ -1233,7 +1462,7 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 	{
 	case infoString:
 #ifdef DEBUG
-		sprintf (temp, "  %s (string) %s\n", item->name, string);
+		sprintf (temp, "  %s (string) %.128s\n", item->name, string);
 		OutputDebugString (temp);
 #endif
 		return (setString (string, (SQLCHAR*) ptr, maxLength, actualLength)) ?
@@ -1254,9 +1483,18 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 		sprintf (temp, "  %s (long) %d\n", item->name, value);
 		OutputDebugString (temp);
 #endif
-		*((SQLUINTEGER*) ptr) = value;
-		if (actualLength)
-			*actualLength = sizeof (SQLUINTEGER);
+		if ( maxLength == sizeof (SQLUSMALLINT) )
+		{
+			*((SQLUSMALLINT*) ptr) = (SQLUSMALLINT)value;
+			if (actualLength)
+				*actualLength = sizeof (SQLUSMALLINT);
+		}
+		else
+		{
+			*((SQLUINTEGER*) ptr) = value;
+			if (actualLength)
+				*actualLength = sizeof (SQLUINTEGER);
+		}
 		break;
 
 	case infoUnsupported:
@@ -1282,17 +1520,26 @@ char* OdbcConnection::appendString(char * ptr, const char * string)
 RETCODE OdbcConnection::allocHandle(int handleType, SQLHANDLE * outputHandle)
 {
 	clearErrors();
-	*outputHandle = SQL_NULL_HDBC;
+	if ( handleType == SQL_HANDLE_DESC )
+	{
+		OdbcDesc * desc = allocDescriptor(odtApplication);
+		desc->headAllocType = SQL_DESC_ALLOC_USER;
+		*outputHandle = desc;
+		return sqlSuccess();
+	}
+	else if (handleType == SQL_HANDLE_STMT)
+	{
+		*outputHandle = SQL_NULL_HDBC;
 
-	if (handleType != SQL_HANDLE_STMT)
-		return sqlReturn (SQL_ERROR, "HY000", "General Error");
+		OdbcStatement *statement = new OdbcStatement (this, statementNumber++);
+		statement->next = statements;
+		statements = statement;
+		*outputHandle = (SQLHANDLE)statement;
 
-	OdbcStatement *statement = new OdbcStatement (this, statementNumber++);
-	statement->next = statements;
-	statements = statement;
-	*outputHandle = (SQLHANDLE)statement;
+		return sqlSuccess();
+	}
 
-	return sqlSuccess();
+	return sqlReturn (SQL_ERROR, "HY000", "General Error");
 }
 
 DatabaseMetaData* OdbcConnection::getMetaData()
@@ -1300,7 +1547,17 @@ DatabaseMetaData* OdbcConnection::getMetaData()
 	return connection->getMetaData();
 }
 
-RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQLCHAR *uid, int uidLength, SQLCHAR * passwd, int passwdLength, SQLCHAR * roleSQL, int roleLength)
+void OdbcConnection::Lock()
+{
+	connection->getMetaData()->LockThread();
+}
+
+void OdbcConnection::UnLock()
+{
+	connection->getMetaData()->UnLockThread();
+}
+
+RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQLCHAR *uid, int uidLength, SQLCHAR * passwd, int passwdLength)
 {
 	clearErrors();
 
@@ -1312,31 +1569,42 @@ RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQ
 	dsn = getString (&p, dataSetName, dsnLength, "");
 	account = getString (&p, uid, uidLength, "");
 	password = getString (&p, passwd, passwdLength, "");
-	role = getString (&p, roleSQL, roleLength, "");
+	role = "";
+	charset = "";
 	expandConnectParameters();
-	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role);
+	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
 	if (ret != SQL_SUCCESS)
 		return ret;
 
+	if ( levelBrowseConnect )
+		levelBrowseConnect = 0;
+
 	return sqlSuccess();
 }
 
-RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * databaseName, const char * account, const char * password, const char * role)
+RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * databaseName, const char * account, const char * password, const char * role, const char * charset)
 {
 	Properties *properties = NULL;
 
 	try
 	{
 #ifdef _WIN32
-		HINSTANCE handle = LoadLibrary (sharedLibrary);
-		if (!handle)
+		if( !env->libraryHandle )
 		{
-			JString text;
-			text.Format ("Unable to connect to data source: library '%s' failed to load", sharedLibrary);
-			return sqlReturn (SQL_ERROR, "08001", text);
+			env->libraryHandle = LoadLibrary (sharedLibrary);
+			if ( !env->libraryHandle )
+			{
+				JString text;
+				text.Format ("Unable to connect to data source: library '%s' failed to load", sharedLibrary);
+				return sqlReturn (SQL_ERROR, "08001", text);
+			}
 		}
-		ConnectFn fn = (ConnectFn) GetProcAddress (handle, "createConnection");
+#ifdef __BORLANDC__
+		ConnectFn fn = (ConnectFn) GetProcAddress (env->libraryHandle, "_createConnection");
+#else
+		ConnectFn fn = (ConnectFn) GetProcAddress (env->libraryHandle, "createConnection");
+#endif
 		if (!fn)
 		{
 			JString text;
@@ -1345,16 +1613,19 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 		}
 #endif
 #ifdef ELF
-		libraryHandle = dlopen (sharedLibrary, RTLD_NOW);
-		if (!libraryHandle)
+		if( !env->libraryHandle )
 		{
-			JString text;
-			const char *msg = dlerror();
-			text.Format ("Unable to connect to data source: library '%s' failed to load: %s",
-			             sharedLibrary, msg);
-			return sqlReturn (SQL_ERROR, "08001", text);
+			env->libraryHandle = dlopen (sharedLibrary, RTLD_NOW);
+			if (!env->libraryHandle)
+			{
+				JString text;
+				const char *msg = dlerror();
+				text.Format ("Unable to connect to data source: library '%s' failed to load: %s",
+							 sharedLibrary, msg);
+				return sqlReturn (SQL_ERROR, "08001", text);
+			}
 		}
-		ConnectFn fn = (ConnectFn) dlsym (libraryHandle, "createConnection");
+		ConnectFn fn = (ConnectFn) dlsym (env->libraryHandle, "createConnection");
 		if (!fn)
 		{
 			JString text;
@@ -1376,6 +1647,8 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 			properties->putValue ("password", password);
 		if (role)
 			properties->putValue ("role", role);
+		if (charset)
+			properties->putValue ("charset", charset);
 		connection->openDatabase (databaseName, properties);
 		delete properties;
 		DatabaseMetaData *metaData = connection->getMetaData();
@@ -1385,6 +1658,8 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 		// Next two lines added by CA
 		connection->setAutoCommit( autoCommit );
 		connection->setTransactionIsolation( transactionIsolation );
+		connection->setExtInitTransaction( optTpb );
+
 	}
 	catch (SQLException& exception)
 	{
@@ -1417,7 +1692,6 @@ RETCODE OdbcConnection::sqlEndTran(int operation)
 			case SQL_ROLLBACK:
 				connection->rollback();
 			}
-			transactionPending = false;
 		}
 		catch (SQLException& exception)
 		{
@@ -1442,6 +1716,8 @@ void OdbcConnection::expandConnectParameters()
 {
 	if (!dsn.IsEmpty())
 	{
+		const char * optionsTpb;
+
 		if (databaseName.IsEmpty())
 			databaseName = readAttribute (SETUP_DBNAME);
 
@@ -1456,6 +1732,20 @@ void OdbcConnection::expandConnectParameters()
 
 		if (role.IsEmpty())
 			role = readAttribute(SETUP_ROLE);
+
+		if (charset.IsEmpty())
+			charset = readAttribute(SETUP_CHARSET);
+
+		optTpb = 0;
+		optionsTpb = (const char *)readAttribute(SETUP_READONLY_TPB);
+
+		if(optionsTpb && *optionsTpb == 'Y')
+			optTpb |=TRA_ro;
+
+		optionsTpb = (const char *)readAttribute(SETUP_NOWAIT_TPB);
+
+		if(optionsTpb && *optionsTpb == 'Y')
+			optTpb |=TRA_nw;
 	}
 
 	if (jdbcDriver.IsEmpty())
@@ -1493,16 +1783,9 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 		value = asyncEnabled;
 		break;
 
-	case SQL_CURRENT_QUALIFIER:		//   109
-		string = const_cast<char *>(databaseName.getString());
-		bufferLength = databaseName.length();
-		break;
-
 	case SQL_ATTR_ACCESS_MODE:			//   101		
 		value = accessMode;
 		break;
-
-
 
 	case SQL_TXN_ISOLATION:			//   108
 		value = connection->getTransactionIsolation();
@@ -1512,12 +1795,16 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 		value = (autoCommit) ? SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF;
 		break;
 
-	case SQL_ODBC_CURSORS:			//   110
+	case SQL_ATTR_ODBC_CURSORS: // SQL_ODBC_CURSORS   110
 		value = cursors;
 		break;
 
 	case SQL_ATTR_CONNECTION_DEAD:
 		value = SQL_CD_FALSE;
+		break;
+
+	case SQL_ATTR_AUTO_IPD:			// 10001
+		value = SQL_TRUE;
 		break;
 
 	case SQL_LOGIN_TIMEOUT:			//   103
@@ -1544,10 +1831,4 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 		*lengthPtr = sizeof (long);
 
 	return sqlSuccess();
-}
-
-void OdbcConnection::transactionStarted()
-{
-	if (!autoCommit)
-		transactionPending = true;
 }

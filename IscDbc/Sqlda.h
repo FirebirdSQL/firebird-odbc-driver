@@ -38,29 +38,40 @@ struct TempVector {
 
 class Value;
 class IscConnection;
+class CDataStaticCursor;
 
 class Sqlda  
 {
 public:
-	void deleteTemps();
-	void* allocTemp (int index, int length);
 	const char* getOwnerName (int index);
 	int findColumn (const char *columnName);
 	void setBlob (XSQLVAR *var, Value *value, IscConnection *connection);
+	void setArray (XSQLVAR *var, Value *value, IscConnection *connection);
 	void setValue (int slot, Value *value, IscConnection *connection);
 	const char* getTableName (int index);
 //	static const char* getSqlTypeName (int iscType, int subType);
 //	static int getSqlType (int iscType, int subType);
-	static int getSqlType (int iscType, int subType, int sqlScale);
+	static int getSqlType (int iscType, int subType, int sqlScale, int &realSqlType);
 	static const char* getSqlTypeName (int iscType, int subType, int sqlScale);
 	bool isNullable (int index);
 	int getScale (int index);
 	int getPrecision (int index);
 	const char* getColumnName (int index);
-	int getDisplaySize (int index);
-	int getColumnType (int index);
-	const char* getColumnTypeName (int index);
+	int getColumnDisplaySize (int index);
+	int getSubType(int index);
+	int getColumnType (int index, int &realSqlType);
+	const char * getColumnTypeName (int index);
+	void getSqlData(int index, char *& ptData, short *& ptIndData);
+	void setSqlData(int index, long ptData, long ptIndData);
+	void saveSqlData(int index, long ptData, long ptIndData);
+	void restoreSqlData(int index);
 	void print();
+	void initStaticCursor(IscConnection *connect);
+	bool setCurrentRowInBufferStaticCursor(int nRow);
+	void getAdressFieldFromCurrentRowInBufferStaticCursor(int column, char *& sqldata, short *& sqlind);
+	void copyNextSqldaInBufferStaticCursor();
+	void copyNextSqldaFromBufferStaticCursor();
+	int getCountRowsStaticCursor();
 	int getColumnCount();
 	void allocBuffer();
 	bool checkOverflow();
@@ -69,10 +80,20 @@ public:
 	Sqlda();
 	virtual ~Sqlda();
 
+	int isBlobOrArray(int index);
+
+	CDataStaticCursor * dataStaticCursor;
+	int			lengthBufferRows;
+	int			*offsetSqldata;
+	int			indicatorsOffset;
+	long		*saveOrgAdressSqlData;
+	long		*saveOrgAdressSqlInd;
+
 	XSQLDA		*sqlda;
 	char		tempSqlda [XSQLDA_LENGTH (DEFAULT_SQLDA_COUNT)];
 	char		*buffer;
 	TempVector	*temps;
+	bool		needsbuffer;
 };
 
 #endif // !defined(AFX_SQLDA_H__6C3E2AB9_229F_11D4_98DF_0000C01D2301__INCLUDED_)

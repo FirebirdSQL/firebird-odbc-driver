@@ -30,20 +30,18 @@
 #endif // _MSC_VER >= 1000
 
 struct Segment
-    {
+{
 	int		length;
 	char	*address;
 	Segment	*next;
-	};
+};
 
 class Blob;
-class Clob;
 
 class Stream  
 {
 public:
 	void putSegment (Blob *blob);
-	void putSegment (Clob *blob);
 	void* getSegment (int offset);
 	int getSegmentLength(int offset);
 	void printChars (const char *msg, int length, const char *data);
@@ -57,6 +55,7 @@ public:
 	virtual char*	getString();
 	virtual int		getSegment (int offset, int len, void *ptr, char delimiter);
 	virtual void	setSegment (Segment *segment, int length, void *address);
+	virtual int		getSegmentToHexStr(int offset, int len, void * ptr);
 	virtual int		getSegment (int offset, int length, void* address);
 	virtual void	putSegment (const char *string);
 	virtual void	putSegment (int length, const char *address, bool copy);

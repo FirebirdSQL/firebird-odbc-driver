@@ -38,8 +38,7 @@ class IscResultSet;
 class IscMetaDataResultSet : public IscResultSet  
 {
 public:
-	virtual bool next();
-	JString expandPattern (const char *string, const char *pattern);
+	JString expandPattern (const char *prefix, const char *string, const char *pattern);
 	bool isWildcarded (const char *pattern);
 	void trimBlanks (int id);
 	virtual void prepareStatement (const char *sql);
@@ -54,7 +53,7 @@ public:
 	virtual const char* getTableName (int index);
 	virtual const char* getColumnName (int index);
 	virtual int			getColumnDisplaySize (int index);
-	virtual int			getColumnType (int index);
+	virtual int			getColumnType (int index, int &realSqlType);
 	virtual const char*	getColumnTypeName (int index);
 
 

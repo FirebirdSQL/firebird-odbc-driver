@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "IscDbc.h"
 #include "IscProceduresResultSet.h"
+#include "IscDatabaseMetaData.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -44,20 +45,28 @@ IscProceduresResultSet::~IscProceduresResultSet()
 void IscProceduresResultSet::getProcedures(const char * catalog, const char * schemaPattern, const char * procedureNamePattern)
 {
 	JString sql = 
-		"select NULL as table_cat,\n"								// 1
-				"\tNULL as table_schem,\n"							// 2
-				"\trdb$procedure_name as procedure_name,\n"			// 3
-				"\trdb$procedure_inputs as num_input_params,\n"		// 4
-				"\trdb$procedure_outputs as num_output_params,\n"	// 5
-				"\t0 as num_result_sets,\n"							// 6
-				"\trdb$description as remarks,\n"					// 7
-				"\t0 as procedure_type\n"							// 8 SQL_PT_UNKNOWN
-		"from rdb$procedures\n";
+		"select NULL as procedure_cat,\n"									// 1
+				"\tNULL as procedure_schem,\n"								// 2
+				"\tproc.rdb$procedure_name as procedure_name,\n"			// 3
+				"\tproc.rdb$procedure_inputs as num_input_params,\n"		// 4
+				"\tproc.rdb$procedure_outputs as num_output_params,\n"		// 5
+				"\t0 as num_result_sets,\n"									// 6
+				"\tproc.rdb$description as remarks,\n"						// 7
+				"\t0 as procedure_type\n"									// 8 SQL_PT_UNKNOWN
+		"from rdb$procedures proc\n";
 
-	if (procedureNamePattern)
-		sql += expandPattern (" where rdb$procedure_name %s '%s'", procedureNamePattern);
+	const char *sep = " where ";
 
-	sql += " order by rdb$procedure_name";
+	if (procedureNamePattern && *procedureNamePattern)
+	{
+		sql += expandPattern (sep,"proc.rdb$procedure_name", procedureNamePattern);
+		sep = " and ";
+	}
+
+	if ( !metaData->allTablesAreSelectable() )
+		sql += metaData->existsAccess(sep, "proc", 5, "");
+
+	sql += " order by proc.rdb$procedure_name";
 	prepareStatement (sql);
 	numberColumns = 8;
 }

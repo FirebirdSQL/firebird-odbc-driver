@@ -34,9 +34,8 @@
 //////////////////////////////////////////////////////////////////////
 
 
-#include "Engine.h"
+#include "IscDbc.h"
 #include "BinaryBlob.h"
-#include "AsciiBlob.h"
 
 #ifdef ENGINE
 #include "Database.h"
@@ -55,35 +54,29 @@ static char THIS_FILE[]=__FILE__;
 
 BinaryBlob::BinaryBlob()
 {
-	useCount = 0;
-	offset = 0;
-	populated = true;
+    useCount = 1;
+    offset = 0;
+    populated = true;
 }
 
 BinaryBlob::BinaryBlob(int minSegmentSize) : Stream (minSegmentSize)
 {
-	useCount = 0;
-	offset = 0;
-	populated = true;
+    useCount = 1;
+    offset = 0;
+    populated = true;
 }
 
 #ifdef ENGINE
 BinaryBlob::BinaryBlob(Database * db, long recNumber, long sectId)
 {
-	useCount = 0;
-	offset = 0;
-	populated = false;
-	database = db;
-	recordNumber = recNumber;
-	sectionId = sectId;
+    useCount = 1;
+    offset = 0;
+    populated = false;
+    database = db;
+    recordNumber = recNumber;
+    sectionId = sectId;
 }
 #endif
-
-BinaryBlob::BinaryBlob(Clob * blob)
-{
-	useCount = 0;
-	Stream::putSegment (blob);
-}
 
 BinaryBlob::~BinaryBlob()
 {
@@ -97,7 +90,7 @@ void BinaryBlob::addRef()
 
 int BinaryBlob::release()
 {
-	if (--useCount <= 0)
+	if (--useCount == 0)
 		{
 		delete this;
 		return 0;
@@ -161,6 +154,13 @@ bool BinaryBlob::loadFile(const char * fileName)
 	return true;
 }
 ***/
+void BinaryBlob::getHexString(long pos, long length, void * address)
+{
+	if (!populated)
+		populate();
+
+	Stream::getSegmentToHexStr (pos, length, address);
+}
 
 void BinaryBlob::getBytes(long pos, long length, void * address)
 {
@@ -197,6 +197,10 @@ void* BinaryBlob::getSegment(int pos)
 	return Stream::getSegment (pos);
 }
 
+int	BinaryBlob::getSegment (int offset, int length, void* address)
+{
+	return Stream::getSegment (offset,length,address);
+}
 
 void BinaryBlob::populate()
 {
@@ -212,9 +216,3 @@ void BinaryBlob::putSegment(Blob * blob)
 {
 	Stream::putSegment (blob);
 }
-
-void BinaryBlob::putSegment(Clob * blob)
-{
-	Stream::putSegment (blob);
-}
-

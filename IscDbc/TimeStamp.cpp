@@ -31,8 +31,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-
-#include "Engine.h"
+#ifdef __BORLANDC__
+#include <iostream.h>
+#else
+#include <stdio.h>
+#endif
+#include "IscDbc.h"
 #include "TimeStamp.h"
 #include <time.h>
 #include <string.h>
@@ -41,27 +45,12 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-
-TimeStamp& TimeStamp::operator =(DateTime value)
+TimeStamp TimeStamp::convert(const char * string, int length)
 {
-//Orig.
-//	date = value.date;
-//	nanos = 0;
-
-//From B. Schulte
-// convert DateTime to 'new' TimeStamp
-    date = value.date / 24/60/60;
-    nanos = value.date - (date * 24*60*60);
-
-	return *this;
-}
-
-TimeStamp& TimeStamp::operator =(long value)
-{
-	date = value;
-	nanos = 0;
-
-	return *this;
+	TimeStamp timestamp;
+	timestamp.date = 0;
+	timestamp.nanos = 0;
+	return timestamp;
 }
 
 int TimeStamp::getTimeString(int length, char * buffer)
@@ -72,20 +61,22 @@ int TimeStamp::getTimeString(int length, char * buffer)
 
 	DateTime::decodeDate (date, time);
 	decodeTime (nanos, time);
-	
-	return strftime (buffer, length, "%Y-%m-%d %H:%M:%S", time);
+
+	int len = strftime (buffer, length, "%Y-%m-%d %H:%M:%S", time);
+	long nano = (nanos % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
+	if( nano )
+		len+=sprintf(buffer+len,".%lu",nano);
+
+	return len;
 }
 
 int TimeStamp::decodeTime (long nanos, tm * times)
 {
-//Orig.
-//	long seconds = nanos / 100;
-//From B. Schulte
-// now the nanos are already the seconds... so kill the "/100"
-    long seconds = nanos ;
-	times->tm_hour = seconds / (60 * 60);
-	seconds -= times->tm_hour * 60 * 60;
-	times->tm_min = seconds / 60;
-	times->tm_sec = seconds - times->tm_min * 60;
+	long minutes = nanos / (ISC_TIME_SECONDS_PRECISION * 60);
+
+	times->tm_hour = minutes / 60;
+	times->tm_min = minutes % 60;
+	times->tm_sec = (nanos / ISC_TIME_SECONDS_PRECISION) % 60;
+
 	return true;
 }

@@ -36,6 +36,11 @@ class Properties;
 class Attachment  
 {
 public:
+	bool isAdmin();
+	void checkAdmin();
+	JString& getUserAccess();
+	int getUserType();
+	JString existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix);
 	int getDatabaseDialect();
 	int release();
 	void addRef();
@@ -47,6 +52,8 @@ public:
 	void		*transactionHandle;
 	JString		databaseName;
 	JString		userName;
+	JString		userAccess;
+	int			userType;
 	JString		serverVersion;
 	int			pageSize;
 	int			serverBaseLevel;	
@@ -54,6 +61,8 @@ public:
 	bool		quotedIdentifiers;
 	int			transactionIsolation;
 	int			useCount;
+	bool		admin;
+	bool		isRoles;
 	Mutex		mutex;
 };
 

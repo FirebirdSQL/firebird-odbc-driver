@@ -62,7 +62,7 @@ IscSpecialColumnsResultSet::~IscSpecialColumnsResultSet()
 void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const char * schema, const char * table, int scope, int nullable)
 {
 	JString sql = 
-		"select f.rdb$field_type as scope,\n"						// 1 
+		"select distinct f.rdb$field_type as scope,\n"				// 1 
 				"\trfr.rdb$field_name as column_name, \n"			// 2
 				"\tf.rdb$field_type as data_type,\n"				// 3
 				"\tf.rdb$field_sub_type as type_name,\n"			// 4
@@ -87,13 +87,18 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 				"\t\ton rel.rdb$constraint_type = 'PRIMARY KEY'\n"
 				"\t\tand rel.rdb$index_name = i.rdb$index_name\n"
 		"where i.rdb$unique_flag = 1\n";
-	sql += expandPattern ("\tand rfr.rdb$relation_name %s '%s'\n", table);
+
+	if ( !metaData->allTablesAreSelectable() )
+		sql += metaData->existsAccess("\t\tand ", "rfr", 0, "\n");
+
+	if(table && *table)
+		sql += expandPattern ("\t\tand ","rfr.rdb$relation_name", table);
+
 	sql += " order by rel.rdb$constraint_type, rdb$index_name, rdb$field_position";
 
 	prepareStatement (sql);
 	numberColumns = 8;
 	index_id = -1;
-
 }
 
 bool IscSpecialColumnsResultSet::next ()
@@ -102,7 +107,7 @@ bool IscSpecialColumnsResultSet::next ()
 	if (!resultSet->next())
 		return false;
 
-	resultSet->setValue(1,1);	//scope is always transaction for us
+	resultSet->setValue(1,2);	//scope is always transaction for us
 
 	int	idx_id = resultSet->getInt (10);
 	if (index_id == -1) 
@@ -141,7 +146,7 @@ bool IscSpecialColumnsResultSet::next ()
 	return true;
 }
 
-int IscSpecialColumnsResultSet::getColumnType(int index)
+int IscSpecialColumnsResultSet::getColumnType(int index, int &realSqlType)
 {
 	switch (index)
 		{
@@ -149,7 +154,7 @@ int IscSpecialColumnsResultSet::getColumnType(int index)
 			return JDBC_VARCHAR;
 		}
 
-	return Parent::getColumnType (index);
+	return Parent::getColumnType (index, realSqlType);
 }
 
 int IscSpecialColumnsResultSet::getColumnDisplaySize(int index)
@@ -165,6 +170,8 @@ int IscSpecialColumnsResultSet::getColumnDisplaySize(int index)
 
 int IscSpecialColumnsResultSet::getPrecision(int index)
 {
+	return 31;
+/*
 	switch (index)
 		{
 		case TYPE_NAME:					//	TYPE_NAME
@@ -172,6 +179,7 @@ int IscSpecialColumnsResultSet::getPrecision(int index)
 		}
 
 	return Parent::getPrecision (index);
+*/
 }
 
 
@@ -207,23 +215,23 @@ void IscSpecialColumnsResultSet::setCharLen (int charLenInd,
 
 
 void IscSpecialColumnsResultSet::adjustResults (IscSqlType sqlType)
-
 {
-
 	// decimal digits have no meaning for some columns
 	// radix - doesn't mean much for some colums either
 	switch (sqlType.type)
-		{
+	{
 		case JDBC_CHAR:
 		case JDBC_VARCHAR:
 		case JDBC_LONGVARCHAR:
 		case JDBC_LONGVARBINARY:
 		case JDBC_DATE:
+		case JDBC_SQL_DATE:
 			resultSet->setNull (7);
 			break;
 		case JDBC_TIME:
+		case JDBC_SQL_TIME:
 		case JDBC_TIMESTAMP:
-			resultSet->setValue (7, (long)0);
-		}	
-
+		case JDBC_SQL_TIMESTAMP:
+			resultSet->setValue (7, (long)-ISC_TIME_SECONDS_PRECISION_SCALE);
+	}	
 }

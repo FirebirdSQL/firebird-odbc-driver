@@ -22,8 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#if !defined(AFX_SETUP_H__ED260D92_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
-#define AFX_SETUP_H__ED260D92_1BC4_11D4_98DF_0000C01D2301__INCLUDED_
+#if !defined(_SETUP_H_INCLUDED_)
+#define _SETUP_H_INCLUDED_
 
 #if _MSC_VER >= 1000
 #pragma once
@@ -32,12 +32,12 @@
 class Setup  
 {
 public:
-	CString readAttribute (const char *attribute);
+	JString readAttribute (const char *attribute);
 	void readAttributes();
 	bool configureDialog();
 	void writeAttributes();
 	void writeAttribute (const char *attribute, const char *value);
-	CString getAttribute (const char *attribute);
+	JString getAttribute (const char *attribute);
 	void removeDsn();
 	void addDsn();
 	void configDsn();
@@ -45,14 +45,17 @@ public:
 	virtual ~Setup();
 
 	HWND		hWnd;
-	CString		driver;
-	CString		attributes;
-	CString		dsn;
-	CString		dbName;
-	CString		user;
-	CString		password;
-	CString		jdbcDriver;
-	CString		role;
+	JString		driver;
+	JString		attributes;
+	JString		dsn;
+	JString		dbName;
+	JString		user;
+	JString		password;
+	JString		jdbcDriver;
+	JString		role;
+	JString		charset;
+	JString		readonlyTpb;
+	JString		nowaitTpb;
 };
 
-#endif // !defined(AFX_SETUP_H__ED260D92_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
+#endif // !defined(_SETUP_H_INCLUDED_)

@@ -23,17 +23,18 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "IscDbc.h"
+#include "IscBlob.h"
+#include "IscArray.h"
 #include "IscStatementMetaData.h"
-#include "IscPreparedStatement.h"
 #include "Sqlda.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscStatementMetaData::IscStatementMetaData(IscPreparedStatement *preparedStatement)
+IscStatementMetaData::IscStatementMetaData(Sqlda *ptSqlda)
 {
-	statement = preparedStatement;
+	sqlda = ptSqlda;
 }
 
 IscStatementMetaData::~IscStatementMetaData()
@@ -41,29 +42,137 @@ IscStatementMetaData::~IscStatementMetaData()
 
 }
 
-int IscStatementMetaData::getParameterCount()
+int IscStatementMetaData::getColumnCount()
 {
-	return statement->inputSqlda.getColumnCount();
+	return sqlda->getColumnCount();
 }
 
-int IscStatementMetaData::getParameterType(int index)
+int IscStatementMetaData::getColumnType(int index, int &realSqlType)
 {
-	return statement->inputSqlda.getColumnType (index);
+	return sqlda->getColumnType (index, realSqlType);
 }
 
 int IscStatementMetaData::getPrecision(int index)
 {
-	return statement->inputSqlda.getPrecision (index);
+	return sqlda->getPrecision (index);
 }
 
 int IscStatementMetaData::getScale(int index)
 {
-	return -statement->inputSqlda.getScale (index);
+	return -sqlda->getScale (index);
 }
 
 bool IscStatementMetaData::isNullable(int index)
 {
-	return statement->inputSqlda.isNullable (index);
+	return sqlda->isNullable (index);
+}
+
+int IscStatementMetaData::getColumnDisplaySize(int index)
+{
+	return sqlda->getColumnDisplaySize(index);
+}
+
+const char* IscStatementMetaData::getColumnLabel(int index)
+{
+	return sqlda->getColumnName(index);
+}
+
+const char* IscStatementMetaData::getSqlTypeName(int index)
+{
+	return sqlda->getColumnTypeName(index);
+}
+
+const char* IscStatementMetaData::getColumnName(int index)
+{
+	return sqlda->getColumnName(index);
+}
+
+const char* IscStatementMetaData::getTableName(int index)
+{
+	return sqlda->getTableName(index);
+}
+
+const char* IscStatementMetaData::getColumnTypeName(int index)
+{
+	return sqlda->getColumnTypeName(index);
+}
+
+bool IscStatementMetaData::isSigned(int index)
+{
+	return true;
+}
+
+bool IscStatementMetaData::isReadOnly(int index)
+{
+	return false;
+}
+
+bool IscStatementMetaData::isWritable(int index)
+{
+	return true;
+}
+
+bool IscStatementMetaData::isDefinitelyWritable(int index)
+{
+	return false;
+}
+
+bool IscStatementMetaData::isCurrency(int index)
+{
+	return false;
+}
+
+bool IscStatementMetaData::isCaseSensitive(int index)
+{
+	return true;
+}
+
+bool IscStatementMetaData::isAutoIncrement(int index)
+{
+	return false;
+}
+
+bool IscStatementMetaData::isSearchable(int index)
+{
+	int realSqlType;
+	int type = sqlda->getColumnType (index, realSqlType);
+
+	return type != JDBC_LONGVARCHAR && type != JDBC_LONGVARBINARY;
+}
+
+int IscStatementMetaData::isBlobOrArray(int index)
+{
+	return sqlda->isBlobOrArray(index);
+}
+
+const char* IscStatementMetaData::getSchemaName(int index)
+{
+	return sqlda->getOwnerName (index);;
+}
+
+const char* IscStatementMetaData::getCatalogName(int index)
+{
+	return "";	
+}
+
+void IscStatementMetaData::getSqlData(int index, char *& ptData, short *& ptIndData)
+{
+	sqlda->getSqlData(index, ptData, ptIndData);
+}
+
+void IscStatementMetaData::setSqlData(int index, long ptData, long ptIndData)
+{
+	sqlda->setSqlData(index, ptData, ptIndData);
+}
+
+void IscStatementMetaData::saveSqlData(int index, long ptData, long ptIndData)
+{
+	sqlda->saveSqlData(index, ptData, ptIndData);
+}
+
+void IscStatementMetaData::restoreSqlData(int index)
+{
+	sqlda->restoreSqlData(index);
 }
 
 int IscStatementMetaData::objectVersion()

@@ -30,6 +30,7 @@
 #endif // _MSC_VER >= 1000
 
 #include "OdbcObject.h"
+#include "IscDbc/Mutex.h"
 
 class OdbcConnection;
 
@@ -40,13 +41,60 @@ public:
 	RETCODE sqlSetEnvAttr (int attribute, SQLPOINTER value, int length);
 	void connectionClosed (OdbcConnection *connection);
 	RETCODE sqlEndTran(int operation);
+	RETCODE sqlDrivers( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
+	RETCODE sqlDataSources( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
+#ifdef _WIN32
+	BOOL getDrivers();
+	BOOL getDataSources(UWORD wConfigMode);
+#endif
 	virtual RETCODE allocHandle (int handleType, SQLHANDLE *outputHandle);
+	void LockEnv();
+	void UnLockEnv();
 	virtual OdbcObjectType getType();
 	OdbcEnv();
 	virtual ~OdbcEnv();
 
+#ifdef _WIN32
+	HINSTANCE		libraryHandle;
+#else
+	void			*libraryHandle;
+#endif
+
+	Mutex			mutex;
 	OdbcConnection	*connections;
 	const char		*odbcIniFileName;
+	const char		*odbcInctFileName;
+
+#ifdef _WIN32
+	char			listDSN[1024];
+	char			*activeDSN;
+	char			*endDSN;
+
+	char			listDrv[2048];
+	char			*activeDrv;
+	char			*endDrv;
+#endif
+};
+
+class SafeEnvThread
+{
+	OdbcEnv * env;
+public:
+	SafeEnvThread(OdbcEnv * ptEnv)
+	{
+		if( ptEnv )
+		{
+			env = ptEnv;
+			env->LockEnv();
+		}
+		else 
+			env = NULL;
+	}
+	virtual ~SafeEnvThread()
+	{
+		if(env)
+			env->UnLockEnv();
+	}
 };
 
 #endif // !defined(AFX_ODBCENV_H__ED260D95_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)

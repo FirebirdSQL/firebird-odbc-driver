@@ -58,12 +58,9 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-extern "C"
-{
-Connection* createConnection()
+extern "C" Connection* createConnection()
 {
 	return new IscConnection;
-}
 }
 
 IscConnection::IscConnection()
@@ -87,8 +84,10 @@ void IscConnection::init()
 	metaData = NULL;
 	transactionHandle = NULL;
 	transactionIsolation = 0;
+	transactionPending = false;
 	autoCommit = true;
 	attachment = NULL;
+	transactionExtInit = 0;
 }
 
 IscConnection::~IscConnection()
@@ -142,13 +141,17 @@ PreparedStatement* IscConnection::prepareStatement(const char * sqlString)
 void IscConnection::commit()
 {
 	if (transactionHandle)
-		{
+	{
 		ISC_STATUS statusVector [20];
-		isc_commit_transaction (statusVector, &transactionHandle);
+		GDS->_commit_transaction (statusVector, &transactionHandle);
 
 		if (statusVector [1])
+		{
+			rollback();
 			throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
 		}
+	}
+	transactionPending = false;
 }
 
 void IscConnection::rollback()
@@ -156,15 +159,21 @@ void IscConnection::rollback()
 	if (transactionHandle)
 		{
 		ISC_STATUS statusVector [20];
-		isc_rollback_transaction (statusVector, &transactionHandle);
+		GDS->_rollback_transaction (statusVector, &transactionHandle);
 
 		if (statusVector [1])
 			throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
 		}
+	transactionPending = false;
 }
 
 void IscConnection::prepareTransaction()
 {
+}
+
+bool IscConnection::getTransactionPending()
+{
+	return transactionPending;
 }
 
 /* Original
@@ -193,8 +202,8 @@ void* IscConnection::startTransaction()
     static char    iscTpb[5];
 
     iscTpb[0] = isc_tpb_version3;
-    iscTpb[1] = isc_tpb_write;
-    iscTpb[2] = isc_tpb_wait;
+    iscTpb[1] = transactionExtInit & TRA_ro ? isc_tpb_read : isc_tpb_write;
+    iscTpb[2] = transactionExtInit & TRA_nw ? isc_tpb_nowait : isc_tpb_wait;
     /* Isolation level */
     switch( transactionIsolation )
     {
@@ -222,11 +231,14 @@ void* IscConnection::startTransaction()
             break;
     }
 
-    isc_start_transaction( statusVector, &transactionHandle, 1, &attachment->databaseHandle,
+    GDS->_start_transaction( statusVector, &transactionHandle, 1, &attachment->databaseHandle,
             sizeof( iscTpb ), &iscTpb);
 
     if (statusVector [1])
         throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
+
+	if (!autoCommit)
+		transactionPending = true;
 
     return transactionHandle;
 }
@@ -241,7 +253,7 @@ Statement* IscConnection::createStatement()
 }
 
 
-Clob* IscConnection::genHTML(Properties * parameters, long genHeaders)
+Blob* IscConnection::genHTML(Properties * parameters, long genHeaders)
 {
 	NOT_YET_IMPLEMENTED;
 
@@ -254,6 +266,124 @@ void IscConnection::freeHTML(const char * html)
 	delete [] (char*) html;
 }
 ***/
+/*
+SELECT *
+ FROM  {oj DEPARTMENT Department LEFT OUTER JOIN EMPLOYEE Employee
+   ON  Department.DEPT_NO = Employee.DEPT_NO }
+ WHERE Employee.DEPT_NO = Department.DEPT_NO
+*/
+
+bool IscConnection::getNativeSql (const char * inStatementText, long textLength1,
+								char * outStatementText, long bufferLength,
+								long * textLength2Ptr)
+{
+	bool bModify = false;
+	char * ptIn = (char*)inStatementText;
+	char * ptInEnd = ptIn + textLength1;
+	char * ptBeg, * ptOut = outStatementText;
+	char * ptEndBracket = NULL;
+
+#pragma FB_COMPILER_MESSAGE("IscConnection::getNativeSql - The temporary decision; FIXME!")
+
+	while ( ptIn < ptInEnd )
+	{
+		if ( *ptIn == '\"' )
+		{
+			// replace "123" to '123'
+			bool bConst = false;
+			ptBeg = ptOut;
+			*ptOut++ = *ptIn++;
+			
+			while( *ptIn == ' ')
+				*ptOut++ = *ptIn++;
+
+			if ( *ptIn >= '0' && *ptIn <= '9' )
+				bConst = true;
+
+			while( *ptIn && *ptIn != '\"' )
+				*ptOut++ = *ptIn++;
+
+			if ( *ptIn != '\"' )
+				return false;
+			
+			if ( bConst )
+				*ptBeg = *ptOut = '\'';
+			else
+				*ptOut = *ptIn;
+
+			++ptIn;	++ptOut;
+			bModify = true;
+			continue;
+		}
+		else
+		{
+			if ( *ptIn == '{' )
+				ptEndBracket = ptOut;
+
+			*ptOut++ = *ptIn++;
+		}
+	}
+
+	*ptOut = '\0';
+	int ignoreBracket = 0;
+
+	while ( ptEndBracket )
+	{
+		ptIn = ptEndBracket;
+
+		ptIn++; // '{'
+		
+		while( *ptIn == ' ' )ptIn++;
+
+		if ( *(long*)ptIn == 0x6c6c6163 || *(long*)ptIn == 0x4c4c4143 )
+			++ignoreBracket; // { call }
+		else
+		{
+			// Check 'oj' or 'OJ'
+			if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
+				ptIn += 2; // 'oj'
+			else
+				ptIn += 2; // temp 'fn'
+
+			ptOut = ptEndBracket;
+			int ignoreBr = ignoreBracket;
+
+			do
+			{
+				while( *ptIn && *ptIn != '}' )
+					*ptOut++ = *ptIn++;
+
+				if( ignoreBr )
+					*ptOut++ = *ptIn++;
+
+			}while ( ignoreBr-- );
+
+			if(*ptIn != '}')
+				return false;
+
+			ptIn++; // '}'
+
+			while( *ptIn )
+				*ptOut++ = *ptIn++;
+
+			*ptOut = '\0';
+			bModify = true;
+		}
+
+		--ptEndBracket; // '{'
+
+		while ( ptEndBracket > outStatementText && *ptEndBracket != '{')
+			--ptEndBracket;
+
+		if(*ptEndBracket != '{')
+			ptEndBracket = NULL;
+	}
+
+	if ( textLength2Ptr )
+		*textLength2Ptr = ptOut - outStatementText;
+
+	return bModify;
+}
 
 DatabaseMetaData* IscConnection::getMetaData()
 {
@@ -311,7 +441,7 @@ JString IscConnection::getIscStatusText(ISC_STATUS * statusVector)
 	ISC_STATUS *status = statusVector;
 	bool first = true;
 
-	while (isc_interprete (p, &status))
+	while (GDS->_interprete (p, &status))
 		{
 		while (*p)
 			++p;
@@ -332,10 +462,10 @@ int IscConnection::getInfoItem(char * buffer, int infoItem, int defaultValue)
 	for (char *p = buffer; *p != isc_info_end;)
 		{
 		char item = *p++;
-		int length = isc_vax_integer (p, 2);
+		int length = GDS->_vax_integer (p, 2);
 		p += 2;
 		if (item == infoItem)
-			return isc_vax_integer (p, length);
+			return GDS->_vax_integer (p, length);
 		p += length;
 		}
 
@@ -347,7 +477,7 @@ JString IscConnection::getInfoString(char * buffer, int infoItem, const char * d
 	for (char *p = buffer; *p != isc_info_end;)
 		{
 		char item = *p++;
-		int length = isc_vax_integer (p, 2);
+		int length = GDS->_vax_integer (p, 2);
 		p += 2;
 		if (item == infoItem)
 			return JString (p, length);
@@ -374,6 +504,9 @@ Connection* IscConnection::clone()
 
 void IscConnection::setAutoCommit(bool setting)
 {
+	if(!autoCommit && setting && transactionPending)
+		commitAuto();
+
 	autoCommit = setting;
 }
 
@@ -390,6 +523,11 @@ void IscConnection::setTransactionIsolation(int level)
 int IscConnection::getTransactionIsolation()
 {
 	return transactionIsolation;
+}
+
+void IscConnection::setExtInitTransaction(int optTpb)
+{
+	transactionExtInit = optTpb;
 }
 
 void IscConnection::addRef()
@@ -454,11 +592,14 @@ int IscConnection::getDatabaseDialect()
 void IscConnection::commitRetaining()
 {
 	if (transactionHandle)
-		{
+	{
 		ISC_STATUS statusVector [20];
-		isc_commit_retaining (statusVector, &transactionHandle);
+		GDS->_commit_retaining (statusVector, &transactionHandle);
 
 		if (statusVector [1])
+		{
+			rollback();
 			throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
 		}
+	}
 }

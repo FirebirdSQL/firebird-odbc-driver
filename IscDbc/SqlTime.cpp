@@ -21,23 +21,15 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "IscDbc.h"
 #include "SqlTime.h"
 #include <time.h>
 #include <string.h>
 
-SqlTime& SqlTime::operator =(long value)
-{
-	timeValue = value;
-
-	return *this;
-}
-
-
-
 SqlTime SqlTime::convert(const char * string, int length)
 {
 	SqlTime time;
-	time = 0;
+	time.timeValue = 0;
 	return time;
 }
 
@@ -52,12 +44,13 @@ int SqlTime::getString(const char * format, int length, char * buffer)
 	struct tm *time = &tmTemp;
 	memset (time, 0, sizeof (tmTemp));
 		
-	long seconds = timeValue;
-	time->tm_hour = timeValue / (60 * 60);
-	seconds -= time->tm_hour * 60 * 60;
-	time->tm_min = seconds / 60;
-	time->tm_sec = seconds - time->tm_min * 60;
+	long minutes;
 	
+	minutes = timeValue / (ISC_TIME_SECONDS_PRECISION * 60);
+	time->tm_hour = minutes / 60;
+	time->tm_min = minutes % 60;
+	time->tm_sec = (timeValue / ISC_TIME_SECONDS_PRECISION) % 60;
+
 	return strftime (buffer, length, format, time);
 }
 

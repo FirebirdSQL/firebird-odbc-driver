@@ -99,6 +99,30 @@ IscDatabaseMetaData::~IscDatabaseMetaData()
 
 }
 
+void IscDatabaseMetaData::LockThread()
+{
+	connection->attachment->mutex.lock();
+}
+
+void IscDatabaseMetaData::UnLockThread()
+{
+	connection->attachment->mutex.release();
+}
+
+short IscDatabaseMetaData::getSqlStrPageSizeBd(const void * info_buffer, int bufferLength,short *lengthPtr)
+{
+	return getPageDatabase(connection->attachment->databaseHandle,info_buffer,bufferLength,lengthPtr);
+}
+short IscDatabaseMetaData::getSqlStrWalInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr)
+{
+	return getWalDatabase(connection->attachment->databaseHandle,info_buffer,bufferLength,lengthPtr);
+}
+short IscDatabaseMetaData::getStrStatInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr)
+{
+	return getStatInformations(connection->attachment->databaseHandle,info_buffer,bufferLength,lengthPtr);
+}
+
+
 ResultSet* IscDatabaseMetaData::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char **types)
 {
 	IscTablesResultSet *resultSet = new IscTablesResultSet (this);
@@ -229,12 +253,12 @@ ResultSet* IscDatabaseMetaData::getUsers(const char * catalog, const char *userP
 
 bool IscDatabaseMetaData::allProceduresAreCallable()
 	{
-	return true;
+	return connection->attachment->isAdmin();
 	}
 
 bool IscDatabaseMetaData::allTablesAreSelectable()
 	{
-	return true;
+	return connection->attachment->isAdmin();
 	}
 
 const char* IscDatabaseMetaData::getURL()
@@ -246,6 +270,21 @@ const char* IscDatabaseMetaData::getURL()
 const char* IscDatabaseMetaData::getUserName()
 	{
 	return connection->attachment->userName;
+	}
+
+const char* IscDatabaseMetaData::getUserAccess()
+	{
+	return connection->attachment->getUserAccess();
+	}
+
+const int IscDatabaseMetaData::getUserType()
+	{
+	return connection->attachment->getUserType();
+	}
+
+JString IscDatabaseMetaData::existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix)
+	{
+	return connection->attachment->existsAccess(prefix, relobject, typeobject, suffix);
 	}
 
 bool IscDatabaseMetaData::isReadOnly()
@@ -330,7 +369,7 @@ bool IscDatabaseMetaData::supportsMixedCaseIdentifiers()
 
 bool IscDatabaseMetaData::storesUpperCaseIdentifiers()
 	{
-	return true;
+	return connection->attachment->databaseDialect < 3;
 	}
 
 bool IscDatabaseMetaData::storesLowerCaseIdentifiers()
@@ -360,7 +399,7 @@ bool IscDatabaseMetaData::storesLowerCaseQuotedIdentifiers()
 
 bool IscDatabaseMetaData::storesMixedCaseQuotedIdentifiers()
 	{
-	return connection->attachment->quotedIdentifiers;
+	return connection->attachment->databaseDialect < 3;
 	}
 
 const char* IscDatabaseMetaData::getIdentifierQuoteString()
@@ -370,38 +409,21 @@ const char* IscDatabaseMetaData::getIdentifierQuoteString()
 
 const char* IscDatabaseMetaData::getSQLKeywords()
 	{
-	// return "WEEKDAY,YEARDAY,SQL,TRIGGER";
-
-	return  "ACTION,ACTIVE,ADD,ADMIN,AFTER,ALL,ALTER,AND,ANY,AS,ASC,ASCENDING,AT,"
-			"AUTO,AUTODDL,AVG,BASED,BASENAME,BASE_NAME,BEFORE,BEGIN,BETWEEN,BLOB,"
-			"BLOBEDIT,BUFFER,BY,CACHE,CASCADE,CAST,CHAR,CHARACTER,CHARACTER_LENGTH,"
-			"CHAR_LENGTH,CHECK,CHECK_POINT_LEN,CHECK_POINT_LENGTH,COLLATE,COLLATION,"
-			"COLUMN,COMMIT,COMMITTED,COMPILETIME,COMPUTED,CLOSE,CONDITIONAL,CONNECT,"
-			"CONSTRAINT,CONTAINING,CONTINUE,COUNT,CREATE,CSTRING,CURRENT,CURRENT_DATE,"
-			"CURRENT_TIME,CURRENT_TIMESTAMP,CURSOR,DATABASE,DATE,DAY,DB_KEY,DEBUG,DEC,"
-			"DECIMAL,DECLARE,DEFAULT,DELETE,DESC,DESCENDING,DESCRIBE,DESCRIPTOR,"
-			"DISCONNECT,DISPLAY,DISTINCT,DO,DOMAIN,DOUBLE,DROP,ECHO,EDIT,ELSE,END,"
-			"ENTRY_POINT,ESCAPE,EVENT,EXCEPTION,EXECUTE,EXISTS,EXIT,EXTERN,EXTERNAL,"
-			"EXTRACT,FETCH,FILE,FILTER,FLOAT,FOR,FOREIGN,FOUND,FREE_IT,FROM,FULL,FUNCTION,"
-			"GDSCODE,GENERATOR,GEN_ID,GLOBAL,GOTO,GRANT,GROUP,GROUP_COMMIT_WAIT,"
-			"GROUP_COMMIT_,WAIT_TIME,HAVING,HELP,HOUR,IF,IMMEDIATE,IN,INACTIVE,INDEX,"
-			"INDICATOR,INIT,INNER,INPUT,INPUT_TYPE,INSERT,INT,INTEGER,INTO,IS,ISOLATION,"
-			"ISQL,JOIN,KEY,LC_MESSAGES,LC_TYPE,LEFT,LENGTH,LEV,LEVEL,LIKE,LOGFILE,"
-			"LOG_BUFFER_SIZE,LOG_BUF_SIZE,LONG,MANUAL,MAX,MAXIMUM,MAXIMUM_SEGMENT,"
-			"MAX_SEGMENT,MERGE,MESSAGE,MIN,MINIMUM,MINUTE,MODULE_NAME,MONTH,NAMES,"
-			"NATIONAL,NATURAL,NCHAR,NO,NOAUTO,NOT,NULL,NUMERIC,NUM_LOG_BUFS,"
-			"NUM_LOG_BUFFERS,OCTET_LENGTH,OF,ON,ONLY,OPEN,OPTION,OR,ORDER,OUTER,OUTPUT,"
-			"OUTPUT_TYPE,OVERFLOW,PAGE,PAGELENGTH,PAGES,PAGE_SIZE,PARAMETER,PASSWORD,"
-			"PLAN,POSITION,POST_EVENT,PRECISION,PREPARE,PROCEDURE,PROTECTED,PRIMARY,"
-			"PRIVILEGES,PUBLIC,QUIT,RAW_PARTITIONS,RDB$DB_KEY,READ,REAL,RECORD_VERSION,"
-			"REFERENCES,RELEASE,RESERV,RESERVING,RESTRICT,RETAIN,RETURN,RETURNING_VALUES,"
-			"RETURNS,REVOKE,RIGHT,ROLE,ROLLBACK,RUNTIME,SCHEMA,SECOND,SEGMENT,SELECT,SET,"
-			"SHADOW,SHARED,SHELL,SHOW,SINGULAR,SIZE,SMALLINT,SNAPSHOT,SOME,SORT,SQLCODE,"
-			"SQLERROR,SQLWARNING,STABILITY,STARTING,STARTS,STATEMENT,STATIC,STATISTICS,"
-			"SUB_TYPE,SUM,SUSPEND,TABLE,TERMINATOR,THEN,TIME,TIMESTAMP,TO,TRANSACTION,"
-			"TRANSLATE,TRANSLATION,TRIGGER,TRIM,TYPE,UNCOMMITTED,UNION,UNIQUE,UPDATE,"
-			"UPPER,USER,USING,VALUE,VALUES,VARCHAR,VARIABLE,VARYING,VERSION,VIEW,WAIT,"
-			"WEEKDAY,WHEN,WHENEVER,WHERE,WHILE,WITH,WORK,WRITE,YEAR,YEARDAY";
+	return  "ACTIVE,ADMIN,AFTER,ASCENDING,AUTO,AUTODDL,BASED,BASENAME,BASE_NAME,"
+			"BEFORE,BIGINT,BLOB,BLOBEDIT,BUFFER,CACHE,CHECK_POINT_LEN,CHECK_POINT_LENGTH,"
+			"COMMITTED,COMPILETIME,COMPUTED,CONDITIONAL,CONTAINING,CSTRING,CURRENT_CONNECTION,"
+			"CURRENT_TRANSACTION,DATABASE,DB_KEY,DEBUG,DESCENDING,DISPLAY,ECHO,EDIT,ENTRY_POINT,"
+			"EVENT,EXIT,FILE,FILTER,FIRST,FREE_IT,FUNCTION,GDSCODE,GENERATOR,GEN_ID,"
+			"GROUP_COMMIT_WAIT,GROUP_COMMIT_,WAIT_TIME,HELP,IF,INACTIVE,INPUT_TYPE,ISQL,"
+			"LC_MESSAGES,LC_TYPE,LENGTH,LOGFILE,LOG_BUFFER_SIZE,LOG_BUF_SIZE,LONG,MANUAL,MAXIMUM,"
+			"MAXIMUM_SEGMENT,MAX_SEGMENT,MERGE,MESSAGE,MINIMUM,MODULE_NAME,NEW,NOAUTO,"
+			"NUM_LOG_BUFS,NUM_LOG_BUFFERS,OLD,OUTPUT_TYPE,OVERFLOW,PAGE,PAGELENGTH,PAGES,"
+			"PAGE_SIZE,PARAMETER,PASSWORD,PLAN,POST_EVENT,PROTECTED,QUIT,RAW_PARTITIONS,"
+			"RDB$DB_KEY,RECORD_VERSION,RECREATE,RELEASE,RESERV,RESERVING,RETAIN,RETURN,"
+			"RETURNING_VALUES,RETURNS,ROLE,RUNTIME,SCHEMA,SEGMENT,SHADOW,SHARED,SHELL,"
+			"SHOW,SINGULAR,SNAPSHOT,SORT,STABILITY,STARTING,STARTS,STATEMENT,STATIC,"
+			"STATISTICS,SUB_TYPE,SUSPEND,TERM,TERMINATOR,TRIGGER,TYPE,UNCOMMITTED,VARIABLE,"
+			"VERSION,WAIT,WEEKDAY,WHILE,YEARDAY";
 	}
 
 const char* IscDatabaseMetaData::getNumericFunctions()
@@ -430,7 +452,7 @@ const char* IscDatabaseMetaData::getTimeDateFunctions()
 
 const char* IscDatabaseMetaData::getSearchStringEscape()
 	{
-	return "";
+	return "\\";
 	}
 
 const char* IscDatabaseMetaData::getExtraNameCharacters()
@@ -583,7 +605,7 @@ bool IscDatabaseMetaData::supportsANSI92IntermediateSQL()
 
 bool IscDatabaseMetaData::supportsANSI92FullSQL()
 	{
-	return false;
+	return true;
 	}
 
 bool IscDatabaseMetaData::supportsIntegrityEnhancementFacility()
@@ -608,7 +630,8 @@ bool IscDatabaseMetaData::supportsLimitedOuterJoins()
 
 const char* IscDatabaseMetaData::getSchemaTerm()
 	{
-	return "schema";
+	return "";
+//	return "schema";
 	}
 
 const char* IscDatabaseMetaData::getProcedureTerm()
@@ -738,12 +761,12 @@ bool IscDatabaseMetaData::supportsUnionAll()
 
 bool IscDatabaseMetaData::supportsOpenCursorsAcrossCommit()
 	{
-	return false;
+	return true;
 	}
 
 bool IscDatabaseMetaData::supportsOpenCursorsAcrossRollback()
 	{
-	return false;
+	return true;
 	}
 
 bool IscDatabaseMetaData::supportsOpenStatementsAcrossCommit()

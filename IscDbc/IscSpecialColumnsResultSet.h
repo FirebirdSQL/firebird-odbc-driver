@@ -40,7 +40,7 @@ public:
 	virtual void specialColumns (const char * catalog, const char * schema, const char * table, int scope, int nullable);
 	bool next();
 	typedef IscMetaDataResultSet Parent;
-	virtual int getColumnType (int index);
+	virtual int getColumnType (int index, int &realSqlType);
 	virtual int IscSpecialColumnsResultSet::getColumnDisplaySize(int index);
 	virtual int IscSpecialColumnsResultSet::getPrecision(int index);
 

@@ -31,8 +31,7 @@
 
 #include "Connection.h"
 
-class IscPreparedStatement;
-
+class Sqlda;
 
 class IscStatementMetaData : public StatementMetaData  
 {
@@ -41,12 +40,34 @@ public:
 	virtual bool isNullable (int index);
 	virtual int getScale (int index);
 	virtual int getPrecision (int index);
-	virtual int getParameterType (int index);
-	virtual int getParameterCount();
-	IscStatementMetaData(IscPreparedStatement *preparedStatement);
+	virtual int getColumnType (int index, int &realSqlType);
+	virtual int getColumnCount();
+	virtual int getColumnDisplaySize(int index);
+	virtual const char* getColumnLabel(int index);
+	virtual const char* getSqlTypeName(int index);
+	virtual const char* getColumnName(int index);
+	virtual const char* getTableName(int index);
+	virtual const char* getColumnTypeName(int index);
+	virtual bool isSigned (int index);
+	virtual bool isReadOnly (int index);
+	virtual bool isWritable (int index);
+	virtual bool isDefinitelyWritable (int index);
+	virtual bool isCurrency (int index);
+	virtual bool isCaseSensitive (int index);
+	virtual bool isAutoIncrement (int index);
+	virtual bool isSearchable (int index);
+	virtual int	 isBlobOrArray(int index);
+	virtual const char*	getSchemaName (int index);
+	virtual const char*	getCatalogName (int index);
+	virtual void getSqlData(int index, char *& ptData, short *& ptIndData);
+	virtual void setSqlData(int index, long ptData, long ptIndData);
+	virtual void saveSqlData(int index, long ptData, long ptIndData);
+	virtual void restoreSqlData(int index);
+
+	IscStatementMetaData(Sqlda	* ptSqlda);
 	virtual ~IscStatementMetaData();
 
-	IscPreparedStatement	*statement;
+	Sqlda					*sqlda;
 };
 
 #endif // !defined(AFX_ISCSTATEMENTMETADATA_H__32C6E496_2C14_11D4_98E0_0000C01D2301__INCLUDED_)

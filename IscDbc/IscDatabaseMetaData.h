@@ -38,6 +38,9 @@ class IscConnection;
 class IscDatabaseMetaData : public DatabaseMetaData  
 {
 public:
+	virtual short getSqlStrPageSizeBd(const void * info_buffer, int bufferLength,short *lengthPtr);
+	virtual short getSqlStrWalInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr);
+	virtual short getStrStatInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr);
 	virtual bool supportsStatementMetaData();
 	virtual int objectVersion();
 	IscDatabaseMetaData(IscConnection *connect);
@@ -51,11 +54,14 @@ public:
 	virtual ResultSet* getPrimaryKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern);
 	virtual ResultSet* getColumns (const char *catalog, const char *schema, const char *table, const char *fieldNamePattern);
 	virtual ResultSet* getTables (const char *catalog, const char *schemaPattern, const char *tableNamePattern, int typeCount, const char **types);
-	virtual ResultSet*specialColumns(const char * catalog, const char * schema, const char * table, int scope, int nullable);
+	virtual ResultSet* specialColumns(const char * catalog, const char * schema, const char * table, int scope, int nullable);
 	virtual bool allProceduresAreCallable();
 	virtual bool allTablesAreSelectable();
 	virtual const char* getURL();
 	virtual const char* getUserName();
+	virtual const char* getUserAccess();
+	virtual const int getUserType();
+	virtual JString existsAccess(const char *prefix, const char * relobject, int typeobject, const char *suffix);
 	virtual bool isReadOnly();
 	virtual bool nullsAreSortedHigh();
 	virtual bool nullsAreSortedLow();
@@ -216,6 +222,8 @@ public:
 	virtual bool supportsBatchUpdates();
 	virtual ResultSet* getUDTs(const char* catalog, const char* schemaPattern, 
 			  const char* typeNamePattern, int* types);
+	void LockThread();
+	void UnLockThread();
 
 	IscConnection	*connection;
 	LinkedList		resultSets;

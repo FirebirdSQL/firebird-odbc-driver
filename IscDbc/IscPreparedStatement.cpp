@@ -36,17 +36,15 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <malloc.h>
+#include <stdlib.h>
 #include "IscDbc.h"
 #include "IscPreparedStatement.h"
 #include "SQLError.h"
 #include "IscResultSet.h"
 #include "IscConnection.h"
 #include "BinaryBlob.h"
-#include "AsciiBlob.h"
 #include "Value.h"
 #include "IscStatementMetaData.h"
-
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -54,7 +52,8 @@
 
 IscPreparedStatement::IscPreparedStatement(IscConnection *connection) : IscStatement (connection)
 {
-	statementMetaData = NULL;
+	statementMetaDataIPD = NULL;
+	statementMetaDataIRD = NULL;
 //Added by RM 2002-06-04
     segmentBlob = NULL;
 	segmentClob = NULL;
@@ -62,8 +61,10 @@ IscPreparedStatement::IscPreparedStatement(IscConnection *connection) : IscState
 
 IscPreparedStatement::~IscPreparedStatement()
 {
-	if (statementMetaData)
-		delete statementMetaData;
+	if (statementMetaDataIPD)
+		delete statementMetaDataIPD;
+	if (statementMetaDataIRD)
+		delete statementMetaDataIRD;
 }
 
 ResultSet* IscPreparedStatement::executeQuery()
@@ -115,6 +116,11 @@ void IscPreparedStatement::setString(int index, const char * string, int length)
     getParameter (index - 1)->setString (length, string, true);
 }
 
+void IscPreparedStatement::convStringData(int index)
+{
+	getParameter (--index)->convertStringData ();
+}
+
 bool IscPreparedStatement::execute()
 {
 	int numberParameters = inputSqlda.getColumnCount();
@@ -135,10 +141,15 @@ int IscPreparedStatement::executeUpdate()
 
 void IscPreparedStatement::setBytes(int index, int length, const void* bytes)
 {
+	char *idx = (char*)bytes;
 	BinaryBlob *blob = new BinaryBlob();
 	getParameter (index - 1)->setValue (blob);
-	blob->putSegment (length, (char*) bytes, true);
-	blob->release();
+	while (length >= DEFAULT_BLOB_BUFFER_LENGTH) {
+		blob->putSegment(DEFAULT_BLOB_BUFFER_LENGTH, idx, true);
+		idx += DEFAULT_BLOB_BUFFER_LENGTH;
+		length -= DEFAULT_BLOB_BUFFER_LENGTH;
+	}
+	if (length)	blob->putSegment(length, idx, true);
 }
 
 //Added by RM 2002-06-04
@@ -162,36 +173,9 @@ void IscPreparedStatement::putBlobSegmentData(int length, const void* bytes)
 void IscPreparedStatement::endBlobDataTransfer()
 {
 	if (segmentBlob)
-{
-    segmentBlob->release();
-    segmentBlob = NULL;
-}
-}
-
-// Carlos G.A.
-void IscPreparedStatement::beginClobDataTransfer(int index)
-{
-	if (segmentClob)
-        endClobDataTransfer();
-
-    segmentClob = new AsciiBlob();
-	getParameter (index - 1)->setValue (segmentClob);
-}
-
-// Carlos G.A.
-void IscPreparedStatement::putClobSegmentData(int length, const void* bytes)
-{
-	if( segmentClob )
-		segmentClob->putSegment (length, (char*) bytes, true);
-}
-
-// Carlos G.A.
-void IscPreparedStatement::endClobDataTransfer()
-{
-	if( segmentClob )
 	{
-		segmentClob->release();
-		segmentClob = NULL;
+		segmentBlob->release();
+		segmentBlob = NULL;
 	}
 }
 
@@ -203,6 +187,11 @@ bool IscPreparedStatement::execute (const char *sqlString)
 ResultSet*	 IscPreparedStatement::executeQuery (const char *sqlString)
 {
 	return IscStatement::executeQuery (sqlString);
+}
+
+void IscPreparedStatement::clearResults()
+{
+	IscStatement::clearResults ();
 }
 
 int	IscPreparedStatement::getUpdateCount()
@@ -262,14 +251,14 @@ void IscPreparedStatement::getInputParameters()
 	ISC_STATUS statusVector [20];
 
 	int dialect = connection->getDatabaseDialect ();
-	isc_dsql_describe_bind (statusVector, &statementHandle, dialect, inputSqlda);
+	GDS->_dsql_describe_bind (statusVector, &statementHandle, dialect, inputSqlda);
 
 	if (statusVector [1])
 		THROW_ISC_EXCEPTION (statusVector);
 
 	if (inputSqlda.checkOverflow())
 		{
-		isc_dsql_describe_bind (statusVector, &statementHandle, dialect, inputSqlda);
+		GDS->_dsql_describe_bind (statusVector, &statementHandle, dialect, inputSqlda);
 		if (statusVector [1])
 			THROW_ISC_EXCEPTION (statusVector);
 		}
@@ -285,14 +274,24 @@ int IscPreparedStatement::getNumParams()
 }
 
 
-StatementMetaData* IscPreparedStatement::getStatementMetaData()
+StatementMetaData* IscPreparedStatement::getStatementMetaDataIPD()
 {
-	if (statementMetaData)
-		return statementMetaData;
+	if (statementMetaDataIPD)
+		return statementMetaDataIPD;
 
-	statementMetaData = new IscStatementMetaData (this);
+	statementMetaDataIPD = new IscStatementMetaData (&inputSqlda);
 
-	return statementMetaData;
+	return statementMetaDataIPD;
+}
+
+StatementMetaData* IscPreparedStatement::getStatementMetaDataIRD()
+{
+	if (statementMetaDataIRD)
+		return statementMetaDataIRD;
+
+	statementMetaDataIRD = new IscStatementMetaData (&outputSqlda);
+
+	return statementMetaDataIRD;
 }
 
 void IscPreparedStatement::setByte(int index, char value)
@@ -300,7 +299,7 @@ void IscPreparedStatement::setByte(int index, char value)
 	getParameter (index - 1)->setValue ((short) value);
 }
 
-void IscPreparedStatement::setLong(int index, QUAD value)
+void IscPreparedStatement::setQuad(int index, QUAD value)
 {
 	getParameter (index - 1)->setValue (value);
 }
@@ -330,7 +329,7 @@ void IscPreparedStatement::setBlob(int index, Blob * value)
 	getParameter (index - 1)->setValue (value);
 }
 
-void IscPreparedStatement::setClob(int index, Clob * value)
+void IscPreparedStatement::setArray(int index, Blob * value)
 {
 	getParameter (index - 1)->setValue (value);
 }

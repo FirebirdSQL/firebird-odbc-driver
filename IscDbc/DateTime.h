@@ -30,13 +30,9 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
-struct tm;
-
 class DateTime  
 {
 public:
-	DateTime& operator = (QUAD value);
-	DateTime& operator = (long value);
 	int getString (int length, char *buffer);
 	int getString (const char * format, int length, char * buffer);
 	double getDouble();
@@ -46,9 +42,9 @@ public:
 	static bool match (const char *str1, const char *str2);
 	static int lookup (const char *string, const char **table);
 	static DateTime convert (const char *string, int length);
-	static signed long decodeDate (signed long nday, tm *times);
-	static signed long encodeDate (tm *times);
-	static signed long DateTime::yday (struct tm	*times);
+	static signed long decodeDate (signed long nday, struct tm *times);
+	static signed long encodeDate (struct tm *times);
+	static signed long yday (struct tm	*times);
 
 	signed long date;
 };

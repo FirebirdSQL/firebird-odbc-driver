@@ -18,56 +18,42 @@
  *  All Rights Reserved.
  */
 
-#if !defined(AFX_DSNDIALOG_H__B70DB912_1BB7_11D4_98DE_0000C01D2301__INCLUDED_)
-#define AFX_DSNDIALOG_H__B70DB912_1BB7_11D4_98DE_0000C01D2301__INCLUDED_
+#if !defined(_DSNDIALOG_H_INCLUDED_)
+#define _DSNDIALOG_H_INCLUDED_
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
 // DsnDialog.h : header file
 //
 
 /////////////////////////////////////////////////////////////////////////////
 // CDsnDialog dialog
 
-class CDsnDialog : public CDialog
+class CDsnDialog
 {
 // Construction
 public:
 	const char** drivers;
-	CDsnDialog(const char **drivers, CWnd* pParent = NULL);   // standard constructor
+	CDsnDialog(const char **jdbcDrivers);   // standard constructor
+	~CDsnDialog();
 
 // Dialog Data
-	//{{AFX_DATA(CDsnDialog)
 	enum { IDD = IDD_DSN_PROPERTIES };
-	CString	m_database;
-	CString	m_name;
-	CString	m_password;
-	CString	m_user;
-	CString	m_driver;
-	CString	m_role;
-	//}}AFX_DATA
+	JString	m_database;
+	JString	m_name;
+	JString	m_password;
+	JString	m_user;
+	JString	m_driver;
+	JString	m_role;
+	JString	m_charset;
+	BOOL	m_readonly;
+	BOOL	m_nowait;
 
+public:
+	int DoModal();
 
-// Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CDsnDialog)
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	//}}AFX_VIRTUAL
-
-// Implementation
-protected:
-
-	// Generated message map functions
-	//{{AFX_MSG(CDsnDialog)
-	afx_msg void OnFindFile();
-	virtual BOOL OnInitDialog();
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+	BOOL IsLocalhost(char * fullPathFileName, int &nSme);
+	BOOL OnFindFile();
+	void UpdateData(HWND hDlg, BOOL bSaveAndValidate = TRUE );
+	BOOL OnInitDialog(HWND hDlg);
 };
 
-//{{AFX_INSERT_LOCATION}}
-// Microsoft Developer Studio will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_DSNDIALOG_H__B70DB912_1BB7_11D4_98DE_0000C01D2301__INCLUDED_)
+#endif // !defined(_DSNDIALOG_H_INCLUDED_)

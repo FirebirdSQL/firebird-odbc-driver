@@ -2,14 +2,9 @@
 // Microsoft Developer Studio generated include file.
 // Used by ODbcJdbc.rc
 //
+#define IDC_STATIC                      -1
 
-// Next default values for new objects
-// 
-#ifdef APSTUDIO_INVOKED
-#ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        101
-#define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1000
-#define _APS_NEXT_SYMED_VALUE           101
-#endif
-#endif
+#define IDD_CON_PROPERTIES              129
+#define IDC_USER                        1001
+#define IDC_PASSWORD                    1002
+#define IDC_ROLE                        1003

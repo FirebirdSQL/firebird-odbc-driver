@@ -70,8 +70,8 @@ struct Types {
 
 #define ALPHA(type,code,prec) type,code,prec,"'","'","length",NULLABLE,CASE_SENSITIVE,SEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
 #define BLOB(type,code,prefix,suffix,casesensitive) type,code,MAX_BLOB_LENGTH,prefix,suffix,NULL,NULLABLE,casesensitive,UNSEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
-#define NUMERIC(type,code,prec,attr,min,max,numprecradix) type,code,prec,"'","'",attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,IS_SIGNED,NOT_MONEY,NOT_AUTO_INCR,type,min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
-#define DATETIME(type,code,prec,prefix,suffix,datetimesub) type,code,prec,prefix,suffix,NULL,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_NUMERIC,NOT_NUMERIC,NOT_AUTO_INCR,type,UNSCALED,UNSCALED,TYPE_SQL_DATETIME,datetimesub,NOT_NUMERIC,NOT_NUMERIC
+#define NUMERIC(type,code,prec,attr,min,max,numprecradix) type,code,prec,"<n/a>","<n/a>",attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,IS_SIGNED,NOT_MONEY,NOT_AUTO_INCR,type,min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
+#define DATETIME(type,code,prec,prefix,suffix,datetimesub) type,code,prec,prefix,suffix,NULL,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_NUMERIC,NOT_MONEY,NOT_AUTO_INCR,type,UNSCALED,UNSCALED,TYPE_SQL_DATETIME,datetimesub,NOT_NUMERIC,NOT_NUMERIC
 
 static const Types types [] = {
 	BLOB ("BLOB", JDBC_LONGVARBINARY,NULL,NULL,CASE_INSENSITIVE),
@@ -83,6 +83,7 @@ static const Types types [] = {
 	NUMERIC ("SMALLINT", JDBC_SMALLINT, MAX_SMALLINT_LENGTH, NULL, 0, 0, 10),	
 	NUMERIC ("FLOAT", JDBC_FLOAT, MAX_FLOAT_LENGTH, NULL, UNSCALED, UNSCALED, 2),
 	NUMERIC ("DOUBLE PRECISION", JDBC_DOUBLE, MAX_DOUBLE_LENGTH, NULL, UNSCALED, UNSCALED, 2),
+	NUMERIC ("BIGINT", JDBC_BIGINT, MAX_QUAD_LENGTH,NULL, 0, 0, 19),
 	ALPHA ("VARCHAR", JDBC_VARCHAR,MAX_VARCHAR_LENGTH),
 	DATETIME("DATE",JDBC_DATE,MAX_DATE_LENGTH,"'","'",1),
 	DATETIME("TIME",JDBC_TIME,MAX_TIME_LENGTH,"'","'",2),
@@ -163,7 +164,7 @@ bool TypesResultSet::next()
 			return false;
 
 		recordNumber = findType();
-		if( recordNumber == NULL)
+		if( recordNumber == 0 )
 		{
 			recordNumber = 1;
 			return false;
@@ -173,8 +174,9 @@ bool TypesResultSet::next()
 	if (++recordNumber > sizeof (types) / sizeof (types [0]))
 		return false;
 
-	//deleteBlobs();
 	reset();
+	allocConversions();
+
 	const Types *type = types + recordNumber - 1;
 	int col = 1;
 
@@ -206,9 +208,24 @@ const char* TypesResultSet::getColumnName(int index)
 	return fields [index - 1].name;
 }
 
-int TypesResultSet::getColumnType(int index)
+const char* TypesResultSet::getColumnTypeName(int index)
 {
-	return fields [index - 1].type;
+	return fields [index - 1].name;
+}
+
+const char* TypesResultSet::getSqlTypeName(int index)
+{
+	return fields [index - 1].name;
+}
+
+int TypesResultSet::getColumnType(int index, int &realSqlType)
+{
+	return (realSqlType = fields [index - 1].type);
+}
+
+const char* TypesResultSet::getColumnLabel(int index)
+{
+	return fields [index - 1].name;
 }
 
 int TypesResultSet::getColumnDisplaySize(int index)
@@ -231,14 +248,19 @@ bool TypesResultSet::isNullable(int index)
 	return true;
 }
 
+const char* TypesResultSet::getTableName(int index)
+{
+	return "";
+}
+
 int TypesResultSet::findType()
 {	
-	for(int i=0;i<13;i++)
+	for(int i=0;i<sizeof (fields)/sizeof (fields [0]);i++)
 	{
 		if (types[i].typeType == dataTypes)
 			return i;		
 	}
 
-	return NULL;
+	return 0;
 }
 

@@ -37,69 +37,89 @@
 #include "TimeStamp.h"	// Added by ClassView
 
 class IscStatement;
-class IscResultSetMetaData;
 class IscDatabaseMetaData;
 class Sqlda;
 
-class IscResultSet : public ResultSet  
+enum enStatysActivePositionRow { enSUCCESS, enUNKNOWN, enINSERT_ROW, enAFTER_LAST, enBEFORE_FIRST };
+
+class IscResultSet : public ResultSet, public StatementMetaData
 {
 public:
 	void allocConversions();
 	IscResultSet(IscStatement *iscStatement);
 	virtual ~IscResultSet();
-	virtual const char* getString (const char *columnName);
-	virtual long		getInt (const char *columnName);
+	void				initResultSet(IscStatement *iscStatement);
 	virtual int			findColumn (const char *columName);
-	virtual long		getInt (int id);
 	virtual void		freeHTML(const char *html);
 	virtual const char* genHTML(const char *series, const char *type, Properties *context);
-	virtual Blob*		getBlob (int index);
 	virtual void		close();
-	virtual const char* getString (int id);
 	virtual bool		next();
-	virtual ResultSetMetaData* getMetaData();
+	virtual StatementMetaData* getMetaData();
 	virtual int			release();
 	virtual void		addRef();
 	virtual bool		wasNull();
 
+//public StatementMetaData
+	virtual int			getColumnCount();
+	virtual int			getColumnType (int index, int &realSqlType);
+	virtual int			getPrecision(int index);
+	virtual int			getScale(int index);
 	virtual bool		isNullable (int index);
-	virtual int			getScale (int index);
-	virtual int			getPrecision (int index);
-	virtual const char* getTableName (int index);
-	virtual const char* getColumnName (int index);
-	virtual int			getColumnDisplaySize (int index);
-	virtual int			getColumnType (int index);
-	virtual const char* getColumnTypeName (int index);
+	virtual int			getColumnDisplaySize(int index);
+	virtual const char* getColumnLabel(int index);
+	virtual const char* getSqlTypeName(int index);
+	virtual const char* getColumnName(int index);
+	virtual const char* getTableName(int index);
+	virtual const char* getColumnTypeName(int index);
+	virtual bool		isSigned (int index);
+	virtual bool		isReadOnly (int index);
+	virtual bool		isWritable (int index);
+	virtual bool		isDefinitelyWritable (int index);
+	virtual bool		isCurrency (int index);
+	virtual bool		isCaseSensitive (int index);
+	virtual bool		isAutoIncrement (int index);
+	virtual bool		isSearchable (int index);
+	virtual int			isBlobOrArray(int index);
+	virtual const char*	getSchemaName (int index);
+	virtual const char*	getCatalogName (int index);
 
-	virtual Value*		getValue (int index);
-	virtual Value*		getValue (const char *columnName);
+	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData);
+	virtual void		setSqlData(int index, long ptData, long ptIndData);
+	virtual void		saveSqlData(int index, long ptData, long ptIndData);
+	virtual void		restoreSqlData(int index);
+// end public StatementMetaData
 
 	void		deleteBlobs();
 	void		reset();
 
 public:
-	void setNull (int index);
-	const char* getSchemaName (int index);
-	virtual Clob* getClob (const char* columnName);
-	virtual Clob* getClob (int index);
-	virtual int objectVersion();
-	virtual TimeStamp getTimestamp (const char * columnName);
-	virtual TimeStamp getTimestamp (int index);
-	virtual SqlTime getTime (const char * columnName);
-	virtual SqlTime getTime (int index);
-	virtual DateTime getDate (const char * columnName);
-	virtual DateTime getDate (int index);
-	virtual float getFloat (const char * columnName);
-	virtual float getFloat (int id);
-	virtual char getByte (const char *columnName);
-	virtual char getByte (int id);
-	virtual Blob* getBlob(const char * columnName);
-	virtual double getDouble(const char * columnName);
-	virtual double getDouble (int index);
-	virtual QUAD getLong(const char * columnName);
-	virtual QUAD getLong (int index);
-	virtual short getShort (const char * columnName);
-	virtual short getShort (int index);
+	void				setNull (int index);
+	virtual int			objectVersion();
+	virtual Value*		getValue (int index);
+	virtual Value*		getValue (const char *columnName);
+	virtual bool		isNull(int index);
+	virtual const char* getString (int index);
+	virtual const char* getString (const char *columnName);
+	virtual TimeStamp	getTimestamp (int index);
+	virtual TimeStamp	getTimestamp (const char * columnName);
+	virtual SqlTime		getTime (int index);
+	virtual SqlTime		getTime (const char * columnName);
+	virtual DateTime	getDate (int index);
+	virtual DateTime	getDate (const char * columnName);
+	virtual long		getInt (int index);
+	virtual long		getInt (const char *columnName);
+	virtual float		getFloat (int index);
+	virtual float		getFloat (const char * columnName);
+	virtual char		getByte (int index);
+	virtual char		getByte (const char *columnName);
+	virtual Blob*		getBlob (int index);
+	virtual Blob*		getBlob (const char * columnName);
+	virtual double		getDouble (int index);
+	virtual double		getDouble (const char * columnName);
+	virtual QUAD		getQuad (int index);
+	virtual QUAD		getQuad (const char *columnName);
+	virtual short		getShort (int index);
+	virtual short		getShort (const char * columnName);
 
 	virtual bool		isBeforeFirst();
 	virtual bool		isAfterLast();
@@ -134,7 +154,6 @@ public:
 	virtual void		updateTime (int columnIndex, SqlTime value);
 	virtual void		updateTimeStamp (int columnIndex, TimeStamp value);
 	virtual void		updateBlob (int columnIndex, Blob* value);
-	virtual void		updateClob (int columnIndex, Clob* value);
 	virtual void		updateNull (const char *columnName);
 	virtual void		updateBoolean (const char *columnName, bool value);
 	virtual void		updateByte (const char *columnName, char value);
@@ -149,7 +168,6 @@ public:
 	virtual void		updateTime (const char *columnName, SqlTime value);
 	virtual void		updateTimeStamp (const char *columnName, TimeStamp value);
 	virtual void		updateBlob (const char *columnName, Blob* value);
-	virtual void		updateClob (const char *columnName, Clob* value);
 	virtual void		insertRow();
 	virtual void		updateRow();
 	virtual void		deleteRow();
@@ -158,6 +176,15 @@ public:
 	virtual void		moveToInsertRow();
 	virtual void		moveToCurrentRow();
 	virtual Statement	*getStatement();
+	virtual void		setPosRowInSet(int posRow);
+	virtual int			getPosRowInSet();
+	virtual bool		readStaticCursor();
+	virtual bool		readForwardCursor();
+	virtual bool		setCurrentRowInBufferStaticCursor(int nRow);
+	virtual void		copyNextSqldaInBufferStaticCursor();
+	virtual void		copyNextSqldaFromBufferStaticCursor();
+	virtual int			getCountRowsStaticCursor();
+	virtual bool		getDataFromStaticCursor (int column, int cType, void * pointer, int bufferLength, long * indicatorPointer);
 
 	void setValue (int index, long value);
 	void setValue (int index, const char *value);
@@ -173,7 +200,8 @@ public:
 	LinkedList		clobs;
 	Sqlda			*sqlda;
 	IscStatement	*statement;
-	IscResultSetMetaData *metaData;
+	int				activePosRowInSet;
+	enStatysActivePositionRow statysPositionRow;
 };
 
 #endif // !defined(AFX_ISCRESULTSET_H__C19738BA_1C87_11D4_98DF_0000C01D2301__INCLUDED_)
