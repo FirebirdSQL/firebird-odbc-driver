@@ -31,10 +31,13 @@
 #include "DsnDialog.h"
 #include "Setup.h"
 #include "../SetupAttributes.h"
+#include "../SecurityPassword.h"
 
 extern HINSTANCE m_hInstance;
 
 namespace OdbcJdbcSetupLibrary {
+
+using namespace classSecurityPassword;
 
 #ifdef _WIN32
 #define strncasecmp		strnicmp
@@ -566,7 +569,6 @@ void Setup::writeAttributes()
 	writeAttribute (SETUP_DBNAME, dbName);
 	writeAttribute (SETUP_CLIENT, client);
 	writeAttribute (SETUP_USER, user);
-	writeAttribute (SETUP_PASSWORD, password);
 	writeAttribute (SETUP_ROLE, role);
 	writeAttribute (SETUP_CHARSET, charset);
 	writeAttribute (SETUP_JDBC_DRIVER, jdbcDriver);
@@ -574,6 +576,11 @@ void Setup::writeAttributes()
 	writeAttribute (SETUP_NOWAIT_TPB, nowaitTpb);
 	writeAttribute (SETUP_DIALECT, dialect);
 	writeAttribute (SETUP_QUOTED, quoted);
+
+	char buffer[256];
+	CSecurityPassword security;
+	security.encode( (char*)(const char *)password, buffer );
+	writeAttribute (SETUP_PASSWORD, buffer);
 }
 
 void Setup::readAttributes()
@@ -581,7 +588,6 @@ void Setup::readAttributes()
 	dbName = readAttribute (SETUP_DBNAME);
 	client = readAttribute (SETUP_CLIENT);
 	user = readAttribute (SETUP_USER);
-	password = readAttribute (SETUP_PASSWORD);
 	jdbcDriver = readAttribute (SETUP_JDBC_DRIVER);
 	role = readAttribute (SETUP_ROLE);
 	charset = readAttribute (SETUP_CHARSET);
@@ -589,6 +595,17 @@ void Setup::readAttributes()
 	nowaitTpb = readAttribute (SETUP_NOWAIT_TPB);
 	dialect = readAttribute (SETUP_DIALECT);
 	quoted = readAttribute (SETUP_QUOTED);
+
+	JString pass = readAttribute (SETUP_PASSWORD);
+	if ( pass.length() > 40 )
+	{
+		char buffer[256];
+		CSecurityPassword security;
+		security.decode( (char*)(const char *)pass, buffer );
+		password = buffer;
+	}
+	else
+		password = pass;
 }
 
 void Setup::writeAttribute(const char * attribute, const char * value)

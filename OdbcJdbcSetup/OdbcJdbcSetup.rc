@@ -123,7 +123,7 @@ BEGIN
     EDITTEXT        IDC_USER,7,89,66,12,ES_UPPERCASE | ES_AUTOHSCROLL
     EDITTEXT        IDC_PASSWORD,77,89,73,12,ES_PASSWORD | ES_AUTOHSCROLL
     EDITTEXT        IDC_ROLE,154,89,76,12,ES_AUTOHSCROLL
-    COMBOBOX        IDC_CHARSET,56,109,114,120,CBS_DROPDOWN | WS_VSCROLL | 
+    COMBOBOX        IDC_CHARSET,53,109,114,120,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "read (default write)",IDC_CHECK_READ,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,148,69,10
@@ -139,16 +139,16 @@ BEGIN
     LTEXT           "Role",IDC_STATIC,155,78,16,8
     LTEXT           "Character Set",IDC_STATIC,7,112,44,8
     GROUPBOX        "Options",IDC_STATIC,7,130,223,49
-    GROUPBOX        "Initializing transaction",IDC_STATIC,14,139,79,33
+    GROUPBOX        "Initializing transaction",IDC_STATIC,14,139,89,33
     LTEXT           "Client",IDC_STATIC,7,52,32,8
-    GROUPBOX        "Dialect",IDC_STATIC,96,139,31,33,WS_GROUP
-    CONTROL         "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,104,148,16,
+    GROUPBOX        "Dialect",IDC_STATIC,106,139,31,33,WS_GROUP
+    CONTROL         "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,114,148,16,
                     10
-    CONTROL         "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,104,158,16,
+    CONTROL         "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,114,158,16,
                     10
     CONTROL         "quoted identifiers",IDC_CHECK_QUOTED,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,136,148,66,10
-    PUSHBUTTON      "Test connection",IDC_TEST_CONNECTION,175,108,55,14
+                    BS_AUTOCHECKBOX | WS_TABSTOP,146,148,66,10
+    PUSHBUTTON      "Test connection",IDC_TEST_CONNECTION,172,108,58,14
 END
 
 

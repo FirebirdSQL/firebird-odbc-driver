@@ -85,6 +85,7 @@
 #include "OdbcStatement.h"
 #include "OdbcDesc.h"
 #include "ConnectDialog.h"
+#include "SecurityPassword.h"
 
 #ifndef _WIN32
 #define ELF
@@ -105,6 +106,8 @@
 #define ODBC_VERSION_NUMBER	"03.00.0000"
 
 namespace OdbcJdbcLibrary {
+
+using namespace classSecurityPassword;
 
 typedef Connection* (*ConnectFn)();
 
@@ -1507,7 +1510,18 @@ void OdbcConnection::expandConnectParameters()
 			account = readAttribute (SETUP_USER);
 
 		if (password.IsEmpty())
-			password = readAttribute (SETUP_PASSWORD);
+		{
+			JString pass = readAttribute (SETUP_PASSWORD);
+			if ( pass.length() > 40 )
+			{
+				char buffer[256];
+				CSecurityPassword security;
+				security.decode( (char*)(const char *)pass, buffer );
+				password = buffer;
+			}
+			else
+				password = pass;
+		}
 
 		if (jdbcDriver.IsEmpty())
 			jdbcDriver = readAttribute (SETUP_JDBC_DRIVER);
