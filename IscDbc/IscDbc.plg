@@ -6,13 +6,13 @@
 --------------------Configuration: IscDbc - Win32 Debug--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating temporary file "w:\TEMP\RSPA4.tmp" with contents
+Creating temporary file "w:\TEMP\RSP78.tmp" with contents
 [
 /nologo /MTd /W3 /Gm /GX /Zi /Od /I "c:\Program Files\Interbase\SDK\include" /I ".." /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FR"../debug/" /Fp"../debug/IscDbc.pch" /YX /Fo"../debug/" /Fd"../debug/" /FD /c 
-"H:\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\IscDbc\IscStatement.cpp"
+"H:\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\IscDbc\IscPrimaryKeysResultSet.cpp"
 ]
-Creating command line "cl.exe @w:\TEMP\RSPA4.tmp" 
-Creating temporary file "w:\TEMP\RSPA5.tmp" with contents
+Creating command line "cl.exe @w:\TEMP\RSP78.tmp" 
+Creating temporary file "w:\TEMP\RSP79.tmp" with contents
 [
 gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"../debug/IscDbc.pdb" /debug /machine:I386 /def:".\IscDbc.def" /out:"../debug/IscDbc.dll" /implib:"../debug/IscDbc.lib" /pdbtype:sept /libpath:"c:\Program Files\Interbase\SDK\lib_ms" 
 \Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\AsciiBlob.obj
@@ -56,13 +56,12 @@ gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"../debug/Isc
 \Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Values.obj
 \Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscDbc.res
 ]
-Creating command line "link.exe @w:\TEMP\RSPA5.tmp"
+Creating command line "link.exe @w:\TEMP\RSP79.tmp"
 <h3>Output Window</h3>
 Compiling...
-IscStatement.cpp
+IscPrimaryKeysResultSet.cpp
 Linking...
-   Creating library ../debug/IscDbc.lib and object ../debug/IscDbc.exp
-Creating temporary file "w:\TEMP\RSPA9.tmp" with contents
+Creating temporary file "w:\TEMP\RSP7A.tmp" with contents
 [
 /nologo /o"../debug/IscDbc.bsc" 
 \Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\AsciiBlob.sbr
@@ -104,52 +103,14 @@ Creating temporary file "w:\TEMP\RSPA9.tmp" with contents
 \Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TypesResultSet.sbr
 \Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Value.sbr
 \Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Values.sbr]
-Creating command line "bscmake.exe @w:\TEMP\RSPA9.tmp"
+Creating command line "bscmake.exe @w:\TEMP\RSP7A.tmp"
 Creating browse info file...
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\AsciiBlob.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Attachment.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\BinaryBlob.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Blob.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\DateTime.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Error.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscBlob.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscCallableStatement.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscColumnsResultSet.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscConnection.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscCrossReferenceResultSet.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscDatabaseMetaData.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscIndexInfoResultSet.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscMetaDataResultSet.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscPreparedStatement.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscPrimaryKeysResultSet.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscProcedureColumnsResultSet.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscProceduresResultSet.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscResultSet.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscResultSetMetaData.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscSpecialColumnsResultSet.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscSqlType.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscStatementMetaData.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscTablesResultSet.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\JString.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\LinkedList.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Lock.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Mutex.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Parameter.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Parameters.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Sqlda.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\SQLError.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\SqlTime.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Stream.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TimeStamp.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TypesResultSet.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Value.sbr' not in ../debug/IscDbc.bsc
-BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Values.sbr' not in ../debug/IscDbc.bsc
 <h3>Output Window</h3>
 
 
 
 <h3>Results</h3>
-IscDbc.dll - 0 error(s), 38 warning(s)
+IscDbc.dll - 0 error(s), 0 warning(s)
 </pre>
 </body>
 </html>

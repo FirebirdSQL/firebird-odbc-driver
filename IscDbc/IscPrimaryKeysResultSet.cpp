@@ -46,10 +46,10 @@ void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * 
 	JString sql = 
 		"select NULL as table_cat,\n"						// 1
 				"\tNULL as table_schem,\n"					// 2
-				"\trdb$relation_name as table_name,\n"		// 3
-				"\trdb$field_name as column_name,\n"		// 4
-				"\trdb$field_position as key_seq,\n"		// 5
-				"\trdb$index_name as pk_name\n"				// 6
+				"\trel.rdb$relation_name as table_name,\n"		// 3
+				"\tseg.rdb$field_name as column_name,\n"		// 4
+				"\tseg.rdb$field_position as key_seq,\n"		// 5
+				"\tidx.rdb$index_name as pk_name\n"				// 6
 		"from rdb$relation_constraints rel, rdb$indices idx, rdb$index_segments seg\n"
 		" where rel.rdb$constraint_type = 'PRIMARY KEY'\n"
 		" and rel.rdb$index_name = idx.rdb$index_name\n"
@@ -58,7 +58,7 @@ void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * 
 	if (tableNamePattern)
 		sql += expandPattern (" and rel.rdb$relation_name %s '%s'", tableNamePattern);
 
-	sql += " order by rel.rdb$relation_name, rdb$index_name, rdb$field_position";
+	sql += " order by rel.rdb$relation_name, idx.rdb$index_name, seg.rdb$field_position";
 	prepareStatement (sql);
 	numberColumns = 6;
 }

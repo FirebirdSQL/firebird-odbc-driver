@@ -3,16 +3,120 @@
 <pre>
 <h1>Build Log</h1>
 <h3>
+--------------------Configuration: IscDbc - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "w:\TEMP\RSP85.tmp" with contents
+[
+/nologo /MTd /W3 /Gm /GX /Zi /Od /I "c:\Program Files\Interbase\SDK\include" /I ".." /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FR"../debug/" /Fp"../debug/IscDbc.pch" /YX /Fo"../debug/" /Fd"../debug/" /FD /c 
+"H:\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\IscDbc\IscConnection.cpp"
+]
+Creating command line "cl.exe @w:\TEMP\RSP85.tmp" 
+Creating temporary file "w:\TEMP\RSP86.tmp" with contents
+[
+gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"../debug/IscDbc.pdb" /debug /machine:I386 /def:".\IscDbc.def" /out:"../debug/IscDbc.dll" /implib:"../debug/IscDbc.lib" /pdbtype:sept /libpath:"c:\Program Files\Interbase\SDK\lib_ms" 
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\AsciiBlob.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Attachment.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\BinaryBlob.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Blob.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\DateTime.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Error.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscBlob.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscCallableStatement.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscColumnsResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscConnection.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscCrossReferenceResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscDatabaseMetaData.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscIndexInfoResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscMetaDataResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscPreparedStatement.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscPrimaryKeysResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscProcedureColumnsResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscProceduresResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscResultSetMetaData.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscSpecialColumnsResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscSqlType.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscStatement.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscStatementMetaData.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscTablesResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\JString.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\LinkedList.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Lock.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Mutex.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Parameter.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Parameters.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Sqlda.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\SQLError.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\SqlTime.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Stream.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TimeStamp.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TypesResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Value.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Values.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscDbc.res
+]
+Creating command line "link.exe @w:\TEMP\RSP86.tmp"
+<h3>Output Window</h3>
+Compiling...
+IscConnection.cpp
+Linking...
+Creating temporary file "w:\TEMP\RSP87.tmp" with contents
+[
+/nologo /o"../debug/IscDbc.bsc" 
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\AsciiBlob.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Attachment.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\BinaryBlob.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Blob.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\DateTime.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Error.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscBlob.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscCallableStatement.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscColumnsResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscConnection.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscCrossReferenceResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscDatabaseMetaData.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscIndexInfoResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscMetaDataResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscPreparedStatement.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscPrimaryKeysResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscProcedureColumnsResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscProceduresResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscResultSetMetaData.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscSpecialColumnsResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscSqlType.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscStatement.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscStatementMetaData.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscTablesResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\JString.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\LinkedList.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Lock.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Mutex.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Parameter.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Parameters.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Sqlda.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\SQLError.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\SqlTime.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Stream.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TimeStamp.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TypesResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Value.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Values.sbr]
+Creating command line "bscmake.exe @w:\TEMP\RSP87.tmp"
+Creating browse info file...
+<h3>Output Window</h3>
+<h3>
 --------------------Configuration: OdbcJdbc - Win32 Debug--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating temporary file "w:\TEMP\RSP6F.tmp" with contents
+Creating temporary file "w:\TEMP\RSP88.tmp" with contents
 [
 /nologo /MTd /W3 /Gm /GX /Zi /Od /I "IscDbc" /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "DEBUG" /D "LOGGING" /FR"Debug/" /Fp"Debug/OdbcJdbc.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /c 
 "H:\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\OdbcConnection.cpp"
 ]
-Creating command line "cl.exe @w:\TEMP\RSP6F.tmp" 
-Creating temporary file "w:\TEMP\RSP70.tmp" with contents
+Creating command line "cl.exe @w:\TEMP\RSP88.tmp" 
+Creating temporary file "w:\TEMP\RSP89.tmp" with contents
 [
 IscDbc.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"Debug/OdbcJdbc.pdb" /debug /machine:I386 /def:".\OdbcJdbc.def" /out:"Debug/OdbcJdbc.dll" /implib:"Debug/OdbcJdbc.lib" /pdbtype:sept /libpath:"debug" 
 .\Debug\DescRecord.obj
@@ -28,12 +132,12 @@ IscDbc.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.
 .\Debug\ODbcJdbc.res
 .\debug\IscDbc.lib
 ]
-Creating command line "link.exe @w:\TEMP\RSP70.tmp"
+Creating command line "link.exe @w:\TEMP\RSP89.tmp"
 <h3>Output Window</h3>
 Compiling...
 OdbcConnection.cpp
 Linking...
-Creating temporary file "w:\TEMP\RSP71.tmp" with contents
+Creating temporary file "w:\TEMP\RSP8A.tmp" with contents
 [
 /nologo /o"Debug/OdbcJdbc.bsc" 
 .\Debug\DescRecord.sbr
@@ -46,7 +150,7 @@ Creating temporary file "w:\TEMP\RSP71.tmp" with contents
 .\Debug\OdbcError.sbr
 .\Debug\OdbcObject.sbr
 .\Debug\OdbcStatement.sbr]
-Creating command line "bscmake.exe @w:\TEMP\RSP71.tmp"
+Creating command line "bscmake.exe @w:\TEMP\RSP8A.tmp"
 Creating browse info file...
 <h3>Output Window</h3>
 <h3>

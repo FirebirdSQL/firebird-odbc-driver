@@ -20,6 +20,10 @@
  *
  *	Changes
  *
+ *	2002-06-08  IscConnection::startTransaction()
+ *				Contributed by Carlos Alvarez. New implementation
+ *				to better support different transaction options.
+ *
  *	2002-05-20	IscConnection.cpp
  *		
  *				Contributed by Robert Milharcic
@@ -149,6 +153,7 @@ void IscConnection::prepareTransaction()
 {
 }
 
+/* Original
 void* IscConnection::startTransaction()
 {
 	if (transactionHandle)
@@ -162,6 +167,56 @@ void* IscConnection::startTransaction()
 
 	return transactionHandle;
 }
+*/
+//2002-06-08 New version suggested by CA
+void* IscConnection::startTransaction()
+{
+    if (transactionHandle)
+        return transactionHandle;
+
+    ISC_STATUS statusVector [20];
+
+    static char    iscTpb[5];
+
+    iscTpb[0] = isc_tpb_version3;
+    iscTpb[1] = isc_tpb_write;
+    iscTpb[2] = isc_tpb_wait;
+    /* Isolation level */
+    switch( transactionIsolation )
+    {
+        case 0x00000008L:
+            // SQL_TXN_SERIALIZABLE:
+            iscTpb[3] = isc_tpb_consistency;
+            break;
+
+        case 0x00000004L:
+            // SQL_TXN_REPEATABLE_READ:
+            iscTpb[3] = isc_tpb_concurrency;
+            break;
+
+        case 0x00000001L:
+            // SQL_TXN_READ_UNCOMMITTED:
+            iscTpb[3] = isc_tpb_read_committed;
+            iscTpb[4] = isc_tpb_rec_version;
+            break;
+
+        case 0x00000002L:
+        default:
+            // SQL_TXN_READ_COMMITTED:
+            iscTpb[3] = isc_tpb_read_committed;
+            iscTpb[4] = isc_tpb_no_rec_version;
+            break;
+    }
+
+    isc_start_transaction( statusVector, &transactionHandle, 1, &attachment->databaseHandle,
+            sizeof( iscTpb ), &iscTpb);
+
+    if (statusVector [1])
+        throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
+
+    return transactionHandle;
+}
+
 
 Statement* IscConnection::createStatement()
 {

@@ -5,6 +5,16 @@ Changes made to OdbcJdbc codebase
 !!  using the format below and then paste them into this document. 
 
 
+ *	2002-06-08  OdbcConnection.cpp 
+ *				Contributed by C. G. Alvarez
+ *				sqlSetConnectAttr() and connect()
+ *				now supports SQL_ATTR_TXN_ISOLATION
+
+ *	2002-06-08  IscConnection::startTransaction()
+ *				Contributed by Carlos Alvarez. New implementation
+ *				to better support different transaction options.
+ *
+
  *	2002-06-08	OdbcStatement.cpp
  *				Submitted by B. Schulte
  *				sqlNumResultCols().

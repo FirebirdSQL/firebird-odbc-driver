@@ -18,6 +18,13 @@
  *  All Rights Reserved.
  *
  *
+ *
+ *	2002-06-08  OdbcConnection.cpp 
+ *				Contributed by C. G. Alvarez
+ *				sqlSetConnectAttr() and connect()
+ *				now supports SQL_ATTR_TXN_ISOLATION
+ *
+ *
  *	2002-06-08	OdbcConnection.cpp
  *				Contributed by C. G. Alvarez
  *				Changed sqlDriverConnect() to better support
@@ -270,7 +277,14 @@ RETCODE OdbcConnection::sqlSetConnectAttr (SQLINTEGER attribute, SQLPOINTER valu
 		case SQL_ATTR_ODBC_CURSORS:
 			cursors = (int) value;
 			break;	
-		}
+
+//Added by CA
+	    case SQL_ATTR_TXN_ISOLATION:
+			if( connection )
+	            connection->setTransactionIsolation( (int) value );
+			break;
+
+	}
 			
 	return sqlSuccess();
 }
@@ -847,8 +861,11 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 		DatabaseMetaData *metaData = connection->getMetaData();
 		const char *quoteString = metaData->getIdentifierQuoteString();
 		quotedIdentifiers = quoteString [0] == '"';
-		}
-	catch (SQLException& exception)
+//Next two lines added by CA
+        connection->setAutoCommit( autoCommit );
+        connection->setTransactionIsolation( SQL_TXN_READ_COMMITTED );
+        }
+    catch (SQLException& exception) 
 		{
 		if (properties)
 			delete properties;
