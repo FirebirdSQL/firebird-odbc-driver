@@ -93,6 +93,7 @@ public:
 	char		tempSqlda [XSQLDA_LENGTH (DEFAULT_SQLDA_COUNT)];
 	char		*buffer;
 	TempVector	*temps;
+	bool		needsbuffer;
 };
 
 #endif // !defined(AFX_SQLDA_H__6C3E2AB9_229F_11D4_98DF_0000C01D2301__INCLUDED_)

@@ -298,6 +298,7 @@ Sqlda::Sqlda()
 	indicatorsOffset = 0;
 	saveOrgAdressSqlData = NULL;
 	saveOrgAdressSqlInd = NULL;
+	needsbuffer = true;
 }
 
 Sqlda::~Sqlda()
@@ -342,11 +343,20 @@ bool Sqlda::checkOverflow()
 	sqlda->version = SQLDA_VERSION1;
 	sqlda->sqln = count;
 
+	needsbuffer = true;
+
 	return true;
 }
 
 void Sqlda::allocBuffer()
 {
+	//We've already done it,
+	// doing it again lengthens SQL_TEXT areas and causes
+	// trouble. Contributed by Roger Gammans
+	if (!needsbuffer) return;
+
+	needsbuffer = false;
+
 	if (buffer)
 	{
 		delete [] buffer;
