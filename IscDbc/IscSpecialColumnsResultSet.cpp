@@ -94,7 +94,7 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 	if(table && *table)
 		expandPattern (ptFirst, "\t\tand ","rfr.rdb$relation_name", table);
 
-	addString(ptFirst, " order by rel.rdb$constraint_type, rdb$index_name, rdb$field_position\n");
+	addString(ptFirst, " order by rel.rdb$constraint_type, i.rdb$index_name, rfr.rdb$field_position\n");
 
 	index_id = -1;
 	prepareStatement (sql);
