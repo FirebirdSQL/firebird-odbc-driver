@@ -36,9 +36,8 @@
 // driver is really for testing the setup sample
 //--------------------------------------------------
 
-#include "stdafx.h"
-#include <odbcinst.h>
 #include "OdbcJdbcSetup.h"
+#include <odbcinst.h>
 #include "DsnDialog.h"
 #include "Setup.h"
 #include "SetupAttributes.h"
@@ -62,7 +61,7 @@ static const char *fileNames [] = {
 	};
 
 static const char *drivers [] = { "IscDbc", NULL };
-extern COdbcJdbcSetupApp theApp;
+extern HINSTANCE m_hInstance;
 
 /*
  *	To debug the control panel applet 
@@ -72,26 +71,30 @@ extern COdbcJdbcSetupApp theApp;
  *		shell32.dll,Control_RunDLL odbccp32.cpl,,1
  *	4/ Set breakpoints as desired and hit the run button
  */
+#ifdef __BORLANDC__
+extern "C" __declspec( dllexport ) BOOL INSTAPI ConfigDSN(HWND		hWnd,
+#else
 BOOL INSTAPI ConfigDSN(HWND		hWnd,
+#endif
 			   WORD		fRequest,
 			   LPCSTR	lpszDriver,
 			   LPCSTR	lpszAttributes)
 {
 	Setup setup (hWnd, lpszDriver, lpszAttributes);
 	switch (fRequest)
-		{
-		case ODBC_CONFIG_DSN:
-			setup.configDsn();
-			break;
+	{
+	case ODBC_CONFIG_DSN:
+		setup.configDsn();
+		break;
 
-		case ODBC_ADD_DSN:
-			setup.addDsn();
-			break;
+	case ODBC_ADD_DSN:
+		setup.addDsn();
+		break;
 
-		case ODBC_REMOVE_DSN:
-			setup.removeDsn();
-			break;
-		}
+	case ODBC_REMOVE_DSN:
+		setup.removeDsn();
+		break;
+	}
 
 	return true;
 }
@@ -111,12 +114,12 @@ BOOL INSTAPI ConfigDSN(HWND		hWnd,
  *
  */
 
-STDAPI DllRegisterServer (void)
+extern "C" __declspec( dllexport ) int DllRegisterServer (void)
 {
 	char fileName [256];
-	CString msg;
+	JString msg;
 
-	GetModuleFileName (theApp.m_hInstance, fileName, sizeof (fileName));
+	GetModuleFileName (m_hInstance, fileName, sizeof (fileName));
 
 	char pathOut [256];
 	WORD length = sizeof (pathOut);
@@ -130,7 +133,7 @@ STDAPI DllRegisterServer (void)
 			&length,
 			ODBC_INSTALL_COMPLETE,
 			&useCount))
-		{
+	{
 		char message [SQL_MAX_MESSAGE_LENGTH];
         WORD	errCodeIn = 1;
 		DWORD *	errCodeOut = 0L;
@@ -140,9 +143,9 @@ STDAPI DllRegisterServer (void)
 		
 		msg.Format ("Install Driver Complete (%s, %s) failed with %d\n%s\n", 
 						fileName, pathOut, errCodeOut, message);
-		AfxMessageBox (msg);
+        MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
 		return FALSE;
-		}
+	}
 
 
 	char *path = pathOut + strlen (pathOut);
@@ -151,26 +154,27 @@ STDAPI DllRegisterServer (void)
 	char *tail = strrchr (fileName, '\\') + 1;
 
 	for (const char **ptr = fileNames; *ptr; ++ptr)
-		{
+	{
 		strcpy (path, *ptr);
 		strcpy (tail, *ptr);
 		if (!CopyFile (fileName, pathOut, false))
-			{
+		{
 			DWORD messageId = GetLastError();
 			char temp[256];
 			if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, messageId,
-					NULL, temp, sizeof(temp), NULL))
-				{
+					0, temp, sizeof(temp), NULL))
+			{
 				msg.Format ("Format message failed %d\n", GetLastError());
-				AfxMessageBox (msg);
-				}
+				MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
+				return FALSE;
+			}
 
 			msg.Format ("CopyFile (%s, %s) failed with %d\n%s\n", 
 						fileName, pathOut, messageId, temp);
-			AfxMessageBox (msg);
+	        MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
 			return FALSE;
-			}
 		}
+	}
 
 
 	if (!SQLConfigDriver (
@@ -194,7 +198,7 @@ STDAPI DllRegisterServer (void)
  * The original code uses GetLastError() 
  * but this doesn't report the true error.
  */
-        {
+	{
         char message [SQL_MAX_MESSAGE_LENGTH];
         WORD        errCodeIn = 1;
         DWORD *    errCodeOut = 0L;
@@ -205,9 +209,10 @@ STDAPI DllRegisterServer (void)
         msg.Format ("Config Install (%s, %s) failed with %d\n%s\n",
                         fileName, pathOut, errCodeOut, message);
 
-        AfxMessageBox (msg);
+        MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
+
         return FALSE;
-        } 	
+	} 	
 
 	return TRUE;
 }
@@ -229,12 +234,12 @@ Setup::Setup(HWND windowHandle, const char *drvr, const char *attr)
 		driver = drvr;
 
 	if (attr)
-		{
+	{
 		//MessageBox (hWnd, attr, "Attributes", 0);
 		attributes = attr;
 		dsn = getAttribute (SETUP_DSN);
 		readAttributes();
-		}
+	}
 }
 
 Setup::~Setup()
@@ -257,25 +262,26 @@ void Setup::removeDsn()
 	SQLRemoveDSNFromIni (dsn);
 }
 
-CString Setup::getAttribute(const char * attribute)
+JString Setup::getAttribute(const char * attribute)
 {
 	const char *p;
 	int count = strlen (attribute);
 
 	for (p = attributes; *p; ++p)
-		{
+	{
 		if (*p == *attribute && !strncmp (p, attribute, count) && p [count] == '=')
-			{
+		{
+			const char *q;
 			p += count + 1;
-			for (const char *q = p; *q && *q != ';'; ++q)
+			for (q = p; *q && *q != ';'; ++q)
 				;
-			return CString (p, q - p);
-			}
+			return JString (p, q - p);
+		}
 		while (*p && *p++ != ';')
 			;
-		}
+	}
 
-	return "";
+	return JString();
 }
 
 bool Setup::configureDialog()
@@ -283,7 +289,7 @@ bool Setup::configureDialog()
 	if (jdbcDriver == "")
 		jdbcDriver = drivers [0];
 
-	CDsnDialog dialog (drivers, CWnd::FromHandle (hWnd));
+	CDsnDialog dialog (drivers);
 	dialog.m_name = dsn;
 	dialog.m_database = dbName;
 	dialog.m_user = user;
@@ -291,10 +297,10 @@ bool Setup::configureDialog()
 	dialog.m_driver = jdbcDriver;
 	dialog.m_role = role;
 
-	if(readonlyTpb[0]=='Y')	dialog.m_readonly=TRUE;
+	if(*(const char*)readonlyTpb=='Y')	dialog.m_readonly=TRUE;
 	else dialog.m_readonly=FALSE;
 
-	if(nowaitTpb[0]=='Y')	dialog.m_nowait=TRUE;
+	if(*(const char*)nowaitTpb=='Y')	dialog.m_nowait=TRUE;
 	else dialog.m_nowait=FALSE;
 
 	if (dialog.DoModal() != IDOK)
@@ -346,11 +352,11 @@ void Setup::writeAttribute(const char * attribute, const char * value)
     SQLWritePrivateProfileString(dsn, attribute, value, "ODBC.INI");
 }
 
-CString Setup::readAttribute (const char * attribute)
+JString Setup::readAttribute (const char * attribute)
 {
 	char buffer [256];
 
 	int ret = SQLGetPrivateProfileString (dsn, attribute, "", buffer, sizeof (buffer), "ODBC.INI");
 
-	return CString (buffer, ret);
+	return JString (buffer, ret);
 }

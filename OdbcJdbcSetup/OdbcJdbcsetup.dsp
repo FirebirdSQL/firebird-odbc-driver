@@ -53,7 +53,8 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 /nologo /subsystem:windows /dll /machine:I386
+# ADD LINK32 user32.lib comdlg32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE
+# SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "OdbcJdbcSetup - Win32 Debug"
 
@@ -79,7 +80,8 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 user32.lib comdlg32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE
+# SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
 
@@ -96,11 +98,11 @@ SOURCE=.\DsnDialog.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcJdbcSetup.cpp
+SOURCE=..\IscDbc\JString.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcJdbcSetup.def
+SOURCE=.\OdbcJdbcSetup.cpp
 # End Source File
 # Begin Source File
 
@@ -109,11 +111,6 @@ SOURCE=.\OdbcJdbcSetup.rc
 # Begin Source File
 
 SOURCE=.\Setup.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\StdAfx.cpp
-# ADD CPP /Yc"stdafx.h"
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -139,10 +136,6 @@ SOURCE=.\Setup.h
 
 SOURCE=..\SetupAttributes.h
 # End Source File
-# Begin Source File
-
-SOURCE=.\StdAfx.h
-# End Source File
 # End Group
 # Begin Group "Resource Files"
 
@@ -151,10 +144,6 @@ SOURCE=.\StdAfx.h
 # Begin Source File
 
 SOURCE=..\change.log
-# End Source File
-# Begin Source File
-
-SOURCE=.\ReadMe.txt
 # End Source File
 # End Target
 # End Project

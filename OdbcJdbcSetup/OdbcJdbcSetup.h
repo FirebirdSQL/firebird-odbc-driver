@@ -22,45 +22,14 @@
 // OdbcJdbcSetup.h : main header file for the ODBCJDBCSETUP DLL
 //
 
-#if !defined(AFX_ODBCJDBCSETUP_H__23E7040B_14AB_11D4_98DD_0000C01D2301__INCLUDED_)
-#define AFX_ODBCJDBCSETUP_H__23E7040B_14AB_11D4_98DD_0000C01D2301__INCLUDED_
+#if !defined(_ODBCJDBCSETUP_H_INCLUDED_)
+#define _ODBCJDBCSETUP_H_INCLUDED_
 
-#if _MSC_VER >= 1000
-#pragma once
-#endif // _MSC_VER >= 1000
+#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
-#ifndef __AFXWIN_H__
-	#error include 'stdafx.h' before including this file for PCH
-#endif
+#include <windows.h>
+#include "../IscDbc/JString.h"
 
 #include "resource.h"		// main symbols
 
-/////////////////////////////////////////////////////////////////////////////
-// COdbcJdbcSetupApp
-// See OdbcJdbcSetup.cpp for the implementation of this class
-//
-
-class COdbcJdbcSetupApp : public CWinApp
-{
-public:
-	COdbcJdbcSetupApp();
-
-// Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(COdbcJdbcSetupApp)
-	//}}AFX_VIRTUAL
-
-	//{{AFX_MSG(COdbcJdbcSetupApp)
-		// NOTE - the ClassWizard will add and remove member functions here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
-};
-
-
-/////////////////////////////////////////////////////////////////////////////
-
-//{{AFX_INSERT_LOCATION}}
-// Microsoft Developer Studio will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_ODBCJDBCSETUP_H__23E7040B_14AB_11D4_98DD_0000C01D2301__INCLUDED_)
+#endif // !defined(_ODBCJDBCSETUP_H_INCLUDED_)

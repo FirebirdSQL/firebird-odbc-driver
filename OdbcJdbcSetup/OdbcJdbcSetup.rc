@@ -7,8 +7,9 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
-
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -17,7 +18,7 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 #ifdef _WIN32
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+LANGUAGE 0x22, 0x1
 #pragma code_page(1252)
 #endif //_WIN32
 
@@ -110,14 +111,14 @@ END
 //
 
 IDD_DSN_PROPERTIES DIALOG DISCARDABLE  0, 0, 237, 186
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "FireBird ODBC Setup"
 FONT 8, "MS Sans Serif"
 BEGIN
-    EDITTEXT        IDC_NAME,7,14,102,14,ES_AUTOHSCROLL
-    COMBOBOX        IDC_DRIVER,123,16,102,47,CBS_DROPDOWN | WS_VSCROLL | 
+    EDITTEXT        IDC_NAME,7,17,102,12,ES_AUTOHSCROLL
+    COMBOBOX        IDC_DRIVER,123,17,102,47,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    EDITTEXT        IDC_DATABASE,7,41,176,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_DATABASE,7,42,176,12,ES_AUTOHSCROLL
     PUSHBUTTON      "Browse",IDC_FIND_FILE,189,42,36,14
     EDITTEXT        IDC_USER,7,70,65,14,ES_UPPERCASE | ES_AUTOHSCROLL
     EDITTEXT        IDC_PASSWORD,80,70,70,14,ES_PASSWORD | ES_AUTOHSCROLL
@@ -177,9 +178,6 @@ END
 LANGUAGE 9, 1
 #pragma code_page(1252)
 #endif
-#include "res\OdbcJdbcSetup.rc2"  // non-Microsoft Visual C++ edited resources
-#include "afxres.rc"         // Standard components
 #endif
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
-
