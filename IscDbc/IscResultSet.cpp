@@ -171,6 +171,24 @@ bool IscResultSet::setCurrentRowInBufferStaticCursor(int nRow)
 	return sqlda->setCurrentRowInBufferStaticCursor(nRow);
 }
 
+bool IscResultSet::readFromSystemCatalog()
+{
+	if (!statement)
+		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
+
+	sqlda->initStaticCursor(statement->connection);
+	
+	while( next() )
+		sqlda->addRowSqldaInBufferStaticCursor();
+
+	sqlda->restoreOrgAdressFieldsStaticCursor();
+
+	sqlda->setCurrentRowInBufferStaticCursor(0);
+	sqlda->copyNextSqldaFromBufferStaticCursor();
+
+	return true;
+}
+
 bool IscResultSet::readStaticCursor()
 {
 	if (!statement)
@@ -246,8 +264,8 @@ void IscResultSet::close()
 	if (statement)
 		{
 		statement->deleteResultSet (this);
-		statement->release();
-		statement = NULL;
+		if ( !statement->release() )
+			statement = NULL;
 		}
 }
 

@@ -31,7 +31,6 @@
 namespace IscDbcLibrary {
 
 class IscDatabaseMetaData;
-class IscPreparedStatement;
 
 class IscMetaDataResultSet : public IscResultSet  
 {
@@ -41,10 +40,8 @@ public:
 	bool isWildcarded (const char *pattern);
 	virtual void prepareStatement (const char *sql);
 	IscMetaDataResultSet(IscDatabaseMetaData *meta);
-	~IscMetaDataResultSet();
 
 	IscDatabaseMetaData		*metaData;
-	IscPreparedStatement	*statement;
 };
 
 }; // end namespace IscDbcLibrary

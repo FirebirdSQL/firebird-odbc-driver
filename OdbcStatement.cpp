@@ -466,7 +466,7 @@ void OdbcStatement::releaseResultSet()
 	}
 }
 
-void OdbcStatement::setResultSet(ResultSet * results)
+void OdbcStatement::setResultSet(ResultSet * results, bool fromSystemCatalog)
 {
 	execute = &OdbcStatement::executeStatement;
 	resultSet = results;
@@ -490,7 +490,12 @@ void OdbcStatement::setResultSet(ResultSet * results)
 	countFetched = 0;
 	rowNumber = 0;
 	indicatorRowNumber = 0;
-	isResultSetFromSystemCatalog = true;
+
+	if ( fromSystemCatalog )
+	{
+		isResultSetFromSystemCatalog = true;
+		setCursorRowCount(resultSet->getCountRowsStaticCursor());
+	}
 }
 
 void OdbcStatement::rebindColumn()
@@ -929,6 +934,7 @@ RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 		break;
 
 	case SQL_FETCH_NEXT:
+		resultSet->setPosRowInSet(rowNumber);
 	case SQL_FETCH_LAST:
 		resultSet->afterLast();
 		break;
@@ -1080,6 +1086,8 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 
 	if( enFetch == NoneFetch )
 		enFetch = ExtendedFetch;
+
+#pragma FB_COMPILER_MESSAGE("sqlExtendedFetch::Realized used Static Cursor FIXME!")
 
 	SQLINTEGER	*bindOffsetPtrSave = bindOffsetPtr;
 
@@ -1722,19 +1730,6 @@ RETCODE OdbcStatement::sqlExecuteDirect(SQLCHAR * sql, int sqlLength)
 		return retcode;
 
 	return sqlSuccess();		
-}
-
-ResultSet* OdbcStatement::getResultSet()
-{
-	releaseResultSet();
-
-	if (!statement->getMoreResults())
-		return NULL;
-
-	setResultSet (statement->getResultSet());
-	isResultSetFromSystemCatalog = false;
-
-	return resultSet;
 }
 
 void OdbcStatement::rebindParam ( bool initAttrDataAtExec )
@@ -2492,7 +2487,13 @@ RETCODE OdbcStatement::executeStatement()
 		return ret;
 
 	statement->executeStatement();
-	getResultSet();
+	releaseResultSet();
+
+	if ( statement->getMoreResults() )
+	{
+		setResultSet (statement->getResultSet(), false);
+		statement->addRef();
+	}
 
 	if ( statement->isActiveSelect() && isStaticCursor() )
 	{
@@ -2545,7 +2546,7 @@ RETCODE OdbcStatement::sqlGetTypeInfo(int dataType)
 	try
 	{
 		DatabaseMetaData *metaData = connection->getMetaData();
-		setResultSet (metaData->getTypeInfo (dataType));
+		setResultSet (metaData->getTypeInfo (dataType), false);
 	}
 	catch (SQLException& exception)
 	{

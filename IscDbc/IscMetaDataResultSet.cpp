@@ -35,7 +35,7 @@
 #include "IscMetaDataResultSet.h"
 #include "IscDatabaseMetaData.h"
 #include "IscResultSet.h"
-#include "IscPreparedStatement.h"
+#include "IscStatement.h"
 #include "SQLError.h"
 #include "IscConnection.h"
 
@@ -48,21 +48,16 @@ namespace IscDbcLibrary {
 IscMetaDataResultSet::IscMetaDataResultSet(IscDatabaseMetaData *meta) : IscResultSet (NULL)
 {
 	metaData = meta;
-	statement = NULL;
-}
-
-IscMetaDataResultSet::~IscMetaDataResultSet()
-{
-	if ( statement )
-		statement->release();
 }
 
 void IscMetaDataResultSet::prepareStatement(const char * sql)
 {
 	close();
-	statement = (IscPreparedStatement *)metaData->connection->prepareStatement (sql);
-	statement->executeMetaDataQuery();
+	statement = new IscStatement ( metaData->connection );
+	statement->prepareStatement (sql);
+	statement->execute();
 	initResultSet((IscStatement*)statement);
+	readFromSystemCatalog();
 }
 
 bool IscMetaDataResultSet::isWildcarded(const char * pattern)

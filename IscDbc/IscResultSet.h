@@ -173,6 +173,7 @@ public:
 	virtual int			getPosRowInSet();
 	virtual long		*getSqlDataOffsetPtr();
 	virtual bool		readStaticCursor();
+	virtual bool		readFromSystemCatalog();
 	virtual bool		readForwardCursor();
 	virtual bool		setCurrentRowInBufferStaticCursor(int nRow);
 	virtual void		copyNextSqldaInBufferStaticCursor();

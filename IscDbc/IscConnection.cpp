@@ -659,16 +659,14 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 
 int IscConnection::getCountInputParamFromProcedure ( const char* procedureName )
 {
-	int num = 0;
+	int num = -1; // not found
 	IscProceduresResultSet * resultSet = 
 		(IscProceduresResultSet*)getMetaData()->getProcedures ( NULL, NULL, procedureName );
 
 	if ( resultSet )
 	{
-		if ( resultSet->next() )
+		if ( resultSet->getCountRowsStaticCursor() )
 			num = resultSet->sqlda->getShort(4); // NUM_INPUT_PARAM
-		else
-			num = -1; // not found
 		resultSet->release();
 	}
 

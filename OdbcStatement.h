@@ -80,7 +80,6 @@ public:
 	RETCODE sqlBindParameter (int parameter, int type, int cType, int sqlType, int precision, int scale, PTR ptr, int bufferLength, SDWORD *length);
 	RETCODE sqlDescribeParam (int parameter, SWORD* sqlType, UDWORD*precision, SWORD*scale,SWORD*nullable);
 	RETCODE formatParameter( int parameter );
-	ResultSet* getResultSet();
 	RETCODE sqlExecuteDirect (SQLCHAR * sql, int sqlLength);
 	RETCODE sqlExecute();
 	RETCODE sqlGetData (int column, int cType, PTR value, int bufferLength, SDWORD *length);
@@ -97,7 +96,7 @@ public:
 	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
 	void rebindColumn();
 	void rebindParam(bool initAttrDataAtExec = false);
-	void setResultSet (ResultSet *results);
+	void setResultSet (ResultSet *results, bool fromSystemCatalog = true);
 	void releaseResultSet();
 	void releaseStatement();
 	RETCODE sqlPrepare (SQLCHAR *sql, int sqlLength);
@@ -115,7 +114,7 @@ public:
 	virtual OdbcObjectType getType();
 	OdbcStatement(OdbcConnection *connect, int statementNumber);
 	~OdbcStatement();
-	bool isStaticCursor(){ return cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE; }
+	bool isStaticCursor(){ return cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE || isResultSetFromSystemCatalog; }
 	long getCurrentFetched(){ return countFetched; }
 	inline StatementMetaData	*getStatementMetaDataIRD();
 	inline void clearErrors();
