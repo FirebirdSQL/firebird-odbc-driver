@@ -174,12 +174,6 @@
 				RelativePath="..\..\IscDbc\DateTime.h">
 			</File>
 			<File
-				RelativePath="..\..\IscDbc\Engine.h">
-			</File>
-			<File
-				RelativePath="..\..\IscDbc\Error.h">
-			</File>
-			<File
 				RelativePath="..\..\IscDbc\IscArray.h">
 			</File>
 			<File
@@ -314,9 +308,6 @@
 			</File>
 			<File
 				RelativePath="..\..\IscDbc\DateTime.cpp">
-			</File>
-			<File
-				RelativePath="..\..\IscDbc\Error.cpp">
 			</File>
 			<File
 				RelativePath="..\..\IscDbc\IscArray.cpp">

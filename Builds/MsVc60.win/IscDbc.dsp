@@ -130,10 +130,6 @@ SOURCE=..\..\IscDbc\Engine.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\IscDbc\Error.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\IscDbc\IscArray.h
 # End Source File
 # Begin Source File
@@ -311,10 +307,6 @@ SOURCE=..\..\IscDbc\Blob.cpp
 # Begin Source File
 
 SOURCE=..\..\IscDbc\DateTime.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\IscDbc\Error.cpp
 # End Source File
 # Begin Source File
 
