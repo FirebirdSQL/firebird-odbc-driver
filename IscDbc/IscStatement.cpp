@@ -430,13 +430,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 			case SQL_TEXT:
 				{
 				char *data = (char*) var->sqldata;
-				//printf ("%d '%s'\n", n, data);
-//Orig.
-//				data [var->sqllen - 1] = 0;
-//From B. Schulte
-// 'this fixes the awful bug with those "my field has a trailing blank" ... a bit'
-//RM added the decrement to var->sqllen 2002-06-04
-				data [var->sqllen - 1 ] = 0;    
+				data [var->sqllen] = 0;    
 				value->setString (data, false);
 				}
 				break;
@@ -445,9 +439,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				{
 				int length = *((short*) var->sqldata);
 				char *data = var->sqldata + 2;
-//				if (length < var->sqllen)
-// LiWeimin suggests decrementing the sqllen by 2 before the test.
-				if (length < var->sqllen-2)
+				if (length < var->sqllen)
 				{
 					data [length] = 0;
 					value->setString (data, false);

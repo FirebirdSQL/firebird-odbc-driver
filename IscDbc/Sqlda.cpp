@@ -427,7 +427,6 @@ void Sqlda::allocBuffer()
 			throw SQLEXCEPTION (COMPILE_ERROR, "Sqlda variable has zero length");
 		offset = ROUNDUP (offset, boundary);
 		var->sqldata = (char*)(offsetSqldata[n] = offset);
-		var->sqllen = length;
 		offset += length;
 	}
 
@@ -642,12 +641,6 @@ int Sqlda::getColumnDisplaySize(int index)
 
 		case SQL_TIMESTAMP:
 			return MAX_TIMESTAMP_LENGTH;
-        
-        case SQL_TEXT: 
-            return var->sqllen-1; 
-
-        case SQL_VARYING: 
-            return var->sqllen-2;
 		}
 
 	return var->sqllen;
@@ -708,13 +701,6 @@ int Sqlda::getPrecision(int index)
 
 		case SQL_TIMESTAMP:
 			return MAX_TIMESTAMP_LENGTH;
-
-        case SQL_TEXT: 
-            return var->sqllen-1; 
-
-        case SQL_VARYING: 
-            return var->sqllen-2;
-
 		}
 
 	return var->sqllen;
