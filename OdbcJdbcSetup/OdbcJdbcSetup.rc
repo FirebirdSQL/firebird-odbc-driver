@@ -91,7 +91,7 @@ BEGIN
             VALUE "OriginalFilename", "OdbcJdbcSetup.dll\0"
             VALUE "ProductName", "OdbcJdbcSetup Dynamic Link Library\0"
             VALUE "ProductVersion", PRODUCT_VERSION_STR
-            VALUE "SpecialBuild", "v1-2-release\0"
+            VALUE "SpecialBuild", "v1-3-beta\0"
         END
     END
     BLOCK "VarFileInfo"
