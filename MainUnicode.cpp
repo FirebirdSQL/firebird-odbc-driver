@@ -406,7 +406,8 @@ SQLRETURN SQL_API SQLGetCursorNameW( SQLHSTMT hStmt, SQLWCHAR *cursorName,
 	TRACE ("SQLGetCursorNameW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> CursorName( bufferLength, cursorName, nameLength );
+	bool isByte = false;
+	ConvertingString<> CursorName( bufferLength, cursorName, nameLength, isByte );
 
 	return ((OdbcStatement*) hStmt)->sqlGetCursorName( CursorName, CursorName, nameLength );
 }
