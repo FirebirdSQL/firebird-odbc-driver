@@ -18,7 +18,7 @@
 #
 #
 #
-PACKAGE_NAME=OdbcJdbc_1.2.0.69.pre1.tar
+PACKAGE_NAME=OdbcJdbc_1.2.0.69.tar
 #
 #
 DEBUG = No
@@ -152,6 +152,7 @@ uninstall :
 package :
 	-strip -s $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
 	-rm $(PACKAGE_NAME).gz
+	chmod 740 ../../Install/Linux/install.sh
 	tar -C $(TARGETDIR) -cvf OdbcJdbcLibs.tar $(ISCDBC) $(ODBCJDBC) $(ODBCJDBCSETUP)
 	tar -C ../../Install/HtmlHelp --exclude=CVS -cvf OdbcJdbcDocs.tar html/ 
 	tar -C ../../Install -uf OdbcJdbcDocs.tar ReleaseNotes_v1.2.html
