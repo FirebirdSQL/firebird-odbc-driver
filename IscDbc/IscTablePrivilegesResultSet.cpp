@@ -54,21 +54,27 @@ IscTablePrivilegesResultSet::~IscTablePrivilegesResultSet()
 
 void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
-	JString sql = "select NULL as table_cat,"						//1
-				          "NULL as table_schem,"					//2
-						  "tbl.rdb$relation_name as table_name,"	//3
-						  "usp.rdb$grantor as grantor,"				//4
-						  "usp.rdb$user as grantee,"				//5
-						  "usp.rdb$privilege as privilege,"			//6
-						  "'YES' as isgrantable, "					//7
-						  "usp.rdb$grant_option as GRANT_OPTION "	//8
-                          "from rdb$relations tbl, rdb$user_privileges usp\n"
-                          " where tbl.rdb$relation_name = usp.rdb$relation_name\n";
+	JString sql = "select NULL as table_cat,"										//1
+				          "NULL as table_schem,"									//2
+						  "tbl.rdb$relation_name as table_name,"					//3
+						  "priv.rdb$grantor as grantor,"							//4
+						  "priv.rdb$user as grantee,"								//5
+						  "priv.rdb$privilege as privilege,"						//6
+						  "'YES' as isgrantable, "									//7
+						  "priv.rdb$grant_option as GRANT_OPTION "					//8
+                          "from rdb$relations tbl, rdb$user_privileges priv\n"
+                          " where tbl.rdb$relation_name = priv.rdb$relation_name\n";
+
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		sql +=	"and priv.rdb$object_type = 0\n";
+		sql +=	metaData->getUserAccess();
+	}
 
     if (tableNamePattern && *tableNamePattern)
         sql += expandPattern (" and ","tbl.rdb$relation_name", tableNamePattern);
 
-    sql += " order by tbl.rdb$relation_name, usp.rdb$privilege, usp.rdb$user";
+    sql += " order by tbl.rdb$relation_name, priv.rdb$privilege, priv.rdb$user";
 
     prepareStatement (sql);
     numberColumns = 7;

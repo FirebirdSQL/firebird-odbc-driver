@@ -25,6 +25,7 @@
 #include <string.h>
 #include "IscDbc.h"
 #include "IscCrossReferenceResultSet.h"
+#include "IscDatabaseMetaData.h"
 
 #define SQL_CASCADE                      0
 #define SQL_RESTRICT                     1
@@ -78,8 +79,18 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 		"     rdb$indices pidx,\n"
 		"     rdb$index_segments fseg,\n"
 		"     rdb$index_segments pseg,\n"
-		"     rdb$ref_constraints refc\n"
-		"where fkey.rdb$constraint_type = 'FOREIGN KEY'\n"
+		"     rdb$ref_constraints refc\n";
+
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		sql +=	"join rdb$user_privileges priv\n"
+					"on pidx.rdb$relation_name = priv.rdb$relation_name\n"
+						"and fidx.rdb$relation_name = priv.rdb$relation_name\n"
+						"and priv.rdb$privilege = 'S' and priv.rdb$object_type = 0\n";
+		sql +=	metaData->getUserAccess();
+	}
+
+	sql +=	"where fkey.rdb$constraint_type = 'FOREIGN KEY'\n"
 		"  and fkey.rdb$index_name = fidx.rdb$index_name\n"
 		"  and fidx.rdb$foreign_key = pidx.rdb$index_name\n"
 		"  and fidx.rdb$index_name = fseg.rdb$index_name\n"

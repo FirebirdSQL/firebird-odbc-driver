@@ -53,21 +53,29 @@ IscTablesResultSet::~IscTablesResultSet()
 
 void IscTablesResultSet::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char * * types)
 {
-	JString sql = "select NULL as table_cat,"
-				          "NULL as table_schem,"
-						  "rdb$relation_name as table_name,"
-						  "rdb$view_blr as table_type,"
-						  "rdb$description as remarks,"
-						  "rdb$system_flag "
-						  "from rdb$relations\n";
+	JString sql = "select NULL as table_cat,\n"
+				          "NULL as table_schem,\n"
+						  "tbl.rdb$relation_name as table_name,\n"
+						  "tbl.rdb$view_blr as table_type,\n"
+						  "tbl.rdb$description as remarks,\n"
+						  "tbl.rdb$system_flag\n"
+						  "from rdb$relations tbl\n";
+
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		sql +=	"join rdb$user_privileges priv\n"
+					"on tbl.rdb$relation_name = priv.rdb$relation_name\n"
+					"and priv.rdb$privilege = 'S' and priv.rdb$object_type = 0\n";
+		sql +=	metaData->getUserAccess();
+	}
 
 	const char *sep = " where (";
 
 	if (tableNamePattern && *tableNamePattern)
-		{
+	{
 		sql += expandPattern (" where ","rdb$relation_name", tableNamePattern);
 		sep = " and (";
-		}
+	}
 
 	JString adjunct;
 		

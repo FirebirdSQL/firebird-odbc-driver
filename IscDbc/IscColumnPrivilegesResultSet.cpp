@@ -54,20 +54,26 @@ void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, con
 				          "NULL as table_schem,"
 						  "tbl.rdb$relation_name as table_name,"
 						  "tbl.rdb$field_name as column_name,"
-						  "usp.rdb$grantor as grantor,"
-						  "usp.rdb$user as grantee,"
-						  "usp.rdb$privilege as privilege,"
-						  "usp.rdb$grant_option as is_grantable "
-						  "from rdb$relation_fields tbl, rdb$user_privileges usp\n"
-						  " where tbl.rdb$relation_name = usp.rdb$relation_name\n";
+						  "priv.rdb$grantor as grantor,"
+						  "priv.rdb$user as grantee,"
+						  "priv.rdb$privilege as privilege,"
+						  "priv.rdb$grant_option as is_grantable "
+						  "from rdb$relation_fields tbl, rdb$user_privileges priv\n"
+						  " where tbl.rdb$relation_name = priv.rdb$relation_name\n";
 	
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		sql +=	"and priv.rdb$object_type = 0\n";
+		sql +=	metaData->getUserAccess();
+	}
+
 	if (tableNamePattern && *tableNamePattern)
 		sql += expandPattern (" and ","tbl.rdb$relation_name", tableNamePattern);
 
 	if (columnNamePattern && *columnNamePattern)
 		sql += expandPattern (" and ","tbl.rdb$field_name", columnNamePattern);
 
-	sql += " order by tbl.rdb$relation_name, tbl.rdb$field_name, usp.rdb$privilege";
+	sql += " order by tbl.rdb$relation_name, tbl.rdb$field_name, priv.rdb$privilege";
 
 	prepareStatement (sql);
 	numberColumns = 8;

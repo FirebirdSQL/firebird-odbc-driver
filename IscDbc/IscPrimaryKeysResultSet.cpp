@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "IscDbc.h"
 #include "IscPrimaryKeysResultSet.h"
+#include "IscDatabaseMetaData.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -50,10 +51,19 @@ void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * 
 				"\tseg.rdb$field_name as column_name,\n"		// 4
 				"\tseg.rdb$field_position as key_seq,\n"		// 5
 				"\tidx.rdb$index_name as pk_name\n"				// 6
-		"from rdb$relation_constraints rel, rdb$indices idx, rdb$index_segments seg\n"
-		" where rel.rdb$constraint_type = 'PRIMARY KEY'\n"
-		" and rel.rdb$index_name = idx.rdb$index_name\n"
-		" and idx.rdb$index_name = seg.rdb$index_name\n";
+		"from rdb$relation_constraints rel, rdb$indices idx, rdb$index_segments seg\n";
+
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		sql +=	"join rdb$user_privileges priv\n"
+					"on rel.rdb$relation_name = priv.rdb$relation_name\n"
+						"and priv.rdb$privilege = 'S' and priv.rdb$object_type = 0\n";
+		sql +=	metaData->getUserAccess();
+	}
+
+	sql += " where rel.rdb$constraint_type = 'PRIMARY KEY'\n"
+				" and rel.rdb$index_name = idx.rdb$index_name\n"
+				" and idx.rdb$index_name = seg.rdb$index_name\n";
 
 	if (tableNamePattern && *tableNamePattern)
 		sql += expandPattern (" and ","rel.rdb$relation_name", tableNamePattern);

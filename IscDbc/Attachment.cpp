@@ -29,6 +29,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <stdio.h>
 #include <string.h>
 #include "IscDbc.h"
 #include "Attachment.h"
@@ -54,6 +55,8 @@ Attachment::Attachment()
 {
 	useCount = 1;
 	databaseHandle = NULL;
+	admin = true;
+	isRoles = false;
 }
 
 Attachment::~Attachment()
@@ -68,103 +71,110 @@ Attachment::~Attachment()
 
 void Attachment::openDatabase(const char *dbName, Properties *properties)
 {
+	isRoles = false;
 	databaseName = dbName;
 	char dpb [256], *p = dpb;
 	*p++ = isc_dpb_version1;
 
 	const char *user = properties->findValue ("user", NULL);
 
-	if (user)
-		{
+	if (user && *user)
+	{
 		userName = user;
+		userAccess = user;
 		*p++ = isc_dpb_user_name,
 		*p++ = strlen (user);
 		for (const char *q = user; *q;)
 			*p++ = *q++;
-		}
+	}
 
 	const char *password = properties->findValue ("password", NULL);
 
-	if (password)
-		{
+	if (password && *password)
+	{
 		*p++ = isc_dpb_password,
 		*p++ = strlen (password);
 		for (const char *q = password; *q;)
 			*p++ = *q++;
-		}
+	}
+
 	const char *role = properties->findValue ("role", NULL);
 
-	if (role)
-		{
+	if (role && *role)
+	{
+		userAccess = role;
+		isRoles = true;
 		*p++ = isc_dpb_sql_role_name;
 		*p++ = strlen (role);
 		for (const char *q = role; *q;)
 			*p++ = *q++;
-		}
+	}
 
 	const char *charset = properties->findValue ("charset", NULL);
 
-	if (charset)
-		{
+	if (charset && *charset)
+	{
 		*p++ = isc_dpb_lc_ctype;
 		*p++ = strlen (charset);
 		for (const char *q = charset; *q;)
 			*p++ = *q++;
-		}
+	}
 
 	int dpbLength = p - dpb;
 	ISC_STATUS statusVector [20];
 
 	if (GDS->_attach_database (statusVector, strlen (dbName), (char*) dbName, &databaseHandle, 
 							 dpbLength, dpb))
-		{
+	{
 		JString text = IscConnection::getIscStatusText (statusVector);
 		throw SQLEXCEPTION (statusVector [1], text);
-		}
+	}
 
 	char result [256]; // 100
 	databaseDialect = SQL_DIALECT_V5;
 
 	if (!GDS->_database_info (statusVector, &databaseHandle, sizeof (databaseInfoItems), databaseInfoItems, sizeof (result), result))
-		{
+	{
  		for (p = result; p < result + sizeof (result) && *p != isc_info_end;)
-			{
+		{
 			char item = *p++;
 			int length = GDS->_vax_integer (p, 2);
 			p += 2;
 			switch (item)
-				{
-				case isc_info_db_sql_dialect:
-					databaseDialect = GDS->_vax_integer (p, length);
-					break;
-				
-				case isc_info_base_level:
-					serverBaseLevel = GDS->_vax_integer (p, length);
-					break;
+			{
+			case isc_info_db_sql_dialect:
+				databaseDialect = GDS->_vax_integer (p, length);
+				break;
+			
+			case isc_info_base_level:
+				serverBaseLevel = GDS->_vax_integer (p, length);
+				break;
 
-				case isc_info_version:
-					serverVersion = JString (p + 2, p [1]);
-					break;
+			case isc_info_version:
+				serverVersion = JString (p + 2, p [1]);
+				break;
 
-				case isc_info_page_size:
-					pageSize = GDS->_vax_integer (p, length);
-					break;
-				}
-			p += length;
+			case isc_info_page_size:
+				pageSize = GDS->_vax_integer (p, length);
+				break;
 			}
+			p += length;
 		}
+	}
 
 	switch (databaseDialect)
-		{
-		case 0:
-		case SQL_DIALECT_V5:
-			quotedIdentifiers = false;
-			break;
+	{
+	case 0:
+	case SQL_DIALECT_V5:
+		quotedIdentifiers = false;
+		break;
 
-		case SQL_DIALECT_V6:
-		default:
-			quotedIdentifiers = true;
-		}
+	case SQL_DIALECT_V6:
+	default:
+		quotedIdentifiers = true;
+	}
+
+	checkAdmin();
 }
 
 void Attachment::addRef()
@@ -175,10 +185,10 @@ void Attachment::addRef()
 int Attachment::release()
 {
 	if (--useCount == 0)
-		{
+	{
 		delete this;
 		return 0;
-		}
+	}
 
 	return useCount;
 }
@@ -188,3 +198,31 @@ int Attachment::getDatabaseDialect()
 	return databaseDialect;
 }
 
+void Attachment::checkAdmin()
+{
+	char temp [256];
+	QUAD adm = (QUAD)71752869960019.0;
+	QUAD user = (QUAD)0;
+	memcpy((void *)&user,(const char *)userName,6);
+
+	admin = user == adm;
+
+	if ( admin )
+		userAccess = "";
+	else
+	{
+		sprintf (temp, "and priv.rdb$user = '%s' and priv.rdb$user_type = %d\n",
+			(const char *)userAccess, isRoles ? 13 : 8);
+		userAccess = temp;
+	}
+}
+
+bool Attachment::isAdmin()
+{
+	return admin;
+}
+
+JString& Attachment::filtrAccess()
+{
+	return userAccess;
+}

@@ -49,6 +49,7 @@
 #include "IscSqlType.h"
 #include "IscStatement.h"
 #include "IscConnection.h"
+#include "IscDatabaseMetaData.h"
 
 #ifndef SQL_PARAM_INPUT
 #define SQL_PARAM_TYPE_UNKNOWN           0
@@ -103,8 +104,17 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 				"\tpp.rdb$parameter_number as ordinal_position,\n"	// 18
 				"\t'YES' as is_nullable,\n"							// 19
 				"\tf.rdb$field_precision as column_precision\n"		// 20
-		"from rdb$procedure_parameters pp, rdb$fields f\n"
-		"where pp.rdb$field_source = f.rdb$field_name";
+		"from rdb$procedure_parameters pp, rdb$fields f\n";
+
+	if ( !metaData->allProceduresAreCallable() )
+	{
+		sql +=	"join rdb$user_privileges priv\n"
+					"on pp.rdb$procedure_name = priv.rdb$relation_name\n"
+					"and priv.rdb$privilege = 'S' and priv.rdb$object_type = 5\n";
+		sql +=	metaData->getUserAccess();
+	}
+
+	sql +=	"where pp.rdb$field_source = f.rdb$field_name";
 
 	if (procedureNamePattern && *procedureNamePattern)
 		sql += expandPattern (" and ","pp.rdb$procedure_name", procedureNamePattern);

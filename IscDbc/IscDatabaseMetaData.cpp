@@ -253,12 +253,12 @@ ResultSet* IscDatabaseMetaData::getUsers(const char * catalog, const char *userP
 
 bool IscDatabaseMetaData::allProceduresAreCallable()
 	{
-	return true;
+	return connection->attachment->isAdmin();
 	}
 
 bool IscDatabaseMetaData::allTablesAreSelectable()
 	{
-	return true;
+	return connection->attachment->isAdmin();
 	}
 
 const char* IscDatabaseMetaData::getURL()
@@ -270,6 +270,11 @@ const char* IscDatabaseMetaData::getURL()
 const char* IscDatabaseMetaData::getUserName()
 	{
 	return connection->attachment->userName;
+	}
+
+const char* IscDatabaseMetaData::getUserAccess()
+	{
+	return connection->attachment->filtrAccess();
 	}
 
 bool IscDatabaseMetaData::isReadOnly()

@@ -59,6 +59,7 @@ public:
 	virtual bool allTablesAreSelectable();
 	virtual const char* getURL();
 	virtual const char* getUserName();
+	virtual const char* getUserAccess();
 	virtual bool isReadOnly();
 	virtual bool nullsAreSortedHigh();
 	virtual bool nullsAreSortedLow();

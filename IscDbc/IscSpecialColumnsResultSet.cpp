@@ -77,8 +77,17 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 				"\tf.rdb$field_precision as column_precision\n"		//13
 		"from rdb$fields f\n"
 			"\tjoin rdb$relation_fields rfr\n" 
-				"\t\ton rfr.rdb$field_source = f.rdb$field_name\n"
-			"\tjoin rdb$indices i\n"
+				"\t\ton rfr.rdb$field_source = f.rdb$field_name\n";
+
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		sql +=	"join rdb$user_privileges priv\n"
+					"on rfr.rdb$relation_name = priv.rdb$relation_name\n"
+						"and priv.rdb$privilege = 'S' and priv.rdb$object_type = 0\n";
+		sql +=	metaData->getUserAccess();
+	}
+
+	sql +=	"\tjoin rdb$indices i\n"
 				"\t\ton rfr.rdb$relation_name = i.rdb$relation_name\n"
 			"\tjoin rdb$index_segments s\n"
 				"\t\ton rfr.rdb$field_name = s.rdb$field_name\n"
@@ -96,7 +105,6 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 	prepareStatement (sql);
 	numberColumns = 8;
 	index_id = -1;
-
 }
 
 bool IscSpecialColumnsResultSet::next ()

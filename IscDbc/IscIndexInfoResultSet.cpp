@@ -82,7 +82,15 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 				"\tcast(NULL as smallint) as index_type\n"						// 14
 		"from rdb$relations rl\n";
 
-	const char *v6 = 
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		tableStat += "join rdb$user_privileges priv\n"
+						"on rl.rdb$relation_name = priv.rdb$relation_name\n"
+							"and priv.rdb$privilege = 'S' and priv.rdb$object_type = 0\n";
+		tableStat +=	metaData->getUserAccess();
+	}
+
+	JString sql = 
 		"select cast(NULL as char(31)) as table_cat,\n"							// 1
 				"\tcast(NULL as char(31)) as table_schem,\n"					// 2
 				"\tcast(idx.rdb$relation_name as char(31)) as table_name,\n"	// 3
@@ -97,10 +105,17 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 				"\tcast(NULL as integer) as index_pages,\n"						// 12
 				"\tcast(NULL as varchar(31)) as filter_condition,\n"			// 13
 				"\tcast(idx.rdb$index_type as smallint) as index_type\n"		// 14
-		"from rdb$indices idx, rdb$index_segments seg\n"
-		" where idx.rdb$index_name = seg.rdb$index_name\n";
+		"from rdb$indices idx, rdb$index_segments seg\n";
 
-	JString sql = v6;
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		sql +=	"join rdb$user_privileges priv\n"
+					"on idx.rdb$relation_name = priv.rdb$relation_name\n"
+						"and priv.rdb$privilege = 'S' and priv.rdb$object_type = 0\n";
+		sql +=	metaData->getUserAccess();
+	}
+
+	sql += " where idx.rdb$index_name = seg.rdb$index_name\n";
 
 	if (tableNamePattern && *tableNamePattern)
 	{

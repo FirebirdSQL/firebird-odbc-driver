@@ -142,6 +142,7 @@ public:
 	virtual bool allTablesAreSelectable() = 0;
 	virtual const char* getURL() = 0;
 	virtual const char* getUserName() = 0;
+	virtual const char* getUserAccess() = 0;
 	virtual bool isReadOnly() = 0;
 	virtual bool nullsAreSortedHigh() = 0;
 	virtual bool nullsAreSortedLow() = 0;
