@@ -126,10 +126,6 @@ SOURCE=..\..\IscDbc\DateTime.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\IscDbc\Engine.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\IscDbc\IscArray.h
 # End Source File
 # Begin Source File
