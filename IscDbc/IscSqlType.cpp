@@ -190,22 +190,47 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 	if (type == JDBC_SMALLINT || type == JDBC_INTEGER || 
 		type == JDBC_BIGINT || type == JDBC_DOUBLE)
 	{	
-		if(scale < 0)
+		if (subType == 2)
 		{
-			if (subType == 2)
-				{
-				type = JDBC_DECIMAL;
-				typeName = "DECIMAL";
-				length = precision;
+			switch( type )
+			{
+			case JDBC_SMALLINT:
+				bufferLength = MAX_DECIMAL_SHORT_LENGTH + 2;
+				break;
+			case JDBC_INTEGER:
+				bufferLength = MAX_DECIMAL_LONG_LENGTH + 2;
+				break;
+			case JDBC_DOUBLE:
+				bufferLength = MAX_DECIMAL_DOUBLE_LENGTH + 2;
+				break;
+			default:
 				bufferLength = MAX_DECIMAL_LENGTH + 2;
-				}
-			else
-				{
-				type = JDBC_NUMERIC;
-				typeName = "NUMERIC";
-				length = precision;
+			}
+
+			type = JDBC_DECIMAL;
+			typeName = "DECIMAL";
+			length = precision;
+		}
+		else if (subType == 1)
+		{
+			switch( type )
+			{
+			case JDBC_SMALLINT:
+				bufferLength = MAX_NUMERIC_SHORT_LENGTH + 2;
+				break;
+			case JDBC_INTEGER:
+				bufferLength = MAX_NUMERIC_LONG_LENGTH + 2;
+				break;
+			case JDBC_DOUBLE:
+				bufferLength = MAX_NUMERIC_DOUBLE_LENGTH + 2;
+				break;
+			default:
 				bufferLength = MAX_NUMERIC_LENGTH + 2;
-				}
+			}
+
+			type = JDBC_NUMERIC;
+			typeName = "NUMERIC";
+			length = precision;
 		}
 	}
 }

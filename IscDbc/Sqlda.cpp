@@ -64,6 +64,8 @@
 
 namespace IscDbcLibrary {
 
+#define SET_INFO_FROM_SUBTYPE( a, b, c ) var->sqlsubtype == 1 ? (a) :  var->sqlsubtype == 2 ? (b) : (c)
+
 static short sqlNull = -1;
 
 class CDataStaticCursor
@@ -623,29 +625,29 @@ int Sqlda::getColumnDisplaySize(int index)
 		return var->sqllen;
 
 	case SQL_SHORT:
-		if ( var->sqlscale < 0 )
-			return MAX_NUMERIC_LENGTH + 2;
-		return MAX_SMALLINT_LENGTH + 1;
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_SHORT_LENGTH + 2,
+										MAX_DECIMAL_SHORT_LENGTH + 2,
+										MAX_SMALLINT_LENGTH + 1);
 		
 	case SQL_LONG:
-		if ( var->sqlscale < 0 )
-			return MAX_NUMERIC_LENGTH + 2;
-		return MAX_INT_LENGTH + 1;
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_LONG_LENGTH + 2,
+										MAX_DECIMAL_LONG_LENGTH + 2,
+										MAX_INT_LENGTH + 1);
 
 	case SQL_FLOAT:
 		return MAX_FLOAT_LENGTH + 4;			
 
 	case SQL_D_FLOAT:
 	case SQL_DOUBLE:
-		if ( var->sqlscale < 0 )
-			return MAX_NUMERIC_LENGTH + 2;
-		return MAX_DOUBLE_LENGTH + 4;			
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_DOUBLE_LENGTH + 2,
+										MAX_DECIMAL_DOUBLE_LENGTH + 2,
+										MAX_DOUBLE_LENGTH + 4);
 
 	case SQL_QUAD:
 	case SQL_INT64:
-		if ( var->sqlscale < 0 )
-			return MAX_NUMERIC_LENGTH + 2;
-		return MAX_QUAD_LENGTH + 1;
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_LENGTH + 2,
+										MAX_DECIMAL_LENGTH + 2,
+										MAX_QUAD_LENGTH + 1);
 		
 	case SQL_ARRAY:
 		return var->array->arrOctetLength;
@@ -689,29 +691,29 @@ int Sqlda::getPrecision(int index)
 		return var->sqllen;
 
 	case SQL_SHORT:
-		if ( var->sqlscale < 0 )
-			return MAX_NUMERIC_LENGTH;
-		return MAX_SMALLINT_LENGTH;
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_SHORT_LENGTH,
+										MAX_DECIMAL_SHORT_LENGTH,
+										MAX_SMALLINT_LENGTH);
 
 	case SQL_LONG:
-		if ( var->sqlscale < 0 )
-			return MAX_NUMERIC_LENGTH;
-		return MAX_INT_LENGTH;
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_LONG_LENGTH,
+										MAX_DECIMAL_LONG_LENGTH,
+										MAX_INT_LENGTH);
 
 	case SQL_FLOAT:
 		return MAX_FLOAT_LENGTH;
 
 	case SQL_D_FLOAT:
 	case SQL_DOUBLE:
-		if ( var->sqlscale < 0 )
-			return MAX_NUMERIC_LENGTH;
-		return MAX_DOUBLE_LENGTH;
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_DOUBLE_LENGTH,
+										MAX_DECIMAL_DOUBLE_LENGTH,
+										MAX_DOUBLE_LENGTH);
 
 	case SQL_QUAD:
 	case SQL_INT64:
-		if ( var->sqlscale < 0 )
-			return MAX_NUMERIC_LENGTH;
-		return MAX_QUAD_LENGTH;
+		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_LENGTH,
+										MAX_DECIMAL_LENGTH,
+										MAX_QUAD_LENGTH);
 
 	case SQL_ARRAY:	
 		return var->array->arrOctetLength;
@@ -783,53 +785,25 @@ int Sqlda::getSqlType(CAttrSqlVar *var, int &realSqlType)
 
 	case SQL_SHORT:
 		realSqlType = JDBC_SMALLINT;
-		if ( var->sqlscale < 0 )
-		{
-			if(var->sqlsubtype == 2)
-				return JDBC_DECIMAL;
-			else
-				return JDBC_NUMERIC;
-		}
-		return realSqlType;
+		return SET_INFO_FROM_SUBTYPE ( JDBC_NUMERIC, JDBC_DECIMAL, realSqlType);
 
 	case SQL_LONG:
 		realSqlType = JDBC_INTEGER;
-		if ( var->sqlscale < 0 )
-		{
-			if(var->sqlsubtype == 2)
-				return JDBC_DECIMAL;
-			else
-				return JDBC_NUMERIC;
-		}
-		return realSqlType;
+		return SET_INFO_FROM_SUBTYPE ( JDBC_NUMERIC, JDBC_DECIMAL, realSqlType);
 
 	case SQL_FLOAT:
 		return (realSqlType = JDBC_REAL);
 
 	case SQL_DOUBLE:
 		realSqlType = JDBC_DOUBLE;
-		if ( var->sqlscale < 0 )
-		{
-			if(var->sqlsubtype == 2)
-				return JDBC_DECIMAL;
-			else
-				return JDBC_NUMERIC;
-		}
-		return realSqlType;
+		return SET_INFO_FROM_SUBTYPE ( JDBC_NUMERIC, JDBC_DECIMAL, realSqlType);
 
 	case SQL_QUAD:
 		return JDBC_BIGINT;
 
 	case SQL_INT64:
 		realSqlType = JDBC_BIGINT;
-		if ( var->sqlscale < 0 )
-		{
-			if(var->sqlsubtype == 2)
-				return JDBC_DECIMAL;
-			else
-				return JDBC_NUMERIC;
-		}
-		return realSqlType;
+		return SET_INFO_FROM_SUBTYPE ( JDBC_NUMERIC, JDBC_DECIMAL, realSqlType);
 
 	case SQL_BLOB:
 		if (var->sqlsubtype == 1)
@@ -867,51 +841,23 @@ const char* Sqlda::getSqlTypeName ( CAttrSqlVar *var )
 		return "VARCHAR";
 
 	case SQL_SHORT:
-		if ( var->sqlscale < 0 )
-		{
-			if( var->sqlsubtype == 2)
-				return "DECIMAL";
-			else
-				return "NUMERIC";
-		}
-		return "SMALLINT";
+		return SET_INFO_FROM_SUBTYPE ( "NUMERIC", "DECIMAL", "SMALLINT");
 
 	case SQL_LONG:
-		if ( var->sqlscale < 0 )
-		{
-			if(var->sqlsubtype == 2)
-				return "DECIMAL";
-			else
-				return "NUMERIC";
-		}
-		return "INTEGER";
+		return SET_INFO_FROM_SUBTYPE ( "NUMERIC", "DECIMAL", "INTEGER");
 
 	case SQL_FLOAT:
 		return "FLOAT";
 
 	case SQL_D_FLOAT:
 	case SQL_DOUBLE:
-		if ( var->sqlscale < 0 )
-		{
-			if(var->sqlsubtype == 2)
-				return "DECIMAL";
-			else
-				return "NUMERIC";
-		}
-		return "DOUBLE PRECISION";
+		return SET_INFO_FROM_SUBTYPE ( "NUMERIC", "DECIMAL", "DOUBLE PRECISION");
 
 	case SQL_QUAD:
 		return "BIGINT";
 
 	case SQL_INT64:
-		if ( var->sqlscale < 0 )
-		{
-			if(var->sqlsubtype == 2)
-				return "DECIMAL";
-			else
-				return "NUMERIC";
-		}
-		return "BIGINT";
+		return SET_INFO_FROM_SUBTYPE ( "NUMERIC", "DECIMAL", "BIGINT");
 
 	case SQL_BLOB:
 		if ( var->sqlsubtype == 1 )
