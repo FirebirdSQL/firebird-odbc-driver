@@ -42,13 +42,18 @@ class OdbcConnection;
 class OdbcDesc;
 class DescRecord;
 class OdbcStatement;
+class OdbcConvert;
 
 enum enFetchType { NoneFetch, Fetch, ExtendedFetch, FetchScroll };
+
+typedef RETCODE (OdbcStatement::*EXECUTE_FUNCTION)();
 
 class OdbcStatement : public OdbcObject  
 {
 public:
 	RETCODE sqlMoreResults();
+	RETCODE returnData();
+	RETCODE returnDataFromExtededFetch();
 	RETCODE sqlColAttribute (int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT* strLengthPtr, SQLPOINTER numericAttributePtr);
 	RETCODE sqlFetchScroll (int orientation, int offset);
 	RETCODE sqlFetchScrollCursorStatic(int orientation, int offset);
@@ -61,9 +66,9 @@ public:
 	RETCODE sqlParamData(SQLPOINTER *ptr);	// Carlos Guzmán Álvarez
 	RETCODE	sqlPutData (SQLPOINTER value, SQLINTEGER valueSize);
 	RETCODE sqlGetTypeInfo (int dataType);
-	RETCODE executeStatement();	//Changed return type 2002-06-04 RM 
-	char* getToken (const char** ptr, char *token);
-	bool isStoredProcedureEscape (const char *sqlString);
+	RETCODE inputParam();
+	RETCODE executeStatement();
+	RETCODE executeProcedure();
 	RETCODE sqlGetCursorName (SQLCHAR *name, int bufferLength, SQLSMALLINT *nameLength);
 	RETCODE sqlGetStmtAttr (int attribute, SQLPOINTER value, int bufferLength, SQLINTEGER *lengthPtr);
 	RETCODE sqlCloseCursor();
@@ -71,10 +76,9 @@ public:
 	RETCODE sqlProcedureColumns(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength, SQLCHAR*col,int colLength);
 	RETCODE sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength);
 	RETCODE sqlCancel();
-	void setParameter(DescRecord *record,int parameter);
 	RETCODE sqlBindParameter (int parameter, int type, int cType, int sqlType, int precision, int scale, PTR ptr, int bufferLength, SDWORD *length);
 	RETCODE sqlDescribeParam (int parameter, SWORD* sqlType, UDWORD*precision, SWORD*scale,SWORD*nullable);
-	RETCODE OdbcStatement::formatParameter( int parameter );
+	RETCODE formatParameter( int parameter );
 	ResultSet* getResultSet();
 	RETCODE sqlExecuteDirect (SQLCHAR * sql, int sqlLength);
 	RETCODE sqlExecute();
@@ -88,11 +92,10 @@ public:
 	void releaseParameters();
 	void releaseBindings();
 	RETCODE sqlFreeStmt (int option);
-	bool setValue (DescRecord *record, int column);
-
 	RETCODE sqlFetch();
 	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
 	void rebindColumn();
+	void rebindParam();
 	void setResultSet (ResultSet *results);
 	void releaseResultSet();
 	void releaseStatement();
@@ -104,6 +107,10 @@ public:
 	RETCODE sqlColumnPrivileges (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength, SQLCHAR * column, int columnLength);
 	RETCODE sqlSpecialColumns(unsigned short rowId, SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, unsigned short scope, unsigned short nullable);
 	RETCODE sqlSetParam (int parameter, int cType, int sqlType, int precision, int scale, PTR ptr, SDWORD * length);
+	void addBindColumn(int column, DescRecord * recordFrom, DescRecord * recordTo);
+	void delBindColumn(int column);
+	void addBindParam(int param, DescRecord * recordFrom, DescRecord * recordTo);
+	void delBindParam(int param);
 	virtual OdbcObjectType getType();
 	OdbcStatement(OdbcConnection *connect, int statementNumber);
 	~OdbcStatement();
@@ -111,6 +118,10 @@ public:
 	long getCurrentFetched(){ return countFetched; }
 	inline StatementMetaData	*getStatementMetaDataIRD();
 	inline void clearErrors();
+	RETCODE prepareGetData(int column, DescRecord *recordARD);
+	inline void setZeroColumn(int column);
+	void bindInputOutputParam(int param, DescRecord * recordApp);
+	void bindOutputColumn(int column, DescRecord * recordApp);
 
 	OdbcConnection		*connection;
 	OdbcDesc			*applicationRowDescriptor;
@@ -120,9 +131,13 @@ public:
 	OdbcDesc			*implementationRowDescriptor;
 	OdbcDesc			*implementationParamDescriptor;
 	OdbcDesc			*implementationGetDataDescriptor;
+	OdbcConvert			*convert;
+	ListBindColumn		*listBindIn;
+	ListBindColumn		*listBindOut;
+	ListBindColumn		*listBindGetData;
 	ResultSet			*resultSet;
-	PreparedStatement	*statement;
-	CallableStatement	*callableStatement;
+	EXECUTE_FUNCTION	execute;
+	InternalStatement	*statement;
 	StatementMetaData	*metaData;
 	int					numberColumns;
 	int					numberParameters;

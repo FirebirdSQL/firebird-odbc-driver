@@ -40,10 +40,24 @@ public:
 	void setDefault(DescRecord *recTo);
 	bool operator =(DescRecord *rec);
 	void initZeroColumn();
+	void allocateLocalDataPtr();
+	void freeLocalDataPtr();
+    void beginBlobDataTransfer();
+    void putBlobSegmentData (int length, const void *bytes);
+    void endBlobDataTransfer();	
+
+	void setNull() 
+	{ 
+		if ( indicatorPtr ) 
+			*(short*)indicatorPtr = -1; 
+	}
 
 public:
 	bool			isDefined;
 	bool			isPrepared;
+	bool			isIndicatorSqlDa;
+	bool			isLocalDataPtr;  // use sqlPutData for set data_at_exec
+	char			*localDataPtr;		
 	SQLSMALLINT		callType; // use sqlGetData
 
 	int				isBlobOrArray;
@@ -52,6 +66,7 @@ public:
 	int				sizeColumnExtendedFetch;
 	SQLINTEGER		dataOffset;
 	long			currentFetched;
+	HeadSqlVar		*headSqlVarPtr;
 	Blob			*dataBlobPtr; // for blob or array 
 
 	SQLSMALLINT		type;

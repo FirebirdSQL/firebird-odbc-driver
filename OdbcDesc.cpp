@@ -49,8 +49,8 @@ using namespace IscDbcLibrary;
 OdbcDesc::OdbcDesc(OdbcDescType type, OdbcConnection *connect)
 {
 	connection = connect;
-	parentStmt = NULL;
-	metaData = NULL;
+	metaDataIn = NULL;
+	metaDataOut = NULL;
 	recordSlots = 0;
 	records = NULL;
 

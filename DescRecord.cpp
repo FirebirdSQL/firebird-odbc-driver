@@ -22,6 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <memory.h>
+#include <string.h>
 #include "OdbcConnection.h"
 #include "IscDbc/Connection.h"
 #include "OdbcDesc.h"
@@ -37,6 +39,9 @@ DescRecord::DescRecord()
 {
 	isDefined = false;
 	isPrepared = false;
+	isIndicatorSqlDa = false;
+	isLocalDataPtr = false;
+	localDataPtr = NULL;
 	callType = 0;
 
 	isBlobOrArray = 0;
@@ -45,6 +50,7 @@ DescRecord::DescRecord()
 	sizeColumnExtendedFetch = 0;
 	dataOffset = 0;
 	currentFetched = 0;
+	headSqlVarPtr = NULL;
 	dataBlobPtr = NULL;
 
 	type = SQL_C_DEFAULT;
@@ -73,8 +79,13 @@ DescRecord::DescRecord()
 
 DescRecord::~DescRecord()
 {
+	if ( headSqlVarPtr )
+		headSqlVarPtr->release();
+
 	if ( dataBlobPtr )
 		dataBlobPtr->release();
+
+	freeLocalDataPtr();
 }
 
 void DescRecord::setDefault(DescRecord *recTo)
@@ -84,6 +95,23 @@ void DescRecord::setDefault(DescRecord *recTo)
 	*recTo = this;
 	recTo->indicatorPtr = saveIndicatorPtr;
 	recTo->dataPtr = saveDataPtr;
+}
+
+void DescRecord::allocateLocalDataPtr()
+{
+	freeLocalDataPtr();
+	isLocalDataPtr = true;
+	localDataPtr = (char*)malloc ( octetLength );
+}
+
+void DescRecord::freeLocalDataPtr()
+{
+	if ( isLocalDataPtr )
+	{
+		isLocalDataPtr = false;
+		free ( localDataPtr );
+		localDataPtr = NULL;
+	}
 }
 
 bool DescRecord::operator =(DescRecord *rec)
@@ -148,6 +176,24 @@ void DescRecord::initZeroColumn()
 	unNamed = SQL_UNNAMED;
 	unSigned = SQL_FALSE;
 	updaTable = SQL_ATTR_READONLY;
+}
+
+void DescRecord::beginBlobDataTransfer()
+{
+	dataBlobPtr->clear();
+	startedTransfer = true;
+	*indicatorPtr = 0;
+}
+
+void DescRecord::putBlobSegmentData (int length, const void *bytes)
+{
+	dataBlobPtr->putSegment (length, (char*) bytes, true);
+	*indicatorPtr += length;
+}
+
+void DescRecord::endBlobDataTransfer()
+{
+	startedTransfer = false;
 }
 
 }; // end namespace OdbcJdbcLibrary

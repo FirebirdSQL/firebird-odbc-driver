@@ -42,7 +42,6 @@ enum OdbcDescType {
 
 class OdbcConnection;
 class DescRecord;
-class OdbcConvert;
 class OdbcStatement;
 
 class CBindColumn
@@ -85,11 +84,7 @@ typedef MList<CBindColumn,CBindColumnComparator> ListBindColumn;
 class OdbcDesc : public OdbcObject  
 {
 public:
-	// Use to odtImplementationParameter and odtImplementationRow
-	void setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd);
-	void setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr);
-
-	DescRecord*	getDescRecord(int number, bool bCashe = true);
+	inline DescRecord*	getDescRecord(int number, bool bCashe = true);
 	RETCODE sqlGetDescField(int recNumber, int fieldId, SQLPOINTER value, int length, SQLINTEGER *lengthPtr);
 	RETCODE sqlSetDescField (int recNumber, int fieldId, SQLPOINTER value, int length);
 	RETCODE sqlGetDescRec(SQLSMALLINT recNumber, SQLCHAR *Name, SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, 
@@ -104,29 +99,19 @@ public:
 	~OdbcDesc();
 
 	bool isDefined() { return bDefined; }
+	void setDefined( bool def ){ bDefined = def; }
 	void updateDefined();
 	void clearDefined();
 	void clearPrepared();
 	void removeRecords();
-	void setDefaultImplDesc (StatementMetaData * ptMetaData);
+	void setDefaultImplDesc (StatementMetaData * ptMetaDataOut, StatementMetaData * ptMetaDataIn = NULL);
 	void allocBookmarkField();
 	RETCODE operator =(OdbcDesc &sour);
-	void defFromMetaData(int recNumber, DescRecord * record);
-	int setConvFn(int recNumber, DescRecord * recordTo);
-	int setConvFnForGetData(int recNumber, DescRecord * recordTo, DescRecord *& recordIRD);
+	void defFromMetaDataIn(int recNumber, DescRecord * record);
+	void defFromMetaDataOut(int recNumber, DescRecord * record);
 	int getConciseType(int type);
 	int getConciseSize(int type, int length);
-	int getDefaultFromSQLToConciseType(int sqlType);
-	void addBindColumn(int recNumber, DescRecord * recordApp);
-	void delBindColumn(int recNumber);
-	void addGetDataColumn(int recNumber, DescRecord * recordImp);
-	void delAllBindColumn();
-	void setParent(OdbcStatement *parent);
-
-	RETCODE returnData();
-	RETCODE returnDataFromExtededFetch();
-	RETCODE returnGetData(int recNumber);
-	void setZeroColumn(int rowNumber);
+	int getDefaultFromSQLToConciseType(int sqlType, int bufferLength = 0);
 
 //Head
 	SQLSMALLINT			headAllocType;
@@ -139,15 +124,13 @@ public:
 //
 
 	OdbcConnection		*connection;
-	OdbcStatement		*parentStmt;
-	StatementMetaData	*metaData;
+	StatementMetaData	*metaDataIn;
+	StatementMetaData	*metaDataOut;
 	OdbcDescType		headType;
 	int					recordSlots;
 	DescRecord			**records;
 
 	bool				bDefined;
-	OdbcConvert			*convert;
-	ListBindColumn		*listBind;
 };
 
 }; // end namespace OdbcJdbcLibrary

@@ -46,6 +46,7 @@
 #include <memory.h>
 #include "IscDbc/Connection.h"
 #include "IscDbc/SQLException.h"
+#include "OdbcConnection.h"
 #include "OdbcStatement.h"
 #include "OdbcDateTime.h"
 

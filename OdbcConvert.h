@@ -43,6 +43,7 @@ class OdbcConvert
 	SQLINTEGER		*bindOffsetPtrTo;
 	SQLINTEGER		*bindOffsetPtrIndTo;
 	SQLINTEGER		*bindOffsetPtrFrom;
+	SQLINTEGER		*bindOffsetPtrIndFrom;
 
 private:
 
@@ -51,17 +52,18 @@ private:
 	signed long encode_sql_time(SQLUSMALLINT hour, SQLUSMALLINT minute, SQLUSMALLINT second);
 	void decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMALLINT &minute, SQLUSMALLINT &second);
 	void convertFloatToString(double value, char *string, int size, int *length, int precision = 15, char POINT_DIV = '.');
+	void convertStringDataToServerStringData(char * string, int &len);
 
 public:
 
 	OdbcConvert(OdbcStatement * parent);
 
-	void setParent(OdbcStatement *parent);
 	void setZeroColumn(DescRecord * to, long rowNumber);
 	void setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd);
-	void setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr);
+	void setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd);
 	ADRESS_FUNCTION getAdresFunction(DescRecord * from, DescRecord * to);
 	inline SQLPOINTER getAdressBindDataFrom(char * pointer);
+	inline SQLPOINTER getAdressBindIndFrom(char * pointer);
 	inline SQLPOINTER getAdressBindDataTo(char * pointer);
 	inline SQLPOINTER getAdressBindIndTo(char * pointer);
 
@@ -151,7 +153,7 @@ public:
 	int convBlobToFloat(DescRecord * from, DescRecord * to);
 	int convBlobToDouble(DescRecord * from, DescRecord * to);
 	int convBlobToBigint(DescRecord * from, DescRecord * to);
-	int convBlobToBlob(DescRecord * from, DescRecord * to);
+	int convBlobToBinary(DescRecord * from, DescRecord * to);
 	int convBlobToString(DescRecord * from, DescRecord * to);
 
 // Text
@@ -161,6 +163,12 @@ public:
 	int convStringToDouble(DescRecord * from, DescRecord * to);
 	int convStringToBigint(DescRecord * from, DescRecord * to);
 	int convStringToString(DescRecord * from, DescRecord * to);
+	int convStringToVarString(DescRecord * from, DescRecord * to);
+	int convStringToBlob(DescRecord * from, DescRecord * to);
+
+	int transferStringToDateTime(DescRecord * from, DescRecord * to);
+	int transferStringToAllowedType(DescRecord * from, DescRecord * to);
+	int convStreamToBlob(DescRecord * from, DescRecord * to);
 
 // Varying
 	int convVarStringToLong(DescRecord * from, DescRecord * to);
