@@ -63,7 +63,7 @@
 #define IS_WHITE(p)			(charTable [(p)] == WHITE)
 #define IS_LETTER(p)		(charTable [(p)] & LETTER)
 #define IS_IDENT(p)			(charTable [(p)] & IDENT)
-#define IS_END_TOKEN(p)		(charTable [(p)] & (PUNCT | WHITE))
+#define IS_END_TOKEN(p)		((p) == '\0' || (charTable [(p)] & (PUNCT | WHITE)))
 #define SKIP_WHITE(p)		while (charTable [*p] == WHITE) ++p
 #define SKIP_NO_WHITE(p)	while ( *p && charTable [*p] != WHITE) ++p
 

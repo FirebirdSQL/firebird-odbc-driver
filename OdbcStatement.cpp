@@ -358,6 +358,7 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 {
 	clearErrors();
 	releaseStatement();
+	int retNativeSQL = 0;
 	JString temp, tempNative;
 	const char *string = (const char*) sql;
 
@@ -379,8 +380,14 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 	{
 		long lenstrSQL = strlen(string);
 		long lennewstrSQL = lenstrSQL + 4096;
-		if ( connection->connection->getNativeSql(string,lenstrSQL,tempNative.getBuffer(lennewstrSQL),lennewstrSQL,&lenstrSQL))
+		
+		retNativeSQL = connection->connection->getNativeSql( string, lenstrSQL, tempNative. getBuffer( lennewstrSQL ), lennewstrSQL, &lenstrSQL );
+
+		if ( retNativeSQL > 0 )
+		{
+			retNativeSQL = 0;
 			string = tempNative;
+		}
 	}
 
 #ifdef DEBUG
@@ -395,29 +402,36 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 	{
 		implementationParamDescriptor->releasePrepared();
 
-		statement->prepareStatement (string);
-	
-		if ( statement->isActiveSelect() )
-			execute = &OdbcStatement::executeStatement;
-		else if ( statement->isActiveProcedure() )
-			execute = &OdbcStatement::executeProcedure;
-		else if ( statement->isActiveModify() && applicationParamDescriptor->headArraySize > 1 )
-			execute = &OdbcStatement::executeStatementParamArray;
-		else
-			execute = &OdbcStatement::executeStatement;
-
-		listBindIn->removeAll();
-		listBindOut->removeAll();
-		implementationRowDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIRD());
-		implementationParamDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIRD(), statement->getStatementMetaDataIPD());
-		applicationRowDescriptor->clearPrepared();
-		rebindColumn();
-		numberColumns = statement->getStatementMetaDataIRD()->getColumnCount();
-		implementationParamDescriptor->updateDefinedIn();
-		applicationParamDescriptor->clearPrepared();
+		if ( !retNativeSQL )
+		{
+			statement->prepareStatement (string);
 		
-		if ( enableAutoIPD == SQL_TRUE )
-			rebindParam();
+			if ( statement->isActiveSelect() )
+				execute = &OdbcStatement::executeStatement;
+			else if ( statement->isActiveProcedure() )
+				execute = &OdbcStatement::executeProcedure;
+			else if ( statement->isActiveModify() && applicationParamDescriptor->headArraySize > 1 )
+				execute = &OdbcStatement::executeStatementParamArray;
+			else
+				execute = &OdbcStatement::executeStatement;
+
+			listBindIn->removeAll();
+			listBindOut->removeAll();
+			implementationRowDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIRD());
+			implementationParamDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIRD(), statement->getStatementMetaDataIPD());
+			applicationRowDescriptor->clearPrepared();
+			rebindColumn();
+			numberColumns = statement->getStatementMetaDataIRD()->getColumnCount();
+			implementationParamDescriptor->updateDefinedIn();
+			applicationParamDescriptor->clearPrepared();
+			
+			if ( enableAutoIPD == SQL_TRUE )
+				rebindParam();
+		}
+		else if ( retNativeSQL == -1 ) // replace commit
+				execute = &OdbcStatement::executeCommit;
+		else if ( retNativeSQL == -2 ) // replace rollback
+				execute = &OdbcStatement::executeRollback;
 
 		if ( setPreCursorName )
 		{
@@ -674,7 +688,7 @@ SQLRETURN OdbcStatement::fetchData()
 					bindOffsetPtrTmp += rowBindType;
 					++nRow;
 				}
-				if ( statusPtr )
+				if ( statusPtr && nRow )
 					memset(statusPtr, SQL_ROW_SUCCESS, sizeof(*statusPtr) * nRow);
 			}
 			else // if ( schemaExtendedFetchData )
@@ -693,7 +707,7 @@ SQLRETURN OdbcStatement::fetchData()
 					++bindOffsetPtrTmp;
 					++nRow;
 				}
-				if ( statusPtr )
+				if ( statusPtr && nRow )
 					memset(statusPtr, SQL_ROW_SUCCESS, sizeof(*statusPtr) * nRow);
 			}
 
@@ -2452,6 +2466,16 @@ SQLRETURN OdbcStatement::executeProcedure()
 	}
 
 	return ret;
+}
+
+SQLRETURN OdbcStatement::executeCommit()
+{
+	return connection->sqlEndTran( SQL_COMMIT );
+}
+	
+SQLRETURN OdbcStatement::executeRollback()
+{
+	return connection->sqlEndTran( SQL_ROLLBACK );
 }
 
 SQLRETURN OdbcStatement::sqlGetTypeInfo(int dataType)

@@ -57,7 +57,7 @@ int init ()
 	int n;
 	const char *p;
 
-	for (p = " \t\n"; *p; ++p)
+	for (p = " ;\t\r\n"; *p; ++p)
 		charTable [*p] = WHITE;
 
 	for (p = "?=(),{}"; *p; ++p)

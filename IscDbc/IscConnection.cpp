@@ -579,21 +579,29 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 		*ptOut++ = *ptIn++;
 	}
 
-	if ( textLength2Ptr )
-		*textLength2Ptr = textLength1;
-
 	if ( statusQuote ) // There is no '"' or '\'' a syntactic mistake
+	{
+		if ( textLength2Ptr )
+			*textLength2Ptr = textLength1;
 		return statysModify;
+	}
 
 	*ptOut = '\0';
 
 	if ( !ptEndBracket )
 	{
+		if ( textLength2Ptr )
+			*textLength2Ptr = ptOut - outStatementText;
+
 		ptOut = outStatementText;
 
 		SKIP_WHITE ( ptOut );
 
-		if ( !strncasecmp (ptOut, "CREATE", 6) || !strncasecmp (ptOut, "ALTER", 5) )
+		if ( !strncasecmp (ptOut, "COMMIT", 6) && IS_END_TOKEN(*(ptOut + 6)) )
+			statysModify = -1;
+		else if ( !strncasecmp (ptOut, "ROLLBACK", 8) && IS_END_TOKEN(*(ptOut + 8)) )
+			statysModify = -2;
+		else if ( !strncasecmp (ptOut, "CREATE", 6) || !strncasecmp (ptOut, "ALTER", 5) )
 		{
 			if ( UPPER(*ptOut) == 'A' )
 				ptOut += 5;
@@ -622,6 +630,9 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 						SKIP_NO_WHITE ( ptOut );
 				}
 			}
+
+			if ( textLength2Ptr )
+				*textLength2Ptr = ptOut - outStatementText;
 		}
 	}
 	else
@@ -635,8 +646,8 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 			while( *ptIn == ' ' )ptIn++;
 
 //	On a note		++ignoreBracket; // ignored { }
-			if ( *ptIn == '?' || *(long*)ptIn == 0x6c6c6163 || *(long*)ptIn == 0x4c4c4143 )
-			{	// Check '?' or 'call' or 'CALL'
+			if ( *ptIn == '?' || *(long*)ptIn == 0x6c6c6163 || *(long*)ptIn == 0x4c4c4143  || *(long*)ptIn == 0x6c6c6143)
+			{	// Check '?' or 'call' or 'CALL' or 'Call'
 				if ( *ptIn == '?' )
 				{
 					ptIn++;
@@ -649,7 +660,7 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 					while( *ptIn == ' ' )ptIn++;
 				}
 
-				if ( *(long*)ptIn != 0x6c6c6163 && *(long*)ptIn != 0x4c4c4143 )
+				if ( *(long*)ptIn != 0x6c6c6163 && *(long*)ptIn != 0x4c4c4143 && *(long*)ptIn != 0x6c6c6143 )
 					return statysModify;
 
 				ptIn += 4; // 'call'
@@ -852,10 +863,10 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 			if(*ptEndBracket != '{')
 				ptEndBracket = NULL;
 		}
-	}
 
-	if ( textLength2Ptr )
-		*textLength2Ptr = ptOut - outStatementText;
+		if ( textLength2Ptr )
+			*textLength2Ptr = ptOut - outStatementText;
+	}
 
 	return statysModify;
 }

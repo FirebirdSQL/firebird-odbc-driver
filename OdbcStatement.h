@@ -72,6 +72,8 @@ public:
 	SQLRETURN executeStatement();
 	SQLRETURN executeStatementParamArray();
 	SQLRETURN executeProcedure();
+	SQLRETURN executeCommit();
+	SQLRETURN executeRollback();
 	SQLRETURN sqlGetCursorName (SQLCHAR *name, int bufferLength, SQLSMALLINT *nameLength);
 	SQLRETURN sqlGetStmtAttr (int attribute, SQLPOINTER value, int bufferLength, SQLINTEGER *lengthPtr);
 	SQLRETURN sqlCloseCursor();
