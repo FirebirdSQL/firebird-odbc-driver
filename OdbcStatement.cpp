@@ -721,6 +721,9 @@ SQLRETURN OdbcStatement::fetchData()
 					bindOffsetPtrInd += sizeof(SQLINTEGER);
 					++bindOffsetPtrTmp;
 					++nRow;
+					
+					if ( maxRows && nRow == maxRows )
+						break;
 				}
 				if ( statusPtr && nRow )
 					memset(statusPtr, SQL_ROW_SUCCESS, sizeof(*statusPtr) * nRow);
@@ -948,6 +951,9 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 					bindOffsetPtrInd += sizeof(SQLINTEGER);
 					++bindOffsetPtrTmp;
 					++nRow;
+					
+					if ( maxRows && nRow == maxRows )
+						break;
 				}
 				if ( statusPtr )
 					memset(statusPtr, SQL_ROW_SUCCESS, sizeof(*statusPtr) * nRow);
@@ -1195,13 +1201,17 @@ SQLRETURN OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTE
 	if ( bOk == false )
 		return sqlReturn (SQL_ERROR, "S1C00", "Driver not capable");
 
-	sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)crowKeyset, 0);
+	if ( crowKeyset > crowRowset )
+		sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN, 0);
+	else
+		sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)-crowKeyset, 0);
+
 	sqlSetStmtAttr(SQL_ATTR_CONCURRENCY, (SQLPOINTER)(int)fConcurrency, 0);
 
 	if ( crowKeyset > 0 )
 		sqlSetStmtAttr(SQL_ATTR_KEYSET_SIZE, (SQLPOINTER)crowKeyset, 0);
-
-	sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)crowKeyset, 0);
+	else
+		sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)crowRowset, 0);
 
 	return sqlSuccess();
 }
@@ -2766,7 +2776,9 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 				applicationRowDescriptor->headArraySize = (int) ptr;
 				TRACE02(SQL_ATTR_ROW_ARRAY_SIZE,(int) ptr);
 				break;
-		    case SQL_ROWSET_SIZE:                // 9
+
+			case SQL_ATTR_KEYSET_SIZE:           // 8
+			case SQL_ROWSET_SIZE:                // 9
 				rowArraySize = (int) ptr;
 				TRACE02(SQL_ROWSET_SIZE,(int) ptr);
 				break;

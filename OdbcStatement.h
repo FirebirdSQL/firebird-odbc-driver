@@ -119,7 +119,7 @@ public:
 	virtual OdbcObjectType getType();
 	OdbcStatement(OdbcConnection *connect, int statementNumber);
 	~OdbcStatement();
-	bool isStaticCursor(){ return cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE || isResultSetFromSystemCatalog; }
+	bool isStaticCursor(){ return cursorType != SQL_CURSOR_FORWARD_ONLY && cursorScrollable == SQL_SCROLLABLE || isResultSetFromSystemCatalog; }
 	long getCurrentFetched(){ return countFetched; }
 	bool getSchemaFetchData(){ return rowBindType || bindOffsetPtr; }
 	inline StatementMetaData	*getStatementMetaDataIRD();
