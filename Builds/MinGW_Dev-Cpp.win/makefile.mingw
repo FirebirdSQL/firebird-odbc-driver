@@ -5,7 +5,7 @@
 #
 #    Init variables for compile MinGW
 #
-MINGWDIR	= "d:/MinGw"
+MINGWDIR	= d:/MinGw
 # Windows 2000/NT
 #VER_WINNT	= -D_WIN32_WINNT=0x0500 -DWINVER=0x0500
 # Win98/Me
