@@ -231,10 +231,10 @@ public:
 		{
 			T * p = ptRoot;
 
-			for(int i=0; i < count; i++, p++)
-				p->remove();
+			while ( count-- )
+				(p++)->remove();
 
-			free(ptRoot);
+			free( ptRoot );
 			ptRoot = NULL;
 		}
 
