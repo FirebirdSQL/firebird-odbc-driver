@@ -327,6 +327,7 @@ public:
 	virtual void		close() = 0;
 	virtual int			release() = 0;
 	virtual void		addRef() = 0;
+	virtual bool		isActiveSelect() = 0;
 	virtual int			objectVersion() = 0;
 	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) = 0;
 	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr) = 0;
