@@ -469,6 +469,7 @@ void OdbcStatement::setResultSet(ResultSet * results)
 
 	if ( !statement->isActive() )
 	{
+		listBindOut->removeAll();
 		implementationRowDescriptor->setDefaultImplDesc (metaData);
 		applicationRowDescriptor->clearPrepared();
 		rebindColumn();
