@@ -266,7 +266,7 @@ void* IscConnection::startTransaction()
     }
 
     GDS->_start_transaction( statusVector, &transactionHandle, 1, &attachment->databaseHandle,
-            count, &iscTpb);
+            count, iscTpb );
 
     if (statusVector [1])
         throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));

@@ -94,8 +94,8 @@ void EnvShare::startTransaction()
 		CFbDll *GDS = connections[0]->GDS;
 		struct 
 		{
-			void * db;
-			char **opt;
+			void *db;
+			char *opt;
 			int countOpt;
 		} shDb[MAX_COUNT_DBC_SHARE] = {0};
 
