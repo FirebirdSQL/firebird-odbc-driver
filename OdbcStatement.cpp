@@ -3661,11 +3661,16 @@ RETCODE OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attri
 			break;
 
 		case SQL_DESC_DISPLAY_SIZE:
+		case SQL_COLUMN_LENGTH:
 			value = metaData->getColumnDisplaySize (column);
 			break;
 
 		case SQL_DESC_NULLABLE:
 			value = (metaData->isNullable (column)) ? SQL_NULLABLE : SQL_NO_NULLS;
+			break;
+
+		case SQL_DESC_FIXED_PREC_SCALE:
+			value = (metaData->isCurrency (column)) ? 1 : 0;
 			break;
 
 		/***
