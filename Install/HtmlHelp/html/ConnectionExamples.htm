@@ -1,0 +1,50 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/idpl.html. 
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Connection examples</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_connection_examples"></A><h1>Connection Examples</h1></P>
+
+<P>Example connection string for Applications that use the ODBC function <B>SQLDriverConnect</B>:</P>
+
+<P>1. Open("<B>DSN</B>=mcsAddress;")</P>
+
+<P>2. Open("<B>DSN</B>=mcsAddress; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite;")</P>
+
+<P>3. Open("<B>DSN</B>=mcsAddress; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=172.17.2.10:/usr/local/efldata/mcsAddress.fdb;")</P>
+
+<P>4. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>DBNAME</B>=172.17.2.10:/usr/local/efldata/mcsAddress.fdb;")</P>
+
+<P>5. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=172.17.2.10:/usr/local/efldata/mcsAddress.fdb;")</P>
+
+<P>also </P>
+
+<P>6. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=dummy;")</P>
+
+<P>dummy – is an alias derived from the Firebird <B>aliases.conf</B> file.
+If the environment variables <B>ISC_PASSWORD</B> and <B>ISC_USER</B> are set then the driver will use these. </P>
+
+</BODY>
+</HTML>
