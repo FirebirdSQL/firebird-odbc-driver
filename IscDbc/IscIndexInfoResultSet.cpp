@@ -76,7 +76,8 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 				"\tcast(NULL as integer) as cardinality,\n"						// 11
 				"\tcast(NULL as integer) as index_pages,\n"						// 12
 				"\tcast(NULL as varchar(31)) as filter_condition,\n"			// 13
-				"\tcast(NULL as smallint) as index_type\n"						// 14
+				"\tcast(NULL as smallint) as index_type,\n"						// 14
+				"\tcast(NULL as varchar(31)) as constraint_type\n"				// 15
 		"from rdb$relations rl\n";
 
 	char sql[2048] =
@@ -94,17 +95,26 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 				"\tcast(NULL as integer) as cardinality,\n"						// 11
 				"\tcast(NULL as integer) as index_pages,\n"						// 12
 				"\tcast(NULL as varchar(31)) as filter_condition,\n"			// 13
-				"\tcast(idx.rdb$index_type as smallint) as index_type\n"		// 14
-		"from rdb$indices idx, rdb$index_segments seg\n"
-		"where idx.rdb$index_name = seg.rdb$index_name\n";
+				"\tcast(idx.rdb$index_type as smallint) as index_type,\n"		// 14
+				"\tcast(relc.rdb$constraint_type as varchar(31)) as constraint_type\n"	// 15
+		"from rdb$indices idx\n"
+			"\tjoin rdb$index_segments seg on idx.rdb$index_name = seg.rdb$index_name\n"
+			"\tleft join rdb$relation_constraints relc on ( relc.rdb$index_name = idx.rdb$index_name\n";
 
 	char * ptFirst = sqlQuery + strlen(sqlQuery);
 	char * ptSecond = sql + strlen(sql);
 
+	if (unique)
+		addString(ptSecond, "\t\t\tand relc.rdb$relation_name = idx.rdb$relation_name\n"
+							"\t\t\tand ( relc.rdb$constraint_type = 'PRIMARY KEY' or relc.rdb$constraint_type = 'UNIQUE' ) )\n"
+							"where idx.rdb$unique_flag = 1\n");
+	else
+		addString(ptSecond, "\t\t\tand relc.rdb$relation_name = idx.rdb$relation_name )\n");
+
 	if (tableNamePattern && *tableNamePattern)
 	{
 		expandPattern (ptFirst, " where ","rl.rdb$relation_name", tableNamePattern);
-		expandPattern (ptSecond, " and ","idx.rdb$relation_name", tableNamePattern);
+		expandPattern (ptSecond, unique ? " and " : " where ","idx.rdb$relation_name", tableNamePattern);
 
 		if ( !metaData->allTablesAreSelectable() )
 		{
@@ -113,10 +123,7 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 		}
 	}
 
-	if (unique)
-		addString(ptSecond, " and idx.rdb$unique_flag = 1\n");
-
-	addString(ptSecond, " order by 4, 7, 5, 6, 8\n");
+	addString(ptSecond, " order by 4, 7, 15, 5, 6, 8\n");
 	addString(ptFirst, sql);
 
 	prepareStatement (sqlQuery);
