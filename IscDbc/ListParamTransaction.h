@@ -45,6 +45,7 @@ public:
 	int			lengthNameTransaction;
 	char		*tpbBuffer;
 	int			lengthTpbBuffer;
+	bool		autoCommit;
 
 	CNodeParamTransaction()
 	{
@@ -68,6 +69,7 @@ public:
 		delete[] tpbBuffer;
 		tpbBuffer = NULL;
 		lengthTpbBuffer = 0;
+		autoCommit = false;
 	}
 	CNodeParamTransaction & operator =(const CNodeParamTransaction & src)
 	{ 
@@ -81,6 +83,7 @@ public:
 		lengthTpbBuffer = src.lengthTpbBuffer;
 		tpbBuffer = new char[lengthTpbBuffer];
 		memcpy( tpbBuffer, src.tpbBuffer, lengthTpbBuffer );
+		autoCommit = src.autoCommit;
 
 		return  *this;
 	}
