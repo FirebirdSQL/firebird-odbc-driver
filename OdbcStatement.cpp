@@ -1384,25 +1384,28 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 			}
 			else
 			{
-				int len = MIN(dataRemaining, MAX(0, (long)binding->bufferLength-1));
-				 
-				if ( len > 0 ) 
+				if ( !binding->bufferLength )
+					length = dataRemaining;
+				else
 				{
-					memcpy (binding->pointer, string+binding->dataOffset, len);
-					((char*) (binding->pointer)) [len] = 0;
-				}
+					int len = MIN(dataRemaining, MAX(0, (long)binding->bufferLength-1));
+					 
+					if ( len > 0 ) 
+					{
+						memcpy (binding->pointer, string+binding->dataOffset, len);
+						((char*) (binding->pointer)) [len] = 0;
+					}
 
-				if (!binding->bufferLength && len < dataRemaining)
-				{
-					error = postError (new OdbcError (0, "01004", "Data truncated"));
-					retinfo = SQL_SUCCESS_WITH_INFO;
+					if ( len < dataRemaining)
+					{
+						error = postError (new OdbcError (0, "01004", "Data truncated"));
+						retinfo = SQL_SUCCESS_WITH_INFO;
+					}
+
 					binding->dataOffset += len;
+					length = len;
 				}
-				else if (binding->bufferLength && len <= binding->bufferLength)
-					binding->dataOffset += len;
-					
-				length = len;
-				}
+			}
 			}
 			break;
 
@@ -1498,20 +1501,24 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 			}
 			else
 			{
-				int len = MIN(dataRemaining, binding->bufferLength);
-			 
-				blob->getBytes (binding->dataOffset, len, binding->pointer);
-				 
-				if (!binding->bufferLength && len < dataRemaining)
+				if ( !binding->bufferLength )
+					length = dataRemaining;
+				else
 				{
-					error = postError (new OdbcError (0, "01004", "Data truncated"));
-					retinfo = SQL_SUCCESS_WITH_INFO;
+					int len = MIN(dataRemaining, binding->bufferLength);
+					 
+					if ( len > 0 ) 
+						blob->getBytes (binding->dataOffset, len, binding->pointer);
+
+					if ( len < dataRemaining)
+					{
+						error = postError (new OdbcError (0, "01004", "Data truncated"));
+						retinfo = SQL_SUCCESS_WITH_INFO;
+					}
+
 					binding->dataOffset += len;
+					length = len;
 				}
-				else if (binding->bufferLength && len <= binding->bufferLength)
-					binding->dataOffset += len;
-					
-				length = len;
 			}
 			}
 			break;	
