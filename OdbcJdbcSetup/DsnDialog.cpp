@@ -164,7 +164,6 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 		}
 		else
 		{
-			SetDisabledDlgItem ( hDlg, IDC_CHECK_QUOTED );
 			SetDisabledDlgItem ( hDlg, IDC_CHECK_SENSITIVE );
 			SetDisabledDlgItem ( hDlg, IDC_CHECK_AUTOQUOTED );
 		}
@@ -481,14 +480,12 @@ BOOL CALLBACK wndprocDsnDialog( HWND hDlg, UINT message, WORD wParam, LONG lPara
 			break;
 
 		case IDC_DIALECT1:
-			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_QUOTED);
 			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE);
 			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AUTOQUOTED);
 			break;
 
 		case IDC_DIALECT3:
 			m_ptDsnDialog->UpdateData(hDlg);
-			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_QUOTED, FALSE);
 			if ( m_ptDsnDialog->m_quoted )
 			{
 				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE, FALSE);
@@ -503,7 +500,7 @@ BOOL CALLBACK wndprocDsnDialog( HWND hDlg, UINT message, WORD wParam, LONG lPara
 				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE);
 				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AUTOQUOTED);
 			}
-			else
+			else if ( m_ptDsnDialog->m_dialect3 )
 			{
 				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE, FALSE);
 				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AUTOQUOTED, FALSE);
