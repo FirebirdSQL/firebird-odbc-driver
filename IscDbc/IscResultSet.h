@@ -49,7 +49,7 @@ public:
 	virtual void		freeHTML(const char *html);
 	virtual const char* genHTML(const char *series, const char *type, Properties *context);
 	virtual void		close();
-	virtual bool		next();
+	virtual bool		nextFetch();
 	virtual StatementMetaData* getMetaData();
 	virtual int			release();
 	virtual void		addRef();
@@ -117,7 +117,7 @@ public:
 	virtual short		getShort (int index);
 	virtual short		getShort (const char * columnName);
 
-	virtual bool		nextSqlDa();
+	virtual bool		next();
 	virtual bool		isBeforeFirst();
 	virtual bool		isAfterLast();
 	virtual bool		isFirst();

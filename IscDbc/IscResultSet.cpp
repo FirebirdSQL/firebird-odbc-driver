@@ -108,7 +108,7 @@ bool IscResultSet::readForwardCursor()
 	return true;
 }
 
-bool IscResultSet::nextSqlDa()
+bool IscResultSet::next()
 {
 	if (!statement)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
@@ -131,7 +131,7 @@ bool IscResultSet::nextSqlDa()
 	return true;
 }
 
-bool IscResultSet::next()
+bool IscResultSet::nextFetch()
 {
 	if (!statement)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
