@@ -35,7 +35,7 @@
 
 namespace IscDbcLibrary {
 
-IscUserEvents::IscUserEvents( IscConnection *connect, PropertiesEvents *context, callbackEvent astRoutine )
+IscUserEvents::IscUserEvents( IscConnection *connect, PropertiesEvents *context, callbackEvent astRoutine, void *userAppData )
 {
 	useCount = 1;
 	eventBuffer = NULL;
@@ -46,6 +46,7 @@ IscUserEvents::IscUserEvents( IscConnection *connect, PropertiesEvents *context,
 	events = (ParametersEvents*)context;
 	events->addRef();
 	callbackAstRoutine = astRoutine;
+	userData = userAppData;
 
 	initEventBlock();
 }
@@ -71,14 +72,14 @@ void IscUserEvents::initEventBlock()
 {
 	char		*p;
 	const char	*q;
-	int			length;
-	int			i;
+	int length = 1;
 
-	length = 1;
-
-	i = events->getCount();
-	while ( i-- )
-		length += events->lengthNameEvent(i) + sizeof( long ) + sizeof( char );
+	ParameterEvent *param = events->getHeadPosition();
+	while ( param )
+	{
+		length += param->lengthNameEvent + sizeof( long ) + sizeof( char );
+		param = events->getNext();
+	}
 
 	p = eventBuffer = new char[length];
 
@@ -91,29 +92,31 @@ void IscUserEvents::initEventBlock()
 	// initialize the block with event names and counts
 	*p++ = 1;
 
-	i = events->getCount();
-	while ( i-- )
+	param = events->getHeadPosition();
+	while ( param )
 	{
-		*p++ = events->lengthNameEvent(i);
-		q = events->getNameEvent(i);
+		*p++ = param->lengthNameEvent;
+		q = param->nameEvent;
 
 		while ( (*p++ = *q++) );
 
 		*p++ = 0;
 		*p++ = 0;
 		*p++ = 0;
+
+		param = events->getNext();
 	}
 
 	lengthEventBlock = (short)(p - eventBuffer);
 }
 
-void IscUserEvents::queEvents()
+void IscUserEvents::queEvents( void * interfase )
 {
 	ISC_STATUS statusVector[20];
 	connection->GDS->_que_events( statusVector, &connection->databaseHandle,
 								   &eventId, lengthEventBlock, eventBuffer,
-								   (isc_callback)callbackAstRoutine, (UserEvents*)this );
-
+								   (isc_callback)callbackAstRoutine,
+								   !interfase ? (UserEvents*)this : interfase );
 	if ( statusVector [1] )
 		THROW_ISC_EXCEPTION( connection, statusVector );
 }
@@ -128,31 +131,45 @@ void IscUserEvents::eventCounts( char *result )
 {
 	char *p = eventBuffer + 1;
 	char *q = result + 1;
-	int	i = events->getCount();
 
-	// analyze the event blocks, getting the delta for each event
-	while ( i-- )
+	ParameterEvent *param = events->getHeadPosition();
+	while ( param )
 	{
 		// skip over the event name
 		p += *p + 1;
 		q += *q + 1;
 
 		// get the change in count
-		events->updateCountExecutedEvents( i, vaxInteger( q ) - vaxInteger( p ) );
+		unsigned long count = vaxInteger( q ) - vaxInteger( p ); 
+		if ( count )
+		{
+			param->countEvents += count;
+			if ( param->countEvents )
+				param->changed = true;
+		}
+		else
+			param->changed = false;
 
 		int n = sizeof ( unsigned long );
 		do 
 			*p++ = *q++; 
 		while ( --n );
+
+		param = events->getNext();
 	}
 }
 
 bool IscUserEvents::isChanged( int numEvent )
 {
-	return false;
+	return events->isChanged( numEvent );
 }
 
-int IscUserEvents::getCountUserEvents()
+unsigned long IscUserEvents::getCountEvents( int numEvent )
+{
+	return events->getCountExecutedEvents( numEvent );
+}
+
+int IscUserEvents::getCountRegisteredNameEvents()
 {
 	return events->getCount();
 }
@@ -160,6 +177,11 @@ int IscUserEvents::getCountUserEvents()
 void IscUserEvents::updateResultEvents( char * result )
 {
 	eventCounts( result );
+}
+
+void* IscUserEvents::getUserData()
+{
+	return userData;
 }
 
 void IscUserEvents::addRef()

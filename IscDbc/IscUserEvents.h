@@ -33,7 +33,7 @@ class IscUserEvents : public UserEvents
 {
 public:
 
-	IscUserEvents( IscConnection *connect, PropertiesEvents *context, callbackEvent astRoutine );
+	IscUserEvents( IscConnection *connect, PropertiesEvents *context, callbackEvent astRoutine, void *userAppData = NULL );
 	~IscUserEvents();
 
 	void				releaseEventBlock();
@@ -41,10 +41,12 @@ public:
 	inline unsigned long vaxInteger( char * val );
 	void				eventCounts( char *result );
 
-	virtual void		queEvents();
+	virtual void		queEvents( void * interfase = NULL );
 	virtual bool		isChanged( int numEvent = 0 );
-	virtual int			getCountUserEvents();
+	virtual unsigned long getCountEvents( int numEvent = 0 );
+	virtual int			getCountRegisteredNameEvents();
 	virtual void		updateResultEvents( char * result );
+	virtual void		*getUserData();
 	virtual void		addRef();
 	virtual int			release();
 	virtual int			objectVersion();
@@ -61,7 +63,7 @@ public:
 	
 	ParametersEvents	*events;
 	callbackEvent		callbackAstRoutine;
-
+	void				*userData;
 };
 
 }; // end namespace IscDbcLibrary
