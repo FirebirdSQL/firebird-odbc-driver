@@ -239,6 +239,7 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	currency = SQL_CONCUR_READ_ONLY;
 	cursorType = SQL_CURSOR_FORWARD_ONLY;
 	cursorName.Format ("cursor%d", statementNumber);
+	setPreCursorName = false;
 	cursorScrollable = false;
 	asyncEnable = false;
     rowArraySize  = applicationRowDescriptor->headArraySize; //added by CGA
@@ -408,7 +409,7 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength, bool isExecDirec
 #endif
 
 	try
-		{
+	{
 		if (isStoredProcedureEscape (string))
 			statement = callableStatement = connection->connection->prepareCall (string);
 		else
@@ -417,18 +418,20 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength, bool isExecDirec
 		implementationRowDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIRD());
 		implementationParamDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIPD());
 
-//		//Added by CGA
-//		if( updatePreparedResultSet )
-//			setResultSet(statement->getResultSet());
 		if (!isExecDirect)
 			getResultSet();
 
-		}
-	catch (SQLException& exception)
+		if ( setPreCursorName )
 		{
+			statement->setCursorName (cursorName);
+			setPreCursorName = false;
+		}
+	}
+	catch (SQLException& exception)
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	return sqlSuccess();
 }
@@ -439,10 +442,10 @@ void OdbcStatement::releaseStatement()
 	callableStatement = NULL;
 
 	if (statement)
-		{
+	{
 		statement->release();
 		statement = NULL;
-		}
+	}
 }
 
 void OdbcStatement::releaseResultSet()
@@ -1676,29 +1679,30 @@ RETCODE OdbcStatement::sqlFreeStmt(int option)
 {
 	clearErrors();
 	try
-		{
+	{
 		switch (option)
-			{
-			case SQL_CLOSE:
-				releaseResultSet();
-				if(statement)
-					statement->clearResults();
-				break;
-
-			case SQL_UNBIND:
-				releaseBindings();
-				break;
-
-			case SQL_RESET_PARAMS:
-				releaseParameters();
-				break;
-			}
-		}
-	catch (SQLException& exception)
 		{
+		case SQL_CLOSE:
+			setPreCursorName = false;
+			releaseResultSet();
+			if(statement)
+				statement->clearResults();
+			break;
+
+		case SQL_UNBIND:
+			releaseBindings();
+			break;
+
+		case SQL_RESET_PARAMS:
+			releaseParameters();
+			break;
+		}
+	}
+	catch (SQLException& exception)
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	return sqlSuccess();
 }
@@ -2436,14 +2440,20 @@ RETCODE OdbcStatement::sqlSetCursorName(SQLCHAR * name, int nameLength)
 	cursorName = getString (&p, name, nameLength, NULL);
 
 	try
+	{
+		if( !statement )
+			setPreCursorName = true;
+		else
 		{
-		statement->setCursorName (cursorName);
+			statement->setCursorName (cursorName);
+			setPreCursorName = false;
 		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	return sqlSuccess();
 }
@@ -2453,14 +2463,15 @@ RETCODE OdbcStatement::sqlCloseCursor()
 	clearErrors();
 
 	try
-		{
+	{
+		setPreCursorName = false;
 		releaseResultSet();
-		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	return sqlSuccess();
 }
@@ -2640,14 +2651,14 @@ RETCODE OdbcStatement::sqlGetCursorName(SQLCHAR *name, int bufferLength, SQLSMAL
 {
 	clearErrors();
 	try
-		{
+	{
 		returnStringInfo (name, bufferLength, nameLength, cursorName);
-		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 	return sqlSuccess();
 }
 
