@@ -586,6 +586,13 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 				if ( IS_QUOTE(*ptIn) )
 				{
 					ptIn++;
+					// Wizard VC : example {call ".SP_TEST"(?,?)}
+					if ( *ptIn == '.' )
+					{
+						*ptIn = *(ptIn-1);
+						*(ptIn-1) = ' ';
+						ptIn++;
+					}
 					
 					while ( !(IS_END_TOKEN(*ptIn)) )
 						*end++ = *ptIn++;
@@ -712,7 +719,8 @@ bool IscConnection::getCountInputParamFromProcedure ( const char* procedureName,
 	{
 		numIn = resultSet.sqlda->getShort(4); // NUM_INPUT_PARAM
 		numOut = resultSet.sqlda->getShort(5); // NUM_OUTPUT_PARAM
-		canSelect = resultSet.canSelectFromProcedure();
+		if ( numOut )
+			canSelect = resultSet.canSelectFromProcedure();
 		ret = true;
 	}
 
