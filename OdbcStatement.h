@@ -96,7 +96,7 @@ public:
 	RETCODE sqlFetch();
 	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
 	void rebindColumn();
-	void rebindParam();
+	void rebindParam(bool initAttrDataAtExec = false);
 	void setResultSet (ResultSet *results);
 	void releaseResultSet();
 	void releaseStatement();

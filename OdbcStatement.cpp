@@ -1731,7 +1731,7 @@ ResultSet* OdbcStatement::getResultSet()
 	return resultSet;
 }
 
-void OdbcStatement::rebindParam()
+void OdbcStatement::rebindParam ( bool initAttrDataAtExec )
 {
 	int nCount = implementationParamDescriptor->headCount;
 	int nCountApp = applicationParamDescriptor->headCount;
@@ -1743,6 +1743,19 @@ void OdbcStatement::rebindParam()
 		DescRecord * recordApp = applicationParamDescriptor->getDescRecord ( paramApp );
 		if ( !recordApp->isPrepared && recordApp->isDefined )
 			bindInputOutputParam ( param, recordApp );
+
+		if ( initAttrDataAtExec )
+		{
+			long * length;
+
+			if ( !applicationParamDescriptor->headBindOffsetPtr )
+				length = recordApp->indicatorPtr;
+			else
+				length = (long*)((char*)recordApp->indicatorPtr + *applicationParamDescriptor->headBindOffsetPtr);
+	
+			recordApp->data_at_exec = length && recordApp->parameterType != SQL_PARAM_OUTPUT 
+				&& (*length == SQL_DATA_AT_EXEC || *length <= SQL_LEN_DATA_AT_EXEC_OFFSET);
+		}
 	}
 }
 
@@ -1939,13 +1952,7 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 		record->length = bufferLength;
 		record->octetLengthPtr = length;
 		record->indicatorPtr = length;
-
-		if ( applicationParamDescriptor->headBindOffsetPtr )
-			record->data_at_exec = false;
-		else
-			record->data_at_exec = length && type != SQL_PARAM_OUTPUT 
-					&& (*length == SQL_DATA_AT_EXEC || *length <= SQL_LEN_DATA_AT_EXEC_OFFSET );
-
+		record->data_at_exec = false; // Is defined in the moment SQLExecute or SqlExecDirect
 		record->startedTransfer = false;
 		record->isDefined = true;
 		record->isPrepared = false;
@@ -2377,6 +2384,16 @@ void OdbcStatement::registerOutParameter()
 		DescRecord * recordApp = applicationParamDescriptor->getDescRecord ( paramApp );
 		if ( !recordApp->isPrepared && recordApp->isDefined )
 			bindInputOutputParam ( param, recordApp );
+
+		long * length;
+
+		if ( !applicationParamDescriptor->headBindOffsetPtr )
+			length = recordApp->indicatorPtr;
+		else
+			length = (long*)((char*)recordApp->indicatorPtr + *applicationParamDescriptor->headBindOffsetPtr);
+
+		recordApp->data_at_exec = length && recordApp->parameterType != SQL_PARAM_OUTPUT 
+			&& (*length == SQL_DATA_AT_EXEC || *length <= SQL_LEN_DATA_AT_EXEC_OFFSET);
 	}
 }
 
@@ -2392,25 +2409,11 @@ RETCODE OdbcStatement::inputParam()
 			if ( !implementationParamDescriptor->isDefined() )
 			{
 				implementationParamDescriptor->setDefined(true);
-				rebindParam();
+				rebindParam( true );
 			}
 
 			parameterNeedData = 1;
 			convert->setBindOffsetPtrFrom ( applicationParamDescriptor->headBindOffsetPtr, applicationParamDescriptor->headBindOffsetPtr );
-
-			if ( applicationParamDescriptor->headBindOffsetPtr )
-			{
-				int nCountApp = applicationParamDescriptor->headCount;
-
-				for (int paramApp = 1; paramApp <= nCountApp; ++paramApp)
-				{
-					DescRecord * recordApp = applicationParamDescriptor->getDescRecord ( paramApp );
-					int * length = (int*)((char*)recordApp->indicatorPtr + *applicationParamDescriptor->headBindOffsetPtr);
-			
-					recordApp->data_at_exec = length && recordApp->parameterType != SQL_PARAM_OUTPUT 
-						&& (*length == SQL_DATA_AT_EXEC || *length <= SQL_LEN_DATA_AT_EXEC_OFFSET);
-				}
-			}
 		}
 
 		for (int n = parameterNeedData; n <= nInputParam; ++n)
