@@ -29,6 +29,21 @@
 
 namespace OdbcJdbcLibrary {
 
+struct shortTime
+{
+    unsigned char hour;
+    unsigned char minute;
+    unsigned char second;
+    unsigned char hsecond;
+};
+
+struct shortDate
+{
+    int		year;
+    char	day;
+    char	month;
+};
+
 class DescRecord;
 class OdbcConvert;
 class OdbcStatement;
@@ -169,6 +184,7 @@ public:
 	int convDateToTagDate(DescRecord * from, DescRecord * to);
 	int convDateToTagTimestamp(DescRecord * from, DescRecord * to);
 	int convDateToString(DescRecord * from, DescRecord * to);
+	int convDateToBinary(DescRecord * from, DescRecord * to);
 
 	int transferTagDateToDate(DescRecord * from, DescRecord * to);
 	int transferTagDateToDateTime(DescRecord * from, DescRecord * to);
@@ -181,6 +197,7 @@ public:
 	int convTimeToTagTime(DescRecord * from, DescRecord * to);
 	int convTimeToTagTimestamp(DescRecord * from, DescRecord * to);
 	int convTimeToString(DescRecord * from, DescRecord * to);
+	int convTimeToBinary(DescRecord * from, DescRecord * to);
 
 	int transferTagTimeToTime(DescRecord * from, DescRecord * to);
 	int transferTagTimeToDateTime(DescRecord * from, DescRecord * to);
@@ -192,6 +209,7 @@ public:
 	int convDateTimeToTagTime(DescRecord * from, DescRecord * to);
 	int convDateTimeToTagDateTime(DescRecord * from, DescRecord * to);
 	int convDateTimeToString(DescRecord * from, DescRecord * to);
+	int convDateTimeToBinary(DescRecord * from, DescRecord * to);
 
 	int transferTagDateTimeToDate(DescRecord * from, DescRecord * to);
 	int transferTagDateTimeToTime(DescRecord * from, DescRecord * to);

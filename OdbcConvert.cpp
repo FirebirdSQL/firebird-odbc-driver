@@ -424,6 +424,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			if ( to->isIndicatorSqlDa )
 				return &OdbcConvert::transferTagDateToDateTime;
 			return &OdbcConvert::convDateToTagTimestamp;
+		case SQL_C_BINARY:
+			return &OdbcConvert::convDateToBinary;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateToString;
 		default:
@@ -457,6 +459,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			if ( to->isIndicatorSqlDa )
 				return &OdbcConvert::transferTagTimeToDateTime;
 			return &OdbcConvert::convTimeToTagTimestamp;
+		case SQL_C_BINARY:
+			return &OdbcConvert::convTimeToBinary;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convTimeToString;
 		default:
@@ -489,6 +493,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 				return &OdbcConvert::transferTagDateTimeToDateTime;
 			bIdentity = true;
 			return &OdbcConvert::convDateTimeToTagDateTime;
+		case SQL_C_BINARY:
+			return &OdbcConvert::convDateTimeToBinary;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateTimeToString;
 		default:
@@ -1282,6 +1288,49 @@ int OdbcConvert::convDateToTagDate(DescRecord * from, DescRecord * to)
 	return SQL_SUCCESS;
 }
 
+int OdbcConvert::convDateToBinary(DescRecord * from, DescRecord * to)
+{
+	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	SQLUSMALLINT mday, month;
+	SQLSMALLINT year;
+
+	decode_sql_date(*(long*)getAdressBindDataFrom((char*)from->dataPtr), mday, month, year);
+	int outlen = to->length;
+
+	if ( outlen == sizeof(tagDATE_STRUCT) ) // tagDate
+	{
+		tagDATE_STRUCT *pt = (tagDATE_STRUCT*)pointer;
+		pt->year = year;
+		pt->day = mday;
+		pt->month = month;
+	}
+	else if ( outlen == 4 ) // DOS date
+	{
+		shortDate *pt = (shortDate*)pointer;
+		pt->year = year;
+		pt->day = (char)mday;
+		pt->month = (char)month;
+	}
+	else
+	{
+		tagDATE_STRUCT tagDt;
+		tagDt.year = year;
+		tagDt.day = mday;
+		tagDt.month = month;
+		memcpy( pointer, &tagDt, outlen );
+	}
+
+	if ( indicatorTo )
+		*indicatorTo = outlen;
+
+	return SQL_SUCCESS;
+}
+
 // for use App to SqlDa
 int OdbcConvert::transferTagDateToDate(DescRecord * from, DescRecord * to)
 {
@@ -1388,6 +1437,53 @@ int OdbcConvert::convTimeToTagTime(DescRecord * from, DescRecord * to)
 
 	if ( indicatorTo )
 		*indicatorTo = sizeof(tagTIME_STRUCT);
+
+	return SQL_SUCCESS;
+}
+
+int OdbcConvert::convTimeToBinary(DescRecord * from, DescRecord * to)
+{
+	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	SQLUSMALLINT hour, minute, second;
+	long ntime = *(long*)getAdressBindDataFrom((char*)from->dataPtr);
+	long nnano = ntime % ISC_TIME_SECONDS_PRECISION;
+
+	decode_sql_time(ntime, hour, minute, second);
+
+	int outlen = to->length;
+
+	if ( outlen == sizeof(tagTIME_STRUCT) ) // tagTime
+	{
+		tagTIME_STRUCT *pt = (tagTIME_STRUCT*)pointer;
+		pt->hour = hour;
+		pt->minute = minute;
+		pt->second = second;
+	}
+	else if ( outlen == 4 ) // DOS date
+	{
+		shortTime *pt = (shortTime*)pointer;
+		pt->hour = (unsigned char)hour;
+		pt->minute = (unsigned char)minute;
+		pt->second = (unsigned char)second;
+		if ( nnano ) nnano = (10000 + nnano) / 100 - 100;
+		pt->hsecond = (unsigned char)nnano;
+	}
+	else
+	{
+		tagTIME_STRUCT tagTm;
+		tagTm.hour = hour;
+		tagTm.minute = minute;
+		tagTm.second = second;
+		memcpy( pointer, &tagTm, outlen );
+	}
+
+	if ( indicatorTo )
+		*indicatorTo = outlen;
 
 	return SQL_SUCCESS;
 }
@@ -1542,6 +1638,65 @@ int OdbcConvert::convDateTimeToTagDateTime(DescRecord * from, DescRecord * to)
 	decode_sql_date(nday, tagTs->day, tagTs->month, tagTs->year);
 	decode_sql_time(ntime, tagTs->hour, tagTs->minute, tagTs->second);
 	tagTs->fraction = (ntime % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
+
+	if ( indicatorTo )
+		*indicatorTo = sizeof(tagTIMESTAMP_STRUCT);
+
+	return SQL_SUCCESS;
+}
+
+int OdbcConvert::convDateTimeToBinary(DescRecord * from, DescRecord * to)
+{
+	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	QUAD &number = *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr);
+
+	long nday = LO_LONG(number);
+	long ntime = HI_LONG(number);
+	int outlen = to->length;
+
+	if ( outlen == sizeof(tagTIMESTAMP_STRUCT) ) // tagTimestamp
+	{
+		tagTIMESTAMP_STRUCT * tagTs = (tagTIMESTAMP_STRUCT*)pointer;
+		decode_sql_date(nday, tagTs->day, tagTs->month, tagTs->year);
+		decode_sql_time(ntime, tagTs->hour, tagTs->minute, tagTs->second);
+		tagTs->fraction = (ntime % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
+	}
+	else if ( outlen == 8 ) // DOS date/time
+	{
+		tagTIMESTAMP_STRUCT tagTs;
+
+		decode_sql_date(nday, tagTs.day, tagTs.month, tagTs.year);
+		decode_sql_time(ntime, tagTs.hour, tagTs.minute, tagTs.second);
+		tagTs.fraction = (ntime % ISC_TIME_SECONDS_PRECISION);
+
+		if ( tagTs.fraction ) 
+			tagTs.fraction = (10000 + tagTs.fraction) / 100 - 100;
+
+		shortDate *ptd = (shortDate*)pointer;
+		ptd->year = tagTs.year;
+		ptd->day = (char)tagTs.day;
+		ptd->month = (char)tagTs.month;
+
+		shortTime *ptt = (shortTime*)(pointer + 4);
+		ptt->hour = (unsigned char)tagTs.hour;
+		ptt->minute = (unsigned char)tagTs.minute;
+		ptt->second = (unsigned char)tagTs.second;
+		ptt->hsecond = (unsigned char)tagTs.fraction;
+	}
+	else
+	{
+		tagTIMESTAMP_STRUCT tagTs;
+
+		decode_sql_date(nday, tagTs.day, tagTs.month, tagTs.year);
+		decode_sql_time(ntime, tagTs.hour, tagTs.minute, tagTs.second);
+		tagTs.fraction = (ntime % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
+		memcpy( pointer, &tagTs, outlen );
+	}
 
 	if ( indicatorTo )
 		*indicatorTo = sizeof(tagTIMESTAMP_STRUCT);
