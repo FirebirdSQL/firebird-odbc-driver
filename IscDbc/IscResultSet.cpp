@@ -87,29 +87,6 @@ void IscResultSet::initResultSet(IscStatement *iscStatement)
 
 // Is used only for cursors OdbcJdbc
 // It is forbidden to use in IscDbc
-bool IscResultSet::readForwardCursor()
-{
-	if (!statement)
-		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
-
-	ISC_STATUS statusVector [20];
-
-	int dialect = statement->connection->getDatabaseDialect ();
-	int ret = statement->connection->GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
-
-	if (ret)
-	{
-		if (ret == 100)
-		{
-			close();
-			return false;
-		}
-		THROW_ISC_EXCEPTION (statement->connection, statusVector);
-	}
-
-	return true;
-}
-
 bool IscResultSet::nextFetch()
 {
 	if (!statement)

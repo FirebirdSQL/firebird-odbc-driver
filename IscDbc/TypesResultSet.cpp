@@ -31,6 +31,8 @@
 #include "IscDbc.h"
 #include "TypesResultSet.h"
 #include "Types.h"
+#include "IscStatement.h"
+#include "Value.h"
 
 namespace IscDbcLibrary {
 
@@ -197,7 +199,7 @@ TypesResultSet::~TypesResultSet()
 	free(indicators);
 }
 
-bool TypesResultSet::next()
+bool TypesResultSet::nextFetch()
 {
 	if (dataTypes != 0)
 	{
@@ -238,6 +240,29 @@ bool TypesResultSet::next()
 	SET_INDICATOR_VAL(16,short,true);			// SQL_DATETIME_SUB
 	SET_INDICATOR_VAL(17,long,true);			// NUM_PREC_RADIX
 	SET_INDICATOR_VAL(18,short,true);			// INTERVAL_PRECISION	
+
+	return true;
+}
+
+bool TypesResultSet::next()
+{
+	deleteBlobs();
+	reset();
+	allocConversions();
+
+	if ( !(activePosRowInSet >= 0 && activePosRowInSet < sqlda->getCountRowsStaticCursor()) )
+		return false;
+
+	if ( activePosRowInSet )
+		copyNextSqldaFromBufferStaticCursor();
+
+	++activePosRowInSet;
+
+	XSQLVAR *var = sqlda->sqlda->sqlvar;
+    Value *value = values.values;
+
+	for (int n = 0; n < sqlda->sqlda->sqld; ++n, ++var, ++value)
+		statement->setValue (value, var);
 
 	return true;
 }

@@ -37,9 +37,11 @@ public: // StatementMetaData
 	virtual int objectVersion(){ return STATEMENTMETADATA_VERSION; }
 
 public:
-	virtual bool next();
 	TypesResultSet(int dataType);
 	~TypesResultSet();
+
+	virtual bool nextFetch();
+	virtual bool next();
 	int findType();
 
 	int			recordNumber;

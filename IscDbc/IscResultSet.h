@@ -99,7 +99,6 @@ public:
 	void				allocConversions();
 	virtual void		freeHTML(const char *html);
 	virtual const char* genHTML(const char *series, const char *type, Properties *context);
-	virtual bool		nextFetch();
 	virtual int			release();
 	virtual void		addRef();
 	virtual int			getColumnCount();
@@ -174,7 +173,7 @@ public:
 	virtual long		*getSqlDataOffsetPtr();
 	virtual bool		readStaticCursor();
 	virtual bool		readFromSystemCatalog();
-	virtual bool		readForwardCursor();
+	virtual bool		nextFetch();
 	virtual bool		setCurrentRowInBufferStaticCursor(int nRow);
 	virtual void		copyNextSqldaInBufferStaticCursor();
 	virtual void		copyNextSqldaFromBufferStaticCursor();

@@ -169,7 +169,7 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	resultSet = NULL;
 	statement = connection->connection->createInternalStatement();
 	execute = &OdbcStatement::executeStatement;
-	fetchNext = &ResultSet::next;
+	fetchNext = &ResultSet::nextFetch;
 	schemaFetchData = true;
 	metaData = NULL;
 	cancel = false;
@@ -499,7 +499,7 @@ void OdbcStatement::releaseResultSet()
 void OdbcStatement::setResultSet(ResultSet * results, bool fromSystemCatalog)
 {
 	execute = &OdbcStatement::executeStatement;
-	fetchNext = &ResultSet::next;
+	fetchNext = &ResultSet::nextFetch;
 	resultSet = results;
 	metaData = resultSet->getMetaData();
 	sqldataOutOffsetPtr = resultSet->getSqlDataOffsetPtr();
