@@ -89,7 +89,6 @@ extern "C"
 #else
 #define OUTPUT_MONITOR_EXECUTING(msg)
 #endif
-//#define DEBUG
 
 #ifdef DEBUG
 #define TRACE(msg)		trace (msg"\n")
@@ -99,15 +98,15 @@ extern "C"
 
 #if(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_ENV)
 
-#define GUARD 				SafeEnvThread wt
-#define GUARD_HSTMT(arg)	GUARD
-#define GUARD_HDBC(arg)		GUARD
-#define GUARD_HDESC(arg)	GUARD
-#define GUARD_HTYPE(arg1,arg2)	GUARD
+#define GUARD_ENV				SafeEnvThread wt
+#define GUARD_HSTMT(arg)		GUARD_ENV
+#define GUARD_HDBC(arg)			GUARD_ENV
+#define GUARD_HDESC(arg)		GUARD_ENV
+#define GUARD_HTYPE(arg1,arg2)	GUARD_ENV
 
 #elif(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_CONNECT)
 
-#define GUARD
+#define GUARD_ENV				SafeEnvThread wt
 #define GUARD_HSTMT(arg)		SafeConnectThread wt(((OdbcStatement*)arg)->connection)
 #define GUARD_HDBC(arg) 		SafeConnectThread wt((OdbcConnection*)arg)
 #define GUARD_HDESC(arg)		SafeConnectThread wt(((OdbcDesc*)arg)->connection)
@@ -118,7 +117,7 @@ extern "C"
 
 #else
 
-#define GUARD
+#define GUARD_ENV
 #define GUARD_HSTMT(arg)
 #define GUARD_HDBC(arg)
 #define GUARD_HDESC(arg)	
@@ -126,7 +125,6 @@ extern "C"
 
 #endif
 
-//#define LOGGING
 #ifdef LOGGING
 FILE	*logFile = NULL;
 void logMsg (const char *msg)
@@ -153,22 +151,19 @@ void trace (const char *msg)
     LOG_MSG(msg);
 }
 
-// __SQLAllocHandle
-// Local variant of call to defeat the dynamic link
-// mechanism.
-static RETCODE SQL_API __SQLAllocHandle  (SQLSMALLINT arg0,
-		 SQLHANDLE arg1,
-		 SQLHANDLE * arg2)
+static RETCODE __SQLAllocHandle  (SQLSMALLINT arg0, SQLHANDLE arg1, SQLHANDLE * arg2)
 {
 	TRACE ("__SQLAllocHandle");
 
 	if (arg0 == SQL_HANDLE_ENV)
-		{
+	{
 		if (arg1 != SQL_NULL_HANDLE || arg2 == NULL)
 			return SQL_ERROR;
+
 		*arg2 = (SQLHANDLE)new OdbcEnv;
+
 		return SQL_SUCCESS;
-		}
+	}
 
 	OdbcObject *object = (OdbcObject*) arg1;
 
@@ -184,7 +179,7 @@ RETCODE SQL_API SQLAllocConnect  (HENV arg0,
 			 HDBC * arg1)
 {
 	TRACE ("SQLAllocConnect");
-	GUARD_HSTMT(arg1);
+	GUARD_ENV;
 
 	return __SQLAllocHandle (SQL_HANDLE_DBC, arg0, arg1);
 }
@@ -750,10 +745,10 @@ RETCODE SQL_API SQLBrowseConnect  (HDBC arg0,
 		 SWORD arg4,
 		 SWORD * arg5)
 {
+	TRACE ("SQLBrowseConnect");
 	GUARD_HDBC(arg0);
-#pragma FB_COMPILER_MESSAGE("SQLBrowseConnect - Implemented; FIXME!")
-	notYetImplemented("SQLBrowseConnect called\n");
-	return(SQL_SUCCESS);
+
+	return ((OdbcConnection*) arg0)->sqlBrowseConnect (arg1, arg2, arg3, arg4, arg5);
 }
 
 ///// SQLDataSources /////
@@ -767,9 +762,10 @@ RETCODE SQL_API SQLDataSources  (HENV arg0,
 		 SWORD arg6,
 		 SWORD * arg7)
 {
-#pragma FB_COMPILER_MESSAGE("SQLDataSources - Implemented; FIXME!")
-	notYetImplemented("SQLDataSources called\n");
-	return(SQL_SUCCESS);
+	TRACE ("SQLDataSources");
+	GUARD_ENV;
+
+	return ((OdbcEnv*)arg0)->sqlDataSources (arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
 
 ///// SQLDescribeParam /////
@@ -844,10 +840,10 @@ RETCODE SQL_API SQLNativeSql  (HDBC arg0,
 		 SDWORD arg4,
 		 SDWORD * arg5)
 {
+	TRACE ("SQLNativeSql");
 	GUARD_HDBC(arg0);
-#pragma FB_COMPILER_MESSAGE("SQLNativeSql - Implemented; FIXME!")
-	notYetImplemented("SQLNativeSql called\n");
-	return(SQL_SUCCESS);
+
+	return ((OdbcConnection*) arg0)->sqlNativeSql (arg1, arg2, arg3, arg4, arg5);
 }
 
 ///// SQLNumParams /////
@@ -867,10 +863,13 @@ RETCODE SQL_API SQLParamOptions  (HSTMT arg0,
 		 UDWORD arg1,
 		 UDWORD * arg2)
 {
+	TRACE("SQLParamOptions");
 	GUARD_HSTMT(arg0);
-#pragma FB_COMPILER_MESSAGE("SQLParamOptions - Implemented; FIXME!")
-	notYetImplemented("SQLParamOptions called\n");
-	return(SQL_SUCCESS);
+
+	((OdbcStatement*) arg0)->sqlSetStmtAttr(SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)arg1, 0);
+	((OdbcStatement*) arg0)->sqlSetStmtAttr(SQL_ATTR_PARAMS_PROCESSED_PTR, (SQLPOINTER)arg2, 0);
+
+	return SQL_SUCCESS;
 }
 
 ///// SQLPrimaryKeys /////
@@ -943,10 +942,10 @@ RETCODE SQL_API SQLSetScrollOptions  (HSTMT arg0,
 		 SDWORD arg2,
 		 UWORD arg3)
 {
+	TRACE ("SQLSetScrollOptions");
 	GUARD_HSTMT(arg0);
-#pragma FB_COMPILER_MESSAGE("SQLSetScrollOptions - Implemented; FIXME!")
-	notYetImplemented("SQLSetScrollOptions called\n");
-	return(SQL_SUCCESS);
+
+	return ((OdbcStatement*) arg0)->sqlSetScrollOptions (arg1, arg2, arg3);
 }
 
 ///// SQLTablePrivileges /////
@@ -995,9 +994,10 @@ RETCODE SQL_API SQLDrivers  (HENV arg0,
 		 SWORD arg6,
 		 SWORD * arg7)
 {
-#pragma FB_COMPILER_MESSAGE("SQLDrivers - Implemented; FIXME!")
-	notYetImplemented("SQLDrivers called\n");
-	return(SQL_SUCCESS);
+	TRACE ("SQLDrivers");
+	GUARD_ENV;
+
+	return ((OdbcEnv*)arg0)->sqlDrivers (arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
 
 ///// SQLBindParameter /////
@@ -1021,14 +1021,36 @@ RETCODE SQL_API SQLBindParameter  (HSTMT arg0,
 
 ///// SQLAllocHandle - global /////
 
-RETCODE SQL_API SQLAllocHandle (SQLSMALLINT arg0,
-		 SQLHANDLE arg1,
-		 SQLHANDLE * arg2)
+RETCODE SQL_API SQLAllocHandle (SQLSMALLINT arg0, SQLHANDLE arg1, SQLHANDLE * arg2)
 {
-#pragma FB_COMPILER_MESSAGE("SQLAllocHandle - GUARD_????(arg0); FIXME!")
-	return __SQLAllocHandle (arg0, arg1, arg2);
-}
+	TRACE ("SQLAllocHandle");
 
+	switch( arg0 )
+	{
+	case SQL_HANDLE_ENV:
+			return __SQLAllocHandle (arg0, arg1, arg2);
+
+	case SQL_HANDLE_DBC:
+		{
+			GUARD_ENV;
+			return __SQLAllocHandle (arg0, arg1, arg2);
+		}
+
+	case SQL_HANDLE_STMT:
+		{
+			GUARD_HDBC(arg1);
+			return __SQLAllocHandle (arg0, arg1, arg2);
+		}
+
+	case SQL_HANDLE_DESC:
+		{
+			GUARD_HDBC(arg1);
+			return __SQLAllocHandle (arg0, arg1, arg2);
+		}
+	}
+
+	return SQL_INVALID_HANDLE;
+}
 
 ///// SQLBindParam /////
 
@@ -1041,10 +1063,10 @@ RETCODE SQL_API SQLBindParam  (SQLHSTMT arg0,
 		 SQLPOINTER arg6,
 		 SQLINTEGER * arg7)
 {
+	TRACE ("SQLBindParam");
 	GUARD_HSTMT(arg0);
-#pragma FB_COMPILER_MESSAGE("SQLBindParam - Implemented; FIXME!")
-	notYetImplemented("SQLBindParam called\n");
-	return(SQL_SUCCESS);
+
+	return ((OdbcStatement*) arg0)->sqlBindParameter (arg1, SQL_PARAM_INPUT, arg2, arg3, arg4, arg5, arg6, SQL_SETPARAM_VALUE_MAX, arg7);
 }
 
 ///// SQLCloseCursor /////
