@@ -41,6 +41,7 @@ public:
 	bool operator =(DescRecord *rec);
 	void initZeroColumn();
 	void allocateLocalDataPtr();
+	void releaseAllocMemory();
 	void freeLocalDataPtr();
     void beginBlobDataTransfer();
     void putBlobSegmentData (int length, const void *bytes);

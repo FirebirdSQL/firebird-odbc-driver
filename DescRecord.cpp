@@ -80,11 +80,22 @@ DescRecord::DescRecord()
 
 DescRecord::~DescRecord()
 {
+	releaseAllocMemory();
+}
+
+void DescRecord::releaseAllocMemory()
+{
 	if ( headSqlVarPtr )
+	{
 		headSqlVarPtr->release();
+		headSqlVarPtr = NULL;
+	}
 
 	if ( dataBlobPtr )
+	{
 		dataBlobPtr->release();
+		dataBlobPtr = NULL;
+	}
 
 	freeLocalDataPtr();
 }
