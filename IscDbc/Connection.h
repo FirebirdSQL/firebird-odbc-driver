@@ -560,6 +560,7 @@ public:
 	virtual void		copyNextSqldaFromBufferStaticCursor() = 0;
 	virtual int			getCountRowsStaticCursor() = 0;
 	virtual bool		getDataFromStaticCursor (int column/*, Blob * pointerBlobData*/) = 0;
+	virtual bool		nextFromProcedure() = 0;
 	virtual int			release() = 0;
 	virtual void		addRef() = 0;
 	virtual int			getColumnCount() = 0;

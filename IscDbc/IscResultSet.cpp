@@ -81,6 +81,7 @@ void IscResultSet::initResultSet(IscStatement *iscStatement)
 		allocConversions();
 	}
 
+	nextSimulateForProcedure = false;
 	activePosRowInSet = 0;
 	statysPositionRow = enBEFORE_FIRST;
 }
@@ -237,6 +238,15 @@ bool IscResultSet::getDataFromStaticCursor (int column/*, Blob * pointerBlobData
 		return false;
 
 	sqlda->setCurrentRowInBufferStaticCursor(activePosRowInSet);
+	return true;
+}
+
+bool IscResultSet::nextFromProcedure()
+{
+	if ( nextSimulateForProcedure )
+		return false;
+
+	nextSimulateForProcedure = true;
 	return true;
 }
 

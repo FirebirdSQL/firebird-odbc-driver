@@ -292,12 +292,15 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 	if (resultSets.isEmpty())
 	{
 		typeStmt = stmtNone;
-		if (connection->autoCommit)
-			connection->commitAuto();
-		// Close cursors too.
-		ISC_STATUS statusVector [20];
-		connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_close);
-		//FIXME: Test status vector.
+		if ( connection )
+		{
+			if (connection->autoCommit)
+				connection->commitAuto();
+			// Close cursors too.
+			ISC_STATUS statusVector [20];
+			connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_close);
+			//FIXME: Test status vector.
+		}
 	}
 }
 

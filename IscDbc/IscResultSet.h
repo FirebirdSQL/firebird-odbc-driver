@@ -180,6 +180,7 @@ public:
 	virtual void		copyNextSqldaFromBufferStaticCursor();
 	virtual int			getCountRowsStaticCursor();
 	virtual bool		getDataFromStaticCursor (int column);
+	virtual bool		nextFromProcedure();
 
 	void				setValue (int index, long value);
 	void				setValue (int index, const char *value);
@@ -191,6 +192,7 @@ public:
 	char			**conversions;
 	char			**columnNames;
 	bool			valueWasNull;
+	bool			nextSimulateForProcedure;
 	LinkedList		blobs;
 	LinkedList		clobs;
 	IscStatement	*statement;
