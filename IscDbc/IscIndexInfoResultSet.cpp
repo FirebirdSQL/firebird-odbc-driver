@@ -66,37 +66,37 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 										 bool unique, bool approximate)
 {
 	JString tableStat = 
-		"select NULL as table_cat,\n"								// 1
-				"\tNULL as table_schem,\n"							// 2
-				"\trl.rdb$relation_name as table_name,\n"			// 3
-				"\tcast(0 as smallint) as non_unique,\n"			// 4 
-				"\tcast(NULL as char(31)) as index_qualifier,\n"	// 5 
-				"\tcast(NULL as char(31)) index_name,\n"			// 6
-				"\tcast(0 as smallint) as index_type,\n"			// 7  SQL_TABLE_STAT
-				"\tcast(NULL as smallint) as ordinal_position,\n"	// 8
-				"\tcast(NULL as char(31)) as column_name,\n"		// 9
-				"\tcast(NULL as char) as asc_or_desc,\n"			// 10
-				"\tcast(NULL as integer) as cardinality,\n"			// 11
-				"\tcast(NULL as integer) as index_pages,\n"			// 12
-				"\tcast(NULL as varchar(31)) as filter_condition,\n"// 13
-				"\tcast(NULL as smallint) as index_type\n"			// 14
+		"select cast(NULL as char(31)) as table_cat,\n"							// 1
+				"\tcast(NULL as char(31)) as table_schem,\n"					// 2
+				"\tcast(rl.rdb$relation_name as char(31)) as table_name,\n"		// 3
+				"\tcast(0 as smallint) as non_unique,\n"						// 4
+				"\tcast(NULL as char(31)) as index_qualifier,\n"				// 5
+				"\tcast(NULL as char(31)) index_name,\n"						// 6
+				"\tcast(0 as smallint) as index_type,\n"						// 7  SQL_TABLE_STAT
+				"\tcast(NULL as smallint) as ordinal_position,\n"				// 8
+				"\tcast(NULL as char(31)) as column_name,\n"					// 9
+				"\tcast(NULL as char) as asc_or_desc,\n"						// 10
+				"\tcast(NULL as integer) as cardinality,\n"						// 11
+				"\tcast(NULL as integer) as index_pages,\n"						// 12
+				"\tcast(NULL as varchar(31)) as filter_condition,\n"			// 13
+				"\tcast(NULL as smallint) as index_type\n"						// 14
 		"from rdb$relations rl\n";
 
 	const char *v6 = 
-		"select NULL as table_cat,\n"								// 1
-				"\tNULL as table_schem,\n"							// 2
-				"\tidx.rdb$relation_name as table_name,\n"			// 3
+		"select cast(NULL as char(31)) as table_cat,\n"							// 1
+				"\tcast(NULL as char(31)) as table_schem,\n"					// 2
+				"\tcast(idx.rdb$relation_name as char(31)) as table_name,\n"	// 3
 				"\tcast((1-idx.rdb$unique_flag) as smallint) as non_unique,\n"	// 4
-				"\tidx.rdb$index_name as index_qualifier,\n"		// 5
-				"\tidx.rdb$index_name as index_name,\n"				// 6
-				"\tcast(3 as smallint) as index_type,\n"			// 7 (SQL_INDEX_OTHER)
-				"\tseg.rdb$field_position as ordinal_position,\n"	// 8
-				"\tseg.rdb$field_name as column_name,\n"			// 9
-				"\tcast(NULL as char) as asc_or_desc,\n"			// 10
-				"\tcast(NULL as integer) as cardinality,\n"			// 11
-				"\tcast(NULL as integer) as index_pages,\n"			// 12
-				"\tcast(NULL as varchar(31)) as filter_condition,\n"// 13
-				"\tidx.rdb$index_type as index_type\n"				// 14
+				"\tcast(idx.rdb$index_name as char(31)) as index_qualifier,\n"	// 5
+				"\tcast(idx.rdb$index_name as char(31)) as index_name,\n"		// 6
+				"\tcast(3 as smallint) as index_type,\n"						// 7 (SQL_INDEX_OTHER)
+				"\tcast(seg.rdb$field_position as smallint) as ordinal_position,\n"	// 8
+				"\tcast(seg.rdb$field_name as char(31)) as column_name,\n"		// 9
+				"\tcast(NULL as char) as asc_or_desc,\n"						// 10
+				"\tcast(NULL as integer) as cardinality,\n"						// 11
+				"\tcast(NULL as integer) as index_pages,\n"						// 12
+				"\tcast(NULL as varchar(31)) as filter_condition,\n"			// 13
+				"\tcast(idx.rdb$index_type as smallint) as index_type\n"		// 14
 		"from rdb$indices idx, rdb$index_segments seg\n"
 		" where idx.rdb$index_name = seg.rdb$index_name\n";
 

@@ -544,7 +544,7 @@ ISC_TIMESTAMP IscStatement::getIscTimeStamp(TimeStamp value)
 */
 //From B. Schulte
 	date.timestamp_date = value.date ;
-	date.timestamp_time =  value.nanos * ISC_TIME_SECONDS_PRECISION;
+	date.timestamp_time =  value.nanos;
 
 	return date;
 }

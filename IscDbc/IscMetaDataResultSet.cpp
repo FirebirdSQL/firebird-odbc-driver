@@ -107,7 +107,7 @@ JString IscMetaDataResultSet::expandPattern(const char * string, const char * pa
 	if (isWildcarded (pattern))
 	{
 		char strValLike [128];
-		sprintf (strValLike, "%s%%' ESCAPE '\\",pattern);
+		sprintf (strValLike, "%s %%' ESCAPE '\\",pattern);
 		sprintf (temp, string, "like", strValLike);
 	}
 	else
