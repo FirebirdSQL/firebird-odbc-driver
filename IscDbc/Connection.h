@@ -545,6 +545,34 @@ public:
 	virtual Statement	*getStatement() = 0;
 };
 
+#define RESULTSETMETADATA_VERSION	1
+
+class ResultSetMetaData  
+{
+public:
+	virtual const char*	getTableName (int index) = 0;
+	virtual const char*	getColumnName (int index) = 0;
+	virtual int			getColumnDisplaySize (int index) = 0;
+	virtual int			getColumnType (int index) = 0;
+	virtual const char*	getColumnTypeName (int index) = 0;
+	virtual int			getColumnCount() = 0;
+	virtual int			getPrecision(int index) = 0;
+	virtual int			getScale(int index) = 0;
+	virtual bool		isNullable (int index) = 0;
+	virtual int			objectVersion() = 0;
+	virtual const char*	getColumnLabel (int index) = 0;
+	virtual bool		isSigned (int index) = 0;
+	virtual bool		isReadOnly (int index) = 0;
+	virtual bool		isWritable (int index) = 0;
+	virtual bool		isDefinitelyWritable (int index) = 0;
+	virtual bool		isCurrency (int index) = 0;
+	virtual bool		isCaseSensitive (int index) = 0;
+	virtual bool		isAutoIncrement (int index) = 0;
+	virtual bool		isSearchable (int index) = 0;
+	virtual const char*	getSchemaName (int index) = 0;
+	virtual const char*	getCatalogName (int index) = 0;
+};
+
 #define RESULTLIST_VERSION		1
 
 class ResultList  

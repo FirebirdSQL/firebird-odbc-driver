@@ -19,6 +19,7 @@ ISCDBCSRC = \
 	IscProcedureColumnsResultSet.cpp \
 	IscProceduresResultSet.cpp \
 	IscResultSet.cpp \
+	IscResultSetMetaData.cpp \
 	IscSpecialColumnsResultSet.cpp \
 	IscSqlType.cpp \
 	IscStatement.cpp \

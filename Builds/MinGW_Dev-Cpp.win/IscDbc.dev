@@ -9,7 +9,7 @@ CppCompiler=-D__GNUWIN32__ -D_WIN32_WINNT=0x0400 -DWINVER=0x0400 -DWIN32 -D_WIN3
 Includes=d:/firebird/include;../..
 Linker=--output-def Release/Obj/libIscDbc.def_@@_--output-lib Release/libIscDbc.a_@@_--def ../../IscDbc/IscDbc.def_@@_
 Libs=d:/firebird/lib
-UnitCount=90
+UnitCount=92
 Folders="Header Files","Resource Files","Source Files"
 ObjFiles=
 PrivateResource=IscDbc_private.rc
@@ -908,8 +908,8 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit91]
-FileName=..\..\IscDbc\Values.cpp
-Folder="Source Files"
+FileName=..\..\IscDbc\IscResultSetMetaData.h
+Folder=Header Files
 Compile=1
 CompileCpp=1
 Link=1
@@ -918,7 +918,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit92]
-FileName=..\..\IscDbc\IscOdbcStatement.cpp
+FileName=..\..\IscDbc\IscResultSetMetaData.cpp
 Folder=Source Files
 Compile=1
 CompileCpp=1
