@@ -12,15 +12,14 @@
 #    language governing rights and limitations under the License.
 #
 #
-#    The Original Code was created by Paul Reeves for IBPhoenix.
-#
 #    Copyright (c) 2004 Paul Reeves
 #    All Rights Reserved.
 #
-# To Do for future version
+# To Do for a future version
 #    Consider adding an install log
 #    Make verbose output consistent
 #    Consider adding --force for those that really don't care.
+#    Consider adding a --status option - Does unixODBC exist. Is the driver already installed?
 #
 #   Test the install
 #   Write uninstall docs function
@@ -91,8 +90,8 @@ ErrorHelp()
             echo "    --docs=/path/to/docs/on/your/distribution"
             echo "  as a parameter.    "
             echo ""
-            echo "  The Firebird documentation will be created in a "
-            echo "  sub-directory under the directory specified."
+            echo "  The Firebird ODBC Driver documentation will be created "
+            echo "  in a sub-directory under the directory specified."
             ;;
         7)
             echo "  A problem occurred while running odbcinst to "
@@ -166,7 +165,7 @@ CheckEnvironment()
     #If it isn't we will have a problem registering
     #the driver as the odbcinst.ini is distro specific.
     #So, might as well bail out now if we can't find odbcinst.
-    odbcinst 1>/dev/null 2>/dev/null
+    odbcinst 2>/dev/null >/dev/null 
     if [ $? -eq 127 ]; then ErrorHelp 9; fi
 
     #Which Distro is installed?
@@ -213,12 +212,13 @@ CheckEnvironment()
 InstallLibraries()
 {
     if [ "$TEST" = "1" ]; then
-        echo "Testing decompression of tarfile OdbcJdbcLibs.tar.gz"
-        tar --directory $fbODBCLIBS -tvzf OdbcJdbcLibs.tar.gz
+        echo "Testing extraction of tarfile OdbcJdbcLibs.tar"
+        tar --directory $fbODBCLIBS -tvf OdbcJdbcLibs.tar
     else
-        echo "Decompressing OdbcJdbcLibs.tar.gz"
-        tar --directory $fbODBCLIBS -xvzf OdbcJdbcLibs.tar.gz
+        echo "Untarring OdbcJdbcLibs.tar"
+        tar --directory $fbODBCLIBS -xvf OdbcJdbcLibs.tar
         ln -f -s $fbODBCLIBS/libIscDbc.so $fbODBCLIBS/libIscDbc
+        ln -f -s $fbODBCLIBS/libIscDbc.so $fbODBCLIBS/IscDbc
     fi
 
     if [ $? -ne 0 ]; then
@@ -226,45 +226,38 @@ InstallLibraries()
     fi
 }
 
+
 ##################################################################################
 UninstallLibraries()
 {
-    echo $FUNCNAME
-    if [ "$VERBOSE" = "1" ]; then
-        echo "Attempting to uninstall the driver"
+    if [ "TEST" = "1" ]; then
+        echo $FUNCNAME
     fi
 
-    if [ "TEST" = "1" ]; then
-        for afile in libIscDbc.so libOdbcJdbc.so libOdbcJdbcS.so libIscDbc
-        do
+    for afile in libIscDbc.so libOdbcJdbc.so libOdbcJdbcS.so libIscDbc
+    do
+        if [ "TEST" = "1" ]; then
             echo "In Test Mode. Would remove $(fbODBCLIBS)/$afile"
-        done
-    else
-        for file in libIscDbc.so libOdbcJdbc.so libOdbcJdbcS.so libIscDbc
-        do
+        else
             rm $fbODBCLIBS/$afile
-        done
-    fi
+        fi
+    done
 }
 
 ##################################################################################
 UninstallDocs()
 {
-    echo $FUNCNAME
-    if [ "$VERBOSE" = "1" ]; then
-        echo "Attempting to uninstall the documentation"
+    if [ "$TEST" = "1" ]; then
+        echo $FUNCNAME
     fi
+
     if [ "TEST" = "1" ]; then
-        for afile in libIscDbc.so libOdbcJdbc.so libOdbcJdbcS.so libIscDbc
-        do
-            echo "In Test Mode. Would remove $afile"
-        done
+        echo "In Test Mode. Would remove  $fbODBCDOCS/*"
     else
-        for afile in libIscDbc.so libOdbcJdbc.so libOdbcJdbcS.so libIscDbc
-        do
-        Inclomplete!
-            rm $(fbODBCLIBS)/$afile
-        done
+        rm $fbODBCDOCS/html/*
+		rmdir $fbODBCDOCS/html
+        rm $fbODBCDOCS/*
+		rmdir $fbODBCDOCS
     fi
 }
 
@@ -281,19 +274,20 @@ if [ "$TEST" = "1" ]; then
         echo "Would copy $afile to $fbODBCDOCS"
     done
 
-    echo "Testing decompression of tarfile OdbcJdbcDocs.tar.gz"
-    tar --directory $fbODBCDOCS -tvzf OdbcJdbcDocs.tar.gz
+    echo "Testing extraction of tarfile OdbcJdbcDocs.tar"
+    tar --directory $fbODBCDOCS -tvf OdbcJdbcDocs.tar
 else
+    if [ ! -d $fbODBCDOCS  ]; then
+        mkdir $fbODBCDOCS
+    fi
+
     for afile in readme.txt *.ini
     do
         cp $afile $fbODBCDOCS
     done
 
-    if [ ! -d $fbODBCDOCS  ]; then
-        mkdir $fbODBCDOCS
-    fi
-    echo "Decompressing OdbcJdbcDocs.tar.gz"
-    tar --directory $fbODBCDOCS -xvzf OdbcJdbcDocs.tar.gz
+    echo "Untarring OdbcJdbcDocs.tar.gz"
+    tar --directory $fbODBCDOCS -xvf OdbcJdbcDocs.tar
 fi
 
 if [ $? -ne 0 ]; then
@@ -311,11 +305,11 @@ if [ "$TEST" = "1" ]; then
     echo "Test Mode. This is the uninstall script that would be created"
     echo "in $fbODBCDOCS : "
     echo "  #!/bin/bash"
-    echo "  install.sh --uninstall --libs=$fbODBCLIBS --docs=$fbODBCDOCS"
+    echo "  ./install.sh --uninstall --libs=$fbODBCLIBS --docs=$fbODBCDOCS"
     echo ""
 else
     echo "#!/bin/bash" > $fbODBCDOCS/uninstall.sh
-    echo "install.sh --uninstall --libs=$fbODBCLIBS --docs=$fbODBCDOCS" >> $fbODBCDOCS/uninstall.sh
+    echo "./install.sh --uninstall --libs=$fbODBCLIBS --docs=$fbODBCDOCS" >> $fbODBCDOCS/uninstall.sh
     echo "" >> $fbODBCDOCS/uninstall.sh
     chmod 744 $fbODBCDOCS/uninstall.sh
 fi
@@ -336,6 +330,7 @@ else
 fi
 }
 
+
 ##################################################################################
 RemoveDriver()
 {
@@ -351,7 +346,7 @@ fi
 
 
 ##################################################################################
-ConfigureTestDSN()
+CreateTestDSN()
 {
 
 if [ "$TEST" = "1" ]; then
@@ -399,9 +394,21 @@ main(){
         WriteUninstallScript
         ConfigureDriver
         if [ "$TESTDSN" = "1" ]; then
-            ConfigureTestDSN
+            CreateTestDSN
         fi
-    fi
+		echo -e \
+"\n   Installation complete. \n\n \
+  It is recommended that you review the readme.txt, \n \
+  the release notes and the documentation in the \n \
+  html sub-directory. These have been installed \n \
+  in $fbODBCDOCS"
+		echo ""
+
+		echo -e \
+"Installation complete. \n\nIt is recommended that you review the readme.txt, \
+the release notes and the documentation in the html sub-directory. These have been installed \
+in $fbODBCDOCS.\n\n\nThe Firebird ODBC driver development team" | mail -s "Firebird ODBC Driver Installation" $USER@localhost
+	fi
 }
 
 

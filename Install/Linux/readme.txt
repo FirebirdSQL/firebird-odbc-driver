@@ -37,6 +37,15 @@ the driver. You also have the option of configuring a test
 dsn by passing the parameter --createTestDSN to install.sh.
 
 
+Documentation
+-------------
+
+Be sure to read the release notes. They are available in the 
+FirebirdODBC directory in the standard documentation location
+for your distribution. You will also find detailed information 
+in the html sub-dir.
+
+
 Known issues
 ------------
 

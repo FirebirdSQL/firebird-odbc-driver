@@ -17,7 +17,10 @@
 #     All Rights Reserved.
 #
 #
-
+#
+PACKAGE_NAME=OdbcJdbc_1.2.0.67.pre1.tar
+#
+#
 DEBUG = No
 #
 .PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean postbuild install uninstall package
@@ -28,6 +31,7 @@ ifndef $(ODBCMANAGER)
 ODBCMANAGER	= unixODBC
 #ODBCMANAGER	= iODBC
 endif
+
 
 #
 # Start build
@@ -94,6 +98,7 @@ DEBUGFLAGS	= -D_DEBUG -DDEBUG -DLOGGING -fexceptions
 else
 DEBUGFLAGS	= -DNDEBUG
 endif
+
 #
 $(BUILDDIR)/%.o: $(ISCDBCDIR)/%.cpp
 	$(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
@@ -148,13 +153,14 @@ uninstall :
 #
 package :
 	-strip -s $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
-	-rm OdbcJdbc_Snapshot.tar.gz
-	tar -C $(TARGETDIR) -cvzf OdbcJdbcLibs.tar.gz $(ISCDBC) $(ODBCJDBC) $(ODBCJDBCSETUP)
-	tar -C ../../Install/HtmlHelp --exclude=CVS -cvzf OdbcJdbcDocs.tar.gz html/ 
-	tar -C ../../Install/Linux -cf OdbcJdbc_Snapshot.tar install.sh readme.txt DriverTemplate.ini FirebirdDSNTemplate.ini InterBaseDSNTemplate.ini
-	tar -uf OdbcJdbc_Snapshot.tar OdbcJdbcLibs.tar.gz OdbcJdbcDocs.tar.gz
-	rm OdbcJdbcLibs.tar.gz  OdbcJdbcDocs.tar.gz
-	gzip -9 -S .gz OdbcJdbc_Snapshot.tar 
+	-rm $(PACKAGE_NAME).gz
+	tar -C $(TARGETDIR) -cvf OdbcJdbcLibs.tar $(ISCDBC) $(ODBCJDBC) $(ODBCJDBCSETUP)
+	tar -C ../../Install/HtmlHelp --exclude=CVS -cvf OdbcJdbcDocs.tar html/ 
+	tar -C ../../Install -uf OdbcJdbcDocs.tar ReleaseNotes_v1.2.html
+	tar -C ../../Install/Linux -cf $(PACKAGE_NAME) install.sh readme.txt DriverTemplate.ini FirebirdDSNTemplate.ini InterBaseDSNTemplate.ini
+	tar -uf $(PACKAGE_NAME) OdbcJdbcLibs.tar OdbcJdbcDocs.tar
+	rm OdbcJdbcLibs.tar  OdbcJdbcDocs.tar
+	gzip -9 -S .gz $(PACKAGE_NAME) 
 #
 
 #
