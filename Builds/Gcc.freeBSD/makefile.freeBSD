@@ -42,10 +42,10 @@ DEBUGFLAGS = -DNDEBUG
 endif
 #
 $(BUILDDIR)/%.o: $(ISCDBCDIR)/%.cpp
- $(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
+	$(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
 #
 $(BUILDDIR)/%.o: $(ODBCJDBCDIR)/%.cpp
- $(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
+	$(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
 #
 ISCDBCLIB       = $(ISCDBCDLL:.so=.a)
 ODBCJDBCLIB     = $(ODBCJDBCDLL:.so=.a)
@@ -55,12 +55,12 @@ all : createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
 #
 # Silently creates the target and build directories
 createdirs :
- @-mkdir $(TARGETDIR)
- @-mkdir $(BUILDDIR)
+	@-mkdir $(TARGETDIR)
+	@-mkdir $(BUILDDIR)
 #
 # Silently cleanup and deletes the target and build directories
 clean :
- @-rm -fr $(TARGETDIR)
+	@-rm -fr $(TARGETDIR)
 #
 IscDbc : $(ISCDBCDLL)
 OdbcJdbc : $(ODBCJDBCDLL)
@@ -69,16 +69,16 @@ OdbcJdbcSetup : $(ODBCJDBCSETUPDLL)
 # Build the library from the object modules
 #
 $(ISCDBCDLL) : $(LIST_ISCDBCOBJ)
- ar crs $(ISCDBCLIB) $(LIST_ISCDBCOBJ)
- $(GCC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(EXTLIBS) -o $(ISCDBCDLL)
+	ar crs $(ISCDBCLIB) $(LIST_ISCDBCOBJ)
+	$(GCC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(EXTLIBS) -o $(ISCDBCDLL)
 #
 $(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ)
- ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCOBJ)
- $(GCC) $(LINKFLAGS) $(BUILDDIR)/JString.o $(BUILDDIR)/Mutex.o $(LIST_ODBCJDBCOBJ) $(EXTLIBS) -o $(ODBCJDBCDLL)
+	ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCOBJ)
+	$(GCC) $(LINKFLAGS) $(BUILDDIR)/JString.o $(BUILDDIR)/Mutex.o $(LIST_ODBCJDBCOBJ) $(EXTLIBS) -o $(ODBCJDBCDLL)
 #
 $(ODBCJDBCSETUPDLL) : $(LIST_ODBCJDBCSETUPOBJ)
- ar crs $(ODBCJDBCSETUPLIB) $(LIST_ODBCJDBCSETUPOBJ)
- $(GCC) $(LINKFLAGS) $(LIST_ODBCJDBCSETUPOBJ) $(EXTLIBS) -o $(ODBCJDBCSETUPDLL)
+	ar crs $(ODBCJDBCSETUPLIB) $(LIST_ODBCJDBCSETUPOBJ)
+	$(GCC) $(LINKFLAGS) $(LIST_ODBCJDBCSETUPOBJ) $(EXTLIBS) -o $(ODBCJDBCSETUPDLL)
 #
 # End
 #
