@@ -2869,8 +2869,13 @@ RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 				valueSize = strlen( (char*)value );
 
 		case SQL_C_BINARY:
-			*binding->indicatorPtr += valueSize;
-			statement->putBlobSegmentData (valueSize, value);
+			if( valueSize )
+			{
+				*binding->indicatorPtr += valueSize;
+				statement->putBlobSegmentData (valueSize, value);
+			}
+			else
+				endPutData = true;
 			break;
 		}
 	}
