@@ -539,7 +539,7 @@ char* Value::getString(char **tempPtr)
 				int length = data.blob->length();
 				*tempPtr = new char [length*2 + 1];
 				if( length > 0 )
-					data.blob->getBytes (0, length, *tempPtr);
+					data.blob->getHexString (0, length, *tempPtr);
 				(*tempPtr) [length*2] = 0;
 			}
 			else if(data.blob->enType == enTypeClob)

@@ -18,6 +18,7 @@ public:
 	virtual void	addRef() = 0;
 	virtual int		release() = 0;
 	virtual void	getBytes (long pos, long length, void *buffer) = 0;
+	virtual void	getHexString (long pos, long length, void *buffer) = 0;
 	virtual int		length() = 0;
 	virtual int		getSegmentLength (int pos) = 0;
 	virtual void	*getSegment (int pos) = 0;

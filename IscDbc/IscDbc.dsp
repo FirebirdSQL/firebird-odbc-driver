@@ -108,6 +108,10 @@ SOURCE=.\BinaryBlob.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\BinToHexStr.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Blob.h
 # End Source File
 # Begin Source File

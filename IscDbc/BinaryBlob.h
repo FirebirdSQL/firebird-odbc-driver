@@ -51,6 +51,7 @@ public:
 	virtual int getSegmentLength (int pos);
 	void putSegment (int length, const char *data, bool copyFlag);
 	int length();
+	void getHexString(long pos, long length, void * address);
 	void getBytes (long pos, long length, void *address);
 	 BinaryBlob (int minSegmentSize);
 	BinaryBlob();

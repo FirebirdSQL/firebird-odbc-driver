@@ -154,6 +154,13 @@ bool BinaryBlob::loadFile(const char * fileName)
 	return true;
 }
 ***/
+void BinaryBlob::getHexString(long pos, long length, void * address)
+{
+	if (!populated)
+		populate();
+
+	Stream::getSegmentToHexStr (pos, length, address);
+}
 
 void BinaryBlob::getBytes(long pos, long length, void * address)
 {

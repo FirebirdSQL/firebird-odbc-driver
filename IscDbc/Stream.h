@@ -55,6 +55,7 @@ public:
 	virtual char*	getString();
 	virtual int		getSegment (int offset, int len, void *ptr, char delimiter);
 	virtual void	setSegment (Segment *segment, int length, void *address);
+	virtual int		getSegmentToHexStr(int offset, int len, void * ptr);
 	virtual int		getSegment (int offset, int length, void* address);
 	virtual void	putSegment (const char *string);
 	virtual void	putSegment (int length, const char *address, bool copy);
