@@ -2638,7 +2638,11 @@ RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 			if( valueSize )
 				binding->putBlobSegmentData (valueSize, value);
 			else
+			{
+				if ( binding->startedTransfer )
+					--parameterNeedData;
 				endPutData = true;
+			}
 			break;
 		}
 	}
