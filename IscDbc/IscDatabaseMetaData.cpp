@@ -430,7 +430,7 @@ const char* IscDatabaseMetaData::getTimeDateFunctions()
 
 const char* IscDatabaseMetaData::getSearchStringEscape()
 	{
-	return 0;
+	return "";
 	}
 
 const char* IscDatabaseMetaData::getExtraNameCharacters()

@@ -822,6 +822,8 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 	case SQL_SEARCH_PATTERN_ESCAPE:
 		if ( metaData->supportsLikeEscapeClause() )
 			string = metaData->getSearchStringEscape();
+		else
+			string = "";
 			break;
 
 	case SQL_PROCEDURES:
@@ -1426,7 +1428,8 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 		break;
 
 	case SQL_CURRENT_QUALIFIER:		//   109
-		string = "";
+		string = const_cast<char *>(databaseName.getString());
+		bufferLength = databaseName.length();
 		break;
 
 	case SQL_ACCESS_MODE:			//   101
@@ -1461,6 +1464,8 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 		return sqlReturn (SQL_ERROR, "HYC00", "Optional feature not implemented");
 	}
 
+	SQLINTEGER len = bufferLength;
+	lengthPtr = &len;
 	if (string)
 		return returnStringInfo (ptr, bufferLength, lengthPtr, string);
 

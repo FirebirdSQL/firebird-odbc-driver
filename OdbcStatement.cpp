@@ -604,7 +604,7 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 			//Added by PR. If len is negative we get an AV so
 			if ( len > 0 ) 
 			{
-				memcpy (binding->pointer, string+binding->dataOffset, len);						
+				memcpy (binding->pointer, string+binding->dataOffset, len);
 				((char*) (binding->pointer)) [len] = 0;
 			}
 
@@ -843,7 +843,7 @@ RETCODE OdbcStatement::sqlFreeStmt(int option)
 		return SQL_ERROR;
 		}
 
-	return sqlSuccess();			
+	return sqlSuccess();
 }
 
 void OdbcStatement::releaseBindings()
@@ -908,7 +908,7 @@ RETCODE OdbcStatement::sqlStatistics(SQLCHAR * catalog, int catLength,
 			}
 	}
 	else
-		return sqlReturn (SQL_ERROR, "HY009", "Invalid use of null pointer");	
+		return sqlReturn (SQL_ERROR, "HY009", "Invalid use of null pointer");
 
 	return sqlSuccess();
 }
@@ -1289,7 +1289,7 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 		binding->bufferLength = bufferLength;
 		binding->indicatorPointer = length;
 		binding->startedTransfer	= false;
-		binding->data_at_exec		= false;		
+		binding->data_at_exec		= false;
 		}
 	catch (SQLException& exception)
 		{
@@ -1300,8 +1300,6 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 	return sqlSuccess();
 }
 
-//void OdbcStatement::setParameter(Binding * binding, int parameter)
-//Amended 2002-06-04 RM
 void OdbcStatement::setParameter(Binding * binding, int parameter)
 {
     clearErrors();
@@ -1318,7 +1316,7 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 			{
 			case SQL_C_CHAR:
 			{
-				if (!binding->data_at_exec)					
+				if (!binding->data_at_exec)
                 switch( *binding->indicatorPointer )
                 {
                     case SQL_NTS:
@@ -1572,7 +1570,7 @@ RETCODE OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferL
 				break;
 				
 			case SQL_ATTR_MAX_LENGTH:
-				value = 0;					//driver does not truncat
+				value = 0;					//driver does not truncate
 				break;
 
 			case SQL_ATTR_QUERY_TIMEOUT:
@@ -1580,7 +1578,7 @@ RETCODE OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferL
 				break;
 
 			case SQL_ATTR_ASYNC_ENABLE:
-				value = 0;							// driver doesn do async				
+				value = 0;							// driver doesn't do async
 				break;
 
 			case SQL_ATTR_PARAM_BIND_TYPE:
@@ -1691,7 +1689,7 @@ bool OdbcStatement::isStoredProcedureEscape(const char *sqlString)
 		getToken (&p, token);
 		}
 
-	return strcasecmp (token, "call") == 0;			
+	return strcasecmp (token, "call") == 0;
 }
 
 char* OdbcStatement::getToken(const char **ptr, char *token)
@@ -1819,7 +1817,7 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 		if( binding->indicatorPointer && !binding->startedTransfer &&
 			( *binding->indicatorPointer == SQL_DATA_AT_EXEC || *binding->indicatorPointer < SQL_LEN_DATA_AT_EXEC_OFFSET ) )
 		{
-			parameterNeedData = n;						
+			parameterNeedData = n;
 			*ptr = binding->pointer;
 			binding->data_at_exec = true;
 
@@ -1854,8 +1852,6 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 		}
 		else
 		{			
-			// Damos por finalizada la transferencia de los datos para el 
-			// parámetro actual
 			if (binding->startedTransfer)
 			{
 				binding->startedTransfer = false;
@@ -2341,7 +2337,7 @@ RETCODE OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attri
 			case SQL_DESC_COUNT                0
 			case SQL_DESC_NAME                 1
 			case SQL_DESC_TYPE                 2
-			case SQL_DESC_CONCISE_TYPE         2			
+			case SQL_DESC_CONCISE_TYPE         2
 			case SQL_DESC_LENGTH               3
 			case SQL_DESC_PRECISION            4
 			case SQL_DESC_SCALE                5
