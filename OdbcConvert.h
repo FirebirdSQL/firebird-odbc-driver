@@ -94,6 +94,8 @@ public:
 	int convShortToLong(DescRecord * from, DescRecord * to);
 	int convShortToFloat(DescRecord * from, DescRecord * to);
 	int convShortToDouble(DescRecord * from, DescRecord * to);
+	int convShortToFloatWithScale(DescRecord * from, DescRecord * to);
+	int convShortToDoubleWithScale(DescRecord * from, DescRecord * to);
 	int convShortToBigint(DescRecord * from, DescRecord * to);
 	int convShortToString(DescRecord * from, DescRecord * to);
 	int convShortToTagNumeric(DescRecord * from, DescRecord * to);
@@ -104,6 +106,8 @@ public:
 	int convLongToShort(DescRecord * from, DescRecord * to);
 	int convLongToFloat(DescRecord * from, DescRecord * to);
 	int convLongToDouble(DescRecord * from, DescRecord * to);
+	int convLongToFloatWithScale(DescRecord * from, DescRecord * to);
+	int convLongToDoubleWithScale(DescRecord * from, DescRecord * to);
 	int convLongToBigint(DescRecord * from, DescRecord * to);
 	int convLongToString(DescRecord * from, DescRecord * to);
 	int convLongToTagNumeric(DescRecord * from, DescRecord * to);

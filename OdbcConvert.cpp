@@ -184,8 +184,12 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_SLONG:
 			return &OdbcConvert::convShortToLong;
 		case SQL_C_FLOAT:
+			if ( from->scale || to->scale )
+				return &OdbcConvert::convShortToFloatWithScale;
 			return &OdbcConvert::convShortToFloat;
 		case SQL_C_DOUBLE:
+			if ( from->scale || to->scale )
+				return &OdbcConvert::convShortToDoubleWithScale;
 			return &OdbcConvert::convShortToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
@@ -225,8 +229,12 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			bIdentity = true;
 			return &OdbcConvert::convLongToLong;
 		case SQL_C_FLOAT:
+			if ( from->scale || to->scale )
+				return &OdbcConvert::convLongToFloatWithScale;
 			return &OdbcConvert::convLongToFloat;
 		case SQL_C_DOUBLE:
+			if ( from->scale || to->scale )
+				return &OdbcConvert::convLongToDoubleWithScale;
 			return &OdbcConvert::convLongToDouble;
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
@@ -759,7 +767,7 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 	return SQL_SUCCESS;																			\
 }																								\
 
-#define ODBCCONVERTBIGINT_CONV(TYPE_TO,C_TYPE_TO)												\
+#define ODBCCONVERTBIGINT_CONV( TYPE_TO, C_TYPE_TO )											\
 int OdbcConvert::convBigintTo##TYPE_TO(DescRecord * from, DescRecord * to)						\
 {																								\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
@@ -770,6 +778,23 @@ int OdbcConvert::convBigintTo##TYPE_TO(DescRecord * from, DescRecord * to)						
 																								\
 	*(C_TYPE_TO*)pointer = ( (C_TYPE_TO)*(QUAD*)getAdressBindDataFrom((char*)from->dataPtr)	)	\
 					/(C_TYPE_TO)(QUAD)listScale[from->scale];									\
+																								\
+	return SQL_SUCCESS;																			\
+}																								\
+
+#define ODBCCONVERT_WITH_SCALE_CONV(TYPE_FROM,C_TYPE_FROM,TYPE_TO,C_TYPE_TO)					\
+int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO##WithScale(DescRecord * from, DescRecord * to)	\
+{																								\
+	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
+	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+																								\
+	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
+																								\
+	*(C_TYPE_TO*)pointer =																		\
+			( ( (C_TYPE_TO)*(C_TYPE_FROM*)getAdressBindDataFrom( (char*)from->dataPtr) )		\
+					* (C_TYPE_TO)(QUAD)listScale[to->scale] )									\
+					/ (C_TYPE_TO)(QUAD)listScale[from->scale];									\
 																								\
 	return SQL_SUCCESS;																			\
 }																								\
@@ -1032,6 +1057,8 @@ ODBCCONVERT_CONV(Short,short,Short,short);
 ODBCCONVERT_CONV(Short,short,Long,long);
 ODBCCONVERT_CONV(Short,short,Float,float);
 ODBCCONVERT_CONV(Short,short,Double,double);
+ODBCCONVERT_WITH_SCALE_CONV(Short,short,Float,float);
+ODBCCONVERT_WITH_SCALE_CONV(Short,short,Double,double);
 ODBCCONVERT_CONV(Short,short,Bigint,QUAD);
 ODBCCONVERT_CONV_TO_STRING(Short,short,5);
 ODBCCONVERT_CONVTAGNUMERIC(Short,short);
@@ -1045,6 +1072,8 @@ ODBCCONVERT_CONV(Long,long,Short,short);
 ODBCCONVERT_CONV(Long,long,Long,long);
 ODBCCONVERT_CONV(Long,long,Float,float);
 ODBCCONVERT_CONV(Long,long,Double,double);
+ODBCCONVERT_WITH_SCALE_CONV(Long,long,Float,float);
+ODBCCONVERT_WITH_SCALE_CONV(Long,long,Double,double);
 ODBCCONVERT_CONV(Long,long,Bigint,QUAD);
 ODBCCONVERT_CONV_TO_STRING(Long,long,10);
 ODBCCONVERT_CONVTAGNUMERIC(Long,long);
