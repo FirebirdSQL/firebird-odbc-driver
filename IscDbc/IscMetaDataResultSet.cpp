@@ -81,7 +81,7 @@ JString IscMetaDataResultSet::expandPattern(const char *prefix, const char * str
 	const char * ptObj;
 	int dialect = metaData->connection->getDatabaseDialect();
 
-	if ( dialect == 1 )
+	if ( dialect == 1 || *metaData->getIdentifierQuoteString() == ' ' )
 	{
 		strcpy( nameObj, pattern );
 		ch = nameObj;
