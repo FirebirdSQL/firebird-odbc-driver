@@ -2284,10 +2284,14 @@ bool OdbcStatement::registerOutParameter()
 {
 	registrationOutParameter = true;
 
-	int nCountApp = applicationParamDescriptor->headCount;
-	int param = implementationParamDescriptor->metaDataIn->getColumnCount() + 1;
+	int param = implementationParamDescriptor->metaDataIn->getColumnCount();
 
-	if ( nCountApp >= param + numberColumns )
+	if ( !(param + numberColumns) )
+		return true;
+
+	int nCountApp = applicationParamDescriptor->headCount;
+
+	if ( nCountApp >= ++param + numberColumns )
 	{
 		postError ("07002", "COUNT field incorrect");
 		return false;
@@ -2304,6 +2308,7 @@ bool OdbcStatement::registerOutParameter()
 
 	if ( !implementationParamDescriptor->headCount ) // count input param
 		convert->setBindOffsetPtrFrom ( applicationParamDescriptor->headBindOffsetPtr, applicationParamDescriptor->headBindOffsetPtr );
+
 	return true;
 }
 
