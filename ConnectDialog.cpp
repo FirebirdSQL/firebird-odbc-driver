@@ -185,7 +185,7 @@ BOOL CALLBACK wndprocConnectDialog(HWND hDlg, UINT message, WORD wParam, LONG lP
     return FALSE ;
 }
 
-int nCopyAnsiToWideChar (LPWORD lpWCStr, LPSTR lpAnsiIn)
+int nCopyAnsiToWideChar (LPWORD lpWCStr, LPCSTR lpAnsiIn)
 {
   int cchAnsi = lstrlen(lpAnsiIn);
   return MultiByteToWideChar(GetACP(), MB_PRECOMPOSED, lpAnsiIn, cchAnsi,(LPWSTR) lpWCStr, cchAnsi) + 1;

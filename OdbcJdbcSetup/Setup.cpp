@@ -83,8 +83,8 @@ static const char *charsets []=
 	"WIN1250", "WIN1251", "WIN1252", "WIN1253", "WIN1254", NULL
 };
 
-void MessageBoxError(char * stageExecuted, char * pathFile);
-void MessageBoxInstallerError(char * stageExecuted, char * pathOut);
+void MessageBoxError(const char * stageExecuted, char * pathFile);
+void MessageBoxInstallerError(const char * stageExecuted, char * pathOut);
 bool CopyFile(char * sourceFile, char * destFile);
 
 /*
@@ -277,7 +277,7 @@ extern "C" __declspec( dllexport ) int INSTAPI DllUnregisterServer (void)
 	return S_OK;
 }
 
-void MessageBoxError(char * stageExecuted, char * pathFile)
+void MessageBoxError(const char * stageExecuted, char * pathFile)
 {
 	JString msg;
 	DWORD messageId = GetLastError();
@@ -295,7 +295,7 @@ void MessageBoxError(char * stageExecuted, char * pathFile)
 	MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
 }
 
-void MessageBoxInstallerError(char * stageExecuted, char * pathOut)
+void MessageBoxInstallerError(const char * stageExecuted, char * pathOut)
 {
 	JString msg;
     char message [SQL_MAX_MESSAGE_LENGTH];

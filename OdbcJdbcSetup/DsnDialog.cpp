@@ -739,7 +739,7 @@ void ProcessCDError(DWORD dwErrorCode, HWND hWnd)
 	MessageBox( hWnd, stringID, TEXT( _TR( IDS_DLG_TITLE_SETUP, "FireBird ODBC Setup" ) ), MB_OK );
 }
 
-int nCopyAnsiToWideChar (LPWORD lpWCStr, LPSTR lpAnsiIn)
+int nCopyAnsiToWideChar (LPWORD lpWCStr, LPCSTR lpAnsiIn)
 {
   int cchAnsi = lstrlen(lpAnsiIn);
   return MultiByteToWideChar(GetACP(), MB_PRECOMPOSED, lpAnsiIn, cchAnsi,(LPWSTR) lpWCStr, cchAnsi) + 1;
