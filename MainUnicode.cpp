@@ -232,6 +232,11 @@ public:
 
 			delete[] byteString;
 			break;
+
+		case NONE:
+			if ( realLength && returnCountOfBytes )
+				*realLength *= 2;
+			break;
 		}
 	}
 
