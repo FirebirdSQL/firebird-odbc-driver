@@ -54,6 +54,7 @@ static char databaseInfoItems [] = {
 Attachment::Attachment()
 {
 	useCount = 1;
+	GDS = NULL;
 	databaseHandle = NULL;
 	admin = true;
 	isRoles = false;
@@ -65,13 +66,38 @@ Attachment::~Attachment()
 	ISC_STATUS statusVector [20];
 
 	if (databaseHandle)
-	{
 		GDS->_detach_database (statusVector, &databaseHandle);
+
+	if( GDS )
+	{
+		delete GDS;
+		GDS = NULL;
 	}
 }
 
 void Attachment::openDatabase(const char *dbName, Properties *properties)
 {
+	if( !GDS )
+	{
+		const char *client = properties->findValue ("client", NULL);
+		if ( !client || !*client )
+#ifdef _WIN32
+			client = "gds32.dll";
+#else
+			client = "libgds.so";
+#endif
+
+		GDS = new CFbDll();
+		if ( !GDS->LoadDll (client) )
+		{
+			JString text;
+			text.Format ("Unable to connect to data source: library '%s' failed to load", client);
+			throw SQLEXCEPTION (8001, text);
+		}
+	}
+
+	const char *dialect = properties->findValue ("dialect", NULL);
+
 	isRoles = false;
 	databaseName = dbName;
 	char dpb [256], *p = dpb;
@@ -129,7 +155,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	if (GDS->_attach_database (statusVector, strlen (dbName), (char*) dbName, &databaseHandle, 
 							 dpbLength, dpb))
 	{
-		JString text = IscConnection::getIscStatusText (statusVector);
+		JString text = getIscStatusText (statusVector);
 		throw SQLEXCEPTION (statusVector [1], text);
 	}
 
@@ -164,20 +190,41 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 			p += length;
 		}
 	}
+	
+	if ( dialect && *dialect == '1')
+		databaseDialect = SQL_DIALECT_V5;
+	else
+		databaseDialect = SQL_DIALECT_V6;
 
-	switch (databaseDialect)
-	{
-	case 0:
-	case SQL_DIALECT_V5:
-		quotedIdentifiers = false;
-		break;
+	const char *quoted = properties->findValue ("quoted", NULL);
 
-	case SQL_DIALECT_V6:
-	default:
+	if ( quoted && *quoted == 'Y')
 		quotedIdentifiers = true;
-	}
+	else
+		quotedIdentifiers = false;
 
 	checkAdmin();
+}
+
+JString Attachment::getIscStatusText(ISC_STATUS * statusVector)
+{
+	char text [4096], *p = text;
+	ISC_STATUS *status = statusVector;
+	bool first = true;
+
+	while ( GDS->_interprete (p, &status) )
+	{
+		while (*p)
+			++p;
+		*p++ = '\n';
+	}
+
+	if (p > text)
+		--p;
+
+	*p = 0;
+
+	return text;
 }
 
 void Attachment::addRef()

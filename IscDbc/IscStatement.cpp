@@ -96,18 +96,9 @@ static char requestInfo [] = { isc_info_sql_records,
 							   isc_info_sql_stmt_type,
 							   isc_info_end };
 
-static int init();
-static int foo = init();
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
-int init()
-{
-	initDll();
-	return 0;
-}
 
 IscStatement::IscStatement(IscConnection *connect)
 {
@@ -124,24 +115,20 @@ IscStatement::~IscStatement()
 		resultSet->close();
 	END_FOR;
 
-	if (connection)
-		{
-		connection->deleteStatement (this);
-		connection = NULL;
-		}
-
 	try
-		{
+	{
 		if (statementHandle)
 			freeStatementHandle();
-		/***
-		if (transactionHandle)
-			commitAuto();
-		***/
-		}
-	catch (...)
+
+		if (connection)
 		{
+			connection->deleteStatement (this);
+			connection = NULL;
 		}
+	}
+	catch (...)
+	{
+	}
 }
 
 IscResultSet* IscStatement::createResultSet()
@@ -210,10 +197,10 @@ ResultSet* IscStatement::executeQuery(const char * sqlString)
 void IscStatement::setCursorName(const char * name)
 {
 	ISC_STATUS statusVector [20];
-	GDS->_dsql_set_cursor_name (statusVector, &statementHandle, (char*) name, 0);
+	connection->GDS->_dsql_set_cursor_name (statusVector, &statementHandle, (char*) name, 0);
 
 	if (statusVector [1])
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (connection, statusVector);
 }
 
 void IscStatement::addRef()
@@ -257,21 +244,22 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 {
 	resultSets.deleteItem (resultSet);
 	if (resultSets.isEmpty())
-		{
+	{
 		selectActive = false;
 		if (connection->autoCommit)
 			connection->commitAuto();
 		// Close cursors too.
 		ISC_STATUS statusVector [20];
-		GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_close);
+		connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_close);
 		//FIXME: Test status vector.
-		}
+	}
 }
 
 void IscStatement::prepareStatement(const char * sqlString)
 {
 	clearResults();
 	sql = sqlString;
+	CFbDll * GDS = connection->GDS;
 
 	// Make sure we have a transaction started.  Allocate a statement.
 
@@ -280,7 +268,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 	GDS->_dsql_allocate_statement (statusVector, &connection->databaseHandle, &statementHandle);
 
 	if (statusVector [1])
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (connection, statusVector);
 
 	// Prepare dynamic SQL statement.  Make first attempt to get parameters
 
@@ -289,16 +277,16 @@ void IscStatement::prepareStatement(const char * sqlString)
 					  0, (char*) sqlString, dialect, outputSqlda);
 
 	if (statusVector [1])
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (connection, statusVector);
 
 	// If we didn't allocate a large enough SQLDA, try again.
 
 	if (outputSqlda.checkOverflow())
-		{
+	{
 		GDS->_dsql_describe (statusVector, &statementHandle, dialect, outputSqlda);
 		if (statusVector [1])
-			THROW_ISC_EXCEPTION (statusVector);
-		}
+			THROW_ISC_EXCEPTION (connection, statusVector);
+	}
 
 	selectActive		= false;
 	resultsCount		= 1;
@@ -320,14 +308,14 @@ bool IscStatement::execute()
 	void *transHandle = connection->startTransaction();
 
 	int dialect = connection->getDatabaseDialect ();
-	if (GDS->_dsql_execute (statusVector, &transHandle, &statementHandle, 
+	if (connection->GDS->_dsql_execute (statusVector, &transHandle, &statementHandle, 
 			dialect, inputSqlda))
-		{
+	{
 		clearSelect();
 		if (connection->autoCommit)
 			connection->rollbackAuto();
-		THROW_ISC_EXCEPTION (statusVector);
-		}
+		THROW_ISC_EXCEPTION (connection, statusVector);
+	}
 
 	resultsCount		= 1;
 	resultsSequence		= 0;
@@ -375,9 +363,11 @@ int IscStatement::getUpdateCounts()
 {
 	char buffer [128];
 	ISC_STATUS	statusVector [20];
+	CFbDll * GDS = connection->GDS;
+
 	GDS->_dsql_sql_info (statusVector, &statementHandle, 
-					   sizeof (requestInfo), requestInfo,
-					   sizeof (buffer), buffer);
+						sizeof (requestInfo), requestInfo,
+						sizeof (buffer), buffer);
 
 	int statementType = 0;
 	int insertCount, updateCount, deleteCount;
@@ -568,5 +558,5 @@ void IscStatement::clearSelect()
 void IscStatement::freeStatementHandle()
 {
 	ISC_STATUS statusVector [20];
-	GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_drop);
+	connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_drop);
 }

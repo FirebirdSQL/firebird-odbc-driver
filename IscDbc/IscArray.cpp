@@ -70,10 +70,10 @@ IscArray::IscArray(IscConnection *connect,XSQLVAR *var)
 	ISC_STATUS statusVector [20];
 	void *transactionHandle = connection->startTransaction();
 
-	int ret = GDS->_array_lookup_bounds(statusVector,&connection->databaseHandle, &transactionHandle,
+	int ret = connection->GDS->_array_lookup_bounds(statusVector,&connection->databaseHandle, &transactionHandle,
 		var->relname,var->sqlname, &arrDesc);
 	if (ret)
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (connection, statusVector);
 
 	arrBufData = NULL;
 
@@ -141,11 +141,11 @@ void IscArray::getBytesFromArray()
 	void *transactionHandle = connection->startTransaction();
 	long lenbuf = arrBufDataSize;
 
-	int ret = GDS->_array_get_slice(statusVector, &connection->databaseHandle, &transactionHandle,
+	int ret = connection->GDS->_array_get_slice(statusVector, &connection->databaseHandle, &transactionHandle,
 		&arrayId, &arrDesc, arrBufData, &lenbuf);
 
 	if ( ret )
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (connection, statusVector);
 
 	fetchedBinary = true;
 }
@@ -393,8 +393,8 @@ void IscArray::writeArray(Value * value)
 
 	memset(&arrayId,0,sizeof(arrayId));
 
-	int ret = GDS->_array_put_slice(statusVector, &connection->databaseHandle, &transactionHandle,
+	int ret = connection->GDS->_array_put_slice(statusVector, &connection->databaseHandle, &transactionHandle,
 		&arrayId, &arrDesc, arrBufData, &lenbuf);
 	if (ret || lenbuf != arrBufDataSize)
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (connection, statusVector);
 }

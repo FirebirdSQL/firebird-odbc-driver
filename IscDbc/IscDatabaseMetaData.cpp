@@ -111,15 +111,15 @@ void IscDatabaseMetaData::UnLockThread()
 
 short IscDatabaseMetaData::getSqlStrPageSizeBd(const void * info_buffer, int bufferLength,short *lengthPtr)
 {
-	return getPageDatabase(connection->attachment->databaseHandle,info_buffer,bufferLength,lengthPtr);
+	return getPageDatabase(connection, info_buffer,bufferLength,lengthPtr);
 }
 short IscDatabaseMetaData::getSqlStrWalInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr)
 {
-	return getWalDatabase(connection->attachment->databaseHandle,info_buffer,bufferLength,lengthPtr);
+	return getWalDatabase(connection, info_buffer,bufferLength,lengthPtr);
 }
 short IscDatabaseMetaData::getStrStatInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr)
 {
-	return getStatInformations(connection->attachment->databaseHandle,info_buffer,bufferLength,lengthPtr);
+	return getStatInformations(connection, info_buffer,bufferLength,lengthPtr);
 }
 
 

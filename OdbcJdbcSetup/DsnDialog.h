@@ -38,6 +38,7 @@ public:
 // Dialog Data
 	enum { IDD = IDD_DSN_PROPERTIES };
 	JString	m_database;
+	JString	m_client;
 	JString	m_name;
 	JString	m_password;
 	JString	m_user;
@@ -46,12 +47,15 @@ public:
 	JString	m_charset;
 	BOOL	m_readonly;
 	BOOL	m_nowait;
+	BOOL	m_dialect3;
+	BOOL	m_quoted;
 
 public:
 	int DoModal();
 
 	BOOL IsLocalhost(char * fullPathFileName, int &nSme);
 	BOOL OnFindFile();
+	BOOL OnFindFileClient();
 	void UpdateData(HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	BOOL OnInitDialog(HWND hDlg);
 };

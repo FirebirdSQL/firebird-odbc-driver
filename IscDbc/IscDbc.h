@@ -39,7 +39,7 @@
 #define SQLEXCEPTION		SQLError
 #define NOT_YET_IMPLEMENTED	throw SQLEXCEPTION (FEATURE_NOT_YET_IMPLEMENTED, "not yet implemented")
 #define NOT_SUPPORTED(type,rellen,rel,collen,col) throw SQLEXCEPTION (UNSUPPORTED_DATATYPE, "datatype is not supported in ODBC: %s column %*s.%*s", type,rellen,rel,collen,col)
-#define THROW_ISC_EXCEPTION(statusVector)			throw SQLEXCEPTION (statusVector [1], IscConnection::getIscStatusText (statusVector))
+#define THROW_ISC_EXCEPTION(connection, statusVector) throw SQLEXCEPTION (statusVector [1], connection->getIscStatusText (statusVector))
 #define OFFSET(type,fld)	(int)&(((type)0)->fld)
 #define MAX(a,b)			((a > b) ? a : b)
 #define MIN(a,b)			((a < b) ? a : b)
@@ -75,6 +75,7 @@ typedef unsigned __int64			UQUAD;
 
 #include "JavaType.h"
 #include "Connection.h"
+#include "IscConnection.h"
 
 #define MAX_ARRAY_LENGTH		100000000
 #define MAX_BLOB_LENGTH			2147483647
@@ -91,17 +92,13 @@ typedef unsigned __int64			UQUAD;
 #define MAX_TIMESTAMP_LENGTH	24
 #define MAX_QUAD_LENGTH			19
 
-int getTypeStatement(isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);
-int getInfoCountRecordsStatement(isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);
-int getPlanStatement(isc_stmt_handle statementHandle,const void * value, int bufferLength,long *lengthPtr);
-int getPageDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr);
-int getWalDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr);
-int strBuildStatInformations(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr);
-void getStatInformations(isc_db_handle Db,char bVanCall);
-int getStatInformations(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr);
-
-extern CFbDll * GDS;
-void initDll();
-
+int getTypeStatement(IscConnection *connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);
+int getInfoCountRecordsStatement(IscConnection *connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);
+int getPlanStatement(IscConnection *connection, isc_stmt_handle statementHandle,const void * value, int bufferLength,long *lengthPtr);
+int getPageDatabase(IscConnection *connection, const void * info_buffer, int bufferLength,short *lengthPtr);
+int getWalDatabase(IscConnection *connection, const void * info_buffer, int bufferLength,short *lengthPtr);
+int strBuildStatInformations(const void * info_buffer, int bufferLength,short *lengthPtr);
+void getStatInformations(IscConnection *connection, char bVanCall);
+int getStatInformations(IscConnection *connection, const void * info_buffer, int bufferLength,short *lengthPtr);
 
 #endif

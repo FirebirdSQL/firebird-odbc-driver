@@ -103,11 +103,11 @@ public:
     BinaryBlob              *segmentBlob;
 	AsciiBlob				*segmentClob;
 	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
-	{ return getPlanStatement(statementHandle,value,bufferLength,lengthPtr); }  
+	{ return getPlanStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  
 	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr)
-	{ return getTypeStatement(statementHandle,value,bufferLength,lengthPtr); }  
+	{ return getTypeStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  
 	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr)
-	{ return getInfoCountRecordsStatement(statementHandle,value,bufferLength,lengthPtr); }  
+	{ return getInfoCountRecordsStatement(connection, statementHandle, value,bufferLength,lengthPtr); }  
 };
 
 #endif // !defined(AFX_ISCPREPAREDSTATEMENT_H__C19738B9_1C87_11D4_98DF_0000C01D2301__INCLUDED_)

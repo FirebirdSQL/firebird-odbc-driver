@@ -93,7 +93,7 @@ bool IscResultSet::readForwardCursor()
 	ISC_STATUS statusVector [20];
 
 	int dialect = statement->connection->getDatabaseDialect ();
-	int ret = GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
+	int ret = statement->connection->GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
 
 	if (ret)
 	{
@@ -102,7 +102,7 @@ bool IscResultSet::readForwardCursor()
 			close();
 			return false;
 		}
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (statement->connection, statusVector);
 	}
 
 	return true;
@@ -120,17 +120,17 @@ bool IscResultSet::next()
 	ISC_STATUS statusVector [20];
 
 	int dialect = statement->connection->getDatabaseDialect ();
-	int ret = GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
+	int ret = statement->connection->GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
 
 	if (ret)
-		{
+	{
 		if (ret == 100)
-			{
+		{
 			close();
 			return false;
-			}
-		THROW_ISC_EXCEPTION (statusVector);
 		}
+		THROW_ISC_EXCEPTION (statement->connection, statusVector);
+	}
 
 	XSQLVAR *var = sqlda->sqlda->sqlvar;
     Value *value = values.values;
@@ -154,6 +154,7 @@ bool IscResultSet::readStaticCursor()
 	ISC_STATUS statusVector [20];
 
 	int dialect = statement->connection->getDatabaseDialect ();
+	CFbDll * GDS = statement->connection->GDS;
 	int ret;
 
 	sqlda->initStaticCursor(statement->connection);
@@ -162,7 +163,7 @@ bool IscResultSet::readStaticCursor()
 		sqlda->copyNextSqldaInBufferStaticCursor();
 
 	if ( ret != 100 )
-		THROW_ISC_EXCEPTION (statusVector);
+		THROW_ISC_EXCEPTION (statement->connection, statusVector);
 
 	sqlda->setCurrentRowInBufferStaticCursor(0);
 	sqlda->copyNextSqldaFromBufferStaticCursor();

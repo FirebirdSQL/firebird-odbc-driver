@@ -295,18 +295,19 @@ typedef void        ISC_EXPORT print_blr(char ISC_FAR*,
 
 class CFbDll
 {
-protected:
-	CFbDll() { };
-	~CFbDll() { };
-
 public:
-	static CFbDll* Dll;
-	static CFbDll* LoadDll(void);
-	static void Release(void);
+	CFbDll();
+	~CFbDll();
+
+	bool LoadDll(const char * client);
+	void Release(void);
 
 #ifdef _WIN32
-	HMODULE _Handle;		
-#endif	
+	HMODULE		_Handle;
+#else
+	void		*_Handle;
+#endif
+
 	int _CFbDllVersion; 		
 
 	// FbClient.Dll Entry Points

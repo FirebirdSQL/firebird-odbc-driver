@@ -117,13 +117,12 @@ public:
 	bool			valueWasNull;
 	int				minOutputVariable;
 
-//////////////////////////////////////////////
 	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
-	{ return getPlanStatement(statementHandle,value,bufferLength,lengthPtr); }  
+	{ return getPlanStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  
 	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr)
-	{ return getTypeStatement(statementHandle,value,bufferLength,lengthPtr); }  
+	{ return getTypeStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  
 	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr)
-	{ return getInfoCountRecordsStatement(statementHandle,value,bufferLength,lengthPtr); }  
+	{ return getInfoCountRecordsStatement(connection, statementHandle, value,bufferLength,lengthPtr); }  
 };
 
 #endif // !defined(AFX_ISCCALLABLESTATEMENT_H__10B4AD63_3637_11D4_98E4_0000C01D2301__INCLUDED_)
