@@ -1,2 +1,0 @@
-// Used by IscDbc.rc
-//
