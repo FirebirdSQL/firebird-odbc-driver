@@ -40,12 +40,12 @@ IscPrimaryKeysResultSet::IscPrimaryKeysResultSet(IscDatabaseMetaData *metaData)
 void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
 	JString sql = 
-		"select NULL as table_cat,\n"							// 1
-				"\tNULL as table_schem,\n"						// 2
+		"select cast (NULL as char(7)) as table_cat,\n"			// 1
+				"\tcast (NULL as char(7)) as table_schem,\n"	// 2
 				"\trel.rdb$relation_name as table_name,\n"		// 3
 				"\tseg.rdb$field_name as column_name,\n"		// 4
-				"\tseg.rdb$field_position as key_seq,\n"		// 5
-				"\tidx.rdb$index_name as pk_name\n"				// 6
+				"\tseg.rdb$field_position+1 as key_seq,\n"		// 5
+				"\trel.rdb$constraint_name as pk_name\n"		// 6
 		"from rdb$relation_constraints rel, rdb$indices idx, rdb$index_segments seg\n"
 		" where rel.rdb$constraint_type = 'PRIMARY KEY'\n"
 			" and rel.rdb$index_name = idx.rdb$index_name\n"

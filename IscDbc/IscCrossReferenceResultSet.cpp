@@ -54,20 +54,22 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 													const char * foreignTable)
 {
 	JString sql = 
-		"select NULL as pktable_cat,\n"						// 1
-				" NULL as pktable_schem,\n"					// 2
-				" pidx.rdb$relation_name as pktable_name,\n"// 3
-				" pseg.rdb$field_name as pkcolumn_name,\n"	// 4
-				" NULL as fktable_cat,\n"					// 5
-				" NULL as fktable_schem,\n"					// 6
-				" fidx.rdb$relation_name as fktable_name,\n"// 7
-				" fseg.rdb$field_name as pkcolumn_name,\n"	// 8
-				" pseg.rdb$field_position as key_seq,\n"	// 9
-				" refc.rdb$update_rule as update_rule,\n"	// 10
-				" refc.rdb$delete_rule as delete_rule,\n"	// 11
-				" fkey.rdb$constraint_name as fk_name,\n"	// 12
-				" refc.rdb$const_name_uq as pk_name,\n"		// 13
-				" 7 as deferrability\n"						// 14	SQL_NOT_DEFERRABLE
+		"select cast (NULL as char(7)) as pktable_cat,\n"		// 1
+				" cast (NULL as char(7)) as pktable_schem,\n"	// 2
+				" pidx.rdb$relation_name as pktable_name,\n"	// 3
+				" pseg.rdb$field_name as pkcolumn_name,\n"		// 4
+				" cast (NULL as char(7)) as fktable_cat,\n"		// 5
+				" cast (NULL as char(7)) as fktable_schem,\n"	// 6
+				" fidx.rdb$relation_name as fktable_name,\n"	// 7
+				" fseg.rdb$field_name as fkcolumn_name,\n"		// 8
+				" pseg.rdb$field_position+1 as key_seq,\n"		// 9
+				" cast (0 as smallint) as update_rule,\n"		// 10
+				" cast (0 as smallint) as delete_rule,\n"		// 11
+				" fkey.rdb$constraint_name as fk_name,\n"		// 12
+				" refc.rdb$const_name_uq as pk_name,\n"			// 13
+				" 7 as deferrability,\n"						// 14	SQL_NOT_DEFERRABLE
+				" refc.rdb$update_rule,\n"						// 15
+				" refc.rdb$delete_rule\n"						// 16
 
 		"from rdb$relation_constraints fkey,\n"
 		"     rdb$indices fidx,\n"
@@ -107,8 +109,9 @@ bool IscCrossReferenceResultSet::next()
 	if (!IscResultSet::next())
 		return false;
 
-	setValue (10, getRule (getString (10)));
-	setValue (11, getRule (getString (11)));
+	int len;
+	sqlda->updateShort ( 10, getRule ( sqlda->getText(15, len)) );
+	sqlda->updateShort ( 11, getRule ( sqlda->getText(16, len)) );
 
 	trimBlanks (3);			// primary key table name
 	trimBlanks (4);			// primary key field name
@@ -125,6 +128,9 @@ int IscCrossReferenceResultSet::getRule(const char * rule)
 	if (stringEqual (rule, "CASCADE"))
 		return SQL_CASCADE;
 
+	if (stringEqual (rule, "RESTRICT"))
+		return SQL_RESTRICT;
+	
 	if (stringEqual (rule, "SET NULL"))
 		return SQL_SET_NULL;
 	
@@ -140,13 +146,11 @@ bool IscCrossReferenceResultSet::stringEqual(const char * p1, const char * p2)
 		if (*p1++ != *p2++)
 			return false;
 
-	while (*p1)
-		if (*p1++ != ' ')
-			return false;
+	if (*p1 && *p1++ != ' ')
+		return false;
 
-	while (*p2)
-		if (*p2++ != ' ')
-			return false;
+	if (*p2 && *p2++ != ' ')
+		return false;
 
 	return true;
 }
