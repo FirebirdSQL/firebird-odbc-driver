@@ -442,47 +442,17 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 	bool bModify = false;
 	char * ptIn = (char*)inStatementText;
 	char * ptInEnd = ptIn + textLength1;
-	char * ptBeg, * ptOut = outStatementText;
+	char * ptOut = outStatementText;
 	char * ptEndBracket = NULL;
 
 #pragma FB_COMPILER_MESSAGE("IscConnection::getNativeSql - The temporary decision; FIXME!")
 
 	while ( ptIn < ptInEnd )
 	{
-		if ( *ptIn == '\"' )
-		{
-			// replace "123" to '123'
-			bool bConst = false;
-			ptBeg = ptOut;
-			*ptOut++ = *ptIn++;
-			
-			while( *ptIn == ' ')
-				*ptOut++ = *ptIn++;
+		if ( *ptIn == '{' )
+			ptEndBracket = ptOut;
 
-			if ( *ptIn >= '0' && *ptIn <= '9' )
-				bConst = true;
-
-			while( *ptIn && *ptIn != '\"' )
-				*ptOut++ = *ptIn++;
-
-			if ( *ptIn != '\"' )
-				return false;
-			
-			if ( bConst )
-				*ptBeg = *ptOut = '\'';
-			else
-				*ptOut = *ptIn;
-
-			++ptIn;	++ptOut;
-			bModify = true;
-		}
-		else
-		{
-			if ( *ptIn == '{' )
-				ptEndBracket = ptOut;
-
-			*ptOut++ = *ptIn++;
-		}
+		*ptOut++ = *ptIn++;
 	}
 
 	*ptOut = '\0';
