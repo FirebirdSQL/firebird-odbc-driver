@@ -163,9 +163,9 @@ struct InfoItem
 
 static SQLUSMALLINT functionsArray [100];
 static SQLSMALLINT  functionsBitmap [SQL_API_ODBC3_ALL_FUNCTIONS_SIZE];
-static int moduleInit();
+static bool moduleInit();
 static InfoItem infoItems [INFO_SLOTS];
-static int foo = moduleInit();
+static bool foo = moduleInit();
 
 /***
 #define SQL_FUNC_EXISTS(pfExists, uwAPI) \
@@ -174,7 +174,7 @@ static int foo = moduleInit();
  				 ) ? SQL_TRUE : SQL_FALSE \
 ***/
 
-int moduleInit()
+bool moduleInit()
 {
 	for (unsigned int n = 0; n < sizeof (supportedFunctions) / sizeof (supportedFunctions [0]); ++n)
 		{
@@ -197,7 +197,7 @@ int moduleInit()
 
 	bool test = SQL_FUNC_EXISTS (functionsBitmap, SQL_API_SQLALLOCHANDLE);
 
-	return 0;
+	return test;
 }
 
 //////////////////////////////////////////////////////////////////////

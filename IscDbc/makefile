@@ -2,7 +2,7 @@ CPPFLAGS = -g -D_REENTRANT -D_PTHREADS -DEXTERNAL
 ENGDIR = ../../netfrastructure/Engine
 REMDIR = ../../netfrastructure/Remote
 TESTDIR = ../JdbcTest
-INTERBASE = /usr/interbase/lib/gds.so.0 -ldl -lcrypt
+INTERBASE = -lgds -ldl -lcrypt
 LIBRARY = IscDbc00.so
 LIB = IscIscc00.a
 LIBS =  -lpthread -lm
@@ -22,7 +22,9 @@ ENGINE = \
 	Parameters.o \
 	Stream.o \
 	SQLError.o \
+	SqlTime.o \
 	TimeStamp.o \
+	TypesResultSet.cpp\
 	Value.o \
 	Values.o \
 
@@ -37,7 +39,9 @@ MODULES = \
 	Parameters.o \
 	Stream.o \
 	SQLError.o \
+	SqlTime.o \
 	TimeStamp.o \
+	TypesResultSet.o \
 	Value.o \
 	Values.o \
 	Attachment.o \
@@ -55,6 +59,7 @@ MODULES = \
 	IscProceduresResultSet.o \
 	IscResultSet.o \
 	IscResultSetMetaData.o \
+	IscSpecialColumnsResultSet.o\
 	IscSqlType.o \
 	IscStatement.o \
 	IscStatementMetaData.o \
@@ -96,6 +101,7 @@ IscPreparedStatement.o : IscPreparedStatement.cpp
 IscResultList.o : IscResultList.cpp
 IscResultSet.o:IscResultSet.cpp
 IscResultSetMetaData.o : IscResultSetMetaData.cpp
+IscSpecialColumnsResultSet.o: IscSpecialColumnsResultSet.cpp
 IscStatement.o: IscStatement.cpp
 IscStatementMetaData.o: IscStatementMetaData.cpp
 IscProceduresResultSet.o: IscProceduresResultSet.cpp
@@ -117,7 +123,9 @@ Protocol.o : Protocol.cpp
 Socket.o : Socket.cpp
 Stream.o : Stream.cpp
 SQLError.o : SQLError.cpp
+SqlTime.o : SqlTime.cpp
 TimeStamp.o : TimeStamp.cpp
+TypesResultSet.o : TypesResultSet.cpp
 Value.o : Value.cpp
 Values.o : Values.cpp
 

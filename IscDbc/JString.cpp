@@ -89,7 +89,7 @@ JString::JString (const JString& source)
  *
  **************************************/
 
-if (string = source.string)
+if ((string = source.string))
 	++(string [-1]);
 }
 
@@ -247,7 +247,7 @@ JString& JString::operator = (const JString& source)
 //assign (source.string);
 release();
 
-if (string = source.string)
+if ((string = source.string))
     ++(string [-1]);
 
 return *this;
@@ -401,7 +401,7 @@ int JString::hash(const char * string, int tableSize)
 {
 	int	value = 0, c;
 
-	while (c = (unsigned) *string++)
+	while ((c = (unsigned) *string++))
 		{
 		if (ISLOWER (c))
 			c -= 'a' - 'A';

@@ -302,7 +302,7 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 
 	catch (SQLException& exception)
 		{
-		OdbcError *error = postError ("HY000", exception);
+		postError ("HY000", exception);
 		return SQL_ERROR;
 		}
 	return sqlSuccess();
@@ -577,7 +577,7 @@ RETCODE OdbcStatement::sqlFreeStmt(int option)
 		}
 	catch (SQLException& exception)
 		{
-		OdbcError *error = postError ("HY000", exception);
+		postError ("HY000", exception);
 		return SQL_ERROR;
 		}
 
@@ -762,7 +762,7 @@ RETCODE OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int buffer
 		}
 	catch (SQLException& exception)
 		{
-		OdbcError *error = postError ("HY000", exception);
+		postError ("HY000", exception);
 		return SQL_ERROR;
 		}
 
@@ -851,7 +851,7 @@ RETCODE OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, UDWORD *
 		}
 	catch (SQLException& exception)
 		{
-		OdbcError *error = postError ("HY000", exception);
+		postError ("HY000", exception);
 		return SQL_ERROR;
 		}
 
@@ -972,7 +972,7 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType, int 
 		}
 	catch (SQLException& exception)
 		{
-		OdbcError *error = postError ("HY000", exception);
+		postError ("HY000", exception);
 		return SQL_ERROR;
 		}
 
@@ -1075,7 +1075,7 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 		}
 	catch (SQLException& exception)
 		{
-		OdbcError *error = postError ("HY000", exception);
+		postError ("HY000", exception);
 		return;
 		}
 
@@ -1291,7 +1291,7 @@ RETCODE OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferL
 		}
 	catch (SQLException& exception)
 		{
-		OdbcError *error = postError ("HY000", exception);
+		postError ("HY000", exception);
 		return SQL_ERROR;
 		}
 
@@ -1307,7 +1307,7 @@ RETCODE OdbcStatement::sqlGetCursorName(SQLCHAR *name, int bufferLength, SQLSMAL
 		}
 	catch (SQLException& exception)
 		{
-		OdbcError *error = postError ("HY000", exception);
+		postError ("HY000", exception);
 		return SQL_ERROR;
 		}
 	return sqlSuccess();
@@ -1541,7 +1541,7 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 		}
 	catch (SQLException& exception)
 		{
-		OdbcError *error = postError ("HY000", exception);
+		postError ("HY000", exception);
 		return SQL_ERROR;
 		}
 

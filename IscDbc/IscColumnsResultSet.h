@@ -47,7 +47,7 @@ public:
 private:
 	virtual bool getBLRLiteral (int indexIn, int indexTarget, IscSqlType sqlType);
 	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType sqlType);
-	virtual void checkQuotes (IscSqlType sqlType, char * buffer);
+	virtual void checkQuotes (IscSqlType sqlType, JString stringVal);
 	virtual void adjustResults (IscSqlType sqlType);	
 };
 

@@ -109,7 +109,6 @@ DateTime DateTime::convert(const char *dateString, int length)
 	char string [100], *q = string;
 	bool numeric = true;
 	bool sign = false;
-	bool negative = false;
 	int		year = -1;
 	int		month = 0;
 	int		day = 0;
@@ -271,11 +270,7 @@ bool DateTime::match(const char * str1, const char * str2)
 {
 	for (; *str1 && *str2; ++str1, ++str2)
 		if (UPPER (*str1) != UPPER (*str2))
-			{
-			int a = UPPER (*str1);
-			int b = UPPER (*str2);
 			return false;
-			}
 
 	return *str1 == 0;
 }

@@ -1,6 +1,6 @@
 CPPFLAGS = -g -Wall -I$(ISCDIR) -I$(ODBC)/include -D_REENTRANT -D_PTHREADS -DEXTERNAL
 ISCDIR = IscDbc
-ODBC = /opt/interbase
+ODBC = /opt/odbc
 LIBRARIES = -L$(ODBC)/lib -llibodbcinst.so -ldl
 LIBRARIES = -L$(ODBC)/lib -lodbcinst -ldl
 INTERBASE = -L/usr/interbase/lib -lgds.so.0 -ldl -lcrypt
@@ -12,10 +12,11 @@ REMOTE = \
 
 
 ISCDBC = \
-	DateTime.o \
-	JString.o \
-	TimeStamp.o \
-	SQLError.o \
+	$(ISCDIR)/DateTime.o \
+	$(ISCDIR)/JString.o \
+	$(ISCDIR)/TimeStamp.o \
+	$(ISCDIR)/SQLError.o \
+        $(ISCDIR)/SqlTime.o \
 
 UNUSED = \
 	Error.o \
@@ -29,6 +30,7 @@ MODULES = \
 	OdbcStatement.o \
 	OdbcObject.o \
 	DescRecord.o \
+	OdbcDateTime.o \
 	$(REMOTE) \
 	$(ISCDBC)
 
@@ -57,6 +59,7 @@ driver: $(DRIVER) $(LIBRARY)
 	g++ -g $(DRIVER) $(LIBRARY) $(LIBS) -o driver
 
 clean: 
+	echo $(ISCDIR)
 	rm $(MODULES)
 
 dependencies:
@@ -78,6 +81,7 @@ OdbcConnection.o : OdbcConnection.cpp
 OdbcStatement.o : OdbcStatement.cpp
 OdbcError.o : OdbcError.cpp
 DescRecord.o : DescRecord.cpp
+OdbcDateTime.o : OdbcDateTime.cpp
 
 DateTime.o : $(ISCDIR)/DateTime.cpp
 	$(COMPILE.C) $< $(OUTPUT_OPTION)
@@ -95,6 +99,9 @@ Protocol.o : $(ISCDIR)/Protocol.cpp
 	$(COMPILE.C) $< $(OUTPUT_OPTION)
 
 SQLError.o : $(ISCDIR)/SQLError.cpp
+	$(COMPILE.C) $< $(OUTPUT_OPTION)
+
+SQLTime.o : $(ISCDIR)/SqlTime.cpp
 	$(COMPILE.C) $< $(OUTPUT_OPTION)
 
 Synchronize.o : $(ISCDIR)/Synchronize.cpp

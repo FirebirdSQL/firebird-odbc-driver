@@ -33,10 +33,11 @@
 #include "IscPreparedStatement.h"
 #include "IscBlob.h"
 #include "IscSqlType.h"
+#include "JString.h"
 
 #define TYPE_NAME	6
 #define DEF_VAL		13
-
+#define BUFF_LEN	256
 
 
 //////////////////////////////////////////////////////////////////////
@@ -111,9 +112,9 @@ bool IscColumnsResultSet::next()
 
 	int dialect = resultSet->statement->connection->getDatabaseDialect();
 	IscSqlType sqlType (blrType, subType, length, dialect);
-	char *type, t[50];
-	type = t;
-	sprintf (type, "%s%s", (array) ? "ARRAY OF " : "", sqlType.typeName);
+
+	JString type;
+	type.Format ("%s%s", (array) ? "ARRAY OF " : "", sqlType.typeName);
 
 	resultSet->setValue (5, sqlType.type);
 	resultSet->setValue (6, type);
@@ -208,9 +209,11 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 		}
 
 	stuff++;	
-	long	intVal, temp, buffLen = 256;
-	char	stringTemp[50], stringVal[256];
+	long	intVal, temp;
 	short	type, scale, mag;
+	char	stringTemp [BUFF_LEN];
+
+	JString stringVal;
 	
 	type = *stuff++;
 
@@ -224,7 +227,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 			intVal = isc_vax_integer (stuff, (type == blr_short)? 2 : 4);
 
 			if (!scale)
-				sprintf (stringVal, "%d", intVal);
+				stringVal.Format ("%d", intVal);
 			else
 				{
 				for (temp = intVal; scale; scale--)
@@ -234,7 +237,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 					}
 				intVal %= mag;
 				scale = *--stuff * -1;			
-				sprintf (stringVal, "%d.%0*d", temp, scale, intVal);
+				stringVal.Format ("%d.%0*d", temp, scale, intVal);
 				}
 
 			break;
@@ -244,38 +247,38 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 			scale = (*stuff++) * -1;
 			intVal = isc_vax_integer (stuff, 4);
 			temp = isc_vax_integer (&stuff[4], 4);
-			sprintf (stringVal, "0x%x%x scale %d", intVal, temp, scale);
+			stringVal.Format ("0x%x%x scale %d", intVal, temp, scale);
 			break;
 
 		case (blr_float):
 		case (blr_double):
-			sprintf (stringVal, "%g", stuff);
+			stringVal.Format ("%g", stuff);
 			break;
 
 		case (blr_d_float):
-			sprintf (stringVal, "d_float is not an ODBC concept");
+			stringVal.Format ("d_float is not an ODBC concept");
 			break;
 			
 		case (blr_timestamp):
 			TimeStamp timestamp;
 			timestamp.date = (long) stuff;
 			timestamp.nanos = (long) &stuff[4];
-			timestamp.getTimeString (sizeof (stringTemp), stringTemp);
-			sprintf (stringVal, "\'%s\'", stringTemp);
+			timestamp.getTimeString (BUFF_LEN, stringTemp);
+			stringVal.Format ("\'%s\'", stringTemp);
 			break;
 
 		case (blr_sql_date):
 			DateTime date;
 			date.date = (long) stuff;
-			date.getString (sizeof (stringTemp), stringTemp);
-			sprintf (stringVal, "\'%s\'", stringTemp);
+			date.getString (BUFF_LEN, stringTemp);
+			stringVal.Format ("\'%s\'", stringTemp);
 			break;
 
 		case (blr_sql_time):
 			SqlTime time;
 			time.timeValue = (long) stuff;
-			time.getString (sizeof (stringTemp), stringTemp);
-			sprintf (stringVal, "\'%s\'", stringTemp);
+			time.getString (BUFF_LEN, stringTemp);
+			stringVal.Format ("\'%s\'", stringTemp);
 			break;
 
 		case (blr_text2):
@@ -294,19 +297,18 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 				default:
 					intVal = isc_vax_integer (stuff, 2);
 				}
-			if ((intVal + 4) >= buffLen)
+			if ((intVal + 4) >= BUFF_LEN)
 				{
-				strcpy (stringVal, "TRUNCATED");
+				stringVal = "TRUNCATED";
 				break;
 				}
-			memcpy (stringVal, &stuff[2], intVal);
-			stringVal[intVal] = 0;
+			stringVal.setString (&stuff[2], intVal);
 			checkQuotes (sqlType, stringVal); 
 			break;
 			
 		case (blr_blob_id):
 		case (blr_blob):
-			sprintf (stringVal, "blob type is not compatible");
+			stringVal = "blob type is not compatible";
 			break;
 
 		}
@@ -333,31 +335,36 @@ void IscColumnsResultSet::setCharLen (int charLenInd,
 		resultSet->setValue (fldLenInd, charLen);
 }
 
-void IscColumnsResultSet::checkQuotes (IscSqlType sqlType, char * stringVal)
+void IscColumnsResultSet::checkQuotes (IscSqlType sqlType, JString stringVal)
 {
 	// Revolting ODBC wants the default value quoted unless its a 
 	// number or a pseudo-literal
 	
-	char temp [265];
-
-	strcpy (temp, stringVal);
-	strupr (stringVal);
+	JString	string = stringVal;
+	string.upcase (string);
 
 	switch (sqlType.type)
 		{
 		case JDBC_DATE:
 		case JDBC_TIMESTAMP:
 		case JDBC_TIME:
-			if (!strcmp ("CURRENT DATE", stringVal) ||
-				!strcmp ("CURRENT TIME", stringVal)	||
-				!strcmp ("CURRENT TIMESTAMP", stringVal))
+			if (string == "CURRENT DATE" ||
+				string == "CURRENT TIME" ||
+				string == "CURRENT TIMESTAMP" ||
+				string == "CURRENT ROLE")
+				{
+				stringVal = string;
 				return;
+				}
 		case JDBC_CHAR:
 		case JDBC_VARCHAR:
-			if (!strcmp ("USER", stringVal))
+			if (string == "USER")
+				{
+				stringVal = string;
 				return;
-		}
-	sprintf (stringVal, "\'%s\'", temp);
+				}
+	}
+	stringVal.Format ("\'%s\'", (const char *) stringVal);
 	return;
 }
 
