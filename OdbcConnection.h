@@ -89,7 +89,6 @@ public:
 	bool		autoCommit;
 	int			accessMode;
 	int			transactionIsolation;
-	void		*libraryHandle;
 	int			cursors;			// default is SQL_CUR_USE_DRIVER
 	int			statementNumber;
 	int			levelBrowseConnect;

@@ -54,6 +54,12 @@ public:
 	OdbcEnv();
 	virtual ~OdbcEnv();
 
+#ifdef _WIN32
+	HINSTANCE		libraryHandle;
+#else
+	void			*libraryHandle;
+#endif
+
 	Mutex			mutex;
 	OdbcConnection	*connections;
 	const char		*odbcIniFileName;

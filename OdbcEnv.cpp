@@ -45,6 +45,7 @@
 
 OdbcEnv::OdbcEnv()
 {
+	libraryHandle = NULL;
 	connections = NULL;
 #ifdef _WIN32
 	activeDrv = NULL;
@@ -121,12 +122,26 @@ RETCODE OdbcEnv::sqlEndTran(int operation)
 
 void OdbcEnv::connectionClosed(OdbcConnection * connection)
 {
-	for (OdbcObject **ptr = (OdbcObject**) &connections; *ptr; ptr =&((*ptr)->next))
+	OdbcObject **ptr;
+
+	for (ptr = (OdbcObject**) &connections; *ptr; ptr = &((*ptr)->next))
 		if (*ptr == connection)
-			{
+		{
 			*ptr = connection->next;
 			break;
-			}
+		}
+
+	if( !connections )
+	{
+		if ( libraryHandle )
+#ifdef _WIN32
+			FreeLibrary(libraryHandle);
+#endif
+#ifdef ELF
+			dlclose (libraryHandle);
+#endif
+		libraryHandle = NULL;
+	}
 }
 
 RETCODE OdbcEnv::sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)

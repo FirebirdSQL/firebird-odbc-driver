@@ -273,7 +273,6 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	connection			= NULL;
 	statements			= NULL;
 	descriptors			= NULL;
-	libraryHandle		= NULL;
 	asyncEnabled		= SQL_ASYNC_ENABLE_OFF;
 	autoCommit			= true;
 	cursors				= SQL_CUR_USE_DRIVER; //Org
@@ -304,11 +303,6 @@ OdbcConnection::~OdbcConnection()
 		descriptors = (OdbcDesc*)descriptor->next;
 		delete descriptor;
 	}
-
-#ifdef ELF
-	if (libraryHandle)
-		dlclose (libraryHandle);
-#endif
 }
 
 OdbcObjectType OdbcConnection::getType()
@@ -1575,17 +1569,20 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 	try
 	{
 #ifdef _WIN32
-		HINSTANCE handle = LoadLibrary (sharedLibrary);
-		if (!handle)
+		if( !env->libraryHandle )
 		{
-			JString text;
-			text.Format ("Unable to connect to data source: library '%s' failed to load", sharedLibrary);
-			return sqlReturn (SQL_ERROR, "08001", text);
+			env->libraryHandle = LoadLibrary (sharedLibrary);
+			if ( !env->libraryHandle )
+			{
+				JString text;
+				text.Format ("Unable to connect to data source: library '%s' failed to load", sharedLibrary);
+				return sqlReturn (SQL_ERROR, "08001", text);
+			}
 		}
 #ifdef __BORLANDC__
-		ConnectFn fn = (ConnectFn) GetProcAddress (handle, "_createConnection");
+		ConnectFn fn = (ConnectFn) GetProcAddress (env->libraryHandle, "_createConnection");
 #else
-		ConnectFn fn = (ConnectFn) GetProcAddress (handle, "createConnection");
+		ConnectFn fn = (ConnectFn) GetProcAddress (env->libraryHandle, "createConnection");
 #endif
 		if (!fn)
 		{
@@ -1595,16 +1592,19 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 		}
 #endif
 #ifdef ELF
-		libraryHandle = dlopen (sharedLibrary, RTLD_NOW);
-		if (!libraryHandle)
+		if( !env->libraryHandle )
 		{
-			JString text;
-			const char *msg = dlerror();
-			text.Format ("Unable to connect to data source: library '%s' failed to load: %s",
-			             sharedLibrary, msg);
-			return sqlReturn (SQL_ERROR, "08001", text);
+			env->libraryHandle = dlopen (sharedLibrary, RTLD_NOW);
+			if (!env->libraryHandle)
+			{
+				JString text;
+				const char *msg = dlerror();
+				text.Format ("Unable to connect to data source: library '%s' failed to load: %s",
+							 sharedLibrary, msg);
+				return sqlReturn (SQL_ERROR, "08001", text);
+			}
 		}
-		ConnectFn fn = (ConnectFn) dlsym (libraryHandle, "createConnection");
+		ConnectFn fn = (ConnectFn) dlsym (env->libraryHandle, "createConnection");
 		if (!fn)
 		{
 			JString text;
