@@ -197,6 +197,10 @@ void* BinaryBlob::getSegment(int pos)
 	return Stream::getSegment (pos);
 }
 
+int	BinaryBlob::getSegment (int offset, int length, void* address)
+{
+	return Stream::getSegment (offset,length,address);
+}
 
 void BinaryBlob::populate()
 {

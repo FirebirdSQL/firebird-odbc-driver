@@ -32,6 +32,7 @@
 #include "OdbcObject.h"
 
 enum OdbcDescType {
+	odtApplication,
 	odtApplicationParameter,
 	odtImplementationParameter,
 	odtApplicationRow,
@@ -39,6 +40,7 @@ enum OdbcDescType {
 	};
 
 class OdbcConnection;
+class StatementMetaData;
 class DescRecord;
 
 class OdbcDesc : public OdbcObject  
@@ -47,16 +49,41 @@ public:
 	DescRecord* getDescRecord (int number);
 	RETCODE sqlGetDescField(int recNumber, int fieldId, SQLPOINTER value, int length, SQLINTEGER *lengthPtr);
 	RETCODE sqlSetDescField (int recNumber, int fieldId, SQLPOINTER value, int length);
+	RETCODE sqlGetDescRec(SQLSMALLINT recNumber, SQLCHAR *Name, SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, 
+							SQLSMALLINT *TypePtr, SQLSMALLINT *SubTypePtr, SQLINTEGER *LengthPtr, SQLSMALLINT *PrecisionPtr, 
+							SQLSMALLINT *ScalePtr, SQLSMALLINT *NullablePtr);
+	RETCODE sqlSetDescRec( SQLSMALLINT recNumber, SQLSMALLINT type, SQLSMALLINT subType, SQLINTEGER length,
+							SQLSMALLINT	precision, SQLSMALLINT scale, SQLPOINTER dataPtr, 
+							SQLINTEGER *stringLengthPtr, SQLINTEGER *indicatorPtr);
+
 	virtual OdbcObjectType getType();
 	OdbcDesc(OdbcDescType type, OdbcConnection *connect);
 	virtual ~OdbcDesc();
 
-	OdbcConnection	*connection;
-	OdbcDescType	descType;
-	int				recordSlots;
-	DescRecord		**records;
-	int				descArraySize;
-	SQLUINTEGER		*rowsProcessedPtr;	
+	void removeRecords();
+	void setDefaultImplDesc (StatementMetaData * ptMetaData);
+	void allocBookmarkField();
+	RETCODE operator =(OdbcDesc &sour);
+
+
+
+//Head
+	SQLSMALLINT			headAllocType;
+	SQLUINTEGER			headArraySize;
+	SQLUSMALLINT		*headArrayStatusPtr;	
+	SQLINTEGER			*headBindOffsetPtr;
+	SQLINTEGER			headBindType; 
+	SQLSMALLINT			headCount;
+	SQLUINTEGER			*headRowsProcessedPtr;
+//
+
+	OdbcConnection		*connection;
+	StatementMetaData	*metaData;
+	OdbcDescType		headType;
+	int					recordSlots;
+	DescRecord			**records;
+
+	bool				bDefined;
 };
 
 #endif // !defined(AFX_ODBCDESC_H__73DA784A_3271_11D4_98E1_0000C01D2301__INCLUDED_)

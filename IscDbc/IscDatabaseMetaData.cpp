@@ -99,6 +99,30 @@ IscDatabaseMetaData::~IscDatabaseMetaData()
 
 }
 
+void IscDatabaseMetaData::LockThread()
+{
+	connection->attachment->mutex.lock();
+}
+
+void IscDatabaseMetaData::UnLockThread()
+{
+	connection->attachment->mutex.release();
+}
+
+short IscDatabaseMetaData::getSqlStrPageSizeBd(const void * info_buffer, int bufferLength,short *lengthPtr)
+{
+	return getPageDatabase(connection->attachment->databaseHandle,info_buffer,bufferLength,lengthPtr);
+}
+short IscDatabaseMetaData::getSqlStrWalInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr)
+{
+	return getWalDatabase(connection->attachment->databaseHandle,info_buffer,bufferLength,lengthPtr);
+}
+short IscDatabaseMetaData::getStrStatInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr)
+{
+	return getStatInformations(connection->attachment->databaseHandle,info_buffer,bufferLength,lengthPtr);
+}
+
+
 ResultSet* IscDatabaseMetaData::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char **types)
 {
 	IscTablesResultSet *resultSet = new IscTablesResultSet (this);
@@ -430,7 +454,7 @@ const char* IscDatabaseMetaData::getTimeDateFunctions()
 
 const char* IscDatabaseMetaData::getSearchStringEscape()
 	{
-	return "";
+	return "\\";
 	}
 
 const char* IscDatabaseMetaData::getExtraNameCharacters()
@@ -608,7 +632,8 @@ bool IscDatabaseMetaData::supportsLimitedOuterJoins()
 
 const char* IscDatabaseMetaData::getSchemaTerm()
 	{
-	return "schema";
+	return "";
+//	return "schema";
 	}
 
 const char* IscDatabaseMetaData::getProcedureTerm()

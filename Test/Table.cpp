@@ -1100,7 +1100,7 @@ int Table::copy(NetfraDatabase * db)
 	FOR_OBJECTS (Field*, field, &fields)
 		insert += sep + field->getIdentifier();
 		select += sep;
-		select += "\"" + field->name + "\"";;
+		select += "\"" + field->name + "\"";
 		values += sep;
 		values += "?";
 		sep = ",";
@@ -1113,7 +1113,7 @@ int Table::copy(NetfraDatabase * db)
 		{
 		insert += ") values (" + values + ")";
 		insertStatement = db->connection->prepareStatement (insert);
-		select += " from \"" + name + "\"";;
+		select += " from \"" + name + "\"";
 
 		SQLRETURN retcode = SQLPrepare (handle, (SQLCHAR*)(const char*) select, SQL_NTS);
 		OdbcCheckCode (retcode, handle, "SQLPrepare");

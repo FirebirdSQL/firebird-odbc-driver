@@ -67,6 +67,7 @@ public:
 //protected:
 	void	setString (int length, const char *string, bool copy);
 	void	setString (const char *value, bool copy);
+	void	convertStringData();
 
 public:	
 	void setValue (SqlTime value);
@@ -89,12 +90,13 @@ public:
 	void allocString (Type typ, int length);
 	void getStream (Stream *stream, bool copyFlag);
 	void setValue (DateTime value);
+
 	DateTime getDate();
 	QUAD convertToQuad (double& divisor);
 	inline void clear()
-		{
+	{
 		if (type == String && copyFlag && data.string.string)
-			{
+		{
 			delete [] data.string.string;
 			data.string.string = NULL;
 			}
@@ -102,6 +104,7 @@ public:
 			data.blob->release();
 		else if (type == ClobPtr)
 			data.clob->release();
+
 		type = Null;
 		}
 

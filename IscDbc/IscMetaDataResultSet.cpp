@@ -150,9 +150,9 @@ bool IscMetaDataResultSet::isNullable(int index)
 {
 	return resultSet->isNullable (index);
 }
-
+/*
 bool IscMetaDataResultSet::next()
 {
 	return resultSet->next();
 }
-
+*/

@@ -83,6 +83,7 @@ static const Types types [] = {
 	NUMERIC ("SMALLINT", JDBC_SMALLINT, MAX_SMALLINT_LENGTH, NULL, 0, 0, 10),	
 	NUMERIC ("FLOAT", JDBC_FLOAT, MAX_FLOAT_LENGTH, NULL, UNSCALED, UNSCALED, 2),
 	NUMERIC ("DOUBLE PRECISION", JDBC_DOUBLE, MAX_DOUBLE_LENGTH, NULL, UNSCALED, UNSCALED, 2),
+	NUMERIC ("BIGINT", JDBC_BIGINT, MAX_QUAD_LENGTH,NULL, 0, 0, 19),
 	ALPHA ("VARCHAR", JDBC_VARCHAR,MAX_VARCHAR_LENGTH),
 	DATETIME("DATE",JDBC_DATE,MAX_DATE_LENGTH,"'","'",1),
 	DATETIME("TIME",JDBC_TIME,MAX_TIME_LENGTH,"'","'",2),
@@ -175,6 +176,8 @@ bool TypesResultSet::next()
 
 	//deleteBlobs();
 	reset();
+	allocConversions();
+
 	const Types *type = types + recordNumber - 1;
 	int col = 1;
 
@@ -233,7 +236,7 @@ bool TypesResultSet::isNullable(int index)
 
 int TypesResultSet::findType()
 {	
-	for(int i=0;i<13;i++)
+	for(int i=0;i<sizeof (fields)/sizeof (fields [0]);i++)
 	{
 		if (types[i].typeType == dataTypes)
 			return i;		

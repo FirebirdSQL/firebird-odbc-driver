@@ -35,6 +35,7 @@ OdbcObject::OdbcObject()
 {
 	next = NULL; // NOMEY
 	errors = NULL;
+	infoPosted = false;
 }
 
 OdbcObject::~OdbcObject()
@@ -270,6 +271,17 @@ RETCODE OdbcObject::sqlGetDiagField(int recNumber, int diagId, SQLPOINTER ptr, i
 {
 	int n = 1;
 
+	if ( diagId == SQL_DIAG_NUMBER )
+	{
+		if( ptr )
+		{
+			SQLSMALLINT &nCount = *stringLength;
+			n = 0;
+			for (OdbcError *error = errors; error; error = error->next, ++n);
+			*(SDWORD*)ptr = n;
+		}
+		return SQL_SUCCESS;
+	}
 	for (OdbcError *error = errors; error; error = error->next, ++n)
 		if (n == recNumber)
 			return error->sqlGetDiagField (diagId, ptr, bufferLength, stringLength);

@@ -12,6 +12,7 @@
 class Blob
 {
 public:
+	bool			bArray;
 	virtual void	addRef() = 0;
 	virtual int		release() = 0;
 	virtual void	getBytes (long pos, long length, void *buffer) = 0;

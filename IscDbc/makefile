@@ -47,6 +47,7 @@ MODULES = \
 	Attachment.o \
 	IscBlob.o \
 	IscColumnsResultSet.o \
+	IscColumnPrivilegesResultSet.o \
 	IscCallableStatement.o \
 	IscConnection.o \
 	IscCrossReferenceResultSet.o \
@@ -64,6 +65,7 @@ MODULES = \
 	IscStatement.o \
 	IscStatementMetaData.o \
 	IscTablesResultSet.o \
+	IscTablePrivilegesResultSet.o \
 	Lock.o \
 	Mutex.o \
 	Sqlda.o \
@@ -106,6 +108,8 @@ IscStatement.o: IscStatement.cpp
 IscStatementMetaData.o: IscStatementMetaData.cpp
 IscProceduresResultSet.o: IscProceduresResultSet.cpp
 IscCallableStatement.o: IscCallableStatement.cpp
+IscColumnPrivilegesResultSet.o: IscColumnPrivilegesResultSet.cpp
+IscTablePrivilegesResultSet.o:  IscTablePrivilegesResultSet.cpp
 Mutex.o: Mutex.cpp
 Lock.o: Lock.cpp
 Attachment.o: Attachment.cpp

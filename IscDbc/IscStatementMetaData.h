@@ -31,8 +31,7 @@
 
 #include "Connection.h"
 
-class IscPreparedStatement;
-
+class Sqlda;
 
 class IscStatementMetaData : public StatementMetaData  
 {
@@ -43,10 +42,10 @@ public:
 	virtual int getPrecision (int index);
 	virtual int getParameterType (int index);
 	virtual int getParameterCount();
-	IscStatementMetaData(IscPreparedStatement *preparedStatement);
+	IscStatementMetaData(Sqlda	* ptSqlda);
 	virtual ~IscStatementMetaData();
 
-	IscPreparedStatement	*statement;
+	Sqlda					*sqlda;
 };
 
 #endif // !defined(AFX_ISCSTATEMENTMETADATA_H__32C6E496_2C14_11D4_98E0_0000C01D2301__INCLUDED_)

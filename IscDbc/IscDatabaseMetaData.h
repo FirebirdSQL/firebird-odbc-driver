@@ -38,6 +38,15 @@ class IscConnection;
 class IscDatabaseMetaData : public DatabaseMetaData  
 {
 public:
+//////////////////////////////////???
+//////////////////////////////////???
+//////////////////////////////////???
+	virtual short getSqlStrPageSizeBd(const void * info_buffer, int bufferLength,short *lengthPtr);
+	virtual short getSqlStrWalInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr);
+	virtual short getStrStatInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr);
+//////////////////////////////////???
+//////////////////////////////////???
+//////////////////////////////////???
 	virtual bool supportsStatementMetaData();
 	virtual int objectVersion();
 	IscDatabaseMetaData(IscConnection *connect);
@@ -216,6 +225,8 @@ public:
 	virtual bool supportsBatchUpdates();
 	virtual ResultSet* getUDTs(const char* catalog, const char* schemaPattern, 
 			  const char* typeNamePattern, int* types);
+	void LockThread();
+	void UnLockThread();
 
 	IscConnection	*connection;
 	LinkedList		resultSets;

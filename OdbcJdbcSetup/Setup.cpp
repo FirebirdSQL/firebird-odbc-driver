@@ -291,6 +291,12 @@ bool Setup::configureDialog()
 	dialog.m_driver = jdbcDriver;
 	dialog.m_role = role;
 
+	if(readonlyTpb[0]=='Y')	dialog.m_readonly=TRUE;
+	else dialog.m_readonly=FALSE;
+
+	if(nowaitTpb[0]=='Y')	dialog.m_nowait=TRUE;
+	else dialog.m_nowait=FALSE;
+
 	if (dialog.DoModal() != IDOK)
 		return false;
 
@@ -300,6 +306,12 @@ bool Setup::configureDialog()
 	password = dialog.m_password;
 	jdbcDriver = dialog.m_driver;
 	role = dialog.m_role;
+
+	if(dialog.m_readonly)readonlyTpb="Y";
+	else readonlyTpb="N";
+
+	if(dialog.m_nowait)nowaitTpb="Y";
+	else nowaitTpb="N";
 
 	SQLWriteDSNToIni(dialog.m_name, driver);
 	writeAttributes();
@@ -314,6 +326,8 @@ void Setup::writeAttributes()
 	writeAttribute (SETUP_PASSWORD, password);
 	writeAttribute (SETUP_ROLE, role);
 	writeAttribute (SETUP_JDBC_DRIVER, jdbcDriver);
+	writeAttribute (SETUP_READONLY_TPB, readonlyTpb);
+	writeAttribute (SETUP_NOWAIT_TPB, nowaitTpb);
 }
 
 void Setup::readAttributes()
@@ -323,6 +337,8 @@ void Setup::readAttributes()
 	password = readAttribute (SETUP_PASSWORD);
 	jdbcDriver = readAttribute (SETUP_JDBC_DRIVER);
 	role = readAttribute (SETUP_ROLE);
+	readonlyTpb = readAttribute (SETUP_READONLY_TPB);
+	nowaitTpb = readAttribute (SETUP_NOWAIT_TPB);
 }
 
 void Setup::writeAttribute(const char * attribute, const char * value)

@@ -53,6 +53,8 @@ public:
 	CString		password;
 	CString		jdbcDriver;
 	CString		role;
+	CString		readonlyTpb;
+	CString		nowaitTpb;
 };
 
 #endif // !defined(AFX_SETUP_H__ED260D92_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)

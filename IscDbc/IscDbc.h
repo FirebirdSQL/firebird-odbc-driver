@@ -30,6 +30,7 @@
 
 #include <ibase.h>
 #include "JString.h"
+#include "LoadFbClientDll.h"
 
 #ifndef NULL
 #define NULL		0
@@ -66,6 +67,7 @@ typedef unsigned __int64			UQUAD;
 
 #define JDBC_NULL		   0 
 
+#define JDBC_ARRAY 		  -8
 #define JDBC_BIT 		  -7
 #define JDBC_TINYINT 	  -6
 #define JDBC_SMALLINT	   5
@@ -109,5 +111,18 @@ typedef unsigned __int64			UQUAD;
 #define MAX_TIME_LENGTH			8
 #define MAX_TIMESTAMP_LENGTH	19
 #define MAX_QUAD_LENGTH			19
+
+int getTypeStatement(isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);
+int getInfoCountRecordsStatement(isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);
+int getPlanStatement(isc_stmt_handle statementHandle,const void * value, int bufferLength,long *lengthPtr);
+int getPageDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr);
+int getWalDatabase(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr);
+int strBuildStatInformations(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr);
+void getStatInformations(isc_db_handle Db,char bVanCall);
+int getStatInformations(isc_db_handle Db,const void * info_buffer, int bufferLength,short *lengthPtr);
+
+extern CFbDll * GDS;
+void initDll();
+
 
 #endif

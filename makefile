@@ -7,13 +7,15 @@ CXX=g++
 CXXFLAGS=-g -w -D_REENTRANT -D_PTHREADS -DEXTERNAL 
 #Extra libraries. Should include path for InterBase/FireBird 
 #library (libgds.so) 
-EXTLIBS=-lcrypt -lgds
+EXTLIBS=-lcrypt -ldl -lgds
 
 ISCDBCDIR=IscDbc
 ISCDBCLIB=IscDbc
 #ODBCJDBCDIR=OdbcJdbc
 ODBCJDBCDIR=.
 ODBCJDBCLIB=OdbcJdbc
+ODBCJDBCSETUPLIB=OdbcJdbcSetupS
+ODBCTESTDIR=OdbcTest
 JDBCTESTCDIR=JdbcTest
 
 ISCDBC= \
@@ -23,6 +25,8 @@ ISCDBC= \
 	Blob.o \
 	DateTime.o \
 	Error.o \
+	extodbc.o \
+	IscArray.o \
 	IscBlob.o \
 	IscCallableStatement.o \
 	IscColumnPrivilegesResultSet.o \
@@ -46,6 +50,7 @@ ISCDBC= \
 	IscTablesResultSet.o \
 	JString.o \
 	LinkedList.o \
+	LoadFbClientDll.o \
 	Lock.o \
 	Mutex.o \
 	Parameter.o \
@@ -76,9 +81,12 @@ ODBCJDBCEXTRA= \
 	JString.o \
 	TimeStamp.o \
 	SQLError.o \
-        SqlTime.o \
+        SqlTime.o 
 
-all:	$(ISCDBCLIB) $(ODBCJDBCLIB) JDBCTEST
+ODBCJDBCSETUP= \
+	OdbcInstGetProp.o 
+
+all:	$(ISCDBCLIB) $(ODBCJDBCLIB) $(ODBCJDBCSETUPLIB) ODBCTEST JDBCTEST
 
 clean:
 	rm -rf *.d JDBCTEST $(ODBCJDBCEXTRA) $(ODBCJDBC) $(ISCDBC) $(ISCDBCLIB).so $(ODBCJDBCLIB).so 
@@ -91,6 +99,13 @@ $(ISCDBCLIB)	: $(ISCDBC)
 $(ODBCJDBCLIB)	: $(ODBCJDBC)
 	ar crs $(ODBCJDBCLIB).a $(ODBCJDBC) $(ODBCJDBCEXTRA)
 	g++ -rdynamic -export-dynamic $(ODBCJDBC) $(ODBCJDBCEXTRA) $(EXTLIBS) -shared -o $(ODBCJDBCLIB).so
+
+$(ODBCJDBCSETUPLIB)	: $(ODBCJDBCSETUP)
+	ar crs $(ODBCJDBCSETUPLIB).a $(ODBCJDBCSETUP)
+	g++ -rdynamic -export-dynamic $(ODBCJDBCSETUP) $(EXTLIBS) -shared -o $(ODBCJDBCSETUPLIB).so
+
+ODBCTEST:
+	$(CXX) $(CXXFLAGS) $(ODBCTESTDIR)/Test.cpp $(ODBCTESTDIR)/Print.cpp $(ODBCTESTDIR)/JString.cpp $(ODBCTESTDIR)/Odbc.cpp -I$(ODBCJDBCDIR) -o testODBC -lodbc
 
 JDBCTEST:
 	 $(CXX) $(CXXFLAGS) $(JDBCTESTCDIR)/Test.cpp $(ISCDBCLIB).a -I$(ISCDBCDIR) -o test $(EXTLIBS)
@@ -107,6 +122,10 @@ DateTime.o:
 	 $(CXX) $(CXXFLAGS) -c $(ISCDBCDIR)/DateTime.cpp -I$(ISCDBCDIR)
 Error.o:
 	 $(CXX) $(CXXFLAGS) -c $(ISCDBCDIR)/Error.cpp -I$(ISCDBCDIR)
+extodbc.o:
+	 $(CXX) $(CXXFLAGS) -c $(ISCDBCDIR)/extodbc.cpp -I$(ISCDBCDIR)
+IscArray.o:
+	 $(CXX) $(CXXFLAGS) -c $(ISCDBCDIR)/IscArray.cpp -I$(ISCDBCDIR)
 IscBlob.o:
 	 $(CXX) $(CXXFLAGS) -c $(ISCDBCDIR)/IscBlob.cpp -I$(ISCDBCDIR)
 IscCallableStatement.o:
@@ -153,6 +172,8 @@ JString.o:
 	 $(CXX) $(CXXFLAGS) -c $(ISCDBCDIR)/JString.cpp -I$(ISCDBCDIR)
 LinkedList.o:
 	 $(CXX) $(CXXFLAGS) -c $(ISCDBCDIR)/LinkedList.cpp -I$(ISCDBCDIR)
+LoadFbClientDll.o:
+	 $(CXX) $(CXXFLAGS) -c $(ISCDBCDIR)/LoadFbClientDll.cpp -I$(ISCDBCDIR)
 Lock.o:
 	 $(CXX) $(CXXFLAGS) -c $(ISCDBCDIR)/Lock.cpp -I$(ISCDBCDIR)
 Mutex.o:
@@ -199,3 +220,6 @@ OdbcObject.o:
 	 $(CXX) $(CXXFLAGS) -c $(ODBCJDBCDIR)/OdbcObject.cpp -I$(ISCDBCDIR) -I$(ODBCJDBCDIR)
 OdbcStatement.o:
 	 $(CXX) $(CXXFLAGS) -c $(ODBCJDBCDIR)/OdbcStatement.cpp -I$(ISCDBCDIR) -I$(ODBCJDBCDIR)
+
+OdbcInstGetProp.o:
+	 $(CXX) $(CXXFLAGS) -c $(ODBCJDBCDIR)/OdbcInstGetProp.cpp -I$(ISCDBCDIR) -I$(ODBCJDBCDIR)

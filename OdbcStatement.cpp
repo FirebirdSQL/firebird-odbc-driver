@@ -124,13 +124,13 @@
 // OdbcStatement.cpp: implementation of the OdbcStatement class.
 //
 //////////////////////////////////////////////////////////////////////
-
 #include <memory.h>
 #include <stdio.h>
 #include "OdbcStatement.h"
 #include "OdbcConnection.h"
 #include "OdbcError.h"
 #include "Connection.h"
+#include "DescRecord.h"
 #include "SQLException.h"
 #include "OdbcDateTime.h"
 #include <time.h>
@@ -138,8 +138,23 @@
 #include "DateTime.h"
 #include "TimeStamp.h"
 
+#ifdef DEBUG                               
+#define TRACE(msg)		OutputDebugString(#msg);OutputDebugString("\n")      
+#define TRACE02(msg,val)  TraceOutput(#msg,val)
+#else
+#define TRACE(msg)		
+#define TRACE02(msg,val)
+#endif
 #define RESULTS(fn)		(resultSet) ? resultSet->fn : callableStatement->fn
 #define SKIP_WHITE(p)	while (charTable [*p] == WHITE) ++p
+
+#define SET_ClearBindDataOffset  
+void TraceOutput(char * msg,long val)
+{
+	char buf[80];
+	sprintf(buf,"\t%s = %d : %x\n",msg,val,val);
+	OutputDebugString(buf);
+}
 
 #define PUNCT			1
 #define WHITE			2
@@ -185,21 +200,19 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	resultSet = NULL;
 	statement = NULL;
 	callableStatement = NULL;
-	bindings = NULL;
 	getDataBindings = NULL;	//added by RM
-	parameters = NULL;
 	metaData = NULL;
-//	updatePreparedResultSet = true;
 	cancel = false;
-	numberParameters = 0;
-    parameterNeedData = -1;	//Added 2002-06-04 RM
-    numberBindings = 0;
+    parameterNeedData = 0;	
 	numberGetDataBindings = 0;	//added by RM
 	maxRows = 0;
+	maxLength = 0;
 	applicationRowDescriptor = connection->allocDescriptor (odtApplicationRow);
 	applicationParamDescriptor = connection->allocDescriptor (odtApplicationParameter);
 	implementationRowDescriptor = connection->allocDescriptor (odtImplementationRow);
 	implementationParamDescriptor = connection->allocDescriptor (odtImplementationParameter);
+
+	fetchRetData = SQL_RD_ON;			
 	rowBindType = SQL_BIND_BY_COLUMN;
 	paramBindType = SQL_BIND_BY_COLUMN;
 	bindOffsetPtr = NULL;
@@ -212,20 +225,21 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	cursorName.Format ("cursor%d", statementNumber);
 	cursorScrollable = false;
 	asyncEnable = false;
-    rowArraySize  = applicationRowDescriptor->descArraySize; //added by CGA
-
+    rowArraySize  = applicationRowDescriptor->headArraySize; //added by CGA
+	enableAutoIPD = SQL_FALSE;
+	useBookmarks = SQL_UB_OFF;
 }
 
 OdbcStatement::~OdbcStatement()
 {
 	connection->statementDeleted (this);
+	releaseStatement();
+	releaseBindings();
+	releaseParameters();
 	delete applicationRowDescriptor;
 	delete applicationParamDescriptor;
 	delete implementationRowDescriptor;
 	delete implementationParamDescriptor;
-	releaseStatement();
-	releaseBindings();
-	releaseParameters();
 }
 
 OdbcObjectType OdbcStatement::getType()
@@ -323,7 +337,8 @@ RETCODE OdbcStatement::sqlColumnPrivileges(SQLCHAR * catalog, int catLength,
 	const char *tbl		= getString (&p, table, tableLength, NULL);
 	const char *col		= getString (&p, column, columnLength, NULL);
 
-	if ( *tbl && *col )
+//	if ( *tbl && *col )
+	if ( tbl || col )
 	{
 		try
 			{
@@ -349,16 +364,17 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength, bool isExecDirec
 	JString temp;
 	const char *string = (const char*) sql;
 
-#ifdef DEBUG
-		char tempDebugStr [8196];
-		sprintf (tempDebugStr, "Preparing statement:\n\t%s\n", sql);
-		OutputDebugString (tempDebugStr);
-#endif
 	if (sqlLength != SQL_NTS)
-		{
+	{
 		temp = JString ((const char*) sql, sqlLength);
 		string = temp;
-		}
+	}
+
+#ifdef DEBUG
+	char tempDebugStr [8196];
+	sprintf (tempDebugStr, "Preparing statement:\n\t%.8195s\n", string);
+	OutputDebugString (tempDebugStr);
+#endif
 
 	try
 		{
@@ -366,6 +382,9 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength, bool isExecDirec
 			statement = callableStatement = connection->connection->prepareCall (string);
 		else
 			statement = connection->connection->prepareStatement (string);
+
+		implementationRowDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIRD());
+		implementationParamDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIPD());
 
 //		//Added by CGA
 //		if( updatePreparedResultSet )
@@ -420,10 +439,122 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 {
 	clearErrors();
 
+	if (column < 0)
+		return sqlReturn (SQL_ERROR, "07009", "Invalid descriptor index");
+
+	try
+		{
+
+		switch (targetType)
+			{
+			case SQL_C_CHAR:
+			case SQL_C_SHORT:
+			case SQL_C_SSHORT:
+			case SQL_C_USHORT:
+			case SQL_C_LONG:
+			case SQL_C_SLONG:
+			case SQL_C_ULONG:
+			case SQL_C_FLOAT:
+			case SQL_C_DOUBLE:
+			case SQL_C_BIT:
+			case SQL_C_TINYINT:
+			case SQL_C_STINYINT:
+			case SQL_C_UTINYINT:
+			case SQL_C_SBIGINT:
+			case SQL_C_UBIGINT:
+			case SQL_C_BINARY:
+			//case SQL_C_BOOKMARK:
+			//case SQL_C_VARBOOKMARK:
+			case SQL_C_DATE:
+			case SQL_C_TIME:
+			case SQL_C_TIMESTAMP:
+			case SQL_C_NUMERIC:
+			case SQL_TYPE_DATE:
+			case SQL_TYPE_TIME:
+			case SQL_TYPE_TIMESTAMP:
+			case SQL_C_DEFAULT:
+			//case SQL_C_GUID:
+				break;
+				
+			default:
+				{
+				JString msg;
+				msg.Format ("Invalid application datatype (%d)", targetType);
+				LOG_MSG ((const char*) msg);
+				LOG_MSG ("\n");
+				return sqlReturn (SQL_ERROR, "HY03", (const char*) msg);
+				//return sqlReturn (SQL_ERROR, "HY03", "Invalid application buffer type");
+				}
+			}
+
+		if (!_bindings)
+		{
+			DescRecord *record = applicationRowDescriptor->getDescRecord (column);
+
+			record->parameterType = SQL_PARAM_OUTPUT;
+			record->type = targetType;
+			record->conciseType = targetType;
+			record->dataPtr = targetValuePtr;
+			record->length = bufferLength;
+			record->indicatorPtr = indPtr;
+		}
+		else
+		{
+			int count = MAX (column, numberColumns);
+			if (count >= *_numberBindings)
+			{
+				*_bindings = allocBindings (count + 1, *_numberBindings, *_bindings);
+				*_numberBindings = count + 1;
+			}
+
+			Binding *binding = *_bindings + column;	
+			binding->type = SQL_PARAM_OUTPUT;
+			binding->cType = targetType;
+			binding->pointer = targetValuePtr;
+			binding->bufferLength = bufferLength;
+			binding->indicatorPointer = indPtr;
+			if ( metaData &&
+				 ( metaData->getColumnType (column) == SQL_CHAR || 
+				   metaData->getColumnType (column) == SQL_VARCHAR ))
+				binding->dataOffset			= 0;
+#ifdef DEBUG
+			char tempDebugStr [128];
+			sprintf (tempDebugStr, "Column %d %31s has SQL Type %3.3d, CType %3.3d, Type %3.3d \n", 
+						column,
+						"",
+						binding->sqlType,
+						binding->cType,
+						binding->type
+					);
+			OutputDebugString (tempDebugStr);
+#endif
+		}
+
+	}
+
+	catch (SQLException& exception)
+	{
+		postError ("HY000", exception);
+		return SQL_ERROR;
+	}
+	return sqlSuccess();
+}
+
+/*
+//RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER * indPtr)
+RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER * indPtr, Binding** _bindings, int* _numberBindings)
+{
+	clearErrors();
+
 //Added by RM
 	if (!_bindings)
-		_bindings = &bindings;
+//		_bindings = &bindings;
+	{
+		if(!bindings)
+			bindings = new Binding*;
 
+		_bindings = bindings;
+	}
 	if (!_numberBindings)
 		_numberBindings = &numberBindings;
 
@@ -502,7 +633,7 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 			binding->dataOffset			= 0;
 
 #ifdef DEBUG
-		char tempDebugStr [8196];
+		char tempDebugStr [128];
 		sprintf (tempDebugStr, "Column %d %31s has SQL Type %3.3d, CType %3.3d, Type %3.3d \n", 
 					column,
 					"",
@@ -522,9 +653,11 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 		}
 	return sqlSuccess();
 }
+*/
 
 RETCODE OdbcStatement::sqlFetch()
 {
+	clearErrors();
 	if (!resultSet)
 		return sqlReturn (SQL_ERROR, "24000", "Invalid cursor state");
 
@@ -534,11 +667,13 @@ RETCODE OdbcStatement::sqlFetch()
 		return sqlReturn (SQL_ERROR, "S1008", "Operation canceled");
 		}
 
+		SET_ClearBindDataOffset
+
 		if (eof || !resultSet->next())
 			{
 			eof = true;
-			if (implementationRowDescriptor->rowsProcessedPtr)
-				*implementationRowDescriptor->rowsProcessedPtr = 0;
+			if (implementationRowDescriptor->headRowsProcessedPtr)
+				*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
 			return SQL_NO_DATA;
 			}
 
@@ -547,38 +682,94 @@ RETCODE OdbcStatement::sqlFetch()
 
 RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 {
+	clearErrors();
 	if (!resultSet)
 		return sqlReturn (SQL_ERROR, "24000", "Invalid cursor state");
 
+	if( cursorType == SQL_CURSOR_FORWARD_ONLY && orientation != SQL_FETCH_NEXT )
+		return sqlReturn (SQL_ERROR, "HY106", "Fetch type out of range");
+
 	if (cancel)
-		{
+	{
 		releaseResultSet();
 		return sqlReturn (SQL_ERROR, "S1008", "Operation canceled");
-		}
+	}
+
+	SQLINTEGER	*bindOffsetPtrSave = bindOffsetPtr;
 
 	try
+	{ 
+		SET_ClearBindDataOffset
+
+		if(applicationRowDescriptor->headArraySize > 1)
 		{
-		if (eof || !resultSet->next())
+			SQLUSMALLINT *statusPtr = implementationRowDescriptor->headArrayStatusPtr;
+			int nCountRow = applicationRowDescriptor->headArraySize;
+
+
+			if ( !eof )
 			{
-			eof = true;
-			if (implementationRowDescriptor->rowsProcessedPtr)
-				*implementationRowDescriptor->rowsProcessedPtr = 0;
-			return SQL_NO_DATA;
+				SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
+				bindOffsetPtr = &bindOffsetPtrTmp;
+				int nRow = 0;
+				while ( nRow < nCountRow && resultSet->next() )
+				{
+					returnData();
+					
+					if ( statusPtr )
+						statusPtr[nRow] = SQL_SUCCESS;
+					bindOffsetPtrTmp += rowBindType;
+
+					++nRow;
+				}
+				
+				if( !nRow || nRow < nCountRow)
+				{
+					eof = true;
+					if( nRow && statusPtr)
+						while(nRow < nCountRow)
+							statusPtr[nRow++] = SQL_ROW_NOROW;
+				}
+
+				if (implementationRowDescriptor->headRowsProcessedPtr)
+					*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = nRow;
+
+				bindOffsetPtr = bindOffsetPtrSave;
 			}
+
+			if ( eof )
+			{
+				if (implementationRowDescriptor->headRowsProcessedPtr)
+					*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
+				return SQL_NO_DATA;
+			}
+
+			return sqlSuccess();
 		}
+		else
+			if (eof || !resultSet->next())
+			{
+				eof = true;
+				if (implementationRowDescriptor->headRowsProcessedPtr)
+					*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
+				return SQL_NO_DATA;
+			}
+	}
 	catch (SQLException& exception)
-		{
+	{
+		bindOffsetPtr = bindOffsetPtrSave;
 		OdbcError *error = postError ("HY000", exception);
 		error->setRowNumber (rowNumber);
 		return SQL_ERROR;
-		}
+	}
 
-	return returnData();;
+	return returnData();
 }
 
 
 RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray)
 {
+	clearErrors();
 	if (!resultSet)
 		return sqlReturn (SQL_ERROR, "24000", "Invalid cursor state");
 
@@ -588,18 +779,23 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 		return sqlReturn (SQL_ERROR, "S1008", "Operation canceled");
 	}
 
+	if( cursorType == SQL_CURSOR_FORWARD_ONLY && orientation != SQL_FETCH_NEXT )
+		return sqlReturn (SQL_ERROR, "HY106", "Fetch type out of range");
+
 	try
 	{
 		if(rowCountPointer)
 			*rowCountPointer = 1;
 		
+		SET_ClearBindDataOffset
+
 		if (eof || !resultSet->next())
 		{
 			eof = true;
 			if(rowCountPointer)
 				*rowCountPointer = 0;
  			if(rowStatusArray)
-				rowStatusArray[0] = SQL_ROW_NOROW;
+ 				rowStatusArray[0] = SQL_ROW_NOROW;
 			return SQL_NO_DATA;
 		}
 		else
@@ -618,6 +814,191 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 	return returnData();
 
 }
+
+bool OdbcStatement::setValue(DescRecord *record, int column)
+{
+	bool info = false;
+
+	SQLSMALLINT &type = record->conciseType;
+	SQLPOINTER pointer = record->dataPtr;
+	SQLUINTEGER &bufferLength = record->length;
+	SQLINTEGER * indicatorPointer = record->indicatorPtr;
+
+	if ( bindOffsetPtr )
+	{
+		pointer = (SQLPOINTER)((char*)pointer + *bindOffsetPtr);
+		indicatorPointer = (SQLINTEGER *)((char*)indicatorPointer + *bindOffsetPtr);
+	}
+
+	SQLINTEGER	dataOffset = 0;
+	int length = bufferLength;
+
+	OdbcError *error = NULL;
+
+	if( !pointer )
+		return info;
+
+	if (type == SQL_C_DEFAULT)
+		{
+		ResultSetMetaData *metaData = resultSet->getMetaData();
+		type = getCType (metaData->getColumnType (column), 
+						 metaData->isSigned (column));
+		}
+
+	switch (type)
+		{
+		case SQL_C_CHAR:
+			{
+
+			const char *string = RESULTS (getString (column));
+
+			int dataRemaining = strlen(string) - dataOffset;
+			int len = MIN(dataRemaining, (long)bufferLength);
+			 
+			//Added by PR. If len is negative we get an AV
+			//Added by NOMEY. and empty strings have len = 0
+			if ( len >= 0 ) 
+			{
+				memcpy (pointer, string+dataOffset, len);
+				((char*) (pointer)) [len] = 0;
+			}
+
+			if (len < dataRemaining)
+			{
+				error = postError (new OdbcError (0, "01004", "Data truncated"));
+				info = true;
+			}
+
+			length = dataRemaining;
+			dataOffset += len;
+
+			if (!info)
+				dataOffset = 0;
+			}
+			break;
+
+		case SQL_C_SHORT:
+		case SQL_C_SSHORT:
+		case SQL_C_USHORT:
+			*((short*) pointer) = RESULTS (getShort (column));
+			length = sizeof(short);
+			break;
+
+		case SQL_C_LONG:
+		case SQL_C_SLONG:
+		case SQL_C_ULONG:
+			*((long*) pointer) = RESULTS (getInt (column));
+			length = sizeof(long);
+			break;
+
+		case SQL_C_FLOAT:
+			*((float*) pointer) = RESULTS (getFloat (column));
+			length = sizeof(float);
+			break;
+
+		case SQL_C_DOUBLE:
+			*((double*) pointer) = RESULTS (getDouble (column));
+			length = sizeof(double);
+			break;
+
+		case SQL_C_TINYINT:
+		case SQL_C_STINYINT:
+		case SQL_C_UTINYINT:
+			*((char*) pointer) = RESULTS (getByte (column));
+			length = sizeof(char);
+			break;
+
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			*((QUAD*) pointer) = RESULTS (getLong (column));
+			length = sizeof(QUAD);
+			break;
+
+//		case SQL_TYPE_DATE:
+		case SQL_C_TYPE_DATE:
+		case SQL_C_DATE:
+			{
+			OdbcDateTime converter;
+			DateTime dateTime = RESULTS (getDate (column));
+			tagDATE_STRUCT *var = (tagDATE_STRUCT*) pointer;
+			converter.convert (&dateTime, var);
+			length = sizeof(tagDATE_STRUCT);
+			}
+			break;
+
+//		case SQL_TYPE_TIMESTAMP:
+		case SQL_C_TYPE_TIMESTAMP:
+		case SQL_C_TIMESTAMP:
+			{
+			TimeStamp timestamp = RESULTS (getTimestamp (column));
+			tagTIMESTAMP_STRUCT *var = (tagTIMESTAMP_STRUCT*) pointer;
+			OdbcDateTime converter;
+			converter.convert (&timestamp, var);
+			length = sizeof(tagTIMESTAMP_STRUCT);
+			}
+			break;
+
+		case SQL_C_TYPE_TIME:
+		case SQL_C_TIME:
+			{
+			SqlTime sqlTime = RESULTS (getTime (column));
+			tagTIME_STRUCT *var = (tagTIME_STRUCT*) pointer;
+			var->hour = (unsigned short) (sqlTime.timeValue / (60 * 60)) % 24;
+			var->minute = (unsigned short) (sqlTime.timeValue / 60) % 60;
+			var->second = (unsigned short) (sqlTime.timeValue % 60);
+			length = sizeof (tagTIME_STRUCT);
+			}
+			break;
+
+		case SQL_C_BINARY:
+			{
+			//for now, just get value so the wasNull check will work
+			Blob* blob = RESULTS (getBlob(column));
+			int dataRemaining = blob->length() - dataOffset;
+			int len = MIN(dataRemaining, (long)bufferLength);
+			 
+			blob->getBytes (dataOffset, len, pointer);
+
+			if (len < dataRemaining)
+			{
+				error = postError (new OdbcError (0, "01004", "Data truncated"));
+				info = true;
+			}
+				
+			length = dataRemaining;
+			dataOffset += len;
+
+			if (!info)
+				dataOffset = 0;
+			}
+			break;	
+
+		case SQL_C_BIT:
+		//case SQL_C_BOOKMARK:
+		//case SQL_C_VARBOOKMARK:
+		case SQL_C_NUMERIC:
+		//case SQL_C_GUID:
+			//break;
+
+		default:
+			error = postError (new OdbcError (0, "HYC00", "Optional feature not implemented"));
+			info = true;
+		}
+
+	if (error)
+		error->setColumnNumber (column, rowNumber);
+
+	if (indicatorPointer)
+		{
+		if (RESULTS (wasNull()))
+			*indicatorPointer = SQL_NULL_DATA;
+		else
+			*indicatorPointer = length;
+		}
+
+	return info;
+}
+
 
 bool OdbcStatement::setValue(Binding * binding, int column)
 {
@@ -905,6 +1286,8 @@ RETCODE OdbcStatement::sqlFreeStmt(int option)
 			{
 			case SQL_CLOSE:
 				releaseResultSet();
+				if(statement)
+					statement->clearResults();
 				break;
 
 			case SQL_UNBIND:
@@ -927,13 +1310,7 @@ RETCODE OdbcStatement::sqlFreeStmt(int option)
 
 void OdbcStatement::releaseBindings()
 {
-	numberBindings = 0;
-
-	if (bindings)
-		{
-		delete [] bindings;
-		bindings = NULL;
-		}
+	applicationRowDescriptor->removeRecords();
 //Added by RM
 	numberGetDataBindings = 0;
 
@@ -947,15 +1324,9 @@ void OdbcStatement::releaseBindings()
 
 void OdbcStatement::releaseParameters()
 {
-	numberParameters = 0;
+	applicationParamDescriptor->removeRecords();
 	paramsetSize = 0;
 	paramsProcessedPtr = NULL;
-
-	if (parameters)
-		{
-		delete [] parameters;
-		parameters = NULL;
-		}
 }
 
 RETCODE OdbcStatement::sqlStatistics(SQLCHAR * catalog, int catLength, 
@@ -1074,15 +1445,16 @@ RETCODE OdbcStatement::sqlNumParams(SWORD * params)
 	
 	if (statement)
 		try
-			{				
-			*params = statement->getNumParams();
-			}
+		{
+			if( params )
+				*params = statement->getNumParams();
+		}
 		catch (SQLException& exception)
-			{
+		{
 			postError ("HY000", exception);
 			return SQL_ERROR;
-			}
-	else
+		}
+	else if( params )
 		*params = 0;
 
 	return sqlSuccess();
@@ -1173,16 +1545,16 @@ RETCODE OdbcStatement::sqlExecute()
 	int retcode = SQL_SUCCESS;
 
 	try
-		{
-//		if ( resultSet )
+	{
 		releaseResultSet();
+		parameterNeedData = 0;
 		retcode = executeStatement();
-		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		retcode = SQL_ERROR;
-		}
+	}
 
 	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
 		return retcode;
@@ -1192,26 +1564,19 @@ RETCODE OdbcStatement::sqlExecute()
 
 RETCODE OdbcStatement::sqlExecuteDirect(SQLCHAR * sql, int sqlLength)
 {
-//	updatePreparedResultSet = false;
-//	int retcode = sqlPrepare (sql, sqlLength);
-//	updatePreparedResultSet = true;
 	int retcode = sqlPrepare (sql, sqlLength, true);
-
-
 	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
 		return retcode;
-
 	try
-		{
-//		executeStatement();
-//Amended to return RETCODE 2002-06-04 RM
+	{
+		parameterNeedData = 0;
 		retcode = executeStatement();
-		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
 		return retcode;
@@ -1225,8 +1590,7 @@ ResultSet* OdbcStatement::getResultSet()
 	cancel = false;
 	numberColumns = 0;
 
-	if (resultSet)
-		releaseResultSet();
+	releaseResultSet();
 
 	if (!statement->getMoreResults())
 		return NULL;
@@ -1239,7 +1603,7 @@ ResultSet* OdbcStatement::getResultSet()
 RETCODE OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, UDWORD * precision, SWORD * scale, SWORD * nullable)
 {
 	clearErrors();
-	StatementMetaData *metaData = statement->getStatementMetaData();
+	StatementMetaData *metaData = statement->getStatementMetaDataIPD();
 
 	try
 		{
@@ -1278,121 +1642,157 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 
 	if (parameter <= 0)
 		return sqlReturn (SQL_ERROR, "S1093", "Invalid parameter number");
-//		return sqlReturn (SQL_ERROR, "S1093", "Invalid parameter number :: OdbcStatement::sqlBindParameter");
 
 	int parametersNeeded = parameter;
 
 	try
-		{
-		if (parameter > numberParameters)
-			{
-			if (statement)
-				{
-				StatementMetaData *metaData = statement->getStatementMetaData();
-				int n = metaData->getParameterCount();
-				parametersNeeded = MAX (parametersNeeded, n);
-				}
-			parameters = allocBindings (parametersNeeded, numberParameters, parameters);
-			numberParameters = parametersNeeded;
-			}
-
+	{
 		if (cType == SQL_C_DEFAULT)
 			switch (sqlType)
-				{
-				 case SQL_CHAR:
-				 case SQL_VARCHAR:
-				 case SQL_LONGVARCHAR:
-				 case SQL_DECIMAL:
-				 case SQL_NUMERIC:
-					cType = SQL_C_CHAR;
-					break;
-				 case SQL_BIT:
-					cType = SQL_C_BIT;
-					break;
-				 case SQL_SMALLINT:
-					cType = SQL_C_SSHORT;
-					break;
-				 case SQL_INTEGER:
-					cType = SQL_C_SLONG;
-					break;
-				 case SQL_BIGINT:
-					cType = SQL_C_CHAR;
-					break;
-				 case SQL_REAL:
-					cType = SQL_C_FLOAT;
-					break;
-				 case SQL_FLOAT:
-				 case SQL_DOUBLE:
-					cType = SQL_C_DOUBLE;
-					break;
-				 case SQL_BINARY:
-				 case SQL_VARBINARY:
-				 case SQL_LONGVARBINARY:
-					cType = SQL_C_BINARY;
-					break;
-				 case SQL_DATE:
-					cType = SQL_C_DATE;
-					break;
-				 case SQL_TIME:
-					cType = SQL_C_TIME;
-					break;
-				 case SQL_TIMESTAMP:
-					cType = SQL_C_TIMESTAMP;
-					break;
-				 case SQL_TYPE_DATE:
-					cType = SQL_C_TYPE_DATE;
-					break;
-				 case SQL_TYPE_TIME:
-					cType = SQL_C_TYPE_TIME;
-					break;
-				 case SQL_TYPE_TIMESTAMP:
-					cType = SQL_C_TYPE_TIMESTAMP;
-					break;
-				}
-
-		switch (cType)
 			{
-			case SQL_C_CHAR:
-			case SQL_C_SHORT:
-			case SQL_C_SSHORT:
-			case SQL_C_USHORT:
-			case SQL_C_LONG:
-			case SQL_C_SLONG:
-			case SQL_C_ULONG:
-			case SQL_C_FLOAT:
-			case SQL_C_DOUBLE:
-			case SQL_C_BIT:
-			case SQL_C_TINYINT:
-			case SQL_C_STINYINT:
-			case SQL_C_UTINYINT:
-			case SQL_C_SBIGINT:
-			case SQL_C_UBIGINT:
-			case SQL_C_BINARY:
-			case SQL_C_DATE:
-			case SQL_C_TIME:
-			case SQL_C_TIMESTAMP:
-			case SQL_C_TYPE_DATE:
-			case SQL_C_TYPE_TIME:
-			case SQL_C_TYPE_TIMESTAMP:
-			case SQL_C_NUMERIC:
-			//case SQL_C_BOOKMARK:
-			//case SQL_C_VARBOOKMARK:
-			//case SQL_C_GUID:
+			 case SQL_CHAR:
+			 case SQL_VARCHAR:
+			 case SQL_LONGVARCHAR:
+			 case SQL_DECIMAL:
+			 case SQL_NUMERIC:
+				cType = SQL_C_CHAR;
 				break;
-
-			default:
-				return sqlReturn (SQL_ERROR, "S1C00", "Driver not capable");
+			 case SQL_BIT:
+				cType = SQL_C_BIT;
+				break;
+			 case SQL_SMALLINT:
+				cType = SQL_C_SSHORT;
+				break;
+			 case SQL_INTEGER:
+				cType = SQL_C_SLONG;
+				break;
+			 case SQL_BIGINT:
+				cType = SQL_C_CHAR;
+				break;
+			 case SQL_REAL:
+				cType = SQL_C_FLOAT;
+				break;
+			 case SQL_FLOAT:
+			 case SQL_DOUBLE:
+				cType = SQL_C_DOUBLE;
+				break;
+			 case SQL_BINARY:
+			 case SQL_VARBINARY:
+			 case SQL_LONGVARBINARY:
+				cType = SQL_C_BINARY;
+				break;
+			 case SQL_DATE:
+				cType = SQL_C_DATE;
+				break;
+			 case SQL_TIME:
+				cType = SQL_C_TIME;
+				break;
+			 case SQL_TIMESTAMP:
+				cType = SQL_C_TIMESTAMP;
+				break;
+			 case SQL_TYPE_DATE:
+				cType = SQL_C_TYPE_DATE;
+				break;
+			 case SQL_TYPE_TIME:
+				cType = SQL_C_TYPE_TIME;
+				break;
+			 case SQL_TYPE_TIMESTAMP:
+				cType = SQL_C_TYPE_TIMESTAMP;
+				break;
 			}
 
-		Binding *binding = parameters + parameter - 1;
-		binding->type = type;
-		binding->cType = cType;
-		binding->sqlType = sqlType;
-		binding->pointer = ptr;
-		binding->bufferLength = bufferLength;
-		binding->indicatorPointer = length;
-		binding->startedTransfer	= false;
-		binding->data_at_exec		= false;
+		switch (cType)
+		{
+		case SQL_C_CHAR:
+		case SQL_C_SHORT:
+		case SQL_C_SSHORT:
+		case SQL_C_USHORT:
+		case SQL_C_LONG:
+		case SQL_C_SLONG:
+		case SQL_C_ULONG:
+		case SQL_C_FLOAT:
+		case SQL_C_DOUBLE:
+		case SQL_C_BIT:
+		case SQL_C_TINYINT:
+		case SQL_C_STINYINT:
+		case SQL_C_UTINYINT:
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+		case SQL_C_BINARY:
+		case SQL_C_DATE:
+		case SQL_C_TIME:
+		case SQL_C_TIMESTAMP:
+		case SQL_C_TYPE_DATE:
+		case SQL_C_TYPE_TIME:
+		case SQL_C_TYPE_TIMESTAMP:
+		case SQL_C_NUMERIC:
+		//case SQL_C_BOOKMARK:
+		//case SQL_C_VARBOOKMARK:
+		//case SQL_C_GUID:
+			break;
+
+		default:
+			return sqlReturn (SQL_ERROR, "S1C00", "Driver not capable");
+		}
+
+		DescRecord *record = applicationParamDescriptor->getDescRecord (parameter);
+
+		switch (sqlType)
+		{
+		case SQL_DATE:
+		case SQL_TYPE_DATE:
+		case SQL_TIME:
+		case SQL_TYPE_TIME:
+		case SQL_TIMESTAMP:
+		case SQL_TYPE_TIMESTAMP:
+			record->type = sqlType;
+			break;
+		default:
+			record->type = cType;
+		}
+
+		record->conciseType = cType;
+		record->dataPtr = ptr;
+		record->octetLength = bufferLength;
+		record->length = bufferLength;
+		record->octetLengthPtr = length;
+		record->indicatorPtr = length;
+		record->data_at_exec = length && type != SQL_PARAM_OUTPUT 
+					&& (*length == SQL_DATA_AT_EXEC || *length < SQL_LEN_DATA_AT_EXEC_OFFSET );
+
+		record = implementationParamDescriptor->getDescRecord (parameter);
+
+		record->parameterType = type; // SQL_PARAM_INPUT, SQL_PARAM_OUTPUT, SQL_PARAM_INPUT_OUTPUT
+		record->type = sqlType;
+		record->conciseType = sqlType;
+		record->indicatorPtr = length;
+
+		switch (sqlType)
+		{
+		 case SQL_TIME:
+		 case SQL_TYPE_TIME:
+		 case SQL_TIMESTAMP:
+		 case SQL_TYPE_TIMESTAMP:
+			 record->precision = scale;
+		 case SQL_CHAR:
+		 case SQL_VARCHAR:
+		 case SQL_LONGVARCHAR:
+		 case SQL_BINARY:
+		 case SQL_VARBINARY:
+		 case SQL_LONGVARBINARY:
+		 case SQL_DATE:
+		 case SQL_TYPE_DATE:
+			 record->length = precision;
+			break;
+		 case SQL_DECIMAL:
+		 case SQL_NUMERIC:
+			 record->scale = scale;
+		 case SQL_REAL:
+		 case SQL_FLOAT:
+		 case SQL_DOUBLE:
+			 record->precision = precision;
+			 break;
+		}
 		}
 	catch (SQLException& exception)
 		{
@@ -1419,26 +1819,31 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 			{
 		case SQL_C_CHAR:
 			{
-				if (!binding->data_at_exec)
+				if (binding->indicatorPointer)
 				{
-					// NOMEY test binding->indicatorPointer
-					if (binding->indicatorPointer)
+					switch( *binding->indicatorPointer )
 					{
-						switch( *binding->indicatorPointer )
-						{
-						case SQL_NTS:
-							statement->setString (parameter, (char*) binding->pointer );
-							break;
-							
-						default:                       
-							statement->setString (parameter, (char*)binding->pointer, *binding->indicatorPointer );
-							break;
-						}
-					}
-					else
-					{
+					case SQL_NTS:
 						statement->setString (parameter, (char*) binding->pointer );
+						break;
+						
+					default:                       
+						statement->setString (parameter, (char*)binding->pointer, *binding->indicatorPointer );
+						break;
 					}
+				}
+				else
+				{
+					statement->setString (parameter, (char*) binding->pointer );
+				}
+				// Remove from parametr {t {d {ts
+				switch(binding->sqlType)
+				{
+				case SQL_TYPE_DATE:
+				case SQL_TYPE_TIME:
+				case SQL_TYPE_TIMESTAMP:
+					statement->convStringData (parameter);
+					break;
 				}
 			}
 			break;
@@ -1516,7 +1921,8 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 
 			case SQL_C_BINARY:
 				if (!binding->data_at_exec)
-                	statement->setBytes(parameter, *(binding->indicatorPointer), binding->pointer);
+               		statement->setBytes(parameter, binding->bufferLength, binding->pointer);
+//           		statement->setBytes(parameter, *(binding->indicatorPointer), binding->pointer);
 				break;
 
 			case SQL_C_BIT:
@@ -1538,6 +1944,150 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 		}
 
 }
+
+void OdbcStatement::setParameter(DescRecord *record,int parameter)
+{
+    clearErrors();
+
+	DescRecord *recordIPD = implementationParamDescriptor->getDescRecord (parameter);
+	SQLINTEGER *indicatorPointer = record->indicatorPtr;
+	char * pointer = (char *)record->dataPtr;
+
+
+	if (indicatorPointer && *indicatorPointer == SQL_NULL_DATA)
+	{
+		statement->setNull(parameter, 0);
+		return;
+	}
+
+	try
+	{
+#pragma FB_COMPILER_MESSAGE("Modify SQL 92 FIXME!")
+		int type = record->conciseType == SQL_C_DEFAULT ? record->type : record->conciseType;
+
+		switch ( type )
+		{
+		case SQL_C_CHAR:
+			{
+				if (indicatorPointer)
+				{
+					switch( *indicatorPointer )
+					{
+					case SQL_NTS:
+						statement->setString (parameter, pointer );
+						break;
+						
+					default:                       
+						statement->setString (parameter, pointer, *indicatorPointer );
+						break;
+					}
+				}
+				else
+				{
+					statement->setString (parameter, pointer );
+				}
+				switch(recordIPD->conciseType)
+				{
+				case SQL_DATE:
+				case SQL_TIME:
+				case SQL_TIMESTAMP:
+				case SQL_TYPE_DATE:
+				case SQL_TYPE_TIME:
+				case SQL_TYPE_TIMESTAMP:
+					statement->convStringData (parameter);
+					break;
+				}
+			}
+			break;
+
+		case SQL_C_SHORT:
+		case SQL_C_SSHORT:
+		case SQL_C_USHORT:
+			statement->setShort (parameter, *(short*) pointer);
+			break;
+
+		case SQL_C_LONG:
+		case SQL_C_SLONG:
+		case SQL_C_ULONG:
+			statement->setInt (parameter, *(long*) pointer);
+			break;
+
+		case SQL_C_FLOAT:
+			statement->setFloat (parameter, *(float*) pointer);
+			break;
+
+		case SQL_C_DOUBLE:
+			statement->setDouble (parameter, *(double*) pointer);
+			break;
+
+		case SQL_C_TINYINT:
+		case SQL_C_STINYINT:
+		case SQL_C_UTINYINT:
+			statement->setByte (parameter, *(char*) pointer);
+			break;
+
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			statement->setLong (parameter, *(QUAD*) pointer);
+			break;
+
+		case SQL_C_TIMESTAMP:
+		case SQL_C_TYPE_TIMESTAMP:
+			{
+			OdbcDateTime converter;
+			tagTIMESTAMP_STRUCT *var = (tagTIMESTAMP_STRUCT*) pointer;
+			TimeStamp timestamp;
+		    converter.convert (var, &timestamp);
+			statement->setTimestamp ( parameter, timestamp);
+			}
+			break;
+
+		case SQL_C_DATE:
+		case SQL_C_TYPE_DATE:
+			{
+			OdbcDateTime converter;
+			tagDATE_STRUCT *var = (tagDATE_STRUCT*) pointer;
+			DateTime dateTime;
+			converter.convert (var, &dateTime);
+			statement->setDate (parameter, dateTime);
+			}
+			break;
+
+		case SQL_C_TIME:
+		case SQL_C_TYPE_TIME:
+			{
+			tagTIME_STRUCT *var = (tagTIME_STRUCT*) pointer;
+			SqlTime dateTime;
+			dateTime.timeValue = var->hour * 60 * 60 + var->minute * 60 + var->second;
+			statement->setTime (parameter, dateTime);
+			}
+			break;
+
+		case SQL_C_BINARY:
+			if (!record->data_at_exec)
+               	statement->setBytes(parameter, record->length, pointer);
+			break;
+
+		case SQL_C_BIT:
+		case SQL_C_NUMERIC:
+		//case SQL_C_BOOKMARK:
+		//case SQL_C_VARBOOKMARK:
+		//case SQL_C_GUID:
+			//break;
+
+		default:
+			postError (new OdbcError (0, "HYC00", "Optional feature not implemented"));
+			return;
+		}
+	}
+	catch (SQLException& exception)
+	{
+		postError ("HY000", exception);
+		return;
+	}
+
+}
+
 
 RETCODE OdbcStatement::sqlCancel()
 {
@@ -1651,79 +2201,123 @@ RETCODE OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferL
 		{
 		switch (attribute)
 			{
+			case 11999:
+				return statement->getStmtPlan(ptr,bufferLength,lengthPtr);
+				break;
+
+			case 11998:
+				return statement->getStmtType(ptr,bufferLength,lengthPtr);
+				break;
+
+			case 11997:
+				return statement->getStmtInfoCountRecords(ptr,bufferLength,lengthPtr);
+				break;
+
 			case SQL_ATTR_APP_ROW_DESC:
 				value = (long) applicationRowDescriptor;
+				TRACE02(SQL_ATTR_APP_ROW_DESC,value);
 				break;
 
 			case SQL_ATTR_APP_PARAM_DESC:
 				value = (long) applicationParamDescriptor;
+				TRACE02(SQL_ATTR_APP_PARAM_DESC,value);
 				break;
 
 			case SQL_ATTR_IMP_ROW_DESC:
 				value = (long) implementationRowDescriptor;
+				TRACE02(SQL_ATTR_IMP_ROW_DESC,value);
 				break;
 
 			case SQL_ATTR_IMP_PARAM_DESC:
 				value = (long) implementationParamDescriptor;
+				TRACE02(SQL_ATTR_IMP_PARAM_DESC,value);
 				break;
 
 			case SQL_ATTR_CURSOR_TYPE:
-				value = SQL_CURSOR_FORWARD_ONLY;
+				value = cursorType;
+				TRACE02(SQL_ATTR_CURSOR_TYPE,value);
 				break;
 
 			case SQL_ATTR_CONCURRENCY:
 				value = SQL_CONCUR_LOCK;
+				TRACE02(SQL_ATTR_CONCURRENCY,value);
 				break;
 
 		    case SQL_ATTR_ROW_ARRAY_SIZE:
+				value = applicationRowDescriptor->headArraySize;
+				TRACE02(SQL_ATTR_ROW_ARRAY_SIZE,value);
+				break;
+
 			case SQL_ROWSET_SIZE:
 		        value = rowArraySize;
+				TRACE02(SQL_ROWSET_SIZE,value);
 				break;
 
 			case SQL_ATTR_MAX_ROWS:					// SQL_MAX_ROWS 1
 				value = maxRows;
+				TRACE02(SQL_ATTR_MAX_ROWS,value);
 				break;
 				
 			case SQL_ATTR_MAX_LENGTH:
-				value = 0;					//driver does not truncate
+				value = maxLength;
+				TRACE02(SQL_ATTR_MAX_LENGTH,value);
 				break;
 
 			case SQL_ATTR_QUERY_TIMEOUT:
 				value = 0;							// driver doesn't timeout
+				TRACE02(SQL_ATTR_QUERY_TIMEOUT,value);
 				break;
 
 			case SQL_ATTR_ASYNC_ENABLE:
 				value = 0;							// driver doesn't do async
+				TRACE02(SQL_ATTR_ASYNC_ENABLE,value);
 				break;
 
 			case SQL_ATTR_PARAM_BIND_TYPE:
 				value = SQL_PARAM_BIND_BY_COLUMN;	// no row binding
+				TRACE02(SQL_ATTR_PARAM_BIND_TYPE,value);
 				break;
 
 			case SQL_ATTR_RETRIEVE_DATA:
-				value = SQL_RD_ON;					// fetch returns data
+				value = fetchRetData;
+				TRACE02(SQL_ATTR_RETRIEVE_DATA,value);
 				break;
 
 			case SQL_ATTR_ROW_NUMBER:
 				value = (long) rowNumber;
+				TRACE02(SQL_ATTR_ROW_NUMBER,value);
 				break;
 
 			case SQL_ATTR_ROW_BIND_TYPE:
 				value = (long) rowBindType;
+				TRACE02(SQL_ATTR_ROW_BIND_TYPE,value);
 				break;
 
 			case SQL_ATTR_ROW_STATUS_PTR:
 				value = (long) rowStatusPtr;
+				TRACE02(SQL_ATTR_ROW_STATUS_PTR,value);
 				break;
 
-
 		    case SQL_ATTR_USE_BOOKMARKS:
-				value = SQL_UB_OFF;
+				value = useBookmarks;
+				TRACE02(SQL_ATTR_USE_BOOKMARKS,value);
 		        break;
 
 		    case SQL_ATTR_CURSOR_SENSITIVITY:
 				value = SQL_UNSPECIFIED;
+				TRACE02(SQL_ATTR_CURSOR_SENSITIVITY,value);
 		        break;
+
+			case SQL_ATTR_ENABLE_AUTO_IPD:
+				value = enableAutoIPD;
+				TRACE02(SQL_ATTR_ENABLE_AUTO_IPD,value);
+		        break;
+
+			case SQL_ATTR_PARAMSET_SIZE:		// 22
+				value = (long)paramsetSize;
+				TRACE02(SQL_ATTR_PARAMSET_SIZE,value);
+				break;
+
 
 			/***
 			case SQL_ATTR_ENABLE_AUTO_IPD			15
@@ -1734,7 +2328,6 @@ RETCODE OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferL
 			case SQL_ATTR_PARAM_OPERATION_PTR		19
 			case SQL_ATTR_PARAM_STATUS_PTR			20
 			case	SQL_ATTR_PARAMS_PROCESSED_PTR		21
-			case	SQL_ATTR_PARAMSET_SIZE				22
 			case SQL_ATTR_RETRIEVE_DATA				SQL_RETRIEVE_DATA
 			case SQL_ATTR_ROW_BIND_OFFSET_PTR		23
 			case SQL_ATTR_ROW_OPERATION_PTR			24
@@ -1827,66 +2420,53 @@ char* OdbcStatement::getToken(const char **ptr, char *token)
 
 	return token;
 }
-/*
-//Added 2002-06-04 RM
-RETCODE OdbcStatement::setParameters()
-{
-    RETCODE retcode = SQL_SUCCESS;
-    for (int n = 0; n < numberParameters; ++n)
-        {
-        Binding *binding = parameters + n;
-        if (binding->pointer && binding->type != SQL_PARAM_OUTPUT)
-            {
-            RETCODE rc = setParameter(binding, n + 1);
-            if (rc == SQL_NEED_DATA)
-                retcode = rc;
-            else if (rc && rc != SQL_SUCCESS_WITH_INFO)
-                return rc;              
-            }
-        }
-    return retcode;
-}
-*/
+
 RETCODE OdbcStatement::executeStatement()
 {
-
-	parameterNeedData = -1;
+	StatementMetaData *metaData = statement->getStatementMetaDataIPD();
+	int nInputParam = metaData->getParameterCount();
+	if( nInputParam )
+	{
+		if(parameterNeedData == 0)
+			parameterNeedData = 1;
     
-    for (int n = 0; n < numberParameters; ++n)
+	    for (int n = parameterNeedData; n <= nInputParam; ++n)
+		{
+			DescRecord *record = applicationParamDescriptor->getDescRecord (n);
+
+			if ( record->parameterType != SQL_PARAM_OUTPUT )
+			{
+				if ( record->data_at_exec )
+				{
+					parameterNeedData = n;
+					return SQL_NEED_DATA;
+				}
+				else if( record->dataPtr )
+					setParameter (record, n);
+	        }
+		}
+	}
+	if (callableStatement)
+		for (int n = 1; n <= implementationParamDescriptor->headCount; ++n)
         {
-        Binding *binding = parameters + n;
-		if ( ( binding->pointer || binding->indicatorPointer ) && binding->type != SQL_PARAM_OUTPUT )
-//			if ( *binding->indicatorPointer == SQL_DATA_AT_EXEC || *binding->indicatorPointer < SQL_LEN_DATA_AT_EXEC_OFFSET )
-			if (binding->indicatorPointer &&( 
-				*binding->indicatorPointer == SQL_DATA_AT_EXEC || *binding->indicatorPointer < SQL_LEN_DATA_AT_EXEC_OFFSET )) // NOMEY +				
-				return SQL_NEED_DATA;
-			else				
-            setParameter (binding, n + 1);
+			DescRecord *record = implementationParamDescriptor->getDescRecord (n);
+			if (record->parameterType != SQL_PARAM_INPUT)
+				callableStatement->registerOutParameter (n, record->conciseType);
         }
 
-    if (callableStatement)
-        for (int n = 0; n < numberParameters; ++n)
-            {
-            Binding *binding = parameters + n;
-            if (binding->pointer && binding->type != SQL_PARAM_INPUT)
-                callableStatement->registerOutParameter (n + 1, binding->sqlType);
-            }
-        
     statement->execute();
-    connection->transactionStarted();
 
     if (callableStatement)
-        for (int n = 0; n < numberParameters; ++n)
-            {
-            Binding *binding = parameters + n;
-            if (binding->pointer && binding->type != SQL_PARAM_INPUT)
-                setValue (binding, n + 1);
-            }
+        for (int n = 1; n <= implementationParamDescriptor->headCount; ++n)
+        {
+			DescRecord *record = implementationParamDescriptor->getDescRecord (n);
+			if (record->parameterType != SQL_PARAM_INPUT)
+				setValue (applicationParamDescriptor->getDescRecord (n), n );
+        }
 
     getResultSet();
 	return SQL_SUCCESS;
 }
-
 
 Binding* OdbcStatement::allocBindings(int count, int oldCount, Binding *oldBindings)
 {
@@ -1927,25 +2507,32 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 
 	clearErrors();
 
-	for (int n = 0; n < numberParameters; ++n)
+	if (parameterNeedData == 0)
+		return sqlReturn (SQL_ERROR, "HY010", "Function sequence error :: OdbcStatement::sqlParamData");
+
+    if (parameterNeedData-1 > implementationParamDescriptor->headCount)
+		return sqlReturn (SQL_ERROR, "HY000", "General error :: OdbcStatement::sqlParamData");
+
+    if (parameterNeedData <= implementationParamDescriptor->headCount)
 	{
-		Binding *binding = parameters + n;
+		int n = parameterNeedData;
 
-		if( binding->indicatorPointer && !binding->startedTransfer &&
-			( *binding->indicatorPointer == SQL_DATA_AT_EXEC || *binding->indicatorPointer < SQL_LEN_DATA_AT_EXEC_OFFSET ) )
+		DescRecord *binding = applicationParamDescriptor->getDescRecord (n);
+
+	//	Bound Address + Binding Offset + ((Row Number – 1) x Element Size)
+	//	*ptr = binding->pointer + bindOffsetPtr + ((1 – 1) * rowBindType);
+		*(unsigned long*)ptr = (unsigned long)binding->dataPtr + (unsigned long)bindOffsetPtr; // for single row
+ 
+		if( binding->indicatorPtr && !binding->startedTransfer && *binding->indicatorPtr < SQL_LEN_DATA_AT_EXEC_OFFSET ) 
 		{
-			parameterNeedData = n;
-			*ptr = binding->pointer;
-			binding->data_at_exec = true;
-
-			switch (binding->cType)
+			switch (binding->conciseType)
 			{
 				case SQL_C_CHAR:
 				{
 					if ( !binding->startedTransfer )
 					{
 						binding->startedTransfer = true;
-						*binding->indicatorPointer = 0;
+						*binding->indicatorPtr = 0;
 						statement->beginClobDataTransfer(n+1);
 					}
 
@@ -1958,7 +2545,7 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 					if ( !binding->startedTransfer )
 					{
 						binding->startedTransfer = true;
-						*binding->indicatorPointer = 0;
+						*binding->indicatorPtr = 0;
 						statement->beginBlobDataTransfer(n+1);
 					}
 
@@ -1973,29 +2560,29 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 			{
 				binding->startedTransfer = false;
 				if(binding->data_at_exec)
-					switch (binding->cType)
+					switch (binding->conciseType)
 					{
-						case SQL_C_CHAR:
-							statement->endClobDataTransfer();
-							break;
-						
-						case SQL_C_BINARY:
-							statement->endBlobDataTransfer();
-							break;
+					case SQL_C_CHAR:
+						statement->endClobDataTransfer();
+						break;
+							
+					case SQL_C_BINARY:
+						statement->endBlobDataTransfer();
+						break;
 					}
 			}
 		}
 	}
 	
 	try
-		{
+	{
 		retcode = executeStatement();
-		}
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		retcode = SQL_ERROR;
-		}
+	}
 
 	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
 		return retcode;
@@ -2005,13 +2592,151 @@ RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 
 RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 {
-	if (parameterNeedData == -1)
+	if (parameterNeedData == 0)
 		return sqlReturn (SQL_ERROR, "HY010", "Function sequence error :: OdbcStatement::sqlPutData");
 
-    if (parameterNeedData >= numberParameters)
+    if (parameterNeedData > implementationParamDescriptor->headCount)
 		return sqlReturn (SQL_ERROR, "HY000", "General error :: OdbcStatement::sqlPutData");
 
-    Binding *binding = parameters + parameterNeedData;
+	DescRecord *binding = applicationParamDescriptor->getDescRecord (parameterNeedData);
+
+    if (!binding)
+		return sqlReturn (SQL_ERROR, "HY000", "General error :: OdbcStatement::sqlPutData");
+
+	if (valueSize == SQL_NULL_DATA)
+		*binding->indicatorPtr = SQL_NULL_DATA;
+	else
+		switch (binding->conciseType)
+		{
+			case SQL_C_CHAR:
+			{
+				if(valueSize == SQL_NTS)
+					valueSize = strlen( (char*)value );
+
+				if( binding->data_at_exec )
+				{
+					binding->dataPtr = value;
+					*binding->indicatorPtr = valueSize;
+					setParameter (binding, parameterNeedData );
+				}
+				else
+				{
+					*binding->indicatorPtr += valueSize;
+					statement->putClobSegmentData (valueSize, value);
+				}
+			}
+			break;
+
+			case SQL_C_BINARY:
+			{			
+				*binding->indicatorPtr += valueSize;
+
+				statement->putBlobSegmentData (valueSize, value);
+			}
+			break;
+		}
+
+	++parameterNeedData;
+
+	return sqlSuccess();
+}
+
+/*
+RETCODE OdbcStatement::sqlParamData(SQLPOINTER *ptr)
+{	
+	RETCODE retcode = sqlSuccess();
+
+	clearErrors();
+
+	if (parameterNeedData == 0)
+		return sqlReturn (SQL_ERROR, "HY010", "Function sequence error :: OdbcStatement::sqlParamData");
+
+    if (parameterNeedData > numberParameters)
+		return sqlReturn (SQL_ERROR, "HY000", "General error :: OdbcStatement::sqlParamData");
+
+	int n = parameterNeedData;
+
+	Binding *binding = parameters + n;
+
+//	Bound Address + Binding Offset + ((Row Number – 1) x Element Size)
+//	*ptr = binding->pointer + bindOffsetPtr + ((1 – 1) * rowBindType);
+	*(unsigned long*)ptr = (unsigned long)binding->pointerOrg + (unsigned long)bindOffsetPtr; // for single row
+ 
+	if( binding->indicatorPointer && !binding->startedTransfer && *binding->indicatorPointer < SQL_LEN_DATA_AT_EXEC_OFFSET ) 
+	{
+		switch (binding->cType)
+		{
+			case SQL_C_CHAR:
+			{
+				if ( !binding->startedTransfer )
+				{
+					binding->startedTransfer = true;
+					*binding->indicatorPointer = 0;
+					statement->beginClobDataTransfer(n+1);
+				}
+
+				return SQL_NEED_DATA;
+			}
+			break;
+
+			case SQL_C_BINARY:
+			{
+				if ( !binding->startedTransfer )
+				{
+					binding->startedTransfer = true;
+					*binding->indicatorPointer = 0;
+					statement->beginBlobDataTransfer(n+1);
+				}
+
+				return SQL_NEED_DATA;
+			}
+			break;				
+		}
+	}
+	else
+	{			
+		if (binding->startedTransfer)
+		{
+			binding->startedTransfer = false;
+			if(binding->data_at_exec)
+				switch (binding->cType)
+				{
+				case SQL_C_CHAR:
+					statement->endClobDataTransfer();
+					break;
+						
+				case SQL_C_BINARY:
+					statement->endBlobDataTransfer();
+					break;
+				}
+		}
+	}
+	
+	try
+	{
+		retcode = executeStatement();
+	}
+	catch (SQLException& exception)
+	{
+		postError ("HY000", exception);
+		retcode = SQL_ERROR;
+	}
+
+	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
+		return retcode;
+
+	return sqlSuccess();
+}
+
+RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
+{
+	if (parameterNeedData == 0)
+		return sqlReturn (SQL_ERROR, "HY010", "Function sequence error :: OdbcStatement::sqlPutData");
+
+    if (parameterNeedData > numberParameters)
+		return sqlReturn (SQL_ERROR, "HY000", "General error :: OdbcStatement::sqlPutData");
+
+    Binding *binding = parameters + parameterNeedData++;
 
     if (!binding)
 		return sqlReturn (SQL_ERROR, "HY000", "General error :: OdbcStatement::sqlPutData");
@@ -2029,9 +2754,17 @@ RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 			if(valueSize == SQL_NTS)
 				valueSize = strlen( (char*)value );
 
-			*binding->indicatorPointer += valueSize;
-
-			statement->putClobSegmentData (valueSize, value);
+			if( binding->data_at_exec )
+			{
+				binding->pointer = value;
+				*binding->indicatorPointer = valueSize;
+				setParameter (binding, parameterNeedData );
+			}
+			else
+			{
+				*binding->indicatorPointer += valueSize;
+				statement->putClobSegmentData (valueSize, value);
+			}
 		}
 		break;
 
@@ -2046,6 +2779,7 @@ RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 
 	return sqlSuccess();
 }
+*/
 
 RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 {
@@ -2056,77 +2790,129 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 		switch (attribute)
 			{
 			case SQL_QUERY_TIMEOUT:				// 0
+				TRACE(SQL_QUERY_TIMEOUT);
+				break;
+
+			case SQL_ATTR_RETRIEVE_DATA:
+				fetchRetData = (int) ptr;
+				TRACE02(SQL_ATTR_RETRIEVE_DATA,(int) ptr);
 				break;
 
 			case SQL_ATTR_PARAM_BIND_TYPE:		// 18
 				paramBindType = (int) ptr;
+				applicationParamDescriptor->headBindType = (SQLINTEGER) ptr;
+				TRACE02(SQL_ATTR_PARAM_BIND_TYPE,(int) ptr);
 				break;
 
 			case SQL_ATTR_PARAM_BIND_OFFSET_PTR:// 17
 				paramBindOffset = ptr;
+				applicationParamDescriptor->headBindOffsetPtr = (SQLINTEGER*)ptr;
+				TRACE02(SQL_ATTR_PARAM_BIND_OFFSET_PTR,(int) ptr);
 				break;
 
 			case SQL_ATTR_PARAMS_PROCESSED_PTR:	// 21
 				paramsProcessedPtr = ptr;
+				implementationParamDescriptor->headRowsProcessedPtr = (SQLUINTEGER*) ptr;
+				TRACE02(SQL_ATTR_PARAMS_PROCESSED_PTR,(int) ptr);
 				break;
 
 			case SQL_ATTR_PARAMSET_SIZE:		// 22
 				paramsetSize = (int) ptr;
+				applicationParamDescriptor->headArraySize = (SQLUINTEGER)ptr;
+				TRACE02(SQL_ATTR_PARAMSET_SIZE,(int) ptr);
 				break;
 
 			case SQL_ATTR_ROW_BIND_TYPE:		// SQL_BIND_TYPE 5
 				rowBindType = (int) ptr;
+				applicationRowDescriptor->headBindType = (SQLINTEGER)ptr;
+				TRACE02(SQL_ATTR_ROW_BIND_TYPE,(int) ptr);
 				break;
 
 			case SQL_ATTR_ROW_ARRAY_SIZE:		// 27
+				applicationRowDescriptor->headArraySize = (int) ptr;
+				TRACE02(SQL_ATTR_ROW_ARRAY_SIZE,(int) ptr);
+				break;
 		    case SQL_ROWSET_SIZE:                // 9
 				rowArraySize = (int) ptr;
-				applicationRowDescriptor->descArraySize = rowArraySize;
+				TRACE02(SQL_ROWSET_SIZE,(int) ptr);
 				break;
 					
 			case SQL_ATTR_ROWS_FETCHED_PTR:		// 26
-				implementationRowDescriptor->rowsProcessedPtr = (SQLUINTEGER*) ptr;
+				implementationRowDescriptor->headRowsProcessedPtr = (SQLUINTEGER*) ptr;
+				TRACE02(SQL_ATTR_ROWS_FETCHED_PTR,(int) ptr);
 				break;
 
 			case SQL_ATTR_ROW_BIND_OFFSET_PTR:	// 23
 				bindOffsetPtr = (SQLINTEGER*) ptr;
+				applicationRowDescriptor->headBindOffsetPtr = (SQLINTEGER*)ptr;
+				TRACE02(SQL_ATTR_ROW_BIND_OFFSET_PTR,(int) ptr);
 				break;
 
 			case SQL_ATTR_ROW_STATUS_PTR:		// 25
 				rowStatusPtr = (SQLUSMALLINT*) ptr;
+				implementationRowDescriptor->headArrayStatusPtr = (SQLUSMALLINT*)ptr;
+				TRACE02(SQL_ATTR_ROW_STATUS_PTR,(int) ptr);
 				break;
  
  			case SQL_ATTR_CONCURRENCY:			// SQL_CONCURRENCY	7
 				currency = (int) ptr;
+				TRACE02(SQL_ATTR_CONCURRENCY,(int) ptr);
 				break;
 
 			case SQL_ATTR_CURSOR_TYPE:			// SQL_CURSOR_TYPE 6
 				cursorType = (int) ptr;
+				TRACE02(SQL_ATTR_CURSOR_TYPE,(int) ptr);
 				break;
 
 			case SQL_ATTR_CURSOR_SCROLLABLE:
 				cursorScrollable = (int) ptr == SQL_SCROLLABLE;
+				TRACE02(SQL_ATTR_CURSOR_SCROLLABLE,(int) ptr);
 				break;
 
 			case SQL_ATTR_ASYNC_ENABLE:			// 4
 				asyncEnable = (int) ptr == SQL_ASYNC_ENABLE_ON;
+				TRACE02(SQL_ATTR_ASYNC_ENABLE,(int) ptr);
 				break;
 
 			case SQL_ATTR_MAX_ROWS:					// SQL_MAX_ROWS 1
 				maxRows = (int) ptr;
+				TRACE02(SQL_ATTR_MAX_ROWS,(int) ptr);
 				break;
 			
 			case SQL_ATTR_MAX_LENGTH:
-				if (!(long)ptr)
-				    break;
-				else 
-				    return sqlReturn (SQL_SUCCESS_WITH_INFO, "01SO2", 
-					    "Driver does not truncate");
+				TRACE02(SQL_ATTR_MAX_LENGTH,(int) ptr);
+				maxLength = (int) ptr;
+				break;
 
 		    case SQL_ATTR_USE_BOOKMARKS:        //    SQL_USE_BOOKMARKS 12
-		        break;
+				applicationRowDescriptor->allocBookmarkField();
+				useBookmarks = (SQLINTEGER)ptr;
+				TRACE02(SQL_ATTR_USE_BOOKMARKS,(int) ptr);
+				break;
+
+
 
 			case SQL_ATTR_CURSOR_SENSITIVITY:    // (-2)
+				TRACE(SQL_ATTR_CURSOR_SENSITIVITY);
+		        break;
+			case SQL_ATTR_PARAM_OPERATION_PTR:		// 19
+				applicationParamDescriptor->headArrayStatusPtr = (SQLUSMALLINT*)ptr;
+				TRACE02(SQL_ATTR_PARAM_OPERATION_PTR,(int) ptr);
+		        break;
+
+			case SQL_ATTR_PARAM_STATUS_PTR:			// 20
+				implementationParamDescriptor->headArrayStatusPtr = (SQLUSMALLINT*)ptr;
+				TRACE02(SQL_ATTR_PARAM_STATUS_PTR,(int) ptr);
+		        break;
+
+			case SQL_ATTR_ROW_OPERATION_PTR:		//	24
+				applicationRowDescriptor->headArrayStatusPtr = (SQLUSMALLINT*)ptr;
+				TRACE02(SQL_ATTR_ROW_OPERATION_PTR,(int) ptr);
+				break;
+
+			case SQL_ATTR_ENABLE_AUTO_IPD:
+				enableAutoIPD = (int) ptr;
+				TRACE02(SQL_ATTR_ENABLE_AUTO_IPD,(int) ptr);
 		        break;
 
 			/***
@@ -2142,16 +2928,12 @@ RETCODE OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int length)
 			case SQL_ATTR_PARAM_OPERATION_PTR		19
 			case SQL_ATTR_PARAM_STATUS_PTR			20
 			case SQL_ATTR_PARAMS_PROCESSED_PTR		21
-			case SQL_ATTR_PARAMSET_SIZE				22
 			case SQL_ATTR_QUERY_TIMEOUT				SQL_QUERY_TIMEOUT
 			case SQL_ATTR_RETRIEVE_DATA				SQL_RETRIEVE_DATA 11
 			case SQL_ATTR_ROW_BIND_TYPE				SQL_BIND_TYPE 5
-			case SQL_ATTR_ROW_NUMBER					SQL_ROW_NUMBER 14
 			case SQL_ATTR_ROW_OPERATION_PTR			24
 			case SQL_ATTR_ROW_STATUS_PTR				25
-			case SQL_ATTR_ROW_ARRAY_SIZE				27	
 			case SQL_ATTR_SIMULATE_CURSOR			SQL_SIMULATE_CURSOR 10
-			case SQL_ATTR_USE_BOOKMARKS				SQL_USE_BOOKMARKS 13	
 			***/
 
 			default:
@@ -2326,17 +3108,13 @@ RETCODE OdbcStatement::returnData()
 	++rowNumber;
 
 	try
-		{
-		if (bindings)
-			for (columnNumber = 1; columnNumber <= numberColumns; ++columnNumber)
-				{
-				Binding *binding = bindings + columnNumber;
-				if (binding->pointer && binding->type != SQL_PARAM_INPUT)
-					setValue (binding, columnNumber);
-				}
+	{
+		int nCount = applicationRowDescriptor->headCount;
+		for (columnNumber = 1; columnNumber <= nCount; ++columnNumber)
+			setValue (applicationRowDescriptor->getDescRecord (columnNumber), columnNumber);
 
-		if (implementationRowDescriptor->rowsProcessedPtr)
-			*implementationRowDescriptor->rowsProcessedPtr = 1;
+		if (implementationRowDescriptor->headRowsProcessedPtr)
+			*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 1;
 		}
 	catch (SQLException& exception)
 		{
@@ -2348,6 +3126,36 @@ RETCODE OdbcStatement::returnData()
 	return sqlSuccess();
 }
 
+/*
+RETCODE OdbcStatement::returnData()
+{
+	int columnNumber;
+	++rowNumber;
+
+	try
+		{
+		if (bindings && *bindings)
+//			for (columnNumber = 1; columnNumber <= numberColumns; ++columnNumber)
+			for (columnNumber = 1; columnNumber < numberBindings; ++columnNumber)
+				{
+				Binding *binding = *bindings + columnNumber;
+				if (binding->pointer && binding->type != SQL_PARAM_INPUT)
+					setValue (binding, columnNumber);
+				}
+
+		if (implementationRowDescriptor->headRowsProcessedPtr)
+			*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 1;
+		}
+	catch (SQLException& exception)
+		{
+		OdbcError *error = postError ("HY000", exception);
+		error->setRowNumber (rowNumber);
+		error->setColumnNumber (columnNumber, rowNumber);
+		return SQL_ERROR;
+		}
+	return sqlSuccess();
+}
+*/
 RETCODE OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT *strLengthPtr, SQLPOINTER numericAttributePtr)
 {
 	clearErrors();

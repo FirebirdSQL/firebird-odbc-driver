@@ -60,6 +60,7 @@
 #include "Value.h"
 #include "IscConnection.h"
 #include "IscStatement.h"
+#include "IscArray.h"
 
 static short sqlNull = -1;
 
@@ -166,13 +167,14 @@ void Sqlda::allocBuffer()
 				length = sizeof (QUAD);
 				break;
 
+			case SQL_ARRAY:
 			case SQL_BLOB:
 				length = sizeof (ISC_QUAD);
 				boundary = 4;
 				break;
 
-			case SQL_ARRAY:
-				NOT_SUPPORTED("array", var->relname_length, var->relname, var->aliasname_length, var->aliasname);
+//			case SQL_ARRAY:
+//				NOT_SUPPORTED("array", var->relname_length, var->relname, var->aliasname_length, var->aliasname);
 			}
 		if (length == 0)
 			throw SQLEXCEPTION (COMPILE_ERROR, "Sqlda variable has zero length");
@@ -498,7 +500,8 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale)
 			return JDBC_DATE;
 
 		case SQL_ARRAY:
-			NOT_SUPPORTED("array", 0, "", 0, "");
+			return JDBC_ARRAY;
+//			NOT_SUPPORTED("array", 0, "", 0, "");
 		}
 
 	return 0;
@@ -619,17 +622,20 @@ void Sqlda::setValue(int slot, Value * value, IscConnection *connection)
 		case SQL_BLOB:	
 			setBlob (var, value, connection);
 			return;
+		case SQL_ARRAY:	
+			setArray (var, value, connection);
+			return;
 		}
 
 	var->sqlscale = 0;
 	var->sqldata = (char*) &value->data;
-	var->sqlind = NULL;
+	*var->sqlind = 0;
 
 	switch (value->type)
 		{
 		case Null:
-			var->sqltype = SQL_LONG;
-			var->sqlind = &sqlNull;
+			var->sqltype |= 1;
+			*var->sqlind = sqlNull;
 			break;
 
 		case String:
@@ -690,7 +696,6 @@ void Sqlda::setValue(int slot, Value * value, IscConnection *connection)
 
 }
 
-
 void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 {
 	if (value->type == Null)
@@ -705,7 +710,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 	ISC_STATUS statusVector [20];
 	isc_blob_handle blobHandle = NULL;
 	isc_tr_handle transactionHandle = connection->startTransaction();
-	isc_create_blob2 (statusVector, 
+	GDS->_create_blob2 (statusVector, 
 					  &connection->databaseHandle,
 					  &transactionHandle,
 					  &blobHandle,
@@ -751,7 +756,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 			Blob *blob = value->data.blob;
 			for (int len, offset = 0; len = blob->getSegmentLength (offset); offset += len)
 				{
-				isc_put_segment (statusVector, &blobHandle, len, (char*) blob->getSegment (offset));
+				GDS->_put_segment (statusVector, &blobHandle, len, (char*) blob->getSegment (offset));
 				if (statusVector [1])
 					THROW_ISC_EXCEPTION (statusVector);
 				}
@@ -764,7 +769,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 			Clob *blob = value->data.clob;
 			for (int len, offset = 0; len = blob->getSegmentLength (offset); offset += len)
 				{
-				isc_put_segment (statusVector, &blobHandle, len, (char*) blob->getSegment (offset));
+				GDS->_put_segment (statusVector, &blobHandle, len, (char*) blob->getSegment (offset));
 				if (statusVector [1])
 					THROW_ISC_EXCEPTION (statusVector);
 				}
@@ -779,14 +784,33 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscConnection *connection)
 
 	if (length)
 		{
-		isc_put_segment (statusVector, &blobHandle, length, address);
+		GDS->_put_segment (statusVector, &blobHandle, length, address);
 		if (statusVector [1])
 			THROW_ISC_EXCEPTION (statusVector);
 		}
 
-	isc_close_blob (statusVector, &blobHandle);
+	GDS->_close_blob (statusVector, &blobHandle);
 	if (statusVector [1])
 		THROW_ISC_EXCEPTION (statusVector);
+}
+
+void WriteToArray(IscConnection *connect,XSQLVAR *var,Value * value);
+
+void Sqlda::setArray(XSQLVAR * var, Value * value, IscConnection *connection)
+{
+	if (value->type == Null)
+		{
+		var->sqltype |= 1;
+		*var->sqlind = -1;
+		memset (var->sqldata, 0, var->sqllen);
+		return;
+		}
+
+	var->sqltype &= ~1;
+	
+	IscArray arr(connection,var);
+	arr.writeArray(value);
+	*(ISC_QUAD*)var->sqldata=arr.arrayId;
 }
 
 int Sqlda::findColumn(const char * columnName)

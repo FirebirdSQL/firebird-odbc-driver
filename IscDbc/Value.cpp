@@ -203,6 +203,35 @@ void Value::setString(int length, const char * string, bool copy)
 		data.string.string = (char*) string;
 }
 
+void Value::convertStringData()
+{
+	char * pt, * ptTmp = data.string.string;
+
+	if (!ptTmp || !*ptTmp)
+		return;
+
+	while(*ptTmp==' ')ptTmp++;
+
+	if(*ptTmp!='{')
+		return;
+
+	pt = data.string.string;
+
+	while(*ptTmp && *ptTmp!='\'')ptTmp++;
+
+	if(*ptTmp!='\'')
+		return;
+
+	ptTmp++; // ch \'
+
+	while(*ptTmp && *ptTmp!='\'')
+		*pt++=*ptTmp++;
+
+	data.string.length = pt-data.string.string;
+	*pt = '\0';
+	// validate end string check Server
+}
+
 char* Value::getString()
 {
 	switch (type)
@@ -521,10 +550,21 @@ char* Value::getString(char **tempPtr)
 
  			if (*tempPtr)
 				delete [] *tempPtr;
-			int length = data.blob->length();
-			*tempPtr = new char [length + 1];
-			data.blob->getBytes (0, length, *tempPtr);
-			(*tempPtr) [length] = 0;
+			if(data.blob->bArray)
+			{
+				BinaryBlob * ptArr = (BinaryBlob *)data.blob;
+				int length = ptArr->getLength();
+				*tempPtr = new char [length + 1];
+				ptArr->getSegment ((int)0, length,(void*)*tempPtr);
+				(*tempPtr) [length] = 0;
+			}
+			else
+			{
+				int length = data.blob->length();
+				*tempPtr = new char [length + 1];
+				data.blob->getBytes (0, length, *tempPtr);
+				(*tempPtr) [length] = 0;
+			}
 			return *tempPtr;
 			}
 
@@ -994,3 +1034,4 @@ void Value::setValue(SqlTime value)
 	type = TimeType;
 	data.time = value;
 }
+

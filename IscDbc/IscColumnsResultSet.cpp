@@ -117,7 +117,8 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 	OutputDebugString (sql.getString());
 #endif
 	prepareStatement (sql);
-	numberColumns = 18;
+//NewTestFire
+//	numberColumns = 18;
 }
 
 bool IscColumnsResultSet::next()
@@ -144,8 +145,8 @@ bool IscColumnsResultSet::next()
 	int array	  = resultSet->getInt (21);	// ARRAY_DIMENSION
 	int precision = resultSet->getInt (25);	// COLUMN_PRECISION
 
-	if (resultSet->valueWasNull)
-		array = 0;
+//	if (resultSet->valueWasNull)
+//		array = 0;
 
 	int dialect = resultSet->statement->connection->getDatabaseDialect();
 //	IscSqlType sqlType (blrType, subType, length, length, dialect, precision);
@@ -265,7 +266,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 			scale = (*stuff++) * -1;
 			mag = 1;
 
-			intVal = isc_vax_integer (stuff, (type == blr_short)? 2 : 4);
+			intVal = GDS->_vax_integer (stuff, (type == blr_short)? 2 : 4);
 
 			if (!scale)
 				stringVal.Format ("%d", intVal);
@@ -286,8 +287,8 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 		case (blr_quad):
 		case (blr_int64):
 			scale = (*stuff++) * -1;
-			intVal = isc_vax_integer (stuff, 4);
-			temp = isc_vax_integer (&stuff[4], 4);
+			intVal = GDS->_vax_integer (stuff, 4);
+			temp = GDS->_vax_integer (&stuff[4], 4);
 			stringVal.Format ("0x%x%x scale %d", intVal, temp, scale);
 			break;
 
@@ -336,7 +337,7 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 					intVal = strlen (stuff);
 					break;
 				default:
-					intVal = isc_vax_integer (stuff, 2);
+					intVal = GDS->_vax_integer (stuff, 2);
 				}
 			if ((intVal + 4) >= BUFF_LEN)
 				{

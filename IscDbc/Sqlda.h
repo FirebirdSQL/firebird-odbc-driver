@@ -47,6 +47,7 @@ public:
 	const char* getOwnerName (int index);
 	int findColumn (const char *columnName);
 	void setBlob (XSQLVAR *var, Value *value, IscConnection *connection);
+	void setArray (XSQLVAR *var, Value *value, IscConnection *connection);
 	void setValue (int slot, Value *value, IscConnection *connection);
 	const char* getTableName (int index);
 //	static const char* getSqlTypeName (int iscType, int subType);

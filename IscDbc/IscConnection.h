@@ -49,6 +49,7 @@ public:
 	virtual void addRef();
 	virtual int getTransactionIsolation();
 	virtual void setTransactionIsolation (int level);
+	virtual void setExtInitTransaction (int optTpb);
 	virtual bool getAutoCommit();
 	virtual void setAutoCommit (bool setting);
 	void init();
@@ -72,6 +73,7 @@ public:
 	virtual bool isConnected();
 	virtual Statement* createStatement();
 	virtual void prepareTransaction();
+	virtual bool getTransactionPending();
 	virtual void rollback();
 	virtual void commit();
 	virtual PreparedStatement* prepareStatement (const char *sqlString);
@@ -84,7 +86,9 @@ public:
 	LinkedList		statements;
 	IscDatabaseMetaData	*metaData;
 	int				transactionIsolation;
+	int				transactionExtInit;
 	bool			autoCommit;
+	bool			transactionPending;
 	int				useCount;
 };
 

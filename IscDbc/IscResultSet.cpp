@@ -92,13 +92,14 @@ bool IscResultSet::next()
 	if (!statement)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
 
+
 	deleteBlobs();
 	reset();
 	allocConversions();
 	ISC_STATUS statusVector [20];
 
 	int dialect = statement->connection->getDatabaseDialect ();
-	int ret = isc_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
+	int ret = GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
 
 	if (ret)
 		{
@@ -126,7 +127,6 @@ const char* IscResultSet::getString(int id)
 
 	/*if (conversions [id - 1])
 		return conversions [id - 1];*/
-
 	return getValue (id)->getString(conversions + id - 1);
 }
 

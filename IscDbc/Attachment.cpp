@@ -61,7 +61,9 @@ Attachment::~Attachment()
 	ISC_STATUS statusVector [20];
 
 	if (databaseHandle)
-		isc_detach_database (statusVector, &databaseHandle);
+	{
+		GDS->_detach_database (statusVector, &databaseHandle);
+	}
 }
 
 void Attachment::openDatabase(const char *dbName, Properties *properties)
@@ -103,31 +105,31 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	int dpbLength = p - dpb;
 	ISC_STATUS statusVector [20];
 
-	if (isc_attach_database (statusVector, strlen (dbName), (char*) dbName, &databaseHandle, 
+	if (GDS->_attach_database (statusVector, strlen (dbName), (char*) dbName, &databaseHandle, 
 							 dpbLength, dpb))
 		{
 		JString text = IscConnection::getIscStatusText (statusVector);
 		throw SQLEXCEPTION (statusVector [1], text);
 		}
 
-	char result [100];
+	char result [256]; // 100
 	databaseDialect = SQL_DIALECT_V5;
 
-	if (!isc_database_info (statusVector, &databaseHandle, sizeof (databaseInfoItems), databaseInfoItems, sizeof (result), result))
+	if (!GDS->_database_info (statusVector, &databaseHandle, sizeof (databaseInfoItems), databaseInfoItems, sizeof (result), result))
 		{
-		for (char *p = result; p < result + sizeof (result) && *p != isc_info_end;)
+ 		for (p = result; p < result + sizeof (result) && *p != isc_info_end;)
 			{
 			char item = *p++;
-			int length = isc_vax_integer (p, 2);
+			int length = GDS->_vax_integer (p, 2);
 			p += 2;
 			switch (item)
 				{
 				case isc_info_db_sql_dialect:
-					databaseDialect = isc_vax_integer (p, length);
+					databaseDialect = GDS->_vax_integer (p, length);
 					break;
 				
 				case isc_info_base_level:
-					serverBaseLevel = isc_vax_integer (p, length);
+					serverBaseLevel = GDS->_vax_integer (p, length);
 					break;
 
 				case isc_info_version:
@@ -135,7 +137,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 					break;
 
 				case isc_info_page_size:
-					pageSize = isc_vax_integer (p, length);
+					pageSize = GDS->_vax_integer (p, length);
 					break;
 				}
 			p += length;

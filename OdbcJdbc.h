@@ -64,5 +64,15 @@ void logMsg (const char *msg);
 #define MASK(n)				(1 << (n))
 #define ROUNDUP(n,b)		((n + b - 1) & ~(b - 1))
 
+#define DRIVER_LOCKED_LEVEL_ENV         4
+#define DRIVER_LOCKED_LEVEL_CONNECT     3
+#define DRIVER_LOCKED_LEVEL				DRIVER_LOCKED_LEVEL_CONNECT
+
+#define FB_COMPILER_MESSAGE_STR(x) #x
+#define FB_COMPILER_MESSAGE_STR2(x)   FB_COMPILER_MESSAGE_STR(x)
+#define FB_COMPILER_MESSAGE(desc) message(__FILE__ "("	\
+									FB_COMPILER_MESSAGE_STR2(__LINE__) "):" desc)
+
+
 #endif
 

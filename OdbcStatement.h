@@ -42,6 +42,7 @@ struct Binding {
 	int			cType;
 	int			sqlType;
 	void		*pointer;
+	void		*pointerOrg;
 	SQLINTEGER	bufferLength;
 //Suggested by R. Milharcic
 	SQLINTEGER	dataOffset;
@@ -52,6 +53,7 @@ struct Binding {
     
 class OdbcConnection;
 class OdbcDesc;
+class DescRecord;
 class ResultSet;
 class ResultSetMetaData;
 class PreparedStatement;
@@ -85,6 +87,7 @@ public:
 	RETCODE sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength);
 	RETCODE sqlCancel();
 	void setParameter (Binding *binding, int parameter);
+	void setParameter(DescRecord *record,int parameter);
 	RETCODE sqlBindParameter (int parameter, int type, int cType, int sqlType, int precision, int scale, PTR ptr, int bufferLength, SDWORD *length);
 	RETCODE sqlDescribeParam (int parameter, SWORD* sqlType, UDWORD*precision, SWORD*scale,SWORD*nullable);
 	RETCODE OdbcStatement::formatParameter( int parameter );
@@ -102,6 +105,8 @@ public:
 	void releaseBindings();
 	RETCODE sqlFreeStmt (int option);
 	bool setValue (Binding *binding, int column);
+	bool setValue (DescRecord *record, int column);
+
 	RETCODE sqlFetch();
 //	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
 	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr, Binding** _bindings = NULL, int* _numberBindings = NULL); //From RM
@@ -134,29 +139,30 @@ public:
 	int					numberParameters;
 //Added 2002-06-04	RM
     int                 parameterNeedData;
-	int					numberBindings;
  	int					numberGetDataBindings;
-	Binding				*bindings;
 	Binding				*getDataBindings;
-	Binding				*parameters;
 	bool				eof;
 	bool				cancel;
 	JString				cursorName;
 	int					rowBindType;
 	int					paramBindType;
 	int					rowArraySize;
+
+	int					fetchRetData;
 	void				*paramBindOffset;
 	void				*paramsProcessedPtr;
 	int					paramsetSize;
 	SQLINTEGER			*bindOffsetPtr;
 	SQLUSMALLINT		*rowStatusPtr;
+	SQLUINTEGER			enableAutoIPD;
+	SQLINTEGER			useBookmarks;
 	int					currency;
 	int					cursorType;
 	bool				cursorScrollable;
 	bool				asyncEnable;
 	int					rowNumber;
 	int					maxRows;
-//	bool				updatePreparedResultSet;
+	int					maxLength;
 };
 
 #endif // !defined(AFX_ODBCSTATEMENT_H__ED260D97_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)

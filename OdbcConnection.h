@@ -65,13 +65,14 @@ public:
 	virtual OdbcObjectType getType();
 	OdbcConnection(OdbcEnv *parent);
 	virtual ~OdbcConnection();
+	void Lock();
+	void UnLock();
 
 	OdbcEnv		*env;
 	Connection	*connection;
 	OdbcStatement*	statements;
 	OdbcDesc*	descriptors;
 	bool		connected;
-	bool		transactionPending;
 	int			connectionTimeout;
 	JString		dsn;
 	JString		databaseName;
@@ -79,8 +80,9 @@ public:
 	JString		password;
 	JString		role;
 	JString		jdbcDriver;
+	int			optTpb;
 	bool		quotedIdentifiers;
-	bool		asyncEnabled;
+	SQLUINTEGER	asyncEnabled;
 	bool		autoCommit;
 	int			accessMode;
 	int			transactionIsolation;
@@ -88,5 +90,27 @@ public:
 	int			cursors;			// default is SQL_CUR_USE_DRIVER
 	int			statementNumber;
 };
+
+class SafeConnectThread
+{
+	OdbcConnection * connection;
+public:
+	SafeConnectThread(OdbcConnection * connect)
+	{
+		if(connect->connected)
+		{
+			connection=connect;
+			connection->Lock();
+		}
+		else
+			connection = NULL;
+	}
+	virtual ~SafeConnectThread()
+	{
+		if(connection && connection->connected)
+			connection->UnLock();
+	}
+};
+
 
 #endif // !defined(AFX_ODBCCONNECTION_H__ED260D96_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)

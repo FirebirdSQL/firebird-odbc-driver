@@ -60,6 +60,10 @@ typedef __int64			QUAD;
 typedef unsigned __int64			UQUAD;
 #endif
 
+/* values for tra_flags */
+#define TRA_ro			1
+#define TRA_nw			2
+
 class Statement;
 class PreparedStatement;
 class CallableStatement;
@@ -102,6 +106,8 @@ public:
 	virtual bool		getAutoCommit() = 0;
 	virtual void		setTransactionIsolation (int level) = 0;
 	virtual int			getTransactionIsolation() = 0;
+	virtual bool		getTransactionPending() = 0;
+	virtual void		setExtInitTransaction (int optTpb) = 0;
 	virtual CallableStatement* prepareCall (const char *sql) = 0;
 };
 
@@ -110,6 +116,15 @@ public:
 class DatabaseMetaData 
 {
 public:
+//////////////////////////////////???
+//////////////////////////////////???
+//////////////////////////////////???
+	virtual short getSqlStrPageSizeBd(const void * info_buffer, int bufferLength,short *lengthPtr) = 0;
+	virtual short getSqlStrWalInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr) = 0;
+	virtual short getStrStatInfoBd(const void * info_buffer, int bufferLength,short *lengthPtr) = 0;
+//////////////////////////////////???
+//////////////////////////////////???
+//////////////////////////////////???
 	virtual ResultSet* getIndexInfo (const char * catalog, const char * schemaPattern, const char * tableNamePattern, bool unique, bool approximate) = 0;
 	virtual ResultSet* getImportedKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern) = 0;
 	virtual ResultSet* getPrimaryKeys (const char * catalog, const char * schemaPattern, const char * tableNamePattern) = 0;
@@ -286,6 +301,8 @@ public:
 			  const char* typeNamePattern, int* types) = 0;
 	virtual int		objectVersion() = 0;
 	virtual bool supportsStatementMetaData() = 0;
+	virtual void LockThread() = 0;
+	virtual void UnLockThread() = 0;
 };
 
 #define STATEMENT_VERSION	1
@@ -296,6 +313,7 @@ public:
 	virtual bool		execute (const char *sqlString) = 0;
 	virtual ResultSet*	executeQuery (const char *sqlString) = 0;
 	virtual int			getUpdateCount() = 0;
+	virtual void		clearResults() = 0;
 	virtual bool		getMoreResults() = 0;
 	virtual void		setCursorName (const char *name) = 0;
 	virtual ResultSet*	getResultSet() = 0;
@@ -305,6 +323,10 @@ public:
 	virtual int			release() = 0;
 	virtual void		addRef() = 0;
 	virtual int			objectVersion() = 0;
+	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) = 0;
+	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr) = 0;
+	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr) = 0;
+	
 };
 
 #define STATEMENTMETADATA_VERSION	1
@@ -330,6 +352,7 @@ public:
 	virtual int			executeUpdate() = 0;
 	virtual void		setString(int index, const char * string) = 0;
     virtual void        setString(int index, const char * string, int length) = 0;
+	virtual void        convStringData(int index) = 0;
 	virtual void		setByte (int index, char value) = 0;
 	virtual void		setShort (int index, short value) = 0;
 	virtual void		setInt (int index, long value) = 0;
@@ -351,9 +374,12 @@ public:
 	virtual void		setTime (int index, SqlTime value) = 0;
 	virtual void		setTimestamp (int index, TimeStamp value) = 0;
 	virtual void		setBlob (int index, Blob *value) = 0;
+	virtual void		setArray (int index, Blob *value) = 0;
 	virtual void		setClob (int index, Clob *value) = 0;
 	virtual StatementMetaData*
-						getStatementMetaData() = 0;
+						getStatementMetaDataIPD() = 0;
+	virtual StatementMetaData*
+						getStatementMetaDataIRD() = 0;
 	virtual	int			getNumParams() = 0;
 	virtual int			objectVersion() = 0;
 };

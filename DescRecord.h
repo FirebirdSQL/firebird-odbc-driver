@@ -30,23 +30,50 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-class DescRecord  
+class DescRecord
 {
 public:
 	DescRecord();
 	virtual ~DescRecord();
+	bool operator =(DescRecord *rec);
 
-	JString		name;
-	int			type;
-	int			subType;
-	int			length;
-	int			precision;
-	int			scale;
-	bool		nullable;
-	int			bufferLength;
-	void		*dataPtr;
-	SQLINTEGER	*octetLengthPtr;
-	SQLINTEGER	*indicatorPtr;
+public:
+	bool			data_at_exec;
+	bool			startedTransfer;
+
+
+	SQLSMALLINT		type;
+	SQLSMALLINT		datetimeIntervalCode;
+	SQLSMALLINT		conciseType;
+	SQLINTEGER		autoUniqueValue;
+	JString			baseColumnName;
+	JString			baseTableName;
+	SQLINTEGER		caseSensitive;
+	JString			catalogName;
+	SQLINTEGER		datetimeIntervalPrecision;
+	SQLINTEGER		displaySize;
+	SQLSMALLINT		fixedPrecScale;
+	JString			label;
+	SQLUINTEGER		length;
+	JString			literalPrefix;
+	JString			literalSuffix;
+	JString			localTypeName;
+	JString			name;
+	SQLSMALLINT		nullable;
+	SQLINTEGER		octetLength;
+	SQLINTEGER		*octetLengthPtr;
+	SQLSMALLINT		parameterType;
+	SQLSMALLINT		precision;
+	SQLSMALLINT		scale;
+	JString			schemaName;
+	SQLSMALLINT		searchable;
+	JString			tableName;
+	JString			typeName;
+	SQLSMALLINT		unSigned;
+	SQLSMALLINT		updaTable;
+	SQLINTEGER		*indicatorPtr;
+	SQLSMALLINT		unNamed;
+	SQLPOINTER		dataPtr;
 };
 
 #endif // !defined(AFX_DESCRECORD_H__F3F1D3A4_4083_11D4_98E8_0000C01D2301__INCLUDED_)

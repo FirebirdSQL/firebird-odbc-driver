@@ -162,8 +162,9 @@ RETCODE OdbcError::sqlGetDiagField(int diagId, SQLPOINTER ptr, int msgBufferLeng
 
 		case SQL_DIAG_SUBCLASS_ORIGIN:
 			{
+			Hash *code;
 			string = CLASS_ODBC;
-			for (Hash *code = hashTable [JString::hash (sqlState, HASH_SIZE)]; code;
+			for (code = hashTable [JString::hash (sqlState, HASH_SIZE)]; code;
 				 code = code->collision)
 				try
 				{
@@ -181,11 +182,8 @@ RETCODE OdbcError::sqlGetDiagField(int diagId, SQLPOINTER ptr, int msgBufferLeng
 					break;
 				}
 
-//				if (!strcmp (sqlState, code->string))
-//					{
-//					string = CLASS_ODBC;
-//					break;
-//					}
+			if ( !code )
+				string = CLASS_ISO;
 			}
 			break;
 

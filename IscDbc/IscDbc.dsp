@@ -232,6 +232,10 @@ SOURCE=.\LinkedList.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\LoadFbClientDll.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Lock.h
 # End Source File
 # Begin Source File
@@ -313,6 +317,18 @@ SOURCE=.\DateTime.cpp
 # Begin Source File
 
 SOURCE=.\Error.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\extodbc.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\IscArray.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\IscArray.h
 # End Source File
 # Begin Source File
 
@@ -409,6 +425,10 @@ SOURCE=.\JString.cpp
 # Begin Source File
 
 SOURCE=.\LinkedList.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\LoadFbClientDll.cpp
 # End Source File
 # Begin Source File
 

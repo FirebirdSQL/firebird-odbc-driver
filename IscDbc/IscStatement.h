@@ -67,6 +67,13 @@ public:
 	virtual int release();
 	virtual void addRef();
 	virtual ~IscStatement();
+//////////////////////////////////////////////
+	virtual int getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
+	{ return getPlanStatement(statementHandle,value,bufferLength,lengthPtr); }  
+	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr)
+	{ return getTypeStatement(statementHandle,value,bufferLength,lengthPtr); }  
+	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr)
+	{ return getInfoCountRecordsStatement(statementHandle,value,bufferLength,lengthPtr); }  
 
 	IscResultSet*	createResultSet();
 	LinkedList		resultSets;

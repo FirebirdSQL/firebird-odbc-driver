@@ -95,6 +95,10 @@
 
 #define DEFAULT_DRIVER		"IscDbc"
 
+#define SQL_FBGETPAGEDB			180
+#define SQL_FBGETWALDB			181
+#define SQL_FBGETSTATINFODB		182
+
 typedef Connection* (*ConnectFn)();
 
 #define ODBC_DRIVER_VERSION	"03.00"
@@ -141,7 +145,7 @@ static const int supportedFunctions [] = {
             SQL_API_SQLNUMRESULTCOLS,
             SQL_API_SQLDRIVERS,
             SQL_API_SQLPARAMDATA,
-            SQL_API_SQLENDTRAN,
+//            SQL_API_SQLENDTRAN,
             SQL_API_SQLPREPARE,
             SQL_API_SQLEXECDIRECT,
             SQL_API_SQLPUTDATA,
@@ -266,16 +270,16 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	connected			= false;
 	connectionTimeout	= 0;
 	connection			= NULL;
-	transactionPending	= false;
 	statements			= NULL;
 	descriptors			= NULL;
 	libraryHandle		= NULL;
-	asyncEnabled		= false;
+	asyncEnabled		= SQL_ASYNC_ENABLE_OFF;
 	autoCommit			= true;
-	cursors				= SQL_CUR_USE_DRIVER;
+	cursors				= SQL_CUR_USE_DRIVER; //Org
 	statementNumber		= 0;
-	accessMode			= SQL_MODE_READ_ONLY;
+	accessMode			= SQL_MODE_READ_WRITE;
 	transactionIsolation = SQL_TXN_READ_COMMITTED; //suggested by CGA.
+	optTpb				= 0;
 }
 
 OdbcConnection::~OdbcConnection()
@@ -350,7 +354,7 @@ RETCODE OdbcConnection::sqlSetConnectAttr (SQLINTEGER attribute, SQLPOINTER valu
 
 		//Added by CA
 	case SQL_ATTR_ASYNC_ENABLE:
-		asyncEnabled = (int) value == SQL_ASYNC_ENABLE_ON;
+		asyncEnabled = (int) value;
 		break;
 
 	case SQL_ATTR_ACCESS_MODE:
@@ -536,7 +540,7 @@ RETCODE OdbcConnection::sqlDisconnect()
 	if (!connected)
 		sqlReturn (SQL_ERROR, "08003", "Connection does not exist");
 
-	if (transactionPending)
+	if (connection->getTransactionPending())
 		sqlReturn (SQL_ERROR, "25000", "Invalid transaction state");
 
 	try
@@ -592,6 +596,21 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 
 	switch (type)
 	{
+//////////////////////////////////???
+//////////////////////////////////???
+//////////////////////////////////???
+	case SQL_FBGETPAGEDB:
+		metaData->getSqlStrPageSizeBd(ptr,maxLength,actualLength);
+		return SQL_SUCCESS;
+	case SQL_FBGETWALDB:
+		metaData->getSqlStrWalInfoBd(ptr,maxLength,actualLength);
+		return SQL_SUCCESS;
+	case SQL_FBGETSTATINFODB:
+		metaData->getStrStatInfoBd(ptr,maxLength,actualLength);
+		return SQL_SUCCESS;
+//////////////////////////////////???
+//////////////////////////////////???
+//////////////////////////////////???
 	case SQL_CURSOR_COMMIT_BEHAVIOR:
 		if (metaData->supportsOpenCursorsAcrossCommit())
 			value = SQL_CB_PRESERVE;
@@ -1189,7 +1208,6 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 		         SQL_SFKU_SET_NULL;
 		break;
 
-
 	case SQL_SQL92_RELATIONAL_JOIN_OPERATORS:
 		{
 			value = 0;
@@ -1233,7 +1251,7 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 	{
 	case infoString:
 #ifdef DEBUG
-		sprintf (temp, "  %s (string) %s\n", item->name, string);
+		sprintf (temp, "  %s (string) %.128s\n", item->name, string);
 		OutputDebugString (temp);
 #endif
 		return (setString (string, (SQLCHAR*) ptr, maxLength, actualLength)) ?
@@ -1282,17 +1300,26 @@ char* OdbcConnection::appendString(char * ptr, const char * string)
 RETCODE OdbcConnection::allocHandle(int handleType, SQLHANDLE * outputHandle)
 {
 	clearErrors();
-	*outputHandle = SQL_NULL_HDBC;
+	if ( handleType == SQL_HANDLE_DESC )
+	{
+		OdbcDesc * desc = allocDescriptor(odtApplication);
+		desc->headAllocType = SQL_DESC_ALLOC_USER;
+		*outputHandle = desc;
+		return sqlSuccess();
+	}
+	else if (handleType == SQL_HANDLE_STMT)
+	{
+		*outputHandle = SQL_NULL_HDBC;
 
-	if (handleType != SQL_HANDLE_STMT)
-		return sqlReturn (SQL_ERROR, "HY000", "General Error");
+		OdbcStatement *statement = new OdbcStatement (this, statementNumber++);
+		statement->next = statements;
+		statements = statement;
+		*outputHandle = (SQLHANDLE)statement;
 
-	OdbcStatement *statement = new OdbcStatement (this, statementNumber++);
-	statement->next = statements;
-	statements = statement;
-	*outputHandle = (SQLHANDLE)statement;
+		return sqlSuccess();
+	}
 
-	return sqlSuccess();
+	return sqlReturn (SQL_ERROR, "HY000", "General Error");
 }
 
 DatabaseMetaData* OdbcConnection::getMetaData()
@@ -1300,6 +1327,15 @@ DatabaseMetaData* OdbcConnection::getMetaData()
 	return connection->getMetaData();
 }
 
+void OdbcConnection::Lock()
+{
+	connection->getMetaData()->LockThread();
+}
+
+void OdbcConnection::UnLock()
+{
+	connection->getMetaData()->UnLockThread();
+}
 RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQLCHAR *uid, int uidLength, SQLCHAR * passwd, int passwdLength, SQLCHAR * roleSQL, int roleLength)
 {
 	clearErrors();
@@ -1385,6 +1421,8 @@ RETCODE OdbcConnection::connect(const char *sharedLibrary, const char * database
 		// Next two lines added by CA
 		connection->setAutoCommit( autoCommit );
 		connection->setTransactionIsolation( transactionIsolation );
+		connection->setExtInitTransaction( optTpb );
+
 	}
 	catch (SQLException& exception)
 	{
@@ -1417,7 +1455,6 @@ RETCODE OdbcConnection::sqlEndTran(int operation)
 			case SQL_ROLLBACK:
 				connection->rollback();
 			}
-			transactionPending = false;
 		}
 		catch (SQLException& exception)
 		{
@@ -1456,6 +1493,13 @@ void OdbcConnection::expandConnectParameters()
 
 		if (role.IsEmpty())
 			role = readAttribute(SETUP_ROLE);
+
+		optTpb = 0;
+
+		JString	optionsTpb = readAttribute(SETUP_READONLY_TPB);
+		if(optionsTpb[0]=='Y')optTpb |=TRA_ro;
+		optionsTpb = readAttribute(SETUP_NOWAIT_TPB);
+		if(optionsTpb[0]=='Y')optTpb |=TRA_nw;
 	}
 
 	if (jdbcDriver.IsEmpty())
@@ -1512,12 +1556,16 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 		value = (autoCommit) ? SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF;
 		break;
 
-	case SQL_ODBC_CURSORS:			//   110
+	case SQL_ATTR_ODBC_CURSORS: // SQL_ODBC_CURSORS   110
 		value = cursors;
 		break;
 
 	case SQL_ATTR_CONNECTION_DEAD:
 		value = SQL_CD_FALSE;
+		break;
+
+	case SQL_ATTR_AUTO_IPD:			// 10001
+		value = SQL_TRUE;
 		break;
 
 	case SQL_LOGIN_TIMEOUT:			//   103
@@ -1544,10 +1592,4 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 		*lengthPtr = sizeof (long);
 
 	return sqlSuccess();
-}
-
-void OdbcConnection::transactionStarted()
-{
-	if (!autoCommit)
-		transactionPending = true;
 }

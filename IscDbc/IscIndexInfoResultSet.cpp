@@ -109,7 +109,10 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 	if (unique)
 		sql += " and idx.rdb$unique_flag = 1\n";
 
-	sql += " order by idx.rdb$unique_flag desc, idx.rdb$index_name, seg.rdb$field_position\n";
+	if (isWildcarded(tableNamePattern)) // all tables
+		sql += " order by idx.rdb$relation_name, idx.rdb$unique_flag desc, idx.rdb$index_name, seg.rdb$field_position\n";
+	else
+		sql += " order by idx.rdb$unique_flag desc, idx.rdb$index_name, seg.rdb$field_position\n";
 
 	prepareStatement (sql);
 	numberColumns = 13;

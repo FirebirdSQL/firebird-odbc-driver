@@ -24,16 +24,16 @@
 
 #include "IscDbc.h"
 #include "IscStatementMetaData.h"
-#include "IscPreparedStatement.h"
+//#include "IscPreparedStatement.h"
 #include "Sqlda.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscStatementMetaData::IscStatementMetaData(IscPreparedStatement *preparedStatement)
+IscStatementMetaData::IscStatementMetaData(Sqlda *ptSqlda)
 {
-	statement = preparedStatement;
+	sqlda = ptSqlda;
 }
 
 IscStatementMetaData::~IscStatementMetaData()
@@ -43,27 +43,27 @@ IscStatementMetaData::~IscStatementMetaData()
 
 int IscStatementMetaData::getParameterCount()
 {
-	return statement->inputSqlda.getColumnCount();
+	return sqlda->getColumnCount();
 }
 
 int IscStatementMetaData::getParameterType(int index)
 {
-	return statement->inputSqlda.getColumnType (index);
+	return sqlda->getColumnType (index);
 }
 
 int IscStatementMetaData::getPrecision(int index)
 {
-	return statement->inputSqlda.getPrecision (index);
+	return sqlda->getPrecision (index);
 }
 
 int IscStatementMetaData::getScale(int index)
 {
-	return -statement->inputSqlda.getScale (index);
+	return -sqlda->getScale (index);
 }
 
 bool IscStatementMetaData::isNullable(int index)
 {
-	return statement->inputSqlda.isNullable (index);
+	return sqlda->isNullable (index);
 }
 
 int IscStatementMetaData::objectVersion()

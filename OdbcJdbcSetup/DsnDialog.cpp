@@ -45,6 +45,8 @@ CDsnDialog::CDsnDialog(const char **jdbcDrivers, CWnd* pParent /*=NULL*/)
 	m_user = _T("");
 	m_driver = _T("");
 	m_role = _T("");
+	m_readonly = FALSE;
+	m_nowait = FALSE;
 	//}}AFX_DATA_INIT
 
 	drivers = jdbcDrivers;
@@ -61,6 +63,8 @@ void CDsnDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_USER, m_user);
 	DDX_CBString(pDX, IDC_DRIVER, m_driver);
 	DDX_Text(pDX, IDC_ROLE, m_role);
+	DDX_Check(pDX, IDC_CHECK_READ, m_readonly);
+	DDX_Check(pDX, IDC_CHECK_NOWAIT, m_nowait);
 	//}}AFX_DATA_MAP
 }
 

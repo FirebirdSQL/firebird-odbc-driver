@@ -87,6 +87,8 @@
 #include "IscConnection.h"
 #include "Attachment.h"
 #include "IscBlob.h"
+#include "IscArray.h"
+
 #include "SQLError.h"
 #include "Value.h"
 
@@ -105,7 +107,8 @@ static long baseDate = init();
 int init()
 {
 	ISC_QUAD baseDate;
-	isc_encode_date (&baseTm, &baseDate);
+	initDll();
+	GDS->_encode_date (&baseTm, &baseDate);
 
 	return baseDate.gds_quad_high;
 }
@@ -116,7 +119,6 @@ IscStatement::IscStatement(IscConnection *connect)
 	useCount = 1;
 	numberColumns = 0;
 	statementHandle = NULL;
-	//transactionHandle = NULL;
 	updateCount = insertCount = deleteCount = 0;
 	selectActive = false;
 }
@@ -196,8 +198,9 @@ ResultSet* IscStatement::getResultSet()
 		throw SQLEXCEPTION (RUNTIME_ERROR, "no active statement");
 
     if (!selectActive)
-		if (outputSqlda.sqlda->sqld < 1)
-			throw SQLEXCEPTION (RUNTIME_ERROR, "current statement doesn't return results");
+ 		if (outputSqlda.sqlda->sqld < 1)
+//		            throw SQLEXCEPTION (RUNTIME_ERROR, "current statement doesn't return results");
+		            throw SQLEXCEPTION (NO_RECORDS_FOR_FETCH, "current statement doesn't return results");
 	
 	return createResultSet();
 }
@@ -212,7 +215,7 @@ ResultSet* IscStatement::executeQuery(const char * sqlString)
 void IscStatement::setCursorName(const char * name)
 {
 	ISC_STATUS statusVector [20];
-	isc_dsql_set_cursor_name (statusVector, &statementHandle, (char*) name, 0);
+	GDS->_dsql_set_cursor_name (statusVector, &statementHandle, (char*) name, 0);
 
 	if (statusVector [1])
 		THROW_ISC_EXCEPTION (statusVector);
@@ -258,14 +261,14 @@ int IscStatement::getUpdateCount()
 void IscStatement::deleteResultSet(IscResultSet * resultSet)
 {
 	resultSets.deleteItem (resultSet);
-
 	if (resultSets.isEmpty())
 		{
 		selectActive = false;
-		connection->commitAuto();
+		if (connection->autoCommit)
+			connection->commitAuto();
 		// Close cursors too.
 		ISC_STATUS statusVector [20];
-		isc_dsql_free_statement (statusVector, &statementHandle, DSQL_close);
+		GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_close);
 		//FIXME: Test status vector.
 		}
 }
@@ -279,7 +282,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 
 	void *transHandle = connection->startTransaction();
 	ISC_STATUS statusVector [20];
-	isc_dsql_allocate_statement (statusVector, &connection->databaseHandle, &statementHandle);
+	GDS->_dsql_allocate_statement (statusVector, &connection->databaseHandle, &statementHandle);
 
 	if (statusVector [1])
 		THROW_ISC_EXCEPTION (statusVector);
@@ -287,7 +290,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 	// Prepare dynamic SQL statement.  Make first attempt to get parameters
 
 	int dialect = connection->getDatabaseDialect();
-	isc_dsql_prepare (statusVector, &transHandle, &statementHandle,
+	GDS->_dsql_prepare (statusVector, &transHandle, &statementHandle,
 					  0, (char*) sqlString, dialect, outputSqlda);
 
 	if (statusVector [1])
@@ -297,7 +300,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 
 	if (outputSqlda.checkOverflow())
 		{
-		isc_dsql_describe (statusVector, &statementHandle, dialect, outputSqlda);
+		GDS->_dsql_describe (statusVector, &statementHandle, dialect, outputSqlda);
 		if (statusVector [1])
 			THROW_ISC_EXCEPTION (statusVector);
 		}
@@ -323,7 +326,7 @@ bool IscStatement::execute()
 	void *transHandle = connection->startTransaction();
 
 	int dialect = connection->getDatabaseDialect ();
-	if (isc_dsql_execute (statusVector, &transHandle, &statementHandle, 
+	if (GDS->_dsql_execute (statusVector, &transHandle, &statementHandle, 
 			dialect, inputSqlda))
 		{
 		clearSelect();
@@ -338,35 +341,36 @@ bool IscStatement::execute()
 	selectActive = false;
 
 	switch (statementType)
+	{
+	case isc_info_sql_stmt_ddl:
 		{
-		case isc_info_sql_stmt_ddl:
-			{
 			clearSelect();
-			connection->commit();
-			freeStatementHandle();
-			}
-			break;
-
-		//case isc_info_sql_stmt_exec_procedure:
-		case isc_info_sql_stmt_select:
-		case isc_info_sql_stmt_select_for_upd:
-			selectActive = true;
-			break;
-
-		case isc_info_sql_stmt_insert:
-		case isc_info_sql_stmt_update:
-		case isc_info_sql_stmt_delete:
 			if (connection->autoCommit)
 				connection->commitAuto();
-			break;
+			freeStatementHandle();
 		}
+		break;
+
+	//case isc_info_sql_stmt_exec_procedure:
+	case isc_info_sql_stmt_select:
+	case isc_info_sql_stmt_select_for_upd:
+		selectActive = true;
+		break;
+
+	case isc_info_sql_stmt_insert:
+	case isc_info_sql_stmt_update:
+	case isc_info_sql_stmt_delete:
+		if (connection->autoCommit)
+			connection->commitAuto();
+		break;
+	}
 
 	return outputSqlda.sqlda->sqld > 0;
 }
 
 void IscStatement::clearResults()
 {
-
+	updateCount = insertCount = deleteCount = 0;
 }
 
 int IscStatement::objectVersion()
@@ -378,7 +382,7 @@ int IscStatement::getUpdateCounts()
 {
 	char buffer [128];
 	ISC_STATUS	statusVector [20];
-	isc_dsql_sql_info (statusVector, &statementHandle, 
+	GDS->_dsql_sql_info (statusVector, &statementHandle, 
 					   sizeof (requestInfo), requestInfo,
 					   sizeof (buffer), buffer);
 
@@ -387,7 +391,7 @@ int IscStatement::getUpdateCounts()
 	for (char *p = buffer; *p != isc_info_end;)
 		{
 		char item = *p++;
-		int length = isc_vax_integer (p, 2);
+		int length = GDS->_vax_integer (p, 2);
 		p += 2;
 		switch (item)
 			{
@@ -397,24 +401,24 @@ int IscStatement::getUpdateCounts()
 				for (char *q = p; *q != isc_info_end;)
 					{
 					char item = *q++;
-					int l = isc_vax_integer (q, 2);
+					int l = GDS->_vax_integer (q, 2);
 					q += 2;
 					switch (item)
 						{
 						case isc_info_req_insert_count:
-							n = isc_vax_integer (q, l);
+							n = GDS->_vax_integer (q, l);
 							insertDelta = n - insertCount;
 							insertCount = n;
 							break;
 
 						case isc_info_req_delete_count:
-							n = isc_vax_integer (q, l);
+							n = GDS->_vax_integer (q, l);
 							deleteDelta = n - deleteCount;
 							deleteCount = n;
 							break;
 
 						case isc_info_req_update_count:
-							n = isc_vax_integer (q, l);
+							n = GDS->_vax_integer (q, l);
 							updateDelta = n - updateCount;
 							updateCount = n;
 							break;
@@ -425,7 +429,7 @@ int IscStatement::getUpdateCounts()
 				break;
 
 			case isc_info_sql_stmt_type:
-				statementType = isc_vax_integer (p, length);
+				statementType = GDS->_vax_integer (p, length);
 				break;
 			}
 		p += length;
@@ -558,7 +562,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				break;
 
 			case SQL_ARRAY:
-				NOT_SUPPORTED("array", var->relname_length, var->relname, var->aliasname_length, var->aliasname);
+				value->setValue (new IscArray(connection,var));
 				break;
 			}
 }
@@ -589,60 +593,19 @@ ISC_TIME IscStatement::getIscTime(SqlTime value)
 	return value.timeValue * ISC_TIME_SECONDS_PRECISION;
 }
 
-/***
-void IscStatement::commitAuto()
-{
-	if (transactionHandle)
-		{
-		ISC_STATUS statusVector [20];
-		isc_commit_transaction (statusVector, &transactionHandle);
-		if (statusVector [1])
-			THROW_ISC_EXCEPTION (statusVector);
-		}
-}
-
-void* IscStatement::getTransaction()
-{
-	ISC_STATUS statusVector [20];
-
-	if (!connection->autoCommit)
-		return connection->startTransaction();
-
-	if (transactionHandle)
-		return transactionHandle;
-
-	isc_start_transaction (statusVector, &transactionHandle, 1, &connection->attachment->databaseHandle, 0, NULL);
-
-	if (statusVector [1])
-		THROW_ISC_EXCEPTION (statusVector);
-
-	return transactionHandle;
-}
-
-void IscStatement::rollbackAuto()
-{
-	if (transactionHandle)
-		{
-		ISC_STATUS statusVector [20];
-		isc_rollback_transaction (statusVector, &transactionHandle);
-		if (statusVector [1])
-			THROW_ISC_EXCEPTION (statusVector);
-		}
-}
-***/
-
 void IscStatement::clearSelect()
 {
 	if (selectActive)
-		{
+	{
 		selectActive = false;
-		connection->commitAuto();
+		if(connection->autoCommit)
+			connection->commitAuto();
 		freeStatementHandle();
-		}
+	}
 }
 
 void IscStatement::freeStatementHandle()
 {
 	ISC_STATUS statusVector [20];
-	isc_dsql_free_statement (statusVector, &statementHandle, DSQL_drop);
+	GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_drop);
 }

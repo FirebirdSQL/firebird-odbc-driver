@@ -46,6 +46,8 @@ public:
 	CString	m_user;
 	CString	m_driver;
 	CString	m_role;
+	BOOL	m_readonly;
+	BOOL	m_nowait;
 	//}}AFX_DATA
 
 

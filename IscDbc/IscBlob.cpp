@@ -38,6 +38,7 @@ IscBlob::IscBlob(IscStatement *stmt, ISC_QUAD *id)
 	statement = stmt;
 	blobId = *id;
 	fetched = false;
+	bArray = false;
 }
 
 IscBlob::~IscBlob()
@@ -68,7 +69,7 @@ void IscBlob::fetchBlob()
 	void *transactionHandle = connection->startTransaction();
 	isc_blob_handle blobHandle = NULL;
 
-	int ret = isc_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
+	int ret = GDS->_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
 							  &blobHandle, &blobId, 0, NULL);
 
 	if (ret)
@@ -79,7 +80,7 @@ void IscBlob::fetchBlob()
 
 	for (;;)
 		{
-		int ret = isc_get_segment (statusVector, &blobHandle, &length, sizeof (buffer), buffer);
+		int ret = GDS->_get_segment (statusVector, &blobHandle, &length, sizeof (buffer), buffer);
 		if (ret)
 			if (ret == isc_segstr_eof)
 				break;
@@ -88,7 +89,7 @@ void IscBlob::fetchBlob()
 		putSegment (length, buffer, true);
 		}
 
-	isc_close_blob (statusVector, &blobHandle);
+	GDS->_close_blob (statusVector, &blobHandle);
 	blobHandle = NULL;
 	fetched = true;
 }

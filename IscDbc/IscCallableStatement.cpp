@@ -55,7 +55,7 @@
 #define QUOTE			16
 #define IDENT			32
 
-static char charTable [256];
+char charTable [256];
 static int init();
 static int foo = init();
 
@@ -136,6 +136,11 @@ void IscCallableStatement::setString(int index, const char * string, int length)
     Parent::setString(index, string, length);   
 }
 
+void IscCallableStatement::convStringData(int index)
+{
+	Parent::convStringData (index);
+}
+
 bool IscCallableStatement::execute()
 {
 	connection->startTransaction();
@@ -150,7 +155,8 @@ bool IscCallableStatement::execute()
 		inputSqlda.setValue (n, parameters.values + n, connection);
 
 	int dialect = connection->getDatabaseDialect();
-	if (isc_dsql_execute2 (statusVector, &transHandle, &statementHandle,
+
+	if (GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle,
 						  dialect, inputSqlda, outputSqlda))
 		THROW_ISC_EXCEPTION (statusVector);
 
@@ -208,7 +214,6 @@ void IscCallableStatement::endClobDataTransfer()
     Parent::endClobDataTransfer();
 }
 
-
 void IscCallableStatement::setBytes(int index, int length, const void* bytes)
 {
 	Parent::setBytes(index, length, bytes);
@@ -223,6 +228,11 @@ bool IscCallableStatement::execute (const char *sqlString)
 ResultSet*	 IscCallableStatement::executeQuery (const char *sqlString)
 {
 	return Parent::executeQuery(sqlString);
+}
+
+void IscCallableStatement::clearResults()
+{
+	Parent::clearResults();
 }
 
 int	IscCallableStatement::getUpdateCount()
@@ -270,9 +280,14 @@ void IscCallableStatement::addRef()
 	Parent::addRef();
 }
 
-StatementMetaData* IscCallableStatement::getStatementMetaData()
+StatementMetaData* IscCallableStatement::getStatementMetaDataIPD()
 {
-	return Parent::getStatementMetaData();
+	return Parent::getStatementMetaDataIPD();
+}
+
+StatementMetaData* IscCallableStatement::getStatementMetaDataIRD()
+{
+	return Parent::getStatementMetaDataIRD();
 }
 
 void IscCallableStatement::setByte(int index, char value)
@@ -308,6 +323,11 @@ void IscCallableStatement::setShort(int index, short value)
 void IscCallableStatement::setBlob(int index, Blob * value)
 {
 	Parent::setBlob(index, value);
+}
+
+void IscCallableStatement::setArray(int index, Blob * value)
+{
+	Parent::setArray(index, value);
 }
 
 void IscCallableStatement::setClob(int index, Clob * value)

@@ -61,7 +61,7 @@
  *				o Changed parameter types for SQLSetConnectOption
  *	
  */
-
+// D:\FIREDRV\OdbcJdbc\Visdata.exe
 
 #ifdef _WIN32
 #include <windows.h>
@@ -76,16 +76,48 @@ extern "C"
 }
 
 #include <stdio.h>
+#include "OdbcJdbc.h"
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
 #include "OdbcStatement.h"
+#include "SafeEnvThread.h"
 
+#define __MONITOR_EXECUTING
+
+#ifdef _WIN32
+#define OUTPUT_MONITOR_EXECUTING(msg)  OutputDebugString(msg); 
+#else
+#define OUTPUT_MONITOR_EXECUTING(msg)
+#endif
 //#define DEBUG
 
 #ifdef DEBUG
 #define TRACE(msg)		trace (msg)
 #else
-#define TRACE(msg)
+#define TRACE(msg)		OUTPUT_MONITOR_EXECUTING(msg)
+#endif
+
+#if(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_ENV)
+
+#define GUARD 				SafeEnvThread wt
+#define GUARD_HSTMT(arg)	GUARD
+#define GUARD_HDBC(arg)		GUARD
+#define GUARD_HDESC(arg)	GUARD
+
+#elif(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_CONNECT)
+
+#define GUARD
+#define GUARD_HSTMT(arg)		SafeConnectThread wt(((OdbcStatement*)arg)->connection)
+#define GUARD_HDBC(arg) 		SafeConnectThread wt((OdbcConnection*)arg)
+#define GUARD_HDESC(arg)		SafeConnectThread wt(((OdbcDesc*)arg)->connection)
+
+#else
+
+#define GUARD
+#define GUARD_HSTMT(arg)
+#define GUARD_HDBC(arg)
+#define GUARD_HDESC(arg)	
+
 #endif
 
 //#define LOGGING
@@ -148,6 +180,7 @@ RETCODE SQL_API SQLAllocConnect  (HENV arg0,
 			 HDBC * arg1)
 {
 	TRACE ("SQLAllocConnect");
+	GUARD_HSTMT(arg1);
 
 	return __SQLAllocHandle (SQL_HANDLE_DBC, arg0, arg1);
 }
@@ -167,6 +200,7 @@ RETCODE SQL_API SQLAllocStmt  (HDBC arg0,
 		 HSTMT * arg1)
 {
 	TRACE ("SQLAllocStmt");
+	GUARD_HDBC(arg0);
 
 	return __SQLAllocHandle (SQL_HANDLE_STMT, arg0, arg1);
 }
@@ -181,6 +215,7 @@ RETCODE SQL_API SQLBindCol  (HSTMT arg0,
 			SDWORD * arg5)
 {
 	TRACE ("SQLBindCol");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlBindCol (arg1, arg2, arg3, arg4, arg5);
 }
@@ -190,6 +225,7 @@ RETCODE SQL_API SQLBindCol  (HSTMT arg0,
 RETCODE SQL_API SQLCancel  (HSTMT arg0)
 {
 	TRACE ("SQLCancel");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlCancel ();
 }
@@ -205,6 +241,7 @@ RETCODE SQL_API SQLColAttributes  (HSTMT arg0,
 		 SDWORD * arg6)
 {
 	TRACE("SQLColAttributes");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlColAttributes (arg1, arg2, arg3, arg4, arg5, arg6);
 }
@@ -223,6 +260,7 @@ RETCODE SQL_API SQLConnect  (HDBC arg0,
 	role = r;
 
 	TRACE ("SQLConnect");
+	GUARD_HDBC(arg0);
 
 	return ((OdbcConnection*) arg0)->sqlConnect (arg1, arg2, arg3, arg4, arg5, arg6, role, 0);
 }
@@ -240,6 +278,7 @@ RETCODE SQL_API SQLDescribeCol  (HSTMT arg0,
 		 SWORD * arg8)
 {
 	TRACE ("SQLDescribeCol");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlDescribeCol (arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
@@ -249,6 +288,7 @@ RETCODE SQL_API SQLDescribeCol  (HSTMT arg0,
 RETCODE SQL_API SQLDisconnect  (HDBC arg0)
 {
 	TRACE ("SQLDisconnect");
+	GUARD_HDBC(arg0);
 #ifdef LOGGING
 	if ( logFile )
 		fclose (logFile);
@@ -271,13 +311,17 @@ RETCODE SQL_API SQLError  (HENV env,
 	TRACE("SQLError");
 
 	if (statement)
+	{
+		GUARD_HSTMT(statement);
 //		return statement->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
 		return ((OdbcStatement*)statement)->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
-
+	}
 	if (connection)
+	{
+		GUARD_HDBC(connection);
 //		return connection->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
 		return ((OdbcConnection*)connection)->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
-
+	}
 	if (env)
 //		return env->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
 		return ((OdbcEnv*)env)->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
@@ -292,6 +336,7 @@ RETCODE SQL_API SQLExecDirect  (HSTMT arg0,
 		 SDWORD arg2)
 {
 	TRACE ("SQLExecDirect");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlExecuteDirect(arg1, arg2);
 }
@@ -301,6 +346,7 @@ RETCODE SQL_API SQLExecDirect  (HSTMT arg0,
 RETCODE SQL_API SQLExecute  (HSTMT arg0)
 {
 	TRACE("SQLExecute");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlExecute();
 }
@@ -310,6 +356,7 @@ RETCODE SQL_API SQLExecute  (HSTMT arg0)
 RETCODE SQL_API SQLFetch  (HSTMT arg0)
 {
 	TRACE ("SQLFetch");
+	GUARD_HSTMT(arg0);
 	
 	return ((OdbcStatement*) arg0)->sqlFetch();
 }
@@ -319,8 +366,10 @@ RETCODE SQL_API SQLFetch  (HSTMT arg0)
 RETCODE SQL_API SQLFreeConnect  (HDBC arg0)
 {
 	TRACE ("SQLFreeconnect");
+	GUARD_HDBC(arg0);
 
-	return SQLFreeHandle (SQL_HANDLE_DBC, arg0);
+	delete (OdbcConnection*) arg0;
+	return SQL_SUCCESS;
 }
 
 ///// SQLFreeEnv /////	ODBC 3.0	///// ISO 92
@@ -329,7 +378,8 @@ RETCODE SQL_API SQLFreeEnv  (HENV arg0)
 {
 	TRACE ("SQLFreeEnv");
 
-	return SQLFreeHandle (SQL_HANDLE_ENV, arg0);
+	delete (OdbcEnv*) arg0;
+	return SQL_SUCCESS;
 }
 
 ///// SQLFreeStmt /////	ODBC 1.0	///// ISO 92
@@ -338,9 +388,13 @@ RETCODE SQL_API SQLFreeStmt  (HSTMT arg0,
 		 UWORD arg1)
 {
 	TRACE ("SQLFreeStmt");
+	GUARD_HSTMT(arg0);
 
 	if (arg1 == SQL_DROP)
-		return SQLFreeHandle (SQL_HANDLE_STMT, arg0);
+	{
+		delete (OdbcStatement*) arg0;
+		return SQL_SUCCESS;
+	}
 
 	return ((OdbcStatement*) arg0)->sqlFreeStmt (arg1);
 }
@@ -353,6 +407,7 @@ RETCODE SQL_API SQLGetCursorName  (HSTMT arg0,
 		 SWORD * arg3)
 {
 	TRACE ("SQLGetCursorName called\n");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlGetCursorName (arg1, arg2, arg3);
 }
@@ -362,6 +417,7 @@ RETCODE SQL_API SQLGetCursorName  (HSTMT arg0,
 RETCODE SQL_API SQLNumResultCols  (HSTMT arg0, SWORD * arg1)
 {
 	TRACE ("SQLNumResultCols");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlNumResultCols (arg1);
 }
@@ -373,6 +429,7 @@ RETCODE SQL_API SQLPrepare  (HSTMT arg0,
 		 SDWORD arg2)
 {
 	TRACE ("SQLPrepare");
+	GUARD_HSTMT(arg0);
 	
 	return ((OdbcStatement*) arg0)->sqlPrepare (arg1, arg2, false);
 
@@ -383,6 +440,7 @@ RETCODE SQL_API SQLPrepare  (HSTMT arg0,
 RETCODE SQL_API SQLRowCount  (HSTMT arg0, SDWORD * arg1)
 {
 	TRACE ("SQLRowCount");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlRowCount (arg1);
 }
@@ -394,6 +452,7 @@ RETCODE SQL_API SQLSetCursorName  (HSTMT arg0,
 		 SWORD arg2)
 {
 	TRACE ("SQLSetCursorName");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlSetCursorName (arg1, arg2);
 }
@@ -410,6 +469,7 @@ RETCODE SQL_API SQLSetParam  (HSTMT arg0,
 		 SDWORD * arg7)
 {
 	TRACE ("SQLSetParam");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlSetParam (arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
@@ -423,9 +483,12 @@ RETCODE SQL_API SQLTransact  (HENV arg0,
 	TRACE ("SQLTransact");
 
 	if (arg0 == SQL_NULL_HDBC)
-		return SQLEndTran (SQL_HANDLE_DBC, arg1, arg2);
+	{
+		GUARD_HDBC(arg1);
+		return ((OdbcConnection*) arg1)->sqlEndTran (arg2);
+	}
 
-	return SQLEndTran (SQL_HANDLE_ENV, arg0, arg2);
+	return ((OdbcEnv*) arg0)->sqlEndTran (arg2);
 }
 
 ///// SQLColumns /////
@@ -441,6 +504,7 @@ RETCODE SQL_API SQLColumns  (HSTMT arg0,
 		 SWORD arg8)
 {
 	TRACE ("SQLColumns");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlColumns (arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
@@ -457,6 +521,7 @@ RETCODE SQL_API SQLDriverConnect  (HDBC arg0,
 		 UWORD uwMode)
 {
 	TRACE ("SQLDriverConnect");
+	GUARD_HDBC(arg0);
 
 	return ((OdbcConnection*) arg0)->sqlDriverConnect (
 				hWnd, szConnStrIn, cbConnStrIn,
@@ -505,8 +570,9 @@ RETCODE SQL_API SQLGetConnectOption  (HDBC arg0,
 */
 //Added by C. G. A.
 	TRACE ("SQLGetConnectOption");
+	GUARD_HDBC(arg0);
 
-	return SQLGetConnectAttr (arg0, arg1, arg2, 0, NULL);
+	return ((OdbcConnection*) arg0)->sqlGetConnectAttr (arg1, arg2, 0, NULL);
 
 }
 
@@ -520,6 +586,7 @@ RETCODE SQL_API SQLGetData  (HSTMT arg0,
 		 SDWORD * arg5)
 {
 	TRACE ("SQLGetData");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlGetData (arg1, arg2, arg3, arg4, arg5);
 }
@@ -531,6 +598,7 @@ RETCODE SQL_API SQLGetFunctions  (HDBC arg0,
 		 SQLUSMALLINT  *arg2)
 {
 	TRACE ("SQLGetFunctions");
+	GUARD_HDBC(arg0);
 
 	return ((OdbcConnection*) arg0)->sqlGetFunctions (arg1, arg2);
 }
@@ -544,6 +612,7 @@ RETCODE SQL_API SQLGetInfo  (HDBC arg0,
 		 SWORD * arg4)
 {
 	TRACE ("SQLGetInfo");
+	GUARD_HDBC(arg0);
 
 	return ((OdbcConnection*) arg0)->sqlGetInfo (arg1, arg2, arg3, arg4);
 }
@@ -560,6 +629,7 @@ RETCODE SQL_API SQLGetStmtOption  (HSTMT arg0,
 	*/
 	
 	TRACE ("SQLGetStmtOption");
+	GUARD_HSTMT(arg0);
 	return ((OdbcStatement*) arg0)->sqlGetStmtAttr (arg1, arg2, 0, NULL);
 
 }
@@ -570,6 +640,7 @@ RETCODE SQL_API SQLGetTypeInfo  (HSTMT arg0,
 		 SWORD arg1)
 {
 	TRACE ("SQLGetTypeInfo");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlGetTypeInfo (arg1);
 }
@@ -580,6 +651,7 @@ RETCODE SQL_API SQLParamData  (HSTMT arg0,
 		 PTR * arg1)
 {
 	TRACE("SQLParamData");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlParamData (arg1);
 }
@@ -591,6 +663,7 @@ RETCODE SQL_API SQLPutData  (HSTMT arg0,
 		 SDWORD arg2)
 {
 	TRACE ("SQLPutData");
+	GUARD_HSTMT(arg0);
 	return ((OdbcStatement*) arg0)->sqlPutData (arg1, arg2);
 }
 
@@ -603,9 +676,9 @@ RETCODE SQL_API SQLSetConnectOption  (HDBC arg0,
                  SQLUINTEGER arg2)
 {
 	TRACE ("SQLSetConnectOption");
+	GUARD_HDBC(arg0);
 
-	return SQLSetConnectAttr (arg0, arg1, (SQLPOINTER)arg2, 0);
-
+	return ((OdbcConnection*) arg0)->sqlSetConnectAttr (arg1, (SQLPOINTER)arg2,0);
 }
 
 
@@ -616,6 +689,7 @@ RETCODE SQL_API SQLSetStmtOption  (HSTMT arg0,
 		 UDWORD arg2)
 {
 	TRACE ("SQLSetStmtOption");
+	GUARD_HSTMT(arg0);
 	return ((OdbcStatement*) arg0)->sqlSetStmtAttr (arg1, (SQLPOINTER) arg2, 0);
 
 }
@@ -634,6 +708,7 @@ RETCODE SQL_API SQLSpecialColumns  (HSTMT arg0,
 		 UWORD arg9)
 {
 	TRACE ("SQLSpecialColumns");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlSpecialColumns (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
 }
@@ -651,6 +726,7 @@ RETCODE SQL_API SQLStatistics  (HSTMT arg0,
 		 UWORD arg8)
 {
 	TRACE ("SQLStatistics");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlStatistics (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
 }
@@ -668,6 +744,7 @@ RETCODE SQL_API SQLTables  (HSTMT arg0,
 		 SWORD arg8)
 {
 	TRACE ("SQLTables");
+	GUARD_HSTMT(arg0);
 	return ((OdbcStatement*) arg0)->sqlTables (arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
 
@@ -680,6 +757,7 @@ RETCODE SQL_API SQLBrowseConnect  (HDBC arg0,
 		 SWORD arg4,
 		 SWORD * arg5)
 {
+	GUARD_HDBC(arg0);
 	notYetImplemented("SQLBrowseConnect called\n");
 	return(SQL_SUCCESS);
 }
@@ -709,6 +787,7 @@ RETCODE SQL_API SQLDescribeParam  (HSTMT arg0,
 		 SWORD * arg5)
 {
 	TRACE("SQLDescribeParam");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlDescribeParam (arg1, arg2, arg3, arg4, arg4);
 }
@@ -722,6 +801,7 @@ RETCODE SQL_API SQLExtendedFetch  (HSTMT arg0,
 		 UWORD * arg4)
 {
 	TRACE ("SQLExtendedFetch");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlExtendedFetch(arg1, arg2, arg3, arg4);
 }
@@ -743,6 +823,7 @@ RETCODE SQL_API SQLForeignKeys  (HSTMT arg0,
 		 SWORD arg12)
 {
 	TRACE ("SQLForeignKeys");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlForeignKeys (arg1, arg2, arg3, arg4, 
 													arg5, arg6, arg7, arg8,
@@ -754,6 +835,7 @@ RETCODE SQL_API SQLForeignKeys  (HSTMT arg0,
 RETCODE SQL_API SQLMoreResults  (HSTMT arg0)
 {
 	TRACE("SQLMoreResults");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlMoreResults();
 }
@@ -767,6 +849,7 @@ RETCODE SQL_API SQLNativeSql  (HDBC arg0,
 		 SDWORD arg4,
 		 SDWORD * arg5)
 {
+	GUARD_HDBC(arg0);
 	notYetImplemented("SQLNativeSql called\n");
 	return(SQL_SUCCESS);
 }
@@ -782,6 +865,7 @@ RETCODE SQL_API SQLNumParams  (HSTMT arg0,
 	*/
 	
 	TRACE("SQLMoreResults");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlNumParams(arg1);		
 }
@@ -792,6 +876,7 @@ RETCODE SQL_API SQLParamOptions  (HSTMT arg0,
 		 UDWORD arg1,
 		 UDWORD * arg2)
 {
+	GUARD_HSTMT(arg0);
 	notYetImplemented("SQLParamOptions called\n");
 	return(SQL_SUCCESS);
 }
@@ -807,6 +892,7 @@ RETCODE SQL_API SQLPrimaryKeys  (HSTMT arg0,
 		 SWORD arg6)
 {
 	TRACE ("SQLPrimaryKeys");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlPrimaryKeys (arg1, arg2, arg3, arg4, arg5, arg6);
 }
@@ -824,6 +910,7 @@ RETCODE SQL_API SQLProcedureColumns  (HSTMT arg0,
 		 SWORD arg8)
 {
 	TRACE ("SQLProcedureColumns");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlProcedureColumns (arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
@@ -839,6 +926,7 @@ RETCODE SQL_API SQLProcedures  (HSTMT arg0,
 		 SWORD arg6)
 {
 	TRACE ("SQLProcedures");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlProcedures (arg1,arg2,arg3,arg4,arg5,arg6);
 }
@@ -850,6 +938,7 @@ RETCODE SQL_API SQLSetPos  (HSTMT arg0,
 		 UWORD arg2,
 		 UWORD arg3)
 {
+	GUARD_HSTMT(arg0);
 	notYetImplemented("SQLSetPos called\n");
 	return(SQL_SUCCESS);
 }
@@ -861,6 +950,7 @@ RETCODE SQL_API SQLSetScrollOptions  (HSTMT arg0,
 		 SDWORD arg2,
 		 UWORD arg3)
 {
+	GUARD_HSTMT(arg0);
 	notYetImplemented("SQLSetScrollOptions called\n");
 	return(SQL_SUCCESS);
 }
@@ -882,6 +972,7 @@ RETCODE SQL_API SQLTablePrivileges  (
 	*/
 
 	TRACE ("SQLTablePrivileges");
+	GUARD_HSTMT(arg0);
 	return ((OdbcStatement*) arg0)->sqlTablePrivileges (arg1,arg2,arg3,arg4,arg5,arg6);
 }
 
@@ -903,6 +994,7 @@ RETCODE SQL_API SQLColumnPrivileges  (HSTMT arg0,
 	*/
 
 	TRACE ("SQLColumnPrivileges");
+	GUARD_HSTMT(arg0);
 	return ((OdbcStatement*) arg0)->sqlColumnPrivileges (arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
 
@@ -935,6 +1027,7 @@ RETCODE SQL_API SQLBindParameter  (HSTMT arg0,
 		 SDWORD * arg9)
 {
 	TRACE ("SQLBindParameter");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlBindParameter (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
 }
@@ -960,6 +1053,7 @@ RETCODE SQL_API SQLBindParam  (SQLHSTMT arg0,
 		 SQLPOINTER arg6,
 		 SQLINTEGER * arg7)
 {
+	GUARD_HSTMT(arg0);
 	notYetImplemented("SQLBindParam called\n");
 	return(SQL_SUCCESS);
 }
@@ -969,6 +1063,7 @@ RETCODE SQL_API SQLBindParam  (SQLHSTMT arg0,
 RETCODE SQL_API SQLCloseCursor  (SQLHSTMT arg0)
 {
 	TRACE ("SQLCloseCursor");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlCloseCursor();
 }
@@ -984,17 +1079,21 @@ RETCODE SQL_API SQLColAttribute  (SQLHSTMT arg0,
 		 SQLPOINTER arg6)
 {
 	TRACE ("SQLColAttribute");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlColAttribute (arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
 ///// SQLCopyDesc /////
-
 RETCODE SQL_API SQLCopyDesc  (SQLHDESC arg0,
 		 SQLHDESC arg1)
 {
-	notYetImplemented("SQLCopyDesc called\n");
-	return(SQL_SUCCESS);
+	TRACE ("SQLCopyDesc");
+	GUARD_HDESC(arg0);
+	if( arg0 == NULL || arg1 == NULL )
+		return SQL_ERROR;
+
+	return *(OdbcDesc*)arg1 = *(OdbcDesc*)arg0;
 }
 
 ///// SQLEndTran ///// ODBC 3.0 ///// ISO 92
@@ -1011,7 +1110,10 @@ RETCODE SQL_API SQLEndTran  (SQLSMALLINT arg0,
 			return ((OdbcEnv*) arg1)->sqlEndTran (arg2);
 
 		case SQL_HANDLE_DBC:
-			return ((OdbcConnection*) arg1)->sqlEndTran (arg2);
+			{
+				GUARD_HDBC(arg1);
+				return ((OdbcConnection*) arg1)->sqlEndTran (arg2);
+			}
 		}
 
 	return SQL_INVALID_HANDLE;
@@ -1024,6 +1126,7 @@ RETCODE SQL_API SQLFetchScroll  (SQLHSTMT arg0,
 		 SQLINTEGER arg2)
 {
 	TRACE ("SQLFetchScroll");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlFetchScroll (arg1, arg2);
 }
@@ -1042,15 +1145,26 @@ RETCODE SQL_API SQLFreeHandle  (SQLSMALLINT arg0,
 			break;
 
 		case SQL_HANDLE_DBC:
-			delete (OdbcConnection*) arg1;
+			{
+				GUARD_HDBC(arg1);
+				delete (OdbcConnection*) arg1;
+			}
 			break;
 
 		case SQL_HANDLE_STMT:
-			delete (OdbcStatement*) arg1;
+			{
+				GUARD_HSTMT(arg1);
+				delete (OdbcStatement*) arg1;
+			}
 			break;
 
 		case SQL_HANDLE_DESC:
-			notYetImplemented ("SQLFreeHandle DESC");
+			{
+				GUARD_HDESC(arg1);
+				if ( ((OdbcDesc*)arg1)->headType == odtApplication )
+					delete (OdbcDesc*) arg1;
+			}
+			break;
 
 		default:
 			return SQL_INVALID_HANDLE;
@@ -1068,6 +1182,7 @@ RETCODE SQL_API SQLGetConnectAttr  (SQLHDBC arg0,
 		 SQLINTEGER * arg4)
 {
 	TRACE ("SQLGetConnectAttr");
+	GUARD_HDBC(arg0);
 
 	return ((OdbcConnection*) arg0)->sqlGetConnectAttr (arg1, arg2, arg3, arg4);
 }
@@ -1081,12 +1196,8 @@ RETCODE SQL_API SQLGetDescField  (SQLHDESC arg0,
 		 SQLINTEGER arg4,
 		 SQLINTEGER * arg5)
 {
-	/*
-	notYetImplemented("SQLGetDescField called\n");
-	return(SQL_SUCCESS);
-	*/
-
-	TRACE ("SQLSetDescField");
+	TRACE ("SQLGetDescField");
+	GUARD_HDESC(arg0);
 
 	return ((OdbcDesc*) arg0)->sqlGetDescField (arg1, arg2, arg3, arg4, arg5);
 }
@@ -1105,8 +1216,9 @@ RETCODE SQL_API SQLGetDescRec  (SQLHDESC arg0,
 		 SQLSMALLINT * arg9,
 		 SQLSMALLINT * arg10)
 {
-	notYetImplemented("SQLGetDescRec called\n");
-	return(SQL_SUCCESS);
+	TRACE ("SQLGetDescRec");
+	GUARD_HDESC(arg0);
+	return ((OdbcDesc*) arg0)->sqlGetDescRec (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
 }
 
 ///// SQLGetDiagField /////
@@ -1167,6 +1279,7 @@ RETCODE SQL_API SQLGetStmtAttr  (SQLHSTMT arg0,
 		 SQLINTEGER * arg4)
 {
 	TRACE ("SQLGetStmtAttr");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlGetStmtAttr (arg1,arg2,arg3,arg4);
 }
@@ -1179,6 +1292,7 @@ RETCODE SQL_API SQLSetConnectAttr  (SQLHDBC arg0,
 		 SQLINTEGER arg3)
 {
 	TRACE ("SQLSetConnectAttr");
+	GUARD_HDBC(arg0);
 
 	return ((OdbcConnection*) arg0)->sqlSetConnectAttr (arg1, arg2, arg3);
 }
@@ -1192,6 +1306,7 @@ RETCODE SQL_API SQLSetDescField  (SQLHDESC arg0,
 		 SQLINTEGER arg4)
 {
 	TRACE ("SQLSetDescField");
+	GUARD_HDESC(arg0);
 
 	return ((OdbcDesc*) arg0)->sqlSetDescField (arg1, arg2, arg3, arg4);
 }
@@ -1209,8 +1324,9 @@ RETCODE SQL_API SQLSetDescRec  (SQLHDESC arg0,
 		 SQLINTEGER * arg8,
 		 SQLINTEGER * arg9)
 {
-	notYetImplemented("SQLSetDescRec called\n");
-	return(SQL_SUCCESS);
+	TRACE ("SQLSetDescRec");
+	GUARD_HDESC(arg0);
+	return ((OdbcDesc*) arg0)->sqlSetDescRec (arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
 }
 
 ///// SQLSetEnvAttr /////
@@ -1233,6 +1349,7 @@ RETCODE SQL_API SQLSetStmtAttr  (SQLHSTMT arg0,
 		 SQLINTEGER arg3)
 {
 	TRACE ("SQLSetStmtAttr");
+	GUARD_HSTMT(arg0);
 
 	return ((OdbcStatement*) arg0)->sqlSetStmtAttr (arg1, arg2, arg3);
 }
@@ -1243,6 +1360,7 @@ RETCODE SQL_API SQLSetStmtAttr  (SQLHSTMT arg0,
 RETCODE SQL_API SQLBulkOperations  (SQLHSTMT arg0,
 			SQLSMALLINT arg1)
 {
+	GUARD_HSTMT(arg0);
 	notYetImplemented("SQLBulkOperations called\n");
 	return(SQL_SUCCESS);
 }
