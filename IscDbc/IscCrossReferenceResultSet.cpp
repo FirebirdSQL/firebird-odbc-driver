@@ -64,7 +64,7 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 				" cast (NULL as varchar(7)) as fktable_schem,\n"// 6
 				" cast (fidx.rdb$relation_name as varchar(31)) as fktable_name,\n"	// 7
 				" cast (fseg.rdb$field_name as varchar(31)) as fkcolumn_name,\n"	// 8
-				" pseg.rdb$field_position+1 as key_seq,\n"		// 9
+				" cast (pseg.rdb$field_position+1 as smallint) as key_seq,\n"		// 9
 				" cast (0 as smallint) as update_rule,\n"		// 10
 				" cast (0 as smallint) as delete_rule,\n"		// 11
 				" cast (fkey.rdb$constraint_name as varchar(31)) as fk_name,\n"		// 12
