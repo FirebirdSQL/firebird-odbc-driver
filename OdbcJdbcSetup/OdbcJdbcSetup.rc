@@ -52,7 +52,6 @@ BEGIN
     "LANGUAGE 9, 1\r\n"
     "#pragma code_page(1252)\r\n"
     "#endif\r\n"
-    "#include ""res\\OdbcJdbcSetup.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
     "#include ""afxres.rc""         // Standard components\r\n"
     "#endif\0"
 END
@@ -126,7 +125,8 @@ BEGIN
     EDITTEXT        IDC_USER,7,89,66,12,ES_UPPERCASE | ES_AUTOHSCROLL
     EDITTEXT        IDC_PASSWORD,77,89,73,12,ES_PASSWORD | ES_AUTOHSCROLL
     EDITTEXT        IDC_ROLE,154,89,76,12,ES_AUTOHSCROLL
-    EDITTEXT        IDC_CHARSET,56,109,114,12,ES_AUTOHSCROLL
+    COMBOBOX        IDC_CHARSET,56,109,114,120,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
     CONTROL         "read (default write)",IDC_CHECK_READ,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,148,69,10
     CONTROL         "nowait (default wait)",IDC_CHECK_NOWAIT,"Button",

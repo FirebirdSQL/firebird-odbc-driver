@@ -36,7 +36,7 @@ CDsnDialog * m_ptDsnDialog = NULL;
 BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam);
 void ProcessCDError(DWORD dwErrorCode, HWND hWnd);
 
-CDsnDialog::CDsnDialog(const char **jdbcDrivers)
+CDsnDialog::CDsnDialog(const char **jdbcDrivers, const char **jdbcCharsets)
 {
 	m_database = "";
 	m_client = "";
@@ -52,6 +52,7 @@ CDsnDialog::CDsnDialog(const char **jdbcDrivers)
 	m_quoted = TRUE;
 
 	drivers = jdbcDrivers;
+	charsets = jdbcCharsets;
 	m_ptDsnDialog = this;
 }
 
@@ -81,7 +82,14 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 			GetWindowText(hWnd, m_driver.getBuffer(256), 256+1);
 
 		GetDlgItemText(hDlg, IDC_ROLE, m_role.getBuffer(256), 256);
-		GetDlgItemText(hDlg, IDC_CHARSET, m_charset.getBuffer(256), 256);
+
+		hWnd = GetDlgItem(hDlg, IDC_CHARSET);
+		
+		nLen = GetWindowTextLength(hWnd);
+		if (nLen > 0)
+			GetWindowText(hWnd, m_charset.getBuffer(nLen), nLen+1);
+		else
+			GetWindowText(hWnd, m_charset.getBuffer(256), 256+1);
 
         m_readonly = SendDlgItemMessage(hDlg, IDC_CHECK_READ, BM_GETCHECK, 0, 0);
         m_nowait = SendDlgItemMessage(hDlg, IDC_CHECK_NOWAIT, BM_GETCHECK, 0, 0);
@@ -104,7 +112,13 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 			SetWindowText(hWnd, (const char *)m_driver);
 
 		SetDlgItemText(hDlg, IDC_ROLE, (const char *)m_role);
-		SetDlgItemText(hDlg, IDC_CHARSET, (const char *)m_charset);
+
+		hWnd = GetDlgItem(hDlg, IDC_CHARSET);
+
+		if ( m_charset.IsEmpty() )
+			SetWindowText(hWnd, (const char *)*charsets);
+		else if (SendMessage(hWnd, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)(const char *)m_charset) == CB_ERR)
+			SetWindowText(hWnd, (const char *)m_charset);
 
         CheckDlgButton(hDlg, IDC_CHECK_READ, m_readonly);
         CheckDlgButton(hDlg, IDC_CHECK_NOWAIT, m_nowait);
@@ -331,6 +345,11 @@ BOOL CDsnDialog::OnInitDialog(HWND hDlg)
 
 	for (const char **driver = drivers; *driver; ++driver)
 		SendMessage(hWndBox, CB_ADDSTRING, 0, (LPARAM)*driver);
+
+	hWndBox = GetDlgItem(hDlg, IDC_CHARSET);
+
+	for (const char **charset = charsets; *charset; ++charset)
+		SendMessage(hWndBox, CB_ADDSTRING, 0, (LPARAM)*charset);
 
 	return TRUE;
 }
@@ -621,7 +640,7 @@ int DialogBoxDynamic()
     TMP_EDITTEXT      ( IDC_USER,7,89,66,12,ES_UPPERCASE | ES_AUTOHSCROLL )
     TMP_EDITTEXT      ( IDC_PASSWORD,77,89,73,12,ES_PASSWORD | ES_AUTOHSCROLL )
     TMP_EDITTEXT      ( IDC_ROLE,154,89,76,12,ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_CHARSET,56,109,114,12,ES_AUTOHSCROLL )
+    TMP_COMBOBOX      ( IDC_CHARSET,56,109,114,120,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
     TMP_BUTTONCONTROL ( "read (default write)",IDC_CHECK_READ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,148,69,10 )
     TMP_BUTTONCONTROL ( "nowait (default wait)",IDC_CHECK_NOWAIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,158,72,10 )
     TMP_DEFPUSHBUTTON ( "OK",IDOK,43,183,50,14 )

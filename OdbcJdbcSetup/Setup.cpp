@@ -56,6 +56,14 @@ static const char *fileNames [] = {
 	};
 
 static const char *drivers [] = { "IscDbc", NULL };
+static const char *charsets []= 
+{ 
+	"NONE", "ASCII", "BIG_5", "CYRL", "DOS437", "DOS850", "DOS852", "DOS857", "DOS860",
+	"DOS861", "DOS863", "DOS865", "DOS866", "EUCJ_0208", "GB_2312", "ISO8859_1", 
+	"ISO8859_2", "KSC_5601", "OCTETS", "SJIS_0208", "UNICODE_FSS", 
+	"WIN1250", "WIN1251", "WIN1252", "WIN1253", "WIN1254", NULL
+};
+
 void MessageBoxError(char * stageExecuted, char * pathFile);
 void MessageBoxInstallerError(char * stageExecuted, char * pathOut);
 bool CopyFile(char * sourceFile, char * destFile);
@@ -404,7 +412,7 @@ bool Setup::configureDialog()
 	if ( jdbcDriver.IsEmpty() )
 		jdbcDriver = drivers [0];
 
-	CDsnDialog dialog (drivers);
+	CDsnDialog dialog (drivers, charsets);
 	dialog.m_name = dsn;
 	dialog.m_database = dbName;
 	dialog.m_client = client;

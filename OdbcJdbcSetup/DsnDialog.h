@@ -33,10 +33,11 @@ using namespace classJString;
 
 class CDsnDialog
 {
-// Construction
-public:
 	const char** drivers;
-	CDsnDialog(const char **jdbcDrivers);   // standard constructor
+	const char** charsets;
+
+public:
+	CDsnDialog(const char **jdbcDrivers, const char **jdbcCharsets);
 	~CDsnDialog();
 
 // Dialog Data
