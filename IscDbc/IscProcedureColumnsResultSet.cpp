@@ -137,7 +137,11 @@ bool IscProcedureColumnsResultSet::next()
 
 	sqlda->updateShort (6, sqlType.type);
 	sqlda->updateVarying (7, sqlType.typeName);
-	sqlda->updateInt (9, length);
+
+	if (sqlType.type != JDBC_VARCHAR &&	sqlType.type != JDBC_CHAR)
+		sqlda->updateInt (9, sqlType.bufferLength);
+	else
+		sqlda->updateInt (9, length);
 
 	switch (sqlType.type)
 	{
