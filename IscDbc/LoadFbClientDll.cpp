@@ -15,12 +15,16 @@ CFbDll::~CFbDll()
 	Release(); 
 }
 
-bool CFbDll::LoadDll(const char * client)
+bool CFbDll::LoadDll (const char * client, const char * clientDef)
 {
 #ifdef _WIN32
 	_Handle = LoadLibrary (client);
+	if ( !_Handle && clientDef )
+		_Handle = LoadLibrary (clientDef);
 #else
 	_Handle = dlopen (client, RTLD_NOW);
+	if ( !_Handle && clientDef )
+		_Handle = dlopen (clientDef, RTLD_NOW);
 #endif
 	if ( !_Handle )
 		return false;

@@ -83,16 +83,19 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 {
 	if( !GDS )
 	{
+		const char *clientDefault = NULL;
 		const char *client = properties->findValue ("client", NULL);
 		if ( !client || !*client )
 #ifdef _WIN32
-			client = "gds32.dll";
+			client = "gds32.dll",
+			clientDefault = "fbclient.dll";
 #else
-			client = "libgds.so";
+			client = "libgds.so",
+			clientDefault = "libfbclient.so";
 #endif
 
 		GDS = new CFbDll();
-		if ( !GDS->LoadDll (client) )
+		if ( !GDS->LoadDll (client, clientDefault) )
 		{
 			JString text;
 			text.Format ("Unable to connect to data source: library '%s' failed to load", client);
