@@ -303,6 +303,8 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 		case SQL_C_UBIGINT:
 			bIdentity = true;
 			return &OdbcConvert::convBigintToBigint;
+		case SQL_C_BINARY:
+			return &OdbcConvert::convBigintToBinary;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convBigintToString;
 		case SQL_DECIMAL:
@@ -646,6 +648,84 @@ int OdbcConvert::conv##TYPE_FROM##ToString(DescRecord * from, DescRecord * to)		
 	return SQL_SUCCESS;																			\
 }																								\
 
+#define ODBCCONVERT_CONV_TO_BINARY(TYPE_FROM,C_TYPE_FROM,DEF_SCALE)								\
+int OdbcConvert::conv##TYPE_FROM##ToBinary(DescRecord * from, DescRecord * to)					\
+{																								\
+	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
+	SQLINTEGER *indicatorPointer = (SQLINTEGER *)getAdressBindIndTo((char*)to->indicatorPtr);	\
+																								\
+	ODBCCONVERT_CHECKNULL;																		\
+																								\
+	int len = to->length;																		\
+																								\
+	if ( !len && to->dataPtr)																	\
+		*(short*)to->dataPtr = '0';																\
+	else																						\
+	{																							\
+		C_TYPE_FROM number = *(C_TYPE_FROM*)getAdressBindDataFrom((char*)from->dataPtr);		\
+		short *strbin = (short*)pointer;														\
+		int scale = -from->scale;																\
+																								\
+		if (number == 0)																		\
+		{																						\
+			len = 1;																			\
+			*strbin = '0';																		\
+		}																						\
+		else if (scale < -18)																	\
+		{																						\
+			len = 3;																			\
+			*strbin++ = '*';																	\
+			*strbin++ = '*';																	\
+			*strbin++ = '*';																	\
+		}																						\
+		else																					\
+		{																						\
+			bool negative = false;																\
+																								\
+			if (number < 0)																		\
+			{																					\
+				number = -number;																\
+				negative = true;																\
+			}																					\
+																								\
+			char temp [100], *p = temp;															\
+			int n;																				\
+			for (n = 0; number; number /= 10, --n)												\
+			{																					\
+				if (scale && scale == n)														\
+					*p++ = '.';																	\
+				*p++ = '0' + (char) (number % 10);												\
+			}																					\
+																								\
+			if (scale <= n)																		\
+			{																					\
+				for (; n > scale; --n)															\
+					*p++ = '0';																	\
+				*p++ = '.';																		\
+			}																					\
+																								\
+			short *q = strbin;																	\
+			int l=0;																			\
+																								\
+			if (negative)																		\
+				*q++ = '-',++l;																	\
+																								\
+			if ( p - temp > len - l )															\
+				p = temp + len - l;																\
+																								\
+			while (p > temp)																	\
+				*q++ = *--p;																	\
+																								\
+			len = q - strbin;																	\
+		}																						\
+	}																							\
+																								\
+	if ( indicatorPointer )																		\
+		*indicatorPointer = len << 1;															\
+																								\
+	return SQL_SUCCESS;																			\
+}																								\
+
 ////////////////////////////////////////////////////////////////////////
 // Short
 ////////////////////////////////////////////////////////////////////////
@@ -736,6 +816,7 @@ ODBCCONVERT_CONV(Bigint,QUAD,Long,long);
 ODBCCONVERT_CONV(Bigint,QUAD,Float,float);
 ODBCCONVERT_CONV(Bigint,QUAD,Double,double);
 ODBCCONVERT_CONV(Bigint,QUAD,Bigint,QUAD);
+ODBCCONVERT_CONV_TO_BINARY(Bigint,QUAD,18);
 ODBCCONVERT_CONV_TO_STRING(Bigint,QUAD,18);
 
 int OdbcConvert::convBigintToTagNumeric(DescRecord * from, DescRecord * to)
