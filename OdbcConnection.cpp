@@ -17,6 +17,9 @@
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
  *
+ *
+ *	2002-11-21
+ *
  *	2002-08-12	OdbcConnection.cpp 
  *				Contributed by C. G. Alvarez
  *				Added SQL_API_SQLGETCONNECTOPTION to list of 
@@ -144,6 +147,8 @@ static const int supportedFunctions [] = {
             SQL_API_SQLGETCURSORNAME,
             SQL_API_SQLSETSTMTATTR,
             SQL_API_SQLGETDATA,
+
+			SQL_API_SQLEXTENDEDFETCH,	//Deprecated ODBC 1.0 call. Replaced by SQL_API_SQLFETCHSCROLL in ODBC 3.0
 
             // The following is a list of valid values for FunctionId for functions conforming to the X/Open standards - compliance level,,
 

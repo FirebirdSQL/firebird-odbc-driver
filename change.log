@@ -5,6 +5,22 @@ Changes made to OdbcJdbc codebase
 !!  using the format below and then paste them into this document. 
 
 
+ *	2002-11-21	OdbcStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Modification to OdbcStatement::sqlExtendedFetch
+ *				to support SQL_API_SQLEXTENDEDFETCH
+
+ *	2002-11-21	Reorganized the MSVC build settings.
+ *
+ *				OdbcJdbcSetup must now be built separately, 
+ *				_before_ building the driver (OdbcJdbc). It 
+ *				need only be built once.
+ *
+ *				When building the driver in debug mode
+ *				the build process will automatically register 
+ *				the newly compiled driver. It can then be 
+ *				debugged with the application of choice.
+ 
  *  2002-10-11  
  *				Contributed by C. G. Alvarez
  *              Extensive modifications to all classes 

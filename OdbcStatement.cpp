@@ -20,6 +20,11 @@
  *
  *	Changes
  *
+ *	2002-11-21	OdbcStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Modification to OdbcStatement::sqlExtendedFetch
+ *				to support SQL_API_SQLEXTENDEDFETCH
+ *
  *  2002-10-11	OdbcStatement.cpp
  *				Contributed by C. G. Alvarez
  *				Extensive modifications to blob reading and writing
@@ -323,6 +328,11 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 	JString temp;
 	const char *string = (const char*) sql;
 
+#ifdef DEBUG
+		char tempDebugStr [8196];
+		sprintf (tempDebugStr, "Preparing statement:\n\t%s\n", sql);
+		OutputDebugString (tempDebugStr);
+#endif
 	if (sqlLength != SQL_NTS)
 		{
 		temp = JString ((const char*) sql, sqlLength);
@@ -467,6 +477,19 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 		binding->indicatorPointer = indPtr;
 		if ( metaData->getColumnType (column) == SQL_CHAR || metaData->getColumnType (column) == SQL_VARCHAR )
 			binding->dataOffset			= 0;
+
+#ifdef DEBUG
+		char tempDebugStr [8196];
+		sprintf (tempDebugStr, "Column %d %31s has SQL Type %3.3d, CType %3.3d, Type %3.3d \n", 
+					column,
+					"",
+					binding->sqlType,
+					binding->cType,
+					binding->type
+				);
+		OutputDebugString (tempDebugStr);
+#endif
+
 		}
 
 	catch (SQLException& exception)
@@ -530,31 +553,42 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 	return returnData();;
 }
 
+
 RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray)
 {
 	if (!resultSet)
 		return sqlReturn (SQL_ERROR, "24000", "Invalid cursor state");
 
 	if (cancel)
-		{
+	{
 		releaseResultSet();
 		return sqlReturn (SQL_ERROR, "S1008", "Operation canceled");
-		}
+	}
 
 	try
-		{
+	{
+		if(rowCountPointer)
+			*rowCountPointer = 1;
+		
 		if (eof || !resultSet->next())
-			{
-			eof = true;
-			return SQL_NO_DATA;
-			}
-		}
-	catch (SQLException& exception)
 		{
+			eof = true;
+			if(rowStatusArray)
+				rowStatusArray[0] = SQL_ROW_NOROW;
+			return SQL_NO_DATA;
+		}
+		else
+		{
+			if(rowStatusArray)
+				rowStatusArray[0] = SQL_ROW_SUCCESS;
+		}		
+	}
+	catch (SQLException& exception)
+	{
 		OdbcError *error = postError ("HY000", exception);
 		error->setRowNumber (rowNumber);
 		return SQL_ERROR;
-		}
+	}
 
 	return returnData();
 
@@ -565,6 +599,23 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 	bool info = false;
 	int length = binding->bufferLength;
 	int type = binding->cType;
+
+#ifdef DEBUG			
+//This is an attempt to understand why datatypes get mangled during
+//Metadata lookups. Not yet ready for prime time.
+	if ((type  != getCType (metaData->getColumnType (column), 
+							metaData->isSigned (column)) && (type != SQL_C_DEFAULT) ))
+		{
+		char tempDebugStr [8196];
+		sprintf (tempDebugStr, "CType and Firebird Type don't match: %d and %d\n",
+								binding->cType,binding->type);
+		OutputDebugString (tempDebugStr);
+		//force the type to use the underlying column type
+		type = getCType (metaData->getColumnType (column), 
+							metaData->isSigned (column));
+		}
+#endif
+
 	OdbcError *error = NULL;
 
 	if (type == SQL_C_DEFAULT)
@@ -1031,6 +1082,17 @@ RETCODE OdbcStatement::sqlDescribeCol(int col,
 			*precision = metaData->getPrecision (col);
 		if (nullable)
 			*nullable = (metaData->isNullable (col)) ? SQL_NULLABLE : SQL_NO_NULLS;
+#ifdef DEBUG
+		char tempDebugStr [8196];
+		sprintf (tempDebugStr, "Column %.2d %31s has type %.3d, scale %.3d, precision %.3d \n", 
+				col,
+				metaData->getColumnName(col),
+				metaData->getColumnType (col),
+				metaData->getScale (col),
+				metaData->getPrecision (col)
+				);
+		OutputDebugString (tempDebugStr);
+#endif
 		}
 	catch (SQLException& exception)
 		{

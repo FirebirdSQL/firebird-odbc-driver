@@ -23,6 +23,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef DEBUG
+#ifdef _WIN32
+#include <windows.h>
+#endif
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -88,13 +93,16 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 		" where rfr.rdb$field_source = fld.rdb$field_name\n";
 
 	if (tableNamePattern)
-		sql += expandPattern (" and rfr.rdb$relation_name %s '%s'", tableNamePattern);
+		sql += expandPattern (" and rfr.rdb$relation_name %s '%s'\n", tableNamePattern);
 
 	if (fieldNamePattern)
-		sql += expandPattern (" and rfr.rdb$field_name %s '%s'", fieldNamePattern);
+		sql += expandPattern (" and rfr.rdb$field_name %s '%s'\n", fieldNamePattern);
 
-	sql += " order by rfr.rdb$relation_name, rfr.rdb$field_position";
+	sql += " order by rfr.rdb$relation_name, rfr.rdb$field_position\n";
 	
+#ifdef DEBUG
+	OutputDebugString (sql.getString());
+#endif
 	prepareStatement (sql);
 	numberColumns = 18;
 }

@@ -64,8 +64,8 @@ LINK32=link.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 5
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "../debug"
-# PROP Intermediate_Dir "../debug"
+# PROP Output_Dir "../Debug"
+# PROP Intermediate_Dir "../Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
@@ -80,12 +80,6 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# Begin Special Build Tool
-TargetPath=\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\OdbcJdbcSetup.dll
-SOURCE="$(InputPath)"
-PostBuild_Desc=Registering successfully built driver...
-PostBuild_Cmds=regsvr32 /s $(TargetPath)
-# End Special Build Tool
 
 !ENDIF 
 

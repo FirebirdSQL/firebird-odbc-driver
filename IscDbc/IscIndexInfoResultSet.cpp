@@ -32,6 +32,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef DEBUG
+#ifdef _WIN32
+#include <windows.h>
+#endif
+#endif
+
 #include <stdio.h>
 #include "IscDbc.h"
 #include "IscIndexInfoResultSet.h"
@@ -101,9 +107,9 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 		sql += expandPattern (" and idx.rdb$relation_name %s '%s'\n", tableNamePattern);
 
 	if (unique)
-		sql += " and idx.rdb$unique_flag = 1";
+		sql += " and idx.rdb$unique_flag = 1\n";
 
-	sql += " order by idx.rdb$unique_flag desc, idx.rdb$index_name, seg.rdb$field_position";
+	sql += " order by idx.rdb$unique_flag desc, idx.rdb$index_name, seg.rdb$field_position\n";
 
 	prepareStatement (sql);
 	numberColumns = 13;
