@@ -35,9 +35,9 @@ UninstallDisplayIcon={app}\OdbcJdbcSetup.dll
 
 [Files]
 
-Source: "{#sourceDll}IscDbc.dll"; DestDir: "{app}"
-Source: "{#sourceDll}OdbcJdbc.dll"; DestDir: "{app}"
-Source: "{#sourceDll}OdbcJdbcSetup.dll"; DestDir: "{app}"
+Source: "{#sourceDll}IscDbc.dll"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "{#sourceDll}OdbcJdbc.dll"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "{#sourceDll}OdbcJdbcSetup.dll"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 ;Source: "FirebirdOdbc.hlp"; DestDir: "{app}"
 Source: "Readme.txt"; DestDir: "{app}"; Flags: isreadme
 
@@ -45,8 +45,8 @@ Source: "Readme.txt"; DestDir: "{app}"; Flags: isreadme
 Name: "{group}\Firebird ODBC"; Filename: "{app}\unins000.exe"
 
 [Run]
-Filename: "{sys}\regsvr32.exe"; Parameters: """{app}""/OdbcJdbcSetup.dll"
+Filename: "{sys}\regsvr32.exe"; Parameters: "/s ""{app}""\OdbcJdbcSetup.dll"
 
 [UninstallRun]
-Filename: "{sys}\regsvr32.exe"; Parameters: "/u ""{app}""/OdbcJdbcSetup.dll"
+Filename: "{sys}\regsvr32.exe"; Parameters: "/u ""{app}""\OdbcJdbcSetup.dll"
 
