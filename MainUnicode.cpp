@@ -1082,9 +1082,9 @@ SQLRETURN SQL_API SQLGetStmtAttrW( SQLHSTMT hStmt,
 
 	switch ( attribute )
 	{
-	case 11999:
-	case 11998:
-	case 11997:
+	case SQL_FBGETSTMT_PLAN:
+	case SQL_FBGETSTMT_TYPE:
+	case SQL_FBGETSTMT_INFO:
 
 		if ( bufferLength <= SQL_LEN_BINARY_ATTR_OFFSET )
 			bufferLength = -bufferLength + SQL_LEN_BINARY_ATTR_OFFSET;
