@@ -23,72 +23,13 @@
 #else
 #include <wchar.h>
 #endif
-
-#include <odbcinst.h>
-
-extern "C"
-{
-#include <sql.h>
-#include <sqlext.h>
-#include <sqlucode.h>
-}
-
 #include <stdio.h>
 #include "OdbcJdbc.h"
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
 #include "OdbcStatement.h"
 #include "SafeEnvThread.h"
-
-void trace (const char *msg);
-
-#ifdef _WIN32
-#define OUTPUT_MONITOR_EXECUTING(msg)  OutputDebugString(msg"\n");
-#else
-#define OUTPUT_MONITOR_EXECUTING(msg)
-#endif
-
-#ifdef DEBUG
-#define TRACE(msg)		trace (msg"\n")
-#else
-#ifdef __MONITOR_EXECUTING
-#define TRACE(msg)		OUTPUT_MONITOR_EXECUTING(msg)
-#else
-#define TRACE(msg)		
-#endif
-#endif
-
-#if(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_ENV)
-
-#define GUARD					SafeDllThread wt
-#define GUARD_ENV(arg)			GUARD
-#define GUARD_HSTMT(arg)		GUARD
-#define GUARD_HDBC(arg)			GUARD
-#define GUARD_HDESC(arg)		GUARD
-#define GUARD_HTYPE(arg1,arg2)	GUARD
-
-#elif(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_CONNECT)
-
-#define GUARD					SafeDllThread wt
-#define GUARD_ENV(arg)			SafeEnvThread wt((OdbcEnv*)arg)
-#define GUARD_HSTMT(arg)		SafeConnectThread wt(((OdbcStatement*)arg)->connection)
-#define GUARD_HDBC(arg) 		SafeConnectThread wt((OdbcConnection*)arg)
-#define GUARD_HDESC(arg)		SafeConnectThread wt(((OdbcDesc*)arg)->connection)
-#define GUARD_HTYPE(arg,arg1)	SafeConnectThread wt(												\
-									arg1==SQL_HANDLE_DBC ? (OdbcConnection*)arg:					\
-									arg1==SQL_HANDLE_STMT ? ((OdbcStatement*)arg)->connection:		\
-									arg1==SQL_HANDLE_DESC ? ((OdbcDesc*)arg)->connection : NULL )
-
-#else
-
-#define GUARD
-#define GUARD_ENV(arg)
-#define GUARD_HSTMT(arg)
-#define GUARD_HDBC(arg)
-#define GUARD_HDESC(arg)	
-#define GUARD_HTYPE(arg1,arg2)
-
-#endif
+#include "Main.h"
 
 using namespace OdbcJdbcLibrary;
 extern UINT codePage; // from Main.cpp
