@@ -7,7 +7,7 @@ Changes made to OdbcJdbc codebase
  *	2002-07-08	OdbcStatement.cpp
  *				Added changes from C. G. Alvarez to return
  *				SQL_DESC_UNNAMED and SQL_DESC_BASE_TABLE_NAME
- *				from sqlColAtrributes()
+ *				from sqlColAtrribute()
 
  *	2002-07-06	OdbcJdbcSetup.dsp
  *				Added post-build step to automatically register 

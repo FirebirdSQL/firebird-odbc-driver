@@ -1928,7 +1928,6 @@ RETCODE OdbcStatement::sqlColAttributes(int column, int descType, SQLPOINTER buf
 				value = metaData->getColumnType (column);
 				break;
 
-		    case SQL_DESC_BASE_TABLE_NAME:
 			case SQL_COLUMN_TABLE_NAME:
 				string = metaData->getTableName (column);
 				break;
@@ -1941,9 +1940,6 @@ RETCODE OdbcStatement::sqlColAttributes(int column, int descType, SQLPOINTER buf
 				string = metaData->getCatalogName (column);
 				break;
 
-			case SQL_DESC_UNNAMED:
-		        value = (metaData->getColumnName (column)) ? SQL_NAMED : SQL_UNNAMED;
-				break;
 
 			/***
 			case SQL_COLUMN_COUNT                0
@@ -2096,11 +2092,17 @@ RETCODE OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attri
 				value = metaData->getColumnType (column);
 				break;
 
+			case SQL_DESC_BASE_TABLE_NAME:
 			case SQL_DESC_TABLE_NAME:
 				string = metaData->getTableName (column);
 				break;
 
-			/***
+			case SQL_DESC_UNNAMED:
+		        value = (metaData->getColumnName (column)) ? SQL_NAMED : SQL_UNNAMED;
+		        break; 
+
+
+		/***
 			case SQL_DESC_OWNER_NAME:
 				string = metaData->getSchemaName (column);
 				break;
