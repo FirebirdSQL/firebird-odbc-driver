@@ -98,7 +98,11 @@ public:
 		offsetSqldata = ptOffsetSqldata;
 		lenRow = lnRow;
 		indicatorsOffset = lenRow - ptSqlda->sqld*sizeof(short);
-		nMAXROWBLOCK = 65535u;
+		nMAXROWBLOCK = 65535l/lnRow;
+		
+		if ( nMAXROWBLOCK < 40 )
+			nMAXROWBLOCK = 40;
+
 		countBlocks = 10;
 		countAllRows = 0;
 		listBlocks = (char **)calloc(1,countBlocks*sizeof(*listBlocks));
