@@ -29,6 +29,8 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+namespace IscDbcLibrary {
+
 struct Segment
 {
 	int		length;
@@ -80,5 +82,7 @@ public:
 	Segment	*segments;
 	Segment *current;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_STREAM_H__02AD6A53_A433_11D2_AB5B_0000C01D2301__INCLUDED_)

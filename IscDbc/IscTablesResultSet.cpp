@@ -35,6 +35,8 @@
 #define TABLE_TYPE	4
 #define REMARKS		5
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -163,3 +165,5 @@ int IscTablesResultSet::getPrecision(int index)
 		}
 //	return Parent::getPrecision (index);
 }
+
+}; // end namespace IscDbcLibrary

@@ -55,6 +55,8 @@
 #define QUOTE			16
 #define IDENT			32
 
+namespace IscDbcLibrary {
+
 char charTable [256];
 static int init();
 static int foo = init();
@@ -467,3 +469,5 @@ void IscCallableStatement::getToken(const char **ptr, char *token)
 	*q = 0;
 	*ptr = p;
 }
+
+}; // end namespace IscDbcLibrary

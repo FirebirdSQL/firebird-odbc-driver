@@ -30,6 +30,8 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+namespace IscDbcLibrary {
+
 class DateTime  
 {
 public:
@@ -49,5 +51,6 @@ public:
 	signed long date;
 };
 
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_DATETIME_H__84FD1970_A97F_11D2_AB5C_0000C01D2301__INCLUDED_)

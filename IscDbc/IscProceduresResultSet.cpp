@@ -27,6 +27,8 @@
 #include "IscProceduresResultSet.h"
 #include "IscDatabaseMetaData.h"
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -75,3 +77,5 @@ bool IscProceduresResultSet::next()
 
 	return true;
 }
+
+}; // end namespace IscDbcLibrary

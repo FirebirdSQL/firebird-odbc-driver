@@ -36,6 +36,8 @@
 #define TABLE_TYPE    4
 
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -158,3 +160,4 @@ int IscTablePrivilegesResultSet::getColumnPrecision(int index)
     return Parent::getPrecision (index);
 }
 
+}; // end namespace IscDbcLibrary

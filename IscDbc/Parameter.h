@@ -30,6 +30,8 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+namespace IscDbcLibrary {
+
 class Parameter
 {
 public:
@@ -42,5 +44,7 @@ public:
 	char		*value;
 	Parameter	*next;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_PARAMETER_H__BD560E65_B194_11D3_AB9F_0000C01D2301__INCLUDED_)

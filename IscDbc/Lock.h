@@ -29,7 +29,11 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-class Mutex;
+#include "Mutex.h"
+
+namespace IscDbcLibrary {
+
+using namespace classMutex;
 
 class Lock  
 {
@@ -42,5 +46,7 @@ public:
 	Mutex	*mutex;
 	bool	locked;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_LOCK_H__F3F1D3A8_4083_11D4_98E8_0000C01D2301__INCLUDED_)

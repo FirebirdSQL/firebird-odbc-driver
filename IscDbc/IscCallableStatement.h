@@ -41,6 +41,8 @@
 #include "TimeStamp.h"	// Added by ClassView
 #include "JString.h"	// Added by ClassView
 
+namespace IscDbcLibrary {
+
 class IscCallableStatement : public IscPreparedStatement, public CallableStatement  
 {
 public:
@@ -125,5 +127,7 @@ public:
 	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr)
 	{ return getInfoCountRecordsStatement(connection, statementHandle, value,bufferLength,lengthPtr); }  
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_ISCCALLABLESTATEMENT_H__10B4AD63_3637_11D4_98E4_0000C01D2301__INCLUDED_)

@@ -32,6 +32,8 @@
 #include "IscPreparedStatement.h"
 #include "IscBlob.h"
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -139,3 +141,5 @@ int IscColumnPrivilegesResultSet::getColumnPrecision(int index)
 {
 	return Parent::getPrecision (index);
 }
+
+}; // end namespace IscDbcLibrary

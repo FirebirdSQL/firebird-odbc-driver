@@ -33,6 +33,8 @@
 #include "LinkedList.h"
 #include "Sqlda.h"
 
+namespace IscDbcLibrary {
+
 class IscConnection;
 class IscResultSet;
 
@@ -91,5 +93,7 @@ public:
 	int				summaryUpdateCount;
 	bool			selectActive;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_ISCSTATEMENT_H__C19738B8_1C87_11D4_98DF_0000C01D2301__INCLUDED_)

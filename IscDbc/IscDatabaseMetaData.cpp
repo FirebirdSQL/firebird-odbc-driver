@@ -82,6 +82,8 @@
 #define TRANSACTION_SERIALIZABLE      8
 
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -1160,3 +1162,5 @@ bool IscDatabaseMetaData::supportsStatementMetaData()
 {
 	return true;
 }
+
+}; // end namespace IscDbcLibrary

@@ -5,6 +5,8 @@
 #include <windows.h>
 #endif
 
+namespace IscDbcLibrary {
+
 typedef ISC_STATUS ISC_EXPORT create_database (ISC_STATUS ISC_FAR *, 
 					    short, 
 					    char ISC_FAR *, 
@@ -369,5 +371,7 @@ public:
 	encode_timestamp*			_encode_timestamp;
 	print_blr*					_print_blr;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // __LOAD_FB_CLIENT_DLL__

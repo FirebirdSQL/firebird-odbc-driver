@@ -29,6 +29,8 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+namespace IscDbcLibrary {
+
 class SqlTime
 {
 public:
@@ -39,5 +41,7 @@ public:
 	unsigned long	timeValue;
 
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_TIME_H__EBB84E64_5FD6_4A16_9A4E_8D71B73E9075__INCLUDED_)

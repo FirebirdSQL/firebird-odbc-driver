@@ -9,6 +9,9 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+namespace IscDbcLibrary
+{
+
 enum enumTypeBlob { enTypeBlob = 1, enTypeClob, enTypeArray };
 
 class Blob
@@ -23,5 +26,7 @@ public:
 	virtual int		getSegmentLength (int pos) = 0;
 	virtual void	*getSegment (int pos) = 0;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_BLOB_H__84FD196A_A97F_11D2_AB5C_0000C01D2301__INCLUDED_)

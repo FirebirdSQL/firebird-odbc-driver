@@ -34,6 +34,8 @@
 static char THIS_FILE[]=__FILE__;
 #endif
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -71,3 +73,5 @@ void Values::clear()
 	for (int n = 0; n < count; ++n)
 		values [n].clear();
 }
+
+}; // end namespace IscDbcLibrary

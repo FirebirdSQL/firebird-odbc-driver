@@ -39,6 +39,8 @@
 #include "IscConnection.h"
 #include "Value.h"
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -170,3 +172,5 @@ bool IscMetaDataResultSet::isNullable(int index)
 {
 	return resultSet->isNullable (index);
 }
+
+}; // end namespace IscDbcLibrary

@@ -29,6 +29,8 @@
 #define NULL	0
 #endif
 
+namespace IscDbcLibrary {
+
 class LinkedNode;
 
 class LinkedList
@@ -91,6 +93,6 @@ inline void	*LinkedList::getNext(LinkedList **node)
 	return object;
 	}
 
+}; // end namespace IscDbcLibrary
 
 #endif
-

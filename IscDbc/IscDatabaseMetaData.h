@@ -32,6 +32,8 @@
 #include "Connection.h"
 #include "LinkedList.h"
 
+namespace IscDbcLibrary {
+
 class IscConnection;
 
 
@@ -228,5 +230,7 @@ public:
 	IscConnection	*connection;
 	LinkedList		resultSets;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_ISCDATABASEMETADATA_H__C19738BD_1C87_11D4_98DF_0000C01D2301__INCLUDED_)

@@ -31,6 +31,8 @@
 
 #include "IscMetaDataResultSet.h"
 
+namespace IscDbcLibrary {
+
 class IscCrossReferenceResultSet : public IscMetaDataResultSet  
 {
 public:
@@ -46,5 +48,7 @@ public:
 	virtual int getColumnType (int index, int &realSqlType);
 
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_ISCCROSSREFERENCERESULTSET_H__32C6E495_2C14_11D4_98E0_0000C01D2301__INCLUDED_)

@@ -24,8 +24,6 @@
 
 // copyright (c) 1999 - 2000 by James A. Starkey for IBPhoenix.
 
-
-//#include "stdafx.h"
 #include <memory.h>
 #include "Parameter.h"
 
@@ -33,6 +31,8 @@
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
 #endif
+
+namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -56,3 +56,5 @@ Parameter::~Parameter()
 	delete [] name;
 	delete [] value;
 }
+
+}; // end namespace IscDbcLibrary

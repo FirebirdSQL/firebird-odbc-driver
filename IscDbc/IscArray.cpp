@@ -43,6 +43,8 @@
 #define QUOTE			16
 #define IDENT			32
 
+namespace IscDbcLibrary {
+
 extern char charTable [];
 //
 //////////////////////////////////////////////////////////////////////
@@ -398,3 +400,5 @@ void IscArray::writeArray(Value * value)
 	if (ret || lenbuf != arrBufDataSize)
 		THROW_ISC_EXCEPTION (connection, statusVector);
 }
+
+}; // end namespace IscDbcLibrary

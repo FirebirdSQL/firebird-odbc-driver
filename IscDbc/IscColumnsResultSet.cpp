@@ -58,6 +58,7 @@
 #define DEF_VAL		13
 #define BUFF_LEN	256
 
+namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -517,3 +518,5 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 	resultSet->setValue (18, ((resultSet->getInt (11)) == 0) ? "NO" : "YES");
 
 }
+
+}; // end namespace IscDbcLibrary

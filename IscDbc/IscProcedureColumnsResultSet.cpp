@@ -62,6 +62,8 @@
 
 #define TYPE_NAME	7
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -178,3 +180,5 @@ int IscProcedureColumnsResultSet::getPrecision(int index)
 	return Parent::getPrecision (index);
 */
 }
+
+}; // end namespace IscDbcLibrary

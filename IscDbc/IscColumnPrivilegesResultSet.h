@@ -31,6 +31,8 @@
 
 #include "IscMetaDataResultSet.h"
 
+namespace IscDbcLibrary {
+
 class IscColumnPrivilegesResultSet : public IscMetaDataResultSet  
 {
 public:
@@ -44,5 +46,7 @@ public:
 	virtual int getColumnPrecision(int index);
 
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_ISCCOLUMNPRIVILEGESRESULTSET_H__6C3E2AB7_229F_11D4_98DF_0000C01D2301__INCLUDED_)

@@ -46,11 +46,11 @@
 static char THIS_FILE[]=__FILE__;
 #endif
 
+namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
 
 BinaryBlob::BinaryBlob()
 {
@@ -216,3 +216,5 @@ void BinaryBlob::putSegment(Blob * blob)
 {
 	Stream::putSegment (blob);
 }
+
+}; // end namespace IscDbcLibrary

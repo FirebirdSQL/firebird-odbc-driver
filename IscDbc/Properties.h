@@ -1,6 +1,8 @@
 #ifndef _PROPERTIES_H_
 #define _PROPERTIES_H_
 
+namespace IscDbcLibrary {
+
 class Properties  
 {
 public:
@@ -11,5 +13,7 @@ public:
 	virtual const char *getName (int index) = 0;
 	virtual const char *getValue (int index) = 0;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif

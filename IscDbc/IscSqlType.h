@@ -29,6 +29,8 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+namespace IscDbcLibrary {
+
 class IscSqlType  
 {
 public:
@@ -42,5 +44,7 @@ public:
 	int		bufferLength;
 	int		precision;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_ISCSQLTYPE_H__32C6E499_2C14_11D4_98E0_0000C01D2301__INCLUDED_)

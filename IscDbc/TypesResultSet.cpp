@@ -27,6 +27,8 @@
 #include "TypesResultSet.h"
 #include "Types.h"
 
+namespace IscDbcLibrary {
+
 #define SET_VALUE(col,value)	if (value == -1) setNull(col); else setValue (col, value);
 
 struct Types {
@@ -264,3 +266,4 @@ int TypesResultSet::findType()
 	return 0;
 }
 
+}; // end namespace IscDbcLibrary

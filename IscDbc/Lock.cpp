@@ -23,7 +23,10 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "Lock.h"
-#include "Mutex.h"
+
+namespace IscDbcLibrary {
+
+using namespace classMutex;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -58,3 +61,5 @@ void Lock::release()
 		locked = false;
 		}
 }
+
+}; // end namespace IscDbcLibrary

@@ -36,6 +36,8 @@
 #define UPD_RULE		10
 #define DEL_RULE		11
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -186,3 +188,5 @@ int IscCrossReferenceResultSet::getPrecision(int index)
 
 	return Parent::getPrecision (index);
 }
+
+}; // end namespace IscDbcLibrary

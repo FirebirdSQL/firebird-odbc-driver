@@ -31,6 +31,8 @@
 
 #include "Connection.h"
 
+namespace IscDbcLibrary {
+
 class Sqlda;
 
 class IscStatementMetaData : public StatementMetaData  
@@ -69,5 +71,7 @@ public:
 
 	Sqlda					*sqlda;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_ISCSTATEMENTMETADATA_H__32C6E496_2C14_11D4_98E0_0000C01D2301__INCLUDED_)

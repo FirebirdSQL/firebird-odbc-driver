@@ -31,6 +31,8 @@
 
 #include "IscMetaDataResultSet.h"
 
+namespace IscDbcLibrary {
+
 class IscPrimaryKeysResultSet : public IscMetaDataResultSet  
 {
 public:
@@ -39,5 +41,7 @@ public:
 	IscPrimaryKeysResultSet(IscDatabaseMetaData *metaData);
 
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_ISCPRIMARYKEYSRESULTSET_H__32C6E493_2C14_11D4_98E0_0000C01D2301__INCLUDED_)

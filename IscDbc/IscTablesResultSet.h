@@ -31,6 +31,8 @@
 
 #include "IscMetaDataResultSet.h"
 
+namespace IscDbcLibrary {
+
 class IscTablesResultSet : public IscMetaDataResultSet  
 {
 public:
@@ -44,5 +46,7 @@ public:
 	virtual int getPrecision(int index);
 
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_ISCTABLESRESULTSET_H__6C3E2AB7_229F_11D4_98DF_0000C01D2301__INCLUDED_)

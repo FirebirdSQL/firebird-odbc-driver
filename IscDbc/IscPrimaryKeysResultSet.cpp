@@ -27,6 +27,8 @@
 #include "IscPrimaryKeysResultSet.h"
 #include "IscDatabaseMetaData.h"
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -73,3 +75,5 @@ bool IscPrimaryKeysResultSet::next()
 
 	return true;
 }
+
+}; // end namespace IscDbcLibrary

@@ -29,6 +29,8 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+namespace IscDbcLibrary {
+
 #define DEFAULT_SQLDA_COUNT		20
 
 struct TempVector {
@@ -95,5 +97,7 @@ public:
 	TempVector	*temps;
 	bool		needsbuffer;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_SQLDA_H__6C3E2AB9_229F_11D4_98DF_0000C01D2301__INCLUDED_)

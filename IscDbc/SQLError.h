@@ -24,6 +24,8 @@
 #include "SQLException.h"
 #include "JString.h"
 
+namespace IscDbcLibrary {
+
 class Stream;
 
 class SQLError : public SQLException
@@ -48,5 +50,7 @@ public:
 	JString	stackTrace;
 	int		useCount;
     };
+
+}; // end namespace IscDbcLibrary
 
 #endif

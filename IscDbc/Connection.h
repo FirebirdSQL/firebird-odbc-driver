@@ -47,15 +47,18 @@
 #include "Properties.h"
 #include "SQLException.h"
 
+typedef unsigned char	UCHAR;
+typedef unsigned long	ULONG;
+
 #ifndef QUAD
 
-#ifndef _WIN32
+#ifdef __MINGW32__
+#define __int64			long long
+#elif !defined ( _WIN32 )
 #define __int64			long long
 #define _stdcall
 #endif
 
-typedef unsigned char	UCHAR;
-typedef unsigned long	ULONG;
 typedef __int64			QUAD;
 typedef unsigned __int64			UQUAD;
 #endif
@@ -69,6 +72,8 @@ typedef unsigned __int64			UQUAD;
 /* values for tra_flags */
 #define TRA_ro			1
 #define TRA_nw			2
+
+namespace IscDbcLibrary {
 
 class Statement;
 class PreparedStatement;
@@ -553,5 +558,7 @@ extern "C" __declspec( dllexport ) Connection*	createConnection();
 #else
 extern "C" Connection*	createConnection();
 #endif
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_CONNECTION_H__BD560E62_B194_11D3_AB9F_0000C01D2301__INCLUDED_)

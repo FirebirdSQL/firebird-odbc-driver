@@ -33,6 +33,8 @@
 #include <pthread.h>
 #endif
 
+namespace classMutex {
+
 class Mutex  
 {
 public:
@@ -50,5 +52,7 @@ public:
 #endif
 
 };
+
+}; // end namespace classMutex
 
 #endif // !defined(AFX_MUTEX_H__F3F1D3A7_4083_11D4_98E8_0000C01D2301__INCLUDED_)

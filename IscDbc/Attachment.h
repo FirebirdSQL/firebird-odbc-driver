@@ -31,6 +31,11 @@
 
 #include "Mutex.h"
 
+namespace IscDbcLibrary 
+{
+
+using namespace classMutex;
+
 class Properties;
 
 class Attachment  
@@ -67,5 +72,7 @@ public:
 	bool		isRoles;
 	Mutex		mutex;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_ATTACHMENT_H__F3F1D3A9_4083_11D4_98E8_0000C01D2301__INCLUDED_)

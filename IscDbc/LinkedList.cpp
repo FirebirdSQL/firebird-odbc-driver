@@ -27,6 +27,8 @@
 static char THIS_FILE[]=__FILE__;
 #endif
 
+namespace IscDbcLibrary {
+
 
 LinkedList::LinkedList ()
 {
@@ -431,3 +433,5 @@ void LinkedList::addressCheck(void * address)
 		(long) address == 0x00cdde70)
 		printf ("hit %x\n", address);
 }
+
+}; // end namespace IscDbcLibrary

@@ -34,6 +34,8 @@
 
 #include "Properties.h"
 
+namespace IscDbcLibrary {
+
 class Parameter;
 
 class Parameters : public Properties
@@ -53,5 +55,7 @@ public:
 	Parameter	*parameters;
 	int			count;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_PARAMETERS_H__13461881_1D25_11D4_98DF_0000C01D2301__INCLUDED_)

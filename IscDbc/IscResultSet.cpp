@@ -41,6 +41,7 @@
 #include "SQLError.h"
 #include "Value.h"
 
+namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -948,3 +949,4 @@ Statement *IscResultSet::getStatement()
 	return 0;
 }
 
+}; // end namespace IscDbcLibrary

@@ -32,6 +32,8 @@
 #include "IscMetaDataResultSet.h"
 #include "IscSqlType.h"
 
+namespace IscDbcLibrary {
+
 class IscColumnsResultSet : public IscMetaDataResultSet  
 {
 public:
@@ -49,5 +51,7 @@ private:
 	virtual void checkQuotes (IscSqlType sqlType, JString stringVal);
 	virtual void adjustResults (IscSqlType sqlType);	
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_ISCCOLUMNSMETADATA_H__6C3E2ABA_229F_11D4_98DF_0000C01D2301__INCLUDED_)

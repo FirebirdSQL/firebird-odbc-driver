@@ -44,6 +44,8 @@
 #define TYPE_NAME  4
 
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -230,3 +232,5 @@ void IscSpecialColumnsResultSet::adjustResults (IscSqlType sqlType)
 			resultSet->setValue (7, (long)-ISC_TIME_SECONDS_PRECISION_SCALE);
 	}	
 }
+
+}; // end namespace IscDbcLibrary

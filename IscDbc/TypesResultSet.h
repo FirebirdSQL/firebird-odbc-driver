@@ -32,6 +32,8 @@
 
 #include "IscResultSet.h"
 
+namespace IscDbcLibrary {
+
 class TypesResultSet : public IscResultSet  
 {
 public:
@@ -53,5 +55,7 @@ public:
 	int			recordNumber;
 	int			dataTypes;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_TYPESRESULTSET_H__F0866333_9646_11D4_98F5_0000C01D2301__INCLUDED_)

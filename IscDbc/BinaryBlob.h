@@ -37,6 +37,9 @@
 #include "Blob.h"
 #include "Stream.h"
 
+namespace IscDbcLibrary
+{
+
 class Database;
 
 class BinaryBlob : public Blob, public Stream 
@@ -67,5 +70,7 @@ public:
 	long		recordNumber;
 	bool		populated;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_BINARYBLOB_H__74F68A11_3271_11D4_98E1_0000C01D2301__INCLUDED_)

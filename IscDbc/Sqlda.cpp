@@ -63,6 +63,8 @@
 #include "IscBlob.h"
 #include "IscArray.h"
 
+namespace IscDbcLibrary {
+
 static short sqlNull = -1;
 
 class CDataStaticCursor
@@ -1189,3 +1191,4 @@ int Sqlda::isBlobOrArray(int index)
 	return 0;
 }
 
+}; // end namespace IscDbcLibrary

@@ -45,6 +45,8 @@
 
 #define ASC_DSC	10
 
+namespace IscDbcLibrary {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -188,3 +190,5 @@ int IscIndexInfoResultSet::getPrecision(int index)
 
 //	return Parent::getPrecision (index);
 }
+
+}; // end namespace IscDbcLibrary

@@ -36,6 +36,8 @@
 #include "SqlTime.h"
 #include "TimeStamp.h"	// Added by ClassView
 
+namespace IscDbcLibrary {
+
 class IscStatement;
 class IscDatabaseMetaData;
 class Sqlda;
@@ -203,5 +205,7 @@ public:
 	int				activePosRowInSet;
 	enStatysActivePositionRow statysPositionRow;
 };
+
+}; // end namespace IscDbcLibrary
 
 #endif // !defined(AFX_ISCRESULTSET_H__C19738BA_1C87_11D4_98DF_0000C01D2301__INCLUDED_)

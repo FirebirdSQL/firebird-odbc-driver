@@ -28,6 +28,8 @@
 
 #include "Mutex.h"
 
+namespace classMutex {
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -76,3 +78,5 @@ void Mutex::release()
 	int ret = pthread_mutex_unlock (&mutex);
 #endif
 }
+
+}; // end namespace classMutex

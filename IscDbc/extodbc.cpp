@@ -31,6 +31,8 @@
 #include <string.h>
 #include "IscDbc.h"
 
+namespace IscDbcLibrary {
+
 int getTypeStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr)
 {
 	ISC_STATUS	statusVector[20];
@@ -507,3 +509,5 @@ int strBuildStatInformations(const void * info_buffer, int bufferLength,short *l
 	}
 	return length;
 }
+
+}; // end namespace IscDbcLibrary
