@@ -220,10 +220,10 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 
 OdbcStatement::~OdbcStatement()
 {
-	releaseStatement();
-	statement->release();
 	releaseBindings();
 	releaseParameters();
+	releaseStatement();
+	statement->release();
 	delete applicationRowDescriptor;
 	delete applicationParamDescriptor;
 	delete implementationRowDescriptor;
@@ -1395,6 +1395,11 @@ void OdbcStatement::releaseBindings()
 
 void OdbcStatement::releaseParameters()
 {
+	listBindIn->removeAll();
+
+	if ( statement->isActiveProcedure() )
+		listBindOut->removeAll();
+
 	implementationParamDescriptor->setDefined( false );
 	implementationParamDescriptor->clearPrepared();
 	applicationParamDescriptor->removeRecords();
