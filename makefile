@@ -19,7 +19,6 @@ ODBCJDBCSETUPLIB=OdbcJdbcS
 JDBCTESTCDIR=JdbcTest
 
 ISCDBC= \
-	AsciiBlob.o \
 	Attachment.o \
 	BinaryBlob.o \
 	Blob.o \
@@ -112,8 +111,6 @@ ODBCTEST:
 JDBCTEST:
 	 $(CXX) $(CXXFLAGS) $(JDBCTESTCDIR)/Test.cpp $(ISCDBCLIB).a -I$(ISCDBCDIR) -o test $(EXTLIBS)
 
-AsciiBlob.o:
-	 $(CXX) $(CXXFLAGS) -c $(ISCDBCDIR)/AsciiBlob.cpp -I$(ISCDBCDIR)
 Attachment.o:
 	 $(CXX) $(CXXFLAGS) -c $(ISCDBCDIR)/Attachment.cpp -I$(ISCDBCDIR)
 BinaryBlob.o:
