@@ -1137,7 +1137,7 @@ void Value::convertFloatToString(double value, char *string, int size, int *leng
 			while ( end > src && *end == '0' )
 				*end-- = '\0';
 
-			if ( end > src )
+			if ( end >= src )
 			{
 				*dst++ = '0';
 				*dst++ = POINT_DIV;
@@ -1148,7 +1148,7 @@ void Value::convertFloatToString(double value, char *string, int size, int *leng
 				while ( (*dst++ = *src++) );
 				--dst;
 			}
-			else if ( *end == '0' )
+			else // if ( *end == '0' )
 			{
 				dst = begin;
 				*dst++ = '0';
