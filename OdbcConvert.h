@@ -45,6 +45,9 @@ class OdbcConvert
 	SQLINTEGER		*bindOffsetPtrFrom;
 	SQLINTEGER		*bindOffsetPtrIndFrom;
 
+public:
+	bool			statusReturnData;
+
 private:
 
 	signed long encode_sql_date(SQLUSMALLINT day, SQLUSMALLINT month, SQLSMALLINT year);
