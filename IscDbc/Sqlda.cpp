@@ -348,10 +348,13 @@ bool Sqlda::checkOverflow()
 void Sqlda::allocBuffer()
 {
 	if (buffer)
-		{
+	{
 		delete [] buffer;
 		buffer = NULL;
-		}
+	}
+
+	if ( offsetSqldata )
+		delete [] offsetSqldata;
 
 	int offset = 0;
 	int n = 0;
