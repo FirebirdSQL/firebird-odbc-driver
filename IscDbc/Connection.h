@@ -331,11 +331,21 @@ public:
 class StatementMetaData  
 {
 public:
-	virtual int			getParameterCount() = 0;
-	virtual int			getParameterType (int index) = 0;
+	virtual int			getCount() = 0;
+	virtual int			getType (int index) = 0;
 	virtual int			getPrecision(int index) = 0;
 	virtual int			getScale(int index) = 0;
 	virtual bool		isNullable (int index) = 0;
+	virtual int			getDisplaySize(int index) = 0;
+	virtual const char* getColumnLabel(int index) = 0;
+	virtual const char* getSqlTypeName(int index) = 0;
+	virtual const char* getColumnName(int index) = 0;
+	virtual const char* getTableName(int index) = 0;
+	virtual const char* getColumnTypeName(int index) = 0;
+	virtual void		getSqlData(int index, char *& ptData, short *& ptIndData) = 0;
+	virtual void		setSqlData(int index, long ptData, long ptIndData) = 0;
+	virtual void		saveSqlData(int index, long ptData, long ptIndData) = 0;
+	virtual void		restoreSqlData(int index) = 0;
 	virtual int			objectVersion() = 0;
 };
 
@@ -416,6 +426,7 @@ public:
 	virtual void		setPosRowInSet(int posRow) = 0;
 	virtual int			getPosRowInSet() = 0;
 	virtual bool		readStaticCursor() = 0;
+	virtual bool		readForwardCursor() = 0;
 	virtual bool		setCurrentRowInBufferStaticCursor(int nRow) = 0;
 	virtual void		copyNextSqldaInBufferStaticCursor() = 0;
 	virtual void		copyNextSqldaFromBufferStaticCursor() = 0;

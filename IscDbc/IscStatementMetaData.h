@@ -40,8 +40,19 @@ public:
 	virtual bool isNullable (int index);
 	virtual int getScale (int index);
 	virtual int getPrecision (int index);
-	virtual int getParameterType (int index);
-	virtual int getParameterCount();
+	virtual int getType (int index);
+	virtual int getCount();
+	virtual int getDisplaySize(int index);
+	virtual const char* getColumnLabel(int index);
+	virtual const char* getSqlTypeName(int index);
+	virtual const char* getColumnName(int index);
+	virtual const char* getTableName(int index);
+	virtual const char* getColumnTypeName(int index);
+	virtual void getSqlData(int index, char *& ptData, short *& ptIndData);
+	virtual void setSqlData(int index, long ptData, long ptIndData);
+	virtual void saveSqlData(int index, long ptData, long ptIndData);
+	virtual void restoreSqlData(int index);
+
 	IscStatementMetaData(Sqlda	* ptSqlda);
 	virtual ~IscStatementMetaData();
 

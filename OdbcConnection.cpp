@@ -595,21 +595,18 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 
 	switch (type)
 	{
-//////////////////////////////////???
-//////////////////////////////////???
-//////////////////////////////////???
 	case SQL_FBGETPAGEDB:
 		metaData->getSqlStrPageSizeBd(ptr,maxLength,actualLength);
 		return SQL_SUCCESS;
+
 	case SQL_FBGETWALDB:
 		metaData->getSqlStrWalInfoBd(ptr,maxLength,actualLength);
 		return SQL_SUCCESS;
+
 	case SQL_FBGETSTATINFODB:
 		metaData->getStrStatInfoBd(ptr,maxLength,actualLength);
 		return SQL_SUCCESS;
-//////////////////////////////////???
-//////////////////////////////////???
-//////////////////////////////////???
+
 	case SQL_CURSOR_COMMIT_BEHAVIOR:
 		if (metaData->supportsOpenCursorsAcrossCommit())
 			value = SQL_CB_PRESERVE;

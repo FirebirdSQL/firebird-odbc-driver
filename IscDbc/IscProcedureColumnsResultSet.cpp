@@ -168,6 +168,8 @@ int IscProcedureColumnsResultSet::getColumnType(int index)
 
 int IscProcedureColumnsResultSet::getPrecision(int index)
 {
+	return 31;
+/*
 	switch (index)
 		{
 		case TYPE_NAME:					//	TYPE_NAME
@@ -175,4 +177,5 @@ int IscProcedureColumnsResultSet::getPrecision(int index)
 		}
 
 	return Parent::getPrecision (index);
+*/
 }

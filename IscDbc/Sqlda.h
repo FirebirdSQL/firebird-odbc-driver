@@ -60,8 +60,13 @@ public:
 	int getPrecision (int index);
 	const char* getColumnName (int index);
 	int getDisplaySize (int index);
+	int getSubType(int index);
 	int getColumnType (int index);
-	const char* getColumnTypeName (int index);
+	const char * getColumnTypeName (int index);
+	void getSqlData(int index, char *& ptData, short *& ptIndData);
+	void setSqlData(int index, long ptData, long ptIndData);
+	void saveSqlData(int index, long ptData, long ptIndData);
+	void restoreSqlData(int index);
 	void print();
 	void initStaticCursor(IscConnection *connect);
 	bool setCurrentRowInBufferStaticCursor(int nRow);
@@ -80,6 +85,8 @@ public:
 	int			lengthBufferRows;
 	int			*offsetSqldata;
 	int			indicatorsOffset;
+	long		*saveOrgAdressSqlData;
+	long		*saveOrgAdressSqlInd;
 
 	XSQLDA		*sqlda;
 	char		tempSqlda [XSQLDA_LENGTH (DEFAULT_SQLDA_COUNT)];

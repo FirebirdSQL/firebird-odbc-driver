@@ -24,7 +24,6 @@
 
 #include "IscDbc.h"
 #include "IscStatementMetaData.h"
-//#include "IscPreparedStatement.h"
 #include "Sqlda.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -41,12 +40,12 @@ IscStatementMetaData::~IscStatementMetaData()
 
 }
 
-int IscStatementMetaData::getParameterCount()
+int IscStatementMetaData::getCount()
 {
 	return sqlda->getColumnCount();
 }
 
-int IscStatementMetaData::getParameterType(int index)
+int IscStatementMetaData::getType(int index)
 {
 	return sqlda->getColumnType (index);
 }
@@ -64,6 +63,56 @@ int IscStatementMetaData::getScale(int index)
 bool IscStatementMetaData::isNullable(int index)
 {
 	return sqlda->isNullable (index);
+}
+
+int IscStatementMetaData::getDisplaySize(int index)
+{
+	return sqlda->getDisplaySize(index);
+}
+
+const char* IscStatementMetaData::getColumnLabel(int index)
+{
+	return sqlda->getColumnName(index);
+}
+
+const char* IscStatementMetaData::getSqlTypeName(int index)
+{
+	return sqlda->getColumnTypeName(index);
+}
+
+const char* IscStatementMetaData::getColumnName(int index)
+{
+	return sqlda->getColumnName(index);
+}
+
+const char* IscStatementMetaData::getTableName(int index)
+{
+	return sqlda->getTableName(index);
+}
+
+const char* IscStatementMetaData::getColumnTypeName(int index)
+{
+	return sqlda->getColumnTypeName(index);
+}
+
+void IscStatementMetaData::getSqlData(int index, char *& ptData, short *& ptIndData)
+{
+	sqlda->getSqlData(index, ptData, ptIndData);
+}
+
+void IscStatementMetaData::setSqlData(int index, long ptData, long ptIndData)
+{
+	sqlda->setSqlData(index, ptData, ptIndData);
+}
+
+void IscStatementMetaData::saveSqlData(int index, long ptData, long ptIndData)
+{
+	sqlda->saveSqlData(index, ptData, ptIndData);
+}
+
+void IscStatementMetaData::restoreSqlData(int index)
+{
+	sqlda->restoreSqlData(index);
 }
 
 int IscStatementMetaData::objectVersion()

@@ -127,6 +127,7 @@ public:
 	virtual OdbcObjectType getType();
 	OdbcStatement(OdbcConnection *connect, int statementNumber);
 	virtual ~OdbcStatement();
+	bool isStaticCursor(){ return cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE; }
 
 	OdbcConnection		*connection;
 	OdbcDesc			*applicationRowDescriptor;
@@ -165,6 +166,7 @@ public:
 	bool				cursorScrollable;
 	bool				asyncEnable;
 	int					rowNumber;
+	long				indicatorRowNumber;
 	int					maxRows;
 	int					maxLength;
 };

@@ -279,6 +279,8 @@ Sqlda::Sqlda()
 	dataStaticCursor = NULL;
 	offsetSqldata = NULL;
 	indicatorsOffset = 0;
+	saveOrgAdressSqlData = NULL;
+	saveOrgAdressSqlInd = NULL;
 }
 
 Sqlda::~Sqlda()
@@ -292,6 +294,10 @@ Sqlda::~Sqlda()
 		delete 	dataStaticCursor;
 	if ( offsetSqldata )
 		delete [] offsetSqldata;
+	if ( saveOrgAdressSqlData )
+		delete [] saveOrgAdressSqlData;
+	if ( saveOrgAdressSqlInd )
+		delete [] saveOrgAdressSqlInd;
 }
 
 Sqlda::operator XSQLDA* ()
@@ -439,6 +445,51 @@ int Sqlda::getCountRowsStaticCursor()
 int Sqlda::getColumnCount()
 {
 	return sqlda->sqld;
+}
+
+void Sqlda::getSqlData(int index, char *& ptData, short *& ptIndData)
+{
+	ptData = sqlda->sqlvar[index - 1].sqldata;
+	ptIndData = sqlda->sqlvar[index - 1].sqlind;
+}
+
+void Sqlda::setSqlData(int index, long ptData, long ptIndData)
+{
+	saveSqlData(index, ptData, ptIndData);
+	sqlda->sqlvar[index - 1].sqldata = (char*)ptData;
+	sqlda->sqlvar[index - 1].sqlind = (short*)ptIndData;
+}
+
+void Sqlda::saveSqlData(int index, long ptData, long ptIndData)
+{
+	if ( !saveOrgAdressSqlData )
+	{
+		int numberColumns = sqlda->sqld;
+		saveOrgAdressSqlData = new long [numberColumns];
+		memset(saveOrgAdressSqlData,0,sizeof(*saveOrgAdressSqlData)*numberColumns);
+		saveOrgAdressSqlInd = new long [numberColumns];
+		memset(saveOrgAdressSqlInd,0,sizeof(*saveOrgAdressSqlInd)*numberColumns);
+	}
+	if ( !saveOrgAdressSqlData[index-1] )
+	{
+		saveOrgAdressSqlData[index-1] = ptData;
+		saveOrgAdressSqlInd[index-1] = ptIndData;
+	}
+}
+
+void Sqlda::restoreSqlData(int index)
+{
+	if ( !saveOrgAdressSqlData )
+		return;
+
+	int ind = index-1;
+	if ( saveOrgAdressSqlData[ind] )
+	{
+		sqlda->sqlvar[ind].sqldata = (char*)saveOrgAdressSqlData[ind];
+		saveOrgAdressSqlData[ind] = 0;
+		sqlda->sqlvar[ind].sqlind = (short*)saveOrgAdressSqlInd[ind];
+		saveOrgAdressSqlInd[ind] = 0;
+	}
 }
 
 void Sqlda::print()
@@ -651,6 +702,11 @@ const char* Sqlda::getColumnTypeName(int index)
 	return getSqlTypeName (var->sqltype, var->sqlsubtype, var->sqlscale);
 }
 
+int Sqlda::getSubType(int index)
+{
+	return sqlda->sqlvar[index - 1].sqlsubtype;
+}
+
 int Sqlda::getSqlType(int iscType, int subType, int sqlScale)
 {
 	switch (iscType & ~1)
@@ -739,7 +795,6 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale)
 
 		case SQL_ARRAY:
 			return JDBC_ARRAY;
-//			NOT_SUPPORTED("array", 0, "", 0, "");
 		}
 
 	return 0;

@@ -55,11 +55,21 @@ DescRecord::DescRecord()
 	indicatorPtr = NULL;
 	unNamed = SQL_NAMED;
 	dataPtr = NULL;
+	fnConv = NULL;
 }
 
 DescRecord::~DescRecord()
 {
 
+}
+
+void DescRecord::setDefault(DescRecord *recTo)
+{
+	SQLINTEGER		*saveIndicatorPtr = recTo->indicatorPtr;
+	SQLPOINTER		saveDataPtr = recTo->dataPtr;
+	*recTo = this;
+	recTo->indicatorPtr = saveIndicatorPtr;
+	recTo->dataPtr = saveDataPtr;
 }
 
 bool DescRecord::operator =(DescRecord *rec)

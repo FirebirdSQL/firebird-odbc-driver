@@ -195,6 +195,8 @@ int IscColumnsResultSet::getColumnDisplaySize(int index)
 
 int IscColumnsResultSet::getPrecision(int index)
 {
+	return 31;
+/*
 	switch (index)
 		{
 		case TYPE_NAME:					//	TYPE_NAME
@@ -203,6 +205,7 @@ int IscColumnsResultSet::getPrecision(int index)
 		}
 
 	return Parent::getPrecision (index);
+*/
 }
 
 

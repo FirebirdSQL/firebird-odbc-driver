@@ -163,6 +163,7 @@ public:
 	virtual void		setPosRowInSet(int posRow);
 	virtual int			getPosRowInSet();
 	virtual bool		readStaticCursor();
+	virtual bool		readForwardCursor();
 	virtual bool		setCurrentRowInBufferStaticCursor(int nRow);
 	virtual void		copyNextSqldaInBufferStaticCursor();
 	virtual void		copyNextSqldaFromBufferStaticCursor();

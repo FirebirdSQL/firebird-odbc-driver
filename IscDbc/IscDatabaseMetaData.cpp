@@ -354,7 +354,7 @@ bool IscDatabaseMetaData::supportsMixedCaseIdentifiers()
 
 bool IscDatabaseMetaData::storesUpperCaseIdentifiers()
 	{
-	return true;
+	return connection->attachment->databaseDialect < 3;
 	}
 
 bool IscDatabaseMetaData::storesLowerCaseIdentifiers()
@@ -384,7 +384,7 @@ bool IscDatabaseMetaData::storesLowerCaseQuotedIdentifiers()
 
 bool IscDatabaseMetaData::storesMixedCaseQuotedIdentifiers()
 	{
-	return connection->attachment->quotedIdentifiers;
+	return connection->attachment->databaseDialect < 3;
 	}
 
 const char* IscDatabaseMetaData::getIdentifierQuoteString()

@@ -30,11 +30,14 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+#include "OdbcConvert.h"
+
 class DescRecord
 {
 public:
 	DescRecord();
 	virtual ~DescRecord();
+	void setDefault(DescRecord *recTo);
 	bool operator =(DescRecord *rec);
 
 public:
@@ -74,6 +77,10 @@ public:
 	SQLINTEGER		*indicatorPtr;
 	SQLSMALLINT		unNamed;
 	SQLPOINTER		dataPtr;
+
+public:
+
+	ADRESS_FUNCTION fnConv;
 };
 
 #endif // !defined(AFX_DESCRECORD_H__F3F1D3A4_4083_11D4_98E8_0000C01D2301__INCLUDED_)

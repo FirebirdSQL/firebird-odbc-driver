@@ -47,6 +47,7 @@ void logMsg (const char *msg);
 
 #include <sql.h>
 #include <sqlext.h>
+#include "JavaType.h"
 
 #ifndef NULL
 #define NULL				0

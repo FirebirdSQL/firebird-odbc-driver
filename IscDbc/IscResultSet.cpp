@@ -90,6 +90,31 @@ ResultSetMetaData* IscResultSet::getMetaData()
 	return (ResultSetMetaData*) metaData;
 }
 
+// Is used only for cursors OdbcJdbc
+// It is forbidden to use in IscDbc
+bool IscResultSet::readForwardCursor()
+{
+	if (!statement)
+		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
+
+	ISC_STATUS statusVector [20];
+
+	int dialect = statement->connection->getDatabaseDialect ();
+	int ret = GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
+
+	if (ret)
+	{
+		if (ret == 100)
+		{
+			close();
+			return false;
+		}
+		THROW_ISC_EXCEPTION (statusVector);
+	}
+
+	return true;
+}
+
 bool IscResultSet::next()
 {
 	if (!statement)
@@ -175,13 +200,13 @@ int IscResultSet::getCountRowsStaticCursor()
 
 bool IscResultSet::getDataFromStaticCursor (int column, int cType, void * pointer, int bufferLength, long * indicatorPointer)
 {
-	if ( !(activePosRowInSet > 0 && activePosRowInSet <= sqlda->getCountRowsStaticCursor()) )
+	if ( !(activePosRowInSet >= 0 && activePosRowInSet < sqlda->getCountRowsStaticCursor()) )
 		return false;
 
 	XSQLVAR *var = sqlda->sqlda->sqlvar + column - 1;
     Value *value = values.values + column - 1;
 
-	sqlda->setCurrentRowInBufferStaticCursor(activePosRowInSet-1);
+	sqlda->setCurrentRowInBufferStaticCursor(activePosRowInSet);
 	sqlda->copyNextSqldaFromBufferStaticCursor();
 	if ( !*(long*)var->sqldata )
 		value->type = Null;

@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
+# ADD LINK32 Release/IscDbc.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib advapi32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
 
 !ELSEIF  "$(CFG)" == "OdbcJdbc - Win32 Debug"
 
@@ -123,6 +123,10 @@ SOURCE=.\OdbcConnection.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\OdbcConvert.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\OdbcDateTime.cpp
 # End Source File
 # Begin Source File
@@ -175,7 +179,15 @@ SOURCE=.\IscDbc\JString.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Mlist.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\OdbcConnection.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\OdbcConvert.h
 # End Source File
 # Begin Source File
 
@@ -214,9 +226,5 @@ SOURCE=.\SafeEnvThread.h
 SOURCE=.\SetupAttributes.h
 # End Source File
 # End Group
-# Begin Source File
-
-SOURCE=.\IscDbc\TimeStamp.h
-# End Source File
 # End Target
 # End Project

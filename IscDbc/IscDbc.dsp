@@ -224,6 +224,10 @@ SOURCE=.\IscTablesResultSet.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\JavaType.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\JString.h
 # End Source File
 # Begin Source File

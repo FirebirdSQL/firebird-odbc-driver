@@ -35,6 +35,7 @@
 #include "Connection.h"
 #include "DescRecord.h"
 #include "SQLException.h"
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -59,6 +60,17 @@ OdbcDesc::OdbcDesc(OdbcDescType type, OdbcConnection *connect)
 		bDefined = false;
 	else
 		bDefined = true;
+
+	if( headType == odtImplementationParameter || headType == odtImplementationRow )
+	{
+		convert = new OdbcConvert;
+		listBind = new ListBindColumn;
+	}
+	else
+	{
+		convert = NULL;
+		listBind = NULL;
+	}
 }
 
 void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaData)
@@ -84,8 +96,15 @@ void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaData)
 
 	bDefined = true;
 
-	headCount = metaData->getParameterCount();
+	headCount = metaData->getCount();
 	getDescRecord (headCount);
+}
+
+// Use to odtImplementationParameter and odtImplementationRow
+void OdbcDesc::setBindOffsetPtr(SQLINTEGER	**ptBindOffsetPtr)
+{ 
+	// convert always not NULL, as is caused the constructor OdbcDesc
+	convert->setBindOffsetPtr(ptBindOffsetPtr);
 }
 
 void OdbcDesc::removeRecords()
@@ -102,13 +121,6 @@ void OdbcDesc::removeRecords()
 	recordSlots = 0;
 }
  
-/*
-			case odtApplicationRow:
-			case odtApplicationParameter:
-			case odtImplementationRow:
-			case odtImplementationParameter:
-*/
-
 RETCODE OdbcDesc::operator =(OdbcDesc &sour)
 {
 	if( headType == odtImplementationRow )
@@ -138,6 +150,94 @@ OdbcDesc::~OdbcDesc()
 		connection->descriptorDeleted (this);
 
 	removeRecords();
+	
+	if (convert)
+		delete convert;
+}
+
+// 	Info -> ASSERT( headType == odtImplementationParameter )
+int OdbcDesc::setConvFn(int recNumber, DescRecord * recordTo)
+{
+	if ( !metaData )
+		return -1;
+
+	DescRecord *record = getDescRecord(recNumber);
+
+	if( recNumber == 0 )
+		recordTo->setDefault(record);
+	else
+	{
+		record->autoUniqueValue = SQL_FALSE;
+		record->caseSensitive = SQL_FALSE;
+		record->catalogName = "";
+		record->datetimeIntervalCode = 0;
+		record->displaySize = metaData->getDisplaySize(recNumber);
+		record->fixedPrecScale = SQL_FALSE;
+		record->label = metaData->getColumnLabel(recNumber);
+		record->length = metaData->getDisplaySize(recNumber);
+		record->literalPrefix = "\"";
+		record->literalSuffix = "\"";
+		record->localTypeName = metaData->getSqlTypeName(recNumber);
+		record->name = metaData->getColumnName(recNumber);
+		record->baseColumnName = metaData->getColumnName(recNumber);
+		record->nullable = metaData->isNullable(recNumber);
+		record->octetLength = metaData->getPrecision(recNumber);
+		record->precision = metaData->getPrecision(recNumber);
+		record->scale = metaData->getScale(recNumber);
+		record->schemaName = "";
+		record->searchable = SQL_PRED_NONE;
+		record->tableName = metaData->getTableName(recNumber);
+		record->baseTableName = metaData->getTableName(recNumber);
+		record->type = metaData->getType(recNumber);
+		record->conciseType = getConciseType(record->type);
+		record->typeName = metaData->getColumnTypeName(recNumber);
+		record->unNamed = !record->name.IsEmpty() ? SQL_NAMED : SQL_UNNAMED;
+		record->unSigned = SQL_FALSE;
+		record->updaTable = SQL_ATTR_WRITE;
+		
+		if( recordTo->conciseType == SQL_C_DEFAULT )
+			record->setDefault(recordTo);
+
+		metaData->getSqlData(recNumber, (char *&)record->dataPtr, (short *&)record->indicatorPtr);
+	}
+
+	record->fnConv = convert->getAdresFunction(record,recordTo);
+
+	return convert->isIdentity() && recNumber;
+}
+
+static long fnCmpInt(CBindColumn * a, CBindColumn * b)
+{
+	return a->column-b->column;
+}
+
+void OdbcDesc::addBindColumn(int recNumber, DescRecord * recordApp)
+{
+	DescRecord *recordImp = getDescRecord(recNumber);
+	CBindColumn bindCol(recNumber,recordImp,recordApp);
+
+	int j = listBind->SearchAndInsert(&bindCol,(long (*)(const void *,const void *))fnCmpInt);
+	if( j < 0 )
+		(*listBind)[-j-1] = bindCol;
+}
+
+void OdbcDesc::delBindColumn(int recNumber)
+{
+}
+
+void OdbcDesc::delAllBindColumn()
+{
+	listBind->OnRemoveAll();
+}
+
+void OdbcDesc::returnData()
+{
+	CBindColumn * bindRec = listBind->GetHeadPosition();
+	while(bindRec)
+	{
+		(convert->*bindRec->impRecord->fnConv)(bindRec->impRecord,bindRec->appRecord);
+		bindRec = listBind->GetNext();
+	}
 }
 
 OdbcObjectType OdbcDesc::getType()
@@ -1041,4 +1141,47 @@ RETCODE OdbcDesc::sqlSetDescRec(	SQLSMALLINT	recNumber,
 	}
 
 	return sqlSuccess();
+}
+
+int OdbcDesc::getConciseType(int type)
+{
+	switch ( type )
+		{
+		case JDBC_LONGVARBINARY:
+		case JDBC_LONGVARCHAR:
+			return SQL_C_BINARY;
+
+		case JDBC_CHAR:
+		case JDBC_VARCHAR:
+			return SQL_C_CHAR;
+
+		case JDBC_SMALLINT:
+			return SQL_C_SSHORT;
+
+		case JDBC_INTEGER:
+			return SQL_C_SLONG;
+
+		case JDBC_BIGINT:
+			return SQL_C_SBIGINT;
+
+		case JDBC_FLOAT:
+			return SQL_C_FLOAT;
+
+		case JDBC_DOUBLE:
+			return SQL_C_DOUBLE;
+
+		case JDBC_DATE:
+			return SQL_C_DATE;
+
+		case JDBC_TIME:
+			return SQL_C_TIME;
+
+		case JDBC_TIMESTAMP:
+			return SQL_C_TIMESTAMP;
+
+		case JDBC_ARRAY:
+			return SQL_C_BINARY;
+		}
+
+	return type;
 }

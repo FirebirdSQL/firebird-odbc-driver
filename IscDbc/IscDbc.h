@@ -73,41 +73,8 @@ typedef unsigned long	ULONG;
 typedef __int64			QUAD;
 typedef unsigned __int64			UQUAD;
 
-/*
- *		Sql types (actually from java.sql.types)
- */
-
-#define JDBC_NULL		   0 
-
-#define JDBC_ARRAY 		  -8
-#define JDBC_BIT 		  -7
-#define JDBC_TINYINT 	  -6
-#define JDBC_SMALLINT	   5
-#define JDBC_INTEGER 	   4
-#define JDBC_BIGINT 	  -5
-
-#define JDBC_FLOAT 		   6
-#define JDBC_REAL 		   7
-#define JDBC_DOUBLE 	   8
-
-#define JDBC_NUMERIC 	   2
-#define JDBC_DECIMAL	   3
-
-#define JDBC_CHAR		   1
-#define JDBC_VARCHAR 	  12
-#define JDBC_LONGVARCHAR  -1
-
-#define JDBC_SQL_DATE 	  9
-#define JDBC_SQL_TIME 	  10
-#define JDBC_SQL_TIMESTAMP	  11
-
-#define JDBC_DATE 		  91
-#define JDBC_TIME 		  92
-#define JDBC_TIMESTAMP 	  93
-
-#define JDBC_BINARY		  -2
-#define JDBC_VARBINARY 	  -3
-#define JDBC_LONGVARBINARY 	  -4
+#include "JavaType.h"
+#include "Connection.h"
 
 #define MAX_ARRAY_LENGTH		100000000
 #define MAX_BLOB_LENGTH			2147483647
