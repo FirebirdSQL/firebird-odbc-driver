@@ -1,0 +1,898 @@
+/*
+ *  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/idpl.html. 
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2003 Vladimir Tsvigun
+ *  All Rights Reserved.
+ */
+
+// OdbcConvert.cpp: OdbcConvert class.
+//
+//////////////////////////////////////////////////////////////////////
+
+#include <stdio.h>
+#include "OdbcJdbc.h"
+#include "OdbcDesc.h"
+#include "OdbcConnection.h"
+#include "Connection.h"
+#include "DescRecord.h"
+#include "SQLException.h"
+
+#define MAKEQUAD(a, b)      ((QUAD)(((long)(a)) | ((UQUAD)((long)(b))) << 32))
+#define LO_LONG(l)           ((long)(l))
+#define HI_LONG(l)           ((long)(((UQUAD)(l) >> 32) & 0xFFFFFFFF))
+
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
+
+OdbcConvert::OdbcConvert()
+{
+	bIdentity = false;
+	bindOffsetPtr = NULL;
+}
+
+void OdbcConvert::setBindOffsetPtr(SQLINTEGER	**ptBindOffsetPtr)
+{
+	bindOffsetPtr = ptBindOffsetPtr;
+}
+
+ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to)
+{
+	bIdentity = false;
+
+	switch(from->conciseType)
+	{
+	case SQL_C_SHORT:
+	case SQL_C_USHORT:
+	case SQL_C_SSHORT:
+		switch(to->conciseType)
+		{
+		case SQL_C_SHORT:
+		case SQL_C_USHORT:
+		case SQL_C_SSHORT:
+			bIdentity = true;
+			return convShortToShort;
+		case SQL_C_LONG:
+		case SQL_C_ULONG:
+		case SQL_C_SLONG:
+			return convShortToLong;
+		case SQL_C_FLOAT:
+			return convShortToFloat;
+		case SQL_C_DOUBLE:
+			return convShortToDouble;
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			return convShortToBigint;
+		case SQL_C_CHAR:
+			return convShortToString;
+		case SQL_C_BINARY:
+		case SQL_C_TYPE_DATE:
+		case SQL_C_DATE:
+		case SQL_C_TYPE_TIMESTAMP:
+		case SQL_C_TIMESTAMP:
+		case SQL_C_TYPE_TIME:
+		case SQL_C_TIME:
+		case SQL_C_NUMERIC:
+			break;
+		}
+
+	case SQL_C_LONG:
+	case SQL_C_ULONG:
+	case SQL_C_SLONG:
+		switch(to->conciseType)
+		{
+		case SQL_C_SHORT:
+		case SQL_C_USHORT:
+		case SQL_C_SSHORT:
+			return convLongToShort;
+		case SQL_C_LONG:
+		case SQL_C_ULONG:
+		case SQL_C_SLONG:
+			bIdentity = true;
+			return convLongToLong;
+		case SQL_C_FLOAT:
+			return convLongToFloat;
+		case SQL_C_DOUBLE:
+			return convLongToDouble;
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			return convLongToBigint;
+		case SQL_C_CHAR:
+			return convLongToString;
+		}
+
+	case SQL_C_FLOAT:
+		switch(to->conciseType)
+		{
+		case SQL_C_SHORT:
+		case SQL_C_USHORT:
+		case SQL_C_SSHORT:
+			return convFloatToShort;
+		case SQL_C_LONG:
+		case SQL_C_ULONG:
+		case SQL_C_SLONG:
+			return convFloatToLong;
+		case SQL_C_FLOAT:
+			bIdentity = true;
+			return convFloatToFloat;
+		case SQL_C_DOUBLE:
+			return convFloatToDouble;
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			return convFloatToBigint;
+		case SQL_C_CHAR:
+			return convFloatToString;
+		}
+
+	case SQL_C_DOUBLE:
+		switch(to->conciseType)
+		{
+		case SQL_C_SHORT:
+		case SQL_C_USHORT:
+		case SQL_C_SSHORT:
+			return convDoubleToShort;
+		case SQL_C_LONG:
+		case SQL_C_ULONG:
+		case SQL_C_SLONG:
+			return convDoubleToLong;
+		case SQL_C_FLOAT:
+			return convDoubleToFloat;
+		case SQL_C_DOUBLE:
+			bIdentity = true;
+			return convDoubleToDouble;
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			return convDoubleToBigint;
+		case SQL_C_CHAR:
+			return convDoubleToString;
+		}
+
+	case SQL_C_SBIGINT:
+	case SQL_C_UBIGINT:
+		switch(to->conciseType)
+		{
+		case SQL_C_SHORT:
+		case SQL_C_USHORT:
+		case SQL_C_SSHORT:
+			return convBigintToShort;
+		case SQL_C_LONG:
+		case SQL_C_ULONG:
+		case SQL_C_SLONG:
+			return convBigintToLong;
+		case SQL_C_FLOAT:
+			return convBigintToFloat;
+		case SQL_C_DOUBLE:
+			return convBigintToDouble;
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			bIdentity = true;
+			return convBigintToBigint;
+		case SQL_C_CHAR:
+			return convBigintToString;
+		}
+
+	case SQL_DECIMAL:
+	case SQL_C_NUMERIC:
+		switch(to->conciseType)
+		{
+		case SQL_C_SHORT:
+		case SQL_C_USHORT:
+		case SQL_C_SSHORT:
+			return convNumericToShort;
+		case SQL_C_LONG:
+		case SQL_C_ULONG:
+		case SQL_C_SLONG:
+			return convNumericToLong;
+		case SQL_C_FLOAT:
+			return convNumericToFloat;
+		case SQL_C_DOUBLE:
+			return convNumericToDouble;
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			return convNumericToBigint;
+		case SQL_DECIMAL:
+		case SQL_C_NUMERIC:
+			bIdentity = true;
+			return convNumericToTagNumeric;
+		}
+
+	case SQL_C_DATE:
+	case SQL_C_TYPE_DATE:
+		switch(to->conciseType)
+		{
+		case SQL_C_LONG:
+		case SQL_C_ULONG:
+		case SQL_C_SLONG:
+			return convDateToLong;
+		case SQL_C_FLOAT:
+			return convDateToFloat;
+		case SQL_C_DOUBLE:
+			return convDateToDouble;
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			return convDateToBigint;
+		case SQL_C_DATE:
+		case SQL_C_TYPE_DATE:
+			bIdentity = true;
+			return convDateToTagDate;
+		case SQL_C_CHAR:
+			return convDateToString;
+		}
+
+	case SQL_C_TIME:
+	case SQL_C_TYPE_TIME:
+		switch(to->conciseType)
+		{
+		case SQL_C_LONG:
+		case SQL_C_ULONG:
+		case SQL_C_SLONG:
+			return convTimeToLong;
+		case SQL_C_FLOAT:
+			return convTimeToFloat;
+		case SQL_C_DOUBLE:
+			return convTimeToDouble;
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			return convTimeToBigint;
+		case SQL_C_TIME:
+		case SQL_C_TYPE_TIME:
+			bIdentity = true;
+			return convTimeToTagTime;
+		case SQL_C_CHAR:
+			return convTimeToString;
+		}
+
+	case SQL_C_TYPE_TIMESTAMP:
+	case SQL_C_TIMESTAMP:
+		switch(to->conciseType)
+		{
+		case SQL_C_DOUBLE:
+			return convDateTimeToDouble;
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			return convDateTimeToBigint;
+		case SQL_C_TYPE_TIMESTAMP:
+		case SQL_C_TIMESTAMP:
+			bIdentity = true;
+			return convDateTimeToTagDateTime;
+		case SQL_C_CHAR:
+			return convDateTimeToString;
+		}
+
+	case SQL_C_BINARY:
+		switch(to->conciseType)
+		{
+		case SQL_C_LONG:
+		case SQL_C_ULONG:
+		case SQL_C_SLONG:
+			return convBlobToLong;
+		case SQL_C_FLOAT:
+			return convBlobToFloat;
+		case SQL_C_DOUBLE:
+			return convBlobToDouble;
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			return convBlobToBigint;
+		case SQL_C_BINARY:
+			bIdentity = true;
+			return convBlobToBlob;
+		case SQL_C_CHAR:
+			return convBlobToString;
+		}
+
+	case SQL_C_CHAR:
+		switch(to->conciseType)
+		{
+		case SQL_C_LONG:
+		case SQL_C_ULONG:
+		case SQL_C_SLONG:
+			return convStringToLong;
+		case SQL_C_SHORT:
+		case SQL_C_USHORT:
+		case SQL_C_SSHORT:
+			return convStringToShort;
+		case SQL_C_FLOAT:
+			return convStringToFloat;
+		case SQL_C_DOUBLE:
+			return convStringToDouble;
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			return convStringToBigint;
+		case SQL_C_CHAR:
+			if ( from->type == JDBC_VARCHAR )
+				return convVarStringToString;
+			bIdentity = true;
+			return convStringToString;
+		}
+	}
+	return NULL;
+}
+
+inline 
+SQLPOINTER OdbcConvert::getAdressData(char * pointer)
+{
+	return (SQLPOINTER)(pointer + **bindOffsetPtr);
+}
+
+#define ODBCCONVERT_CHECKNULL			\
+	if( *from->indicatorPtr == -1 )		\
+	{									\
+		if ( indicatorPointer )			\
+			*indicatorPointer = -1;		\
+		return 0;						\
+	}									\
+
+#define ODBCCONVERT_CONV(TYPE_FROM,C_TYPE_FROM,TYPE_TO,C_TYPE_TO)							\
+int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)			\
+{																							\
+	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);									\
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);	\
+																							\
+	if( *from->indicatorPtr == -1 )															\
+	{																						\
+		if ( indicatorPointer )																\
+			*indicatorPointer = -1;															\
+	}																						\
+	else																					\
+	{																						\
+		*(##C_TYPE_TO*)pointer = (##C_TYPE_TO)*(##C_TYPE_FROM*)from->dataPtr;				\
+		if ( indicatorPointer )																\
+			*indicatorPointer = sizeof(##C_TYPE_TO);										\
+	}																						\
+	return 0;																				\
+}																							\
+
+#define ODBCCONVERT_CONVROUND(TYPE_FROM,C_TYPE_FROM,TYPE_TO,C_TYPE_TO)						\
+int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)			\
+{																							\
+	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);									\
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);	\
+																							\
+	if( *from->indicatorPtr == -1 )															\
+	{																						\
+		if ( indicatorPointer )																\
+			*indicatorPointer = -1;															\
+	}																						\
+	else																					\
+	{																						\
+		##C_TYPE_FROM valFrom = *(##C_TYPE_FROM*)from->dataPtr;								\
+		if ( valFrom < 0 )valFrom -= 0.5;													\
+		else valFrom += 0.5;																\
+																							\
+		*(##C_TYPE_TO*)pointer = (##C_TYPE_TO)valFrom;										\
+		if ( indicatorPointer )																\
+			*indicatorPointer = sizeof(##C_TYPE_TO);										\
+	}																						\
+	return 0;																				\
+}																							\
+
+#define ODBCCONVERT_CONV_TO_STRING(TYPE_FROM,C_TYPE_FROM,DEF_SCALE)							\
+int OdbcConvert::conv##TYPE_FROM##ToString(DescRecord * from, DescRecord * to)				\
+{																							\
+	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);									\
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);	\
+																							\
+	ODBCCONVERT_CHECKNULL;																	\
+																							\
+	int len = to->length;																	\
+																							\
+	if ( !len )																				\
+		*(char*)to->dataPtr = 0;															\
+	else																					\
+	{	/* Original source from IscDbc/Value.cpp */											\
+		##C_TYPE_FROM number = *(##C_TYPE_FROM*)from->dataPtr;								\
+		char *string = (char*)pointer;														\
+		int scale = from->scale;															\
+																							\
+		if (number == 0)																	\
+			strcpy (string, "0");															\
+		else if (scale < -##DEF_SCALE)														\
+			strcpy (string, "***");															\
+		else																				\
+		{																					\
+			bool negative = false;															\
+																							\
+			if (number < 0)																	\
+			{																				\
+				number = -number;															\
+				negative = true;															\
+			}																				\
+																							\
+			char temp [100], *p = temp;														\
+			int n;																			\
+			for (n = 0; number; number /= 10, --n)											\
+			{																				\
+				if (scale && scale == n)													\
+					*p++ = '.';																\
+				*p++ = '0' + (char) (number % 10);											\
+			}																				\
+																							\
+			if (scale <= n)																	\
+			{																				\
+				for (; n > scale; --n)														\
+					*p++ = '0';																\
+				*p++ = '.';																	\
+			}																				\
+																							\
+			char *q = string;																\
+			int l=0;																		\
+																							\
+			if (negative)																	\
+				*q++ = '-',++l;																\
+																							\
+			if ( p - temp > len - l )														\
+				p = temp + len - l;															\
+																							\
+			while (p > temp)																\
+				*q++ = *--p;																\
+																							\
+			*q = 0;																			\
+		}																					\
+	}																						\
+																							\
+	if ( indicatorPointer )																	\
+		*indicatorPointer = len;															\
+																							\
+	return len;																				\
+}																							\
+
+////////////////////////////////////////////////////////////////////////
+// Short
+////////////////////////////////////////////////////////////////////////
+
+ODBCCONVERT_CONV(Short,short,Short,short);
+ODBCCONVERT_CONV(Short,short,Long,long);
+ODBCCONVERT_CONV(Short,short,Float,float);
+ODBCCONVERT_CONV(Short,short,Double,double);
+ODBCCONVERT_CONV(Short,short,Bigint,QUAD);
+ODBCCONVERT_CONV_TO_STRING(Short,short,5);
+
+////////////////////////////////////////////////////////////////////////
+// Long
+////////////////////////////////////////////////////////////////////////
+
+ODBCCONVERT_CONV(Long,long,Short,short);
+ODBCCONVERT_CONV(Long,long,Long,long);
+ODBCCONVERT_CONV(Long,long,Float,float);
+ODBCCONVERT_CONV(Long,long,Double,double);
+ODBCCONVERT_CONV(Long,long,Bigint,QUAD);
+ODBCCONVERT_CONV_TO_STRING(Long,long,10);
+
+////////////////////////////////////////////////////////////////////////
+// Float
+////////////////////////////////////////////////////////////////////////
+
+ODBCCONVERT_CONVROUND(Float,float,Short,short);
+ODBCCONVERT_CONVROUND(Float,float,Long,long);
+ODBCCONVERT_CONV(Float,float,Float,float);
+ODBCCONVERT_CONV(Float,float,Double,double);
+ODBCCONVERT_CONVROUND(Float,float,Bigint,QUAD);
+
+int OdbcConvert::convFloatToString(DescRecord * from, DescRecord * to)
+{
+	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+	
+	int len = _snprintf((char*)to->dataPtr,to->octetLength,"%f",*(float*)from->dataPtr);
+//	int len = _snprintf((char*)to->dataPtr,to->octetLength,"%.*f",from->scale,*(float*)from->dataPtr);
+
+	if ( indicatorPointer )
+		*indicatorPointer = len;
+
+	return len;
+}
+
+////////////////////////////////////////////////////////////////////////
+// Double
+////////////////////////////////////////////////////////////////////////
+
+ODBCCONVERT_CONVROUND(Double,double,Short,short);
+ODBCCONVERT_CONVROUND(Double,double,Long,long);
+ODBCCONVERT_CONV(Double,double,Float,float);
+ODBCCONVERT_CONV(Double,double,Double,double);
+ODBCCONVERT_CONVROUND(Double,double,Bigint,QUAD);
+
+int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
+{
+	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+	
+	int len = _snprintf((char*)to->dataPtr,to->octetLength,"%f",*(double*)from->dataPtr);
+//	int len = _snprintf((char*)to->dataPtr,to->octetLength,"%.*f",from->scale,*(double*)from->dataPtr);
+
+	if ( indicatorPointer )
+		*indicatorPointer = len;
+
+	return len;
+}
+
+////////////////////////////////////////////////////////////////////////
+// Bigint
+////////////////////////////////////////////////////////////////////////
+
+ODBCCONVERT_CONV(Bigint,QUAD,Short,short);
+ODBCCONVERT_CONV(Bigint,QUAD,Long,long);
+ODBCCONVERT_CONV(Bigint,QUAD,Float,float);
+ODBCCONVERT_CONV(Bigint,QUAD,Double,double);
+ODBCCONVERT_CONV(Bigint,QUAD,Bigint,QUAD);
+ODBCCONVERT_CONV_TO_STRING(Bigint,QUAD,18);
+
+////////////////////////////////////////////////////////////////////////
+// Numeric,Decimal
+////////////////////////////////////////////////////////////////////////
+
+ODBCCONVERT_CONV(Numeric,QUAD,Short,short);
+ODBCCONVERT_CONV(Numeric,QUAD,Long,long);
+ODBCCONVERT_CONV(Numeric,QUAD,Float,float);
+ODBCCONVERT_CONV(Numeric,QUAD,Double,double);
+ODBCCONVERT_CONV(Numeric,QUAD,Bigint,QUAD);
+//ODBCCONVERT_CONV(Numeric,QUAD,Numeric,QUAD);
+
+int OdbcConvert::convNumericToTagNumeric(DescRecord * from, DescRecord * to)
+{
+	char* pointer = (char*)getAdressData((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	QUAD &number = *(QUAD*)from->dataPtr;
+	*pointer++=(char)from->precision;
+	*pointer++=(char)from->scale;
+	if ( number < 0 )
+		*pointer++=0;
+	else
+		*pointer++=1;
+	*(QUAD*)pointer = number;
+	if ( indicatorPointer )
+		*indicatorPointer = 0;
+
+	return 0;
+}
+
+
+////////////////////////////////////////////////////////////////////////
+#define ODBCCONVERT_TEMP_CONV(TYPE_FROM,TYPE_TO,C_TYPE_TO)						\
+int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)			\
+{																							\
+	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);									\
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);	\
+																							\
+	if( *from->indicatorPtr == -1 )															\
+	{																						\
+		if ( indicatorPointer )																\
+			*indicatorPointer = -1;															\
+		return 0;																			\
+	}																						\
+	if ( indicatorPointer )																	\
+		*indicatorPointer = 0;																\
+	return 0;																				\
+}	
+																						\
+////////////////////////////////////////////////////////////////////////
+// Date
+////////////////////////////////////////////////////////////////////////
+
+ODBCCONVERT_TEMP_CONV(Date,Long,long);
+ODBCCONVERT_TEMP_CONV(Date,Float,float);
+ODBCCONVERT_TEMP_CONV(Date,Double,double);
+ODBCCONVERT_TEMP_CONV(Date,Bigint,QUAD);
+//ODBCCONVERT_TEMP_CONV(Date,TagDate,short);
+ODBCCONVERT_TEMP_CONV(Date,String,char);
+
+int OdbcConvert::convDateToTagDate(DescRecord * from, DescRecord * to)
+{
+	tagDATE_STRUCT * tagDt = (tagDATE_STRUCT*)getAdressData((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	decode_sql_date(*(long*)from->dataPtr, tagDt->day, tagDt->month, tagDt->year);
+
+	if ( indicatorPointer )
+		*indicatorPointer = 0;
+
+	return 0;
+}
+
+////////////////////////////////////////////////////////////////////////
+// Time
+////////////////////////////////////////////////////////////////////////
+
+ODBCCONVERT_TEMP_CONV(Time,Long,long);
+ODBCCONVERT_TEMP_CONV(Time,Float,float);
+ODBCCONVERT_TEMP_CONV(Time,Double,double);
+ODBCCONVERT_TEMP_CONV(Time,Bigint,QUAD);
+//ODBCCONVERT_TEMP_CONV(Time,TagTime,short);
+ODBCCONVERT_TEMP_CONV(Time,String,char);
+
+int OdbcConvert::convTimeToTagTime(DescRecord * from, DescRecord * to)
+{
+	tagTIMESTAMP_STRUCT * tagTm = (tagTIMESTAMP_STRUCT*)getAdressData((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	decode_sql_time(*(long*)from->dataPtr, tagTm->hour, tagTm->minute, tagTm->second);
+
+	if ( indicatorPointer )
+		*indicatorPointer = 0;
+
+	return 0;
+}
+
+
+////////////////////////////////////////////////////////////////////////
+// DateTime
+////////////////////////////////////////////////////////////////////////
+
+ODBCCONVERT_TEMP_CONV(DateTime,Double,double);
+ODBCCONVERT_TEMP_CONV(DateTime,Bigint,QUAD);
+//ODBCCONVERT_TEMP_CONV(DateTime,TagDateTime,short);
+ODBCCONVERT_TEMP_CONV(DateTime,String,char);
+
+int OdbcConvert::convDateTimeToTagDateTime(DescRecord * from, DescRecord * to)
+{
+	tagTIMESTAMP_STRUCT * tagTs = (tagTIMESTAMP_STRUCT*)getAdressData((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	QUAD &number = *(QUAD*)from->dataPtr;
+
+	long nday = LO_LONG(number);
+	long ntime = HI_LONG(number);
+
+	decode_sql_date(nday, tagTs->day, tagTs->month, tagTs->year);
+	decode_sql_time(ntime, tagTs->hour, tagTs->minute, tagTs->second);
+	tagTs->fraction = ntime % ISC_TIME_SECONDS_PRECISION;
+
+	if ( indicatorPointer )
+		*indicatorPointer = 0;
+
+	return 0;
+}
+
+////////////////////////////////////////////////////////////////////////
+// Blob
+////////////////////////////////////////////////////////////////////////
+
+ODBCCONVERT_TEMP_CONV(Blob,Long,long);
+ODBCCONVERT_TEMP_CONV(Blob,Float,float);
+ODBCCONVERT_TEMP_CONV(Blob,Double,double);
+ODBCCONVERT_TEMP_CONV(Blob,Bigint,QUAD);
+ODBCCONVERT_TEMP_CONV(Blob,Blob,short);
+ODBCCONVERT_TEMP_CONV(Blob,String,char);
+
+////////////////////////////////////////////////////////////////////////
+// String
+////////////////////////////////////////////////////////////////////////
+
+#define ODBCCONVERT_CONV_STRING_TO(TYPE_TO,C_TYPE_TO)											\
+int OdbcConvert::convStringTo##TYPE_TO(DescRecord * from, DescRecord * to)						\
+{																								\
+	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);										\
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);		\
+																								\
+	ODBCCONVERT_CHECKNULL;																		\
+																								\
+	/* Original source from IscDbc/Value.cpp */													\
+	QUAD number = 0;																			\
+	double divisor = 1;																			\
+	bool decimal = false;																		\
+	bool negative = false;																		\
+																								\
+	for (char *p = (char*)from->dataPtr, *end = p + strlen((char*)from->dataPtr); p < end;)		\
+	{																							\
+		char c = *p++;																			\
+		if (c >= '0' && c <= '9')																\
+		{																						\
+			number = number * 10 + c - '0';														\
+			if (decimal)																		\
+				divisor *= 10;																	\
+		}																						\
+		else if (c == '-')																		\
+			negative = true;																	\
+																								\
+		else if (c == '.')																		\
+			decimal = true;																		\
+		else if (c == '+' || c == ',' || c == '\'' || c == '`')									\
+			;																					\
+		else if (c != ' ' && c != '\t' && c != '\n')											\
+			break;																				\
+	}																							\
+																								\
+	if( negative )number = -number;																\
+																								\
+	int scale = to->scale;																		\
+																								\
+	if ( scale )																				\
+	{																							\
+		if (scale < 0)																			\
+			for (; scale; ++scale)																\
+				divisor /= 10;																	\
+		else if (scale > 0)																		\
+			for (; scale; --scale)																\
+				divisor *= 10;																	\
+	}																							\
+																								\
+	if (divisor == 1)																			\
+		*(##C_TYPE_TO*)pointer = (##C_TYPE_TO)number;											\
+	else																						\
+		*(##C_TYPE_TO*)pointer = (##C_TYPE_TO)(number / divisor);								\
+																								\
+	if ( indicatorPointer )																		\
+		*indicatorPointer = sizeof(##C_TYPE_TO);												\
+																								\
+	return 0;																					\
+}																								\
+
+ODBCCONVERT_CONV_STRING_TO(Short,short);
+ODBCCONVERT_CONV_STRING_TO(Long,long);
+ODBCCONVERT_CONV_STRING_TO(Float,float);
+ODBCCONVERT_CONV_STRING_TO(Double,double);
+ODBCCONVERT_CONV_STRING_TO(Bigint,QUAD);
+
+int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
+{
+	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+	
+	int len = MIN(from->length, (int)to->length);
+	
+	if( len )
+		memcpy (pointer, from->dataPtr, len);
+
+//	!!! 99 tip 
+	
+	((char*) (pointer)) [len] = 0;
+	
+	if ( indicatorPointer )
+		*indicatorPointer = len;
+
+	return len;
+}
+
+int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
+{
+	SQLPOINTER pointer = getAdressData((char*)to->dataPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressData((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+	
+	int len = MIN(*(short*)from->dataPtr, (int)to->length);
+	
+	if( len > 0 )
+		memcpy (pointer, (char*)from->dataPtr + 2, len);
+	
+	((char*) (pointer)) [len] = 0;
+
+	if ( indicatorPointer )
+		*indicatorPointer = len;
+
+	return len;
+}
+
+signed long OdbcConvert::encode_sql_date(SQLUSMALLINT day, SQLUSMALLINT month, SQLSMALLINT year)
+{
+/**************************************
+ *
+ *	n d a y
+ *
+ **************************************
+ *
+ * Functional description
+ *	Convert a calendar date to a numeric day
+ *	(the number of days since the base date).
+ *
+ **************************************/
+	signed long	c, ya;
+
+	if (month > 2)
+		month -= 3;
+	else
+	{
+		month += 9;
+		year -= 1;
+	}
+
+	c = year / 100;
+	ya = year - 100 * c;
+
+	return (signed long) (((QUAD) 146097 * c) / 4 + 
+		(1461 * ya) / 4 + 
+		(153 * month + 2) / 5 + 
+		day - 678882); //	day + 1721119 - 2400001);
+}
+
+void OdbcConvert::decode_sql_date(signed long nday, SQLUSMALLINT &mday, SQLUSMALLINT &month, SQLSMALLINT &year)
+{
+/**************************************
+ *
+ *	n d a t e
+ *
+ **************************************
+ *
+ * Functional description
+ *	Convert a numeric day to [day, month, year].
+ *
+ * Calenders are divided into 4 year cycles.
+ * 3 Non-Leap years, and 1 leap year.
+ * Each cycle takes 365*4 + 1 == 1461 days.
+ * There is a further cycle of 100 4 year cycles.
+ * Every 100 years, the normally expected leap year
+ * is not present.  Every 400 years it is.
+ * This cycle takes 100 * 1461 - 3 == 146097 days
+ * The origin of the constant 2400001 is unknown.
+ * The origin of the constant 1721119 is unknown.
+ * The difference between 2400001 and 1721119 is the
+ * number of days From 0/0/0000 to our base date of
+ * 11/xx/1858. (678882)
+ * The origin of the constant 153 is unknown.
+ *
+ * This whole routine has problems with ndates
+ * less than -678882 (Approx 2/1/0000).
+ *
+ **************************************/
+	signed long	day;
+	signed long	century;
+
+//	nday -= 1721119 - 2400001;
+	nday += 678882;
+
+	century = (4 * nday - 1) / 146097;
+	nday = 4 * nday - 1 - 146097 * century;
+	day = nday / 4;
+
+	nday = (4 * day + 3) / 1461;
+	day = 4 * day + 3 - 1461 * nday;
+	day = (day + 4) / 4;
+
+	month = (5 * day - 3) / 153;
+	day = 5 * day - 3 - 153 * month;
+	mday = (day + 5) / 5;
+
+	year = (short)(100 * century + nday);
+
+	if (month < 10)
+		month += 3;
+	else
+	{
+		month -= 9;
+		year += 1;
+	}
+}
+
+signed long OdbcConvert::encode_sql_time(SQLUSMALLINT hour, SQLUSMALLINT minute, SQLUSMALLINT second)
+{
+	return ((hour * 60 + minute) * 60 +
+				 second) * ISC_TIME_SECONDS_PRECISION;
+}
+
+void OdbcConvert::decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMALLINT &minute, SQLUSMALLINT &second)
+{
+	long minutes;
+
+	minutes = ntime / (ISC_TIME_SECONDS_PRECISION * 60);
+	hour = minutes / 60;
+	minute = minutes % 60;
+	second = (ntime / ISC_TIME_SECONDS_PRECISION) % 60;
+}
