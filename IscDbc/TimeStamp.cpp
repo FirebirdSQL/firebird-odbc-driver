@@ -50,7 +50,7 @@ TimeStamp& TimeStamp::operator =(DateTime value)
 
 //From B. Schulte
 // convert DateTime to 'new' TimeStamp
-    date = value.date / (24/60/60);
+    date = value.date / 24/60/60;
     nanos = value.date - (date * 24*60*60);
 
 	return *this;

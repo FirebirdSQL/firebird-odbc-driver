@@ -21,7 +21,15 @@
 #ifndef __SETUP_ATTRIBUTES_H
 #define __SETUP_ATTRIBUTES_H
 
-#define DRIVER_NAME			"OdbcJdbc"
+/* 
+ * I'm reasonably sure this string should match the one in Setup.cpp 
+ * for the declaration of driverInfo. It is only used in one place - 
+ *   OdbcConnection::sqlDriverConnect()
+ * however, if an attempt is made to create a FileDSN the system 
+ * doesn't use 'OdbcJdbc' as the driver string.		PR 2002-06-04
+ */
+//#define DRIVER_NAME			"OdbcJdbc"
+#define DRIVER_NAME			"Firebird/InterBase(r) driver"
 #define DRIVER_VERSION		"01.00.0000"
 #define SETUP_DSN			"DSN"
 #define SETUP_DBNAME		"Dbname"

@@ -16,6 +16,13 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *	2002-06-04	IscPreparedStatement.cpp
+ *				Contributed by Robert Milharcic
+ *				o Added beginDataTransfer(), putSegmentData()
+ *				  and endDataTransfer().
+ *
+ *
  */
 
 // IscPreparedStatement.cpp: implementation of the IscPreparedStatement class.
@@ -41,6 +48,8 @@
 IscPreparedStatement::IscPreparedStatement(IscConnection *connection) : IscStatement (connection)
 {
 	statementMetaData = NULL;
+//Added by RM 2002-06-04
+    segmentBlob = NULL;
 }
 
 IscPreparedStatement::~IscPreparedStatement()
@@ -119,6 +128,29 @@ void IscPreparedStatement::setBytes(int index, int length, const void* bytes)
 	blob->release();
 }
 
+//Added by RM 2002-06-04
+void IscPreparedStatement::beginDataTransfer(int index)
+{
+    if (segmentBlob)
+        endDataTransfer();
+
+    segmentBlob = new BinaryBlob();
+    segmentBlob->addRef();
+    getParameter (index - 1)->setValue (segmentBlob);
+}
+
+//Added by RM 2002-06-04
+void IscPreparedStatement::putSegmentData(int length, const void* bytes)
+{
+    segmentBlob->putSegment (length, (char*) bytes, true);
+}
+
+//Added by RM 2002-06-04
+void IscPreparedStatement::endDataTransfer()
+{
+    segmentBlob->release();
+    segmentBlob = NULL;
+}
 
 bool IscPreparedStatement::execute (const char *sqlString)
 {

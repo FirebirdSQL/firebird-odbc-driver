@@ -18,6 +18,11 @@
  *  All Rights Reserved.
  *
  *
+ *	2002-06-04	IscStatement.cpp
+ *				Amended setValue() again. (RM)
+ *					Hopefully this means that we finally 
+ *					have got SQL_CHAR and SQL_VARYING right.
+ *
  *	2002-05-20	Added suggestion from Bernhard Schulte
  *				o	IscStatement::setValue() amended to 
  *					fix problem with trailing blanks.
@@ -402,7 +407,8 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 //				data [var->sqllen - 1] = 0;
 //From B. Schulte
 // 'this fixes the awful bug with those "my field has a trailing blank" ... a bit'
-				data [var->sqllen ] = 0;    
+//RM added the decrement to var->sqllen 2002-06-04
+				data [var->sqllen - 1 ] = 0;    
 				value->setString (data, false);
 				}
 				break;

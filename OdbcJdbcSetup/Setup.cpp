@@ -17,7 +17,11 @@
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
  *
- *	
+ *	2002-06-08	Setup.cpp
+ *				Added changes suggested by C. G. Alvarez to 
+ *				correctly locate the driver if already 
+ *				installed and to correctly report any errors.
+ *
  *  2002-04-30	Added 'role' fix from Paul Schmidt		(PCR)
  *
  */
@@ -60,7 +64,14 @@ static const char *fileNames [] = {
 static const char *drivers [] = { "IscDbc", NULL };
 extern COdbcJdbcSetupApp theApp;
 
-
+/*
+ *	To debug the control panel applet 
+ *	1/ set the active project to OdbcJdbcSetup
+ *	2/ set the executable to { full path to } rundll32.exe
+ *	3/ Pass this command as the program argument:
+ *		shell32.dll,Control_RunDLL odbccp32.cpl,,1
+ *	4/ Set breakpoints as desired and hit the run button
+ */
 BOOL INSTAPI ConfigDSN(HWND		hWnd,
 			   WORD		fRequest,
 			   LPCSTR	lpszDriver,
@@ -89,6 +100,14 @@ BOOL INSTAPI ConfigDSN(HWND		hWnd,
  *	Registration can be performed with the following command:
  *
  *		regsvr32 odbcjdbcsetup.dll
+ *
+ *	To debug registration the project settings to call regsvr32.exe
+ *  with the full path.
+ *
+ *  Use 
+ *		../debug/odbcjdbcsetup.dll
+ *
+ *  as the program argument
  *
  */
 
@@ -153,21 +172,42 @@ STDAPI DllRegisterServer (void)
 			}
 		}
 
+
 	if (!SQLConfigDriver (
 			NULL,
 			ODBC_INSTALL_DRIVER,
-			"OdbcJdbc",
+//			"OdbcJdbc",
+			"Firebird/InterBase(r) driver", 
 			NULL,
-			"OdbcJdbc driver was installed successfully",
+			"Firebird/InterBase(r) driver was installed successfully",
 			64,
 			NULL))
-		{
+
+/*		{
 		msg.Format ("Config Install (%s, %s) failed with %d\n", 
 						fileName, pathOut, GetLastError());
 		AfxMessageBox (msg);
 		return FALSE;
 		}
-	
+*/
+/*
+ * The original code uses GetLastError() 
+ * but this doesn't report the true error.
+ */
+        {
+        char message [SQL_MAX_MESSAGE_LENGTH];
+        WORD        errCodeIn = 1;
+        DWORD *    errCodeOut = 0L;
+
+        SQLInstallerError(errCodeIn, errCodeOut, message, sizeof (message) - 1,
+            NULL);
+
+        msg.Format ("Config Install (%s, %s) failed with %d\n%s\n",
+                        fileName, pathOut, errCodeOut, message);
+
+        AfxMessageBox (msg);
+        return FALSE;
+        } 	
 
 	return TRUE;
 }

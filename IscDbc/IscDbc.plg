@@ -6,65 +6,150 @@
 --------------------Configuration: IscDbc - Win32 Debug--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP365.tmp" with contents
+Creating temporary file "w:\TEMP\RSPA4.tmp" with contents
 [
-/nologo /MTd /W3 /Gm /GX /Zi /Od /I "c:\Program Files\Interbase\SDK\include" /I ".." /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /Fp"Debug/IscDbc.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /c 
-"C:\OdbcJdbc\IscDbc\IscColumnsResultSet.cpp"
+/nologo /MTd /W3 /Gm /GX /Zi /Od /I "c:\Program Files\Interbase\SDK\include" /I ".." /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FR"../debug/" /Fp"../debug/IscDbc.pch" /YX /Fo"../debug/" /Fd"../debug/" /FD /c 
+"H:\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\IscDbc\IscStatement.cpp"
 ]
-Creating command line "cl.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP365.tmp" 
-Creating temporary file "C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP366.tmp" with contents
+Creating command line "cl.exe @w:\TEMP\RSPA4.tmp" 
+Creating temporary file "w:\TEMP\RSPA5.tmp" with contents
 [
-gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"Debug/IscDbc.pdb" /debug /machine:I386 /def:".\IscDbc.def" /out:"..\Debug/IscDbc.dll" /implib:"Debug/IscDbc.lib" /pdbtype:sept /libpath:"c:\Program Files\Interbase\SDK\lib_ms" 
-.\Debug\AsciiBlob.obj
-.\Debug\Attachment.obj
-.\Debug\BinaryBlob.obj
-.\Debug\Blob.obj
-.\Debug\DateTime.obj
-.\Debug\Error.obj
-.\Debug\IscBlob.obj
-.\Debug\IscCallableStatement.obj
-.\Debug\IscColumnsResultSet.obj
-.\Debug\IscConnection.obj
-.\Debug\IscCrossReferenceResultSet.obj
-.\Debug\IscDatabaseMetaData.obj
-.\Debug\IscIndexInfoResultSet.obj
-.\Debug\IscMetaDataResultSet.obj
-.\Debug\IscPreparedStatement.obj
-.\Debug\IscPrimaryKeysResultSet.obj
-.\Debug\IscProcedureColumnsResultSet.obj
-.\Debug\IscProceduresResultSet.obj
-.\Debug\IscResultSet.obj
-.\Debug\IscResultSetMetaData.obj
-.\Debug\IscSpecialColumnsResultSet.obj
-.\Debug\IscSqlType.obj
-.\Debug\IscStatement.obj
-.\Debug\IscStatementMetaData.obj
-.\Debug\IscTablesResultSet.obj
-.\Debug\JString.obj
-.\Debug\LinkedList.obj
-.\Debug\Lock.obj
-.\Debug\Mutex.obj
-.\Debug\Parameter.obj
-.\Debug\Parameters.obj
-.\Debug\Sqlda.obj
-.\Debug\SQLError.obj
-.\Debug\SqlTime.obj
-.\Debug\Stream.obj
-.\Debug\TimeStamp.obj
-.\Debug\TypesResultSet.obj
-.\Debug\Value.obj
-.\Debug\Values.obj
+gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"../debug/IscDbc.pdb" /debug /machine:I386 /def:".\IscDbc.def" /out:"../debug/IscDbc.dll" /implib:"../debug/IscDbc.lib" /pdbtype:sept /libpath:"c:\Program Files\Interbase\SDK\lib_ms" 
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\AsciiBlob.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Attachment.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\BinaryBlob.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Blob.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\DateTime.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Error.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscBlob.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscCallableStatement.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscColumnsResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscConnection.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscCrossReferenceResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscDatabaseMetaData.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscIndexInfoResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscMetaDataResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscPreparedStatement.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscPrimaryKeysResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscProcedureColumnsResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscProceduresResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscResultSetMetaData.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscSpecialColumnsResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscSqlType.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscStatement.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscStatementMetaData.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscTablesResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\JString.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\LinkedList.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Lock.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Mutex.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Parameter.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Parameters.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Sqlda.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\SQLError.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\SqlTime.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Stream.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TimeStamp.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TypesResultSet.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Value.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Values.obj
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscDbc.res
 ]
-Creating command line "link.exe @C:\DOCUME~1\harrison\LOCALS~1\Temp\RSP366.tmp"
+Creating command line "link.exe @w:\TEMP\RSPA5.tmp"
 <h3>Output Window</h3>
 Compiling...
-IscColumnsResultSet.cpp
+IscStatement.cpp
 Linking...
+   Creating library ../debug/IscDbc.lib and object ../debug/IscDbc.exp
+Creating temporary file "w:\TEMP\RSPA9.tmp" with contents
+[
+/nologo /o"../debug/IscDbc.bsc" 
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\AsciiBlob.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Attachment.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\BinaryBlob.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Blob.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\DateTime.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Error.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscBlob.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscCallableStatement.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscColumnsResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscConnection.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscCrossReferenceResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscDatabaseMetaData.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscIndexInfoResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscMetaDataResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscPreparedStatement.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscPrimaryKeysResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscProcedureColumnsResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscProceduresResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscResultSetMetaData.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscSpecialColumnsResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscSqlType.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscStatement.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscStatementMetaData.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscTablesResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\JString.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\LinkedList.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Lock.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Mutex.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Parameter.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Parameters.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Sqlda.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\SQLError.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\SqlTime.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Stream.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TimeStamp.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TypesResultSet.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Value.sbr
+\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Values.sbr]
+Creating command line "bscmake.exe @w:\TEMP\RSPA9.tmp"
+Creating browse info file...
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\AsciiBlob.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Attachment.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\BinaryBlob.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Blob.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\DateTime.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Error.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscBlob.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscCallableStatement.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscColumnsResultSet.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscConnection.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscCrossReferenceResultSet.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscDatabaseMetaData.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscIndexInfoResultSet.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscMetaDataResultSet.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscPreparedStatement.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscPrimaryKeysResultSet.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscProcedureColumnsResultSet.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscProceduresResultSet.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscResultSet.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscResultSetMetaData.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscSpecialColumnsResultSet.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscSqlType.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscStatementMetaData.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\IscTablesResultSet.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\JString.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\LinkedList.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Lock.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Mutex.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Parameter.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Parameters.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Sqlda.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\SQLError.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\SqlTime.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Stream.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TimeStamp.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\TypesResultSet.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Value.sbr' not in ../debug/IscDbc.bsc
+BSCMAKE: warning BK4502 : truncated .SBR file '\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\debug\Values.sbr' not in ../debug/IscDbc.bsc
+<h3>Output Window</h3>
 
 
 
 <h3>Results</h3>
-IscDbc.dll - 0 error(s), 0 warning(s)
+IscDbc.dll - 0 error(s), 38 warning(s)
 </pre>
 </body>
 </html>

@@ -20,6 +20,11 @@
  *
  *	Changes
  *
+ *	2002-06-04	OdbcdStatement.cpp
+ *				submitted by Robert Milharcic
+ *				Extensive changes to improve writing and 
+ *				retrieval of binary blobs
+ *
  *	2002-05-20	Updated OdbcStatement.cpp 
  *
  *				Contributed by Pier Alberto GUIDOTTI
@@ -111,7 +116,9 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	metaData = NULL;
 	cancel = false;
 	numberParameters = 0;
-	numberBindings = 0;
+//Added 2002-06-04 RM
+    parameterNeedData = -1;
+    numberBindings = 0;
 	numberGetDataBindings = 0;	//added by RM
 	maxRows = 0;
 	applicationRowDescriptor = connection->allocDescriptor (odtApplicationRow);
@@ -476,8 +483,12 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 			int dataRemaining = strlen(string) - binding->dataOffset;
 			int len = MIN(dataRemaining, binding->bufferLength);
 			 
-		    memcpy (binding->pointer, string+binding->dataOffset, len);						
-			((char*) (binding->pointer)) [len] = 0;
+			//Added by PR. If len is negative we get an AV so
+			if ( len > 0 ) 
+			{
+				memcpy (binding->pointer, string+binding->dataOffset, len);						
+				((char*) (binding->pointer)) [len] = 0;
+			}
 
 			if (len < dataRemaining)
 			{
@@ -887,7 +898,9 @@ RETCODE OdbcStatement::sqlExecute()
 
 	try
 		{
-		executeStatement();
+//		executeStatement();
+//Amended to return RETCODE 2002-06-04 RM
+		retcode = executeStatement();
 		}
 	catch (SQLException& exception)
 		{
@@ -910,7 +923,9 @@ RETCODE OdbcStatement::sqlExecuteDirect(SQLCHAR * sql, int sqlLength)
 
 	try
 		{
-		executeStatement();
+//		executeStatement();
+//Amended to return RETCODE 2002-06-04 RM
+		retcode = executeStatement();
 		}
 	catch (SQLException& exception)
 		{
@@ -1090,14 +1105,20 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType, int 
 	return sqlSuccess();
 }
 
-void OdbcStatement::setParameter(Binding * binding, int parameter)
+//void OdbcStatement::setParameter(Binding * binding, int parameter)
+//Amended 2002-06-04 RM
+RETCODE OdbcStatement::setParameter(Binding * binding, int parameter)
 {
-	clearErrors();
+	//Added 2002-06-04 RM
+    RETCODE retcode = SQL_SUCCESS;
+    clearErrors();
 
 	if (binding && binding->indicatorPointer && *(binding->indicatorPointer) == SQL_NULL_DATA)
 		{
 		statement->setNull(parameter, 0);
-		return;
+		//Amended to return status 2002-06-04 RM
+		return SQL_SUCCESS;
+        ;
 		}
 
 	try
@@ -1177,7 +1198,15 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 				break;
 
 			case SQL_C_BINARY:
-				statement->setBytes(parameter, *(binding->indicatorPointer), binding->pointer);
+				//Added if block 2002-06-04 RM
+                if (*binding->indicatorPointer < SQL_LEN_DATA_AT_EXEC_OFFSET)
+                    {
+                    binding->dataOffset = -(*binding->indicatorPointer) + SQL_LEN_DATA_AT_EXEC_OFFSET;
+                    statement->beginDataTransfer(parameter);
+                    retcode = SQL_NEED_DATA;
+                    }
+                else
+                	statement->setBytes(parameter, *(binding->indicatorPointer), binding->pointer);
 				break;
 
 			case SQL_C_BIT:
@@ -1189,15 +1218,19 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 
 			default:
 				postError (new OdbcError (0, "HYC00", "Optional feature not implemented"));
-				return;
+				//Amended to return errorcode 2002--6-04 RM
+				return SQL_ERROR;
 			}
 		}
 	catch (SQLException& exception)
 		{
 		postError ("HY000", exception);
-		return;
+		//Amended to return errorcode 2002-6-04 RM
+		return SQL_ERROR;
 		}
 
+	//Amended to return errorcode 2002-6-04 RM
+    return retcode;
 }
 
 RETCODE OdbcStatement::sqlCancel()
@@ -1481,6 +1514,27 @@ char* OdbcStatement::getToken(const char **ptr, char *token)
 	return token;
 }
 
+//Added 2002-06-04 RM
+RETCODE OdbcStatement::setParameters()
+{
+    RETCODE retcode = SQL_SUCCESS;
+    for (int n = 0; n < numberParameters; ++n)
+        {
+        Binding *binding = parameters + n;
+        if (binding->pointer && binding->type != SQL_PARAM_OUTPUT)
+            {
+            RETCODE rc = setParameter(binding, n + 1);
+            if (rc == SQL_NEED_DATA)
+                retcode = rc;
+            else if (rc && rc != SQL_SUCCESS_WITH_INFO)
+                return rc;              
+            }
+        }
+    return retcode;
+}
+
+//Renamed executeStatement to executeSQL and extensively modified it
+/*
 void OdbcStatement::executeStatement()
 {
 	for (int n = 0; n < numberParameters; ++n)
@@ -1510,6 +1564,55 @@ void OdbcStatement::executeStatement()
 			}
 
 	getResultSet();
+}
+*/
+
+void OdbcStatement::executeSQL()
+{
+    if (callableStatement)
+    for (int n = 0; n < numberParameters; ++n)
+        {
+        Binding *binding = parameters + n;
+        if (binding->pointer&& binding->type != SQL_PARAM_OUTPUT)
+            setParameter (binding, n + 1);
+        }
+
+    if (callableStatement)
+        for (int n = 0; n < numberParameters; ++n)
+            {
+            Binding *binding = parameters + n;
+            if (binding->pointer && binding->type != SQL_PARAM_INPUT)
+                callableStatement->registerOutParameter (n + 1, binding->sqlType);
+            }
+        
+    statement->execute();
+    connection->transactionStarted();
+
+    if (callableStatement)
+        for (int n = 0; n < numberParameters; ++n)
+            {
+            Binding *binding = parameters + n;
+            if (binding->pointer && binding->type != SQL_PARAM_INPUT)
+                setValue (binding, n + 1);
+            }
+
+    getResultSet();
+}
+
+
+//Added/amended 2002-06-04 RM
+RETCODE OdbcStatement::executeStatement()
+{
+    RETCODE retcode;
+
+    retcode = setParameters();
+    
+    if (retcode == SQL_NEED_DATA)
+        return retcode;
+
+    executeSQL();
+
+    return retcode;
 }
 
 Binding* OdbcStatement::allocBindings(int count, int oldCount, Binding *oldBindings)
@@ -1545,12 +1648,25 @@ RETCODE OdbcStatement::sqlGetTypeInfo(int dataType)
 	return sqlSuccess();
 }
 
+//Amended to iterate through parameter list instead of 
+//releasing statement. 2002-06-04 RM
 RETCODE OdbcStatement::sqlParamData(SQLPOINTER ptr)
 {
 	clearErrors();
-	releaseStatement();
-
-
+//	releaseStatement();
+    for (int n = 0; n < numberParameters; ++n)
+        {
+        Binding *binding = parameters + n;
+        if (binding->pointer && binding->type != SQL_PARAM_OUTPUT)
+            {
+            if (ptr && binding->pointer && binding->dataOffset)
+                {
+                *(DWORD*)ptr = *(DWORD*)binding->pointer;
+                parameterNeedData = n;
+                return SQL_NEED_DATA;
+                }
+            }
+        }
 	return sqlSuccess();
 }
 
@@ -2025,7 +2141,43 @@ RETCODE OdbcStatement::sqlSpecialColumns(unsigned short rowId, SQLCHAR * catalog
 	return sqlSuccess();
 }
 
+//Filled in this method. 2002-06-04 RM
 RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, int valueSize)
 {
-	return sqlSuccess();
+    
+    bool info = false;
+
+    if (parameterNeedData == -1)
+        return sqlReturn (SQL_ERROR, "HY010", "Function sequence error");
+
+    if (parameterNeedData >= numberParameters)
+        return sqlReturn (SQL_ERROR, "HY000", "General error");
+
+    Binding *binding = parameters + parameterNeedData;
+
+    if (!binding)
+        return sqlReturn (SQL_ERROR, "HY000", "General error");
+
+    if (binding->dataOffset > 0)
+        {
+        binding->dataOffset -= valueSize;
+        if (binding->dataOffset < 0)
+            {
+            info = true;
+            valueSize += binding->dataOffset;
+            binding->dataOffset = 0;
+            }
+        
+        statement->putSegmentData (valueSize, value);
+        if (binding->dataOffset == 0)
+            {
+            parameterNeedData = -1;
+            statement->endDataTransfer();
+            executeSQL();
+            }
+        if (info)
+            return sqlReturn (SQL_SUCCESS_WITH_INFO, "22001", "Data truncated");
+        }
+
+    	return sqlSuccess();
 }

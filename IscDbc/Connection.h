@@ -16,6 +16,14 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	2002-06-04	Connection.h
+ *				Contributed by Robert Milharcic
+ *				o Added declarations for beginDataTransfer()
+ *				  putSegmentData() and endDataTransfer()
+ *
+ *
  */
 
 
@@ -319,6 +327,11 @@ public:
 	virtual void		setInt (int index, long value) = 0;
 	virtual void		setLong (int index, QUAD value) = 0;
 	virtual void		setBytes (int index, int length, const void *bytes) = 0;
+//Next three lines added by RM 2002-06-4
+    virtual void        beginDataTransfer(int index) = 0;
+    virtual void        putSegmentData (int length, const void *bytes) = 0;
+    virtual void        endDataTransfer() = 0;
+
 	virtual void		setFloat (int index, float value) = 0;
 	virtual void		setDouble (int index, double value) = 0;
 	virtual void		setNull (int index, int type) = 0;

@@ -16,6 +16,10 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *	2002-06-04	See comment in IscPreparedStatement.cpp
+ *
+ *
  */
 
 // IscPreparedStatement.h: interface for the IscPreparedStatement class.
@@ -35,6 +39,8 @@
 
 class IscConnection;
 class IscStatementMetaData;
+//Added by RM
+class BinaryBlob;
 
 class IscPreparedStatement : public IscStatement, public PreparedStatement
 {
@@ -58,6 +64,11 @@ public:
 	virtual void		setNull (int index, int type);
 	virtual void		setString(int index, const char * string);
 	virtual void		setByte (int index, char value);
+//Added by RM
+    virtual void        beginDataTransfer(int index);
+    virtual void        putSegmentData (int length, const void *bytes);
+    virtual void        endDataTransfer();
+
 	virtual void		setShort (int index, short value);
 	virtual void		setInt (int index, long value);
 	virtual void		setLong (int index, QUAD value);
@@ -78,8 +89,10 @@ public:
 	IscPreparedStatement(IscConnection *connect);
 	Value* getParameter (int index);
 
-	Values		parameters;
+	Values				parameters;
 	IscStatementMetaData	*statementMetaData;
+    BinaryBlob              *segmentBlob;
+
 };
 
 #endif // !defined(AFX_ISCPREPAREDSTATEMENT_H__C19738B9_1C87_11D4_98DF_0000C01D2301__INCLUDED_)

@@ -16,6 +16,9 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *	2002-06-04 See comments in IscCallableStatement.cpp for details
+ *
  */
 
 
@@ -92,6 +95,11 @@ public:
 	virtual void		setTime (int index, SqlTime value);
 	virtual void		setBlob (int index, Blob *value);
 	virtual void		setBytes (int index, int length, const void *bytes);
+
+//Added by RM 2002-06-04
+    virtual void        beginDataTransfer(int index);
+    virtual void        putSegmentData (int length, const void *bytes);
+    virtual void        endDataTransfer();
 
 	virtual int			executeUpdate();
 	virtual bool		execute();

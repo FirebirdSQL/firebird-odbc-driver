@@ -5,6 +5,46 @@ Changes made to OdbcJdbc codebase
 !!  using the format below and then paste them into this document. 
 
 
+ *	2002-06-08	OdbcConnection.cpp
+ *				Contributed by C. G. Alvarez
+ *				Changed sqlDriverConnect() to better support
+ *				Crystal Reports.
+
+ *	2002-06-08	Setup.cpp
+ *				Added changes suggested by C. G. Alvarez to 
+ *				correctly locate the driver if already 
+ *				installed and to correctly report any errors.
+ 
+ *	2002-06-04	OdbcdStatement.cpp
+ *				submitted by Robert Milharcic
+ *				Extensive changes to improve writing and 
+ *				retrieval of binary blobs
+ 
+ *	2002-06-04	IscStatement.cpp
+ *				Amended setValue() again. (Robert Miharcic)
+ *					Hopefully this means that we finally 
+ *					have got SQL_CHAR and SQL_VARYING right.
+ 
+ *	2002-06-04	IscPreparedStatement.cpp
+ *				Contributed by Robert Milharcic
+ *				o Added beginDataTransfer(), putSegmentData()
+ *				  and endDataTransfer().
+ 
+*	2002-06-04	IscCallableStatement.cpp
+ *				Contributed by Robert Milharcic
+ *				o Added beginDataTransfer(), putSegmentData()
+ *				  and endDataTransfer().
+
+ *	2002-06-04	Connection.h
+ *				Contributed by Robert Milharcic
+ *				o Added declarations for beginDataTransfer()
+ *				  putSegmentData() and endDataTransfer()
+ 
+ *	2002-06-04	Sqlda.cpp
+ *				Contributed by Robert Milharcic
+ *				Amended getDisplaySize() and getPrecision()
+ *				to return char and varchar lengths more correctly.
+
  *	2002-05-21	BinaryBlob.cpp
  *				Change release() to test useCount <=0
  *	

@@ -6,20 +6,54 @@
 --------------------Configuration: OdbcJdbc - Win32 Debug--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating temporary file "w:\TEMP\RSP1BE.tmp" with contents
+Creating temporary file "w:\TEMP\RSP119.tmp" with contents
 [
-/nologo /MTd /W3 /Gm /GX /Zi /Od /I "IscDbc" /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "DEBUG" /D "LOGGING" /Fp"Debug/OdbcJdbc.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /c 
-"H:\Firebird_build\OdbcJdbc_20020430\OdbcStatement.cpp"
+/nologo /MTd /W3 /Gm /GX /Zi /Od /I "IscDbc" /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "DEBUG" /D "LOGGING" /FR"Debug/" /Fp"Debug/OdbcJdbc.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /c 
+"H:\Firebird_build\OdbcJdbc_20020604\OdbcJdbc\OdbcStatement.cpp"
 ]
-Creating command line "cl.exe @w:\TEMP\RSP1BE.tmp" 
+Creating command line "cl.exe @w:\TEMP\RSP119.tmp" 
+Creating temporary file "w:\TEMP\RSP11A.tmp" with contents
+[
+IscDbc.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"Debug/OdbcJdbc.pdb" /debug /machine:I386 /def:".\OdbcJdbc.def" /out:"Debug/OdbcJdbc.dll" /implib:"Debug/OdbcJdbc.lib" /pdbtype:sept /libpath:"debug" 
+.\Debug\DescRecord.obj
+.\debug\JString.obj
+.\Debug\Main.obj
+.\Debug\OdbcConnection.obj
+.\Debug\OdbcDateTime.obj
+.\Debug\OdbcDesc.obj
+.\Debug\OdbcEnv.obj
+.\Debug\OdbcError.obj
+.\Debug\OdbcObject.obj
+.\Debug\OdbcStatement.obj
+.\Debug\ODbcJdbc.res
+.\debug\IscDbc.lib
+]
+Creating command line "link.exe @w:\TEMP\RSP11A.tmp"
 <h3>Output Window</h3>
 Compiling...
 OdbcStatement.cpp
+Linking...
+Creating temporary file "w:\TEMP\RSP11B.tmp" with contents
+[
+/nologo /o"Debug/OdbcJdbc.bsc" 
+.\Debug\DescRecord.sbr
+.\debug\JString.sbr
+.\Debug\Main.sbr
+.\Debug\OdbcConnection.sbr
+.\Debug\OdbcDateTime.sbr
+.\Debug\OdbcDesc.sbr
+.\Debug\OdbcEnv.sbr
+.\Debug\OdbcError.sbr
+.\Debug\OdbcObject.sbr
+.\Debug\OdbcStatement.sbr]
+Creating command line "bscmake.exe @w:\TEMP\RSP11B.tmp"
+Creating browse info file...
+<h3>Output Window</h3>
 
 
 
 <h3>Results</h3>
-OdbcStatement.obj - 0 error(s), 0 warning(s)
+OdbcJdbc.dll - 0 error(s), 0 warning(s)
 </pre>
 </body>
 </html>

@@ -16,6 +16,13 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	2002-06-04	Sqlda.cpp
+ *				Contributed by Robert Milharcic
+ *				Amended getDisplaySize() and getPrecision()
+ *				to return char and varchar lengths more correctly.
+ *
  */
 
 // Sqlda.cpp: implementation of the Sqlda class.
@@ -275,6 +282,13 @@ int Sqlda::getDisplaySize(int index)
 
 		case SQL_TIMESTAMP:
 			return 19;
+        
+        case SQL_TEXT: 
+            return var->sqllen-1; 
+
+        case SQL_VARYING: 
+            return var->sqllen-2;
+
 		}
 
 	return var->sqllen;
@@ -324,6 +338,13 @@ int Sqlda::getPrecision(int index)
 
 		case SQL_TIMESTAMP:
 			return 19;
+
+        case SQL_TEXT: 
+            return var->sqllen-1; 
+
+        case SQL_VARYING: 
+            return var->sqllen-2;
+
 		}
 
 	return var->sqllen;

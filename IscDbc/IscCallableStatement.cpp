@@ -16,6 +16,13 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	2002-06-04	IscCallableStatement.cpp
+ *				Contributed by Robert Milharcic
+ *				o Added beginDataTransfer(), putSegmentData()
+ *				  and endDataTransfer().
+ *
  */
 
 // IscCallableStatement.cpp: implementation of the IscCallableStatement class.
@@ -151,6 +158,24 @@ bool IscCallableStatement::execute()
 int IscCallableStatement::executeUpdate()
 {
 	return Parent::executeUpdate();
+}
+
+// Added by RM 2002-06-04
+void IscCallableStatement::beginDataTransfer(int index)
+{
+    Parent::beginDataTransfer(index);
+}
+
+// Added by RM 2002-06-04
+void IscCallableStatement::putSegmentData (int length, const void *bytes)
+{
+    Parent::putSegmentData(length, bytes);
+}
+
+// Added by RM 2002-06-04
+void IscCallableStatement::endDataTransfer()
+{
+    Parent::endDataTransfer();
 }
 
 void IscCallableStatement::setBytes(int index, int length, const void* bytes)

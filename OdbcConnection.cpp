@@ -16,6 +16,12 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	2002-06-08	OdbcConnection.cpp
+ *				Contributed by C. G. Alvarez
+ *				Changed sqlDriverConnect() to better support
+ *				Crystal Reports.
  */
 
 // OdbcConnection.cpp: implementation of the OdbcConnection class.
@@ -330,6 +336,8 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 	expandConnectParameters();
 
 	char returnString [1024], *r = returnString;
+
+/* Removed at suggestion of CGA
 	r = appendString (r, "DRIVER=");
 	r = appendString (r, driver);
 
@@ -356,7 +364,40 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 		r = appendString (r, ";ROLE=");
 		r = appendString (r, role);
 		}
+*/
+//Block suggested by CGA
+    r = appendString (r, "DSN=");
+    r = appendString (r, dsn);
 
+    if (!driver.IsEmpty())
+    {
+        r = appendString (r, ";DRIVER=");
+        r = appendString (r, driver);
+    }
+
+    if (!databaseName.IsEmpty())
+    {
+        r = appendString (r, ";DBNAME=");
+        r = appendString (r, databaseName);
+    }
+
+    if (!account.IsEmpty())
+        {
+        r = appendString (r, ";UID=");
+        r = appendString (r, account);
+        }
+
+    if (!password.IsEmpty())
+        {
+        r = appendString (r, ";PWD=");
+        r = appendString (r, password);
+        }
+
+    if (!role.IsEmpty())
+        {
+        r = appendString (r, ";ROLE=");
+        r = appendString (r, role);
+        } 
 
 	if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
 		postError ("01004", "String data, right truncated");
