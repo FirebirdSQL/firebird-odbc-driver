@@ -435,6 +435,20 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 		}
 	}
 
+	if ( *(ptSrc-1) == ',' )
+	{
+		ptCh = --ptSrc;
+		//  ok, it's output param
+
+		while ( *ptCh && *ptCh != ')' )
+			ptCh++;
+
+		memmove(ptSrc, ptCh, strlen(ptCh) + 1 );
+		string = ptSrc + 1;
+
+		return 1; 
+	}
+
 	SKIP_WHITE(ptSrc);
 
 	if ( *ptSrc == ')' )
@@ -452,21 +466,9 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 		}
 		return 0;
 	}
-	else if ( !*ptSrc )
-		return -1;
 
-	ptCh = --ptSrc;
-
-//  ASSERT ( *ptCh == ',' );
-//  ok, it's output param
-
-	while ( *ptCh && *ptCh != ')' )
-		ptCh++;
-
-	memmove(ptSrc, ptCh, strlen(ptCh) + 1 );
-	string = ptSrc + 1;
-
-	return 1; 
+// error query
+	return -1;
 }
 
 int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
