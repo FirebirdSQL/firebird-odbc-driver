@@ -66,6 +66,7 @@ public:
 	RETCODE sqlParamData(SQLPOINTER *ptr);	// Carlos Guzmán Álvarez
 	RETCODE	sqlPutData (SQLPOINTER value, SQLINTEGER valueSize);
 	RETCODE sqlGetTypeInfo (int dataType);
+	void	registerOutParameter();
 	RETCODE inputParam();
 	RETCODE executeStatement();
 	RETCODE executeProcedure();
@@ -140,8 +141,7 @@ public:
 	InternalStatement	*statement;
 	StatementMetaData	*metaData;
 	int					numberColumns;
-	int					numberParameters;
-//Added 2002-06-04	RM
+	bool				registrationOutParameter;
     int                 parameterNeedData;
 	bool				eof;
 	bool				cancel;

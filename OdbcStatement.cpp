@@ -197,7 +197,8 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	bindOffsetPtr = NULL;
 	rowStatusPtr = NULL;
 	paramsetSize = 0;
-	numberColumns = 0;	//added by RG
+	numberColumns = 0;
+	registrationOutParameter = false;
 	paramsProcessedPtr = NULL;
 	currency = SQL_CONCUR_READ_ONLY;
 	cursorType = SQL_CURSOR_FORWARD_ONLY;
@@ -205,7 +206,7 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	setPreCursorName = false;
 	cursorScrollable = false;
 	asyncEnable = false;
-    rowArraySize  = applicationRowDescriptor->headArraySize; //added by CGA
+    rowArraySize  = applicationRowDescriptor->headArraySize;
 	enableAutoIPD = SQL_TRUE;
 	useBookmarks = SQL_UB_OFF;
 	cursorSensitivity = SQL_INSENSITIVE;
@@ -1987,6 +1988,7 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 		if ( implementationParamDescriptor->isDefined() )
 			implementationParamDescriptor->setDefined ( false );
 
+		registrationOutParameter = false;
 	}
 	catch (SQLException& exception)
 	{
@@ -2361,6 +2363,23 @@ void OdbcStatement::bindOutputColumn(int column, DescRecord * recordApp)
 	recordApp->isPrepared = true;
 }
 
+void OdbcStatement::registerOutParameter()
+{
+	registrationOutParameter = true;
+
+	int nCountApp = applicationParamDescriptor->headCount;
+	int paramApp = implementationParamDescriptor->headCount + 1;
+
+#pragma FB_COMPILER_MESSAGE("This temporary decision. FIXME!")
+
+	for ( int param = 1; param <= numberColumns && paramApp <= nCountApp; ++param, ++paramApp)
+	{
+		DescRecord * recordApp = applicationParamDescriptor->getDescRecord ( paramApp );
+		if ( !recordApp->isPrepared && recordApp->isDefined )
+			bindInputOutputParam ( param, recordApp );
+	}
+}
+
 RETCODE OdbcStatement::inputParam()
 {
 	StatementMetaData *metaData = statement->getStatementMetaDataIPD();
@@ -2375,8 +2394,23 @@ RETCODE OdbcStatement::inputParam()
 				implementationParamDescriptor->setDefined(true);
 				rebindParam();
 			}
+
 			parameterNeedData = 1;
 			convert->setBindOffsetPtrFrom ( applicationParamDescriptor->headBindOffsetPtr, applicationParamDescriptor->headBindOffsetPtr );
+
+			if ( applicationParamDescriptor->headBindOffsetPtr )
+			{
+				int nCountApp = applicationParamDescriptor->headCount;
+
+				for (int paramApp = 1; paramApp <= nCountApp; ++paramApp)
+				{
+					DescRecord * recordApp = applicationParamDescriptor->getDescRecord ( paramApp );
+					int * length = (int*)((char*)recordApp->indicatorPtr + *applicationParamDescriptor->headBindOffsetPtr);
+			
+					recordApp->data_at_exec = length && recordApp->parameterType != SQL_PARAM_OUTPUT 
+						&& (*length == SQL_DATA_AT_EXEC || *length <= SQL_LEN_DATA_AT_EXEC_OFFSET);
+				}
+			}
 		}
 
 		for (int n = parameterNeedData; n <= nInputParam; ++n)
@@ -2455,6 +2489,9 @@ RETCODE OdbcStatement::executeProcedure()
 		return SQL_NEED_DATA;
 
 	RETCODE ret = SQL_SUCCESS;
+
+	if ( !registrationOutParameter )
+		registerOutParameter();
 
 	if ( statement->executeProcedure() )
 	{
