@@ -21,10 +21,11 @@
 ; for Inno Setup ver: 3.0.6.2 from http://www.innosetup.com/
 ; for MsVC 6.0
 #define sourceDll="..\..\Builds\MsVc60.win\Release\"
+#define sourceChm="..\..\Install\HtmlHelp\"
 
 [Setup]
 AppName=Firebird ODBC
-AppVerName=OdbcJdbc version 1-1-beta
+AppVerName=OdbcJdbc version 1-2-release
 WizardImageFile=firebird-logo1.bmp
 WizardImageBackColor=clWhite
 WizardSmallImageFile=firebird-logo2.bmp
@@ -38,7 +39,7 @@ UninstallDisplayIcon={app}\OdbcJdbcSetup.dll
 Source: "{#sourceDll}IscDbc.dll"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#sourceDll}OdbcJdbc.dll"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
 Source: "{#sourceDll}OdbcJdbcSetup.dll"; DestDir: "{app}"; Flags: ignoreversion
-;Source: "FirebirdOdbc.hlp"; DestDir: "{app}"
+Source: "{#sourceChm}OdbcJdbc.chm"; DestDir: "{sys}"; Flags: ignoreversion
 Source: "Readme.txt"; DestDir: "{app}"; Flags: isreadme
 
 [Icons]
