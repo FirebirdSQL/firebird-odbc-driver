@@ -142,6 +142,70 @@ BOOL CDsnDialog::IsLocalhost(char * fullPathFileName, int &nSme)
 	return nOk;
 }
 
+void CDsnDialog::CheckRemotehost(char * fullPathFileName)
+{
+	char * ptCh, * ptStr = fullPathFileName;
+	if(!ptStr)
+		return;
+
+	ptCh = ptStr;
+	while( *ptCh == ' ' ) ++ptCh;
+
+	if ( *(short*)ptCh == 0x5c5c ) // if '\\'
+	{	// after "Browse"
+		ptCh+=2;
+		// name server	
+		while( *ptCh && *ptCh != '\\' )
+			*ptStr++ = *ptCh++;
+
+		*ptCh++; //		*ptCh == '\\' alwaus
+		*ptStr++ = ':';
+
+		// name disk
+		while( *ptCh && *ptCh != '\\' )
+			*ptStr++ = *ptCh++;
+
+		//	*ptCh == '\\' alwaus
+		*ptStr++ = ':';
+
+		while( *ptCh )
+		{
+			if ( *ptCh == '\\' )
+				*ptStr++ = '/', *ptCh++;
+			else
+				*ptStr++ = *ptCh++;
+		}
+
+		*ptStr = '\0';
+	}
+	else
+	{// find ':' without '\\';   c:\ it's not server
+		while( *ptCh && *ptCh != ':') ++ptCh;
+
+		if ( *ptCh == ':' && *(ptCh+1) != '\\')
+		{
+			char * ptNext;
+			memmove(ptStr+2,ptStr,strlen(ptStr)+1);
+			*(short*)ptStr = 0x5c5c;
+			ptCh += 2;
+			*ptCh++ = '\\';
+			ptNext = ptCh;
+
+			while( *ptNext )
+			{
+				if ( *ptNext == '/' ) 
+					*ptCh++ = '\\', ++ptNext;
+				else if ( *ptNext == ':' )
+					++ptNext;
+				else
+					*ptCh++ = *ptNext++;
+			}
+
+			*ptCh = '\0';
+		}
+	}
+}
+
 BOOL CDsnDialog::OnFindFile()
 {
 	int nSme;
@@ -159,6 +223,8 @@ BOOL CDsnDialog::OnFindFile()
 	{
 		memmove(strFullPathFileName,&strFullPathFileName[nSme],strlen(strFullPathFileName) - nSme + 1);
 	}
+	else
+		CheckRemotehost(strFullPathFileName);
 
     ofn.lStructSize = sizeof(OPENFILENAME);
     ofn.hwndOwner = NULL;
@@ -191,7 +257,10 @@ BOOL CDsnDialog::OnFindFile()
 		m_database += strFullPathFileName;
 	}
 	else
+	{
+		CheckRemotehost(strFullPathFileName);
 		m_database = strFullPathFileName;
+	}
 
 	return TRUE;
 }

@@ -54,6 +54,7 @@ public:
 	int DoModal();
 
 	BOOL IsLocalhost(char * fullPathFileName, int &nSme);
+	void CheckRemotehost(char * fullPathFileName);
 	BOOL OnFindFile();
 	BOOL OnFindFileClient();
 	void UpdateData(HWND hDlg, BOOL bSaveAndValidate = TRUE );
