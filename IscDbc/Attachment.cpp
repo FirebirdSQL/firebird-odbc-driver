@@ -103,7 +103,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 
 	isRoles = false;
 	databaseName = dbName;
-	char dpb [256], *p = dpb;
+	char dpb [2048], *p = dpb;
 	*p++ = isc_dpb_version1;
 
 	const char *user = properties->findValue ("user", NULL);
@@ -162,7 +162,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		throw SQLEXCEPTION (statusVector [1], text);
 	}
 
-	char result [256]; // 100
+	char result [2048];
 	databaseDialect = SQL_DIALECT_V5;
 
 	if (!GDS->_database_info (statusVector, &databaseHandle, sizeof (databaseInfoItems), databaseInfoItems, sizeof (result), result))
