@@ -508,8 +508,6 @@ void OdbcStatement::rebindColumn()
 		record->initZeroColumn();
 	}
 
-#pragma FB_COMPILER_MESSAGE("This temporary decision. FIXME!")
-
 	for (int column = 1, columnApp = 1; column <= nCount && columnApp <= nCountApp; ++column,  ++columnApp)
 	{
 		record = applicationRowDescriptor->getDescRecord ( columnApp );
@@ -1737,10 +1735,8 @@ ResultSet* OdbcStatement::getResultSet()
 
 void OdbcStatement::rebindParam ( bool initAttrDataAtExec )
 {
-	int nCount = implementationParamDescriptor->headCount;
+	int nCount = implementationParamDescriptor->metaDataIn->getColumnCount();
 	int nCountApp = applicationParamDescriptor->headCount;
-
-#pragma FB_COMPILER_MESSAGE("This temporary decision. FIXME!")
 
 	for (int paramApp = 1, param = 1; param <= nCount && paramApp <= nCountApp; ++param, ++paramApp)
 	{
@@ -1757,8 +1753,8 @@ void OdbcStatement::rebindParam ( bool initAttrDataAtExec )
 			else
 				length = (long*)((char*)recordApp->indicatorPtr + *applicationParamDescriptor->headBindOffsetPtr);
 	
-			recordApp->data_at_exec = length && recordApp->parameterType != SQL_PARAM_OUTPUT 
-				&& (*length == SQL_DATA_AT_EXEC || *length <= SQL_LEN_DATA_AT_EXEC_OFFSET);
+			recordApp->data_at_exec = length && 
+				(*length == SQL_DATA_AT_EXEC || *length <= SQL_LEN_DATA_AT_EXEC_OFFSET);
 		}
 	}
 }
@@ -2397,9 +2393,7 @@ void OdbcStatement::registerOutParameter()
 	registrationOutParameter = true;
 
 	int nCountApp = applicationParamDescriptor->headCount;
-	int paramApp = implementationParamDescriptor->headCount + 1;
-
-#pragma FB_COMPILER_MESSAGE("This temporary decision. FIXME!")
+	int paramApp = implementationParamDescriptor->metaDataIn->getColumnCount() + 1;
 
 	for ( int param = 1; param <= numberColumns && paramApp <= nCountApp; ++param, ++paramApp)
 	{

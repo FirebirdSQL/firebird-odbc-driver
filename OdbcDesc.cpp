@@ -911,11 +911,14 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
+				{
+#pragma FB_COMPILER_MESSAGE("This temporary decision. FIXME!")
 					record->type = (SQLSMALLINT)(int)value;
+					record->conciseType = (SQLSMALLINT)(int)value;
+				}
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
-//				return sqlReturn (SQL_NO_DATA_FOUND, "HY021", "Inconsistent descriptor information");
 			}
 			break;
 
@@ -942,7 +945,11 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
+				{
+#pragma FB_COMPILER_MESSAGE("This temporary decision. FIXME!")
 					record->conciseType = (SQLSMALLINT)(int)value;
+					record->type = (SQLSMALLINT)(int)value;
+				}
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
