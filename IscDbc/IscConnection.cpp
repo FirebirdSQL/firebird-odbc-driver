@@ -549,6 +549,14 @@ void IscConnection::commitAuto()
 
 void IscConnection::rollbackAuto()
 {
+	FOR_OBJECTS (IscStatement*, statement, &statements)
+		if (statement->selectActive)
+		{
+			rollbackRetaining();
+			return;
+		}
+	END_FOR;
+
 	rollback();
 }
 
@@ -563,6 +571,22 @@ void IscConnection::commitRetaining()
 	{
 		ISC_STATUS statusVector [20];
 		GDS->_commit_retaining (statusVector, &transactionHandle);
+
+		if (statusVector [1])
+		{
+			rollbackRetaining();
+			throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
+		}
+	}
+	transactionPending = false;
+}
+
+void IscConnection::rollbackRetaining()
+{
+	if (transactionHandle)
+	{
+		ISC_STATUS statusVector [20];
+		GDS->_rollback_retaining (statusVector, &transactionHandle);
 
 		if (statusVector [1])
 		{
