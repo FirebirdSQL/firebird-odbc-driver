@@ -159,7 +159,7 @@ bool IscColumnsResultSet::next()
 		char * field_name = sqlda->getVarying ( 4, len);
 		field_name[len] = '\0';
 
-		arrAttr.loadAttributes ( statement->connection, relation_name, field_name );
+		arrAttr.loadAttributes ( statement->connection, relation_name, field_name, subType );
 
 		sqlda->updateVarying (6, arrAttr.getFbSqlType());
 		sqlda->updateInt (7, arrAttr.arrOctetLength );
