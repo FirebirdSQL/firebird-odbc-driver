@@ -48,7 +48,7 @@
 }															\
 
 #define SET_INDICATOR_VAL(col,type,isNull)  if ( isNull && (*(type*)(var[col].sqldata + sqldataOffsetPtr)) == -1 ) *var[col].sqlind = -1; else *var[col].sqlind = 0;
-#define SET_INDICATOR_STR(col)  if ( ((char*)(var[col].sqldata + sqldataOffsetPtr)) == NULL ) *var[col].sqlind = -1; else *var[col].sqlind = strlen((char*)(var[col].sqldata + sqldataOffsetPtr)) + 1;
+#define SET_INDICATOR_STR(col)  if ( ((char*)(var[col].sqldata + sqldataOffsetPtr)) == NULL || !strlen(((char*)(var[col].sqldata + sqldataOffsetPtr))) ) *var[col].sqlind = -1; else *var[col].sqlind = strlen((char*)(var[col].sqldata + sqldataOffsetPtr)) + 1;
 
 struct Types {
 	char	label;
@@ -98,8 +98,8 @@ struct Types {
 #define ALPHA(type,code,prec) 0,sizeof(type)-1,type,code,prec,1,"'",1,"'",6,"length",NULLABLE,CASE_SENSITIVE,SEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
 #define BLOB(type,code,prefix,suffix,casesensitive) 0,sizeof(type)-1,type,code,MAX_BLOB_LENGTH,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",NULLABLE,casesensitive,UNSEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
 //#define NUMERIC_TINYINT(type,code,prec,attr,min,max,numprecradix) 0,sizeof(type)-1,type,code,prec,5,"<n/a>",5,"<n/a>",sizeof(attr)-1,attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE,NOT_SIGNED,NOT_MONEY,NOT_AUTO_INCR,4,"CHAR",min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
-#define NUMERIC(type,code,prec,attr,min,max,numprecradix) 0,sizeof(type)-1,type,code,prec,5,"<n/a>",5,"<n/a>",sizeof(attr)-1,attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,IS_SIGNED,NOT_MONEY,NOT_AUTO_INCR,sizeof(type)-1,type,min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
-#define DATETIME(type,code,prec,prefix,suffix,datetimesub) 0,sizeof(type)-1,type,code,prec,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_NUMERIC,NOT_MONEY,NOT_AUTO_INCR,sizeof(type)-1,type,UNSCALED,UNSCALED,TYPE_SQL_DATETIME,datetimesub,NOT_NUMERIC,NOT_NUMERIC
+#define NUMERIC(type,code,prec,attr,min,max,numprecradix) 0,sizeof(type)-1,type,code,prec,0,"",0,"",sizeof(attr)-1,attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_SIGNED,NOT_MONEY,NOT_AUTO_INCR,sizeof(type)-1,type,min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
+#define DATETIME(type,code,prec,prefix,suffix,datetimesub) 0,sizeof(type)-1,type,code,prec,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,UNSCALED,UNSCALED,TYPE_SQL_DATETIME,datetimesub,NOT_NUMERIC,NOT_NUMERIC
 
 static Types types [] = {
 	BLOB ("BLOB", JDBC_LONGVARBINARY,"","",CASE_INSENSITIVE),
@@ -110,9 +110,9 @@ static Types types [] = {
 	NUMERIC ("INTEGER", JDBC_INTEGER, MAX_INT_LENGTH, "", 0, 0, 10),	
 //	NUMERIC_TINYINT ("TINYINT", JDBC_TINYINT, 3, NULL, 0, 0, 10),
 	NUMERIC ("SMALLINT", JDBC_SMALLINT, MAX_SMALLINT_LENGTH, "", 0, 0, 10),	
-	NUMERIC ("FLOAT", JDBC_FLOAT, MAX_FLOAT_LENGTH, "", UNSCALED, UNSCALED, 2),
-	NUMERIC ("DOUBLE PRECISION", JDBC_DOUBLE, MAX_DOUBLE_LENGTH, "", UNSCALED, UNSCALED, 2),
-	NUMERIC ("BIGINT", JDBC_BIGINT, MAX_QUAD_LENGTH,"", 0, 0, 19),
+	NUMERIC ("FLOAT", JDBC_REAL, MAX_FLOAT_DIGIT_LENGTH, "", UNSCALED, UNSCALED, 2),
+	NUMERIC ("DOUBLE PRECISION", JDBC_DOUBLE, MAX_DOUBLE_DIGIT_LENGTH, "", UNSCALED, UNSCALED, 2),
+	NUMERIC ("BIGINT", JDBC_BIGINT, MAX_QUAD_LENGTH,"", 0, MAX_QUAD_LENGTH, 10),
 	ALPHA ("VARCHAR", JDBC_VARCHAR,MAX_VARCHAR_LENGTH),
 	DATETIME("DATE",JDBC_DATE,MAX_DATE_LENGTH,"'","'",1),
 	DATETIME("TIME",JDBC_TIME,MAX_TIME_LENGTH,"'","'",2),
@@ -155,7 +155,7 @@ TypesResultSet::TypesResultSet(int dataType) : IscResultSet (NULL)
 
 	SET_SQLVAR( 1, "TYPE_NAME"			, SQL_VARYING	,	33  , OFFSET(Types,lenTypeName)				)
 	SET_SQLVAR( 2, "DATA_TYPE"			, SQL_SHORT		,	 5	, OFFSET(Types,typeType)				)
-	SET_SQLVAR( 3, "PRECISION"			, SQL_LONG		,	10	, OFFSET(Types,typePrecision)			)
+	SET_SQLVAR( 3, "COLUMN_SIZE"		, SQL_LONG		,	10	, OFFSET(Types,typePrecision)			)
 	SET_SQLVAR( 4, "LITERAL_PREFIX"		, SQL_VARYING	,	 8	, OFFSET(Types,lenTypePrefix)			)
 	SET_SQLVAR( 5, "LITERAL_SUFFIX"		, SQL_VARYING	,	 8	, OFFSET(Types,lenTypeSuffix)			)
 	SET_SQLVAR( 6, "CREATE_PARAMS"		, SQL_VARYING	,	22	, OFFSET(Types,lenTypeParams)			)
@@ -163,15 +163,15 @@ TypesResultSet::TypesResultSet(int dataType) : IscResultSet (NULL)
 	SET_SQLVAR( 8, "CASE_SENSITIVE"		, SQL_SHORT		,	 5	, OFFSET(Types,typeCaseSensitive)		)
 	SET_SQLVAR( 9, "SEARCHABLE"			, SQL_SHORT		,	 5	, OFFSET(Types,typeSearchable)			)
 	SET_SQLVAR(10, "UNSIGNED_ATTRIBUTE"	, SQL_SHORT		,	 5	, OFFSET(Types,typeUnsigned)			)
-	SET_SQLVAR(11, "MONEY"				, SQL_SHORT		,	 5	, OFFSET(Types,typeMoney)				)
-	SET_SQLVAR(12, "AUTO_INCREMENT"		, SQL_SHORT		,	 5	, OFFSET(Types,typeAutoIncrement)		)
+	SET_SQLVAR(11, "FIXED_PREC_SCALE"	, SQL_SHORT		,	 5	, OFFSET(Types,typeMoney)				)
+	SET_SQLVAR(12, "AUTO_UNIQUE_VALUE"	, SQL_SHORT		,	 5	, OFFSET(Types,typeAutoIncrement)		)
 	SET_SQLVAR(13, "LOCAL_TYPE_NAME"	, SQL_VARYING	,	33	, OFFSET(Types,lenTypeLocalName)		)
 	SET_SQLVAR(14, "MINIMUM_SCALE"		, SQL_SHORT		,	 5	, OFFSET(Types,typeMinScale)			)
 	SET_SQLVAR(15, "MAXIMUM_SCALE"		, SQL_SHORT		,	 5	, OFFSET(Types,typeMaxScale)			)
 	SET_SQLVAR(16, "SQL_DATA_TYPE"		, SQL_SHORT		,	 5	, OFFSET(Types,typeSqlDataType)			)
 	SET_SQLVAR(17, "SQL_DATETIME_SUB"	, SQL_SHORT		,	 5	, OFFSET(Types,typeDateTimeSub)			)
 	SET_SQLVAR(18, "NUM_PREC_RADIX"		, SQL_LONG		,	10	, OFFSET(Types,typeNumPrecRadix)		)
-	SET_SQLVAR(19, "SQL_INTERVAL_PRECISION", SQL_SHORT	,	 5	, OFFSET(Types,typeIntervalPrecision)	)
+	SET_SQLVAR(19, "INTERVAL_PRECISION"	, SQL_SHORT		,	 5	, OFFSET(Types,typeIntervalPrecision)	)
 
 	int i = numberColumns;
 	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar;
@@ -205,6 +205,7 @@ bool TypesResultSet::next()
 		return false;
 
 	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar;
+	sqldataOffsetPtr += sizeof (*types);
 
 	SET_INDICATOR_STR(0);						// TYPE_NAME
 	SET_INDICATOR_VAL(1,short,false);			// DATA_TYPE
@@ -225,8 +226,6 @@ bool TypesResultSet::next()
 	SET_INDICATOR_VAL(16,short,true);			// SQL_DATETIME_SUB
 	SET_INDICATOR_VAL(17,long,true);			// NUM_PREC_RADIX
 	SET_INDICATOR_VAL(18,short,true);			// INTERVAL_PRECISION	
-
-	sqldataOffsetPtr += sizeof (*types);
 
 	return true;
 }
