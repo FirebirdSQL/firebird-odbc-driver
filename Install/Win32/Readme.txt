@@ -1,44 +1,65 @@
-This is the README file for OdbcJdbc.
+Firebird ODBC Driver v1.2.0 Readme (Win32)
+==========================================
 
-You have ideas?
-To you here:  
-     http://www.firebirdsql.org/index.php?op=lists#fb-odbc-devel
+o What's new
+o Installation
+o Configuration
+o Known Issues
+o Feedback
 
-Examples connection:
-  1)Open("DSN=mcsAddress;")
-  2)Open("DSN=mcsAddress;UID=MCSSITE;PWD=mcssite;")
-  3)Open("DSN=mcsAddress;UID=MCSSITE;PWD=mcssite;DBNAME=172.17.2.10:/usr/local/efldata/mcsAddress.fdb;")
-  4)Open("DRIVER=Firebird/InterBase(r) driver;DBNAME=172.17.2.10:/usr/local/efldata/mcsAddress.fdb;")
-  5)Open("DRIVER=Firebird/InterBase(r) driver;UID=MCSSITE;PWD=mcssite;DBNAME=172.17.2.10:/usr/local/efldata/mcsAddress.fdb;")
 
-Is allowed to use ISC_PASSWORD and ISC_USER from environment (autoexec.bat Win32)
+What's New
+----------
 
-=======================================================================
-2) Write: Jorge Andres Brugger
-   Sent: Wednesday, May 12, 2004 10:13 PM
-=======================================================================
-HOW TO USE FIREBIRD WITH MIXED CASE OBJECT NAMES AND CLARION 
-(including the import from the DB to the Clarion dictionary)
+Welcome to the latest release of the Firebird ODBC driver. This release
+sees many significant advances in the driver. Notable changes are:
 
-Version 1.1
+o Increased conformance to the different ODBC specifications.
+o Better documentation.
+o Improved installation (and uninstallation) routines for Win32 and Linux.
 
-1. Create your database in Firebird. You can use table names like 
-"Pending_Invoices" and fields like "Order_Number".
-2. Install 1.02.0060 or newer version of the IBPhoenix ODBC driver. I 
-suggest to download the newest version at http://www.praktik.km.ua/
-3. Create the DSN for the Database, making sure to check all options in 
-"Extend Property Identifier"
-4. Open your dictionary, and normally import multiple tables from the 
-odbc source. It will work, but do not try to browse or use the files in 
-a app yet.
-5. For every field, type in the 'External Name' the name of the field 
-surrounded by quotes (in my example, type "Order_Number" in the external 
-name).
-6. It?s done! Now use your dictionary with Mixed_Case_Identificators 
-without problem. Just for note, remember to use the quotes also in sql 
-sentences from inside Clarion.
 
-Thanks to Vernon Godwin and Vladimir Tsvigun for the info contained in 
-this how-to.
+All the new features and fixes are documented in the release notes.
 
-=======================================================================
+
+o Installation
+--------------
+
+Just click through the binary executable for a default install. More information
+is available in the Installation Readme, which viewable within the installation
+process.
+
+
+o Configuration
+---------------
+
+Database connections are configured from the Database Administator
+applet in the Control Panel.
+
+
+o Known Issues
+--------------
+
+There are no known problems at this time.
+
+
+Feedback
+--------
+
+If you have feedback (good or bad) please email the Firebird
+OBDC driver development list at sourceforge. You can subscribe
+by visiting:
+
+  http://firebird.sourceforge.net/index.php?op=lists
+
+There is also information on how to access this list via a
+newsgroup mirror.
+
+NOTE: This is not a support forum! It is for development issues only.
+This means that general questions about ODBC, SQL, or database access
+will probably be ignored.
+
+
+
+
+

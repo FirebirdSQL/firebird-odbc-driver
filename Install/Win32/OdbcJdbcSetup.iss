@@ -32,8 +32,10 @@
 
 #if MSVC_VERSION==6
 #define BUILD_ENV "MsVc60.win"
-#elif MSVC_VERSION=7
+#elif MSVC_VERSION==7
 #define BUILD_ENV "MsVc70.win"
+#else
+BUILD_ENV undefined
 #endif
 
 #if BUILD_TYPE=="Debug"
@@ -43,7 +45,6 @@
 #endif
 
 #define FIREBIRD_URL "http://www.firebirdsql.org"
-#define BASE_VERSION "1_2"
 
 #define BUILD_ROOT="..\..\"
 #define SOURCE_LIBS "Builds\"+AddBackslash(BUILD_ENV)+AddBackslash(BUILD_TYPE)
@@ -67,7 +68,7 @@ PrivilegesRequired=admin
 
 SourceDir={#BUILD_ROOT}
 OutputDir={#SOURCE_DOCS}\Win32\install_image
-OutputBaseFilename=Firebird_ODBC_{#BASE_VERSION}-Win32{#debug_str}
+OutputBaseFilename=Firebird_ODBC_1.2.0-Win32{#debug_str}
 
 LicenseFile={#SOURCE_DOCS}\IDPLicense.txt
 InfoBeforeFile={#SOURCE_DOCS}\Win32\installation_readme.txt

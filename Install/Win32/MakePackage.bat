@@ -48,10 +48,10 @@ for %%v in ( %* )  do (
 @cd %~dp0
 
 @msdev /? >nul 2>nul
-@if not errorlevel 9009 ((set VS_VER=msvc6) & (goto :EOF))
+@if not errorlevel 9009 ((set MSVC_VERSION=6) & (goto :EOF))
 
 @devenv /? >nul 2>nul
-@if not errorlevel 9009 ((set VS_VER=msvc7) & (goto :EOF))
+@if not errorlevel 9009 ((set MSVC_VERSION=7) & (goto :EOF))
 
 @goto :EOF
 

@@ -185,8 +185,12 @@ extern "C" __declspec( dllexport ) int INSTAPI DllRegisterServer (void)
 		strcpy (tail, *ptr);
 		if (!CopyFile (fileName, pathOut))
 		{
-			SQLRemoveDriver(DRIVER_FULL_NAME, fRemoveDSN, &useCount);
-			return S_FALSE;
+			//No need to fail if we can't find the help file.
+			if ( !strstr (fileName,"OdbcJdbc.chm") )
+			{
+				SQLRemoveDriver (DRIVER_FULL_NAME, fRemoveDSN, &useCount);
+				return S_FALSE;
+			}
 		}
 	}
 
@@ -249,7 +253,10 @@ extern "C" __declspec( dllexport ) int INSTAPI DllUnregisterServer (void)
 		for (const char **ptr = fileNames; bContinue && *ptr; ++ptr)
 		{
 			strcpy (path, *ptr);
-			if ( !DeleteFile (pathFile) )
+			//Why throw an error at all? 
+			DeleteFile (pathFile);
+
+/*			if ( !DeleteFile (pathFile) )
 			{
 				//Best not to throw an error when we fail to remove ourself
 				if ( !strstr(pathFile,"OdbcJdbcSetup") )
@@ -258,6 +265,7 @@ extern "C" __declspec( dllexport ) int INSTAPI DllUnregisterServer (void)
 					bContinue = false;
 				}
 			}
+*/
 		}
 	}
 

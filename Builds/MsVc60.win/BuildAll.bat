@@ -61,7 +61,7 @@ for %%v in ( %1 %2 ) do (
 
 :MAIN
 ::==========
-call :SETUP
+call :SETUP %*
 call :BUILD
 goto :EOF
 
