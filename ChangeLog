@@ -1,3 +1,520 @@
+2003-10-30  praktik
+	* OdbcStatement.cpp:
+		patch set dataoffset = 0 for Binding element of GetData
+		 branch v1-1-beta
+
+2003-10-29  praktik
+	* IscDbc/Attachment.cpp:
+	* IscDbc/Attachment.h:
+	* IscDbc/IscColumnPrivilegesResultSet.cpp:
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscCrossReferenceResultSet.cpp:
+	* IscDbc/IscDatabaseMetaData.cpp:
+	* IscDbc/IscDatabaseMetaData.h:
+	* IscDbc/IscIndexInfoResultSet.cpp:
+	* IscDbc/IscPrimaryKeysResultSet.cpp:
+	* IscDbc/IscProcedureColumnsResultSet.cpp:
+	* IscDbc/IscProceduresResultSet.cpp:
+	* IscDbc/IscSpecialColumnsResultSet.cpp:
+	* IscDbc/IscTablePrivilegesResultSet.cpp:
+	* IscDbc/IscTablesResultSet.cpp:
+		patch privileges of connection user
+		 branch v1-1-beta
+
+	* Main.cpp:
+	* OdbcConnection.cpp:
+	* OdbcConvert.cpp:
+	* OdbcJdbc.rc:
+	* OdbcStatement.cpp:
+	* resource.h:
+		patch SQLRowcount, add ConnectDialog class, patch privileges
+		 of connection user, patch Numeric(5,2) ( long )
+		 branch v1-1-beta
+
+	* ConnectDialog.cpp:
+		file ConnectDialog.cpp was initially added on branch v1-1-beta.
+
+	* ConnectDialog.cpp:
+	* ConnectDialog.h:
+		add ConnectDialog class
+		 branch v1-1-beta
+
+	* ConnectDialog.h:
+		file ConnectDialog.h was initially added on branch v1-1-beta.
+
+2003-10-28  praktik
+	* IscDbc/Attachment.cpp:
+	* IscDbc/Attachment.h:
+	* IscDbc/Connection.h:
+	* IscDbc/IscColumnPrivilegesResultSet.cpp:
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscCrossReferenceResultSet.cpp:
+	* IscDbc/IscDatabaseMetaData.cpp:
+	* IscDbc/IscDatabaseMetaData.h:
+	* IscDbc/IscIndexInfoResultSet.cpp:
+	* IscDbc/IscPrimaryKeysResultSet.cpp:
+	* IscDbc/IscProcedureColumnsResultSet.cpp:
+	* IscDbc/IscProceduresResultSet.cpp:
+	* IscDbc/IscSpecialColumnsResultSet.cpp:
+	* IscDbc/IscTablePrivilegesResultSet.cpp:
+	* IscDbc/IscTablesResultSet.cpp:
+		the filter of the privileges of the active user, for all functions
+		 of the catalogue is added
+		 branch v1-1-beta
+
+2003-10-26  praktik
+	* IscDbc/Connection.h:
+	* IscDbc/IscColumnPrivilegesResultSet.cpp:
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscCrossReferenceResultSet.cpp:
+	* IscDbc/IscDbc.h:
+	* IscDbc/IscIndexInfoResultSet.cpp:
+	* IscDbc/IscMetaDataResultSet.cpp:
+	* IscDbc/IscMetaDataResultSet.h:
+	* IscDbc/IscPrimaryKeysResultSet.cpp:
+	* IscDbc/IscProcedureColumnsResultSet.cpp:
+	* IscDbc/IscProceduresResultSet.cpp:
+	* IscDbc/IscResultSet.cpp:
+	* IscDbc/IscSpecialColumnsResultSet.cpp:
+	* IscDbc/IscSqlType.cpp:
+	* IscDbc/IscTablePrivilegesResultSet.cpp:
+	* IscDbc/IscTablesResultSet.cpp:
+	* IscDbc/Sqlda.cpp:
+	* IscDbc/Sqlda.h:
+	* IscDbc/TimeStamp.cpp:
+	* IscDbc/TypesResultSet.cpp:
+	* OdbcConvert.cpp:
+	* OdbcDateTime.cpp:
+	* OdbcDesc.cpp:
+	* OdbcObject.cpp:
+	* OdbcStatement.cpp:
+		patch use SQL_TIMESTAMP and ESCAPE
+		 branch v1-1-beta
+
+2003-10-24  praktik
+	* OdbcStatement.cpp:
+		patch for SQLPutData
+		 branch v1-1-beta
+
+	* OdbcObject.cpp:
+	* OdbcStatement.cpp:
+		patch use type  SQL_FLOAT
+		 branch v1-1-beta
+
+2003-10-23  praktik
+	* IscDbc/IscIndexInfoResultSet.cpp:
+	* IscDbc/IscMetaDataResultSet.cpp:
+	* IscDbc/IscStatement.cpp:
+		patch add all cast type
+		 branch v1-1-beta
+
+	* OdbcDateTime.cpp:
+	* OdbcStatement.cpp:
+		patch use type timestamp
+		 branch v1-1-beta
+
+	* IscDbc/IscPreparedStatement.cpp:
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/Sqlda.cpp:
+	* IscDbc/Stream.cpp:
+	* IscDbc/Value.cpp:
+	* IscDbc/extodbc.cpp:
+	* Main.cpp:
+	* Mlist.h:
+	* OdbcConvert.cpp:
+	* OdbcConvert.h:
+	* OdbcEnv.cpp:
+	* Test/Hash.cpp:
+		change source OdbcJdbc, for execute make from FreeBSD compiles
+		 Contributed by Dmitriy Nikitinskiy
+		 branch v1-1-beta
+
+2003-10-19  praktik
+	* IscDbc/IscMetaDataResultSet.cpp:
+		patch for pattern ESCAPE
+		 branch v1-1-beta
+
+	* OdbcConnection.cpp:
+		is changed the circuit unloading IscDbc
+		 branch v1-1-beta
+
+2003-10-17  praktik
+	* IscDbc/TimeStamp.cpp:
+	* IscDbc/TimeStamp.h:
+	* IscDbc/Value.cpp:
+	* OdbcStatement.cpp:
+		patch error SqlTime,
+		thank Gunnar Sonsteby
+		 branch v1-1-beta
+
+2003-10-16  praktik
+	* OdbcStatement.cpp:
+		patch error SQLPutData for Clob,
+		thank Carlos Guzman Alvarez
+		 branch v1-1-beta
+
+2003-10-15  praktik
+	* IscDbc/IscConnection.cpp:
+		the method SQLNativeSql is improved
+		 branch v1-1-beta
+
+	* OdbcConnection.cpp:
+	* OdbcConnection.h:
+	* OdbcEnv.cpp:
+	* OdbcEnv.h:
+		is changed the circuit unloading IscDbc
+		 branch v1-1-beta
+
+2003-10-15  skidder
+	* IscDbc/IscPreparedStatement.cpp:
+	* IscDbc/IscPreparedStatement.h:
+	* OdbcStatement.cpp:
+		1. Fix problems with reading (endless reading) and writing
+		(truncation at somewhere <64k) of large BLOB's
+		
+		2. Set parameter value to SQL NULL when passed indicator variable is SQL_NO_DATA
+		and data buffer is NULL pointer. Old behaviour was to silently do nothing in this case
+		thus store incorrect data into database.
+		
+		After this fixes OdbcJdbc driver passes BSS ODBC testsuite (>100 tests) and
+		seems to work correctly.
+
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/IscStatement.h:
+		Return correct SqlRowCount when prepared statement is executed
+		multiple times
+
+2003-10-10  praktik
+	* OdbcStatement.cpp:
+		patch error SQLPutData for Clob,
+		thank Carlos Guzman Alvarez
+		 branch v1-1-beta
+
+2003-10-09  praktik
+	* DescRecord.cpp:
+	* DescRecord.h:
+	* IscDbc/Connection.h:
+	* IscDbc/IscConnection.cpp:
+	* IscDbc/IscResultSet.cpp:
+	* IscDbc/IscResultSet.h:
+	* IscDbc/IscStatementMetaData.cpp:
+	* IscDbc/IscStatementMetaData.h:
+	* IscDbc/Sqlda.cpp:
+	* IscDbc/Sqlda.h:
+	* OdbcStatement.cpp:
+	* OdbcStatement.h:
+		patch error SQLPutData for Clob,
+		thank Carlos Guzman Alvarez
+		 branch v1-1-beta
+
+2003-10-08  praktik
+	* IscDbc/Connection.h:
+	* IscDbc/IscMetaDataResultSet.cpp:
+	* IscDbc/IscResultSet.cpp:
+	* IscDbc/IscResultSet.h:
+	* IscDbc/IscResultSetMetaData.cpp:
+	* IscDbc/IscResultSetMetaData.h:
+	* IscDbc/IscStatementMetaData.cpp:
+	* IscDbc/IscStatementMetaData.h:
+	* IscDbc/Sqlda.cpp:
+	* IscDbc/Sqlda.h:
+	* IscDbc/TypesResultSet.cpp:
+	* IscDbc/TypesResultSet.h:
+	* Mlist.h:
+	* OdbcDesc.cpp:
+	* OdbcStatement.cpp:
+	* OdbcStatement.h:
+		Transition to common use IscStatemetMetaData,
+		       branch v1-1-beta
+
+	* IscDbc/Connection.h:
+	* IscDbc/IscConnection.cpp:
+	* IscDbc/IscConnection.h:
+	* OdbcConnection.cpp:
+	* OdbcStatement.cpp:
+	* OdbcStatement.h:
+		is added extended outer join '{ oj'
+		 branch v1-1-beta
+
+2003-10-06  praktik
+	* IscDbc/IscIndexInfoResultSet.cpp:
+	* IscDbc/IscResultSet.cpp:
+	* IscDbc/IscResultSet.h:
+		patch for SQLStatistics, check table RDB$INDICES
+		the field RDB$UNIQUE_FLAG to NULL and set 1,
+		    branch v1-1-beta
+
+2003-09-18  praktik
+	* OdbcConvert.cpp:
+	* OdbcStatement.cpp:
+		patch warning C4244: '=' : conversion 'long' to 'SQLUSMALLINT',
+		thank Carlos Guzman Alvarez
+		 branch v1-1-beta
+
+2003-09-07  praktik
+	* OdbcStatement.cpp:
+		patch for transfer of the data VARCHAR
+		    through parameters, thank Nesvacil Jiri
+		 branch v1-1-beta
+
+2003-09-02  praktik
+	* IscDbc/Connection.h:
+	* IscDbc/IscCallableStatement.cpp:
+	* IscDbc/IscCallableStatement.h:
+	* IscDbc/IscPreparedStatement.cpp:
+	* IscDbc/IscPreparedStatement.h:
+	* OdbcConvert.cpp:
+	* OdbcStatement.cpp:
+		patch converting type NUMERIC and DECIMAL
+		 branch v1-1-beta
+
+	* OdbcStatement.cpp:
+		patch, added try..catch into sqlFetch()
+		 branch v1-1-beta
+
+2003-09-01  praktik
+	* InfoItems.h:
+	* OdbcStatement.cpp:
+		Contributed by Viesturs Ducens
+		the mistake of numbering of parameters is corrected
+		branch v1-1-beta
+
+2003-08-31  praktik
+	* IscDbc/Attachment.cpp:
+	* Main.cpp:
+	* OdbcConnection.cpp:
+	* OdbcConnection.h:
+	* OdbcInstGetProp.cpp:
+	* OdbcJdbcSetup/DsnDialog.cpp:
+	* OdbcJdbcSetup/DsnDialog.h:
+	* OdbcJdbcSetup/OdbcJdbcSetup.rc:
+	* OdbcJdbcSetup/Setup.cpp:
+	* OdbcJdbcSetup/Setup.h:
+	* OdbcJdbcSetup/resource.h:
+	* SetupAttributes.h:
+		Contributed by Viesturs Ducens
+		added CHARSET for connect to FB
+		branch v1-1-beta
+
+2003-08-30  praktik
+	* OdbcConnection.cpp:
+	* OdbcEnv.cpp:
+	* OdbcEnv.h:
+	* OdbcStatement.cpp:
+		update BOOL into bool
+
+	* Main.cpp:
+	* OdbcEnv.cpp:
+	* OdbcEnv.h:
+	* SafeEnvThread.cpp:
+	* SafeEnvThread.h:
+		improvement safe thread
+		 branch v1-1-beta
+
+2003-08-29  praktik
+	* IscDbc/IscCallableStatement.cpp:
+	* IscDbc/IscResultSet.cpp:
+	* IscDbc/Value.cpp:
+	* IscDbc/Value.h:
+		added Float
+
+	* SetupAttributes.h:
+		added DRIVER_FULL_NAME
+
+	* OdbcEnv.cpp:
+	* OdbcEnv.h:
+		SQLDataSources, SQLDrivers for compatibility is realized
+		 branch v1-1-beta
+
+	* OdbcDesc.cpp:
+		fixed SQL_DESC_ALLOC_USER
+		 branch v1-1-beta
+
+	* OdbcStatement.cpp:
+	* OdbcStatement.h:
+		added sqlSetScrollOptions
+
+	* Main.cpp:
+		 SQLSetScrollOptions, SQLParamOptions, SQLNativeSql, SQLDataSources,
+		    SQLBindParam, SQLBrowseConnect, SQLDrivers
+		    for compatibility is realized
+		 branch v1-1-beta
+
+	* OdbcConnection.cpp:
+	* OdbcConnection.h:
+		SQLBrowseConnect, SQLNativeSql for compatibility is realized
+		 branch v1-1-beta
+
+	* OdbcJdbcSetup/Setup.cpp:
+		added SQLLevel and update ConnectFunctions
+
+2003-08-24  praktik
+	* IscDbc/IscDbc.dsp:
+	* OdbcJdbc.dsp:
+	* OdbcJdbc.dsw:
+	* OdbcJdbcSetup/OdbcJdbcsetup.dsp:
+		moved DSP files to Builds/MsVc60.win
+		 branch v1-1-beta
+
+2003-08-23  praktik
+	* IscDbc/IscDbc.mak:
+	* OdbcJdbc.mak:
+	* OdbcJdbc.opt:
+	* Text.cpp:
+		cleanup
+
+	* IscDbc/IscIndexInfoResultSet.cpp:
+		change of the name of a column from PAGES in index_pages and TYPE in index_type
+		 branch v1-1-beta
+
+2003-08-22  praktik
+	* OdbcJdbcSetup/DsnDialog.cpp:
+	* OdbcJdbcSetup/DsnDialog.h:
+		the dynamic formation config DSN for MinGW is added
+		 branch v1-1-beta
+
+	* OdbcJdbcMinGw.def:
+		file OdbcJdbcMinGw.def was initially added on branch v1-1-beta.
+
+	* IscDbc/LoadFbClientDll.cpp:
+	* Mlist.h:
+	* OdbcConvert.cpp:
+	* OdbcDesc.cpp:
+		the assembly for MinGW is improved
+		 branch v1-1-beta
+
+	* OdbcJdbcMinGw.def:
+		add for MinGW defined exports symbols
+
+2003-08-18  praktik
+	* IscDbc/Connection.h:
+	* IscDbc/IscColumnPrivilegesResultSet.cpp:
+	* IscDbc/IscColumnPrivilegesResultSet.h:
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscColumnsResultSet.h:
+	* IscDbc/IscCrossReferenceResultSet.cpp:
+	* IscDbc/IscCrossReferenceResultSet.h:
+	* IscDbc/IscIndexInfoResultSet.cpp:
+	* IscDbc/IscIndexInfoResultSet.h:
+	* IscDbc/IscMetaDataResultSet.cpp:
+	* IscDbc/IscMetaDataResultSet.h:
+	* IscDbc/IscProcedureColumnsResultSet.cpp:
+	* IscDbc/IscProcedureColumnsResultSet.h:
+	* IscDbc/IscResultSet.cpp:
+	* IscDbc/IscResultSet.h:
+	* IscDbc/IscResultSetMetaData.cpp:
+	* IscDbc/IscResultSetMetaData.h:
+	* IscDbc/IscSpecialColumnsResultSet.cpp:
+	* IscDbc/IscSpecialColumnsResultSet.h:
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/IscStatementMetaData.cpp:
+	* IscDbc/IscStatementMetaData.h:
+	* IscDbc/IscTablePrivilegesResultSet.cpp:
+	* IscDbc/IscTablePrivilegesResultSet.h:
+	* IscDbc/IscTablesResultSet.cpp:
+	* IscDbc/IscTablesResultSet.h:
+	* IscDbc/Sqlda.cpp:
+	* IscDbc/Sqlda.h:
+	* IscDbc/TypesResultSet.cpp:
+	* IscDbc/TypesResultSet.h:
+	* OdbcConvert.cpp:
+	* OdbcConvert.h:
+	* OdbcDesc.cpp:
+	* OdbcDesc.h:
+	* OdbcStatement.cpp:
+		is added converting a type NUMERIC
+		 branch v1-1-beta
+
+2003-08-17  praktik
+	* IscDbc/IscDbc.rc:
+	* IscDbc/IscDbc.rc:
+	* OdbcJdbc.dsp:
+	* OdbcJdbc.rc:
+	* OdbcJdbc.rc:
+	* OdbcJdbcSetup/DsnDialog.cpp:
+	* OdbcJdbcSetup/DsnDialog.h:
+	* OdbcJdbcSetup/OdbcJdbcSetup.aps:
+	* OdbcJdbcSetup/OdbcJdbcSetup.clw:
+	* OdbcJdbcSetup/OdbcJdbcSetup.cpp:
+	* OdbcJdbcSetup/OdbcJdbcSetup.def:
+	* OdbcJdbcSetup/OdbcJdbcSetup.dep:
+	* OdbcJdbcSetup/OdbcJdbcSetup.h:
+	* OdbcJdbcSetup/OdbcJdbcSetup.mak:
+	* OdbcJdbcSetup/OdbcJdbcSetup.rc:
+	* OdbcJdbcSetup/OdbcJdbcSetup.rc:
+	* OdbcJdbcSetup/OdbcJdbcsetup.dsp:
+	* OdbcJdbcSetup/OdbcJdbcsetup.dsp:
+	* OdbcJdbcSetup/ReadMe.txt:
+	* OdbcJdbcSetup/Setup.cpp:
+	* OdbcJdbcSetup/Setup.h:
+	* OdbcJdbcSetup/StdAfx.cpp:
+	* OdbcJdbcSetup/StdAfx.h:
+	* OdbcJdbcSetup/res/OdbcJdbcSetup.rc2:
+	* OdbcJdbcSetup/resource.h:
+		cleanup MFC
+
+2003-08-15  praktik
+	* IscDbc/IscConnection.cpp:
+	* IscDbc/IscDbc.def:
+	* IscDbc/IscSpecialColumnsResultSet.h:
+	* IscDbc/TimeStamp.cpp:
+	* OdbcConnection.cpp:
+	* OdbcConvert.cpp:
+	* OdbcDateTime.cpp:
+	* OdbcDateTime.h:
+	* OdbcDesc.cpp:
+	* OdbcEnv.cpp:
+	* OdbcJdbc.def:
+	* OdbcJdbc.h:
+	* OdbcObject.cpp:
+	* OdbcStatement.cpp:
+	* SetupAttributes.h:
+		change source OdbcJdbc, for execute make from MinGW, Bcc55 and other compiles
+		 branch v1-1-beta
+
+	* IscDbc/makefile:
+	* makefile:
+		is changed and is transferred in a folder Builds
+		 branch v1-1-beta
+
+	* IscDbc/IscDbc.def:
+		CR_LF
+
+	* Date.h:
+		Hi is empty
+		 branch v1-1-beta
+
+2003-08-13  praktik
+	* IscDbc/Connection.h:
+	* IscDbc/DateTime.cpp:
+	* IscDbc/DateTime.h:
+	* IscDbc/IscArray.cpp:
+	* IscDbc/IscConnection.cpp:
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/SqlTime.cpp:
+	* IscDbc/SqlTime.h:
+	* IscDbc/TimeStamp.cpp:
+	* IscDbc/TimeStamp.h:
+	* IscDbc/Types.h:
+	* IscDbc/Value.cpp:
+	* IscDbc/extodbc.cpp:
+	* OdbcConnection.cpp:
+	* OdbcConnection.h:
+	* OdbcError.h:
+	* OdbcJdbc.def:
+	* OdbcObject.h:
+	* OdbcStatement.cpp:
+		change source OdbcJdbc, for execute make from MinGW, Bcc55 and other compiles
+		 branch v1-1-beta
+
+2003-08-10  praktik
+	* IscDbc/LoadFbClientDll.h:
+	* IscDbc/Properties.h:
+		CR-LF
+
+	* IscDbc/IscIndexInfoResultSet.cpp:
+		patch for SQLStatistics according to SQL 92 branch v1-1-beta
+
 2003-08-07  praktik
 	* IscDbc/TypesResultSet.cpp:
 		Contributed by Jirka
