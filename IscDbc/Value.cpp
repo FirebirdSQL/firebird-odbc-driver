@@ -20,6 +20,10 @@
  *
  *	ChangeLog
  *
+ *	2003-03-24	Value.cpp
+ *				Contributed by Norbert Meyer
+ *				Improve memory cleanup Value::getString()
+ *
  *	2002-11-25	Values.cpp
  *				Contributed by C. G. Alvarez
  *				Minor adjustment to improve handling of 
@@ -469,9 +473,10 @@ char* Value::getString(char **tempPtr)
 {
 	char	temp [64];
 
-	if (tempPtr)
-		*tempPtr = NULL;
+//	if (tempPtr)         // NOMEY -
+//		*tempPtr = NULL; // NOMEY -
 
+ 
 	switch (type)
 		{
 		case Null:
@@ -511,7 +516,10 @@ char* Value::getString(char **tempPtr)
 
 		case BlobPtr:
 			{
-			if (*tempPtr)
+			if (!tempPtr)	// NOMEY +
+				throw SQLEXCEPTION (BUG_CHECK, "NULL-Pointer in Value::getString, case BlobPtr:"); // NOMEY +
+
+ 			if (*tempPtr)
 				delete [] *tempPtr;
 			int length = data.blob->length();
 			*tempPtr = new char [length + 1];
@@ -522,6 +530,9 @@ char* Value::getString(char **tempPtr)
 
 		case ClobPtr:
 			{
+			if (!tempPtr)	// NOMEY +
+				throw SQLEXCEPTION (BUG_CHECK, "NULL-Pointer in Value::getString, case ClobPtr:"); // NOMEY +
+
 			if (*tempPtr)
 				delete [] *tempPtr;
 			int length = data.clob->length();
@@ -537,8 +548,13 @@ char* Value::getString(char **tempPtr)
 
 	int length = strlen (temp);
 
-	if (*tempPtr)
-		delete *tempPtr;
+	if (!tempPtr)	//NOMEY +
+		throw SQLEXCEPTION (BUG_CHECK, "NULL-Pointer in Value::getString"); //NOMEY +
+
+ 	if (*tempPtr)
+//	delete *tempPtr;   // NOMEY -
+	delete[] *tempPtr; // NOMEY +
+
 
 	*tempPtr = new char [length + 1];
 	strcpy (*tempPtr, temp);

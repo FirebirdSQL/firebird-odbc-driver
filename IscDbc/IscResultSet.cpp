@@ -16,6 +16,13 @@
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
+ *
+ *
+ *	2003-03-24	IscResultSet.cpp
+ *				Contributed by Andrew Gough
+ *				In IscResultSet::reset() delete the 'conversions' 
+ *				array itself as well as the array elements.
+ *
  */
 // IscResultSet.cpp: implementation of the IscResultSet class.
 //
@@ -248,12 +255,16 @@ int IscResultSet::release()
 void IscResultSet::reset()
 {
 	if (conversions)
+	{
 		for (int n = 0; n < numberColumns; ++n)
 			if (conversions [n])
 				{
 				delete [] conversions [n];
 				conversions [n] = NULL;
 				}
+		delete[] conversions;
+		conversions = NULL;
+	}
 }
 
 int IscResultSet::findColumn(const char * columnName)

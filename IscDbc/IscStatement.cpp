@@ -18,11 +18,36 @@
  *  All Rights Reserved.
  *
  *
+ *	2003-03-24	IscStatement.cpp
+ *				Contributed by Norbert Meyer
+ *				use value->setString (length, data, true); if not, 
+ *				the String is not nullterminated, but used as
+ *				nullterminated String in ODBCStatement::setValue()
+ *				(case SQL_C_CHAR: ...). You can also check the 
+ *				length in ODBCStatement::setValue, but there is no
+ *				function getStringLength...
+ *
+ *	2003-03-24	IscStatement.cpp
+ *				Contributed by Carlos Guzman Alvarez
+ *				Remove updatePreparedResultSet from OdbStatement 
+ *				and achieve the same goal in another way.
+ *
+ *	2003-03-24	IscStatement.cpp
+ *				Contributed by Vladimir Tcvigyn
+ *				Fix for timestamp bug (line 497)
+ *
+ *	2003-03-24	IscStatement.cpp
+ *				Contributed by Vladimir Tcvigyn
+ *				Fix for timestamp bug (line 497)
+ *
+ *	2002-08-12	IscStatement.cpp
+ *				Contributed by Roger Gammans
+ *				Close the cursor when releasing a result set.
+ *				
  *	2002-08-12	IscStatement.cpp
  *				Contributed by C. G. Alvarez
  *				Added more graceful detection of statements that do
  *				not return a result set.	
- *				
  *	
  *	2002-06-04	IscStatement.cpp
  *				Amended setValue() again. (RM)
@@ -171,8 +196,8 @@ ResultSet* IscStatement::getResultSet()
 		throw SQLEXCEPTION (RUNTIME_ERROR, "no active statement");
 
     if (!selectActive)
-				if (outputSqlda.sqlda->sqld < 1)
-		            throw SQLEXCEPTION (RUNTIME_ERROR, "current statement doesn't return results");
+		if (outputSqlda.sqlda->sqld < 1)
+			throw SQLEXCEPTION (RUNTIME_ERROR, "current statement doesn't return results");
 	
 	return createResultSet();
 }
@@ -238,6 +263,10 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 		{
 		selectActive = false;
 		connection->commitAuto();
+		// Close cursors too.
+		ISC_STATUS statusVector [20];
+		isc_dsql_free_statement (statusVector, &statementHandle, DSQL_close);
+		//FIXME: Test status vector.
 		}
 }
 
@@ -273,11 +302,15 @@ void IscStatement::prepareStatement(const char * sqlString)
 			THROW_ISC_EXCEPTION (statusVector);
 		}
 
+	selectActive		= false;
+	resultsCount		= 1;
+	resultsSequence		= 0;
 	int statementType	= getUpdateCounts();
 	
-	numberColumns = outputSqlda.getColumnCount();
-	XSQLVAR *var = outputSqlda.sqlda->sqlvar;
-	insertCount = deleteCount = updateCount = 0;
+	numberColumns		= outputSqlda.getColumnCount();
+	XSQLVAR *var		= outputSqlda.sqlda->sqlvar;
+	insertCount			= deleteCount = updateCount = 0;
+
 }
 
 bool IscStatement::execute()
@@ -299,9 +332,10 @@ bool IscStatement::execute()
 		THROW_ISC_EXCEPTION (statusVector);
 		}
 
-	resultsCount = 1;
-	resultsSequence = 0;
-	int statementType = getUpdateCounts();
+	resultsCount		= 1;
+	resultsSequence		= 0;
+	int statementType	= getUpdateCounts();
+	selectActive = false;
 
 	switch (statementType)
 		{
@@ -436,7 +470,9 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 					value->setString (data, false);
 					}
 				else
-					value->setString (length, data, false);
+//					value->setString (length, data, false);
+					value->setString (length, data, true);
+
 				}
 				break;
 
@@ -483,10 +519,15 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				timestamp.nanos = (date->timestamp_time / 10000) * 100;
 */
 //From B. Schulte
-                long        zeit;
-                zeit = (date->timestamp_time / 10000);
-                timestamp=days;
-                timestamp.nanos = (zeit) ;
+				long        zeit;
+				zeit = (date->timestamp_time / 10000);
+
+				// Just what do we do here? A patch from Vladimir Tcvigyn 
+				// suggests we should multiply days by the number of 
+				// seconds in a day.
+				timestamp=days * 24 * 60 * 60;
+				timestamp=days;
+				timestamp.nanos = (zeit) ;
 
 				value->setValue (timestamp);
 				}
@@ -497,7 +538,8 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				ISC_DATE date = *(ISC_DATE*) var->sqldata;
 				long days = date - baseDate;
 				DateTime dateTime;
-				dateTime = (long) (days * 24 * 60 * 60);
+//				dateTime = (long) (days * 24 * 60 * 60);//NOMEY -
+				dateTime = days; //NOMEY +
 				value->setValue (dateTime);
 				}
 				break;

@@ -19,6 +19,23 @@
  *
  *
  *	Changes
+ *	2003-03-24	OdbcStatement.cpp
+ *				Contributed by Norbert Meyer
+ *				o In sqlExtendedFetch() add support for
+ *				  applications which only check rowCountPointer
+ *				o In setValue()
+ *				  Empty strings have len = 0, so test for that
+ *				o In setParameter() and executeStatement()
+ *				  test for binding->indicatorPointer
+ *
+ *	2003-03-24	OdbcStatement.cpp
+ *				Contributed by Carlos Guzman Alvarez
+ *				Remove updatePreparedResultSet from OdbStatement 
+ *				and achieve the same goal in another way.
+ *
+ *	2003-03-24	OdbcStatement.cpp
+ *				Contributed by Roger Gammans
+ *				Fix a segv in SQLBindCol()
  *
  *	2002-11-21	OdbcStatement.cpp
  *				Contributed by C. G. Alvarez
@@ -172,7 +189,7 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	getDataBindings = NULL;	//added by RM
 	parameters = NULL;
 	metaData = NULL;
-	updatePreparedResultSet = true;
+//	updatePreparedResultSet = true;
 	cancel = false;
 	numberParameters = 0;
     parameterNeedData = -1;	//Added 2002-06-04 RM
@@ -325,7 +342,7 @@ RETCODE OdbcStatement::sqlColumnPrivileges(SQLCHAR * catalog, int catLength,
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
+RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength, bool isExecDirect)
 {
 	clearErrors();
 	releaseStatement();
@@ -350,9 +367,11 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 		else
 			statement = connection->connection->prepareStatement (string);
 
-		//Added by CGA
-		if( updatePreparedResultSet )
-			setResultSet(statement->getResultSet());
+//		//Added by CGA
+//		if( updatePreparedResultSet )
+//			setResultSet(statement->getResultSet());
+		if (!isExecDirect)
+			getResultSet();
 
 		}
 	catch (SQLException& exception)
@@ -382,6 +401,7 @@ void OdbcStatement::releaseResultSet()
 		{
 		resultSet->release();
 		resultSet = NULL;
+		metaData  = NULL;
 		}
 }
 
@@ -470,16 +490,15 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 				}
 			}
 
-//Orig
-//		Binding *binding = bindings + column;
-//From RM
 		Binding *binding = *_bindings + column;	
 		binding->type = SQL_PARAM_OUTPUT;
 		binding->cType = targetType;
 		binding->pointer = targetValuePtr;
 		binding->bufferLength = bufferLength;
 		binding->indicatorPointer = indPtr;
-		if ( metaData->getColumnType (column) == SQL_CHAR || metaData->getColumnType (column) == SQL_VARCHAR )
+		if ( metaData &&
+		     ( metaData->getColumnType (column) == SQL_CHAR || 
+		       metaData->getColumnType (column) == SQL_VARCHAR ))
 			binding->dataOffset			= 0;
 
 #ifdef DEBUG
@@ -577,7 +596,9 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 		if (eof || !resultSet->next())
 		{
 			eof = true;
-			if(rowStatusArray)
+			if(rowCountPointer)
+				*rowCountPointer = 0;
+ 			if(rowStatusArray)
 				rowStatusArray[0] = SQL_ROW_NOROW;
 			return SQL_NO_DATA;
 		}
@@ -656,8 +677,9 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 			int dataRemaining = strlen(string) - binding->dataOffset;
 			int len = MIN(dataRemaining, binding->bufferLength);
 			 
-			//Added by PR. If len is negative we get an AV so
-			if ( len > 0 ) 
+			//Added by PR. If len is negative we get an AV
+			//Added by NOMEY. and empty strings have len = 0
+			if ( len >= 0 ) 
 			{
 				memcpy (binding->pointer, string+binding->dataOffset, len);
 				((char*) (binding->pointer)) [len] = 0;
@@ -743,7 +765,7 @@ bool OdbcStatement::setValue(Binding * binding, int column)
 			{
 			SqlTime sqlTime = RESULTS (getTime (column));
 			tagTIME_STRUCT *var = (tagTIME_STRUCT*) binding->pointer;
-			var->hour = (unsigned short) (sqlTime.timeValue / 60 * 60) % 24;
+			var->hour = (unsigned short) (sqlTime.timeValue / (60 * 60)) % 24;
 			var->minute = (unsigned short) (sqlTime.timeValue / 60) % 60;
 			var->second = (unsigned short) (sqlTime.timeValue % 60);
 			length = sizeof (tagTIME_STRUCT);
@@ -1152,8 +1174,8 @@ RETCODE OdbcStatement::sqlExecute()
 
 	try
 		{
-		if ( resultSet )
-			releaseResultSet();
+//		if ( resultSet )
+		releaseResultSet();
 		retcode = executeStatement();
 		}
 	catch (SQLException& exception)
@@ -1165,14 +1187,15 @@ RETCODE OdbcStatement::sqlExecute()
 	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
 		return retcode;
 
-		return sqlSuccess();
+	return sqlSuccess();
 }
 
 RETCODE OdbcStatement::sqlExecuteDirect(SQLCHAR * sql, int sqlLength)
 {
-	updatePreparedResultSet = false;
-	int retcode = sqlPrepare (sql, sqlLength);
-	updatePreparedResultSet = true;
+//	updatePreparedResultSet = false;
+//	int retcode = sqlPrepare (sql, sqlLength);
+//	updatePreparedResultSet = true;
+	int retcode = sqlPrepare (sql, sqlLength, true);
 
 
 	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
@@ -1254,8 +1277,8 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 	clearErrors();
 
 	if (parameter <= 0)
-//		return sqlReturn (SQL_ERROR, "S1093", "Invalid parameter number");
-		return sqlReturn (SQL_ERROR, "S1093", "Invalid parameter number :: OdbcStatement::sqlBindParameter");
+		return sqlReturn (SQL_ERROR, "S1093", "Invalid parameter number");
+//		return sqlReturn (SQL_ERROR, "S1093", "Invalid parameter number :: OdbcStatement::sqlBindParameter");
 
 	int parametersNeeded = parameter;
 
@@ -1394,22 +1417,31 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 		{
 		switch (binding->cType)
 			{
-			case SQL_C_CHAR:
+		case SQL_C_CHAR:
 			{
 				if (!binding->data_at_exec)
-                switch( *binding->indicatorPointer )
-                {
-                    case SQL_NTS:
-                        statement->setString (parameter, (char*) binding->pointer );
-                        break;
-
-                    default:                       
-                        statement->setString (parameter, (char*)binding->pointer, *binding->indicatorPointer );
+				{
+					// NOMEY test binding->indicatorPointer
+					if (binding->indicatorPointer)
+					{
+						switch( *binding->indicatorPointer )
+						{
+						case SQL_NTS:
+							statement->setString (parameter, (char*) binding->pointer );
 							break;
-                }
+							
+						default:                       
+							statement->setString (parameter, (char*)binding->pointer, *binding->indicatorPointer );
+							break;
+						}
+					}
+					else
+					{
+						statement->setString (parameter, (char*) binding->pointer );
+					}
+				}
 			}
-				break;
-
+			break;
 
 			case SQL_C_SHORT:
 			case SQL_C_SSHORT:
@@ -1824,7 +1856,9 @@ RETCODE OdbcStatement::executeStatement()
         {
         Binding *binding = parameters + n;
 		if ( ( binding->pointer || binding->indicatorPointer ) && binding->type != SQL_PARAM_OUTPUT )
-			if ( *binding->indicatorPointer == SQL_DATA_AT_EXEC || *binding->indicatorPointer < SQL_LEN_DATA_AT_EXEC_OFFSET )
+//			if ( *binding->indicatorPointer == SQL_DATA_AT_EXEC || *binding->indicatorPointer < SQL_LEN_DATA_AT_EXEC_OFFSET )
+			if (binding->indicatorPointer &&( 
+				*binding->indicatorPointer == SQL_DATA_AT_EXEC || *binding->indicatorPointer < SQL_LEN_DATA_AT_EXEC_OFFSET )) // NOMEY +				
 				return SQL_NEED_DATA;
 			else				
             setParameter (binding, n + 1);

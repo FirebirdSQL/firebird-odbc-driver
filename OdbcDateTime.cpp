@@ -141,7 +141,10 @@ int OdbcDateTime::convert (DateTime * dateTimeIn, tagDATE_STRUCT * tagDateOut)
 
 //	ndate (dateTimeIn->date, times);
 //	From B. Schulte
-	ndate ((dateTimeIn->date / 24 /60/60),0, times); 
+//	ndate ((dateTimeIn->date / 24 /60/60),0, times);	// NOMEY -
+	ndate (dateTimeIn->date,0, times);					// NOMEY +
+
+
 
 	times->tm_yday = yday (times);
 	if ((times->tm_wday = ((dateTimeIn->date) + 3) % 7) < 0)

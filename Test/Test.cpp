@@ -41,7 +41,7 @@ class Child : public Interface, public Implementation
 	};
 ***/
 
-main (int argc, const char **argv)
+int main (int argc, const char **argv)
 {
 	//Child child;
 	//child.method();

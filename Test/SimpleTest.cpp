@@ -18,7 +18,7 @@ static void test8 (HDBC);
 static void testDisconnect (HDBC);
 
 
-main (int argc, const char **argv)
+int main (int argc, const char **argv)
     {
     const char **end = argv + argc;
 //    const char *connectString = "ODBC;DSN=FireBirdOdbc;DRIVER=OdbcJdbc;ROLE=cinnamon";
@@ -143,8 +143,9 @@ void test1 (HDBC connection)
     if (!OdbcCheckCode (ret, statement, "SQLDescribeParam"))
         return;
 
+    char  robert[] = "Robert";
     ret = SQLBindParameter (statement, 1, SQL_PARAM_INPUT, 
-                            SQL_C_CHAR, type, precision, scale, "Robert", 0, NULL);
+                            SQL_C_CHAR, type, precision, scale, robert, 0, NULL);
     if (!OdbcCheckCode (ret, statement, "SQLBindParameter"))
         return;
 

@@ -80,6 +80,10 @@ ODBCJDBCEXTRA= \
 
 all:	$(ISCDBCLIB) $(ODBCJDBCLIB) JDBCTEST
 
+clean:
+	rm -rf *.d JDBCTEST $(ODBCJDBCEXTRA) $(ODBCJDBC) $(ISCDBC) $(ISCDBCLIB).so $(ODBCJDBCLIB).so 
+
+
 $(ISCDBCLIB)	: $(ISCDBC)
 	ar crs $(ISCDBCLIB).a $(ISCDBC)
 	g++ -rdynamic -export-dynamic $(ISCDBC) $(EXTLIBS) -shared -o $(ISCDBCLIB).so

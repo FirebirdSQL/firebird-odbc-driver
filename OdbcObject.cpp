@@ -33,6 +33,7 @@
 
 OdbcObject::OdbcObject()
 {
+	next = NULL; // NOMEY
 	errors = NULL;
 }
 

@@ -18,6 +18,13 @@
  *  All Rights Reserved.
  *
  *
+ *	2003-03-24	IscColumnsResultSet.cpp
+ *				Contributed by Norbert Meyer
+ *				o Add some breaks to case statements in adjustResults()
+ *				  VARCHAR storage length is set in function ::setCharLen
+ *				o In IscColumnsResultSet::getBLRLiteral use delete[] s
+ *				  instead of delete.s
+ *
  *	2002-11-24	IscColumnsResultSet.cpp
  *				Contributed by C. G. Alvarez
  *				Improve handling of NUMERIC and DECIMAL fields
@@ -219,7 +226,8 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 	if ((*stuff != blr_version4) && (*stuff != blr_version5))
 		{
 		resultSet->setValue (indexTarget, "unknown, not BLR");
-		delete s;
+//		delete s;	// NOMEY -
+		delete[] s;	// NOMEY +
 		return false;
 		}
 
@@ -228,14 +236,16 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 	if (*stuff == blr_null)
 		{
 		resultSet->setValue (indexTarget, "NULL");
-		delete s;
+//		delete s;	// NOMEY -
+		delete[] s;	// NOMEY +
 		return true;
 		}
 
 	if (*stuff != blr_literal)
 		{
 		resultSet->setValue (indexTarget, "unknown, not literal");
-		delete s;
+//		delete s;	// NOMEY -
+		delete[] s;	// NOMEY +
 		return false;
 		}
 
@@ -344,7 +354,8 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 
 		}
 	resultSet->setValue (indexTarget, stringVal);
-	delete s;
+//	delete s;	// NOMEY -
+	delete[] s;	// NOMEY +
 	return true;
 }								
 
@@ -422,8 +433,8 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 		} 
 
 	// adjust the storage length for VARCHAR
-	if (sqlType.type == JDBC_VARCHAR)
-		resultSet->setValue (8, (resultSet->getInt (8)) + 2);
+//	if (sqlType.type == JDBC_VARCHAR)							// NOMEY -
+//		resultSet->setValue (8, (resultSet->getInt (8)) + 2);	// NOMEY -
 
 	// decimal digits have no meaning for some columns
 	// radix - doesn't mean much for some colums either
@@ -464,9 +475,11 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 		case JDBC_DATE:
 			resultSet->setValue (14, (long) 9);
 			resultSet->setValue (15, (long) 1);
+			break;
 		case JDBC_TIME:
 			resultSet->setValue (14, (long) 9);
 			resultSet->setValue (15, (long) 2);
+			break;
 		case JDBC_TIMESTAMP:
 			resultSet->setValue (14, (long) 9);
 			resultSet->setValue (15, (long) 3);

@@ -17,6 +17,15 @@
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
  *
+ *	2003-03-24	OdbcConnection.cpp
+ *				Contributed by Norbert Meyer
+ *				delete Statements before close connection 
+ *				(statement-destructor needs connection-pointer 
+ *				for call connection->deleteStatement.  
+ *				If connection->deleteStatement not called, 
+ *				you get an AV if you use Statements and call 
+ *				  SQLDisconnect(...); 
+ *				  SQLFreeHandle(..., connection);
  *
  *	2002-12-05	OdbcConnection.cpp 
  *				Contributed by C. Guzman Alvarez
@@ -277,11 +286,29 @@ OdbcConnection::~OdbcConnection()
 	if (env)
 		env->connectionClosed (this);
 
-	while (statements)
-		delete statements;
+// NOMEY begin
+//	while (statements)
+//		delete statements;
 
+//	while (descriptors)
+//		delete descriptors;
+
+	while (statements)
+	{
+		OdbcStatement* statement = statements;
+		statements = (OdbcStatement*)statement->next;
+		delete statement;
+	}
+	
 	while (descriptors)
-		delete descriptors;
+	{
+		OdbcDesc* descriptor = descriptors;
+		descriptors = (OdbcDesc*)descriptor->next;
+		delete descriptor;
+	}
+// NOMEY end
+
+
 
 #ifdef ELF
 	if (libraryHandle)

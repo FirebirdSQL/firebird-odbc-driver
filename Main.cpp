@@ -18,6 +18,15 @@
  *  All Rights Reserved.
  *
  *
+ *
+ *	2003-03-24	main.cpp
+ *				Contributed by Roger Gammans
+ *				Fix SQLError prototype to match the prototype
+ *				in the sql.h header file. This stops g++ 
+ *				generating SQLError as a C++ name-mangled 
+ *				entry point. A C function entry is used 
+ *				allowing correct binding to the driver manager.
+ *
  *	2002-10-11	main.cpp
  *				Contributed by C G Alvarez
  *              Implement SQLNumParams()
@@ -250,9 +259,9 @@ RETCODE SQL_API SQLDisconnect  (HDBC arg0)
 
 ///// SQLError /////	ODBC 1.0	///// Deprecated
 
-RETCODE SQL_API SQLError  (OdbcEnv *env,
-		 OdbcConnection *connection,
-		 OdbcStatement *statement,
+RETCODE SQL_API SQLError  (HENV env,
+		 HDBC connection,
+		 HSTMT statement,
 		 UCHAR * sqlState,
 		 SDWORD * nativeErrorCode,
 		 UCHAR * msgBuffer,
@@ -262,13 +271,16 @@ RETCODE SQL_API SQLError  (OdbcEnv *env,
 	TRACE("SQLError");
 
 	if (statement)
-		return statement->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
+//		return statement->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
+		return ((OdbcStatement*)statement)->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
 
 	if (connection)
-		return connection->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
+//		return connection->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
+		return ((OdbcConnection*)connection)->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
 
 	if (env)
-		return env->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
+//		return env->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
+		return ((OdbcEnv*)env)->sqlError (sqlState, nativeErrorCode, msgBuffer, msgBufferLength, msgLength);
 
 	return SQL_ERROR;
 }
@@ -362,7 +374,8 @@ RETCODE SQL_API SQLPrepare  (HSTMT arg0,
 {
 	TRACE ("SQLPrepare");
 	
-	return ((OdbcStatement*) arg0)->sqlPrepare (arg1, arg2);
+	return ((OdbcStatement*) arg0)->sqlPrepare (arg1, arg2, false);
+
 }
 
 ///// SQLRowCount /////	ODBC 1.0	///// ISO 92

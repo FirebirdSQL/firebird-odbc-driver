@@ -108,7 +108,9 @@ public:
 	void setResultSet (ResultSet *results);
 	void releaseResultSet();
 	void releaseStatement();
-	RETCODE sqlPrepare (SQLCHAR *sql, int sqlLength);
+//	RETCODE sqlPrepare (SQLCHAR *sql, int sqlLength);
+	RETCODE sqlPrepare (SQLCHAR *sql, int sqlLength, bool isExecDirect);
+
 	RETCODE sqlColumns (SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, SQLCHAR *column, int columnLength);
 	RETCODE sqlTables (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength, SQLCHAR *type, int typeLength);
 	RETCODE sqlTablePrivileges (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength);
@@ -154,7 +156,7 @@ public:
 	bool				asyncEnable;
 	int					rowNumber;
 	int					maxRows;
-	bool				updatePreparedResultSet;
+//	bool				updatePreparedResultSet;
 };
 
 #endif // !defined(AFX_ODBCSTATEMENT_H__ED260D97_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)

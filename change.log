@@ -5,6 +5,85 @@ Changes made to OdbcJdbc codebase
 !!  using the format below and then paste them into this document. 
 
 
+ *	2003-03-24	Value.cpp
+ *				Contributed by Norbert Meyer
+ *				Improve memory cleanup Value::getString()
+ 
+ *	2003-03-24	IscColumnsResultSet.cpp
+ *				Contributed by Norbert Meyer
+ *				o Add some breaks to case statements in adjustResults()
+ *				o In IscColumnsResultSet::getBLRLiteral use delete[] s
+ *				  instead of delete.s
+ 
+ *	2003-03-24	IscResultSet.cpp
+ *				Contributed by Andrew Gough
+ *				In IscResultSet::reset() delete the 'conversions' 
+ *				array itself as well as the array elements.
+
+ *	2003-03-24	IscConnection.cpp
+ *				Contributed by Norbert Meyer
+ *				If ++attachment means attachment->addRef() then
+ *				let's say so.
+
+ *	2003-03-24	IscStatement.cpp
+ *				Contributed by Norbert Meyer
+ *				use value->setString (length, data, true); if not, 
+ *				the String is not nullterminated, but used as
+ *				nullterminated String in ODBCStatement::setValue()
+ *				(case SQL_C_CHAR: ...). You can also check the 
+ *				length in ODBCStatement::setValue, but there is no
+ *				function getStringLength...
+
+ *	2003-03-24	OdbcConnection.cpp
+ *				Contributed by Norbert Meyer (NOMEY)
+ *				delete Statements before close connection 
+ *				(statement-destructor needs connection-pointer 
+ *				for call connection->deleteStatement.  
+ *				If connection->deleteStatement not called, 
+ *				you get an AV if you use Statements and call 
+ *				  SQLDisconnect(...); 
+ *				  SQLFreeHandle(..., connection);
+
+ *	2003-03-24	OdbcStatement.cpp
+ *				Contributed by Norbert Meyer (NOMEY)
+ *				o In sqlExtendedFetch() add support for
+ *				  applications which only check rowCountPointer
+ *				o In setValue()
+ *				  Empty strings have len = 0, so test for that
+ *				o In setParameter() and executeStatement()
+ *				  test for binding->indicatorPointer
+
+ *	2003-03-24	OdbcStatement.cpp
+ *				IscStatement.cpp
+ *				Contributed by Carlos Guzman Alvarez
+ *				Remove updatePreparedResultSet from OdbStatement 
+ *				and achieve the same goal in another way.
+
+ *	2003-03-24	IscStatement.cpp
+ *				Contributed by Vladimir Tcvigyn
+ *				Fix for timestamp bug (line 497)
+
+ *	2003-03-24	Test directory
+ *				Contributed by Roger Gammans
+ *				Fixes for some non-standard code. Specifically 
+ *				const correctness and specifying function return types.
+
+ *	2003-03-24	OdbcStatement.cpp
+ *				Contributed by Roger Gammans
+ *				Fix a segv in SQLBindCol()
+
+ *	2003-03-24	main.cpp
+ *				Contributed by Roger Gammans
+ *				Fix SQLError prototype to match the prototype
+ *				in the sql.h header file. This stops g++ 
+ *				generating SQLError as a C++ name-mangled 
+ *				entry point. A C function entry is used 
+ *				allowing correct binding to the driver manager.
+
+ *	2002-08-12	IscStatement.cpp
+ *				Contributed by Roger Gammans
+ *				Close the cursor when releasing a result set.
+
  *	2002-12-05	OdbcConnection.cpp 
  *				Contributed by C. Guzman Alvarez
  *				SQLGetInfo returns more info.

@@ -20,7 +20,7 @@
 #define BIND_STRING(stmt,col,data,len) OdbcCheckCode (SQLBindCol(stmt, col, SQL_C_CHAR, data, sizeof (data), &len), stmt, "SQLBindData")
 #define BIND_LONG(stmt,col,data,len)   OdbcCheckCode (SQLBindCol(stmt, col, SQL_C_SLONG, &data, sizeof (data), &len), stmt, "SQLBindData")
 
-OdbcCheckCode (int retcode, SQLHANDLE statement, const char *string, int handleType=SQL_HANDLE_STMT);
+int OdbcCheckCode (int retcode, SQLHANDLE statement, const char *string, int handleType=SQL_HANDLE_STMT);
 
 /***
 void OdbcExecute (CDatabase*, const char* sql);

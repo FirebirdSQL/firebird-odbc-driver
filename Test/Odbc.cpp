@@ -19,7 +19,7 @@ int		sw_noUpdate;
 
 FILE	*logFile;
 
-OdbcCheckCode (int retcode, SQLHANDLE handle, const char *string, int handleType)
+int OdbcCheckCode (int retcode, SQLHANDLE handle, const char *string, int handleType)
 {
 /**************************************
  *
@@ -69,7 +69,7 @@ for (int n = 1; n < 10; ++n)
 
 if (logFile)
     fflush (logFile);
-printf ("%s\n", message);
+printf ("%s\n", message.getString());
 
 #ifdef _WIN32
 OutputDebugString (message);

@@ -20,6 +20,15 @@
  *
  *	Changes
  *
+ *	2003-03-24	IscConnection.cpp
+ *				Contributed by Norbert Meyer
+ *				o If ++attachment means attachment->addRef() 
+ *				  then let's say so.
+ *				o In close() set statement->connection to NULL.
+ *				  This prevents connection->deleteStatement(this)
+ *				  in destructor of IscStatement.
+ *
+ *
  *	2002-06-08  IscConnection::startTransaction()
  *				Contributed by Carlos Alvarez. New implementation
  *				to better support different transaction options.
@@ -67,7 +76,9 @@ IscConnection::IscConnection(IscConnection * source)
 {
 	init();
 	attachment = source->attachment;
-	++attachment;
+	// NOMEY
+	// ++attachment;
+	attachment->addRef();
 }
 
 void IscConnection::init()
@@ -98,6 +109,7 @@ void IscConnection::close()
 {
 	FOR_OBJECTS (IscStatement*, statement, &statements)
 		statement->close();
+		statement->connection = NULL; // NOMEY
 	END_FOR;
 
 	delete this;
