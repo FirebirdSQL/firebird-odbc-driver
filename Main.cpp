@@ -553,7 +553,12 @@ RETCODE SQL_API SQLGetConnectOption  (HDBC arg0,
 	TRACE ("SQLGetConnectOption");
 	GUARD_HDBC(arg0);
 
-	return ((OdbcConnection*) arg0)->sqlGetConnectAttr (arg1, arg2, 0, NULL);
+	int bufferLength = 0;
+	// Nickolay Samofatov: Make sure you add all supported string attributes here!
+	if (arg1 == SQL_ATTR_CURRENT_CATALOG)
+		bufferLength = SQL_MAX_OPTION_STRING_LENGTH;
+
+	return ((OdbcConnection*) arg0)->sqlGetConnectAttr (arg1, arg2, bufferLength, NULL);
 
 }
 
