@@ -1,7 +1,7 @@
 #
 #DEBUG=1
 #
-.PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean
+.PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean postbuild
 #
 GCC		= g++
 #
@@ -27,12 +27,16 @@ LIST_ODBCJDBCSETUPOBJ	= $(addprefix $(BUILDDIR)/, $(ODBCJDBCSETUPSRC_LINUX:.cpp=
 #
 COMPFLAGS	= -g -w -D_REENTRANT -D_PTHREADS -DEXTERNAL 
 #
-LINKFLAGS	= -rdynamic -export-dynamic -shared
+#LINKFLAGS	= -rdynamic -export-dynamic -shared 
+LINKFLAGS	= -shared
 EXTLIBS		= -lcrypt -ldl -lgds
 #
 ISCDBCDLL       = $(TARGETDIR)/IscDbc.so
 ODBCJDBCDLL     = $(TARGETDIR)/OdbcJdbc.so
 ODBCJDBCSETUPDLL= $(TARGETDIR)/OdbcJdbcS.so
+ISCDBCDEFFILE	= $(ISCDBCDIR)/IscDbc.def
+ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)/OdbcJdbc.def
+ODBCJDBCSDEFFILE= $(ODBCJDBCSETUPDIR)/OdbcJdbcSetup.def
 #
 ifdef DEBUG
 DEBUGFLAGS	= -D_DEBUG -DDEBUG -DLOGGING -fexceptions 
@@ -69,15 +73,20 @@ OdbcJdbcSetup : $(ODBCJDBCSETUPDLL)
 #
 $(ISCDBCDLL) : $(LIST_ISCDBCOBJ)
 	ar crs $(ISCDBCLIB) $(LIST_ISCDBCOBJ)
-	$(GCC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(EXTLIBS) -o $(ISCDBCDLL)
+	$(GCC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(EXTLIBS) --def $(ISCDBCDEFFILE) -o $(ISCDBCDLL)
 #
 $(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ)
 	ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCOBJ)
-	$(GCC) $(LINKFLAGS) $(BUILDDIR)/JString.o $(BUILDDIR)/Mutex.o $(LIST_ODBCJDBCOBJ) $(EXTLIBS) -lodbcinst -o $(ODBCJDBCDLL)
+	$(GCC) $(LINKFLAGS) $(BUILDDIR)/JString.o $(BUILDDIR)/Mutex.o $(LIST_ODBCJDBCOBJ) $(EXTLIBS) -lodbcinst --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
 #
 $(ODBCJDBCSETUPDLL) : $(LIST_ODBCJDBCSETUPOBJ)
 	ar crs $(ODBCJDBCSETUPLIB) $(LIST_ODBCJDBCSETUPOBJ)
 	$(GCC) $(LINKFLAGS) $(LIST_ODBCJDBCSETUPOBJ) $(EXTLIBS) -o $(ODBCJDBCSETUPDLL)
+#
+postbuild : $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+	@-strip -s $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+	@-tar -cf OdbcJdbc_Snapshot.tar $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+	@-gzip -9 -S .gz OdbcJdbc_Snapshot.tar
 #
 # End
 #
