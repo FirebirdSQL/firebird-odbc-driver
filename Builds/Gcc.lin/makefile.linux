@@ -54,11 +54,9 @@ endif
 ifdef INTERBASE
 INCLUDEDIR      := -I/opt/interbase/include -I/usr/include/odbc $(INCLUDEDIR)
 EXTLIBDIR       := -L/opt/interbase/lib -L/usr/lib/unixODBC $(EXTLIBDIR)
-FBCLIENT        = gds
 else
 INCLUDEDIR      = -I/opt/firebird/include -I/usr/include/odbc
 EXTLIBDIR       := -L/opt/firebird/lib -L/usr/lib/unixODBC $(EXTLIBDIR)
-FBCLIENT        = fbclient
 endif
 #
 
@@ -129,7 +127,7 @@ OdbcJdbcSetup : $(ODBCJDBCSETUPDLL)
 #
 $(ISCDBCDLL) : $(LIST_ISCDBCOBJ)
 	ar crs $(ISCDBCLIB) $(LIST_ISCDBCOBJ)
-	$(GCC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(EXTLIBS) -l$(FBCLIENT) --def $(ISCDBCDEFFILE) -o $(ISCDBCDLL)
+	$(GCC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(EXTLIBS) --def $(ISCDBCDEFFILE) -o $(ISCDBCDLL)
 #
 $(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ)
 	ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCOBJ)
