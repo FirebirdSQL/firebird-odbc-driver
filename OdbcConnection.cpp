@@ -1107,10 +1107,6 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 		string = metaData->supportsOrderByUnrelated() ? "Y" : "N";
 		break;
 
-	case SQL_CONVERT_FUNCTIONS:
-		value |= SQL_FN_CVT_CAST;
-		break;
-
 	case SQL_IDENTIFIER_CASE:
 		if (metaData->storesUpperCaseIdentifiers())
 			value = SQL_IC_UPPER;
