@@ -75,7 +75,7 @@ public:
 
 	virtual void		setShort (int index, short value);
 	virtual void		setInt (int index, long value);
-	virtual void		setLong (int index, QUAD value);
+	virtual void		setQuad (int index, QUAD value);
 	virtual void		setFloat (int index, float value);
 	virtual void		setDouble (int index, double value);
 	virtual void		setDate (int index, DateTime value);

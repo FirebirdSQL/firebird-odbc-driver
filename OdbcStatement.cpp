@@ -2223,7 +2223,7 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 
 			case SQL_C_SBIGINT:
 			case SQL_C_UBIGINT:
-				statement->setLong (parameter, *(QUAD*) binding->pointer);
+				statement->setQuad (parameter, *(QUAD*) binding->pointer);
 				break;
 
 			case SQL_C_TIMESTAMP:
@@ -2270,12 +2270,19 @@ void OdbcStatement::setParameter(Binding * binding, int parameter)
 			case SQL_C_BINARY:
 				if (!binding->data_at_exec)
                		statement->setBytes(parameter, binding->bufferLength, binding->pointer);
-//           		statement->setBytes(parameter, *(binding->indicatorPointer), binding->pointer);
+				break;
+
+			case SQL_C_NUMERIC:
+			case SQL_DECIMAL:
+				{
+					QUAD &number = *(QUAD*)((char*)binding->pointer+3);
+					char scale = *((char*)binding->pointer+1);
+					if(scale)number /= (QUAD)listScale[scale];
+					statement->setQuad(parameter, number);
+				}
 				break;
 
 			case SQL_C_BIT:
-			case SQL_C_NUMERIC:
-			case SQL_DECIMAL:
 			//case SQL_C_BOOKMARK:
 			//case SQL_C_VARBOOKMARK:
 			//case SQL_C_GUID:
@@ -2377,7 +2384,7 @@ void OdbcStatement::setParameter(DescRecord *record,int parameter)
 
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-			statement->setLong (parameter, *(QUAD*) pointer);
+			statement->setQuad (parameter, *(QUAD*) pointer);
 			break;
 
 		case SQL_C_TIMESTAMP:
@@ -2417,9 +2424,17 @@ void OdbcStatement::setParameter(DescRecord *record,int parameter)
                	statement->setBytes(parameter, record->length, pointer);
 			break;
 
-		case SQL_C_BIT:
 		case SQL_C_NUMERIC:
 		case SQL_DECIMAL:
+			{
+				QUAD &number = *(QUAD*)(pointer+3);
+				char scale = *(pointer+1);
+				if(scale)number /= (QUAD)listScale[scale];
+				statement->setQuad(parameter, number);
+			}
+			break;
+
+		case SQL_C_BIT:
 		//case SQL_C_BOOKMARK:
 		//case SQL_C_VARBOOKMARK:
 		//case SQL_C_GUID:

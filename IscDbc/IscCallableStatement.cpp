@@ -276,9 +276,9 @@ void IscCallableStatement::setByte(int index, char value)
 	Parent::setByte(index, value);
 }
 
-void IscCallableStatement::setLong(int index, QUAD value)
+void IscCallableStatement::setQuad(int index, QUAD value)
 {
-	Parent::setLong(index, value);
+	Parent::setQuad(index, value);
 }
 
 void IscCallableStatement::setFloat(int index, float value)

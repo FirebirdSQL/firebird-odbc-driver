@@ -362,7 +362,7 @@ public:
 	virtual void		setByte (int index, char value) = 0;
 	virtual void		setShort (int index, short value) = 0;
 	virtual void		setInt (int index, long value) = 0;
-	virtual void		setLong (int index, QUAD value) = 0;
+	virtual void		setQuad (int index, QUAD value) = 0;
 	virtual void		setBytes (int index, int length, const void *bytes) = 0;
 //Next three lines added by RM 2002-06-4
     virtual void        beginBlobDataTransfer(int index) = 0;

@@ -293,7 +293,7 @@ void IscPreparedStatement::setByte(int index, char value)
 	getParameter (index - 1)->setValue ((short) value);
 }
 
-void IscPreparedStatement::setLong(int index, QUAD value)
+void IscPreparedStatement::setQuad(int index, QUAD value)
 {
 	getParameter (index - 1)->setValue (value);
 }
