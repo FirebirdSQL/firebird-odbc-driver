@@ -17,6 +17,7 @@ static const char *szHelpNoWait = "Init transaction (default Wait)";
 
 int ODBCINSTGetProperties( HODBCINSTPROPERTY hLastProperty )
 { 
+
 	hLastProperty->pNext 		= (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
 	hLastProperty 			= hLastProperty->pNext;
 	memset( hLastProperty, 0, sizeof(ODBCINSTPROPERTY) );
@@ -46,27 +47,27 @@ int ODBCINSTGetProperties( HODBCINSTPROPERTY hLastProperty )
 	strncpy( hLastProperty->szName, SETUP_ROLE, INI_MAX_PROPERTY_NAME );
 	strncpy( hLastProperty->szValue, "", INI_MAX_PROPERTY_VALUE );
 
-    	hLastProperty->pNext            = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
-    	hLastProperty                   = hLastProperty->pNext;
-    	memset( hLastProperty, 0, sizeof(ODBCINSTPROPERTY) );
-    	hLastProperty->pszHelp		= (char *)strdup( szHelpReadOnly );
-    	hLastProperty->nPromptType      = ODBCINST_PROMPTTYPE_COMBOBOX;
+    hLastProperty->pNext            = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
+    hLastProperty                   = hLastProperty->pNext;
+    memset( hLastProperty, 0, sizeof(ODBCINSTPROPERTY) );
+    hLastProperty->pszHelp		= (char *)strdup( szHelpReadOnly );
+    hLastProperty->nPromptType      = ODBCINST_PROMPTTYPE_COMBOBOX;
 	hLastProperty->bRefresh		= TRUE;
-    	hLastProperty->aPromptData      = (char**)malloc( sizeof(aYesNo) );
-    	memcpy( hLastProperty->aPromptData, aYesNo, sizeof(aYesNo) );
-    	strncpy( hLastProperty->szName, "ReadOnly", INI_MAX_PROPERTY_NAME );
-    	strcpy( hLastProperty->szValue, "No" );
+    hLastProperty->aPromptData      = (char**)malloc( sizeof(aYesNo) );
+    memcpy( hLastProperty->aPromptData, aYesNo, sizeof(aYesNo) );
+    strncpy( hLastProperty->szName, "ReadOnly", INI_MAX_PROPERTY_NAME );
+    strcpy( hLastProperty->szValue, "No" );
 	
-    	hLastProperty->pNext            = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
-    	hLastProperty                   = hLastProperty->pNext;
-    	memset( hLastProperty, 0, sizeof(ODBCINSTPROPERTY) );
-    	hLastProperty->pszHelp		= (char *)strdup( szHelpNoWait );
-    	hLastProperty->nPromptType      = ODBCINST_PROMPTTYPE_COMBOBOX;
+    hLastProperty->pNext            = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
+    hLastProperty                   = hLastProperty->pNext;
+    memset( hLastProperty, 0, sizeof(ODBCINSTPROPERTY) );
+    hLastProperty->pszHelp		= (char *)strdup( szHelpNoWait );
+    hLastProperty->nPromptType      = ODBCINST_PROMPTTYPE_COMBOBOX;
 	hLastProperty->bRefresh		= TRUE;
-    	hLastProperty->aPromptData      = (char**)malloc( sizeof(aYesNo) );
-    	memcpy( hLastProperty->aPromptData, aYesNo, sizeof(aYesNo) );
-    	strncpy( hLastProperty->szName, "NoWait", INI_MAX_PROPERTY_NAME );
-    	strcpy( hLastProperty->szValue, "No" );
+    hLastProperty->aPromptData      = (char**)malloc( sizeof(aYesNo) );
+    memcpy( hLastProperty->aPromptData, aYesNo, sizeof(aYesNo) );
+    strncpy( hLastProperty->szName, "NoWait", INI_MAX_PROPERTY_NAME );
+    strcpy( hLastProperty->szValue, "No" );
 
 	return 1;
 }
