@@ -118,7 +118,7 @@ void LinkedList::append (void *object)
  **************************************/
 
 LinkedNode *node = new LinkedNode (object);
-addressCheck (node);
+//addressCheck (node);
 
 if (prior)
     {
