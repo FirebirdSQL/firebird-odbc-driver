@@ -283,6 +283,7 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	accessMode			= SQL_MODE_READ_WRITE;
 	transactionIsolation = SQL_TXN_READ_COMMITTED; //suggested by CGA.
 	optTpb				= 0;
+	defOptions			= 0;
 	dialect3			= true;
 	quotedIdentifiers	= true;
 }
@@ -395,23 +396,53 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 			while (p < end && (c = *p++) != ';')
 				*q++ = c;
 		*q = 0;
-		if (!strcmp (name, "DSN"))
+		if (!strncasecmp (name, "DSN", 3))
 			dsn = value;
-		else if (!strcmp (name, "DBNAME"))
+		else if (!strncasecmp (name, "DBNAME", 6))
 			databaseName = value;
-		else if (!strcmp (name, "UID"))
+		else if (!strncasecmp (name, "CLIENT", 6))
+			client = value;
+		else if (!strncasecmp (name, "UID", 3) || !strncasecmp (name, "USER", 4))
 			account = value;
-		else if (!strcmp (name, "PWD"))
+		else if (!strncasecmp (name, "PWD", 3) || !strncasecmp (name, "PASSWORD", 8))
 			password = value;
-		else if (!strcmp (name, "ROLE"))
+		else if (!strncasecmp (name, "ROLE", 4))
 			role = value;
-		else if (!strcmp (name, "CHARSET"))
+		else if (!strncasecmp (name, "CHARSET", 7))
 			charset = value;
-		else if (!strcmp (name, "DRIVER"))
+		else if (!strncasecmp (name, "DRIVER", 6))
 			driver = value;
-		else if (!strcmp (name, "JDBC_DRIVER"))
+		else if (!strncasecmp (name, "JDBC_DRIVER", 11))
 			jdbcDriver = value;
-		else if (!strcmp (name, "ODBC"))
+		else if (!strncasecmp (name, "READONLY", 8))
+		{
+			if( *value == 'Y')
+				optTpb |=TRA_ro;
+
+			defOptions |= DEF_READONLY_TPB;
+		}
+		else if (!strncasecmp (name, "DIALECT", 7))
+		{
+			if( *value == '1')
+				dialect3 = false;
+
+			defOptions |= DEF_DIALECT;
+		}
+		else if (!strncasecmp (name, "NOWAIT", 6))
+		{
+			if( *value == 'Y')
+				optTpb |=TRA_nw;
+
+			defOptions |= DEF_NOWAIT_TPB;
+		}
+		else if (!strncasecmp (name, "QUOTED", 6))
+		{
+			if( *value == 'N')
+				quotedIdentifiers = false;
+
+			defOptions |= DEF_QUOTED;
+		}
+		else if (!strncasecmp (name, "ODBC", 4))
 			;
 		else
 			postError ("01S00", "Invalid connection string attribute");
@@ -422,13 +453,19 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 	char returnString [1024], *r = returnString;
 
 	*r = '\0';
-	//Block suggested by CGA
-	r = appendString (r, "DSN=");
-	r = appendString (r, dsn);
+
+	if (!dsn.IsEmpty())
+	{
+		r = appendString (r, "DSN=");
+		r = appendString (r, dsn);
+	}
 
 	if (!driver.IsEmpty())
 	{
-		r = appendString (r, ";DRIVER=");
+		if ( *r )
+			r = appendString (r, ";DRIVER=");
+		else
+			r = appendString (r, "DRIVER=");
 		r = appendString (r, driver);
 	}
 
@@ -537,7 +574,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 			while (p < end && (c = *p++) != ';')
 				*q++ = c;
 		*q = 0;
-		if (!strcmp (name, "DSN"))
+		if (!strncasecmp (name, "DSN", 3))
 		{
 			if (dsn != (const char *)value)
 			{
@@ -546,7 +583,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 				break;
 			}
 		}
-		else if (!strcmp (name, "DRIVER"))
+		else if (!strncasecmp (name, "DRIVER", 6))
 		{
 			if (driver != (const char *)value)
 			{
@@ -555,7 +592,7 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 				break;
 			}
 		}
-		else if (!strcmp (name, "JDBC_DRIVER"))
+		else if (!strncasecmp (name, "JDBC_DRIVER", 11))
 		{
 			if (jdbcDriver != (const char *)value)
 			{
@@ -564,33 +601,33 @@ RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLI
 				break;
 			}
 		}
-		else if (!strcmp (name, "DBNAME"))
+		else if (!strncasecmp (name, "DBNAME", 6))
 		{
 			levelBrowseConnect = 3;
 			databaseName = value;
 			bFullConnectionString = true;
 		}
-		else if (!strcmp (name, "UID"))
+		else if (!strncasecmp (name, "UID", 3))
 		{
 			account = value;
 			levelBrowseConnect = 2;
 		}
-		else if (!strcmp (name, "PWD"))
+		else if (!strncasecmp (name, "PWD", 3))
 		{
 			password = value;
 			levelBrowseConnect = 2;
 		}
-		else if (!strcmp (name, "ROLE"))
+		else if (!strncasecmp (name, "ROLE", 4))
 		{
 			role = value;
 			levelBrowseConnect = 2;
 		}
-		else if (!strcmp (name, "CHARSET"))
+		else if (!strncasecmp (name, "CHARSET", 7))
 		{
 			charset = value;
 			levelBrowseConnect = 2;
 		}
-		else if (!strcmp (name, "ODBC"))
+		else if (!strncasecmp (name, "ODBC", 4))
 			;
 		else
 			postError ("01S00", "Invalid connection string attribute");
@@ -1435,26 +1472,37 @@ void OdbcConnection::expandConnectParameters()
 		if (charset.IsEmpty())
 			charset = readAttribute(SETUP_CHARSET);
 
-		optTpb = 0;
-		options = readAttribute(SETUP_READONLY_TPB);
+		if ( !(defOptions & DEF_READONLY_TPB) )
+		{
+			options = readAttribute(SETUP_READONLY_TPB);
 
-		if(*(const char *)options == 'Y')
-			optTpb |=TRA_ro;
+			if(*(const char *)options == 'Y')
+				optTpb |=TRA_ro;
+		}
 
-		options = readAttribute(SETUP_NOWAIT_TPB);
+		if ( !(defOptions & DEF_NOWAIT_TPB) )
+		{
+			options = readAttribute(SETUP_NOWAIT_TPB);
 
-		if(*(const char *)options == 'Y')
-			optTpb |=TRA_nw;
+			if(*(const char *)options == 'Y')
+				optTpb |=TRA_nw;
+		}
 
-		options = readAttribute(SETUP_DIALECT);
+		if ( !(defOptions & DEF_DIALECT) )
+		{
+			options = readAttribute(SETUP_DIALECT);
 
-		if(*(const char *)options == '1')
-			dialect3 = false;
+			if(*(const char *)options == '1')
+				dialect3 = false;
+		}
 
-		options = readAttribute(SETUP_QUOTED);
+		if ( !(defOptions & DEF_QUOTED) )
+		{
+			options = readAttribute(SETUP_QUOTED);
 
-		if(*(const char *)options == 'N')
-			quotedIdentifiers = false;
+			if(*(const char *)options == 'N')
+				quotedIdentifiers = false;
+		}
 	}
 
 	if (jdbcDriver.IsEmpty())

@@ -35,6 +35,14 @@ class OdbcStatement;
 
 class OdbcConnection : public OdbcObject  
 {
+	enum 
+	{	
+		DEF_READONLY_TPB = 1,
+		DEF_NOWAIT_TPB = 2,
+		DEF_DIALECT = 4,
+		DEF_QUOTED = 8
+	};
+
 public:
 	void transactionStarted();
 	RETCODE sqlGetConnectAttr (int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER * lengthPtr);
@@ -80,6 +88,7 @@ public:
 	JString		charset;
 	JString		jdbcDriver;
 	int			optTpb;
+	int			defOptions;
 	bool		quotedIdentifiers;
 	bool		dialect3;
 	SQLUINTEGER	asyncEnabled;
