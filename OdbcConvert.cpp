@@ -42,11 +42,7 @@
 
 namespace OdbcJdbcLibrary {
 
-#ifdef __GNUWIN32__
-double listScale[19];
-#else
 unsigned __int64 listScale[19];
-#endif
 
 static int init();
 static int foo = init();

@@ -155,12 +155,6 @@ void TraceOutput(char * msg,long val)
 	OutputDebugString(buf);
 }
 
-#ifdef __GNUWIN32__
-extern double listScale[]; // from OdbcConvert.cpp
-#else
-extern unsigned __int64 listScale[]; // from OdbcConvert.cpp
-#endif
-
 //	Bound Address + Binding Offset + ((Row Number – 1) x Element Size)
 //	*ptr = binding->pointer + bindOffsetPtr + ((1 – 1) * rowBindType); // <-- for single row
 #define GETBOUNDADDRESS(binding)	(unsigned long)binding->dataPtr + (unsigned long)bindOffsetPtr; 
