@@ -200,8 +200,10 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 				{
 					int level = 0;
 					int major = 0, minor = 0, version = 0;
-					char * beg = p + 2;
+					char * start = p + 2;
+					char * beg = start;
 					char * end = beg + p [1];
+					char * tmp = NULL;
 					
 					while ( beg < end )
 					{
@@ -210,6 +212,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 							switch ( ++level )
 							{
 							case 1:
+								tmp = beg;
 								major = atoi(beg);
 								while( *++beg != '.' );
 								break;
@@ -232,7 +235,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 						else
 							beg++;
 					}
-					serverVersion.Format("%02d.%02d.%04d",major,minor,version);
+					serverVersion.Format("%02d.%02d.%04d %.*s %s",major,minor,version, tmp ? tmp - start : 0, start, (const char*)databaseProductName);
 				}
 				break;
 
