@@ -479,8 +479,12 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				value->setValue (*(QUAD*) var->sqldata, var->sqlscale);
 				break;
 
-			case SQL_BLOB:
-				value->setValue (new IscBlob (connection, var));
+			case SQL_BLOB: 
+				{
+				IscBlob* blob = new IscBlob (connection, var);
+				value->setValue (blob);
+				blob->release();
+				}
 				break;
 
 			case SQL_TIMESTAMP:
