@@ -578,6 +578,9 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 		*ptOut++ = *ptIn++;
 	}
 
+	if ( textLength2Ptr )
+		*textLength2Ptr = textLength1;
+
 	if ( statusQuote ) // There is no '"' or '\'' a syntactic mistake
 		return statysModify;
 
