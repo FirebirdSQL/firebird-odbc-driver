@@ -72,12 +72,12 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 				"\tcast(0 as smallint) as non_unique,\n"			// 4 
 				"\tcast(NULL as char(31)) as index_qualifier,\n"	// 5 
 				"\tcast(NULL as char(31)) index_name,\n"			// 6
-				"\tcast(0 as smallint) as \"TYPE\",\n"				// 7  SQL_TABLE_STAT
+				"\tcast(0 as smallint) as index_type,\n"			// 7  SQL_TABLE_STAT
 				"\tcast(NULL as smallint) as ordinal_position,\n"	// 8
 				"\tcast(NULL as char(31)) as column_name,\n"		// 9
 				"\tcast(NULL as char) as asc_or_desc,\n"			// 10
 				"\tcast(NULL as integer) as cardinality,\n"			// 11
-				"\tcast(NULL as integer) as \"PAGES\",\n"			// 12
+				"\tcast(NULL as integer) as index_pages,\n"			// 12
 				"\tcast(NULL as varchar(31)) as filter_condition,\n"// 13
 				"\tcast(NULL as smallint) as index_type\n"			// 14
 		"from rdb$relations rl\n";
@@ -89,12 +89,12 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 				"\tcast((1-idx.rdb$unique_flag) as smallint) as non_unique,\n"	// 4
 				"\tidx.rdb$index_name as index_qualifier,\n"		// 5
 				"\tidx.rdb$index_name as index_name,\n"				// 6
-				"\tcast(3 as smallint) as \"TYPE\",\n"				// 7 (SQL_INDEX_OTHER)
+				"\tcast(3 as smallint) as index_type,\n"			// 7 (SQL_INDEX_OTHER)
 				"\tseg.rdb$field_position as ordinal_position,\n"	// 8
 				"\tseg.rdb$field_name as column_name,\n"			// 9
 				"\tcast(NULL as char) as asc_or_desc,\n"			// 10
 				"\tcast(NULL as integer) as cardinality,\n"			// 11
-				"\tcast(NULL as integer) as \"PAGES\",\n"			// 12
+				"\tcast(NULL as integer) as index_pages,\n"			// 12
 				"\tcast(NULL as varchar(31)) as filter_condition,\n"// 13
 				"\tidx.rdb$index_type as index_type\n"				// 14
 		"from rdb$indices idx, rdb$index_segments seg\n"
