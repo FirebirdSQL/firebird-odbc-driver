@@ -73,7 +73,7 @@ int init ()
 	for (n = 'a'; n <= 'z'; ++n)
 		charTable [n] = LETTER | IDENT;
 
-	for (n = 'A'; n <= 'A'; ++n)
+	for (n = 'A'; n <= 'Z'; ++n)
 		charTable [n] = LETTER | IDENT;
 
 	for (n = '0'; n <= '9'; ++n)
