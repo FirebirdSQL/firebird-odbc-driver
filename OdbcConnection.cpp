@@ -1772,6 +1772,10 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 		value = SQL_TRUE;
 		break;
 
+	case SQL_ATTR_CURRENT_CATALOG:
+		string = databaseName;
+		break;
+
 	case SQL_LOGIN_TIMEOUT:			//   103
 	case SQL_OPT_TRACE:				//   104
 	case SQL_OPT_TRACEFILE:			//   105
