@@ -383,45 +383,44 @@ int IscStatement::getUpdateCounts()
 	int insertCount, updateCount, deleteCount;
 
 	for (char *p = buffer; *p != isc_info_end;)
-		{
+	{
 		char item = *p++;
 		int length = GDS->_vax_integer (p, 2);
 		p += 2;
 		switch (item)
+		{
+		case isc_info_sql_records:
 			{
-			case isc_info_sql_records:
-				{
-				int n;
 				for (char *q = p; *q != isc_info_end;)
-					{
+				{
 					char item = *q++;
 					int l = GDS->_vax_integer (q, 2);
 					q += 2;
 					switch (item)
-						{
-						case isc_info_req_insert_count:
-							insertCount = GDS->_vax_integer (q, l);
-							break;
+					{
+					case isc_info_req_insert_count:
+						insertCount = GDS->_vax_integer (q, l);
+						break;
 
-						case isc_info_req_delete_count:
-							deleteCount = GDS->_vax_integer (q, l);
-							break;
+					case isc_info_req_delete_count:
+						deleteCount = GDS->_vax_integer (q, l);
+						break;
 
-						case isc_info_req_update_count:
-							updateCount = GDS->_vax_integer (q, l);
-							break;
-						}
-					q += l;
+					case isc_info_req_update_count:
+						updateCount = GDS->_vax_integer (q, l);
+						break;
 					}
+					q += l;
 				}
-				break;
-
-			case isc_info_sql_stmt_type:
-				statementType = GDS->_vax_integer (p, length);
-				break;
 			}
-		p += length;
+			break;
+
+		case isc_info_sql_stmt_type:
+			statementType = GDS->_vax_integer (p, length);
+			break;
 		}
+		p += length;
+	}
 
 	summaryUpdateCount = MAX (insertCount, deleteCount);
 	summaryUpdateCount = MAX (summaryUpdateCount, updateCount);
