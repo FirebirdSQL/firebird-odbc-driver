@@ -1195,7 +1195,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 				info = true;
 			}
 
-			length = len;
+			length = dataRemaining;
 			dataOffset += len;
 
 			if (!info)
@@ -1302,7 +1302,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 				info = true;
 			}
 				
-			length = len;
+			length = dataRemaining;
 			dataOffset += len;
 
 			if (!info)
@@ -1423,7 +1423,7 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 					}
 
 					binding->dataOffset += len;
-					length = len;
+					length = dataRemaining;
 				}
 			}
 			}
@@ -1538,7 +1538,7 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 					}
 
 					binding->dataOffset += len;
-					length = len;
+					length = dataRemaining;
 				}
 			}
 			}
