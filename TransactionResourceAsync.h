@@ -45,6 +45,8 @@ enum TRSTATE
 	TR_INVALID_STATE
 };
 
+class OdbcConnection;
+ 
 class TransactionResourceAsync : public ITransactionResourceAsync
 {
 private:
@@ -53,6 +55,7 @@ private:
 public:
 	ITransactionEnlistmentAsync	*enlist;
 	LONG isoLevel;
+	OdbcConnection	*odbcConnection;
 
 public:
 	TransactionResourceAsync();

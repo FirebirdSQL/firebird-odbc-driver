@@ -36,11 +36,11 @@ extern CComModule _Module;
 #include "xolehlp.h" 
 #include "txcoord.h"
 #include "transact.h"
-#include "TransactionResourceAsync.h"
-#include "ResourceManagerSink.h"
 
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
+#include "TransactionResourceAsync.h"
+#include "ResourceManagerSink.h"
 
 CComModule _Module;
 
@@ -67,7 +67,7 @@ void clearAtlResource()
 	}
 }
 
-BOOL OdbcConnection::enlistTransaction( SQLPOINTER transaction )
+bool OdbcConnection::enlistTransaction( SQLPOINTER transaction )
 {
 	HRESULT hr;
 
@@ -81,7 +81,7 @@ BOOL OdbcConnection::enlistTransaction( SQLPOINTER transaction )
 									  0,
 									  (LPVOID*)&transactionManager );
 		if ( S_OK != hr )
-			return hr;
+			return false;
 
 		if ( !resourceManagerFactory )
 		{
@@ -89,12 +89,18 @@ BOOL OdbcConnection::enlistTransaction( SQLPOINTER transaction )
 													(LPVOID*)&resourceManagerFactory );
 		
 			if ( S_OK != hr )
-				return hr;
+				return false;
 		}
+	}
+
+	if ( enlistConnect )
+	{
+		return false;
 	}
 
 	TransactionResourceAsync *tranResAsync = new TransactionResourceAsync;
 	CComObject<ResourceManagerSink> *pSink = NULL;
+
 	hr = CComObject<ResourceManagerSink>::CreateInstance( &pSink );
 
 	pSink->setResourceAsync( tranResAsync );
@@ -125,9 +131,11 @@ BOOL OdbcConnection::enlistTransaction( SQLPOINTER transaction )
 							&tranResAsync->isoLevel,
 							&tranResAsync->enlist );
 
+	tranResAsync->odbcConnection = this;
+	enlistConnect = true;
 	tranResAsync->setState( TR_ENLISTED );
 
-	return TRUE;
+	return true;
 } 
 
 TransactionResourceAsync::TransactionResourceAsync( void )
@@ -135,6 +143,7 @@ TransactionResourceAsync::TransactionResourceAsync( void )
 	enTrState = TR_NONE;
 	useCount = 0;
 	enlist = NULL;
+	odbcConnection = NULL;
 	isoLevel = 0;
 }
 
@@ -142,6 +151,9 @@ TransactionResourceAsync::~TransactionResourceAsync( void )
 {
 	if ( enlist )
 		enlist->Release();
+
+	if ( odbcConnection )
+		odbcConnection->enlistConnect = false;
 }
 
 STDMETHODIMP TransactionResourceAsync::PrepareRequest( BOOL fRetaining,
@@ -166,6 +178,9 @@ STDMETHODIMP TransactionResourceAsync::PrepareRequest( BOOL fRetaining,
 	}
 
 	setState( TR_PREPARING );
+
+	if ( odbcConnection )
+		odbcConnection->connection->prepareTransaction();
 
 	setState( TR_PREPARED );
 
@@ -195,6 +210,9 @@ STDMETHODIMP TransactionResourceAsync::CommitRequest( DWORD grfRM, XACTUOW *pNew
 
 	setState( TR_COMMITTING );
 
+	if ( odbcConnection )
+		odbcConnection->connection->commitAuto();
+
 	setState( TR_COMMITTED );
 
 	hr = enlist->CommitRequestDone( S_OK );
@@ -209,7 +227,7 @@ STDMETHODIMP TransactionResourceAsync::AbortRequest( BOID *pboidReason,
 	HRESULT	hr = S_OK;
 	TRSTATE	enTrState = getState();
 
-	if ( TR_PREPARED != enTrState )
+	if ( TR_ENLISTED != enTrState && TR_PREPARED != enTrState )
 	{
 		setState ( TR_INVALID_STATE );
 
@@ -223,6 +241,9 @@ STDMETHODIMP TransactionResourceAsync::AbortRequest( BOID *pboidReason,
 	}
 
 	setState( TR_ABORTING );
+
+	if ( odbcConnection )
+		odbcConnection->connection->rollbackAuto();
 
 	setState( TR_ABORTED );
 
