@@ -436,11 +436,12 @@ void OdbcStatement::releaseStatement()
 void OdbcStatement::releaseResultSet()
 {
 	if (resultSet)
-		{
+	{
 		resultSet->release();
 		resultSet = NULL;
 		metaData  = NULL;
-		}
+		implementationRowDescriptor->setDefaultImplDesc (metaData);
+	}
 }
 
 void OdbcStatement::setResultSet(ResultSet * results)
