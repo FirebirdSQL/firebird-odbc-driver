@@ -1,3 +1,166 @@
+2003-07-09  praktik
+	* IscDbc/DateTime.cpp:
+		Is corrected according to the source server
+
+2003-05-26  paul_reeves
+	* IscDbc/LoadFbClientDll.h:
+		file LoadFbClientDll.h was initially added on branch v1-1-beta.
+
+	* SafeEnvThread.cpp:
+		file SafeEnvThread.cpp was initially added on branch v1-1-beta.
+
+	* IscDbc/extodbc.cpp:
+		file extodbc.cpp was initially added on branch v1-1-beta.
+
+	* Text.cpp:
+		file Text.cpp was initially added on branch v1-1-beta.
+
+	* SafeEnvThread.h:
+		file SafeEnvThread.h was initially added on branch v1-1-beta.
+
+	* IscDbc/IscArray.cpp:
+		file IscArray.cpp was initially added on branch v1-1-beta.
+
+	* DescRecord.cpp:
+	* DescRecord.h:
+	* InfoItems.h:
+	* IscDbc/Attachment.cpp:
+	* IscDbc/BinaryBlob.cpp:
+	* IscDbc/BinaryBlob.h:
+	* IscDbc/Blob.h:
+	* IscDbc/Connection.h:
+	* IscDbc/IscArray.cpp:
+	* IscDbc/IscArray.h:
+	* IscDbc/IscBlob.cpp:
+	* IscDbc/IscCallableStatement.cpp:
+	* IscDbc/IscCallableStatement.h:
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscConnection.cpp:
+	* IscDbc/IscConnection.h:
+	* IscDbc/IscDatabaseMetaData.cpp:
+	* IscDbc/IscDatabaseMetaData.h:
+	* IscDbc/IscDbc.dsp:
+	* IscDbc/IscDbc.h:
+	* IscDbc/IscIndexInfoResultSet.cpp:
+	* IscDbc/IscMetaDataResultSet.cpp:
+	* IscDbc/IscMetaDataResultSet.h:
+	* IscDbc/IscPreparedStatement.cpp:
+	* IscDbc/IscPreparedStatement.h:
+	* IscDbc/IscResultSet.cpp:
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/IscStatement.h:
+	* IscDbc/IscStatementMetaData.cpp:
+	* IscDbc/IscStatementMetaData.h:
+	* IscDbc/LoadFbClientDll.cpp:
+	* IscDbc/LoadFbClientDll.h:
+	* IscDbc/SQLException.h:
+	* IscDbc/Sqlda.cpp:
+	* IscDbc/Sqlda.h:
+	* IscDbc/TypesResultSet.cpp:
+	* IscDbc/Value.cpp:
+	* IscDbc/Value.h:
+	* IscDbc/extodbc.cpp:
+	* IscDbc/makefile:
+	* Main.cpp:
+	* OdbcConnection.cpp:
+	* OdbcConnection.h:
+	* OdbcDesc.cpp:
+	* OdbcDesc.h:
+	* OdbcError.cpp:
+	* OdbcInstGetProp.cpp:
+	* OdbcJdbc.dsp:
+	* OdbcJdbc.h:
+	* OdbcJdbc.opt:
+	* OdbcJdbcSetup/DsnDialog.cpp:
+	* OdbcJdbcSetup/DsnDialog.h:
+	* OdbcJdbcSetup/OdbcJdbcSetup.clw:
+	* OdbcJdbcSetup/OdbcJdbcSetup.rc:
+	* OdbcJdbcSetup/Setup.cpp:
+	* OdbcJdbcSetup/Setup.h:
+	* OdbcJdbcSetup/resource.h:
+	* OdbcObject.cpp:
+	* OdbcStatement.cpp:
+	* OdbcStatement.h:
+	* SafeEnvThread.cpp:
+	* SafeEnvThread.h:
+	* SetupAttributes.h:
+	* Test/Table.cpp:
+	* Test/Test.cpp:
+	* Test/Test.dsp:
+	* Text.cpp:
+	* makefile:
+		"Create branch for v1.1 beta
+		This commit has extensive modifications from Vladimir Tcvigun.
+		His improvements include:
+		  o Add Array support (while primitively)
+		  o The driver is protected at the env level, only one thing at a time.
+		  o The driver is protected at the connection level, only
+		    one thread can be in a particular driver at one time
+		  o Add options to connect ReadOnly and NoWait
+		  o Modify source for compatibility with unixODBC library
+		  o Add dynamic loading on a name API from GDS32
+		  o Set Null to field from parametr String
+		  o Convert DataTime string {ts {d {t to field from parameter String
+		  o Add implementions of
+		    - Application Parameter Descriptor (APD).
+		      Contains information about the application buffers
+		      bound to the parameters in an SQL statement, such as
+		      their addresses, lengths, and C data types.
+		    - Implementation Parameter Descriptor (IPD).
+		      Contains information about the parameters in
+		      an SQL statement, such as their SQL data types, lengths,
+		      and nullability.
+		    - Application Row Descriptor (ARD).
+		      Contains information about the application buffers
+		      bound to the columns in a result set, such as their
+		      addresses, lengths, and C data types.
+		    - Implementation Row Descriptor (IRD).
+		      Contains information about the columns in a
+		      result set, such as their SQL data types, lengths,
+		      and nullability.
+		
+		  o Add extended server information in following calls:
+		    - getTypeStatement
+		    - getInfoCountRecordsStatement
+		    - getPlanStatement
+		    - getPageDatabase
+		
+		Initially these changes look good, but a little time is needed
+		to review them before applying them to the main branch." OdbcJdbc
+
+	* IscDbc/LoadFbClientDll.cpp:
+		file LoadFbClientDll.cpp was initially added on branch v1-1
+		beta.
+
+	* IscDbc/IscArray.h:
+		file IscArray.h was initially added on branch v1-1-beta.
+
+	* OdbcInstGetProp.cpp:
+		file OdbcInstGetProp.cpp was initially added on branch v1-1
+		beta.
+
+2003-03-26  paul_reeves
+	* IscDbc/DateTime.cpp:
+	* IscDbc/IscColumnsResultSet.cpp:
+	* IscDbc/IscConnection.cpp:
+	* IscDbc/IscResultSet.cpp:
+	* IscDbc/IscStatement.cpp:
+	* IscDbc/Value.cpp:
+	* Main.cpp:
+	* OdbcConnection.cpp:
+	* OdbcDateTime.cpp:
+	* OdbcObject.cpp:
+	* OdbcStatement.cpp:
+	* OdbcStatement.h:
+	* Test/Odbc.cpp:
+	* Test/Odbc.h:
+	* Test/SimpleTest.cpp:
+	* Test/Test.cpp:
+	* change.log:
+	* makefile:
+		Patches from a variety of contributors. They are fully
+		documented in change.log
+
 2003-01-29  paul_reeves
 	* Attributes.cpp:
 	* IscDbc/IscColumnsResultSet.cpp:
