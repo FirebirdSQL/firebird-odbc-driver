@@ -9,7 +9,7 @@ CppCompiler=-D__GNUWIN32__ -D_WIN32_WINNT=0x0400 -DWINVER=0x0400 -DWIN32 -D_WIN3
 Includes=d:/firebird/include;../..
 Linker=--output-def Release/Obj/libIscDbc.def_@@_--output-lib Release/libIscDbc.a_@@_--def ../../IscDbc/IscDbc.def_@@_
 Libs=d:/firebird/lib
-UnitCount=93
+UnitCount=95
 Folders="Header Files","Resource Files","Source Files"
 ObjFiles=
 PrivateResource=IscDbc_private.rc
@@ -977,6 +977,26 @@ BuildCmd=
 
 [Unit93]
 FileName=..\..\IscDbc\Mlist.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit94]
+FileName=..\..\IscDbc\SupportFunctions.cpp
+CompileCpp=1
+Folder="Source Files"
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit95]
+FileName=..\..\IscDbc\SupportFunctions.h
 Folder="Header Files"
 Compile=1
 CompileCpp=1

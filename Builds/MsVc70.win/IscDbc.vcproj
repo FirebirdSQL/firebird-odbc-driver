@@ -291,6 +291,9 @@
 				RelativePath="..\..\IscDbc\Stream.h">
 			</File>
 			<File
+				RelativePath="..\..\IscDbc\SupportFunctions.h">
+			</File>
+			<File
 				RelativePath="..\..\IscDbc\TimeStamp.h">
 			</File>
 			<File
@@ -419,6 +422,9 @@
 			</File>
 			<File
 				RelativePath="..\..\IscDbc\Stream.cpp">
+			</File>
+			<File
+				RelativePath="..\..\IscDbc\SupportFunctions.cpp">
 			</File>
 			<File
 				RelativePath="..\..\IscDbc\TimeStamp.cpp">
