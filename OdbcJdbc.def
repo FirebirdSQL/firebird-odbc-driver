@@ -1,5 +1,5 @@
 LIBRARY "OdbcJdbc"
-DESCRIPTION "OdbcJdbc -- Jim's ODBC/JDBC Driver"
+;DESCRIPTION "OdbcJdbc -- Jim's ODBC/JDBC Driver"
 
 EXPORTS
 	SQLAllocConnect 
