@@ -61,6 +61,8 @@ public:
 						   const SQLCHAR *connectString, int connectStringLength, 
 						   SQLCHAR *outConnectBuffer, int connectBufferLength, SQLSMALLINT *outStringLength, 
 						   int driverCompletion);
+	RETCODE sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, SQLSMALLINT * stringLength2Ptr);
+	RETCODE sqlNativeSql(SQLCHAR * inStatementText, SQLINTEGER textLength1,	SQLCHAR * outStatementText, SQLINTEGER bufferLength, SQLINTEGER * textLength2Ptr);
 	RETCODE sqlSetConnectAttr (SQLINTEGER arg1, SQLPOINTER arg2, SQLINTEGER stringLength);
 	virtual OdbcObjectType getType();
 	OdbcConnection(OdbcEnv *parent);
@@ -89,6 +91,7 @@ public:
 	void		*libraryHandle;
 	int			cursors;			// default is SQL_CUR_USE_DRIVER
 	int			statementNumber;
+	int			levelBrowseConnect;
 };
 
 class SafeConnectThread

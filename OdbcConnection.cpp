@@ -163,6 +163,7 @@ static const int supportedFunctions [] = {
             SQL_API_SQLGETCURSORNAME,
             SQL_API_SQLSETSTMTATTR,
             SQL_API_SQLGETDATA,
+			SQL_API_SQLSETSCROLLOPTIONS,
 
 			SQL_API_SQLEXTENDEDFETCH,	//Deprecated ODBC 1.0 call. Replaced by SQL_API_SQLFETCHSCROLL in ODBC 3.0
 
@@ -267,6 +268,7 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 {
 	env					= parent;
 	connected			= false;
+	levelBrowseConnect	= 0;
 	connectionTimeout	= 0;
 	connection			= NULL;
 	statements			= NULL;
@@ -289,13 +291,6 @@ OdbcConnection::~OdbcConnection()
 	if (env)
 		env->connectionClosed (this);
 
-// NOMEY begin
-//	while (statements)
-//		delete statements;
-
-//	while (descriptors)
-//		delete descriptors;
-
 	while (statements)
 	{
 		OdbcStatement* statement = statements;
@@ -309,9 +304,6 @@ OdbcConnection::~OdbcConnection()
 		descriptors = (OdbcDesc*)descriptor->next;
 		delete descriptor;
 	}
-// NOMEY end
-
-
 
 #ifdef ELF
 	if (libraryHandle)
@@ -426,34 +418,7 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 
 	char returnString [1024], *r = returnString;
 
-	/* Removed at suggestion of CGA
-		r = appendString (r, "DRIVER=");
-		r = appendString (r, driver);
-
-		if (!dsn.IsEmpty())
-			{
-			r = appendString (r, ";DSN=");
-			r = appendString (r, dsn);
-			}
-
-		if (!account.IsEmpty())
-			{
-			r = appendString (r, ";UID=");
-			r = appendString (r, account);
-			}
-
-		if (!password.IsEmpty())
-			{
-			r = appendString (r, ";PWD=");
-			r = appendString (r, password);
-			}
-
-		if (!role.IsEmpty())
-			{
-			r = appendString (r, ";ROLE=");
-			r = appendString (r, role);
-			}
-	*/
+	*r = '\0';
 	//Block suggested by CGA
 	r = appendString (r, "DSN=");
 	r = appendString (r, dsn);
@@ -496,6 +461,207 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 	if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
 		return ret;
 
+	if ( levelBrowseConnect )
+		levelBrowseConnect = 0;
+
+	return sqlSuccess();
+}
+
+RETCODE OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, 
+										 SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, 
+										 SQLSMALLINT * stringLength2Ptr)
+{
+	BOOL bFullConnectionString = FALSE;
+	clearErrors();
+
+	if ( !levelBrowseConnect && connected)
+		return sqlReturn (SQL_ERROR, "08002", "Connection name is use");
+
+	if (stringLength1 < 0 && stringLength1 != SQL_NTS)
+		return sqlReturn (SQL_ERROR, "HY090", "Invalid string or buffer length");
+
+	int length = stringLength (inConnectionString, stringLength1);
+	const char *end = (const char*) inConnectionString + length;
+	JString driver = DRIVER_NAME;
+
+	levelBrowseConnect = 0;
+
+	for (const char *p = (const char*) inConnectionString; p < end;)
+	{
+		char name [256];
+		char value [256];
+		char *q = name;
+		char c;
+
+		while (p < end && ((c = *p),c == ' ' || c == '*'))
+			++p;
+
+		while (p < end && (c = *p++),c != '=' && c != ';')
+			*q++ = c;
+
+		*q = 0;
+		q = value;
+		if (c == '=')
+			while (p < end && (c = *p++) != ';')
+				*q++ = c;
+		*q = 0;
+		if (!strcmp (name, "DSN"))
+		{
+			if (dsn != (const char *)value)
+			{
+				dsn = value;
+				levelBrowseConnect = 1;
+				break;
+			}
+		}
+		else if (!strcmp (name, "DRIVER"))
+		{
+			if (driver != (const char *)value)
+			{
+				driver = value;
+				levelBrowseConnect = 1;
+				break;
+			}
+		}
+		else if (!strcmp (name, "DBNAME"))
+		{
+			levelBrowseConnect = 3;
+			databaseName = value;
+			bFullConnectionString = TRUE;
+		}
+		else if (!strcmp (name, "UID"))
+		{
+			account = value;
+			levelBrowseConnect = 2;
+		}
+		else if (!strcmp (name, "PWD"))
+		{
+			password = value;
+			levelBrowseConnect = 2;
+		}
+		else if (!strcmp (name, "ROLE"))
+		{
+			role = value;
+			levelBrowseConnect = 2;
+		}
+		else if (!strcmp (name, "ODBC"))
+			;
+		else
+			postError ("01S00", "Invalid connection string attribute");
+	}
+
+	if( levelBrowseConnect == 1 )
+		expandConnectParameters();
+
+	char returnString [1024], *r = returnString;
+	*r = '\0';
+
+	switch ( levelBrowseConnect )
+	{
+	case 1:
+		r = appendString (r, "*ROLE=");
+		if (!role.IsEmpty())
+			r = appendString (r, role);
+		else
+			r = appendString (r, "?");
+
+		r = appendString (r, ";UID=");
+		if (!account.IsEmpty())
+			r = appendString (r, account);
+		else
+			r = appendString (r, "?");
+
+		r = appendString (r, ";PWD=");
+		if (!password.IsEmpty())
+			r = appendString (r, password);
+		else
+			r = appendString (r, "?");
+
+		break;
+
+	case 2:
+		r = appendString (r, "DBNAME=");
+		if (!databaseName.IsEmpty())
+			r = appendString (r, databaseName);
+		else
+			r = appendString (r, "?");
+		break;
+
+	case 3:
+		if (!dsn.IsEmpty())
+		{
+			r = appendString (r, "DSN=");
+			r = appendString (r, dsn);
+		}
+
+		if (!driver.IsEmpty())
+		{
+			r = appendString (r, ";DRIVER=");
+			r = appendString (r, driver);
+		}
+
+		if (!role.IsEmpty())
+		{
+			r = appendString (r, ";ROLE=");
+			r = appendString (r, role);
+		}
+
+		if (!account.IsEmpty())
+		{
+			r = appendString (r, ";UID=");
+			r = appendString (r, account);
+		}
+
+		if (!password.IsEmpty())
+		{
+			r = appendString (r, ";PWD=");
+			r = appendString (r, password);
+		}
+
+		if (!databaseName.IsEmpty())
+		{
+			r = appendString (r, ";DBNAME=");
+			r = appendString (r, databaseName);
+		}
+		break;
+	}
+
+	if ( outConnectionString && bufferLength )
+	{
+		if (setString ((UCHAR*) returnString, r - returnString, outConnectionString, bufferLength, stringLength2Ptr))
+			postError ("01004", "String data, right truncated");
+	}
+
+	if ( bFullConnectionString == FALSE )
+		return SQL_NEED_DATA;
+	else
+	{
+		RETCODE ret = connect (jdbcDriver, databaseName, account, password, role);
+
+		if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
+			return ret;
+	}
+
+	return sqlSuccess();
+}
+
+RETCODE OdbcConnection::sqlNativeSql(SQLCHAR * inStatementText, SQLINTEGER textLength1,
+										SQLCHAR * outStatementText, SQLINTEGER bufferLength,
+										SQLINTEGER * textLength2Ptr)
+{
+	clearErrors();
+
+	if ( outStatementText )
+	{
+		if ( textLength1 <= bufferLength )
+		{
+			memcpy(outStatementText,inStatementText,textLength1);
+			outStatementText[textLength1]='\0';
+			if( textLength2Ptr )
+				*textLength2Ptr = textLength1;
+		}
+	}
+
 	return sqlSuccess();
 }
 
@@ -516,7 +682,6 @@ RETCODE OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * 
 	{
 	case SQL_API_ODBC3_ALL_FUNCTIONS:
 		memcpy (supportedPtr, functionsBitmap, sizeof (functionsBitmap));
-		//memset (supportedPtr, -1, sizeof (functionsBitmap));
 		return sqlSuccess();
 
 	case SQL_API_ALL_FUNCTIONS:
@@ -537,10 +702,17 @@ RETCODE OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * 
 RETCODE OdbcConnection::sqlDisconnect()
 {
 	if (!connected)
-		sqlReturn (SQL_ERROR, "08003", "Connection does not exist");
+	{
+		if ( levelBrowseConnect )
+		{
+			levelBrowseConnect = 0;
+			return sqlSuccess();
+		}
+		return sqlReturn (SQL_ERROR, "08003", "Connection does not exist");
+	}
 
 	if (connection->getTransactionPending())
-		sqlReturn (SQL_ERROR, "25000", "Invalid transaction state");
+		return sqlReturn (SQL_ERROR, "25000", "Invalid transaction state");
 
 	try
 	{
@@ -1268,9 +1440,18 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 		sprintf (temp, "  %s (long) %d\n", item->name, value);
 		OutputDebugString (temp);
 #endif
-		*((SQLUINTEGER*) ptr) = value;
-		if (actualLength)
-			*actualLength = sizeof (SQLUINTEGER);
+		if ( maxLength == sizeof (SQLUSMALLINT) )
+		{
+			*((SQLUSMALLINT*) ptr) = (SQLUSMALLINT)value;
+			if (actualLength)
+				*actualLength = sizeof (SQLUSMALLINT);
+		}
+		else
+		{
+			*((SQLUINTEGER*) ptr) = value;
+			if (actualLength)
+				*actualLength = sizeof (SQLUINTEGER);
+		}
 		break;
 
 	case infoUnsupported:
@@ -1332,6 +1513,7 @@ void OdbcConnection::UnLock()
 {
 	connection->getMetaData()->UnLockThread();
 }
+
 RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQLCHAR *uid, int uidLength, SQLCHAR * passwd, int passwdLength, SQLCHAR * roleSQL, int roleLength)
 {
 	clearErrors();
@@ -1350,6 +1532,9 @@ RETCODE OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, SQ
 
 	if (ret != SQL_SUCCESS)
 		return ret;
+
+	if ( levelBrowseConnect )
+		levelBrowseConnect = 0;
 
 	return sqlSuccess();
 }
@@ -1546,8 +1731,6 @@ RETCODE OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int buf
 	case SQL_ATTR_ACCESS_MODE:			//   101		
 		value = accessMode;
 		break;
-
-
 
 	case SQL_TXN_ISOLATION:			//   108
 		value = connection->getTransactionIsolation();
