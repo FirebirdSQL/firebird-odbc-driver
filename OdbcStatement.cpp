@@ -3116,7 +3116,7 @@ RETCODE OdbcStatement::sqlRowCount(SQLINTEGER *rowCount)
 
 	try
 	{
-		if (!statement)
+		if (!statement && !resultSet)
 			return sqlReturn (SQL_ERROR, "HY010", "Function sequence error");
 		if ( isStaticCursor() )
 			*rowCount = sqlDiagCursorRowCount;
@@ -3124,8 +3124,10 @@ RETCODE OdbcStatement::sqlRowCount(SQLINTEGER *rowCount)
 		{
 			if ( enFetch != NoneFetch )
 				*rowCount = rowNumber;
-			else
+			else if ( statement )
 				*rowCount = statement->getUpdateCount();
+			else 
+				*rowCount = -1;
 		}
 	}
 	catch (SQLException& exception)
