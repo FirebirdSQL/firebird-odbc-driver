@@ -477,46 +477,46 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 
 	if (!dsn.IsEmpty())
 	{
-		r = appendString (r, "DSN=");
+		r = appendString (r, SETUP_DSN"=");
 		r = appendString (r, dsn);
 	}
 
 	if (!driver.IsEmpty())
 	{
 		if ( r > returnString )
-			r = appendString (r, ";DRIVER=");
+			r = appendString (r, ";"SETUP_DRIVER"=");
 		else
-			r = appendString (r, "DRIVER=");
+			r = appendString (r, SETUP_DRIVER"=");
 		r = appendString (r, driver);
 	}
 
 	if (!databaseName.IsEmpty())
 	{
-		r = appendString (r, ";DBNAME=");
+		r = appendString (r, ";"SETUP_DBNAME"=");
 		r = appendString (r, databaseName);
 	}
 
 	if (!account.IsEmpty())
 	{
-		r = appendString (r, ";UID=");
+		r = appendString (r, ";"KEY_DSN_UID"=");
 		r = appendString (r, account);
 	}
 
 	if (!password.IsEmpty())
 	{
-		r = appendString (r, ";PWD=");
+		r = appendString (r, ";"KEY_DSN_PWD"=");
 		r = appendString (r, password);
 	}
 
 	if (!role.IsEmpty())
 	{
-		r = appendString (r, ";ROLE=");
+		r = appendString (r, ";"SETUP_ROLE"=");
 		r = appendString (r, role);
 	}
 
 	if (!charset.IsEmpty())
 	{
-		r = appendString (r, ";CHARSET=");
+		r = appendString (r, ";"KEY_DSN_CHARSET"=");
 		r = appendString (r, charset);
 	}
 
