@@ -55,33 +55,33 @@ static char THIS_FILE[]=__FILE__;
 
 BinaryBlob::BinaryBlob()
 {
-	useCount = 0;
-	offset = 0;
-	populated = true;
+    useCount = 1;
+    offset = 0;
+    populated = true;
 }
 
 BinaryBlob::BinaryBlob(int minSegmentSize) : Stream (minSegmentSize)
 {
-	useCount = 0;
-	offset = 0;
-	populated = true;
+    useCount = 1;
+    offset = 0;
+    populated = true;
 }
 
 #ifdef ENGINE
 BinaryBlob::BinaryBlob(Database * db, long recNumber, long sectId)
 {
-	useCount = 0;
-	offset = 0;
-	populated = false;
-	database = db;
-	recordNumber = recNumber;
-	sectionId = sectId;
+    useCount = 1;
+    offset = 0;
+    populated = false;
+    database = db;
+    recordNumber = recNumber;
+    sectionId = sectId;
 }
 #endif
 
 BinaryBlob::BinaryBlob(Clob * blob)
 {
-	useCount = 0;
+    useCount = 1;
 	Stream::putSegment (blob);
 }
 
@@ -97,7 +97,7 @@ void BinaryBlob::addRef()
 
 int BinaryBlob::release()
 {
-	if (--useCount <= 0)
+	if (--useCount == 0)
 		{
 		delete this;
 		return 0;
