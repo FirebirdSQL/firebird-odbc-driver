@@ -154,6 +154,18 @@ void trace (const char *msg)
     LOG_MSG(msg);
 }
 
+#ifdef _WIN32
+HINSTANCE m_hInstance = NULL;
+
+BOOL APIENTRY DllMain(  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID )
+{
+	if ( fdwReason == DLL_PROCESS_ATTACH )
+		m_hInstance = hinstDLL;
+
+    return TRUE;
+}
+#endif
+
 static RETCODE __SQLAllocHandle  (SQLSMALLINT arg0, SQLHANDLE arg1, SQLHANDLE * arg2)
 {
 	TRACE ("__SQLAllocHandle");

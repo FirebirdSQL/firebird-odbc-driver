@@ -467,8 +467,8 @@ int OdbcConvert::conv##TYPE_FROM##ToTagNumeric(DescRecord * from, DescRecord * t
 	else																					\
 		*pointer++=1;																		\
 																							\
-	if ( from->scale )																		\
-		number *= (QUAD)listScale[from->scale];												\
+/*	if ( from->scale )		*/																\
+/*		number *= (QUAD)listScale[from->scale];	*/											\
 																							\
 	if ( indicatorPointer )																	\
 		*indicatorPointer = 0;																\

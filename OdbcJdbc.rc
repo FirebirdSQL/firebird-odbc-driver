@@ -2,6 +2,17 @@
 //
 #include "resource.h"
 
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
 /////////////////////////////////////////////////////////////////////////////
 // English (U.K.) resources
 
@@ -55,5 +66,25 @@ BEGIN
 END
 
 #endif    // !_MAC
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_CON_PROPERTIES DIALOG DISCARDABLE  0, 0, 142, 84
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "FireBird ODBC Connect"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDC_USER,60,10,70,12,ES_UPPERCASE | ES_AUTOHSCROLL
+    EDITTEXT        IDC_PASSWORD,60,25,70,12,ES_PASSWORD | ES_AUTOHSCROLL
+    EDITTEXT        IDC_ROLE,60,40,70,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,16,64,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,77,64,50,14
+    LTEXT           "Account",IDC_STATIC,9,12,30,8
+    LTEXT           "Password",IDC_STATIC,9,26,32,8
+    LTEXT           "Role",IDC_STATIC,9,41,16,8
+END
 
 #endif    // English (U.K.) resources

@@ -1207,7 +1207,14 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 			break;
 
 		case SQL_C_DOUBLE:
-			*((double*) pointer) = RESULTS (getDouble (column));
+			{
+				int scale = metaData->getScale (column);
+				double &val = *((double*) pointer);
+				val = RESULTS (getDouble (column));
+			
+				if(scale)
+					val /= (QUAD)listScale[scale];
+			}	
 			length = sizeof(double);
 			break;
 
@@ -1304,7 +1311,7 @@ bool OdbcStatement::setValue(DescRecord *record, int column)
 					case SQL_C_ULONG:
 					case SQL_C_SLONG:
 					case SQL_C_DOUBLE:
-						number *= (QUAD)listScale[*var];
+//						number *= (QUAD)listScale[*var];
 						break;
 					}
 				}
@@ -1429,7 +1436,14 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 			break;
 
 		case SQL_C_DOUBLE:
-			*((double*) binding->pointer) = RESULTS (getDouble (column));
+			{
+				int scale = metaData->getScale (column);
+				double &val = *((double*) binding->pointer);
+				val = RESULTS (getDouble (column));
+			
+				if(scale)
+					val /= (QUAD)listScale[scale];
+			}	
 			length = sizeof(double);
 			break;
 
@@ -1543,7 +1557,7 @@ RETCODE OdbcStatement::setValue(Binding * binding, int column)
 					case SQL_C_ULONG:
 					case SQL_C_SLONG:
 					case SQL_C_DOUBLE:
-						number *= (QUAD)listScale[*var];
+//						number *= (QUAD)listScale[*var];
 						break;
 					}
 				}
@@ -3312,7 +3326,12 @@ RETCODE OdbcStatement::sqlRowCount(SQLINTEGER *rowCount)
 		if ( isStaticCursor() )
 			*rowCount = sqlDiagCursorRowCount;
 		else
-			*rowCount = statement->getUpdateCount();
+		{
+			if ( enFetch != NoneFetch )
+				*rowCount = rowNumber;
+			else
+				*rowCount = statement->getUpdateCount();
+		}
 	}
 	catch (SQLException& exception)
 	{

@@ -84,6 +84,7 @@
 #include "IscDbc/SQLException.h"
 #include "OdbcStatement.h"
 #include "OdbcDesc.h"
+#include "ConnectDialog.h"
 
 #ifndef _WIN32
 #define ELF
@@ -457,6 +458,26 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 
 	if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
 		postError ("01004", "String data, right truncated");
+
+#ifdef _WIN32
+	if ( account.IsEmpty() || password.IsEmpty() )
+	{
+		CConnectDialog dlg;
+		dlg.m_user = account;
+		dlg.m_password = password;
+		dlg.m_role = role;
+
+		if ( IDOK != dlg.DoModal() )
+		{
+			postError ("28000", "Invalid authorization specification");
+			return SQL_ERROR;
+		}
+
+		account = dlg.m_user;
+		password = dlg.m_password;
+		role = dlg.m_role;
+	}
+#endif // _WIN32
 
 	RETCODE ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
