@@ -40,6 +40,12 @@ public:
 	RETCODE sqlSetEnvAttr (int attribute, SQLPOINTER value, int length);
 	void connectionClosed (OdbcConnection *connection);
 	RETCODE sqlEndTran(int operation);
+	RETCODE sqlDrivers( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
+	RETCODE sqlDataSources( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
+#ifdef _WIN32
+	BOOL getDrivers();
+	BOOL getDataSources(UWORD wConfigMode);
+#endif
 	virtual RETCODE allocHandle (int handleType, SQLHANDLE *outputHandle);
 	virtual OdbcObjectType getType();
 	OdbcEnv();
@@ -47,6 +53,17 @@ public:
 
 	OdbcConnection	*connections;
 	const char		*odbcIniFileName;
+#ifdef _WIN32
+	const char		*odbcInctFileName;
+
+	char			listDSN[1024];
+	char			*activeDSN;
+	char			*endDSN;
+
+	char			listDrv[2048];
+	char			*activeDrv;
+	char			*endDrv;
+#endif
 };
 
 #endif // !defined(AFX_ODBCENV_H__ED260D95_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
