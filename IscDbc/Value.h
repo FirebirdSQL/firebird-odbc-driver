@@ -66,7 +66,7 @@ public:
 
 public:	
 	void setValue (SqlTime value);
-	static void convert (QUAD number, int scale, char *string);
+	void convert (QUAD number, int scale, char *string);
 	TimeStamp getTimestamp();
 	SqlTime getTime();
 	void setValue (TimeStamp value);
