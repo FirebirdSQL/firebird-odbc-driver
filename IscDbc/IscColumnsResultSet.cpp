@@ -407,6 +407,7 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 	case JDBC_FLOAT:
 	case JDBC_DOUBLE:
 		sqlda->setNull (9);
+		sqlda->updateShort (10, 2);
 		break;
 	case JDBC_CHAR:
 	case JDBC_VARCHAR:
