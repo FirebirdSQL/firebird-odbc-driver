@@ -917,7 +917,6 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 			value |= SQL_SU_PRIVILEGE_DEFINITION;
 		break;
 
-		//Added by CGA. 2002-06-25
 	case SQL_SERVER_NAME:
 		string = metaData->getDatabaseServerName();
 		break;
@@ -928,15 +927,6 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 
 	case SQL_DATA_SOURCE_READ_ONLY:
 		string = (metaData->isReadOnly()) ? "Y" : "N";
-		break;
-
-	case SQL_CURSOR_SENSITIVITY:
-		{
-			if ( metaData->supportsANSI92EntryLevelSQL() )
-				value = SQL_UNSPECIFIED;	// Entry level SQL-92 compliant.
-			if ( metaData->supportsANSI92FullSQL() )
-				value = SQL_INSENSITIVE;	// Full level SQL-92 compliant.
-		}
 		break;
 
 	case SQL_DBMS_NAME:
@@ -1003,52 +993,6 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 
 	case SQL_LIKE_ESCAPE_CLAUSE:
 		string = metaData->supportsLikeEscapeClause() ? "Y" : "N";
-		break;
-
-	case SQL_DATETIME_LITERALS:
-		value = SQL_DL_SQL92_DATE |
-		        SQL_DL_SQL92_TIME |
-		        SQL_DL_SQL92_TIMESTAMP;
-		break;
-
-	case SQL_CREATE_DOMAIN:
-		{
-			value = 0;
-			if ( metaData->supportsMinimumSQLGrammar() )
-				value |= 0;
-			if ( metaData->supportsCoreSQLGrammar() )
-				value = SQL_CDO_CREATE_DOMAIN	|
-				        SQL_CDO_DEFAULT			|
-				        SQL_CDO_CONSTRAINT		|
-				        SQL_CDO_COLLATION;
-			if ( metaData->supportsANSI92FullSQL() )
-				value |= 0;
-		}
-		break;
-
-	case SQL_CREATE_TABLE:
-		{
-			value = 0;
-			if ( metaData->supportsMinimumSQLGrammar() )
-				value |= SQL_CT_CREATE_TABLE		|
-				         SQL_CT_COLUMN_CONSTRAINT	|
-				         SQL_CT_COLUMN_DEFAULT		|
-				         SQL_CT_TABLE_CONSTRAINT;
-			if ( metaData->supportsCoreSQLGrammar() )
-				value |= SQL_CT_CONSTRAINT_NAME_DEFINITION;
-			if ( metaData->supportsExtendedSQLGrammar() )
-				value |= SQL_CT_COLUMN_COLLATION;
-		}
-		break;
-
-	case SQL_FILE_USAGE:
-		{
-			value =  SQL_FILE_NOT_SUPPORTED;
-			if ( metaData->usesLocalFiles() )
-				value = SQL_FILE_TABLE;
-			if ( metaData->usesLocalFilePerTable() )
-				value = SQL_FILE_CATALOG;
-		}
 		break;
 
 	case SQL_TXN_ISOLATION_OPTION:
@@ -1155,24 +1099,6 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 		}
 		break;
 
-	case SQL_STRING_FUNCTIONS:
-		value = SQL_FN_STR_UCASE |
-		        SQL_FN_STR_SUBSTRING;
-		break;
-
-	case SQL_NUMERIC_FUNCTIONS:
-		value = 0;
-		break;
-
-	case SQL_TIMEDATE_FUNCTIONS:
-		value |= SQL_FN_TD_EXTRACT;
-		break;
-
-	case SQL_SYSTEM_FUNCTIONS:
-		value = SQL_FN_SYS_USERNAME |
-		        SQL_FN_SYS_DBNAME;
-		break;
-
 	case SQL_EXPRESSIONS_IN_ORDERBY:
 		string = metaData->supportsExpressionsInOrderBy() ? "Y" : "N";
 		break;
@@ -1224,188 +1150,10 @@ RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * a
 			value |= SQL_NC_END;
 		break;
 
-	case SQL_DYNAMIC_CURSOR_ATTRIBUTES1:
-		break;
-
-	case SQL_DYNAMIC_CURSOR_ATTRIBUTES2:
-		break;
-
-	case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES1:
-		break;
-
-	case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES2:
-		break;
-
-	case SQL_STATIC_CURSOR_ATTRIBUTES1:
-		break;
-
-	case SQL_STATIC_CURSOR_ATTRIBUTES2:
-		break;
-
 	case SQL_PROCEDURE_TERM:
 		string = metaData->getProcedureTerm();
 		break;
-
-	case SQL_OUTER_JOINS:
-		if (metaData->supportsFullOuterJoins())
-			string = "F";
-		else if (metaData->supportsLimitedOuterJoins())
-			string = "P";
-		else if (metaData->supportsOuterJoins())
-			string = "Y";
-		else
-			string = "N";
-		break;
-
-	case SQL_OJ_CAPABILITIES:
-		if (metaData->supportsFullOuterJoins())
-			value = SQL_OJ_LEFT | SQL_OJ_RIGHT | SQL_OJ_FULL | SQL_OJ_NESTED |
-			        SQL_OJ_NOT_ORDERED | SQL_OJ_INNER | SQL_OJ_ALL_COMPARISON_OPS;
-		else if (metaData->supportsLimitedOuterJoins())
-			value = 0;
-		else if (metaData->supportsOuterJoins())
-			value = 0;
-		else
-			value = 0;
-		break;
-
-	case SQL_STANDARD_CLI_CONFORMANCE:
-		value = SQL_SCC_ISO92_CLI;
-		break;
-
-	case SQL_SQL92_PREDICATES:
-		{
-			value = 0;
-			if ( metaData->supportsANSI92EntryLevelSQL() )
-			{
-				value |= SQL_SP_BETWEEN    |
-				         SQL_SP_EXISTS    |
-				         SQL_SP_IN        |
-				         SQL_SP_ISNOTNULL|
-				         SQL_SP_ISNULL    |
-				         SQL_SP_LIKE;
-				// SQL_SP_QUANTIFIED_COMPARISON
-				// SQL_SP_UNIQUE
-			}
-			if ( metaData->supportsANSI92IntermediateSQL() )
-				value |= SQL_SP_OVERLAPS;
-			if ( metaData->supportsANSI92FullSQL() )
-				value |= SQL_SP_MATCH_FULL            |
-				         SQL_SP_MATCH_PARTIAL        |
-				         SQL_SP_MATCH_UNIQUE_FULL    |
-				         SQL_SP_MATCH_UNIQUE_PARTIAL    |
-				         SQL_SP_ISNULL    |
-				         SQL_SP_LIKE;
-		}
-		break;
-
-
-	case SQL_SQL92_GRANT:
-		{
-			value = 0;
-			if ( metaData->supportsANSI92EntryLevelSQL() )
-			{
-				value |= SQL_SG_DELETE_TABLE    |
-				         SQL_SG_INSERT_TABLE    |
-				         SQL_SG_REFERENCES_COLUMN |
-				         SQL_SG_REFERENCES_TABLE    |
-				         SQL_SG_SELECT_TABLE    |
-				         SQL_SG_UPDATE_COLUMN    |
-				         SQL_SG_UPDATE_TABLE    |
-				         SQL_SG_WITH_GRANT_OPTION ;
-			}
-			if ( metaData->supportsANSI92IntermediateSQL() )
-				value |= SQL_SG_USAGE_ON_DOMAIN    |
-				         SQL_SG_USAGE_ON_CHARACTER_SET |
-				         SQL_SG_USAGE_ON_COLLATION |
-				         SQL_SG_USAGE_ON_TRANSLATION;
-			// if ( metaData->supportsANSI92FullSQL() )
-		}
-		break;
-
-	case SQL_SQL92_REVOKE:
-		{
-			value = 0;
-			if ( metaData->supportsANSI92EntryLevelSQL() )
-				value |= SQL_SR_DELETE_TABLE    |
-				         SQL_SR_INSERT_TABLE    |
-				         SQL_SR_REFERENCES_COLUMN |
-				         SQL_SR_REFERENCES_TABLE    |
-				         SQL_SR_SELECT_TABLE    |
-				         SQL_SR_UPDATE_COLUMN    |
-				         SQL_SR_UPDATE_TABLE;
-			if ( metaData->supportsANSI92IntermediateSQL() )
-				value |= SQL_SR_CASCADE            |
-				         SQL_SR_GRANT_OPTION_FOR |
-				         SQL_SR_INSERT_COLUMN    |
-				         SQL_SR_RESTRICT        |
-				         SQL_SR_USAGE_ON_DOMAIN    |
-				         SQL_SR_USAGE_ON_CHARACTER_SET |
-				         SQL_SR_USAGE_ON_COLLATION |
-				         SQL_SR_USAGE_ON_TRANSLATION;
-			// if ( metaData->supportsANSI92FullSQL() )
-		}
-		break;
-
-	case SQL_SQL92_DATETIME_FUNCTIONS:
-		value |= SQL_SDF_CURRENT_DATE |
-		         SQL_SDF_CURRENT_TIME |
-		         SQL_SDF_CURRENT_TIMESTAMP;
-		break;
-
-
-	case SQL_SQL92_FOREIGN_KEY_DELETE_RULE:
-		value |= SQL_SFKD_CASCADE    |
-		         SQL_SFKD_NO_ACTION |
-		         SQL_SFKD_SET_DEFAULT |
-		         SQL_SFKD_SET_NULL;
-		break;
-
-	case SQL_SQL92_FOREIGN_KEY_UPDATE_RULE:
-		value |= SQL_SFKU_CASCADE    |
-		         SQL_SFKU_NO_ACTION |
-		         SQL_SFKU_SET_DEFAULT |
-		         SQL_SFKU_SET_NULL;
-		break;
-
-	case SQL_SQL92_RELATIONAL_JOIN_OPERATORS:
-		{
-			value = 0;
-			if ( metaData->supportsANSI92EntryLevelSQL() )
-				value |= SQL_SRJO_LEFT_OUTER_JOIN |    // (FIPS Transitional level)
-				         SQL_SRJO_NATURAL_JOIN    |    // (FIPS Transitional level)
-				         SQL_SRJO_INNER_JOIN    |    // (FIPS Transitional level)
-				         SQL_SRJO_RIGHT_OUTER_JOIN; // (FIPS Transitional level)
-
-			if ( metaData->supportsANSI92IntermediateSQL() )
-				value |= SQL_SRJO_CORRESPONDING_CLAUSE |
-				         SQL_SRJO_EXCEPT_JOIN |
-				         SQL_SRJO_FULL_OUTER_JOIN |
-				         SQL_SRJO_INTERSECT_JOIN;
-						 
-			if ( metaData->supportsANSI92FullSQL() )
-				value |= SQL_SRJO_CROSS_JOIN |
-				         SQL_SRJO_UNION_JOIN;
-		}
-		break;
-
-	case SQL_SQL92_VALUE_EXPRESSIONS:
-		{
-			value = 0;
-			if ( metaData->supportsANSI92EntryLevelSQL() )
-				value |= SQL_SVE_CAST; // (FIPS Transitional level)
-
-			if ( metaData->supportsANSI92IntermediateSQL() )
-				value |= SQL_SVE_CASE |
-				         SQL_SVE_COALESCE |
-				         SQL_SVE_NULLIF;
-
-			// if ( metaData->supportsANSI92FullSQL() )
-		}
-		break;
 	}
-
-	//char temp [256];
 
 	switch (item->type)
 	{
