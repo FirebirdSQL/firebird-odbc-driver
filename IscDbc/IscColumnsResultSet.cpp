@@ -390,7 +390,8 @@ void IscColumnsResultSet::setCharLen (int charLenInd,
 	if (!charLen)
 		resultSet->setNull (charLenInd);
 	else
-		resultSet->setValue (charLenInd, charLen);}
+		resultSet->setValue (charLenInd, charLen);
+}
 
 void IscColumnsResultSet::checkQuotes (IscSqlType sqlType, JString stringVal)
 {
