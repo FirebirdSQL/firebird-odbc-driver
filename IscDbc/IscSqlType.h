@@ -25,6 +25,8 @@
 #if !defined(_ISCSQLTYPE_H_)
 #define _ISCSQLTYPE_H_
 
+#include <string.h>
+
 namespace IscDbcLibrary {
 
 class IscSqlType  
