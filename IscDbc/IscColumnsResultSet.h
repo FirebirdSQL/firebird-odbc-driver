@@ -26,6 +26,7 @@
 #define _ISCCOLUMNSMETADATA_H_
 
 #include "IscMetaDataResultSet.h"
+#include "IscBlob.h"
 #include "IscSqlType.h"
 
 namespace IscDbcLibrary {
@@ -41,6 +42,8 @@ private:
 	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType sqlType);
 	virtual void checkQuotes (IscSqlType sqlType, JString stringVal);
 	virtual void adjustResults (IscSqlType sqlType);	
+
+	IscBlob blob;
 };
 
 }; // end namespace IscDbcLibrary

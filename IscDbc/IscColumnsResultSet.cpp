@@ -127,7 +127,10 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 bool IscColumnsResultSet::next()
 {
 	if (!IscResultSet::next())
+	{
+		blob.clear();
 		return false;
+	}
 
 	int len = sqlda->getShort (24);
 
@@ -178,7 +181,11 @@ bool IscColumnsResultSet::getBLRLiteral (int indexIn,
 		return false;
 	}
 
-	IscBlob blob(statement->connection,sqlda->Var(indexIn));
+	XSQLVAR *var = sqlda->Var(indexIn);
+
+	blob.bind(statement->connection,(char*)var->sqldata);
+	blob.setType(var->sqlsubtype);
+
 	char * stuff = new char [blob.length()];
 	char * s = stuff;
 
