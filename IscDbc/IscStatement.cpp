@@ -430,12 +430,6 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 			case SQL_TEXT:
 				{
 				char *data = (char*) var->sqldata;
-				//printf ("%d '%s'\n", n, data);
-//Orig.
-//				data [var->sqllen - 1] = 0;
-//From B. Schulte
-// 'this fixes the awful bug with those "my field has a trailing blank" ... a bit'
-//RM added the decrement to var->sqllen 2002-06-04
 				data [var->sqllen - 1 ] = 0;    
 				value->setString (data, false);
 				}
@@ -445,15 +439,12 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				{
 				int length = *((short*) var->sqldata);
 				char *data = var->sqldata + 2;
-//				if (length < var->sqllen)
-// LiWeimin suggests decrementing the sqllen by 2 before the test.
-				if (length < var->sqllen-2)
+				if ( length < var->sqllen )
 				{
 					data [length] = 0;
 					value->setString (data, false);
-					}
+				}
 				else
-//					value->setString (length, data, false);
 					value->setString (length, data, true);
 
 				}
@@ -530,19 +521,13 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 
 ISC_DATE IscStatement::getIscDate(DateTime value)
 {
-//	return value.date / (24 * 60 * 60) + baseDate;
-//Suggestion from LiWeimin to change this to
 	return value.date;
 }
 
 ISC_TIMESTAMP IscStatement::getIscTimeStamp(TimeStamp value)
 {
 	ISC_TIMESTAMP date;
-//Orig.
-/*	date.timestamp_date = value.date / (24 * 60 * 60) + baseDate;
-	date.timestamp_time = value.date % (24 * 60 * 60) + value.nanos / 100;
-*/
-//From B. Schulte
+
 	date.timestamp_date = value.date ;
 	date.timestamp_time =  value.nanos;
 
