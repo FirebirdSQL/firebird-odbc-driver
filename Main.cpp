@@ -1143,36 +1143,39 @@ RETCODE SQL_API SQLFreeHandle  (SQLSMALLINT arg0,
 	TRACE ("SQLFreeHandle\n");
 
 	switch (arg0)
+	{
+	case SQL_HANDLE_ENV:
 		{
-		case SQL_HANDLE_ENV:
+			GUARD;
 			delete (OdbcEnv*) arg1;
-			break;
-
-		case SQL_HANDLE_DBC:
-			{
-				GUARD_HDBC(arg1);
-				delete (OdbcConnection*) arg1;
-			}
-			break;
-
-		case SQL_HANDLE_STMT:
-			{
-				GUARD_HSTMT(arg1);
-				delete (OdbcStatement*) arg1;
-			}
-			break;
-
-		case SQL_HANDLE_DESC:
-			{
-				GUARD_HDESC(arg1);
-				if ( ((OdbcDesc*)arg1)->headType == odtApplication )
-					delete (OdbcDesc*) arg1;
-			}
-			break;
-
-		default:
-			return SQL_INVALID_HANDLE;
 		}
+		break;
+
+	case SQL_HANDLE_DBC:
+		{
+			GUARD_ENV(((OdbcConnection*) arg1)->env);
+			delete (OdbcConnection*) arg1;
+		}
+		break;
+
+	case SQL_HANDLE_STMT:
+		{
+			GUARD_HSTMT(arg1);
+			delete (OdbcStatement*) arg1;
+		}
+		break;
+
+	case SQL_HANDLE_DESC:
+		{
+			GUARD_HDESC(arg1);
+			if ( ((OdbcDesc*)arg1)->headType == odtApplication )
+				delete (OdbcDesc*) arg1;
+		}
+		break;
+
+	default:
+		return SQL_INVALID_HANDLE;
+	}
 
 	return SQL_SUCCESS;
 }
