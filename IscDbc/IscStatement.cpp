@@ -376,8 +376,8 @@ bool IscStatement::execute()
 	void *transHandle = connection->startTransaction();
 
 	int dialect = connection->getDatabaseDialect ();
-	if (connection->GDS->_dsql_execute (statusVector, &transHandle, &statementHandle, 
-			dialect, inputSqlda))
+	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle, 
+			dialect, inputSqlda, NULL))
 	{
 		clearSelect();
 		if (connection->autoCommit)
