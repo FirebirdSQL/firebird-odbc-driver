@@ -43,8 +43,6 @@ class CDataStaticCursor;
 class Sqlda  
 {
 public:
-	void deleteTemps();
-	void* allocTemp (int index, int length);
 	const char* getOwnerName (int index);
 	int findColumn (const char *columnName);
 	void setBlob (XSQLVAR *var, Value *value, IscConnection *connection);

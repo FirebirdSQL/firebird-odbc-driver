@@ -107,10 +107,10 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 		"where pp.rdb$field_source = f.rdb$field_name";
 
 	if (procedureNamePattern && *procedureNamePattern)
-		sql += expandPattern (" and pp.rdb$procedure_name %s '%s'", procedureNamePattern);
+		sql += expandPattern (" and ","pp.rdb$procedure_name", procedureNamePattern);
 
 	if (columnNamePattern && *columnNamePattern)
-		sql += expandPattern (" and pp.rdb$parameter_name %s '%s'", columnNamePattern);
+		sql += expandPattern (" and ","pp.rdb$parameter_name", columnNamePattern);
 
 	sql += " order by pp.rdb$procedure_name, pp.rdb$parameter_number";
 	prepareStatement (sql);

@@ -3685,15 +3685,17 @@ RETCODE OdbcStatement::sqlSpecialColumns(unsigned short rowId, SQLCHAR * catalog
 	const char *tbl = getString (&p, table, tableLength, NULL);
 
 	try
-		{
+	{
 		DatabaseMetaData *metaData = connection->getMetaData();
 		setResultSet (metaData->specialColumns (cat, scheme, tbl, scope, nullable));
-		}
+		if ( rowId == SQL_ROWVER )
+			eof = true;
+	}
 	catch (SQLException& exception)
-		{
+	{
 		postError ("HY000", exception);
 		return SQL_ERROR;
-		}
+	}
 
 	return sqlSuccess();
 }

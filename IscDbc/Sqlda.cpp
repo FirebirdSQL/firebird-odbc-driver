@@ -306,7 +306,6 @@ Sqlda::Sqlda()
 
 Sqlda::~Sqlda()
 {
-	deleteTemps();
 	deleteSqlda();
 
 	if (buffer)
@@ -577,7 +576,13 @@ void Sqlda::print()
 					break;
 
 				case SQL_TIMESTAMP:
+					printf ("timestamp");
+					break;
+
 				case SQL_TYPE_TIME:
+					printf ("time");
+					break;
+
 				case SQL_TYPE_DATE:
 					printf ("date");
 					break;
@@ -716,6 +721,13 @@ int Sqlda::getPrecision(int index)
 int Sqlda::getScale(int index)
 {
 	XSQLVAR *var = sqlda->sqlvar + index - 1;
+
+	switch (var->sqltype & ~1)
+	{
+	case SQL_TIMESTAMP:
+	case SQL_TYPE_TIME:
+		return ISC_TIME_SECONDS_PRECISION_SCALE;
+	}
 
 	return var->sqlscale;
 }
@@ -993,22 +1005,19 @@ void Sqlda::setValue(int slot, Value * value, IscConnection *connection)
 		case Date:
 			var->sqltype = SQL_TYPE_DATE;
 			var->sqllen = sizeof (ISC_DATE);
-			allocTemp (slot, var->sqllen);
-			*(ISC_DATE*) (var->sqldata) = IscStatement::getIscDate (value->data.date);
+			*(ISC_DATE*)var->sqldata = IscStatement::getIscDate (value->data.date);
 			break;
 									
 		case TimeType:
 			var->sqltype = SQL_TYPE_TIME;
 			var->sqllen = sizeof (ISC_TIME);
-			allocTemp (slot, var->sqllen);
-			*(ISC_TIME*) (var->sqldata) = IscStatement::getIscTime (value->data.time);
+			*(ISC_TIME*)var->sqldata = IscStatement::getIscTime (value->data.time);
 			break;
 									
 		case Timestamp:
 			var->sqltype = SQL_TIMESTAMP;
 			var->sqllen = sizeof (ISC_TIMESTAMP);
-			allocTemp (slot, var->sqllen);
-			*(ISC_TIMESTAMP*) (var->sqldata) = IscStatement::getIscTimeStamp (value->data.timestamp);
+			*(ISC_TIMESTAMP*)var->sqldata = IscStatement::getIscTimeStamp (value->data.timestamp);
 			break;
 									
 		default:
@@ -1134,40 +1143,6 @@ const char* Sqlda::getOwnerName(int index)
 	XSQLVAR *var = sqlda->sqlvar + index - 1;
 
 	return var->ownname;
-}
-
-void* Sqlda::allocTemp(int index, int length)
-{
-	if (!temps)
-		{
-		temps = new TempVector [sqlda->sqld];
-		memset (temps, 0, sizeof (struct TempVector) * sqlda->sqld);
-		}
-
-	TempVector *temp = temps + index;
-		
-	if (temp->temp)
-		{
-		if (temp->length >= length)
-			return sqlda->sqlvar [index].sqldata = temp->temp;
-		delete [] temp->temp;
-		}
-	
-	temp->length = length;
-
-	return sqlda->sqlvar [index].sqldata = temp->temp = new char [length];	
-}
-
-void Sqlda::deleteTemps()
-{
-	if (temps)
-		{
-		for (int n = 0; n < sqlda->sqld; ++n)
-			if (temps [n].temp)
-				delete [] temps [n].temp;
-		delete [] temps;
-		temps = NULL;
-		}
 }
 
 int Sqlda::isBlobOrArray(int index)

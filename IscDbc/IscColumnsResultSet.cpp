@@ -85,7 +85,7 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 				"\tfld.rdb$field_sub_type as type_name,\n"			// 6 - VARCHAR NOT NULL
 				"\t10 as column_size,\n"							// 7 - INTEGER
 				"\t10 as buffer_length,\n"							// 8 - INTEGER
-				"\tfld.rdb$field_scale as decimal_digits,\n"		// 9 - SMALLINT
+				"\tcast (fld.rdb$field_scale as smallint) as decimal_digits,\n"		// 9 - SMALLINT
 				"\tfld.rdb$field_scale as num_prec_radix,\n"		// 10 - SMALLINT
 				"\trfr.rdb$null_flag as nullable,\n"				// 11 - SMALLINT NOT NULL
 				"\tNULL as remarks,\n"								// 12 - VARCHAR
@@ -106,10 +106,10 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 		" where rfr.rdb$field_source = fld.rdb$field_name\n";
 
 	if (tableNamePattern && *tableNamePattern)
-		sql += expandPattern (" and rfr.rdb$relation_name %s '%s'\n", tableNamePattern);
+		sql += expandPattern (" and ","rfr.rdb$relation_name", tableNamePattern);
 
 	if (fieldNamePattern && *fieldNamePattern)
-		sql += expandPattern (" and rfr.rdb$field_name %s '%s'\n", fieldNamePattern);
+		sql += expandPattern (" and ","rfr.rdb$field_name", fieldNamePattern);
 
 	sql += " order by rfr.rdb$relation_name, rfr.rdb$field_position\n";
 	
@@ -404,8 +404,11 @@ void IscColumnsResultSet::checkQuotes (IscSqlType sqlType, JString stringVal)
 	switch (sqlType.type)
 		{
 		case JDBC_DATE:
-		case JDBC_TIMESTAMP:
+		case JDBC_SQL_DATE:
 		case JDBC_TIME:
+		case JDBC_SQL_TIME:
+		case JDBC_TIMESTAMP:
+		case JDBC_SQL_TIMESTAMP:
 			if (string == "CURRENT DATE" ||
 				string == "CURRENT TIME" ||
 				string == "CURRENT TIMESTAMP" ||
@@ -457,12 +460,15 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 		case JDBC_LONGVARCHAR:
 		case JDBC_LONGVARBINARY:
 		case JDBC_DATE:
+		case JDBC_SQL_DATE:
 			resultSet->setNull (9);
 			resultSet->setNull (10);
 			break;
 		case JDBC_TIME:
+		case JDBC_SQL_TIME:
 		case JDBC_TIMESTAMP:
-			resultSet->setValue (9, (long)0);
+		case JDBC_SQL_TIMESTAMP:
+			resultSet->setValue (9, (long)-ISC_TIME_SECONDS_PRECISION_SCALE);
 			resultSet->setNull (10);
 		}	
 
@@ -477,18 +483,20 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 	if (!getBLRLiteral (13, 13, sqlType))
 		getBLRLiteral (20, 13, sqlType);
 
-	// SQL_DATA_TYPE & DateTimeSubType - why make this easy?
 	switch (sqlType.type)
 		{
 		case JDBC_DATE:
+		case JDBC_SQL_DATE:
 			resultSet->setValue (14, (long) 9);
 			resultSet->setValue (15, (long) 1);
 			break;
 		case JDBC_TIME:
+		case JDBC_SQL_TIME:
 			resultSet->setValue (14, (long) 9);
 			resultSet->setValue (15, (long) 2);
 			break;
 		case JDBC_TIMESTAMP:
+		case JDBC_SQL_TIMESTAMP:
 			resultSet->setValue (14, (long) 9);
 			resultSet->setValue (15, (long) 3);
 			break;

@@ -66,7 +66,7 @@ void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const
                           " where tbl.rdb$relation_name = usp.rdb$relation_name\n";
 
     if (tableNamePattern && *tableNamePattern)
-        sql += expandPattern (" and tbl.rdb$relation_name %s '%s'", tableNamePattern);
+        sql += expandPattern (" and ","tbl.rdb$relation_name", tableNamePattern);
 
     sql += " order by tbl.rdb$relation_name, usp.rdb$privilege, usp.rdb$user";
 

@@ -382,8 +382,6 @@ bool IscResultSet::wasNull()
 
 int IscResultSet::getColumnCount()
 {
-	if ( sqlda )
-		return sqlda->getColumnCount();
 	return numberColumns;
 }
 

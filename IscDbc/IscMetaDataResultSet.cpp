@@ -100,18 +100,15 @@ bool IscMetaDataResultSet::isWildcarded(const char * pattern)
 	return false;
 }
 
-JString IscMetaDataResultSet::expandPattern(const char * string, const char * pattern)
+JString IscMetaDataResultSet::expandPattern(const char *prefix, const char * string, const char * pattern)
 {
-	char temp [128];
+	char temp [256];
 
 	if (isWildcarded (pattern))
-	{
-		char strValLike [128];
-		sprintf (strValLike, "%s %%' ESCAPE '\\",pattern);
-		sprintf (temp, string, "like", strValLike);
-	}
+		sprintf (temp, "%s (%s like '%s %%' ESCAPE '\\' or %s like '%s' ESCAPE '\\')\n",
+							prefix, string, pattern, string, pattern);
 	else
-		sprintf (temp, string, "= ", pattern);
+		sprintf (temp, "%s %s = \'%s\'\n",prefix, string, pattern);
 
 	return temp;
 }
@@ -155,9 +152,3 @@ bool IscMetaDataResultSet::isNullable(int index)
 {
 	return resultSet->isNullable (index);
 }
-/*
-bool IscMetaDataResultSet::next()
-{
-	return resultSet->next();
-}
-*/

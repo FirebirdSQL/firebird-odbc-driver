@@ -56,7 +56,7 @@ void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * 
 		" and idx.rdb$index_name = seg.rdb$index_name\n";
 
 	if (tableNamePattern && *tableNamePattern)
-		sql += expandPattern (" and rel.rdb$relation_name %s '%s'", tableNamePattern);
+		sql += expandPattern (" and ","rel.rdb$relation_name", tableNamePattern);
 
 	sql += " order by rel.rdb$relation_name, idx.rdb$index_name, seg.rdb$field_position";
 	prepareStatement (sql);

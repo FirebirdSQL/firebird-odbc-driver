@@ -146,7 +146,7 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 			type = JDBC_SQL_DATE;
 			typeName = "DATE";
 			length = MAX_DATE_LENGTH;
-			bufferLength = length;
+			bufferLength = 6; // sizeof(tagDATE_STRUCT); 
 			}
 			break;
 
@@ -156,7 +156,7 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 			type = JDBC_SQL_TIME;
 			typeName = "TIME";
 			length = MAX_TIME_LENGTH;
-			bufferLength = length-2;
+			bufferLength = 6; // sizeof(tagTIME_STRUCT); 
 			}
 			break;
 
@@ -166,7 +166,7 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 			type = JDBC_SQL_TIMESTAMP;
 			typeName = "TIMESTAMP";
 			length = MAX_TIMESTAMP_LENGTH;
-			bufferLength = length;
+			bufferLength = 16; // sizeof(tagTIMESTAMP_STRUCT)
 			}
 			break;
 

@@ -1211,12 +1211,21 @@ int OdbcDesc::getConciseType(int type)
 			return SQL_C_DOUBLE;
 
 		case JDBC_DATE:
+			return SQL_C_TYPE_DATE;
+
+		case JDBC_SQL_DATE:
 			return SQL_C_DATE;
 
 		case JDBC_TIME:
+			return SQL_C_TYPE_TIME;
+
+		case JDBC_SQL_TIME:
 			return SQL_C_TIME;
 
 		case JDBC_TIMESTAMP:
+			return SQL_C_TYPE_TIMESTAMP;
+
+		case JDBC_SQL_TIMESTAMP:
 			return SQL_C_TIMESTAMP;
 
 		case JDBC_ARRAY:
@@ -1266,14 +1275,17 @@ int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType)
 	case JDBC_SQL_TIME:
 		cType = SQL_C_TIME;
 		break;
-	case JDBC_TIMESTAMP:
-		cType = SQL_C_TYPE_TIMESTAMP;
+	case JDBC_SQL_TIMESTAMP:
+		cType = SQL_C_TIMESTAMP;
 		break;
 	case JDBC_DATE:
 		cType = SQL_C_TYPE_DATE;
 		break;
 	case JDBC_TIME:
 		cType = SQL_C_TYPE_TIME;
+		break;
+	case JDBC_TIMESTAMP:
+		cType = SQL_C_TYPE_TIMESTAMP;
 		break;
 	default:
 		cType = SQL_C_DEFAULT;

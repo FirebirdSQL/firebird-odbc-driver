@@ -62,6 +62,9 @@ typedef unsigned __int64			UQUAD;
 
 #define ISC_TIME_SECONDS_PRECISION          10000L
 #define ISC_TIME_SECONDS_PRECISION_SCALE    (-4)
+// Default standart size of fraction it's 9 number  
+// It's 9 = ISC_TIME_SECONDS_PRECISION * STD_TIME_SECONDS_PRECISION
+#define STD_TIME_SECONDS_PRECISION          100000L
 
 /* values for tra_flags */
 #define TRA_ro			1

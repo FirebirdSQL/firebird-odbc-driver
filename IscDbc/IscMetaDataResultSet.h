@@ -38,8 +38,7 @@ class IscResultSet;
 class IscMetaDataResultSet : public IscResultSet  
 {
 public:
-//	virtual bool next();
-	JString expandPattern (const char *string, const char *pattern);
+	JString expandPattern (const char *prefix, const char *string, const char *pattern);
 	bool isWildcarded (const char *pattern);
 	void trimBlanks (int id);
 	virtual void prepareStatement (const char *sql);

@@ -89,7 +89,7 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 		"where i.rdb$unique_flag = 1\n";
 
 	if(table && *table)
-		sql += expandPattern ("\tand rfr.rdb$relation_name %s '%s'\n", table);
+		sql += expandPattern ("\tand ","rfr.rdb$relation_name", table);
 
 	sql += " order by rel.rdb$constraint_type, rdb$index_name, rdb$field_position";
 
@@ -105,7 +105,7 @@ bool IscSpecialColumnsResultSet::next ()
 	if (!resultSet->next())
 		return false;
 
-	resultSet->setValue(1,1);	//scope is always transaction for us
+	resultSet->setValue(1,2);	//scope is always transaction for us
 
 	int	idx_id = resultSet->getInt (10);
 	if (index_id == -1) 
@@ -213,23 +213,23 @@ void IscSpecialColumnsResultSet::setCharLen (int charLenInd,
 
 
 void IscSpecialColumnsResultSet::adjustResults (IscSqlType sqlType)
-
 {
-
 	// decimal digits have no meaning for some columns
 	// radix - doesn't mean much for some colums either
 	switch (sqlType.type)
-		{
+	{
 		case JDBC_CHAR:
 		case JDBC_VARCHAR:
 		case JDBC_LONGVARCHAR:
 		case JDBC_LONGVARBINARY:
 		case JDBC_DATE:
+		case JDBC_SQL_DATE:
 			resultSet->setNull (7);
 			break;
 		case JDBC_TIME:
+		case JDBC_SQL_TIME:
 		case JDBC_TIMESTAMP:
-			resultSet->setValue (7, (long)0);
-		}	
-
+		case JDBC_SQL_TIMESTAMP:
+			resultSet->setValue (7, (long)-ISC_TIME_SECONDS_PRECISION_SCALE);
+	}	
 }

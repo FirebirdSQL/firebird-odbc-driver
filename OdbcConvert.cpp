@@ -787,7 +787,7 @@ int OdbcConvert::convTimeToTagTimestamp(DescRecord * from, DescRecord * to)
 	long ntime = *(long*)from->dataPtr;
 	decode_sql_time(ntime, tagTs->hour, tagTs->minute, tagTs->second);
 	tagTs->day = tagTs->month = tagTs->year = 0;
-	tagTs->fraction = ntime % ISC_TIME_SECONDS_PRECISION;
+	tagTs->fraction = (ntime % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
 
 	if ( indicatorPointer )
 		*indicatorPointer = sizeof(tagTIMESTAMP_STRUCT);
@@ -818,7 +818,7 @@ int OdbcConvert::convDateTimeToTagDateTime(DescRecord * from, DescRecord * to)
 
 	decode_sql_date(nday, tagTs->day, tagTs->month, tagTs->year);
 	decode_sql_time(ntime, tagTs->hour, tagTs->minute, tagTs->second);
-	tagTs->fraction = ntime % ISC_TIME_SECONDS_PRECISION;
+	tagTs->fraction = (ntime % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
 
 	if ( indicatorPointer )
 		*indicatorPointer = 0;

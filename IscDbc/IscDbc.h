@@ -88,7 +88,7 @@ typedef unsigned __int64			UQUAD;
 #define MAX_DOUBLE_LENGTH		53
 #define MAX_DATE_LENGTH			10
 #define MAX_TIME_LENGTH			8
-#define MAX_TIMESTAMP_LENGTH	19
+#define MAX_TIMESTAMP_LENGTH	24
 #define MAX_QUAD_LENGTH			19
 
 int getTypeStatement(isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);

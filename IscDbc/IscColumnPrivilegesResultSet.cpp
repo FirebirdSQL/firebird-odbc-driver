@@ -62,10 +62,10 @@ void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, con
 						  " where tbl.rdb$relation_name = usp.rdb$relation_name\n";
 	
 	if (tableNamePattern && *tableNamePattern)
-		sql += expandPattern (" and tbl.rdb$relation_name %s '%s'", tableNamePattern);
+		sql += expandPattern (" and ","tbl.rdb$relation_name", tableNamePattern);
 
 	if (columnNamePattern && *columnNamePattern)
-		sql += expandPattern (" and tbl.rdb$field_name %s '%s'", columnNamePattern);
+		sql += expandPattern (" and ","tbl.rdb$field_name", columnNamePattern);
 
 	sql += " order by tbl.rdb$relation_name, tbl.rdb$field_name, usp.rdb$privilege";
 

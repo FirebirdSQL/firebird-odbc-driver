@@ -55,7 +55,7 @@ void IscProceduresResultSet::getProcedures(const char * catalog, const char * sc
 		"from rdb$procedures\n";
 
 	if (procedureNamePattern && *procedureNamePattern)
-		sql += expandPattern (" where rdb$procedure_name %s '%s'", procedureNamePattern);
+		sql += expandPattern (" where ","rdb$procedure_name", procedureNamePattern);
 
 	sql += " order by rdb$procedure_name";
 	prepareStatement (sql);

@@ -89,10 +89,10 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 		;
 
 	if (primaryTable && *primaryTable)
-		sql += expandPattern (" and pidx.rdb$relation_name %s '%s'", primaryTable);
+		sql += expandPattern (" and ","pidx.rdb$relation_name", primaryTable);
 
 	if (foreignTable && *foreignTable)
-		sql += expandPattern (" and fkey.rdb$relation_name %s '%s'", foreignTable);
+		sql += expandPattern (" and ","fkey.rdb$relation_name", foreignTable);
 
 	sql += " order by pidx.rdb$relation_name, pseg.rdb$field_position";
 	prepareStatement (sql);

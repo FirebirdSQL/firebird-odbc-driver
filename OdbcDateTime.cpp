@@ -108,7 +108,7 @@ int OdbcDateTime::convert (tagTIMESTAMP_STRUCT * tagTimeStampIn, TimeStamp * tim
 	times->tm_year = tagTimeStampIn->year-1900;
 
 	timeStampOut->nanos = ((tagTimeStampIn->hour * 60 + tagTimeStampIn->minute) * 60 + 
-		tagTimeStampIn->second) * ISC_TIME_SECONDS_PRECISION + tagTimeStampIn->fraction; 
+		tagTimeStampIn->second) * ISC_TIME_SECONDS_PRECISION + tagTimeStampIn->fraction / STD_TIME_SECONDS_PRECISION; 
 
 	timeStampOut->date = nday(times);
 
@@ -158,7 +158,7 @@ int OdbcDateTime::convert (TimeStamp *timeStampIn, tagTIMESTAMP_STRUCT * tagTime
 	tagTimeStampOut->hour = times->tm_hour;
 	tagTimeStampOut->minute = times->tm_min;
 	tagTimeStampOut->second = times->tm_sec;
-	tagTimeStampOut->fraction = timeStampIn->nanos % ISC_TIME_SECONDS_PRECISION;
+	tagTimeStampOut->fraction = (timeStampIn->nanos % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
 	return true;
 }
 

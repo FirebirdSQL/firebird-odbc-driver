@@ -104,8 +104,8 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 
 	if (tableNamePattern && *tableNamePattern)
 	{
-		tableStat += expandPattern (" where rl.rdb$relation_name %s '%s'\n", tableNamePattern);
-		sql += expandPattern (" and idx.rdb$relation_name %s '%s'\n", tableNamePattern);
+		tableStat += expandPattern (" where ","rl.rdb$relation_name", tableNamePattern);
+		sql += expandPattern (" and ","idx.rdb$relation_name", tableNamePattern);
 	}
 
 	if (unique)

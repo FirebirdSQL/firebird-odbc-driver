@@ -375,11 +375,20 @@ int OdbcObject::getCType(int type, bool isSigned)
 		case SQL_DATE:
 			return SQL_C_DATE;
 
+		case SQL_TYPE_DATE:
+			return SQL_C_TYPE_DATE;
+
 		case SQL_TIME:
 			return SQL_C_TIME;
 
+		case SQL_TYPE_TIME:
+			return SQL_C_TYPE_TIME;
+
 		case SQL_TIMESTAMP:
 			return SQL_C_TIMESTAMP;
+
+		case SQL_TYPE_TIMESTAMP:
+			return SQL_C_TYPE_TIMESTAMP;
 		}
 
 	return type;
