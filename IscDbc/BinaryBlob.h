@@ -48,6 +48,12 @@ public:
 	virtual void  writeStreamHexToBlob(char * sqldata) {};
 	virtual void  writeBlob(char * sqldata, char *data, long length) {};
 	virtual void  writeStringHexToBlob(char * sqldata, char *data, long length) {};
+	virtual void  directCreateBlob( char * sqldata ) {};
+	virtual void  directOpenBlob(char * sqldata ) {};
+	virtual bool  directFetchBlob(char *data, int length, int &lengthRead) { return false; }
+	virtual bool  directGetSegmentToHexStr( char * bufData, int lenData, int &lenRead ) { return false; }
+	virtual void  directWriteBlob( char *data, long length ) {};
+	virtual void  directCloseBlob() {};
 	void putSegment (int length, const char *data, bool copyFlag);
 	void putLongSegment(int length, const char * data);
 	int length();
@@ -73,6 +79,7 @@ public:
 	long		sectionId;
 	long		recordNumber;
 	bool		populated;
+	int			directLength;
 };
 
 }; // end namespace IscDbcLibrary

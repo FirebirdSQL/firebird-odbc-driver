@@ -53,6 +53,7 @@ BinaryBlob::BinaryBlob()
     useCount = 1;
     offset = 0;
     populated = true;
+	directLength = 0;
 }
 
 BinaryBlob::BinaryBlob(int minSegmentSize) : Stream (minSegmentSize)
@@ -60,6 +61,7 @@ BinaryBlob::BinaryBlob(int minSegmentSize) : Stream (minSegmentSize)
     useCount = 1;
     offset = 0;
     populated = true;
+	directLength = 0;
 }
 
 BinaryBlob::~BinaryBlob()

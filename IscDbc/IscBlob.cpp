@@ -35,6 +35,8 @@
 #include "IscStatement.h"
 #include "SQLError.h"
 
+extern short conwBinToHexStr[];
+
 namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
@@ -45,7 +47,9 @@ IscBlob::IscBlob()
 {
 	connection = NULL;
 	memset(&blobId,0,sizeof(ISC_QUAD));
+	directBlobHandle = NULL;
 	fetched = false;
+	directBlob = false;
 
 	enType = enTypeBlob;
 }
@@ -89,6 +93,9 @@ void IscBlob::attach(char * pointBlob, bool bFetched, bool clear)
 
 int IscBlob::length()
 {
+	if ( directBlob )
+		return directLength;
+
 	if (!fetched)
 		fetchBlob();
 
@@ -115,7 +122,7 @@ void IscBlob::fetchBlob()
 	if (ret)
 		THROW_ISC_EXCEPTION (connection, statusVector);
 
-	char buffer [10000];
+	char buffer [DEFAULT_BLOB_BUFFER_LENGTH];
 	unsigned short length;
 
 	for (;;)
@@ -265,6 +272,182 @@ void  IscBlob::writeStringHexToBlob(char * sqldata, char *data, long length)
 	}
 	else
 		writeBlob(sqldata, data, length);
+}
+
+//
+// Block direct operations reading SQLGetData
+//
+extern signed long getVaxInteger(const unsigned char * ptr, signed short length);
+
+void IscBlob::directOpenBlob( char * sqldata )
+{
+	ISC_STATUS statusVector [20];
+	CFbDll * GDS = connection->GDS;
+	fetched = false;
+
+	if ( directBlobHandle )
+		GDS->_close_blob (statusVector, &directBlobHandle);
+
+	void *transactionHandle = connection->startTransaction();
+	int ret = GDS->_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
+							  &directBlobHandle, (ISC_QUAD*) sqldata, 0, NULL);
+	if (ret)
+		THROW_ISC_EXCEPTION (connection, statusVector);
+	
+	const char blob_info[] = { isc_info_blob_total_length };
+	unsigned char buffer[64];
+
+	ret = GDS->_blob_info ( statusVector, &directBlobHandle, sizeof(blob_info), (char*)blob_info, sizeof(buffer), (char*)buffer);
+	if (ret)
+		THROW_ISC_EXCEPTION (connection, statusVector);
+
+	unsigned char * p = buffer;
+
+	if ( *p++ == isc_info_blob_total_length )
+		directLength = getVaxInteger(p+2, (short)getVaxInteger(p, 2));
+	else
+		directLength = 0;
+	directBlob = true;
+}
+
+bool IscBlob::directFetchBlob( char * bufData, int lenData, int &lenRead )
+{
+	ISC_STATUS statusVector [20];
+	unsigned short length;
+	bool bEndData = false;
+
+	if ( lenData )
+	{
+		CFbDll * GDS = connection->GDS;
+		int post = lenData > DEFAULT_BLOB_BUFFER_LENGTH ? DEFAULT_BLOB_BUFFER_LENGTH : lenData;
+		char *data = bufData;
+		int ret;
+
+		while ( lenData )
+		{
+			if ( (ret = GDS->_get_segment (statusVector, &directBlobHandle, &length, post, data)) )
+			{
+				if (ret == isc_segstr_eof)
+				{
+					directCloseBlob();
+					bEndData = true;
+					break;
+				}
+				else if (ret != isc_segment)
+					THROW_ISC_EXCEPTION (connection, statusVector);
+			}
+			data += length;
+			lenData -= length;
+			if ( lenData < post )
+				post = lenData;
+		}
+
+		lenRead = data - bufData;
+	}
+	return bEndData;
+}
+
+bool IscBlob::directGetSegmentToHexStr( char * bufData, int lenData, int &lenRead )
+{
+	ISC_STATUS statusVector [20];
+	unsigned short length;
+	bool bEndData = false;
+
+	if ( lenData )
+	{
+		CFbDll * GDS = connection->GDS;
+		int post = lenData > DEFAULT_BLOB_BUFFER_LENGTH ? DEFAULT_BLOB_BUFFER_LENGTH : lenData;
+		char *data = bufData;
+		int ret;
+
+		while ( lenData )
+		{
+			if ( (ret = GDS->_get_segment (statusVector, &directBlobHandle, &length, post, data)) )
+			{
+				if (ret == isc_segstr_eof)
+				{
+					directCloseBlob();
+					bEndData = true;
+					break;
+				}
+				else if (ret != isc_segment)
+					THROW_ISC_EXCEPTION (connection, statusVector);
+			}
+			
+			short *address = (short*)data + length - 1;
+			unsigned char *end = (unsigned char *)data + length - 1;
+
+			data += length*2;
+			lenData -= length;
+			if ( lenData < post )
+				post = lenData;
+
+			while( length-- )
+				*address-- = conwBinToHexStr[*end--];
+		}
+
+		lenRead = data - bufData;
+	}
+	return bEndData;
+}
+
+void IscBlob::directCloseBlob()
+{
+	if ( directBlobHandle )
+	{
+		ISC_STATUS statusVector [20];
+		connection->GDS->_close_blob (statusVector, &directBlobHandle);
+		directBlobHandle = NULL;
+	}
+	fetched = true;
+	directBlob = false;
+}
+
+//
+// Block direct operations at record SQLPutData 
+//
+void IscBlob::directCreateBlob( char * sqldata )
+{
+	ISC_STATUS statusVector [20];
+	CFbDll * GDS = connection->GDS;
+
+	if ( directBlobHandle )
+		GDS->_close_blob (statusVector, &directBlobHandle);
+
+	void *transactionHandle = connection->startTransaction();
+	GDS->_create_blob2 ( statusVector, 
+					  &connection->databaseHandle,
+					  &transactionHandle,
+					  &directBlobHandle,
+					  (ISC_QUAD*) sqldata,
+					  0, NULL );
+
+	if ( statusVector [1] )
+		THROW_ISC_EXCEPTION (connection, statusVector);
+}
+
+void IscBlob::directWriteBlob( char *data, long length )
+{
+	ISC_STATUS statusVector [20];
+	CFbDll * GDS = connection->GDS;
+
+	int post = DEFAULT_BLOB_BUFFER_LENGTH;
+
+	while ( length > post )
+	{
+		GDS->_put_segment ( statusVector, &directBlobHandle, post, data);
+		if ( statusVector [1] )
+			THROW_ISC_EXCEPTION ( connection, statusVector );
+		data += post;
+		length -= post;
+	}
+
+	if ( length > 0 )
+	{
+		GDS->_put_segment ( statusVector, &directBlobHandle, (unsigned short)length, data);
+		if ( statusVector [1] )
+			THROW_ISC_EXCEPTION (connection, statusVector);
+	}
 }
 
 }; // end namespace IscDbcLibrary

@@ -55,9 +55,18 @@ public:
 	IscBlob(IscConnection *connect, XSQLVAR *var);
 	~IscBlob();
 
+	void directCreateBlob( char * sqldata );
+	void directOpenBlob(char * sqldata);
+	bool directFetchBlob(char *data, int length, int &lengthRead);
+	bool directGetSegmentToHexStr( char * bufData, int lenData, int &lenRead );
+	void directWriteBlob( char *data, long length );
+	void directCloseBlob();
+
 	IscConnection	*connection;
 	ISC_QUAD		blobId;
+	isc_blob_handle directBlobHandle;
 	bool			fetched;
+	bool			directBlob;
 };
 
 }; // end namespace IscDbcLibrary

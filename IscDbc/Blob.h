@@ -29,6 +29,12 @@ public:
 	virtual void	writeStreamHexToBlob(char * sqldata) = 0;
 	virtual void	writeBlob(char * sqldata, char *data, long length) = 0;
 	virtual void	writeStringHexToBlob(char * sqldata, char *data, long length) = 0;
+	virtual void	directCreateBlob( char * sqldata ) = 0;
+	virtual void	directOpenBlob(char * sqldata) = 0;
+	virtual bool	directFetchBlob(char *data, int length, int &lengthRead) = 0;
+	virtual bool	directGetSegmentToHexStr( char * bufData, int lenData, int &lenRead ) = 0;
+	virtual void	directWriteBlob( char *data, long length ) = 0;
+	virtual void	directCloseBlob() = 0;
 
 	virtual void	bind(Connection *connect, char * sqldata) = 0;
 	virtual void	attach(char * pointBlob, bool fetched, bool clear) = 0;
