@@ -58,7 +58,7 @@ public:
 		impRecord = imp;
 		appRecord = app;
 	}
-	void Remove()
+	void remove()
 	{ 
 		column = 0; 
 		impRecord = NULL;
@@ -72,8 +72,16 @@ public:
 		return  *this;
 	}
 };
-typedef MList<CBindColumn> ListBindColumn;
 
+class CBindColumnComparator
+{
+public:
+	static int compare(const CBindColumn *a, const CBindColumn *b) 
+	{
+	    return a->column - b->column;
+	}
+};
+typedef MList<CBindColumn,CBindColumnComparator> ListBindColumn;
 
 class OdbcDesc : public OdbcObject  
 {

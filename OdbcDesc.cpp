@@ -150,7 +150,7 @@ OdbcDesc::~OdbcDesc()
 		connection->descriptorDeleted (this);
 
 	removeRecords();
-	
+
 	delete convert;
 	delete listBind;
 }
@@ -210,17 +210,12 @@ int OdbcDesc::setConvFn(int recNumber, DescRecord * recordTo)
 	return convert->isIdentity() && recNumber;
 }
 
-static long fnCmpInt(CBindColumn * a, CBindColumn * b)
-{
-	return a->column-b->column;
-}
-
 void OdbcDesc::addBindColumn(int recNumber, DescRecord * recordApp)
 {
 	DescRecord *recordImp = getDescRecord(recNumber);
 	CBindColumn bindCol(recNumber,recordImp,recordApp);
 
-	int j = listBind->SearchAndInsert(&bindCol,(long (*)(const void *,const void *))fnCmpInt);
+	int j = listBind->SearchAndInsert(&bindCol);
 	if( j < 0 )
 		(*listBind)[-j-1] = bindCol;
 }
@@ -231,7 +226,7 @@ void OdbcDesc::delBindColumn(int recNumber)
 
 void OdbcDesc::delAllBindColumn()
 {
-	listBind->OnRemoveAll();
+	listBind->removeAll();
 }
 
 void OdbcDesc::returnData()

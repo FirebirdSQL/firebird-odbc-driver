@@ -27,302 +27,195 @@
 
 #include <stdlib.h>
 
-template <class T>
+// Template for default value comparsion
+template <typename T>
+class DefaultComparator 
+{
+public:
+	static int compare(const T *a, const T *b) 
+	{
+	    return 1;
+	}
+};
+
+template <class T, typename Cmp = DefaultComparator<T> >
 class MList
 {
 private:
-	T	 	 *	m_Root, // Head list
-			 *	pActiv; // active list node
-	long		m_nCount;	// count node
-	char		bOk;
-	long		m_nKolStartKesh; 
-	long		m_nKolKesh;		 
-	long		m_nPozActiv;
+	T	 	*ptRoot, // Head list
+			*ptActiveNode; // active list node
+	int		count;	// count node
+	char	bOk;
+	
+	const int	diffCache;
+	int		numberStartCache;
+	int		countCache;		 
+	int		rowActive;
+
 private:
 	void OnInitList()
 	{
-		bOk=false;
-		m_nCount = 0;
-		m_nKolKesh=m_nKolStartKesh;m_nPozActiv=0;pActiv=NULL;
-		m_Root=(T*)calloc(1,m_nKolKesh * sizeof(T));
-		if(m_Root)
-			bOk=true;
+		count = 0;
+		countCache = numberStartCache;
+		rowActive = 0;
+		ptActiveNode = NULL;
+		ptRoot = (T*)calloc(1, countCache * sizeof(T));
+		if ( ptRoot )
+			bOk = true;
+		else
+			bOk = false;
 	}
-protected:
-	void SetActivItem(int nPoz)
-	{
-		m_nPozActiv=nPoz;
-		pActiv=&m_Root[nPoz]; // active list node
-	}
+
 public:
-	MList(T &t)
+	MList(): diffCache( 50 )
 	{
-		m_nKolStartKesh = 20;
-		OnInitList();
-		Attach(t);
-	}
-	MList()
-	{
-		m_nKolStartKesh = 50;
+		numberStartCache = diffCache;
 		OnInitList();
 	}
-	MList(long nCountKesh)
+
+	void removeAll()
 	{
-		m_nKolStartKesh = nCountKesh;
+		clear();
 		OnInitList();
 	}
-	void OnRemoveAll()
-	{
-		OnDelete();
-		OnInitList();
-	}
-	void OnDelete();
+
 	virtual ~MList()
 	{
-		OnDelete();
+		clear();
 	}
-	char OnReinit(int nCneckCount = 0)
+
+	char reInit(int checkCount = 0)
 	{
-		if( bOk == false )
+		if ( bOk == false )
 			return false;
 
-		if ( nCneckCount && nCneckCount < m_nKolKesh )
+		if ( checkCount && checkCount < countCache )
 			return true;
 
 		char bRez=false;
 		T * tmp;
 
-		if( nCneckCount > m_nKolKesh + 50 )
-			nCneckCount += 50;
+		if ( checkCount > countCache + diffCache )
+			checkCount += diffCache;
 		else
-			nCneckCount = m_nKolKesh + 50;
+			checkCount = countCache + diffCache;
 
-		tmp=(T*)realloc(m_Root,nCneckCount * sizeof(T));
-		if(tmp)
+		tmp = (T*)realloc(ptRoot, checkCount * sizeof(T));
+		if ( tmp )
 		{
-			m_nKolKesh = nCneckCount;
-			m_Root=tmp;
+			countCache = checkCount;
+			ptRoot=tmp;
 			bRez=true;
 		}
 		return bRez;
 	}
-	T & operator [](int nPoz){ return  m_Root[nPoz];}
-	T & operator ()(int nPoz)
+	
+	T & operator [](int pos){ return  ptRoot[pos];}
+	T & operator ()(int pos)
 	{ 
-		OnReinit(nPoz);
-		return  m_Root[nPoz];
+		reInit(pos);
+		return  ptRoot[pos];
 	}
-	T & GetNode(int nPoz){ return  m_Root[nPoz];}
+
 	void operator =(MList &Lst)
 	{
-		if(Lst.GetCount()==0)
+		if ( !Lst.GetCount() )
 			return;
-		OnDelete();
-		m_Root=(T*)calloc(1,Lst.m_nKolKesh * sizeof(T));
-		if(m_Root)
+
+		clear();
+		ptRoot=(T*)calloc(1,Lst.countCache * sizeof(T));
+		if ( ptRoot )
 		{
-			bOk=true;
-			m_nCount=Lst.m_nCount;
-			m_nKolKesh=Lst.m_nKolKesh;
-			m_nKolStartKesh=Lst.m_nKolStartKesh;
-			memcpy(m_Root,Lst.m_Root,sizeof(T)*m_nCount);
+			bOk = true;
+			count = Lst.count;
+			countCache = Lst.countCache;
+			numberStartCache = Lst.numberStartCache;
+			memcpy(ptRoot,Lst.ptRoot,sizeof(T)*count);
 		}
 		else
 			bOk=false;
 	}
-	char OnAttach(MList &Lst)
-	{
-		if(Lst.GetCount()==0)
-			return false;
-
-		OnDelete();
-		m_Root=Lst.m_Root;
-		m_nCount=Lst.m_nCount;
-		m_nKolKesh=Lst.m_nKolKesh;
-		m_nKolStartKesh=Lst.m_nKolStartKesh;
-		Lst.m_Root=NULL;
-		Lst.OnDelete();
-		return true;
-	}
-	void Serialize(char bSave,void * buf,long &nLen);
-	long GetSizeSerialize();
 	char GetSuccess(){ return bOk; }
-	T * GetRoot(){ return m_Root; }
-	int GetCount(){ return m_nCount; }
-	int GetSize() { return m_nCount * sizeof(T); }
-	T * GetActiv(){ return pActiv; }
-	int GetPozActiv(){ return m_nPozActiv; }
+	T * GetRoot(){ return ptRoot; }
+	int GetCount(){ return count; }
 
-	T *GetHeadPosition(int nStartPoz=0)
+	T *GetHeadPosition(int pos = 0)
 	{
-		if(m_nCount==0)return NULL;
-		if(nStartPoz<m_nCount)
+		if ( count == 0 )
+			return NULL;
+
+		if ( pos < count )
 		{
-			pActiv=&m_Root[nStartPoz];
-			m_nPozActiv=nStartPoz;
+			ptActiveNode = &ptRoot[pos];
+			rowActive = pos;
 		}
 		else
 		{
-			pActiv=m_Root;
-			m_nPozActiv=0;
+			ptActiveNode = ptRoot;
+			rowActive = 0;
 		}
-		return pActiv;
+		return ptActiveNode;
 	}
+	
 	T *GetNext()
 	{
-		if(m_nPozActiv+1>=m_nCount)return NULL;
-		pActiv=&m_Root[++m_nPozActiv];
-		return pActiv;
+		if ( rowActive + 1 >= count )
+			return NULL;
+
+		ptActiveNode = &ptRoot[++rowActive];
+		return ptActiveNode;
 	}
-	T *GetTailPosition()
+	
+	int SearchAndInsert(T * key)
 	{
-		if(m_nCount==0)return NULL;
-		pActiv=&m_Root[m_nCount-1];
-		m_nPozActiv=m_nCount-1;
-		return pActiv;
+		register int ret = 1, i, l = 0, u = count - 1;
+		int size = sizeof(T);
+		T * buf = ptRoot;
+
+		while ( u >= l )
+		{
+			i = (l+u) >> 1;
+			if(ret = Cmp::compare(key, &buf[i]), ret < 0)
+				u=i-1;
+			else if ( ret > 0 )
+				l=i+1;
+			else 
+				break;
+		}
+
+		if ( ret )
+		{
+			if( ret > 0 )i = l;
+			else i = u+1;
+
+			memmove(&buf[i+1],&buf[i],(count++-i)*size);
+			memset(&buf[i++],0,size);
+
+			if ( count == countCache )
+				reInit();
+
+			i=-i;
+		}
+
+		return i;
 	}
-	T *GetPrev()
+
+	void clear()
 	{
-		if(m_nPozActiv<1)return NULL;
-		pActiv=&m_Root[--m_nPozActiv];
-		return pActiv;
+		if ( ptRoot )
+		{
+			T * p = ptRoot;
+
+			for(int i=0; i < count; i++, p++)
+				p->remove();
+
+			free(ptRoot);
+			ptRoot = NULL;
+		}
+
+		count = 0; 
+		countCache = numberStartCache;
 	}
-	long SearchAndInsert(const void * klych,long (*Cmp)(const void *,const void *));
-	long Search(const void * klych,long (*Cmp)(const void *,const void *));
-	void DeleteAt(long poz);
-	void Add(const T &t);
-	void Attach(T &t);
-	void operator <<(T &t);
-	void operator +=(const T &t) { Add(t); }
 };
-
-template <class T>
-void MList<T>::OnDelete()
-{
-	if(m_Root)
-	{
-		T * p = m_Root;
-		for(long i=0;i<m_nCount;i++,p++)p->Remove();
-		free(m_Root);m_Root = NULL;
-	}
-	m_nCount = 0; m_nKolKesh=m_nKolStartKesh;
-}
-template <class T>
-void MList<T>::operator <<(T &t)
-{
-	Attach(t);
-}
-template <class T>
-void MList<T>::Attach(T &t)
-{
-	if(m_nCount==m_nKolKesh)OnReinit();
-	m_Root[m_nCount++] << t;
-}
-
-template <class T>
-void MList<T>::Add(const T &t)
-{
-	if(m_nCount==m_nKolKesh)OnReinit();
-	m_Root[m_nCount++]=t;
-}
-
-template <class T>
-long MList<T>::SearchAndInsert(const void * klych,long (*Cmp)(const void *,const void *))
-{
-	register long cmp=1,i,l=0,u=m_nCount-1;
-	long size = sizeof(T);
-	T * buf=m_Root;
-	while(u>=l)
-	{
-		i=(l+u)/2;
-		if(cmp=Cmp(klych,(const void*)&buf[i]),cmp<0)u=i-1;
-		else if (cmp>0)l=i+1;
-		else break;
-	}
-	if(cmp)
-	{
-		if(cmp>0)i=l;
-		else i=u+1;
-		memmove(&buf[i+1],&buf[i],(m_nCount-i)*size);
-		memset(&buf[i],0,size);
-		m_nCount++;i++;
-		if(m_nCount==m_nKolKesh)OnReinit();
-		i=-i;
-	}
-	return i;
-}
-
-template <class T>
-long MList<T>::Search(const void * klych,long (*Cmp)(const void *,const void *))
-{
-	register long cmp=1,i=0,l=0,u=m_nCount-1;
-	T * buf=m_Root;
-	while(u>=l)
-	{
-		i=(l+u)/2;
-		if(cmp=Cmp(klych,(const void*)&buf[i]),cmp<0)u=i-1;
-		else if (cmp>0)l=i+1;
-		else break;
-	}
-	if(cmp)i=-1;
-	return i;
-}
-template <class T>
-void MList<T>::DeleteAt(long poz)
-{
-	if(m_nCount==0)return;
-	if(poz == m_nCount-1)
-	{
-		memset(&m_Root[poz],0,sizeof(T));
-		m_nCount--;
-		return;
-	}
-	m_nCount--;
-	memmove(&m_Root[poz],&m_Root[poz+1],(m_nCount-poz)*sizeof(T));
-	memset(&m_Root[m_nCount],0,sizeof(T));
-}
-template <class T>
-long MList<T>::GetSizeSerialize()
-{
-	long siz=sizeof(long)*2;
-	if(m_Root!=NULL)
-		siz+=m_Root->GetSizeSerialize()*m_nCount;
-	return siz;
-}
-template <class T>
-void MList<T>::Serialize(char bSave,void * p,long &nLen)
-{
-	long sizeData;
-	char * buf=(char *)p;
-	char * pPointBufStart=buf;
-	long siz;
-	if(bSave)
-	{
-		siz=sizeof(m_nCount);memcpy(buf,&m_nCount,siz);buf+=siz;
-		if(m_Root!=NULL)sizeData=m_Root->GetSizeSerialize()*m_nCount;
-		else sizeData=0;
-		siz=sizeof(sizeData);memcpy(buf,&sizeData,siz);buf+=siz;
-	}
-	else
-	{
-		siz=sizeof(m_nCount);memcpy(&m_nCount,buf,siz);buf+=siz;
-		siz=sizeof(sizeData);memcpy(&sizeData,buf,siz);buf+=siz;
-		bOk=false;
-		m_nKolKesh=m_nCount+10;
-		m_nPozActiv=0;pActiv=NULL;
-		if(m_Root)farfree(m_Root);
-		m_Root=(T*)calloc(1,m_nKolKesh * sizeof(T));
-		if(m_Root)bOk=true;
-	}
-	nLen+=(long)(buf-pPointBufStart);
-	if(m_Root)
-	{
-		long len=0;
-		T * p = m_Root;
-		for(long i=0;i<m_nCount;i++,p++)
-			p->Serialize(bSave,(void*)buf,len);
-		nLen+=len;
-	}
-}
 
 #endif // !defined(_MLIST_H_)
