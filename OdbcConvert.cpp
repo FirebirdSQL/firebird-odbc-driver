@@ -838,7 +838,9 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 																								\
 	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
 																								\
-	C_TYPE_FROM valFrom = *(C_TYPE_FROM*)getAdressBindDataFrom((char*)from->dataPtr);			\
+	C_TYPE_FROM &valFrom = *(C_TYPE_FROM*)getAdressBindDataFrom((char*)from->dataPtr);			\
+	if ( to->scale )																			\
+		valFrom *= (C_TYPE_FROM)(QUAD)listScale[to->scale];										\
 	if ( valFrom < 0 )valFrom -= 0.5;															\
 	else valFrom += 0.5;																		\
 																								\
@@ -2080,7 +2082,7 @@ int OdbcConvert::transferStringToDateTime(DescRecord * from, DescRecord * to)
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 
 	int len = 0;
-	convertStringDataToServerStringData ( pointerFrom, len );
+	convertStringDateTimeToServerStringDateTime ( pointerFrom, len );
 
 	if ( !len )
 	{
@@ -2568,32 +2570,72 @@ void OdbcConvert::convertFloatToString(double value, char *string, int size, int
 	*length = len;
 }
 
-void OdbcConvert::convertStringDataToServerStringData(char * string, int &len)
+void OdbcConvert::convertStringDateTimeToServerStringDateTime (char *& string, int &len)
 {
-	char * pt, * ptTmp = string;
+	char * ptBeg = string;
 
-	if ( !ptTmp || !*ptTmp )
+	if ( !ptBeg || !*ptBeg )
 		return;
 
-	while( *ptTmp == ' ' ) ptTmp++;
+	while( *ptBeg == ' ' ) ptBeg++;
 
-	if( *ptTmp != '{' )
+	if( *ptBeg != '{' )
 		return;
 
-	pt = string;
+	while( *++ptBeg == ' ' );
 
-	while( *ptTmp && *ptTmp!='\'' ) ptTmp++;
-
-	if( *ptTmp!='\'' )
+	int offset, offsetPoint;
+	
+	if ( UPPER(*ptBeg) == 'D' )
+	{
+		offsetPoint = 0;
+		offset = 6; // for bad variant '99-1-1'
+	}
+	else if ( UPPER(*ptBeg) == 'T' )
+	{
+		++ptBeg;
+		if ( UPPER(*ptBeg) == 'S' )
+		{
+			offsetPoint = 19;
+			offset = 12; // for bad variant '99-1-1 0:0:0'
+		}
+		else
+		{
+			offsetPoint = 8;
+			offset = 5; // for bad variant '0:0:0'
+		}
+	}
+	else
 		return;
 
-	ptTmp++; // ch \'
+	while( *ptBeg && *ptBeg != '\'' ) ptBeg++;
 
-	while( *ptTmp && *ptTmp!='\'' )
-		*pt++ = *ptTmp++;
+	if( *ptBeg != '\'' )
+		return;
 
-	len = pt - string;
-	// validate end string check Server
+	// ASSERT ( ptBeg == '\'' );
+	char * ptEnd = ++ptBeg + offset;
+
+	while( *ptEnd && *ptEnd != '\'' ) ptEnd++;
+
+	if( *ptEnd != '\'' )
+		return;
+
+	len = ptEnd - ptBeg;
+
+	if ( offsetPoint )
+	{
+		ptEnd = ptBeg + offsetPoint;
+		if ( len > offsetPoint && *ptEnd == '.' )
+		{
+			int l = 5;
+			while ( l-- && *++ptEnd !='\'' );
+			len = ptEnd - ptBeg;
+		}
+	}
+
+	string = ptBeg;
+	// validate string check Server
 }
 
 void OdbcConvert::getFirstElementFromArrayString(char * string, char *& firstChar, int &len)

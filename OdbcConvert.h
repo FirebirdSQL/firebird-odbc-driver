@@ -52,7 +52,7 @@ private:
 	signed long encode_sql_time(SQLUSMALLINT hour, SQLUSMALLINT minute, SQLUSMALLINT second);
 	void decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMALLINT &minute, SQLUSMALLINT &second);
 	void convertFloatToString(double value, char *string, int size, int *length, int precision = 15, char POINT_DIV = '.');
-	void convertStringDataToServerStringData(char * string, int &len);
+	void convertStringDateTimeToServerStringDateTime (char *& string, int &len);
 	void getFirstElementFromArrayString(char * string, char *& firstChar, int &len);
 	void setHeadSqlVar ( DescRecord * to );
 

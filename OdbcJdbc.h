@@ -72,7 +72,11 @@ void logMsg (const char *msg);
 #define MIN(a,b)			((a < b) ? a : b)
 #define ABS(n)				(((n) >= 0) ? (n) : -(n))
 #define MASK(n)				(1 << (n))
-#define ROUNDUP(n,b)		((n + b - 1) & ~(b - 1))
+#define ISLOWER(c)			((c) >= 'a' && (c) <= 'z')
+#define ISUPPER(c)			((c) >= 'A' && (c) <= 'Z')
+#define ISDIGIT(c)			((c) >= '0' && (c) <= '9')
+#define UPPER(c)			((ISLOWER (c)) ? (c) - 'a' + 'A' : (c))
+#define ROUNDUP(n,b)		(((n) + (b) - 1) & ~((b) - 1))
 
 #define DRIVER_LOCKED_LEVEL_ENV         4
 #define DRIVER_LOCKED_LEVEL_CONNECT     3
