@@ -312,18 +312,17 @@ bool IscDatabaseMetaData::nullsAreSortedAtEnd()
 
 const char* IscDatabaseMetaData::getDatabaseServerName()
 	{
-	return "Firebird / InterBase(r) Server";
+	return "Firebird Server";
 	}
 
 const char* IscDatabaseMetaData::getDatabaseProductName()
 	{
-	return "Firebird / InterBase(r)";
+	return connection->attachment->databaseProductName;
 	}
 
 const char* IscDatabaseMetaData::getDatabaseProductVersion()
 	{
-	return "01.05.0000";
-//	return connection->attachment->serverVersion;
+	return connection->attachment->serverVersion;
 	}
 
 int IscDatabaseMetaData::getDatabasePageSize()

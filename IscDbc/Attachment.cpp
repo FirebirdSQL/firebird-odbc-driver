@@ -192,7 +192,45 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 				break;
 			
 			case isc_info_version:
-				serverVersion = JString (p + 2, p [1]);
+//				serverVersion = JString (p + 2, p [1]);
+				{
+					int level = 0;
+					int major = 0, minor = 0, version = 0;
+					char * beg = p + 2;
+					char * end = beg + p [1];
+					
+					while ( beg < end )
+					{
+						if ( *beg >= '0' && *beg <= '9' )
+						{
+							switch ( level++ )
+							{
+							case 1:
+								major = atoi(beg);
+								while( *++beg != '.' );
+								break;
+							case 2:
+								minor = atoi(beg);
+								while( *++beg != '.' );
+								break;
+							case 3:
+								while( *++beg != '.' );
+								break;
+							case 4:
+								version = atoi(beg);
+								while( *beg >= '0' && *beg <= '9' || *beg == ' ')
+									beg++;
+								if ( beg < end )
+									databaseProductName = JString( beg, end - beg );
+								beg = end;
+								break;
+							}
+						}
+						else
+							beg++;
+					}
+					serverVersion.Format("%02d.%02d.%04d",major,minor,version);
+				}
 				break;
 
 			case isc_info_page_size:

@@ -57,6 +57,7 @@ public:
 	JString		userAccess;
 	int			userType;
 	JString		serverVersion;
+	JString		databaseProductName;
 	int			pageSize;
 	int			serverBaseLevel;	
 	int			databaseDialect;
