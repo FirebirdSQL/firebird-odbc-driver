@@ -7,7 +7,7 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
 #ifdef _WIN32
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
+LANGUAGE 0x09, 0x01
 #pragma code_page(1252)
 #endif //_WIN32
 

@@ -18,7 +18,7 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 #ifdef _WIN32
-LANGUAGE 0x22, 0x1
+LANGUAGE 0x09, 0x01
 #pragma code_page(1252)
 #endif //_WIN32
 
