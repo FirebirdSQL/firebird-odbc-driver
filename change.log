@@ -5,6 +5,17 @@ Changes made to OdbcJdbc codebase
 !!  using the format below and then paste them into this document. 
 
 
+ *	2002-06-26	OdbcStatement.cpp
+ *				Added changes from C. G. Alvarez to provide 
+ *				better support for remote views.
+
+ *	2002-06-26	OdbcStatement::OdbcStatement
+ *				Initialised numberColumns in constructor (Roger Gammans)
+
+ *	2002-06-26	OdbcConnection::sqlGetInfo
+ *				Added call to clearErrors() at start of 
+ *				the method(Roger Gammans).
+
  *	2002-06-25	IscDatabaseMetaData.cpp
  *				C. G.Alvarez
  *				Implement getDatabaseServerName()

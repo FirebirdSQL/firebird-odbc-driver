@@ -20,6 +20,13 @@
  *
  *	Changes
  *
+ *	2002-06-26	OdbcStatement.cpp
+ *				Added changes from C. G. Alvarez to provide 
+ *				better support for remote views.
+ *
+ *	2002-06-26	OdbcStatement::OdbcStatement
+ *				Initialised numberColumns in constructor (Roger Gammans)
+ *
  *	2002-06-17	OdbcStatement::setParameter()
  *				Submitted by C. G. Alvarez
  *				Added code to handle returning strings that are not
@@ -130,8 +137,7 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	metaData = NULL;
 	cancel = false;
 	numberParameters = 0;
-//Added 2002-06-04 RM
-    parameterNeedData = -1;
+    parameterNeedData = -1;	//Added 2002-06-04 RM
     numberBindings = 0;
 	numberGetDataBindings = 0;	//added by RM
 	maxRows = 0;
@@ -144,12 +150,14 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	bindOffsetPtr = NULL;
 	rowStatusPtr = NULL;
 	paramsetSize = 0;
+	numberColumns = 0;	//added by RG
 	paramsProcessedPtr = NULL;
 	currency = SQL_CONCUR_READ_ONLY;
 	cursorType = SQL_CURSOR_FORWARD_ONLY;
 	cursorName.Format ("cursor%d", statementNumber);
 	cursorScrollable = false;
 	asyncEnable = false;
+	updatePreparedResultSet = true;	//added by CGA
 }
 
 OdbcStatement::~OdbcStatement()
@@ -244,6 +252,10 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 		postError ("HY000", exception);
 		return SQL_ERROR;
 		}
+
+	//Added by CGA
+	if( updatePreparedResultSet )
+		setResultSet(statement->getResultSet());
 
 	return sqlSuccess();
 }
@@ -820,15 +832,6 @@ RETCODE OdbcStatement::sqlNumResultCols(SWORD * columns)
 {
 	clearErrors();
 
-	if (!resultSet ){
-		// Contributed by B. Schulte
-		// if the resultSet does not exist, execute it, to get a valid resultSet
-		// Foxpro calls this function to get all column-descriptions for its
-		// remote-views. 
-		// This fixes the bug : ' I can't edit my remote-views in Visial FoxPro'
-		this->executeStatement();
-	}
-	
 	if (resultSet)
 		try
 			{
@@ -921,8 +924,8 @@ RETCODE OdbcStatement::sqlExecute()
 
 	try
 		{
-//		executeStatement();
-//Amended to return RETCODE 2002-06-04 RM
+		if ( resultSet )
+			releaseResultSet();
 		retcode = executeStatement();
 		}
 	catch (SQLException& exception)
@@ -934,12 +937,15 @@ RETCODE OdbcStatement::sqlExecute()
 	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
 		return retcode;
 
-	return sqlSuccess();
+		return sqlSuccess();
 }
 
 RETCODE OdbcStatement::sqlExecuteDirect(SQLCHAR * sql, int sqlLength)
 {
+	updatePreparedResultSet = false;
 	int retcode = sqlPrepare (sql, sqlLength);
+	updatePreparedResultSet = true;
+
 
 	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
 		return retcode;

@@ -18,6 +18,9 @@
  *  All Rights Reserved.
  *
  *
+ *	2002-06-26	OdbcConnection::sqlGetInfo
+ *				Added call to clearErrors() at start of 
+ *				the method(Roger Gammans).
  *
  *	2002-06-25  OdbcConnection.cpp  
  *				Contributed by C. G. Alvarez
@@ -492,6 +495,9 @@ RETCODE OdbcConnection::sqlDisconnect()
 
 RETCODE OdbcConnection::sqlGetInfo(UWORD type, PTR ptr, int maxLength, SWORD * actualLength)
 {
+
+	clearErrors();
+
 #ifdef DEBUG
 	char temp [256];
 #endif

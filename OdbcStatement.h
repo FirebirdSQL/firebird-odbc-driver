@@ -150,6 +150,7 @@ public:
 	bool				asyncEnable;
 	int					rowNumber;
 	int					maxRows;
+	bool				updatePreparedResultSet;
 };
 
 #endif // !defined(AFX_ODBCSTATEMENT_H__ED260D97_1BC4_11D4_98DF_0000C01D2301__INCLUDED_)
