@@ -1248,11 +1248,8 @@ RETCODE OdbcStatement::sqlFreeStmt(int option)
 void OdbcStatement::releaseBindings()
 {
 	applicationRowDescriptor->removeRecords();
-	implementationRowDescriptor->removeRecords();
-	applicationParamDescriptor->removeRecords();
-	implementationParamDescriptor->removeRecords();
-	listBindIn->removeAll();
 	listBindOut->removeAll();
+	enFetch = NoneFetch;
 
 	if ( implementationGetDataDescriptor )
 	{
