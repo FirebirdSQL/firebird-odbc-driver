@@ -1,0 +1,81 @@
+#
+#DEBUG		= 1
+#
+COMPDIR		= D:\BC55
+#
+!include ../makefile.environ
+!include ../makefile.sources
+#
+!ifdef DEBUG
+TARGETDIR		= Debug
+!else
+TARGETDIR		= Release
+!endif
+#
+BUILDDIR 		= $(TARGETDIR)\obj
+#
+COMP			= -n$(BUILDDIR) \
+			  -w- -a8 -VM -VF -jb -j1 -Hc -H=$(BUILDDIR)\bcc.csm \
+			  -DWIN32 -D_WINDOWS \
+			  -I.\ -I$(FBINCDIR) -I$(COMPDIR)\Include -I$(ISCDBCDIR) -I$(ODBCJDBCDIR)
+
+#COMP			= -n$(BUILDDIR) \
+#			  -w- -6 -a8 -H -H=$(BUILDDIR)\bcc.csm -tWM -lGn \
+#			  -DWIN32 -D_WINDOWS \
+#			  -I.\ -I$(FBINCDIR) -I$(COMPDIR)\Include -I$(ISCDBCDIR) -I$(ODBCJDBCDIR)
+#
+LD		= ilink32
+# -- -x -Tpd -j"$(COMPDIR)\lib"
+#LINKFLAGS	= -v- -Gi -m -L"$(COMPDIR)\lib"
+LINKFLAGS	= -Gn -Gi -Tpd -ad -L$(COMPDIR)\lib -x
+STARTUP		= c0d32.obj
+LIBRARIES	= import32.lib cw32mt.lib
+ISCDBCDLL       = $(TARGETDIR)\IscDbc.dll
+ODBCJDBCDLL     = $(TARGETDIR)\OdbcJdbc.dll
+
+!ifdef DEBUG
+COMP		= $(COMP) -v -N -x -xp -D_DEBUG -DDEBUG
+#COMP		= $(COMP) -Od -v -D_DEBUG
+!else
+COMP		= $(COMP) -DNDEBUG
+#COMP		= $(COMP) -O -Oi -OS -DNDEBUG
+!endif
+
+COMP		= $(COMP) -tWCR -lGn -tWM -q
+
+.cpp.obj :
+	@bcc32 $(COMP) -c $*.cpp
+
+ISCDBCLIB       = $(ISCDBCDLL:.dll=.lib)
+ISCDBCSRCBCC 	= $(ISCDBCSRC:/=\)
+ISCDBCDIRBCC 	= $(ISCDBCDIR:/=\)
+ODBCJDBCSRCBCC 	= $(ODBCJDBCSRC:/=\)
+ODBCJDBCDIRBCC 	= $(ODBCJDBCDIR:/=\)
+
+#ISCDBCDEFFILE	= 
+ISCDBCDEFFILE	= $(ISCDBCDIRBCC)\IscDbc.def
+ODBCJDBCDEFFILE	= $(ODBCJDBCDIRBCC)\OdbcJdbc.def
+
+all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL)
+
+# Silently creates the target and build directories
+createdirs :
+	-@if not exist $(TARGETDIR)\*.* md $(TARGETDIR) > nul
+	-@if not exist $(BUILDDIR)\*.* md $(BUILDDIR) > nul
+
+# Silently cleanup and deletes the target and build directories
+clean :
+	-@if exist $(BUILDDIR)\*.* rm /f /r $(TARGETDIR)
+
+IscDbc : $(ISCDBCDLL)
+
+OdbcJdbc : $(ODBCJDBCDLL)
+
+# Build the library from the object modules
+
+$(ISCDBCDLL) : $(ISCDBCSRCBCC:.cpp=.obj)
+	$(LD) $(LINKFLAGS) $(STARTUP) $(**:$(ISCDBCDIRBCC)=$(BUILDDIR)) ,$(ISCDBCDLL),,$(LIBRARIES),,
+#	$(LD) $(LINKFLAGS) $(STARTUP) $(**:$(ISCDBCDIRBCC)=$(BUILDDIR)) ,$(ISCDBCDLL),,$(LIBRARIES),$(ISCDBCDEFFILE),
+
+$(ODBCJDBCDLL) : $(ODBCJDBCSRCBCC:.cpp=.obj)
+	$(LD) $(LINKFLAGS) $(STARTUP) $(BUILDDIR)\JString.obj $(**:$(ODBCJDBCDIRBCC)=$(BUILDDIR)) ,$(ODBCJDBCDLL),,$(LIBRARIES) $(ISCDBCLIB) odbccp32.lib ,$(ODBCJDBCDEFFILE),
