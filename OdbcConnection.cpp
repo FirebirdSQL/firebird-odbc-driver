@@ -462,8 +462,11 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 		r = appendString (r, charset);
 	}
 
-	if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
-		postError ("01004", "String data, right truncated");
+	if ( outConnectBuffer && connectBufferLength )
+	{
+		if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
+			postError ("01004", "String data, right truncated");
+	}
 
 #ifdef _WIN32
 	if ( account.IsEmpty() || password.IsEmpty() )

@@ -71,6 +71,16 @@ public:
 	bool isIdentity(){ return bIdentity; }
 	SQLINTEGER &getBindOffsetPtrTo() { return *bindOffsetPtrTo; }
 
+// TinyInt
+	int convTinyIntToTinyInt(DescRecord * from, DescRecord * to);
+	int convTinyIntToShort(DescRecord * from, DescRecord * to);
+	int convTinyIntToLong(DescRecord * from, DescRecord * to);
+	int convTinyIntToFloat(DescRecord * from, DescRecord * to);
+	int convTinyIntToDouble(DescRecord * from, DescRecord * to);
+	int convTinyIntToBigint(DescRecord * from, DescRecord * to);
+	int convTinyIntToString(DescRecord * from, DescRecord * to);
+	int convTinyIntToTagNumeric(DescRecord * from, DescRecord * to);
+
 // Short
 	int convShortToShort(DescRecord * from, DescRecord * to);
 	int convShortToLong(DescRecord * from, DescRecord * to);
@@ -160,6 +170,7 @@ public:
 
 // Text
 	int convStringToLong(DescRecord * from, DescRecord * to);
+	int convStringToTinyInt(DescRecord * from, DescRecord * to);
 	int convStringToShort(DescRecord * from, DescRecord * to);
 	int convStringToFloat(DescRecord * from, DescRecord * to);
 	int convStringToDouble(DescRecord * from, DescRecord * to);
@@ -168,6 +179,7 @@ public:
 	int convStringToVarString(DescRecord * from, DescRecord * to);
 	int convStringToBlob(DescRecord * from, DescRecord * to);
 
+	int transferStringToTinyInt(DescRecord * from, DescRecord * to);
 	int transferStringToDateTime(DescRecord * from, DescRecord * to);
 	int transferStringToAllowedType(DescRecord * from, DescRecord * to);
 	int convStreamHexStringToBlob(DescRecord * from, DescRecord * to);

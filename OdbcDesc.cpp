@@ -1232,6 +1232,9 @@ int OdbcDesc::getConciseType(int type)
 		case JDBC_VARCHAR:
 			return SQL_C_CHAR;
 
+		case JDBC_TINYINT:
+			return SQL_C_STINYINT;
+
 		case JDBC_SMALLINT:
 			return SQL_C_SSHORT;
 
@@ -1286,6 +1289,9 @@ int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType, int bufferLength)
 	case JDBC_NUMERIC:
 	case JDBC_ARRAY:
 		cType = SQL_C_CHAR;
+		break;
+	case JDBC_TINYINT:
+		cType = SQL_C_STINYINT;
 		break;
 	case JDBC_SMALLINT:
 		cType = SQL_C_SSHORT;
@@ -1348,6 +1354,11 @@ int OdbcDesc::getConciseSize(int type, int length)
 	{
 	case SQL_C_CHAR:
 		return length;
+
+	case SQL_C_TINYINT:
+	case SQL_C_STINYINT:
+	case SQL_C_UTINYINT:
+		return sizeof(char);
 
 	case SQL_C_SHORT:
 	case SQL_C_SSHORT:

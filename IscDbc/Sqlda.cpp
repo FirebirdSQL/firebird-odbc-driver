@@ -616,6 +616,11 @@ int Sqlda::getColumnDisplaySize(int index)
 
 	switch (var->sqltype & ~1)
 	{
+	case SQL_TEXT:
+		if ( var->sqllen == 1 )
+			return MAX_TINYINT_LENGTH + 1;
+		return var->sqllen;
+
 	case SQL_SHORT:
 		if ( var->sqlscale < 0 )
 			return MAX_NUMERIC_LENGTH + 2;
@@ -676,6 +681,11 @@ int Sqlda::getPrecision(int index)
 
 	switch (var->sqltype & ~1)
 	{
+	case SQL_TEXT:
+		if ( var->sqllen == 1 )
+			return MAX_TINYINT_LENGTH;
+		return var->sqllen;
+
 	case SQL_SHORT:
 		if ( var->sqlscale < 0 )
 			return MAX_NUMERIC_LENGTH;
@@ -743,16 +753,12 @@ bool Sqlda::isNullable(int index)
 
 int Sqlda::getColumnType(int index, int &realSqlType)
 {
-	ORGSQLVAR *var = orgVar(index);
-
-	return getSqlType (var->sqltype, var->sqlsubtype, var->sqlscale, realSqlType);
+	return getSqlType ( orgVar(index), realSqlType );
 }
 
 const char* Sqlda::getColumnTypeName(int index)
 {
-	ORGSQLVAR *var = orgVar(index);
-
-	return getSqlTypeName (var->sqltype, var->sqlsubtype, var->sqlscale);
+	return getSqlTypeName ( orgVar(index) );
 }
 
 short Sqlda::getSubType(int index)
@@ -760,11 +766,13 @@ short Sqlda::getSubType(int index)
 	return orgsqlvar[index - 1].sqlsubtype;
 }
 
-int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
+int Sqlda::getSqlType(ORGSQLVAR *var, int &realSqlType)
 {
-	switch (iscType & ~1)
+	switch (var->sqltype & ~1)
 	{
 	case SQL_TEXT:
+		if ( var->sqllen == 1 )
+			return (realSqlType = JDBC_TINYINT);
 		return (realSqlType = JDBC_CHAR);
 
 	case SQL_VARYING:
@@ -772,9 +780,9 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
 
 	case SQL_SHORT:
 		realSqlType = JDBC_SMALLINT;
-		if ( sqlScale < 0 )
+		if ( var->sqlscale < 0 )
 		{
-			if(subType == 2)
+			if(var->sqlsubtype == 2)
 				return JDBC_DECIMAL;
 			else
 				return JDBC_NUMERIC;
@@ -783,9 +791,9 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
 
 	case SQL_LONG:
 		realSqlType = JDBC_INTEGER;
-		if ( sqlScale < 0 )
+		if ( var->sqlscale < 0 )
 		{
-			if(subType == 2)
+			if(var->sqlsubtype == 2)
 				return JDBC_DECIMAL;
 			else
 				return JDBC_NUMERIC;
@@ -797,9 +805,9 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
 
 	case SQL_DOUBLE:
 		realSqlType = JDBC_DOUBLE;
-		if ( sqlScale < 0 )
+		if ( var->sqlscale < 0 )
 		{
-			if(subType == 2)
+			if(var->sqlsubtype == 2)
 				return JDBC_DECIMAL;
 			else
 				return JDBC_NUMERIC;
@@ -811,9 +819,9 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
 
 	case SQL_INT64:
 		realSqlType = JDBC_BIGINT;
-		if ( sqlScale < 0 )
+		if ( var->sqlscale < 0 )
 		{
-			if(subType == 2)
+			if(var->sqlsubtype == 2)
 				return JDBC_DECIMAL;
 			else
 				return JDBC_NUMERIC;
@@ -821,7 +829,7 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
 		return realSqlType;
 
 	case SQL_BLOB:
-		if (subType == 1)
+		if (var->sqlsubtype == 1)
 			return (realSqlType = JDBC_LONGVARCHAR);
 		return (realSqlType = JDBC_LONGVARBINARY);
 
@@ -841,41 +849,35 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
 	return (realSqlType = 0);
 }
 
-const char* Sqlda::getSqlTypeName(int iscType, int subType, int sqlScale)
+const char* Sqlda::getSqlTypeName ( ORGSQLVAR *var )
 {
-	switch (iscType & ~1)
+	switch (var->sqltype & ~1)
 	{
 	case SQL_TEXT:
+		if ( var->sqllen == 1 )
+			return "TINYINT";
 		return "CHAR";
 
 	case SQL_VARYING:
 		return "VARCHAR";
 
 	case SQL_SHORT:
-		if ( sqlScale < 0 )
+		if ( var->sqlscale < 0 )
 		{
-			if(subType == 2)
-			{
+			if( var->sqlsubtype == 2)
 				return "DECIMAL";
-			}
 			else
-			{
 				return "NUMERIC";
-			}
 		}
 		return "SMALLINT";
 
 	case SQL_LONG:
-		if ( sqlScale < 0 )
+		if ( var->sqlscale < 0 )
 		{
-			if(subType == 2)
-			{
+			if(var->sqlsubtype == 2)
 				return "DECIMAL";
-			}
 			else
-			{
 				return "NUMERIC";
-			}
 		}
 		return "INTEGER";
 
@@ -884,16 +886,12 @@ const char* Sqlda::getSqlTypeName(int iscType, int subType, int sqlScale)
 
 	case SQL_D_FLOAT:
 	case SQL_DOUBLE:
-		if ( sqlScale < 0 )
+		if ( var->sqlscale < 0 )
 		{
-			if(subType == 2)
-			{
+			if(var->sqlsubtype == 2)
 				return "DECIMAL";
-			}
 			else
-			{
 				return "NUMERIC";
-			}
 		}
 		return "DOUBLE PRECISION";
 
@@ -901,21 +899,17 @@ const char* Sqlda::getSqlTypeName(int iscType, int subType, int sqlScale)
 		return "BIGINT";
 
 	case SQL_INT64:
-		if ( sqlScale < 0 )
+		if ( var->sqlscale < 0 )
 		{
-			if(subType == 2)
-			{
+			if(var->sqlsubtype == 2)
 				return "DECIMAL";
-			}
 			else
-			{
 				return "NUMERIC";
-			}
 		}
 		return "BIGINT";
 
 	case SQL_BLOB:
-		if (subType == 1)
+		if ( var->sqlsubtype == 1 )
 			return "LONG VARCHAR";
 		return "LONG VARBINARY";
 

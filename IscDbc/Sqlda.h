@@ -56,8 +56,8 @@ public:
 	void setArray (XSQLVAR *var, Value *value, IscConnection *connection);
 	void setValue (int slot, Value *value, IscConnection *connection);
 	const char* getTableName (int index);
-	static int getSqlType (int iscType, int subType, int sqlScale, int &realSqlType);
-	static const char* getSqlTypeName (int iscType, int subType, int sqlScale);
+	int getSqlType (ORGSQLVAR *var, int &realSqlType);
+	const char* getSqlTypeName (ORGSQLVAR *var);
 	bool isNullable (int index);
 	int getScale (int index);
 	int getPrecision (int index);

@@ -93,6 +93,7 @@ typedef unsigned __int64			UQUAD;
 #define MAX_VARCHAR_LENGTH		32765
 #define MAX_NUMERIC_LENGTH		18
 #define MAX_DECIMAL_LENGTH		18
+#define MAX_TINYINT_LENGTH		3
 #define MAX_SMALLINT_LENGTH		5
 #define MAX_INT_LENGTH			10
 #define MAX_FLOAT_LENGTH		24

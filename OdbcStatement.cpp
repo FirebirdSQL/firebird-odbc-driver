@@ -1522,10 +1522,10 @@ RETCODE OdbcStatement::sqlDescribeCol(int col,
 		setString (name, colName, nameSize, nameLength);
 		if (sqlType)
 			*sqlType = metaData->getColumnType (col, realSqlType);
-		if (scale)
-			*scale = metaData->getScale (col);
 		if (precision)
 			*precision = metaData->getPrecision (col);
+		if (scale)
+			*scale = metaData->getScale (col);
 		if (nullable)
 			*nullable = (metaData->isNullable (col)) ? SQL_NULLABLE : SQL_NO_NULLS;
 #ifdef DEBUG
@@ -1820,6 +1820,9 @@ RETCODE OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 				break;
 			 case SQL_BIT:
 				cType = SQL_C_BIT;
+				break;
+			 case SQL_TINYINT:
+				cType = SQL_C_STINYINT;
 				break;
 			 case SQL_SMALLINT:
 				cType = SQL_C_SSHORT;

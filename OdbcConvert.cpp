@@ -170,6 +170,48 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 
 	switch(from->conciseType)
 	{
+	case SQL_C_TINYINT:
+	case SQL_C_UTINYINT:
+	case SQL_C_STINYINT:
+		switch(to->conciseType)
+		{
+		case SQL_C_TINYINT:
+		case SQL_C_UTINYINT:
+		case SQL_C_STINYINT:
+			bIdentity = true;
+			return &OdbcConvert::convTinyIntToTinyInt;
+		case SQL_C_SHORT:
+		case SQL_C_USHORT:
+		case SQL_C_SSHORT:
+			bIdentity = true;
+			return &OdbcConvert::convTinyIntToShort;
+		case SQL_C_LONG:
+		case SQL_C_ULONG:
+		case SQL_C_SLONG:
+			return &OdbcConvert::convTinyIntToLong;
+		case SQL_C_FLOAT:
+			return &OdbcConvert::convTinyIntToFloat;
+		case SQL_C_DOUBLE:
+			return &OdbcConvert::convTinyIntToDouble;
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+			return &OdbcConvert::convTinyIntToBigint;
+		case SQL_C_CHAR:
+			return &OdbcConvert::convTinyIntToString;
+		case SQL_DECIMAL:
+		case SQL_C_NUMERIC:
+			return &OdbcConvert::convTinyIntToTagNumeric;
+		case SQL_C_BINARY:
+		case SQL_C_TYPE_DATE:
+		case SQL_C_DATE:
+		case SQL_C_TYPE_TIMESTAMP:
+		case SQL_C_TIMESTAMP:
+		case SQL_C_TYPE_TIME:
+		case SQL_C_TIME:
+			break;
+		}
+		break;
+
 	case SQL_C_SHORT:
 	case SQL_C_USHORT:
 	case SQL_C_SSHORT:
@@ -472,6 +514,15 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 					return &OdbcConvert::transferStringToAllowedType;
 				}
 				return &OdbcConvert::convStringToLong;
+			case SQL_C_TINYINT:
+			case SQL_C_UTINYINT:
+			case SQL_C_STINYINT:
+				if ( to->isIndicatorSqlDa )
+				{
+					to->headSqlVarPtr->setTypeText();
+					return &OdbcConvert::transferStringToTinyInt;
+				}
+				return &OdbcConvert::convStringToTinyInt;
 			case SQL_C_SHORT:
 			case SQL_C_USHORT:
 			case SQL_C_SSHORT:
@@ -830,6 +881,19 @@ int OdbcConvert::conv##TYPE_FROM##ToBinary(DescRecord * from, DescRecord * to)		
 																								\
 	return SQL_SUCCESS;																			\
 }																								\
+
+////////////////////////////////////////////////////////////////////////
+// TinyInt
+////////////////////////////////////////////////////////////////////////
+
+ODBCCONVERT_CONV(TinyInt,char,TinyInt,char);
+ODBCCONVERT_CONV(TinyInt,char,Short,short);
+ODBCCONVERT_CONV(TinyInt,char,Long,long);
+ODBCCONVERT_CONV(TinyInt,char,Float,float);
+ODBCCONVERT_CONV(TinyInt,char,Double,double);
+ODBCCONVERT_CONV(TinyInt,char,Bigint,QUAD);
+ODBCCONVERT_CONV_TO_STRING(TinyInt,char,3);
+ODBCCONVERT_CONVTAGNUMERIC(TinyInt,char);
 
 ////////////////////////////////////////////////////////////////////////
 // Short
@@ -1478,6 +1542,7 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 	return SQL_SUCCESS;																			\
 }																								\
 
+ODBCCONVERT_CONV_STRING_TO(String,TinyInt,char);
 ODBCCONVERT_CONV_STRING_TO(String,Short,short);
 ODBCCONVERT_CONV_STRING_TO(String,Long,long);
 ODBCCONVERT_CONV_STRING_TO(String,Float,float);
@@ -1627,10 +1692,59 @@ int OdbcConvert::convStreamToBlob(DescRecord * from, DescRecord * to)
 }
 
 // for use App to SqlDa
+int OdbcConvert::transferStringToTinyInt(DescRecord * from, DescRecord * to)
+{
+	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
+	SQLINTEGER * indicatorPointerFrom = (SQLINTEGER *)getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressBindIndTo((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL_SQLDA;
+
+	to->headSqlVarPtr->setSqlLen( 1 );
+
+	char * src = pointerFrom;
+	char * org = src;
+
+	if ( !from->data_at_exec )
+		to->headSqlVarPtr->setSqlData( pointerFrom );
+	else
+	{
+		if ( !to->isLocalDataPtr )
+			to->allocateLocalDataPtr();
+
+		to->headSqlVarPtr->setSqlData( to->localDataPtr );
+		org = to->localDataPtr;
+	}
+
+	bool minus = false;
+	int val = 0;
+
+	if ( *src == '-' )
+	{
+		src++;
+		minus = true;
+	}
+	
+	while ( *src )
+	{
+		val *= 10;
+		val += *src++ - '0';
+	}
+
+	if ( minus )
+		*org = (char)-val;
+	else
+		*org = (char)val;
+
+	*(short*)indicatorPointer = 0;
+
+	return SQL_SUCCESS;																			\
+}
+
+// for use App to SqlDa
 int OdbcConvert::transferStringToDateTime(DescRecord * from, DescRecord * to)
 {
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
-	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
 	SQLINTEGER * indicatorPointerFrom = (SQLINTEGER *)getAdressBindIndFrom((char*)from->indicatorPtr);
 	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressBindIndTo((char*)to->indicatorPtr);
 
@@ -1664,7 +1778,6 @@ int OdbcConvert::transferStringToDateTime(DescRecord * from, DescRecord * to)
 int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 {
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
-	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
 	SQLINTEGER * indicatorPointerFrom = (SQLINTEGER *)getAdressBindIndFrom((char*)from->indicatorPtr);
 	SQLINTEGER * indicatorPointer = (SQLINTEGER *)getAdressBindIndTo((char*)to->indicatorPtr);
 

@@ -63,10 +63,18 @@ void IscSqlType::getType(int blrType, int subType, int len, int bufferLen, int d
 		{
 		case blr_text:
 		case blr_text2:
+			if ( length == 1 )
+			{
+			type = JDBC_TINYINT;
+			typeName = "TINYINT";
+			bufferLength = length;
+			length = MAX_TINYINT_LENGTH;
+			}
+			else
 			{
 			type = JDBC_CHAR;
 			typeName = "CHAR";
-			bufferLength = length; 
+			bufferLength = length;
 			}
 			break;
 
