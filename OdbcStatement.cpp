@@ -20,6 +20,11 @@
  *
  *	Changes
  *
+ *	2002-07-08	OdbcStatement.cpp
+ *				Added changes from C. G. Alvarez to return
+ *				SQL_DESC_UNNAMED and SQL_DESC_BASE_TABLE_NAME
+ *				from sqlColAtrributes()
+ *
  *	2002-06-26	OdbcStatement.cpp
  *				Added changes from C. G. Alvarez to provide 
  *				better support for remote views.
@@ -1170,8 +1175,8 @@ RETCODE OdbcStatement::setParameter(Binding * binding, int parameter)
 
                     default:                       
                         statement->setString (parameter, (char*)binding->pointer, *binding->indicatorPointer );
-                        break;
                 }
+				break;
 
 
 			case SQL_C_SHORT:
@@ -1923,6 +1928,7 @@ RETCODE OdbcStatement::sqlColAttributes(int column, int descType, SQLPOINTER buf
 				value = metaData->getColumnType (column);
 				break;
 
+		    case SQL_DESC_BASE_TABLE_NAME:
 			case SQL_COLUMN_TABLE_NAME:
 				string = metaData->getTableName (column);
 				break;
@@ -1933,6 +1939,10 @@ RETCODE OdbcStatement::sqlColAttributes(int column, int descType, SQLPOINTER buf
 
 			case SQL_COLUMN_QUALIFIER_NAME:
 				string = metaData->getCatalogName (column);
+				break;
+
+			case SQL_DESC_UNNAMED:
+		        value = (metaData->getColumnName (column)) ? SQL_NAMED : SQL_UNNAMED;
 				break;
 
 			/***

@@ -83,8 +83,8 @@ LINK32=link.exe
 # Begin Special Build Tool
 TargetPath=\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\OdbcJdbcSetup.dll
 SOURCE="$(InputPath)"
-PostBuild_Desc=Registering successfully built driver
-PostBuild_Cmds=regsvr32 $(TargetPath)
+PostBuild_Desc=Registering successfully built driver...
+PostBuild_Cmds=regsvr32 /s $(TargetPath)
 # End Special Build Tool
 
 !ENDIF 

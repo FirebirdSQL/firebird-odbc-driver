@@ -4,6 +4,11 @@ Changes made to OdbcJdbc codebase
 !!  First, document the changes in the source code header template 
 !!  using the format below and then paste them into this document. 
 
+ *	2002-07-08	OdbcStatement.cpp
+ *				Added changes from C. G. Alvarez to return
+ *				SQL_DESC_UNNAMED and SQL_DESC_BASE_TABLE_NAME
+ *				from sqlColAtrributes()
+
  *	2002-07-06	OdbcJdbcSetup.dsp
  *				Added post-build step to automatically register 
  *				newly built driver if debug build is successful. (PR)

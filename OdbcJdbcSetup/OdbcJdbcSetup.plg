@@ -7,7 +7,7 @@
 </h3>
 <h3>Command Lines</h3>
 Creating command line "rc.exe /l 0x409 /fo"../debug/IscDbc.res" /d "_DEBUG" "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\IscDbc\IscDbc.rc"" 
-Creating temporary file "w:\TEMP\RSP50.tmp" with contents
+Creating temporary file "w:\TEMP\RSP134.tmp" with contents
 [
 /nologo /MTd /W3 /Gm /GX /Zi /Od /I "c:\Program Files\Interbase\SDK\include" /I ".." /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FR"../debug/" /Fp"../debug/IscDbc.pch" /YX /Fo"../debug/" /Fd"../debug/" /FD /c 
 "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\IscDbc\AsciiBlob.cpp"
@@ -50,8 +50,8 @@ Creating temporary file "w:\TEMP\RSP50.tmp" with contents
 "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\IscDbc\Value.cpp"
 "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\IscDbc\Values.cpp"
 ]
-Creating command line "cl.exe @w:\TEMP\RSP50.tmp" 
-Creating temporary file "w:\TEMP\RSP51.tmp" with contents
+Creating command line "cl.exe @w:\TEMP\RSP134.tmp" 
+Creating temporary file "w:\TEMP\RSP135.tmp" with contents
 [
 gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"../debug/IscDbc.pdb" /debug /machine:I386 /def:".\IscDbc.def" /out:"../debug/IscDbc.dll" /implib:"../debug/IscDbc.lib" /pdbtype:sept /libpath:"c:\Program Files\Interbase\SDK\lib_ms" 
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\AsciiBlob.obj
@@ -95,7 +95,7 @@ gds32_ms.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"../debug/Isc
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\Values.obj
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\IscDbc.res
 ]
-Creating command line "link.exe @w:\TEMP\RSP51.tmp"
+Creating command line "link.exe @w:\TEMP\RSP135.tmp"
 <h3>Output Window</h3>
 Compiling resources...
 Compiling...
@@ -140,7 +140,7 @@ Value.cpp
 Values.cpp
 Linking...
    Creating library ../debug/IscDbc.lib and object ../debug/IscDbc.exp
-Creating temporary file "w:\TEMP\RSP55.tmp" with contents
+Creating temporary file "w:\TEMP\RSP139.tmp" with contents
 [
 /nologo /o"../debug/IscDbc.bsc" 
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\AsciiBlob.sbr
@@ -182,7 +182,7 @@ Creating temporary file "w:\TEMP\RSP55.tmp" with contents
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\TypesResultSet.sbr
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\Value.sbr
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\Values.sbr]
-Creating command line "bscmake.exe @w:\TEMP\RSP55.tmp"
+Creating command line "bscmake.exe @w:\TEMP\RSP139.tmp"
 Creating browse info file...
 <h3>Output Window</h3>
 <h3>
@@ -190,7 +190,7 @@ Creating browse info file...
 </h3>
 <h3>Command Lines</h3>
 Creating command line "rc.exe /l 0x409 /fo"Debug/ODbcJdbc.res" /d "_DEBUG" "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\ODbcJdbc.rc"" 
-Creating temporary file "w:\TEMP\RSP56.tmp" with contents
+Creating temporary file "w:\TEMP\RSP13A.tmp" with contents
 [
 /nologo /MTd /W3 /Gm /GX /Zi /Od /I "IscDbc" /I "c:\program files\Interbase\SDK\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "DEBUG" /D "LOGGING" /FR"Debug/" /Fp"Debug/OdbcJdbc.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /c 
 "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\DescRecord.cpp"
@@ -204,8 +204,8 @@ Creating temporary file "w:\TEMP\RSP56.tmp" with contents
 "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\OdbcObject.cpp"
 "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\OdbcStatement.cpp"
 ]
-Creating command line "cl.exe @w:\TEMP\RSP56.tmp" 
-Creating temporary file "w:\TEMP\RSP57.tmp" with contents
+Creating command line "cl.exe @w:\TEMP\RSP13A.tmp" 
+Creating temporary file "w:\TEMP\RSP13B.tmp" with contents
 [
 IscDbc.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /incremental:yes /pdb:"Debug/OdbcJdbc.pdb" /debug /machine:I386 /def:".\OdbcJdbc.def" /out:"Debug/OdbcJdbc.dll" /implib:"Debug/OdbcJdbc.lib" /pdbtype:sept /libpath:"debug" 
 .\Debug\DescRecord.obj
@@ -221,7 +221,7 @@ IscDbc.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.
 .\Debug\ODbcJdbc.res
 .\debug\IscDbc.lib
 ]
-Creating command line "link.exe @w:\TEMP\RSP57.tmp"
+Creating command line "link.exe @w:\TEMP\RSP13B.tmp"
 <h3>Output Window</h3>
 Compiling resources...
 Compiling...
@@ -237,7 +237,7 @@ OdbcObject.cpp
 OdbcStatement.cpp
 Linking...
    Creating library Debug/OdbcJdbc.lib and object Debug/OdbcJdbc.exp
-Creating temporary file "w:\TEMP\RSP5B.tmp" with contents
+Creating temporary file "w:\TEMP\RSP13F.tmp" with contents
 [
 /nologo /o"Debug/OdbcJdbc.bsc" 
 .\Debug\DescRecord.sbr
@@ -250,7 +250,7 @@ Creating temporary file "w:\TEMP\RSP5B.tmp" with contents
 .\Debug\OdbcError.sbr
 .\Debug\OdbcObject.sbr
 .\Debug\OdbcStatement.sbr]
-Creating command line "bscmake.exe @w:\TEMP\RSP5B.tmp"
+Creating command line "bscmake.exe @w:\TEMP\RSP13F.tmp"
 Creating browse info file...
 <h3>Output Window</h3>
 <h3>
@@ -258,21 +258,21 @@ Creating browse info file...
 </h3>
 <h3>Command Lines</h3>
 Creating command line "rc.exe /l 0x409 /fo"../debug/OdbcJdbcSetup.res" /d "_DEBUG" "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\OdbcJdbcSetup\OdbcJdbcSetup.rc"" 
-Creating temporary file "w:\TEMP\RSP5C.tmp" with contents
+Creating temporary file "w:\TEMP\RSP140.tmp" with contents
 [
 /nologo /MTd /W3 /Gm /GX /ZI /Od /I ".." /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /FR"../debug/" /Fp"../debug/OdbcJdbcSetup.pch" /YX /Fo"../debug/" /Fd"../debug/" /FD /c 
 "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\OdbcJdbcSetup\DsnDialog.cpp"
 "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\OdbcJdbcSetup\OdbcJdbcSetup.cpp"
 "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\OdbcJdbcSetup\Setup.cpp"
 ]
-Creating command line "cl.exe @w:\TEMP\RSP5C.tmp" 
-Creating temporary file "w:\TEMP\RSP5D.tmp" with contents
+Creating command line "cl.exe @w:\TEMP\RSP140.tmp" 
+Creating temporary file "w:\TEMP\RSP141.tmp" with contents
 [
 /nologo /MTd /W3 /Gm /GX /ZI /Od /I ".." /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /FR"../debug/" /Fp"../debug/OdbcJdbcSetup.pch" /Yc"stdafx.h" /Fo"../debug/" /Fd"../debug/" /FD /c 
 "H:\Firebird_build\OdbcJdbc_20020706\OdbcJdbc\OdbcJdbcSetup\StdAfx.cpp"
 ]
-Creating command line "cl.exe @w:\TEMP\RSP5D.tmp" 
-Creating temporary file "w:\TEMP\RSP5E.tmp" with contents
+Creating command line "cl.exe @w:\TEMP\RSP141.tmp" 
+Creating temporary file "w:\TEMP\RSP142.tmp" with contents
 [
 /nologo /subsystem:windows /dll /incremental:yes /pdb:"../debug/OdbcJdbcSetup.pdb" /debug /machine:I386 /def:".\OdbcJdbcSetup.def" /out:"../debug/OdbcJdbcSetup.dll" /implib:"../debug/OdbcJdbcSetup.lib" /pdbtype:sept 
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\DsnDialog.obj
@@ -283,7 +283,7 @@ Creating temporary file "w:\TEMP\RSP5E.tmp" with contents
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\IscDbc.lib
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\Debug\OdbcJdbc.lib
 ]
-Creating command line "link.exe @w:\TEMP\RSP5E.tmp"
+Creating command line "link.exe @w:\TEMP\RSP142.tmp"
 <h3>Output Window</h3>
 Compiling resources...
 Compiling...
@@ -294,28 +294,25 @@ OdbcJdbcSetup.cpp
 Setup.cpp
 Linking...
    Creating library ../debug/OdbcJdbcSetup.lib and object ../debug/OdbcJdbcSetup.exp
-Creating temporary file "w:\TEMP\RSP62.tmp" with contents
+Creating temporary file "w:\TEMP\RSP146.tmp" with contents
 [
 /nologo /o"../debug/OdbcJdbcSetup.bsc" 
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\StdAfx.sbr
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\DsnDialog.sbr
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\OdbcJdbcSetup.sbr
 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\Setup.sbr]
-Creating command line "bscmake.exe @w:\TEMP\RSP62.tmp"
+Creating command line "bscmake.exe @w:\TEMP\RSP146.tmp"
 Creating browse info file...
 <h3>Output Window</h3>
-Creating temporary file "w:\TEMP\RSP63.bat" with contents
+Creating temporary file "w:\TEMP\RSP147.bat" with contents
 [
 @echo off
 regsvr32 \Firebird_build\OdbcJdbc_20020706\OdbcJdbc\debug\OdbcJdbcSetup.dll
 ]
-Creating command line "w:\TEMP\RSP63.bat"
+Creating command line "w:\TEMP\RSP147.bat"
 Registering successfully built driver
+Error spawning c:\winnt4\system32\cmd.exe
 
-
-
-<h3>Results</h3>
-OdbcJdbcSetup.dll - 0 error(s), 0 warning(s)
 </pre>
 </body>
 </html>
