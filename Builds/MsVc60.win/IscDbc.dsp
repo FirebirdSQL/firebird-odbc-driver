@@ -198,10 +198,6 @@ SOURCE=..\..\IscDbc\IscResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\IscDbc\IscResultSetMetaData.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\IscDbc\IscSpecialColumnsResultSet.h
 # End Source File
 # Begin Source File
@@ -383,10 +379,6 @@ SOURCE=..\..\IscDbc\IscProceduresResultSet.cpp
 # Begin Source File
 
 SOURCE=..\..\IscDbc\IscResultSet.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\IscDbc\IscResultSetMetaData.cpp
 # End Source File
 # Begin Source File
 
