@@ -307,8 +307,6 @@ Sqlda::Sqlda()
 
 Sqlda::~Sqlda()
 {
-	deleteSqlda();
-
 	if (buffer)
 		delete [] buffer;
 	if ( dataStaticCursor )
@@ -319,6 +317,8 @@ Sqlda::~Sqlda()
 		delete [] saveOrgAdressSqlData;
 	if ( saveOrgAdressSqlInd )
 		delete [] saveOrgAdressSqlInd;
+
+	deleteSqlda(); // Should stand only here!!!
 }
 
 Sqlda::operator XSQLDA* ()
