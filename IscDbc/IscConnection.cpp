@@ -928,6 +928,13 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 		databaseHandle = attachment->databaseHandle;
 		GDS = attachment->GDS;
 	}
+	catch ( SQLException& exception )
+	{
+		delete attachment;
+		attachment = NULL;
+		GDS = NULL;
+		throw SQLEXCEPTION ( exception.getSqlcode() , exception.getText() );
+	}
 	catch (...)
 	{
 		delete attachment;
