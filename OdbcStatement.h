@@ -150,6 +150,7 @@ public:
 	bool				fetched;
 	enFetchType			enFetch;
 	JString				cursorName;
+	bool				setPreCursorName;
 	int					rowBindType;
 	int					paramBindType;
 	int					rowArraySize;
