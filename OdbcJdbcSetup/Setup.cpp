@@ -107,7 +107,7 @@ BOOL INSTAPI ConfigDSN(HWND		hWnd,
  *
  */
 
-extern "C" __declspec( dllexport ) int DllRegisterServer (void)
+extern "C" __declspec( dllexport ) int INSTAPI DllRegisterServer (void)
 {
 	char fileName [256];
 	JString msg;
@@ -167,7 +167,7 @@ extern "C" __declspec( dllexport ) int DllRegisterServer (void)
 	return S_OK;
 }
 
-extern "C" __declspec( dllexport ) int DllUnregisterServer (void)
+extern "C" __declspec( dllexport ) int INSTAPI DllUnregisterServer (void)
 {
 	JString msg;
 	DWORD useCount = 0;
