@@ -41,6 +41,7 @@ odbcinst.ini:
 Description     = InterBase/Firebird ODBC Driver
 Driver          = /usr/lib/OdbcJdbc.so
 Setup           = /usr/lib/OdbcJdbcS.so
+Threading 	= 1
 FileUsage       = 1
 CPTimeout       =
 CPReuse         =
