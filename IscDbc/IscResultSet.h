@@ -49,7 +49,7 @@ class IscResultSet : public ResultSet, public StatementMetaData
 public:
 	void allocConversions();
 	IscResultSet(IscStatement *iscStatement);
-	~IscResultSet();
+	virtual ~IscResultSet();
 	void				initResultSet(IscStatement *iscStatement);
 	virtual int			findColumn (const char *columName);
 	virtual void		freeHTML(const char *html);

@@ -69,7 +69,7 @@ public:
 	virtual int release();
 	virtual void addRef();
 	virtual bool isActiveSelect(){ return selectActive; }
-	~IscStatement();
+	virtual ~IscStatement();
 
 	virtual int getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
 	{ return getPlanStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  
