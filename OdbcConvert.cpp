@@ -27,9 +27,9 @@
 #include "OdbcJdbc.h"
 #include "OdbcDesc.h"
 #include "OdbcConnection.h"
-#include "Connection.h"
+#include "IscDbc/Connection.h"
 #include "DescRecord.h"
-#include "SQLException.h"
+#include "IscDbc/SQLException.h"
 
 #define MAKEQUAD(a, b)      ((QUAD)(((long)(a)) | ((UQUAD)((long)(b))) << 32))
 #define LO_LONG(l)           ((long)(l))

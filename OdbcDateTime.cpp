@@ -44,18 +44,9 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "OdbcDateTime.h"
-#include "Connection.h"
+#include "IscDbc/Connection.h"
 #include <memory.h>
 #include "OdbcStatement.h"
-#include <time.h>
-#include "DateTime.h"
-#include "IscDbc/SqlTime.h"
-#include "TimeStamp.h"
-
-
-typedef signed long		INTERNAL_DATE;
-typedef __int64			SINT64;
-
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -254,7 +245,7 @@ signed long OdbcDateTime::ndate (signed long nday, signed long nsec, tm *times)
 }
 
 
-INTERNAL_DATE OdbcDateTime::nday (struct tm	*times)
+signed long OdbcDateTime::nday (struct tm	*times)
 {
 /**************************************
  *
@@ -285,7 +276,7 @@ INTERNAL_DATE OdbcDateTime::nday (struct tm	*times)
 	c = year / 100;
 	ya = year - 100 * c;
 
-	return (INTERNAL_DATE) (((SINT64) 146097 * c) / 4 + 
+	return (signed long) (((QUAD) 146097 * c) / 4 + 
 		(1461 * ya) / 4 + 
 		(153 * month + 2) / 5 + 
 		day + 1721119 - 2400001);

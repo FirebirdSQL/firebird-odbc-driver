@@ -130,14 +130,10 @@
 #include "OdbcStatement.h"
 #include "OdbcConnection.h"
 #include "OdbcError.h"
-#include "Connection.h"
+#include "IscDbc/Connection.h"
 #include "DescRecord.h"
-#include "SQLException.h"
+#include "IscDbc/SQLException.h"
 #include "OdbcDateTime.h"
-#include <time.h>
-#include "IscDbc/SqlTime.h"
-#include "DateTime.h"
-#include "TimeStamp.h"
 
 #ifdef DEBUG                               
 #define TRACE(msg)		OutputDebugString(#msg"\n");

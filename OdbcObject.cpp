@@ -25,7 +25,7 @@
 #include <string.h>
 #include "OdbcObject.h"
 #include "OdbcError.h"
-#include "SQLException.h"
+#include "IscDbc/SQLException.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

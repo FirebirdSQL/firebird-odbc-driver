@@ -80,8 +80,8 @@
 #include "OdbcEnv.h"
 #include <odbcinst.h>
 #include "SetupAttributes.h"
-#include "Connection.h"
-#include "SQLException.h"
+#include "IscDbc/Connection.h"
+#include "IscDbc/SQLException.h"
 #include "OdbcStatement.h"
 #include "OdbcDesc.h"
 

@@ -33,9 +33,9 @@
 #include "OdbcJdbc.h"
 #include "OdbcDesc.h"
 #include "OdbcConnection.h"
-#include "Connection.h"
+#include "IscDbc/Connection.h"
 #include "DescRecord.h"
-#include "SQLException.h"
+#include "IscDbc/SQLException.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

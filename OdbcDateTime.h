@@ -37,10 +37,10 @@
 #endif // _MSC_VER > 1000
 
 #include <time.h>
-#include "Connection.h"
-#include "TimeStamp.h"
+#include "IscDbc/Connection.h"
+#include "IscDbc/TimeStamp.h"
 #include "IscDbc/SqlTime.h"
-#include "DateTime.h"
+#include "IscDbc/DateTime.h"
 
 struct tagTIMESTAMP_STRUCT;
 struct tagDATE_STRUCT;
