@@ -48,6 +48,8 @@
 #define SETUP_QUOTED		"QuotedIdentifier"
 
 #define KEY_DSN_JDBC_DRIVER	"JDBC_DRIVER"
+#define KEY_FILEDSN			"FILEDSN"
+#define KEY_SAVEDSN			"SAVEDSN"
 #define KEY_DSN_DATABASE	"DATABASE"
 #define KEY_DSN_UID			"UID"
 #define KEY_DSN_PWD			"PWD"

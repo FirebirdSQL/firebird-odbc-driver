@@ -416,6 +416,10 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 		*q = 0;
 		if (!strncasecmp (name, SETUP_DSN, LEN_KEY(SETUP_DSN)) )
 			dsn = value;
+		else if (!strncasecmp (name, KEY_FILEDSN, LEN_KEY(KEY_FILEDSN)) )
+			filedsn = value;
+		else if (!strncasecmp (name, KEY_SAVEDSN, LEN_KEY(KEY_SAVEDSN)) )
+			savedsn = value;
 		else if (!strncasecmp (name, KEY_DSN_DATABASE, LEN_KEY(KEY_DSN_DATABASE))
 			|| !strncasecmp (name, SETUP_DBNAME, LEN_KEY(SETUP_DBNAME)) )
 			databaseName = value;
@@ -426,7 +430,17 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 			account = value;
 		else if (!strncasecmp (name, KEY_DSN_PWD, LEN_KEY(KEY_DSN_PWD))
 			|| !strncasecmp (name, SETUP_PASSWORD, LEN_KEY(SETUP_PASSWORD)) )
-			password = value;
+		{
+			if ( strlen(value) > 40 )
+			{
+				char buffer[256];
+				CSecurityPassword security;
+				security.decode( value, buffer );
+				password = buffer;
+			}
+			else
+				password = value;
+		}
 		else if (!strncasecmp (name, SETUP_ROLE, LEN_KEY(SETUP_ROLE)))
 			role = value;
 		else if (!strncasecmp (name, KEY_DSN_CHARSET, LEN_KEY(KEY_DSN_CHARSET))
@@ -499,34 +513,10 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 		r = appendString (r, databaseName);
 	}
 
-	if (!account.IsEmpty())
-	{
-		r = appendString (r, ";"KEY_DSN_UID"=");
-		r = appendString (r, account);
-	}
-
-	if (!password.IsEmpty())
-	{
-		r = appendString (r, ";"KEY_DSN_PWD"=");
-		r = appendString (r, password);
-	}
-
-	if (!role.IsEmpty())
-	{
-		r = appendString (r, ";"SETUP_ROLE"=");
-		r = appendString (r, role);
-	}
-
 	if (!charset.IsEmpty())
 	{
 		r = appendString (r, ";"KEY_DSN_CHARSET"=");
 		r = appendString (r, charset);
-	}
-
-	if ( outConnectBuffer && connectBufferLength )
-	{
-		if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
-			postError ("01004", "String data, right truncated");
 	}
 
 #ifdef _WIN32
@@ -556,6 +546,36 @@ RETCODE OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connectSt
 
 	if ( levelBrowseConnect )
 		levelBrowseConnect = 0;
+
+	if ( outConnectBuffer && connectBufferLength )
+	{
+		if (!account.IsEmpty())
+		{
+			r = appendString (r, ";"KEY_DSN_UID"=");
+			r = appendString (r, account);
+		}
+
+		if (!password.IsEmpty())
+		{
+			char buffer[256];
+			CSecurityPassword security;
+			security.encode( (char*)(const char *)password, buffer );
+			r = appendString (r, ";"KEY_DSN_PWD"=");
+			r = appendString (r, buffer);
+		}
+
+		if (!role.IsEmpty())
+		{
+			r = appendString (r, ";"SETUP_ROLE"=");
+			r = appendString (r, role);
+		}
+
+		if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
+			postError ("01004", "String data, right truncated");
+	}
+
+	if (!savedsn.IsEmpty())
+		saveConnectParameters();
 
 	return sqlSuccess();
 }
@@ -794,6 +814,23 @@ JString OdbcConnection::readAttribute(const char * attribute)
 	int ret = SQLGetPrivateProfileString (dsn, attribute, "", buffer, sizeof (buffer), env->odbcIniFileName);
 
 	return JString (buffer, ret);
+}
+
+JString OdbcConnection::readAttributeFileDSN(const char * attribute)
+{
+	char buffer [256];
+	unsigned short ret;
+
+	if ( SQLReadFileDSN (filedsn, "ODBC", attribute, buffer, sizeof (buffer), &ret) )
+		return JString (buffer, ret);
+
+	return JString ("", 0);
+}
+
+void OdbcConnection::writeAttributeFileDSN(const char * attribute, const char * value)
+{
+	if ( *value )
+		SQLWriteFileDSN (savedsn, "ODBC", attribute, value);
 }
 
 RETCODE OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * supportedPtr)
@@ -1564,9 +1601,104 @@ void OdbcConnection::expandConnectParameters()
 				quotedIdentifiers = false;
 		}
 	}
+	else if (!filedsn.IsEmpty())
+	{
+		JString options;
+
+		if (databaseName.IsEmpty())
+			databaseName = readAttributeFileDSN (SETUP_DBNAME);
+
+		if (client.IsEmpty())
+			client = readAttributeFileDSN (SETUP_CLIENT);
+
+		if (account.IsEmpty())
+			account = readAttributeFileDSN (SETUP_USER);
+
+		if (password.IsEmpty())
+		{
+			JString pass = readAttributeFileDSN (SETUP_PASSWORD);
+			if ( pass.length() > 40 )
+			{
+				char buffer[256];
+				CSecurityPassword security;
+				security.decode( (char*)(const char *)pass, buffer );
+				password = buffer;
+			}
+			else
+				password = pass;
+		}
+
+		if (jdbcDriver.IsEmpty())
+			jdbcDriver = readAttributeFileDSN (SETUP_JDBC_DRIVER);
+
+		if (role.IsEmpty())
+			role = readAttributeFileDSN (SETUP_ROLE);
+
+		if (charset.IsEmpty())
+			charset = readAttributeFileDSN (SETUP_CHARSET);
+
+		if ( !(defOptions & DEF_READONLY_TPB) )
+		{
+			options = readAttributeFileDSN (SETUP_READONLY_TPB);
+
+			if(*(const char *)options == 'Y')
+				optTpb |=TRA_ro;
+		}
+
+		if ( !(defOptions & DEF_NOWAIT_TPB) )
+		{
+			options = readAttributeFileDSN (SETUP_NOWAIT_TPB);
+
+			if(*(const char *)options == 'Y')
+				optTpb |=TRA_nw;
+		}
+
+		if ( !(defOptions & DEF_DIALECT) )
+		{
+			options = readAttributeFileDSN (SETUP_DIALECT);
+
+			if(*(const char *)options == '1')
+				dialect3 = false;
+		}
+
+		if ( !(defOptions & DEF_QUOTED) )
+		{
+			options = readAttributeFileDSN (SETUP_QUOTED);
+
+			if(*(const char *)options == 'N')
+				quotedIdentifiers = false;
+		}
+
+		if (dsn.IsEmpty())
+		{
+			dsn = readAttributeFileDSN (SETUP_DSN);
+			if (!dsn.IsEmpty())
+				expandConnectParameters();
+		}
+	}
 
 	if (jdbcDriver.IsEmpty())
 		jdbcDriver = DEFAULT_DRIVER;
+}
+
+void OdbcConnection::saveConnectParameters()
+{
+	writeAttributeFileDSN (SETUP_DRIVER, DRIVER_FULL_NAME);
+	writeAttributeFileDSN (SETUP_DBNAME, databaseName);
+	writeAttributeFileDSN (SETUP_CLIENT, client);
+	writeAttributeFileDSN (SETUP_USER, account);
+	writeAttributeFileDSN (SETUP_ROLE, role);
+	writeAttributeFileDSN (SETUP_CHARSET, charset);
+	writeAttributeFileDSN (SETUP_JDBC_DRIVER, jdbcDriver);
+	writeAttributeFileDSN (SETUP_READONLY_TPB, (optTpb & TRA_ro) ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_NOWAIT_TPB, (optTpb & TRA_nw) ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_DIALECT, dialect3 ? "3" : "1");
+	writeAttributeFileDSN (SETUP_QUOTED, quotedIdentifiers ? "Y" : "N");
+
+	char buffer[256];
+	CSecurityPassword security;
+	security.encode( (char*)(const char *)password, buffer );
+	writeAttributeFileDSN (SETUP_PASSWORD, buffer);
 }
 
 OdbcDesc* OdbcConnection::allocDescriptor(OdbcDescType type)

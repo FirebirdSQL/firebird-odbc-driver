@@ -49,6 +49,7 @@ public:
 	void descriptorDeleted (OdbcDesc* descriptor);
 	OdbcDesc* allocDescriptor(OdbcDescType type);
 	void expandConnectParameters();
+	void saveConnectParameters();
 	void statementDeleted (OdbcStatement *statement);
 	RETCODE sqlEndTran (int operation);
 	RETCODE connect (const char *sharedLibrary, const char *databaseName, const char *account, const char *password, const char *role, const char *charset);
@@ -60,6 +61,8 @@ public:
 	RETCODE sqlDisconnect();
 	RETCODE sqlGetFunctions (SQLUSMALLINT functionId, SQLUSMALLINT *supportedPtr);
 	JString readAttribute (const char *attribute);
+	JString readAttributeFileDSN (const char * attribute);
+	void writeAttributeFileDSN (const char * attribute, const char * value);
 	RETCODE sqlDriverConnect (SQLHWND hWnd, 
 						   const SQLCHAR *connectString, int connectStringLength, 
 						   SQLCHAR *outConnectBuffer, int connectBufferLength, SQLSMALLINT *outStringLength, 
@@ -80,6 +83,8 @@ public:
 	bool		connected;
 	int			connectionTimeout;
 	JString		dsn;
+	JString		filedsn;
+	JString		savedsn;
 	JString		databaseName;
 	JString		client;
 	JString		account;
