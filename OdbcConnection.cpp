@@ -1821,7 +1821,10 @@ SQLRETURN OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int b
 		break;
 
 	case SQL_TXN_ISOLATION:			//   108
-		value = connection->getTransactionIsolation();
+		if ( connection )
+			value = connection->getTransactionIsolation();
+		else
+			value = transactionIsolation;
 		break;
 
 	case SQL_AUTOCOMMIT:			//   102
