@@ -966,17 +966,20 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 		break;
 	
 	case SQL_FETCH_BOOKMARK:
-		if ( !fetchBookmarkPtr )
+		if ( !fetchBookmarkPtr && enFetch == FetchScroll && connection->env->useAppOdbcVersion == SQL_OV_ODBC3 )
 			return sqlReturn( SQL_ERROR, "HY111", "Invalid bookmark value" );
 
-		if ( *(long*)fetchBookmarkPtr + offset < 1 )
+		if ( fetchBookmarkPtr )
+			rowNumber = *(long*)fetchBookmarkPtr + offset - 1;
+		else
+			rowNumber = offset - 1;
+
+		if ( rowNumber < 0 )
 		{
 			resultSet->beforeFirst();
 			resultSet->setPosRowInSet(0);
 			return SQL_NO_DATA;
 		}
-
-		rowNumber = *(long*)fetchBookmarkPtr + offset - 1;
 
 		if( rowNumber >= sqlDiagCursorRowCount )
 		{
