@@ -106,7 +106,7 @@ BOOL INSTAPI ConfigDSN(HWND		hWnd,
 {
 	if ( !lpszDriver || strncmp (lpszDriver, DRIVER_FULL_NAME, strlen(DRIVER_FULL_NAME)) )
 	{
-		SQLPostInstallerError ( ODBC_ERROR_INVALID_NAME,"Invalid driver name");
+		SQLPostInstallerError( ODBC_ERROR_INVALID_NAME, _TR( IDS_ERROR_MESSAGE_04, "Invalid driver name" ) );
 		return false;
 	}
 
@@ -165,7 +165,7 @@ extern "C" __declspec( dllexport ) int INSTAPI DllRegisterServer (void)
 			ODBC_INSTALL_COMPLETE,
 			&useCount))
 	{
-		MessageBoxInstallerError("Install Driver Failed", pathOut);
+		MessageBoxInstallerError( _TR( IDS_ERROR_MESSAGE_05, "Install Driver Failed" ), pathOut );
 		return S_FALSE;
 	}
 
@@ -174,7 +174,7 @@ extern "C" __declspec( dllexport ) int INSTAPI DllRegisterServer (void)
 
 	if( !memicmp( fileName, pathOut, strlen(pathOut)) )
 	{
-		MessageBox(NULL, " ERROR!\nPlease, use regsvr32.exe .\\OdbcJdbcSetup.dll", DRIVER_NAME, MB_ICONSTOP|MB_OK);
+		MessageBox( NULL, _TR( IDS_ERROR_MESSAGE_06, " ERROR!\nPlease, use regsvr32.exe .\\OdbcJdbcSetup.dll" ), DRIVER_NAME, MB_ICONSTOP|MB_OK );
 		SQLRemoveDriver(DRIVER_FULL_NAME, fRemoveDSN, &useCount);
         return S_FALSE;
 	}
@@ -208,7 +208,7 @@ extern "C" __declspec( dllexport ) int INSTAPI DllRegisterServer (void)
 			64,
 			NULL))
 	{
-		MessageBoxInstallerError("Config Install", pathOut);
+		MessageBoxInstallerError( _TR( IDS_ERROR_MESSAGE_07, "Config Install" ), pathOut );
 		SQLRemoveDriver(DRIVER_FULL_NAME, fRemoveDSN, &useCount);
         return S_FALSE;
 	} 	
@@ -231,11 +231,11 @@ extern "C" __declspec( dllexport ) int INSTAPI DllUnregisterServer (void)
 			64,
 			NULL))
 	{
-		MessageBoxInstallerError("Config Uninstall", NULL);
+		MessageBoxInstallerError( _TR( IDS_ERROR_MESSAGE_08, "Config Uninstall" ), NULL );
 	} 	
 	else if ( !SQLRemoveDriver(DRIVER_FULL_NAME, fRemoveDSN, &useCount) )
 	{
-		MessageBoxInstallerError("Uninstall Driver", NULL);
+		MessageBoxInstallerError( _TR( IDS_ERROR_MESSAGE_09, "Uninstall Driver" ), NULL );
 	}
 
 	if ( !useCount )
@@ -266,7 +266,7 @@ extern "C" __declspec( dllexport ) int INSTAPI DllUnregisterServer (void)
 				//Best not to throw an error when we fail to remove ourself
 				if ( !strstr(pathFile,"OdbcJdbcSetup") )
 				{
-					MessageBoxError("DeleteFile", pathFile);
+					MessageBoxError( _TR( IDS_ERROR_MESSAGE_11, "DeleteFile" ), pathFile );
 					bContinue = false;
 				}
 			}
@@ -285,13 +285,13 @@ void MessageBoxError(char * stageExecuted, char * pathFile)
 	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, messageId,
 			0, temp, sizeof(temp), NULL))
 	{
-		msg.Format ("Format message failed %d\n", GetLastError());
+		msg.Format( _TR( IDS_ERROR_MESSAGE_12, "Format message failed %d\n" ), GetLastError() );
 		MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
 		return;
 	}
 
-	msg.Format ("%s (%s, %s) failed with %d\n%s\n", 
-				stageExecuted, DRIVER_FULL_NAME, pathFile, messageId, temp);
+	msg.Format( _TR( IDS_ERROR_MESSAGE_13, "%s (%s, %s) failed with %d\n%s\n" ), 
+				stageExecuted, DRIVER_FULL_NAME, pathFile, messageId, temp );
 	MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
 }
 
@@ -305,11 +305,11 @@ void MessageBoxInstallerError(char * stageExecuted, char * pathOut)
     SQLInstallerError(errCodeIn, &errCodeOut, message, sizeof (message) - 1, NULL);
 
 	if ( pathOut && *pathOut )
-		msg.Format ("%s (%s, %s) failed with %d\n%s\n",
-		                stageExecuted, DRIVER_FULL_NAME, pathOut, errCodeOut, message);
+		msg.Format( _TR( IDS_ERROR_MESSAGE_13, "%s (%s, %s) failed with %d\n%s\n" ),
+		                stageExecuted, DRIVER_FULL_NAME, pathOut, errCodeOut, message );
 	else	
-	    msg.Format ("%s (%s) failed with %d\n%s\n",
-		                stageExecuted, DRIVER_FULL_NAME, errCodeOut, message);
+	    msg.Format( _TR( IDS_ERROR_MESSAGE_14, "%s (%s) failed with %d\n%s\n" ),
+		                stageExecuted, DRIVER_FULL_NAME, errCodeOut, message );
 
     MessageBox(NULL, (const char*)msg,DRIVER_NAME, MB_ICONSTOP|MB_OK);
 }
@@ -318,7 +318,7 @@ bool CopyFile(char * sourceFile, char * destFile)
 {
 	if ( (long)GetFileAttributes( sourceFile ) == -1 )
 	{
-		MessageBoxError("CopyFile", sourceFile);
+		MessageBoxError( _TR( IDS_ERROR_MESSAGE_15, "CopyFile" ), sourceFile );
 		return false;
 	}
 
@@ -330,7 +330,7 @@ bool CopyFile(char * sourceFile, char * destFile)
 	src = OpenFile( sourceFile, &reopenBuff, uStyle );
 	if ( src == HFILE_ERROR )
 	{
-		MessageBoxError("CopyFile", sourceFile);
+		MessageBoxError( _TR( IDS_ERROR_MESSAGE_15, "CopyFile" ), sourceFile );
 		return false;
 	}
 
@@ -338,7 +338,7 @@ bool CopyFile(char * sourceFile, char * destFile)
 	dst = OpenFile( destFile, &reopenBuff, uStyle );
 	if ( src == HFILE_ERROR )
 	{
-		MessageBoxError("CopyFile", destFile);
+		MessageBoxError( _TR( IDS_ERROR_MESSAGE_15, "CopyFile" ), destFile );
 		return false;
 	}
 
@@ -351,20 +351,20 @@ bool CopyFile(char * sourceFile, char * destFile)
 	{
 		if ( !ReadFile( (HANDLE)src, bufferData, bufferSize, &dwRead, NULL) )
 		{
-			MessageBoxError("CopyFile", sourceFile);
+			MessageBoxError( _TR( IDS_ERROR_MESSAGE_15, "CopyFile" ), sourceFile );
 			return false;
 		}
 
 		DWORD nWritten;
 		if ( !WriteFile( (HANDLE)dst, bufferData, dwRead, &nWritten, NULL))
 		{
-			MessageBoxError("CopyFile", destFile);
+			MessageBoxError( _TR( IDS_ERROR_MESSAGE_15, "CopyFile" ), destFile );
 			return false;
 		}
 
 		if (nWritten != dwRead)
 		{
-			MessageBox(NULL, "Disk full",DRIVER_NAME, MB_ICONSTOP|MB_OK);
+			MessageBox( NULL, _TR( IDS_ERROR_MESSAGE_16, "Disk full" ), DRIVER_NAME, MB_ICONSTOP|MB_OK );
 			return false;
 		}
 		allSize -= dwRead;
