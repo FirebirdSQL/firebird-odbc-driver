@@ -267,6 +267,12 @@ inline StatementMetaData* OdbcStatement::getStatementMetaDataIRD()
 	return resultSet ? resultSet->getMetaData() : statement->getStatementMetaDataIRD(); 
 }
 
+inline void OdbcStatement::clearErrors()
+{
+	if ( infoPosted )
+		OdbcObject::clearErrors();
+}
+
 RETCODE OdbcStatement::sqlTables(SQLCHAR * catalog, int catLength, 
 								 SQLCHAR * schema, int schemaLength, 
 								 SQLCHAR * table, int tableLength, 
@@ -696,8 +702,6 @@ RETCODE OdbcStatement::sqlFetch()
 		}
 		else
 		{
-			implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
-
 			if (eof || !resultSet->next())
 			{
 				eof = true;
@@ -1854,7 +1858,7 @@ RETCODE OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int buffer
 	if ( fetchRetData == SQL_RD_ON )
 	{
 		if ( isStaticCursor() )
-			resultSet->getDataFromStaticCursor (column/*, record->dataBlobPtr*/);
+			resultSet->getDataFromStaticCursor (column);
 
 		try
 		{

@@ -108,6 +108,7 @@ public:
 	bool isStaticCursor(){ return cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE; }
 	long getCurrentFetched(){ return countFetched; }
 	inline StatementMetaData	*getStatementMetaDataIRD();
+	inline void clearErrors();
 
 	OdbcConnection		*connection;
 	OdbcDesc			*applicationRowDescriptor;
