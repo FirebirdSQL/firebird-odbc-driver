@@ -181,8 +181,14 @@ void OdbcDesc::clearDefined()
 	if (records)
 	{
 		for (int n = 0; n < recordSlots; ++n)
-			if ( records [n] )
-				records [n]->isDefined = false;
+		{
+			DescRecord * rec = records[n];
+			if ( rec )
+			{
+				rec->isDefined = false;
+				rec->currentFetched = 0;
+			}
+		}
 	}
 	bDefined = false;
 }
