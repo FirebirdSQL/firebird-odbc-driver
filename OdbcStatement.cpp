@@ -198,6 +198,7 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	paramsetSize = 0;
 	numberColumns = 0;
 	registrationOutParameter = false;
+	isResultSetFromSystemCatalog = false;
 	paramsProcessedPtr = NULL;
 	currency = SQL_CONCUR_READ_ONLY;
 	cursorType = SQL_CURSOR_FORWARD_ONLY;
@@ -454,6 +455,7 @@ void OdbcStatement::releaseResultSet()
 	}
 	
 	countFetched = 0;
+	isResultSetFromSystemCatalog = false;
 
 	if ( implementationGetDataDescriptor )
 	{
@@ -488,6 +490,7 @@ void OdbcStatement::setResultSet(ResultSet * results)
 	countFetched = 0;
 	rowNumber = 0;
 	indicatorRowNumber = 0;
+	isResultSetFromSystemCatalog = true;
 }
 
 void OdbcStatement::rebindColumn()
@@ -1729,6 +1732,7 @@ ResultSet* OdbcStatement::getResultSet()
 		return NULL;
 
 	setResultSet (statement->getResultSet());
+	isResultSetFromSystemCatalog = false;
 
 	return resultSet;
 }
@@ -2684,12 +2688,15 @@ RETCODE OdbcStatement::returnData()
 	while( bindCol )
 	{
 		retCode = (convert->*bindCol->impRecord->fnConv)(bindCol->impRecord,bindCol->appRecord);
+		bindCol->impRecord->dataOffset = 0;
+
 		if ( retCode != SQL_SUCCESS )
 		{
 			ret = retCode;
 			if ( ret != SQL_SUCCESS_WITH_INFO )
 				break;
 		}
+
 		bindCol = listBindOut->GetNext();
 	}
 	return ret;
@@ -2708,12 +2715,15 @@ RETCODE OdbcStatement::returnDataFromExtededFetch()
 		bindOffsetPtrTo = appRecord->sizeColumnExtendedFetch * currentRow;
 
 		retCode = (convert->*bindCol->impRecord->fnConv)(bindCol->impRecord, appRecord);
+		bindCol->impRecord->dataOffset = 0;
+
 		if ( retCode != SQL_SUCCESS )
 		{
 			ret = retCode;
 			if ( ret != SQL_SUCCESS_WITH_INFO )
 				break;
 		}
+
 		bindCol = listBindOut->GetNext();
 	}
 	return ret;
@@ -2961,9 +2971,11 @@ RETCODE OdbcStatement::sqlRowCount(SQLINTEGER *rowCount)
 
 	try
 	{
-		if (!statement->isActive() && !resultSet)
+		if ( statement->isActiveDDL() )
+			*rowCount = statement->getUpdateCount();
+		else if (!statement->isActive() && !resultSet)
 			return sqlReturn (SQL_ERROR, "HY010", "Function sequence error");
-		if ( isStaticCursor() )
+		else if ( isStaticCursor() )
 			*rowCount = sqlDiagCursorRowCount;
 		else
 		{

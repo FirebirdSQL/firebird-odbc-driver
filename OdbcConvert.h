@@ -194,6 +194,7 @@ public:
 	int convBlobToBinary(DescRecord * from, DescRecord * to);
 	int convBlobToString(DescRecord * from, DescRecord * to);
 	int convStreamToBlob(DescRecord * from, DescRecord * to);
+	int convBinaryToBlob(DescRecord * from, DescRecord * to);
 
 // Text
 	int convStringToLong(DescRecord * from, DescRecord * to);
@@ -221,6 +222,7 @@ public:
 	int convVarStringToDouble(DescRecord * from, DescRecord * to);
 	int convVarStringToBigint(DescRecord * from, DescRecord * to);
 	int convVarStringToString(DescRecord * from, DescRecord * to);
+	int convVarStringSystemToString(DescRecord * from, DescRecord * to);
 };
 
 }; // end namespace OdbcJdbcLibrary

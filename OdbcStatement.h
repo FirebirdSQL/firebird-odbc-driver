@@ -150,6 +150,7 @@ public:
 	enFetchType			enFetch;
 	JString				cursorName;
 	bool				setPreCursorName;
+	bool				isResultSetFromSystemCatalog;
 	int					rowBindType;
 	int					paramBindType;
 	int					rowArraySize;
