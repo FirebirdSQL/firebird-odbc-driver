@@ -443,7 +443,7 @@ RETCODE SQL_API SQLPrepare  (HSTMT arg0,
 	TRACE ("SQLPrepare");
 	GUARD_HSTMT(arg0);
 	
-	return ((OdbcStatement*) arg0)->sqlPrepare (arg1, arg2, false);
+	return ((OdbcStatement*) arg0)->sqlPrepare (arg1, arg2);
 
 }
 

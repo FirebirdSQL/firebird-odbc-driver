@@ -260,6 +260,11 @@ OdbcObjectType OdbcStatement::getType()
 	return odbcTypeStatement;
 }
 
+inline StatementMetaData* OdbcStatement::getStatementMetaDataIRD()
+{ 
+	return resultSet ? resultSet->getMetaData() : statement->getStatementMetaDataIRD(); 
+}
+
 RETCODE OdbcStatement::sqlTables(SQLCHAR * catalog, int catLength, 
 								 SQLCHAR * schema, int schemaLength, 
 								 SQLCHAR * table, int tableLength, 
@@ -364,7 +369,7 @@ RETCODE OdbcStatement::sqlColumnPrivileges(SQLCHAR * catalog, int catLength,
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength, bool isExecDirect)
+RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 {
 	clearErrors();
 	releaseStatement();
@@ -410,15 +415,16 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength, bool isExecDirec
 
 		implementationRowDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIRD());
 		implementationParamDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIPD());
-
-		if (!isExecDirect)
-			getResultSet();
+		implementationRowDescriptor->delAllBindColumn();
+		applicationRowDescriptor->clearPrepared();
 
 		if ( setPreCursorName )
 		{
 			statement->setCursorName (cursorName);
 			setPreCursorName = false;
 		}
+
+		rebindColumn();
 	}
 	catch (SQLException& exception)
 	{
@@ -431,6 +437,10 @@ RETCODE OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength, bool isExecDirec
 
 void OdbcStatement::releaseStatement()
 {
+	eof = false;
+	cancel = false;
+	numberColumns = 0;
+
 	releaseResultSet();
 	callableStatement = NULL;
 
@@ -479,6 +489,41 @@ void OdbcStatement::setResultSet(ResultSet * results)
 	indicatorRowNumber = 0;
 }
 
+void OdbcStatement::rebindColumn()
+{
+	int nCount = MIN(implementationRowDescriptor->headCount, applicationRowDescriptor->headCount);
+
+	for (int column = 0; column <= nCount; ++column)
+	{
+		DescRecord * record = applicationRowDescriptor->getDescRecord (column);
+		if ( !record->isPrepared && record->isDefined )
+		{
+			SQLINTEGER bufferLength = record->length;
+
+			if ( !column )
+			{
+				DescRecord *imprec = implementationRowDescriptor->getDescRecord (column);
+				imprec->dataPtr = &rowNumber;
+				imprec->indicatorPtr = &indicatorRowNumber;
+				record->octetLengthPtr = &indicatorRowNumber;
+				record->setZeroColumn();
+			}
+
+			int ret = implementationRowDescriptor->setConvFn(column, record);
+			if( ret == 1 )// isIdentity
+			{ 
+				// Temp
+				// if ( isStaticCursor() )
+					implementationRowDescriptor->addBindColumn(column, record);
+			}
+			else if( ret == 0 )
+				implementationRowDescriptor->addBindColumn(column, record);
+
+			record->length = bufferLength;
+		}
+	}
+}
+
 RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER * indPtr)
 {
 	clearErrors();
@@ -487,50 +532,48 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 		return sqlReturn (SQL_ERROR, "07009", "Invalid descriptor index");
 
 	try
-		{
-
+	{
 		switch (targetType)
+		{
+		case SQL_C_CHAR:
+		case SQL_C_SHORT:
+		case SQL_C_SSHORT:
+		case SQL_C_USHORT:
+		case SQL_C_LONG:
+		case SQL_C_SLONG:
+		case SQL_C_ULONG:
+		case SQL_C_FLOAT:
+		case SQL_C_DOUBLE:
+		case SQL_C_BIT:
+		case SQL_C_TINYINT:
+		case SQL_C_STINYINT:
+		case SQL_C_UTINYINT:
+		case SQL_C_SBIGINT:
+		case SQL_C_UBIGINT:
+		case SQL_C_BINARY:
+		//case SQL_C_BOOKMARK:
+		//case SQL_C_VARBOOKMARK:
+		case SQL_C_DATE:
+		case SQL_C_TIME:
+		case SQL_C_TIMESTAMP:
+		case SQL_C_NUMERIC:
+		case SQL_DECIMAL:
+		case SQL_TYPE_DATE:
+		case SQL_TYPE_TIME:
+		case SQL_TYPE_TIMESTAMP:
+		case SQL_C_DEFAULT:
+		//case SQL_C_GUID:
+			break;
+			
+		default:
 			{
-			case SQL_C_CHAR:
-			case SQL_C_SHORT:
-			case SQL_C_SSHORT:
-			case SQL_C_USHORT:
-			case SQL_C_LONG:
-			case SQL_C_SLONG:
-			case SQL_C_ULONG:
-			case SQL_C_FLOAT:
-			case SQL_C_DOUBLE:
-			case SQL_C_BIT:
-			case SQL_C_TINYINT:
-			case SQL_C_STINYINT:
-			case SQL_C_UTINYINT:
-			case SQL_C_SBIGINT:
-			case SQL_C_UBIGINT:
-			case SQL_C_BINARY:
-			//case SQL_C_BOOKMARK:
-			//case SQL_C_VARBOOKMARK:
-			case SQL_C_DATE:
-			case SQL_C_TIME:
-			case SQL_C_TIMESTAMP:
-			case SQL_C_NUMERIC:
-			case SQL_DECIMAL:
-			case SQL_TYPE_DATE:
-			case SQL_TYPE_TIME:
-			case SQL_TYPE_TIMESTAMP:
-			case SQL_C_DEFAULT:
-			//case SQL_C_GUID:
-				break;
-				
-			default:
-				{
-				JString msg;
-				msg.Format ("Invalid application datatype (%d)", targetType);
-				LOG_MSG ((const char*) msg);
-				LOG_MSG ("\n");
-				return sqlReturn (SQL_ERROR, "HY03", (const char*) msg);
-				//return sqlReturn (SQL_ERROR, "HY03", "Invalid application buffer type");
-				}
+			JString msg;
+			msg.Format ("Invalid application datatype (%d)", targetType);
+			LOG_MSG ((const char*) msg);
+			LOG_MSG ("\n");
+			return sqlReturn (SQL_ERROR, "HY03", (const char*) msg);
 			}
+		}
 
 		DescRecord *record = applicationRowDescriptor->getDescRecord (column);
 
@@ -539,50 +582,33 @@ RETCODE OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetV
 		record->conciseType = targetType;
 		record->dataPtr = targetValuePtr;
 		record->indicatorPtr = indPtr;
-		record->sizeColumnExtendedFetch = implementationRowDescriptor->getConciseSize(targetType,bufferLength);
-
-		if ( !column )
-		{
-			DescRecord *imprec = implementationRowDescriptor->getDescRecord (column);
-			imprec->dataPtr = &rowNumber;
-			imprec->indicatorPtr = &indicatorRowNumber;
-			record->octetLengthPtr = &indicatorRowNumber;
-
-			record->autoUniqueValue = SQL_FALSE;
-			record->caseSensitive = SQL_FALSE;
-			record->catalogName = "";
-			record->datetimeIntervalCode = 0;
-			record->displaySize = 8;
-			record->fixedPrecScale = SQL_FALSE;
-			record->label = "";
-			record->literalPrefix = "";
-			record->literalSuffix = "";
-			record->localTypeName = "";
-			record->name = "";
-			record->nullable = SQL_NO_NULLS;
-			record->octetLength = 4;
-			record->precision = 4;
-			record->scale = 0;
-			record->schemaName = "";
-			record->searchable = SQL_PRED_NONE;
-			record->tableName = "";
-			record->typeName = "";
-			record->unNamed = SQL_UNNAMED;
-			record->unSigned = SQL_FALSE;
-			record->updaTable = SQL_ATTR_READONLY;
-		}
-
-		int ret = implementationRowDescriptor->setConvFn(column, record);
-		if( ret == 1 )// isIdentity
-		{ 
-			// Temp
-			// if ( isStaticCursor() )
-				implementationRowDescriptor->addBindColumn(column, record);
-		}
-		else if( ret == 0 )
-			implementationRowDescriptor->addBindColumn(column, record);
-
 		record->length = bufferLength;
+		record->isDefined = true;
+		record->isPrepared = false;
+
+		if ( implementationRowDescriptor->isDefined() )
+		{
+			if ( !column )
+			{
+				DescRecord *imprec = implementationRowDescriptor->getDescRecord (column);
+				imprec->dataPtr = &rowNumber;
+				imprec->indicatorPtr = &indicatorRowNumber;
+				record->octetLengthPtr = &indicatorRowNumber;
+				record->setZeroColumn();
+			}
+
+			int ret = implementationRowDescriptor->setConvFn(column, record);
+			if( ret == 1 )// isIdentity
+			{ 
+				// Temp
+				// if ( isStaticCursor() )
+					implementationRowDescriptor->addBindColumn(column, record);
+			}
+			else if( ret == 0 )
+				implementationRowDescriptor->addBindColumn(column, record);
+
+			record->length = bufferLength;
+		}
 	}
 	catch (SQLException& exception)
 	{
@@ -610,32 +636,89 @@ RETCODE OdbcStatement::sqlFetch()
 
 	++countFetched;
 
+	SQLINTEGER	*bindOffsetPtrSave = bindOffsetPtr;
+
 	try
 	{
 		SQLUSMALLINT * statusPtr = implementationRowDescriptor->headArrayStatusPtr;
+		SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
+		bindOffsetPtr = &bindOffsetPtrTmp;
 
-		if (eof || !resultSet->next())
+		implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
+
+		if( applicationRowDescriptor->headArraySize > 1 )
 		{
-			eof = true;
-			if (implementationRowDescriptor->headRowsProcessedPtr)
-				*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
-			if( statusPtr )
-				statusPtr[0] = SQL_ROW_NOROW;
-			return SQL_NO_DATA;
+			int nCountRow = applicationRowDescriptor->headArraySize;
+
+			if ( !eof )
+			{
+				SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
+				bindOffsetPtr = &bindOffsetPtrTmp;
+				int nRow = 0;
+				implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
+				while ( nRow < nCountRow && resultSet->next() )
+				{
+					++rowNumber;
+					implementationRowDescriptor->returnData(); 
+					
+					if ( statusPtr )
+						statusPtr[nRow] = SQL_SUCCESS;
+					bindOffsetPtrTmp += rowBindType;
+
+					++nRow;
+				}
+				
+				if( !nRow || nRow < nCountRow)
+				{
+					eof = true;
+					if( nRow && statusPtr)
+						while(nRow < nCountRow)
+							statusPtr[nRow++] = SQL_ROW_NOROW;
+				}
+
+				if (implementationRowDescriptor->headRowsProcessedPtr)
+					*(SQLUINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = nRow;
+
+				setValue (applicationRowDescriptor->getDescRecord (0), 0);
+
+				bindOffsetPtr = bindOffsetPtrSave;
+			}
+
+			if ( eof )
+			{
+				if (implementationRowDescriptor->headRowsProcessedPtr)
+					*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
+				return SQL_NO_DATA;
+			}
 		}
-		
-		++rowNumber;
+		else
+		{
+			if (eof || !resultSet->next())
+			{
+				eof = true;
+				bindOffsetPtr = bindOffsetPtrSave;
+				if (implementationRowDescriptor->headRowsProcessedPtr)
+					*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 0;
+				if( statusPtr )
+					statusPtr[0] = SQL_ROW_NOROW;
+				return SQL_NO_DATA;
+			}
+			
+			++rowNumber;
+			implementationRowDescriptor->returnData(); 
 
-		implementationRowDescriptor->returnData(); 
+			if (implementationRowDescriptor->headRowsProcessedPtr)
+				*(SQLUINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 1;
 
-		if (implementationRowDescriptor->headRowsProcessedPtr)
-			*(SQLUINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 1;
+			if( statusPtr )
+				statusPtr[0] = SQL_ROW_SUCCESS;
 
-		if( statusPtr )
-			statusPtr[0] = SQL_ROW_SUCCESS;
+			bindOffsetPtr = bindOffsetPtrSave;
+		}
 	}
 	catch (SQLException& exception)
 	{
+		bindOffsetPtr = bindOffsetPtrSave;
 		OdbcError *error = postError ("HY000", exception);
 		error->setRowNumber (rowNumber);
 		return SQL_ERROR;
@@ -752,7 +835,7 @@ RETCODE OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 			SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
 			bindOffsetPtr = &bindOffsetPtrTmp;
 			resultSet->setCurrentRowInBufferStaticCursor(rowNumber);
-			implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr);
+			implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
 			while ( nRow < rowsetSize && rowNumber < sqlDiagCursorRowCount )
 			{
 				resultSet->copyNextSqldaFromBufferStaticCursor();
@@ -883,9 +966,10 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 				SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
 				bindOffsetPtr = &bindOffsetPtrTmp;
 				int nRow = 0;
-				implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr);
+				implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
 				while ( nRow < nCountRow && resultSet->next() )
 				{
+					++rowNumber; // Should stand only here!!!
 					implementationRowDescriptor->returnData(); 
 					
 					if ( statusPtr )
@@ -936,6 +1020,7 @@ RETCODE OdbcStatement::sqlFetchScroll(int orientation, int offset)
 			if( implementationRowDescriptor->headArrayStatusPtr )
 				implementationRowDescriptor->headArrayStatusPtr[0] = SQL_ROW_SUCCESS;
 
+			++rowNumber;
 			implementationRowDescriptor->returnData(); 
 
 			setValue (applicationRowDescriptor->getDescRecord (0), 0);
@@ -980,8 +1065,11 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 		if ( rowArraySize > 1 )
 		{
 			int i;
+			SQLINTEGER	bindOffsetPtrData = 0;
+			SQLINTEGER	bindOffsetPtrInd = 0;
 			SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
 			bindOffsetPtr = &bindOffsetPtrTmp;
+			implementationRowDescriptor->setBindOffsetPtrTo(&bindOffsetPtrData, &bindOffsetPtrInd);
 
 			for ( i = 0; !eof && i < rowArraySize ; ++i )
 			{
@@ -989,7 +1077,9 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 				{
 					if(rowStatusArray)
 						rowStatusArray[i] = SQL_ROW_SUCCESS;
-					implementationRowDescriptor->returnData();
+					++rowNumber;
+					implementationRowDescriptor->returnDataFromExtededFetch();
+					bindOffsetPtrInd += sizeof(SQLINTEGER);
 					++bindOffsetPtrTmp;
 				}
 				else
@@ -1013,9 +1103,14 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 		}
 		else
 		{
+			SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
+			bindOffsetPtr = &bindOffsetPtrTmp;
+
 			if(rowCountPointer)
 				*rowCountPointer = 1;
 			
+			implementationRowDescriptor->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
+
 			if (eof || !resultSet->next())
 			{
 				eof = true;
@@ -1028,8 +1123,9 @@ RETCODE OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER
 			else if(rowStatusArray)
 				rowStatusArray[0] = SQL_ROW_SUCCESS;
 
-			bindOffsetPtr = bindOffsetPtrSave;
+			++rowNumber;
 			implementationRowDescriptor->returnData(); 
+			bindOffsetPtr = bindOffsetPtrSave;
 
 			return sqlSuccess();
 		}
@@ -1564,19 +1660,20 @@ RETCODE OdbcStatement::sqlNumResultCols(SWORD * columns)
 {
 	clearErrors();
 
-	if (resultSet)
-		try
-			{
-			StatementMetaData *metaData = resultSet->getMetaData();
+	try
+	{
+		StatementMetaData *metaData = getStatementMetaDataIRD();
+		if ( metaData )
 			*columns = metaData->getColumnCount();
-			}
-		catch (SQLException& exception)
-			{
-			postError ("HY000", exception);
-			return SQL_ERROR;
-			}
-	else
-		*columns = 0;
+		else
+			*columns = 0;
+	}
+	catch (SQLException& exception)
+	{
+		postError ("HY000", exception);
+		return SQL_ERROR;
+	}
+
 	return sqlSuccess();
 }
 
@@ -1613,7 +1710,7 @@ RETCODE OdbcStatement::sqlDescribeCol(int col,
 	try
 	{
 		int realSqlType;
-		StatementMetaData *metaData = resultSet->getMetaData();
+		StatementMetaData *metaData = getStatementMetaDataIRD();
 		const char *name = metaData->getColumnName (col);
 		setString (name, colName, nameSize, nameLength);
 		if (sqlType)
@@ -1750,7 +1847,7 @@ RETCODE OdbcStatement::sqlExecute()
 
 RETCODE OdbcStatement::sqlExecuteDirect(SQLCHAR * sql, int sqlLength)
 {
-	int retcode = sqlPrepare (sql, sqlLength, true);
+	int retcode = sqlPrepare (sql, sqlLength);
 	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)
 		return retcode;
 	try
@@ -1773,10 +1870,6 @@ RETCODE OdbcStatement::sqlExecuteDirect(SQLCHAR * sql, int sqlLength)
 
 ResultSet* OdbcStatement::getResultSet()
 {
-	eof = false;
-	cancel = false;
-	numberColumns = 0;
-
 	releaseResultSet();
 
 	if (!statement->getMoreResults())
@@ -3000,7 +3093,7 @@ RETCODE OdbcStatement::sqlColAttributes(int column, int descType, SQLPOINTER buf
 
 	try
 	{
-		StatementMetaData *metaData = resultSet->getMetaData();
+		StatementMetaData *metaData = getStatementMetaDataIRD();
 		switch (descType)
 		{
 		case SQL_COLUMN_LABEL:
@@ -3128,60 +3221,6 @@ RETCODE OdbcStatement::sqlColAttributes(int column, int descType, SQLPOINTER buf
 	return sqlSuccess();
 }
 
-RETCODE OdbcStatement::returnData()
-{
-	int columnNumber;
-	++rowNumber;
-
-	try
-	{
-		int nCount = applicationRowDescriptor->headCount;
-		for (columnNumber = 1; columnNumber <= nCount; ++columnNumber)
-			setValue (applicationRowDescriptor->getDescRecord (columnNumber), columnNumber);
-
-		if (implementationRowDescriptor->headRowsProcessedPtr)
-			*(SQLUINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 1;
-		}
-	catch (SQLException& exception)
-		{
-		OdbcError *error = postError ("HY000", exception);
-		error->setRowNumber (rowNumber);
-		error->setColumnNumber (columnNumber, rowNumber);
-		return SQL_ERROR;
-		}
-	return sqlSuccess();
-}
-
-/*
-RETCODE OdbcStatement::returnData()
-{
-	int columnNumber;
-	++rowNumber;
-
-	try
-		{
-		if (bindings && *bindings)
-//			for (columnNumber = 1; columnNumber <= numberColumns; ++columnNumber)
-			for (columnNumber = 1; columnNumber < numberBindings; ++columnNumber)
-				{
-				Binding *binding = *bindings + columnNumber;
-				if (binding->pointer && binding->type != SQL_PARAM_INPUT)
-					setValue (binding, columnNumber);
-				}
-
-		if (implementationRowDescriptor->headRowsProcessedPtr)
-			*(SQLINTEGER*)implementationRowDescriptor->headRowsProcessedPtr = 1;
-		}
-	catch (SQLException& exception)
-		{
-		OdbcError *error = postError ("HY000", exception);
-		error->setRowNumber (rowNumber);
-		error->setColumnNumber (columnNumber, rowNumber);
-		return SQL_ERROR;
-		}
-	return sqlSuccess();
-}
-*/
 RETCODE OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT *strLengthPtr, SQLPOINTER numericAttributePtr)
 {
 	clearErrors();
@@ -3191,7 +3230,7 @@ RETCODE OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attri
 
 	try
 	{
-		StatementMetaData *metaData = resultSet->getMetaData();
+		StatementMetaData *metaData = getStatementMetaDataIRD();
 		switch (fieldId)
 		{
 		case SQL_DESC_LABEL:

@@ -39,6 +39,7 @@ class OdbcConvert
 	bool			bIdentity;
 	SQLINTEGER		tempBindOffsetPtr;
 	SQLINTEGER		*bindOffsetPtrTo;
+	SQLINTEGER		*bindOffsetPtrIndTo;
 	SQLINTEGER		*bindOffsetPtrFrom;
 
 private:
@@ -53,14 +54,16 @@ public:
 	OdbcConvert(OdbcStatement * parent);
 
 	void setParent(OdbcStatement *parent);
-	void setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr);
+	void setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd);
 	void setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr);
 	ADRESS_FUNCTION getAdresFunction(DescRecord * from, DescRecord * to);
 	inline SQLPOINTER getAdressBindDataFrom(char * pointer);
 	inline SQLPOINTER getAdressBindDataTo(char * pointer);
+	inline SQLPOINTER getAdressBindIndTo(char * pointer);
 
 public:
 	bool isIdentity(){ return bIdentity; }
+	SQLINTEGER &getBindOffsetPtrTo() { return *bindOffsetPtrTo; }
 
 // Short
 	int convShortToShort(DescRecord * from, DescRecord * to);

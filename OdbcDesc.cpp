@@ -113,9 +113,9 @@ void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaData)
 }
 
 // Use to odtImplementationParameter and odtImplementationRow
-void OdbcDesc::setBindOffsetPtrTo(SQLINTEGER	*bindOffsetPtr)
+void OdbcDesc::setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd)
 { 
-	convert->setBindOffsetPtrTo(bindOffsetPtr);
+	convert->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtrInd);
 }
 
 void OdbcDesc::setBindOffsetPtrFrom(SQLINTEGER	*bindOffsetPtr)
@@ -137,6 +137,16 @@ void OdbcDesc::removeRecords()
 	recordSlots = 0;
 }
  
+void OdbcDesc::clearPrepared()
+{
+	if (records)
+	{
+		for (int n = 0; n < recordSlots; ++n)
+			if ( records [n] )
+				records [n]->isPrepared = false;
+	}
+}
+ 
 void OdbcDesc::updateDefined()
 {
 	if (records)
@@ -146,6 +156,7 @@ void OdbcDesc::updateDefined()
 			if (records [n] && records [n]->isDefined == false )
 				defFromMetaData(n, records [n]);
 	}
+	bDefined = true;
 }
  
 void OdbcDesc::clearDefined()
@@ -156,6 +167,7 @@ void OdbcDesc::clearDefined()
 			if ( records [n] )
 				records [n]->isDefined = false;
 	}
+	bDefined = false;
 }
  
 RETCODE OdbcDesc::operator =(OdbcDesc &sour)
@@ -274,6 +286,7 @@ int OdbcDesc::setConvFn(int recNumber, DescRecord * recordTo)
 
 	record->fnConv = convert->getAdresFunction(record,recordTo);
 	record->isPrepared = true;
+	recordTo->sizeColumnExtendedFetch = getConciseSize(recordTo->conciseType, recordTo->length);
 	recordTo->isPrepared = true;
 
 	return convert->isIdentity() && recNumber;
@@ -318,6 +331,30 @@ RETCODE OdbcDesc::returnData()
 	while( bindCol )
 	{
 		retCode = (convert->*bindCol->impRecord->fnConv)(bindCol->impRecord,bindCol->appRecord);
+		if ( retCode != SQL_SUCCESS )
+		{
+			ret = retCode;
+			if ( ret != SQL_SUCCESS_WITH_INFO )
+				break;
+		}
+		bindCol = listBind->GetNext();
+	}
+	return ret;
+}
+
+RETCODE OdbcDesc::returnDataFromExtededFetch()
+{
+	RETCODE retCode, ret = SQL_SUCCESS;
+	SQLINTEGER	&bindOffsetPtrTo = convert->getBindOffsetPtrTo();
+	SQLINTEGER	&currentRow = *parentStmt->bindOffsetPtr;
+
+	CBindColumn * bindCol = listBind->GetHeadPosition();
+	while( bindCol )
+	{
+		DescRecord *& appRecord = bindCol->appRecord;
+		bindOffsetPtrTo = appRecord->sizeColumnExtendedFetch * currentRow;
+
+		retCode = (convert->*bindCol->impRecord->fnConv)(bindCol->impRecord, appRecord);
 		if ( retCode != SQL_SUCCESS )
 		{
 			ret = retCode;

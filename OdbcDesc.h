@@ -85,7 +85,7 @@ class OdbcDesc : public OdbcObject
 {
 public:
 	// Use to odtImplementationParameter and odtImplementationRow
-	void setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr);
+	void setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd);
 	void setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr);
 
 	DescRecord*	getDescRecord(int number, bool bCashe = true);
@@ -102,8 +102,10 @@ public:
 	OdbcDesc(OdbcDescType type, OdbcConnection *connect);
 	virtual ~OdbcDesc();
 
+	bool isDefined() { return bDefined; }
 	void updateDefined();
 	void clearDefined();
+	void clearPrepared();
 	void removeRecords();
 	void setDefaultImplDesc (StatementMetaData * ptMetaData);
 	void allocBookmarkField();
@@ -121,6 +123,7 @@ public:
 	void setParent(OdbcStatement *parent);
 
 	RETCODE returnData();
+	RETCODE returnDataFromExtededFetch();
 	RETCODE returnGetData(int recNumber);
 
 //Head

@@ -48,7 +48,6 @@ class OdbcStatement : public OdbcObject
 public:
 	RETCODE sqlMoreResults();
 	RETCODE sqlColAttribute (int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT* strLengthPtr, SQLPOINTER numericAttributePtr);
-	RETCODE returnData();
 	RETCODE sqlFetchScroll (int orientation, int offset);
 	RETCODE sqlFetchScrollCursorStatic(int orientation, int offset);
 	RETCODE sqlSetPos (SQLUSMALLINT rowNumber, SQLUSMALLINT operation, SQLUSMALLINT lockType);
@@ -91,11 +90,11 @@ public:
 
 	RETCODE sqlFetch();
 	RETCODE sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
+	void rebindColumn();
 	void setResultSet (ResultSet *results);
 	void releaseResultSet();
 	void releaseStatement();
-//	RETCODE sqlPrepare (SQLCHAR *sql, int sqlLength);
-	RETCODE sqlPrepare (SQLCHAR *sql, int sqlLength, bool isExecDirect);
+	RETCODE sqlPrepare (SQLCHAR *sql, int sqlLength);
 
 	RETCODE sqlColumns (SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, SQLCHAR *column, int columnLength);
 	RETCODE sqlTables (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength, SQLCHAR *type, int typeLength);
@@ -108,6 +107,7 @@ public:
 	virtual ~OdbcStatement();
 	bool isStaticCursor(){ return cursorType == SQL_CURSOR_STATIC && cursorScrollable == SQL_SCROLLABLE; }
 	long getCurrentFetched(){ return countFetched; }
+	inline StatementMetaData	*getStatementMetaDataIRD();
 
 	OdbcConnection		*connection;
 	OdbcDesc			*applicationRowDescriptor;
