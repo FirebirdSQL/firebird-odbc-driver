@@ -299,7 +299,7 @@ RETCODE SQL_API SQLDescribeCol  (HSTMT arg0,
 RETCODE SQL_API SQLDisconnect  (HDBC arg0)
 {
 	TRACE ("SQLDisconnect");
-	GUARD_HDBC(arg0);
+	GUARD_ENV(arg0);
 
 #ifdef LOGGING
 	if ( logFile )
