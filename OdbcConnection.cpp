@@ -604,6 +604,12 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 			r = appendString (r, client);
 		}
 
+		if (!filedsn.IsEmpty())
+		{
+			r = appendString (r, ";"KEY_FILEDSN"=");
+			r = appendString (r, filedsn);
+		}
+
 		*r = '\0';
 
 		if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
