@@ -58,6 +58,7 @@
 #define QUOTE				16
 #define IDENT				32
 
+#define IS_QUOTE(p)			(charTable [(p)] == QUOTE)
 #define IS_WHITE(p)			(charTable [(p)] == WHITE)
 #define IS_END_TOKEN(p)		(charTable [(p)] & (PUNCT | WHITE))
 #define SKIP_WHITE(p)		while (charTable [*p] == WHITE) ++p

@@ -368,11 +368,10 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 				break;
 			}
 
-			if ( *ptCh == delimiter )
-			{
-				nextParam = true;
-				ptCh++;
-			}
+			if ( !*ptCh )
+				break;
+
+			nextParam = true;
 		}
 		else
 		{
@@ -387,6 +386,9 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 				i++;
 				break;
 			}
+
+			if ( !*ptCh )
+				break;
 
 			nextParam = false;
 		}
@@ -575,12 +577,29 @@ bool IscConnection::getNativeSql (const char * inStatementText, long textLength1
 
 				end = procedureName;
 
-				while ( !(IS_END_TOKEN(*ptIn)) )
-					*end++ = *ptIn++;
+				if ( IS_QUOTE(*ptIn) )
+				{
+					ptIn++;
+					
+					while ( !(IS_END_TOKEN(*ptIn)) )
+						*end++ = *ptIn++;
+
+					end--;
+
+					if ( !IS_QUOTE(*end) )
+						return false;
+				}
+				else
+					while ( !(IS_END_TOKEN(*ptIn)) )
+						*end++ = UPPER(*ptIn), ++ptIn;
 
 				*end = '\0';
 
 				int count = getCountInputParamFromProcedure ( procedureName );
+				
+				if ( count == -1 ) // not found
+					return false;
+
 				int ret = buildParamProcedure ( ptIn, count );
 				
 				if ( ret == -1 ) 
