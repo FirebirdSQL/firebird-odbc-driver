@@ -67,7 +67,7 @@ void MessageBoxInstallerError(char * stageExecuted, char * pathOut);
  *		shell32.dll,Control_RunDLL odbccp32.cpl,,1
  *	4/ Set breakpoints as desired and hit the run button
  */
-#ifdef __BORLANDC__
+#if defined __BORLANDC__ || defined __MINGW32__
 extern "C" __declspec( dllexport ) BOOL INSTAPI ConfigDSN(HWND		hWnd,
 #else
 BOOL INSTAPI ConfigDSN(HWND		hWnd,
