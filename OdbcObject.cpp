@@ -272,7 +272,8 @@ RETCODE OdbcObject::sqlGetDiagRec(int handleType, int recNumber, SQLCHAR * state
 	if (msgBuffer)
 		msgBuffer [0] = 0;
 
-	*msgLength = 0;
+    if ( msgLength )
+        *msgLength = 0;
 
 	return SQL_NO_DATA_FOUND;
 }
