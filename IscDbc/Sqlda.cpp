@@ -100,7 +100,7 @@ public:
 		ptSqlda = sqlda;
 		offsetSqldata = ptOffsetSqldata;
 		lenRow = lnRow;
-		indicatorsOffset = lenRow - ptSqlda->sqld*sizeof(short);
+		indicatorsOffset = lenRow - ptSqlda->sqld*sizeof(int);
 		nMAXROWBLOCK = 65535l/lnRow;
 		
 		if ( nMAXROWBLOCK < 40 )
@@ -123,7 +123,7 @@ public:
 		countColumnBlob = 0;
 		char * ptRow = ptRowBlock;
 		int	*offset = offsetSqldata;
-		short *indicators = (short*) (ptRow + indicatorsOffset);
+		int *indicators = (int*) (ptRow + indicatorsOffset);
 
 		for (n = 0; n < numberColumns; ++n)
 		{
@@ -137,7 +137,7 @@ public:
 				break;
 			}
 			var->sqldata = ptRow + *offset++;
-			(var++)->sqlind = indicators++;
+			(var++)->sqlind = (short*)indicators++;
 		}
 		if ( !bYesBlob )
 			free( numColumnBlob ),
@@ -228,13 +228,13 @@ public:
 		XSQLVAR * var = ptSqlda->sqlvar;
 		char * ptRow = ptRowBlock;
 		int	*offset = offsetSqldata;
-		short *indicators = (short*) (ptRow + indicatorsOffset);
+		int *indicators = (int*) (ptRow + indicatorsOffset);
 		int n = ptSqlda->sqld;
 
 		while ( n-- )
 		{
 			var->sqldata = ptRow + *offset++;
-			(var++)->sqlind = indicators++;
+			(var++)->sqlind = (short*)indicators++;
 		}
 
 		++countAllRows;
@@ -245,13 +245,13 @@ public:
 		XSQLVAR * var = ptSqlda->sqlvar;
 		char * ptRow = ptOrgRowBlock;
 		int	*offset = offsetSqldata;
-		short *indicators = (short*) (ptRow + indicatorsOffset);
+		int *indicators = (int*) (ptRow + indicatorsOffset);
 		int n = ptSqlda->sqld;
 
 		while ( n-- )
 		{
 			var->sqldata = ptRow + *offset++;
-			(var++)->sqlind = indicators++;
+			(var++)->sqlind = (short*)indicators++;
 		}
 	}
 
@@ -279,7 +279,7 @@ public:
 	{
 		char * ptRow = ptRowBlock + lenRow;
 		sqldata = ptRow + offsetSqldata[--column];
-		sqlind = (short*)(ptRow + indicatorsOffset + column * sizeof(short));
+		sqlind = (short*)(ptRow + indicatorsOffset + column * sizeof(int));
 	}
 
 	char * nextPosition()
@@ -470,7 +470,7 @@ void Sqlda::allocBuffer ( IscConnection * connect )
 
 		case SQL_ARRAY:
 			orgvar->array = new CAttrArray;
-			orgvar->array->loadAttributes ( connect, var->relname, var->sqlname );
+			orgvar->array->loadAttributes ( connect, var->relname, var->sqlname, var->sqlsubtype );
 			length = sizeof (ISC_QUAD);
 			boundary = 4;
 			break;
@@ -482,18 +482,18 @@ void Sqlda::allocBuffer ( IscConnection * connect )
 		offset += length;
 	}
 
-	offset = ROUNDUP (offset, sizeof (short));
+	offset = ROUNDUP (offset, sizeof (int));
 	indicatorsOffset = offset;
-	offset += sizeof (short) * numberColumns;
+	offset += sizeof (int) * numberColumns;
 	buffer = new char [offset];
 	lengthBufferRows = offset;
-	short *indicators = (short*) (buffer + indicatorsOffset);
+	int *indicators = (int*) (buffer + indicatorsOffset);
 	var = sqlda->sqlvar;
 
 	for (n = 0; n < numberColumns; ++n, ++var)
 	{
 		var->sqldata = buffer + (long) var->sqldata;
-		var->sqlind = indicators + n;
+		var->sqlind = (short*)(indicators + n);
 	}
 }
 
