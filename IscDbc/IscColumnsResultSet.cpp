@@ -446,6 +446,11 @@ void IscColumnsResultSet::adjustResults (IscSqlType sqlType)
 		case JDBC_DECIMAL:
 			resultSet->setValue (9, resultSet->getInt(9)*-1); 	// Scale > 0
 			break;
+		case JDBC_REAL:
+		case JDBC_DOUBLE:
+			resultSet->setNull (9);
+			resultSet->setValue (10, 2);
+			break;
 		case JDBC_CHAR:
 		case JDBC_VARCHAR:
 		case JDBC_LONGVARCHAR:

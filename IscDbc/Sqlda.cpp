@@ -791,7 +791,7 @@ int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
 		return realSqlType;
 
 	case SQL_FLOAT:
-		return (realSqlType = JDBC_FLOAT);
+		return (realSqlType = JDBC_REAL);
 
 	case SQL_DOUBLE:
 		realSqlType = JDBC_DOUBLE;

@@ -67,6 +67,7 @@ public:
 	void	setString (int length, const char *string, bool copy);
 	void	setString (const char *value, bool copy);
 	void	convertStringData();
+	void	convertFloatToString(double value, char *string, int size, int *length, int precision = 15, char POINT_DIV = '.');
 
 public:	
 	void setValue (SqlTime value);
