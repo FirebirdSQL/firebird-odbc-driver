@@ -38,12 +38,12 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "../Release"
-# PROP Intermediate_Dir "../Release"
+# PROP Output_Dir "Release"
+# PROP Intermediate_Dir "Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "$(INTERBASE)/include" /I ".." /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "$(INTERBASE)/include" /I "../.." /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -65,12 +65,12 @@ LINK32=link.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "../Debug"
-# PROP Intermediate_Dir "../Debug"
+# PROP Output_Dir "Debug"
+# PROP Intermediate_Dir "Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /Zi /Od /I "$(INTERBASE)\include" /I ".." /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "DEBUG" /D "LOGGING" /FR /YX /FD /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /Zi /Od /I "$(INTERBASE)\include" /I "../.." /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "DEBUG" /D "LOGGING" /FR /YX /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -94,7 +94,7 @@ LINK32=link.exe
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\IscDbc.rc
+SOURCE=..\..\IscDbc\IscDbc.rc
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -102,199 +102,199 @@ SOURCE=.\IscDbc.rc
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\Attachment.h
+SOURCE=..\..\IscDbc\Attachment.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\BinaryBlob.h
+SOURCE=..\..\IscDbc\BinaryBlob.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\BinToHexStr.h
+SOURCE=..\..\IscDbc\BinToHexStr.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Blob.h
+SOURCE=..\..\IscDbc\Blob.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Connection.h
+SOURCE=..\..\IscDbc\Connection.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\DateTime.h
+SOURCE=..\..\IscDbc\DateTime.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Engine.h
+SOURCE=..\..\IscDbc\Engine.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Error.h
+SOURCE=..\..\IscDbc\Error.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscArray.h
+SOURCE=..\..\IscDbc\IscArray.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscBlob.h
+SOURCE=..\..\IscDbc\IscBlob.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscCallableStatement.h
+SOURCE=..\..\IscDbc\IscCallableStatement.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscColumnPrivilegesResultSet.h
+SOURCE=..\..\IscDbc\IscColumnPrivilegesResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscColumnsResultSet.h
+SOURCE=..\..\IscDbc\IscColumnsResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscConnection.h
+SOURCE=..\..\IscDbc\IscConnection.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscCrossReferenceResultSet.h
+SOURCE=..\..\IscDbc\IscCrossReferenceResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscDatabaseMetaData.h
+SOURCE=..\..\IscDbc\IscDatabaseMetaData.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscDbc.h
+SOURCE=..\..\IscDbc\IscDbc.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscIndexInfoResultSet.h
+SOURCE=..\..\IscDbc\IscIndexInfoResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscMetaDataResultSet.h
+SOURCE=..\..\IscDbc\IscMetaDataResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscPreparedStatement.h
+SOURCE=..\..\IscDbc\IscPreparedStatement.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscPrimaryKeysResultSet.h
+SOURCE=..\..\IscDbc\IscPrimaryKeysResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscProcedureColumnsResultSet.h
+SOURCE=..\..\IscDbc\IscProcedureColumnsResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscProceduresResultSet.h
+SOURCE=..\..\IscDbc\IscProceduresResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscResultSet.h
+SOURCE=..\..\IscDbc\IscResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscResultSetMetaData.h
+SOURCE=..\..\IscDbc\IscResultSetMetaData.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscSpecialColumnsResultSet.h
+SOURCE=..\..\IscDbc\IscSpecialColumnsResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscSqlType.h
+SOURCE=..\..\IscDbc\IscSqlType.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscStatement.h
+SOURCE=..\..\IscDbc\IscStatement.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscStatementMetaData.h
+SOURCE=..\..\IscDbc\IscStatementMetaData.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscTablePrivilegesResultSet.h
+SOURCE=..\..\IscDbc\IscTablePrivilegesResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscTablesResultSet.h
+SOURCE=..\..\IscDbc\IscTablesResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\JavaType.h
+SOURCE=..\..\IscDbc\JavaType.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\JString.h
+SOURCE=..\..\IscDbc\JString.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\LinkedList.h
+SOURCE=..\..\IscDbc\LinkedList.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\LoadFbClientDll.h
+SOURCE=..\..\IscDbc\LoadFbClientDll.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Lock.h
+SOURCE=..\..\IscDbc\Lock.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Mutex.h
+SOURCE=..\..\IscDbc\Mutex.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Parameter.h
+SOURCE=..\..\IscDbc\Parameter.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Parameters.h
+SOURCE=..\..\IscDbc\Parameters.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Properties.h
+SOURCE=..\..\IscDbc\Properties.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Sqlda.h
+SOURCE=..\..\IscDbc\Sqlda.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\SQLError.h
+SOURCE=..\..\IscDbc\SQLError.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\SQLException.h
+SOURCE=..\..\IscDbc\SQLException.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\SqlTime.h
+SOURCE=..\..\IscDbc\SqlTime.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Stream.h
+SOURCE=..\..\IscDbc\Stream.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\TimeStamp.h
+SOURCE=..\..\IscDbc\TimeStamp.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Types.h
+SOURCE=..\..\IscDbc\Types.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\TypesResultSet.h
+SOURCE=..\..\IscDbc\TypesResultSet.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Value.h
+SOURCE=..\..\IscDbc\Value.h
 # End Source File
 # End Group
 # Begin Group "Source Files"
@@ -302,175 +302,175 @@ SOURCE=.\Value.h
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\Attachment.cpp
+SOURCE=..\..\IscDbc\Attachment.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\BinaryBlob.cpp
+SOURCE=..\..\IscDbc\BinaryBlob.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Blob.cpp
+SOURCE=..\..\IscDbc\Blob.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\DateTime.cpp
+SOURCE=..\..\IscDbc\DateTime.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Error.cpp
+SOURCE=..\..\IscDbc\Error.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\extodbc.cpp
+SOURCE=..\..\IscDbc\extodbc.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscArray.cpp
+SOURCE=..\..\IscDbc\IscArray.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscBlob.cpp
+SOURCE=..\..\IscDbc\IscBlob.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscCallableStatement.cpp
+SOURCE=..\..\IscDbc\IscCallableStatement.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscColumnPrivilegesResultSet.cpp
+SOURCE=..\..\IscDbc\IscColumnPrivilegesResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscColumnsResultSet.cpp
+SOURCE=..\..\IscDbc\IscColumnsResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscConnection.cpp
+SOURCE=..\..\IscDbc\IscConnection.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscCrossReferenceResultSet.cpp
+SOURCE=..\..\IscDbc\IscCrossReferenceResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscDatabaseMetaData.cpp
+SOURCE=..\..\IscDbc\IscDatabaseMetaData.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscIndexInfoResultSet.cpp
+SOURCE=..\..\IscDbc\IscIndexInfoResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscMetaDataResultSet.cpp
+SOURCE=..\..\IscDbc\IscMetaDataResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscPreparedStatement.cpp
+SOURCE=..\..\IscDbc\IscPreparedStatement.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscPrimaryKeysResultSet.cpp
+SOURCE=..\..\IscDbc\IscPrimaryKeysResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscProcedureColumnsResultSet.cpp
+SOURCE=..\..\IscDbc\IscProcedureColumnsResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscProceduresResultSet.cpp
+SOURCE=..\..\IscDbc\IscProceduresResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscResultSet.cpp
+SOURCE=..\..\IscDbc\IscResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscResultSetMetaData.cpp
+SOURCE=..\..\IscDbc\IscResultSetMetaData.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscSpecialColumnsResultSet.cpp
+SOURCE=..\..\IscDbc\IscSpecialColumnsResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscSqlType.cpp
+SOURCE=..\..\IscDbc\IscSqlType.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscStatement.cpp
+SOURCE=..\..\IscDbc\IscStatement.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscStatementMetaData.cpp
+SOURCE=..\..\IscDbc\IscStatementMetaData.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscTablePrivilegesResultSet.cpp
+SOURCE=..\..\IscDbc\IscTablePrivilegesResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscTablesResultSet.cpp
+SOURCE=..\..\IscDbc\IscTablesResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\JString.cpp
+SOURCE=..\..\IscDbc\JString.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\LinkedList.cpp
+SOURCE=..\..\IscDbc\LinkedList.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\LoadFbClientDll.cpp
+SOURCE=..\..\IscDbc\LoadFbClientDll.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Lock.cpp
+SOURCE=..\..\IscDbc\Lock.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Mutex.cpp
+SOURCE=..\..\IscDbc\Mutex.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Parameter.cpp
+SOURCE=..\..\IscDbc\Parameter.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Parameters.cpp
+SOURCE=..\..\IscDbc\Parameters.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Sqlda.cpp
+SOURCE=..\..\IscDbc\Sqlda.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\SQLError.cpp
+SOURCE=..\..\IscDbc\SQLError.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\SqlTime.cpp
+SOURCE=..\..\IscDbc\SqlTime.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Stream.cpp
+SOURCE=..\..\IscDbc\Stream.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\TimeStamp.cpp
+SOURCE=..\..\IscDbc\TimeStamp.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\TypesResultSet.cpp
+SOURCE=..\..\IscDbc\TypesResultSet.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Value.cpp
+SOURCE=..\..\IscDbc\Value.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Values.cpp
+SOURCE=..\..\IscDbc\Values.cpp
 # End Source File
 # End Group
 # End Target

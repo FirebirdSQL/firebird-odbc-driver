@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "IscDbc" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../IscDbc" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -69,7 +69,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "IscDbc" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "DEBUG" /D "LOGGING" /FR /YX /FD /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../IscDbc" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "DEBUG" /D "LOGGING" /FR /YX /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -99,7 +99,7 @@ PostBuild_Cmds=regsvr32 /s $(TargetDir)/OdbcJdbcSetup.dll
 # PROP Default_Filter ".rc"
 # Begin Source File
 
-SOURCE=.\ODbcJdbc.rc
+SOURCE=..\..\ODbcJdbc.rc
 # End Source File
 # End Group
 # Begin Group "Source Files"
@@ -107,11 +107,11 @@ SOURCE=.\ODbcJdbc.rc
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\DescRecord.cpp
+SOURCE=..\..\DescRecord.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscDbc\JString.cpp
+SOURCE=..\..\IscDbc\JString.cpp
 
 !IF  "$(CFG)" == "OdbcJdbc - Win32 Release"
 
@@ -124,51 +124,51 @@ SOURCE=.\IscDbc\JString.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Main.cpp
+SOURCE=..\..\Main.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcConnection.cpp
+SOURCE=..\..\OdbcConnection.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcConvert.cpp
+SOURCE=..\..\OdbcConvert.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcDateTime.cpp
+SOURCE=..\..\OdbcDateTime.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcDesc.cpp
+SOURCE=..\..\OdbcDesc.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcEnv.cpp
+SOURCE=..\..\OdbcEnv.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcError.cpp
+SOURCE=..\..\OdbcError.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcInstGetProp.cpp
+SOURCE=..\..\OdbcInstGetProp.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcJdbc.def
+SOURCE=..\..\OdbcJdbc.def
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcObject.cpp
+SOURCE=..\..\OdbcObject.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcStatement.cpp
+SOURCE=..\..\OdbcStatement.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\SafeEnvThread.cpp
+SOURCE=..\..\SafeEnvThread.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -176,63 +176,63 @@ SOURCE=.\SafeEnvThread.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\DescRecord.h
+SOURCE=..\..\DescRecord.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\InfoItems.h
+SOURCE=..\..\InfoItems.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\IscDbc\JString.h
+SOURCE=..\..\IscDbc\JString.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Mlist.h
+SOURCE=..\..\Mlist.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcConnection.h
+SOURCE=..\..\OdbcConnection.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcConvert.h
+SOURCE=..\..\OdbcConvert.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcDateTime.h
+SOURCE=..\..\OdbcDateTime.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcDesc.h
+SOURCE=..\..\OdbcDesc.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcEnv.h
+SOURCE=..\..\OdbcEnv.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcError.h
+SOURCE=..\..\OdbcError.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcJdbc.h
+SOURCE=..\..\OdbcJdbc.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcObject.h
+SOURCE=..\..\OdbcObject.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcStatement.h
+SOURCE=..\..\OdbcStatement.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\SafeEnvThread.h
+SOURCE=..\..\SafeEnvThread.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\SetupAttributes.h
+SOURCE=..\..\SetupAttributes.h
 # End Source File
 # End Group
 # End Target

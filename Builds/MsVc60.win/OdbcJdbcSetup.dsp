@@ -38,12 +38,12 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 5
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "../Release"
-# PROP Intermediate_Dir "../Release"
+# PROP Output_Dir "Release"
+# PROP Intermediate_Dir "Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I ".." /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../.." /I "../../IscDbc" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
@@ -65,12 +65,12 @@ LINK32=link.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 5
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "../Debug"
-# PROP Intermediate_Dir "../Debug"
+# PROP Output_Dir "Debug"
+# PROP Intermediate_Dir "Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I ".." /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /FR /YX /FD /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../.." /I "../../IscDbc" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /FR /YX /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG" /d "_AFXDLL"
@@ -94,11 +94,11 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=.\DsnDialog.cpp
+SOURCE=..\..\OdbcJdbcSetup\DsnDialog.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\IscDbc\JString.cpp
+SOURCE=..\..\IscDbc\JString.cpp
 
 !IF  "$(CFG)" == "OdbcJdbcSetup - Win32 Release"
 
@@ -111,15 +111,15 @@ SOURCE=..\IscDbc\JString.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcJdbcSetup.cpp
+SOURCE=..\..\OdbcJdbcSetup\OdbcJdbcSetup.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcJdbcSetup.rc
+SOURCE=..\..\OdbcJdbcSetup\OdbcJdbcSetup.rc
 # End Source File
 # Begin Source File
 
-SOURCE=.\Setup.cpp
+SOURCE=..\..\OdbcJdbcSetup\Setup.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -127,23 +127,23 @@ SOURCE=.\Setup.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\DsnDialog.h
+SOURCE=..\..\OdbcJdbcSetup\DsnDialog.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\OdbcJdbcSetup.h
+SOURCE=..\..\OdbcJdbcSetup\OdbcJdbcSetup.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Resource.h
+SOURCE=..\..\OdbcJdbcSetup\Resource.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Setup.h
+SOURCE=..\..\OdbcJdbcSetup\Setup.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\SetupAttributes.h
+SOURCE=..\..\SetupAttributes.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
@@ -152,7 +152,7 @@ SOURCE=..\SetupAttributes.h
 # End Group
 # Begin Source File
 
-SOURCE=..\change.log
+SOURCE=..\..\change.log
 # End Source File
 # End Target
 # End Project
