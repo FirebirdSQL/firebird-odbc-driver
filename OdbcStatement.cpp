@@ -2285,6 +2285,24 @@ RETCODE OdbcStatement::sqlGetCursorName(SQLCHAR *name, int bufferLength, SQLSMAL
 	return sqlSuccess();
 }
 
+inline
+RETCODE OdbcStatement::transferDataToBlobParam ( DescRecord *recordApp )
+{
+	RETCODE ret = SQL_SUCCESS;
+	recordApp->endBlobDataTransfer();
+	CBindColumn &bindCol = (*listBindIn)[ parameterNeedData - 1 ];
+	switch (recordApp->conciseType)
+	{
+	case SQL_C_CHAR:
+		ret = convert->convStreamHexStringToBlob(bindCol.appRecord,bindCol.impRecord);
+		break;
+	case SQL_C_BINARY:
+		ret = convert->convStreamToBlob(bindCol.appRecord,bindCol.impRecord);
+		break;
+	}
+	return ret;
+}
+
 void OdbcStatement::bindInputOutputParam(int param, DescRecord * recordApp)
 {
 	OdbcDesc * ipd = implementationParamDescriptor;
@@ -2418,18 +2436,7 @@ RETCODE OdbcStatement::inputParam()
 				
 				if ( record->startedTransfer )
 				{
-					RETCODE ret;
-					record->endBlobDataTransfer();
-					CBindColumn &bindCol = (*listBindIn)[n-1];
-					switch (record->conciseType)
-					{
-					case SQL_C_CHAR:
-						ret = convert->convStreamHexStringToBlob(bindCol.appRecord,bindCol.impRecord);
-						break;
-					case SQL_C_BINARY:
-						ret = convert->convStreamToBlob(bindCol.appRecord,bindCol.impRecord);
-						break;
-					}
+					transferDataToBlobParam ( record );
 					continue;
 				}
 
@@ -2637,10 +2644,10 @@ RETCODE OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 		case SQL_C_BINARY:
 			if( valueSize )
 				binding->putBlobSegmentData (valueSize, value);
-			else
+			else // if( valueSize == 0 )
 			{
 				if ( binding->startedTransfer )
-					--parameterNeedData;
+					transferDataToBlobParam ( binding );
 				endPutData = true;
 			}
 			break;

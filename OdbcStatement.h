@@ -121,6 +121,7 @@ public:
 	inline void clearErrors();
 	RETCODE prepareGetData(int column, DescRecord *recordARD);
 	inline void setZeroColumn(int column);
+	inline RETCODE transferDataToBlobParam ( DescRecord *record );
 	void bindInputOutputParam(int param, DescRecord * recordApp);
 	void bindOutputColumn(int column, DescRecord * recordApp);
 
