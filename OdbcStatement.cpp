@@ -784,7 +784,6 @@ SQLRETURN OdbcStatement::sqlFetch()
 		rebindColumn();
 		convert->setBindOffsetPtrFrom(sqldataOutOffsetPtr, NULL);
 		isFetchStaticCursor = isStaticCursor();
-		resultSet->setMaxNumberBindColumns( listBindOut->GetCount() );
 	}
 
 	if ( isFetchStaticCursor )
@@ -1050,7 +1049,6 @@ SQLRETURN OdbcStatement::sqlFetchScroll(int orientation, int offset)
 		schemaFetchData = getSchemaFetchData();
 		convert->setBindOffsetPtrFrom(sqldataOutOffsetPtr, NULL);
 		isFetchStaticCursor = isStaticCursor();
-		resultSet->setMaxNumberBindColumns( listBindOut->GetCount() );
 	}
 
 	if( cursorType == SQL_CURSOR_FORWARD_ONLY && orientation != SQL_FETCH_NEXT )
@@ -1090,7 +1088,6 @@ SQLRETURN OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEG
 		schemaFetchData = getSchemaFetchData();
 		convert->setBindOffsetPtrFrom(sqldataOutOffsetPtr, NULL);
 		isFetchStaticCursor = isStaticCursor();
-		resultSet->setMaxNumberBindColumns( listBindOut->GetCount() );
 	}
 
 	implementationRowDescriptor->headRowsProcessedPtr = rowCountPointer;

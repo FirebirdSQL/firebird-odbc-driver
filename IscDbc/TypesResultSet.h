@@ -37,12 +37,11 @@ public: // StatementMetaData
 	virtual int objectVersion(){ return STATEMENTMETADATA_VERSION; }
 
 public:
-	TypesResultSet(int dataType);
+	TypesResultSet( int dataType, int appOdbcVersion );
 	~TypesResultSet();
 
 	virtual bool nextFetch();
 	virtual bool next();
-	virtual void setMaxNumberBindColumns(int countBind);
 	int findType();
 
 	int			recordNumber;

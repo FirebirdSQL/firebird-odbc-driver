@@ -225,11 +225,6 @@ bool IscResultSet::nextFromProcedure()
 	return true;
 }
 
-void IscResultSet::setMaxNumberBindColumns(int countBind)
-{
-	countBind;
-}
-
 Value* IscResultSet::getValue(int index)
 {
 	if (index < 1 || index > values.count)

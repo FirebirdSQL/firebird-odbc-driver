@@ -132,7 +132,7 @@ static Types types [] =
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TypesResultSet::TypesResultSet(int dataType) : IscResultSet (NULL)
+TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion) : IscResultSet (NULL)
 {	
 	dataTypes = dataType;
 
@@ -153,9 +153,18 @@ TypesResultSet::TypesResultSet(int dataType) : IscResultSet (NULL)
 
 	int endRow = sizeof (types) / sizeof (types [0]);
 
-	types[--endRow].typeType = JDBC_TIMESTAMP;
-	types[--endRow].typeType = JDBC_TIME;
-	types[--endRow].typeType = JDBC_DATE;
+	if ( appOdbcVersion == 3 ) // SQL_OV_ODBC3
+	{
+		types[--endRow].typeType = JDBC_TIMESTAMP;
+		types[--endRow].typeType = JDBC_TIME;
+		types[--endRow].typeType = JDBC_DATE;
+	}
+	else
+	{
+		types[--endRow].typeType = JDBC_SQL_TIMESTAMP;
+		types[--endRow].typeType = JDBC_SQL_TIME;
+		types[--endRow].typeType = JDBC_SQL_DATE;
+	}
 
 	recordNumber = 0;
 	numberColumns = 19;
@@ -271,19 +280,6 @@ bool TypesResultSet::next()
 		statement->setValue (value, var);
 
 	return true;
-}
-
-void TypesResultSet::setMaxNumberBindColumns( int countBind )
-{
-	// for compatibility ODBC 2.0
-	if ( countBind && countBind <= 15 )
-	{
-		int endRow = sizeof (types) / sizeof (types [0]);
-
-		types[--endRow].typeType = JDBC_SQL_TIMESTAMP;
-		types[--endRow].typeType = JDBC_SQL_TIME;
-		types[--endRow].typeType = JDBC_SQL_DATE;
-	}
 }
 
 int TypesResultSet::findType()

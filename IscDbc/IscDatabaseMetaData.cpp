@@ -1118,7 +1118,7 @@ ResultSet* IscDatabaseMetaData::getCrossReference(
 
 ResultSet* IscDatabaseMetaData::getTypeInfo(int dataType)
 	{
-	return new TypesResultSet(dataType);
+	return new TypesResultSet( dataType, connection->getUseAppOdbcVersion() );
 	}
 
 StatementMetaData* IscDatabaseMetaData::getMetaDataTypeInfo(ResultSet* setTypeInfo)

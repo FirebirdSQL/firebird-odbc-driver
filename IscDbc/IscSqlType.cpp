@@ -147,8 +147,7 @@ void IscSqlType::buildType ()
 
 		case blr_sql_date:
 			{
-//			type = JDBC_DATE;
-			type = JDBC_SQL_DATE;
+			type = JDBC_DATE;
 			typeName = "DATE";
 			length = MAX_DATE_LENGTH;
 			bufferLength = 6; // sizeof(tagDATE_STRUCT); 
@@ -157,8 +156,7 @@ void IscSqlType::buildType ()
 
 		case blr_sql_time:
 			{
-//			type = JDBC_TIME;
-			type = JDBC_SQL_TIME;
+			type = JDBC_TIME;
 			typeName = "TIME";
 			length = MAX_TIME_LENGTH;
 			bufferLength = 6; // sizeof(tagTIME_STRUCT); 
@@ -167,8 +165,7 @@ void IscSqlType::buildType ()
 
 		case blr_timestamp:
 			{
-//			type = JDBC_TIMESTAMP;
-			type = JDBC_SQL_TIMESTAMP;
+			type = JDBC_TIMESTAMP;
 			typeName = "TIMESTAMP";
 			length = MAX_TIMESTAMP_LENGTH;
 			bufferLength = 16; // sizeof(tagTIMESTAMP_STRUCT); 
