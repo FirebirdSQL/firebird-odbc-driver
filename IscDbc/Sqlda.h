@@ -30,6 +30,14 @@ namespace IscDbcLibrary {
 #define DEFAULT_SQLDA_COUNT		20
 #define DEFAULT_BLOB_BUFFER_LENGTH 16384
 
+typedef struct
+{
+	short			sqltype;			/* datatype of field */
+	short			sqlscale;			/* scale factor */
+	short			sqlsubtype;			/* datatype subtype - BLOBs & Text types only */
+	short			sqllen;				/* length of data area */
+} ORGSQLVAR;
+
 class Value;
 class IscConnection;
 class CDataStaticCursor;
@@ -66,6 +74,7 @@ public:
 	void deleteSqlda();
 	operator XSQLDA*();
 	XSQLVAR * Var(int index){ return sqlda->sqlvar + index - 1; }
+	ORGSQLVAR * orgVar(int index){ return orgsqlvar + index - 1; }
 
 	Sqlda();
 	~Sqlda();
@@ -92,6 +101,7 @@ public:
 	XSQLDA		*sqlda;
 	char		tempSqlda [XSQLDA_LENGTH (DEFAULT_SQLDA_COUNT)];
 	char		*buffer;
+	ORGSQLVAR	*orgsqlvar;
 	bool		needsbuffer;
 };
 

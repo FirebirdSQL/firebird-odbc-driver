@@ -298,6 +298,7 @@ Sqlda::Sqlda()
 	sqlda->version = SQLDA_VERSION1;
 	sqlda->sqln = DEFAULT_SQLDA_COUNT;
 	buffer = NULL;
+	orgsqlvar = NULL;
 	dataStaticCursor = NULL;
 	offsetSqldata = NULL;
 	indicatorsOffset = 0;
@@ -323,6 +324,9 @@ Sqlda::operator XSQLDA* ()
 
 void Sqlda::deleteSqlda()
 {
+	if ( orgsqlvar )
+		free (orgsqlvar);
+
 	if (sqlda != (XSQLDA*) tempSqlda)
 		free (sqlda);
 }
@@ -355,6 +359,9 @@ void Sqlda::allocBuffer()
 
 	needsbuffer = false;
 
+	if ( orgsqlvar ) 
+		free (orgsqlvar);
+
 	if (buffer)
 	{
 		delete [] buffer;
@@ -369,11 +376,16 @@ void Sqlda::allocBuffer()
 	int numberColumns = sqlda->sqld;
 	XSQLVAR *var = sqlda->sqlvar;
 	offsetSqldata = new int [numberColumns];
+	orgsqlvar = (ORGSQLVAR *)malloc ( numberColumns * sizeof(ORGSQLVAR) );
+	ORGSQLVAR * orgvar = orgsqlvar;
 
-	for (n = 0; n < numberColumns; ++n, ++var)
+	for (n = 0; n < numberColumns; ++n, ++var, ++orgvar)
 	{
 		int length = var->sqllen;
 		int boundary = length;
+
+		*(QUAD*)orgvar = *(QUAD*)var;
+
 		switch (var->sqltype & ~1)
 		{
 		case SQL_TEXT:
@@ -434,10 +446,10 @@ void Sqlda::allocBuffer()
 	var = sqlda->sqlvar;
 
 	for (n = 0; n < numberColumns; ++n, ++var)
-		{
+	{
 		var->sqldata = buffer + (long) var->sqldata;
 		var->sqlind = indicators + n;
-		}
+	}
 }
 
 void Sqlda::initStaticCursor(IscConnection *connect)
@@ -548,7 +560,7 @@ void Sqlda::print()
 
 int Sqlda::getColumnDisplaySize(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	ORGSQLVAR *var = orgVar(index);
 
 	switch (var->sqltype & ~1)
 		{
@@ -604,7 +616,7 @@ int Sqlda::getColumnDisplaySize(int index)
 
 const char* Sqlda::getColumnName(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	XSQLVAR *var = Var(index);
 
 	if (var->aliasname [0])
 		return var->aliasname;
@@ -614,7 +626,7 @@ const char* Sqlda::getColumnName(int index)
 
 int Sqlda::getPrecision(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	ORGSQLVAR *var = orgVar(index);
 
 	switch (var->sqltype & ~1)
 		{
@@ -671,7 +683,7 @@ int Sqlda::getPrecision(int index)
 
 int Sqlda::getScale(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	ORGSQLVAR *var = orgVar(index);
 
 	switch (var->sqltype & ~1)
 	{
@@ -685,28 +697,28 @@ int Sqlda::getScale(int index)
 
 bool Sqlda::isNullable(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	ORGSQLVAR *var = orgVar(index);
 
 	return (var->sqltype & 1) ? true : false;
 }
 
 int Sqlda::getColumnType(int index, int &realSqlType)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	ORGSQLVAR *var = orgVar(index);
 
 	return getSqlType (var->sqltype, var->sqlsubtype, var->sqlscale, realSqlType);
 }
 
 const char* Sqlda::getColumnTypeName(int index)
 {
-	XSQLVAR *var = sqlda->sqlvar + index - 1;
+	ORGSQLVAR *var = orgVar(index);
 
 	return getSqlTypeName (var->sqltype, var->sqlsubtype, var->sqlscale);
 }
 
 short Sqlda::getSubType(int index)
 {
-	return sqlda->sqlvar[index - 1].sqlsubtype;
+	return orgsqlvar[index - 1].sqlsubtype;
 }
 
 int Sqlda::getSqlType(int iscType, int subType, int sqlScale, int &realSqlType)
@@ -1095,12 +1107,11 @@ void WriteToArray(IscConnection *connect,XSQLVAR *var,Value * value);
 void Sqlda::setArray(XSQLVAR * var, Value * value, IscConnection *connection)
 {
 	if (value->type == Null)
-		{
+	{
 		var->sqltype |= 1;
 		*var->sqlind = -1;
-		memset (var->sqldata, 0, var->sqllen);
 		return;
-		}
+	}
 
 	var->sqltype &= ~1;
 	
@@ -1127,8 +1138,7 @@ const char* Sqlda::getOwnerName(int index)
 
 int Sqlda::isBlobOrArray(int index)
 {
-	XSQLVAR *var = Var(index);
-	int type = var->sqltype & ~1;
+	int type = orgVar(index)->sqltype & ~1;
 
 	switch (type)
 	{
@@ -1142,48 +1152,50 @@ int Sqlda::isBlobOrArray(int index)
 
 bool Sqlda::isNull(int index)
 {
-	XSQLVAR *var = Var(index);
-	return *(short*)var->sqlind == -1;
+	return *(short*)Var(index)->sqlind == -1;
 }
 
 void Sqlda::setNull(int index)
 {
-	XSQLVAR *var = Var(index);
-	*(short*)var->sqlind = -1;
+	*(short*)Var(index)->sqlind = -1;
 }
 
 short Sqlda::getShort (int index)
 {
 	XSQLVAR *var = Var(index);
-	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_SHORT);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_SHORT);
+	if ( isNull ( index) )
+		return 0;
 	return *(short*)var->sqldata;
 }
 
 long Sqlda::getInt (int index)
 {
 	XSQLVAR *var = Var(index);
-	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_LONG);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_LONG);
+	if ( isNull ( index) )
+		return 0;
 	return *(long*)var->sqldata;
 }
 
 char * Sqlda::getText (int index, int &len)
 {
 	XSQLVAR *var = Var(index);
-	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_TEXT);
-	if( *var->sqlind == -1 )
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_TEXT);
+	if( isNull ( index) )
 	{
 		len = 0;
 		return "";
 	}
-	len = var->sqllen - 1;
+	len = var->sqllen;
 	return var->sqldata;
 }
 
 char * Sqlda::getVarying (int index, int &len)
 {
 	XSQLVAR *var = Var(index);
-	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_VARYING);
-	if( *var->sqlind == -1 )
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_VARYING);
+	if( isNull ( index) )
 	{
 		len = 0;
 		return "";
@@ -1197,7 +1209,7 @@ char * Sqlda::getVarying (int index, int &len)
 void Sqlda::updateShort (int index, short value)
 {
 	XSQLVAR *var = Var(index);
-	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_SHORT);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_SHORT);
 	*(short*)var->sqldata = value;
 	*var->sqlind = 0;
 }
@@ -1205,7 +1217,7 @@ void Sqlda::updateShort (int index, short value)
 void Sqlda::updateInt (int index, int value)
 {
 	XSQLVAR *var = Var(index);
-	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_LONG);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_LONG);
 	*(int*)var->sqldata = value;
 	*var->sqlind = 0;
 }
@@ -1213,7 +1225,7 @@ void Sqlda::updateInt (int index, int value)
 void Sqlda::updateText (int index, const char* dst)
 {
 	XSQLVAR *var = Var(index);
-	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_TEXT);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_TEXT);
     char * src = var->sqldata;
 	int n = var->sqllen;
 	*var->sqlind = 0;
@@ -1221,12 +1233,8 @@ void Sqlda::updateText (int index, const char* dst)
     if ( n < 1)
        return;
 
-    while ( --n && *dst)
+    while ( n-- && *dst)
         *src++ = *dst++;
-
-//	if( n )
-//		while ( n-- )
-//			*src++ = ' ';
 
 	*src = '\0';
 }
@@ -1234,18 +1242,18 @@ void Sqlda::updateText (int index, const char* dst)
 void Sqlda::updateVarying (int index, const char* dst)
 {
 	XSQLVAR *var = Var(index);
-	CONVERSION_CHECK_DEBUG((var->sqltype & ~1) == SQL_VARYING);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_VARYING);
     char * src = var->sqldata + sizeof(short);
-	int n = var->sqllen - 2;
+	int n = var->sqllen;
 	*var->sqlind = 0;
 
     if ( n < 1)
        return;
 
-    while ( --n && *dst)
+    while ( n-- && *dst)
         *src++ = *dst++;
 
-	*(unsigned short*)var->sqldata = (unsigned short)(var->sqllen - n - 3);
+	*(unsigned short*)var->sqldata = (unsigned short)(var->sqllen - n - 1);
 }
 
 }; // end namespace IscDbcLibrary
