@@ -38,6 +38,7 @@ struct TempVector {
 
 class Value;
 class IscConnection;
+class CDataStaticCursor;
 
 class Sqlda  
 {
@@ -62,6 +63,11 @@ public:
 	int getColumnType (int index);
 	const char* getColumnTypeName (int index);
 	void print();
+	void initStaticCursor(IscConnection *connect);
+	bool setCurrentRowInBufferStaticCursor(int nRow);
+	void copyNextSqldaInBufferStaticCursor();
+	void copyNextSqldaFromBufferStaticCursor();
+	int getCountRowsStaticCursor();
 	int getColumnCount();
 	void allocBuffer();
 	bool checkOverflow();
@@ -69,6 +75,11 @@ public:
 	operator XSQLDA*();
 	Sqlda();
 	virtual ~Sqlda();
+
+	CDataStaticCursor * dataStaticCursor;
+	int			lengthBufferRows;
+	int			*offsetSqldata;
+	int			indicatorsOffset;
 
 	XSQLDA		*sqlda;
 	char		tempSqlda [XSQLDA_LENGTH (DEFAULT_SQLDA_COUNT)];

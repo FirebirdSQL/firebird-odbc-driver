@@ -53,6 +53,7 @@
 #include <malloc.h>
 #include <memory.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "IscDbc.h"
 #include "Sqlda.h"
@@ -60,10 +61,210 @@
 #include "Value.h"
 #include "IscConnection.h"
 #include "IscStatement.h"
+#include "IscBlob.h"
 #include "IscArray.h"
 
 static short sqlNull = -1;
 
+class CDataStaticCursor
+{
+public:
+	XSQLDA	*ptSqlda;
+	bool	bYesBlob;
+	int		nMAXROWBLOCK;
+	int		lenRow;
+	char	**listBlocks;
+	int		*countRowsInBlock;
+	int		countBlocks;
+	int		countAllRows;
+	int		curBlock;
+	char	*ptRowBlock;
+	int		minRow;
+	int		maxRow;
+	int		curRow;
+	short	*numColumnBlob;
+	short	countColumnBlob;
+	IscConnection	*connection;
+
+public:
+
+	CDataStaticCursor(IscConnection *connect, XSQLDA * sqlda,int lnRow)
+	{
+		connection = connect;
+		bYesBlob = false;
+		ptSqlda = sqlda;
+		lenRow = lnRow;
+		nMAXROWBLOCK = 65535u;
+		countBlocks = 10;
+		countAllRows = 0;
+		listBlocks = (char **)calloc(1,countBlocks*sizeof(*listBlocks));
+		countRowsInBlock = (int *)calloc(1,countBlocks*sizeof(*countRowsInBlock));
+		ptRowBlock = *listBlocks = (char *)malloc(lenRow*nMAXROWBLOCK);
+		curBlock = 0;
+		minRow = 0;
+		maxRow = *countRowsInBlock = nMAXROWBLOCK;
+		curRow = 0;
+
+		int n, numberColumns = ptSqlda->sqld;
+		XSQLVAR * var = ptSqlda->sqlvar;
+		numColumnBlob = (short *)calloc(1,numberColumns*sizeof(*numColumnBlob));
+		countColumnBlob = 0;
+
+		for (n = 0; n < numberColumns; ++n, ++var)
+		{
+			switch (var->sqltype & ~1)
+			{
+			case SQL_ARRAY:
+			case SQL_BLOB:
+				if ( !bYesBlob )
+					bYesBlob = true;
+				numColumnBlob[countColumnBlob++] = n;
+				break;
+			}
+		}
+		if ( !bYesBlob )
+			free( numColumnBlob ),
+			numColumnBlob = NULL;
+	}
+
+	~CDataStaticCursor()
+	{
+		int i,n;
+
+		if ( bYesBlob )
+		{
+			XSQLVAR * sqlvar = ptSqlda->sqlvar;
+			int nRow = 0; 
+			for ( i = 0; i < countColumnBlob; ++i )
+			{
+				XSQLVAR * var = sqlvar + numColumnBlob[i];
+				if ( (var->sqltype & ~1) == SQL_ARRAY )
+				{
+					for (n = 0; n < countBlocks ; ++n)
+						if ( listBlocks[n] )
+						{
+							int l;
+							char * pt = listBlocks[n] + (var->sqldata - sqlvar[0].sqldata);
+							for ( l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
+							{
+								if ( pt )
+								{
+									free ( ((SIscArrayData *)*(long*)pt)->arrBufData );
+									delete (SIscArrayData *)*(long*)pt;
+								}
+							}
+						}
+				}
+				else if ( (var->sqltype & ~1) == SQL_BLOB )
+				{
+					for (n = 0; n < countBlocks ; ++n)
+						if ( listBlocks[n] )
+						{
+							int l;
+							char * pt = listBlocks[n] + (var->sqldata - sqlvar[0].sqldata);
+							for ( l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
+								if ( pt )delete (IscBlob *)*(long*)pt;
+						}
+				}
+			}
+		}
+
+
+		for (n = 0; n < countBlocks ; ++n)
+			if ( listBlocks[n] )
+				free( listBlocks[n] );
+		free( listBlocks );
+		free( countRowsInBlock );
+
+		if ( numColumnBlob )
+			free( numColumnBlob );
+	}
+
+	bool current(int nRow)
+	{
+		int i, n;
+		for ( i = 0, n = countRowsInBlock[i]; 
+					nRow > n && i < countBlocks; 
+					n += countRowsInBlock[++i]);
+		curBlock = i;
+		maxRow = n;
+		minRow = maxRow - countRowsInBlock[curBlock];
+		curRow = nRow - 1;
+		ptRowBlock = listBlocks[curBlock] + (curRow - minRow) * lenRow;
+		return true;
+	}
+
+	char * next()
+	{
+		if ( ++curRow < maxRow )
+			ptRowBlock += lenRow;
+		else
+		{
+			if ( ++curBlock == countBlocks )
+			{
+				int newCount = countBlocks+10;
+				listBlocks = (char **)realloc(listBlocks,newCount*sizeof(*listBlocks));
+				memset(&listBlocks[countBlocks],0,10*sizeof(*listBlocks));
+				countRowsInBlock = (int *)realloc(countRowsInBlock,newCount*sizeof(*countRowsInBlock));
+				memset(&countRowsInBlock[countBlocks],0,10*sizeof(*countRowsInBlock));
+				countBlocks = newCount;
+			}
+			
+			if ( !listBlocks[curBlock] )
+			{
+				listBlocks[curBlock] = (char *)malloc(lenRow*nMAXROWBLOCK);
+				countRowsInBlock[curBlock] = nMAXROWBLOCK;
+			}
+
+			ptRowBlock = listBlocks[curBlock];
+			minRow = curRow;
+			maxRow = minRow + countRowsInBlock[curBlock];
+		}
+
+		return ptRowBlock;
+	}
+
+	int getCountRowsStaticCursor()
+	{
+		return countAllRows;
+	}
+
+	void operator << (char * orgBuf)
+	{
+		if ( bYesBlob )
+		{
+			int n;
+			XSQLVAR * sqlvar = ptSqlda->sqlvar;
+			for ( n = 0; n < countColumnBlob; ++n )
+			{
+				XSQLVAR * var = sqlvar + numColumnBlob[n];
+				if ( *var->sqlind == -1 )
+					*(long*)var->sqldata = (long)0;
+				else if ( (var->sqltype & ~1) == SQL_ARRAY )
+				{
+					SIscArrayData * ptArr = new SIscArrayData;
+					IscArray iscArr(connection,var);
+					iscArr.getBytesFromArray();
+					iscArr.detach(ptArr);
+					*(long*)var->sqldata = (long)ptArr;
+				}
+				else if ( (var->sqltype & ~1) == SQL_BLOB )
+				{
+					IscBlob * ptBlob = new IscBlob (connection, (ISC_QUAD*) var->sqldata);
+					ptBlob->fetchBlob();
+					*(long*)var->sqldata = (long)ptBlob;
+				}
+			}
+		}
+		memcpy(next(),orgBuf,lenRow);
+		++countAllRows;
+	}
+
+	void operator >> (char * orgBuf)
+	{
+		memcpy(orgBuf,next(),lenRow);
+	}
+};
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -75,6 +276,9 @@ Sqlda::Sqlda()
 	sqlda->sqln = DEFAULT_SQLDA_COUNT;
 	buffer = NULL;
 	temps = NULL;
+	dataStaticCursor = NULL;
+	offsetSqldata = NULL;
+	indicatorsOffset = 0;
 }
 
 Sqlda::~Sqlda()
@@ -84,6 +288,10 @@ Sqlda::~Sqlda()
 
 	if (buffer)
 		delete [] buffer;
+	if ( dataStaticCursor )
+		delete 	dataStaticCursor;
+	if ( offsetSqldata )
+		delete [] offsetSqldata;
 }
 
 Sqlda::operator XSQLDA* ()
@@ -126,6 +334,7 @@ void Sqlda::allocBuffer()
 	int n = 0;
 	int numberColumns = sqlda->sqld;
 	XSQLVAR *var = sqlda->sqlvar;
+	offsetSqldata = new int [numberColumns];
 
 	for (n = 0; n < numberColumns; ++n, ++var)
 		{
@@ -179,15 +388,16 @@ void Sqlda::allocBuffer()
 		if (length == 0)
 			throw SQLEXCEPTION (COMPILE_ERROR, "Sqlda variable has zero length");
 		offset = ROUNDUP (offset, boundary);
-		var->sqldata = (char*) offset;
+		var->sqldata = (char*)(offsetSqldata[n] = offset);
 		var->sqllen = length;
 		offset += length;
 		}
 
 	offset = ROUNDUP (offset, sizeof (short));
-	int indicatorsOffset = offset;
+	indicatorsOffset = offset;
 	offset += sizeof (short) * numberColumns;
 	buffer = new char [offset];
+	lengthBufferRows = offset;
 	short *indicators = (short*) (buffer + indicatorsOffset);
 	var = sqlda->sqlvar;
 
@@ -196,6 +406,34 @@ void Sqlda::allocBuffer()
 		var->sqldata = buffer + (long) var->sqldata;
 		var->sqlind = indicators + n;
 		}
+}
+
+void Sqlda::initStaticCursor(IscConnection *connect)
+{
+	if ( dataStaticCursor )
+		delete 	dataStaticCursor;
+
+	dataStaticCursor = new CDataStaticCursor(connect,sqlda,lengthBufferRows);
+}
+
+bool Sqlda::setCurrentRowInBufferStaticCursor(int nRow)
+{
+	return dataStaticCursor->current(nRow);
+}
+
+void Sqlda::copyNextSqldaInBufferStaticCursor()
+{
+	*dataStaticCursor << buffer;
+}
+
+void Sqlda::copyNextSqldaFromBufferStaticCursor()
+{
+	*dataStaticCursor >> buffer;
+}
+
+int Sqlda::getCountRowsStaticCursor()
+{
+	return dataStaticCursor->getCountRowsStaticCursor();
 }
 
 int Sqlda::getColumnCount()

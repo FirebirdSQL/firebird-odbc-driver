@@ -33,9 +33,9 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscBlob::IscBlob(IscStatement *stmt, ISC_QUAD *id)
+IscBlob::IscBlob(IscConnection *connect, ISC_QUAD *id)
 {
-	statement = stmt;
+	connection = connect;
 	blobId = *id;
 	fetched = false;
 	bArray = false;
@@ -65,7 +65,6 @@ int IscBlob::getSegment(int offset, int length, void * address)
 void IscBlob::fetchBlob()
 {
 	ISC_STATUS statusVector [20];
-	IscConnection *connection = statement->connection;
 	void *transactionHandle = connection->startTransaction();
 	isc_blob_handle blobHandle = NULL;
 

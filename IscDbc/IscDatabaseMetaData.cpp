@@ -607,7 +607,7 @@ bool IscDatabaseMetaData::supportsANSI92IntermediateSQL()
 
 bool IscDatabaseMetaData::supportsANSI92FullSQL()
 	{
-	return false;
+	return true;
 	}
 
 bool IscDatabaseMetaData::supportsIntegrityEnhancementFacility()
@@ -763,12 +763,12 @@ bool IscDatabaseMetaData::supportsUnionAll()
 
 bool IscDatabaseMetaData::supportsOpenCursorsAcrossCommit()
 	{
-	return false;
+	return true;
 	}
 
 bool IscDatabaseMetaData::supportsOpenCursorsAcrossRollback()
 	{
-	return false;
+	return true;
 	}
 
 bool IscDatabaseMetaData::supportsOpenStatementsAcrossCommit()

@@ -33,6 +33,7 @@
 #include "Connection.h"
 
 class IscStatement;
+class IscConnection;
 
 
 class IscBlob : public BinaryBlob
@@ -45,10 +46,10 @@ public:
 	void fetchBlob();
 	virtual int getSegment (int offset, int length, void *address);
 	virtual int length();
-	IscBlob(IscStatement *parentStatement, ISC_QUAD *id);
+	IscBlob(IscConnection *connect, ISC_QUAD *id);
 	virtual ~IscBlob();
 
-	IscStatement	*statement;
+	IscConnection	*connection;
 	ISC_QUAD		blobId;
 	bool			fetched;
 };

@@ -416,6 +416,14 @@ public:
 	virtual int			findColumn (const char *columName) = 0;
 	virtual ResultSetMetaData* getMetaData() = 0;
 	virtual void		close() = 0;
+	virtual void		setPosRowInSet(int posRow) = 0;
+	virtual int			getPosRowInSet() = 0;
+	virtual bool		readStaticCursor() = 0;
+	virtual bool		setCurrentRowInBufferStaticCursor(int nRow) = 0;
+	virtual void		copyNextSqldaInBufferStaticCursor() = 0;
+	virtual void		copyNextSqldaFromBufferStaticCursor() = 0;
+	virtual int			getCountRowsStaticCursor() = 0;
+	virtual bool		getDataFromStaticCursor (int column, int cType, void * pointer, int bufferLength, long * indicatorPointer) = 0;
 	virtual bool		next() = 0;
 	virtual int			release() = 0;
 	virtual void		addRef() = 0;

@@ -18,13 +18,23 @@ class IscConnection;
 class IscStatement;
 class Value;
 
+struct SIscArrayData
+{
+	void*			arrBufData;
+	int				arrBufDataSize;
+	int				arrCountElement;
+	int				arrSizeElement;
+	int				arrTypeElement;
+};
+
 class IscArray : public BinaryBlob
 {
-protected:
-	void getBytesFromArray();
-
 public:
 
+	void attach(SIscArrayData * arr, bool bClear = false);
+	void detach(SIscArrayData * arr);
+	void removeBufData();
+	void getBytesFromArray();
 	void fetchArrayToString();
 	void writeArray(Value * value);
 
@@ -33,11 +43,13 @@ public:
 	virtual int getSegment (int offset, int length, void *address);
 	virtual int	getLength();
 
+	IscArray(SIscArrayData * ptArr);
 	IscArray(IscConnection	*parentConnection,XSQLVAR *var);
 	virtual ~IscArray();
 
 	IscConnection	*connection;
 	ISC_QUAD		arrayId;
+	bool			clear;
 	bool			fetched;
 	bool			fetchedBinary;
 	ISC_ARRAY_DESC	arrDesc;

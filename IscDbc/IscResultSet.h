@@ -41,6 +41,8 @@ class IscResultSetMetaData;
 class IscDatabaseMetaData;
 class Sqlda;
 
+enum enStatysActivePositionRow { enSUCCESS, enUNKNOWN, enINSERT_ROW, enAFTER_LAST, enBEFORE_FIRST };
+
 class IscResultSet : public ResultSet  
 {
 public:
@@ -158,6 +160,14 @@ public:
 	virtual void		moveToInsertRow();
 	virtual void		moveToCurrentRow();
 	virtual Statement	*getStatement();
+	virtual void		setPosRowInSet(int posRow);
+	virtual int			getPosRowInSet();
+	virtual bool		readStaticCursor();
+	virtual bool		setCurrentRowInBufferStaticCursor(int nRow);
+	virtual void		copyNextSqldaInBufferStaticCursor();
+	virtual void		copyNextSqldaFromBufferStaticCursor();
+	virtual int			getCountRowsStaticCursor();
+	virtual bool		getDataFromStaticCursor (int column, int cType, void * pointer, int bufferLength, long * indicatorPointer);
 
 	void setValue (int index, long value);
 	void setValue (int index, const char *value);
@@ -174,6 +184,8 @@ public:
 	Sqlda			*sqlda;
 	IscStatement	*statement;
 	IscResultSetMetaData *metaData;
+	int				activePosRowInSet;
+	enStatysActivePositionRow statysPositionRow;
 };
 
 #endif // !defined(AFX_ISCRESULTSET_H__C19738BA_1C87_11D4_98DF_0000C01D2301__INCLUDED_)

@@ -30,8 +30,18 @@ extern char charTable [];
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+IscArray::IscArray(SIscArrayData * ptArr)
+{
+	attach(ptArr);
+	connection = NULL;
+	fetched = false;
+	fetchedBinary = true;
+	bArray = true;
+}
+
 IscArray::IscArray(IscConnection *connect,XSQLVAR *var)
 {
+	clear = true;
 	connection = connect;
 	arrayId = *(ISC_QUAD*)var->sqldata;
 	fetched = false;
@@ -69,8 +79,37 @@ IscArray::IscArray(IscConnection *connect,XSQLVAR *var)
 
 IscArray::~IscArray()
 {
-	free(arrBufData);
-	arrBufData = NULL;
+	removeBufData();
+}
+
+void IscArray::attach(SIscArrayData * arr, bool bClear)
+{
+	arrBufData = arr->arrBufData;
+	arrBufDataSize = arr->arrBufDataSize;
+	arrCountElement = arr->arrCountElement;
+	arrSizeElement = arr->arrSizeElement;
+	arrTypeElement = arr->arrTypeElement;
+	fetchedBinary = true;
+	clear = bClear;
+}
+
+void IscArray::detach(SIscArrayData * arr)
+{
+	arr->arrBufData = arrBufData;
+	arr->arrBufDataSize = arrBufDataSize;
+	arr->arrCountElement = arrCountElement;
+	arr->arrSizeElement = arrSizeElement;
+	arr->arrTypeElement = arrTypeElement;
+	clear = false;
+}
+
+void IscArray::removeBufData()
+{
+	if( arrBufData && clear)
+	{
+		free(arrBufData);
+		arrBufData = NULL;
+	}
 }
 
 int IscArray::length()
@@ -87,7 +126,7 @@ void IscArray::getBytesFromArray()
 	int ret = GDS->_array_get_slice(statusVector, &connection->databaseHandle, &transactionHandle,
 		&arrayId, &arrDesc, arrBufData, &lenbuf);
 
-	if (ret || lenbuf != arrBufDataSize)
+	if ( ret )
 		THROW_ISC_EXCEPTION (statusVector);
 
 	fetchedBinary = true;

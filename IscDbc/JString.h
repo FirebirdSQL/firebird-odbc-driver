@@ -45,6 +45,7 @@ public:
 	//void set (int length, const char *stuff);
 	bool operator == (const char *string);
 	bool operator != (const char *stuff);
+	JString operator + (const char *string);
 
 	//JString (const WCHAR *wString, int len);
 	JString();

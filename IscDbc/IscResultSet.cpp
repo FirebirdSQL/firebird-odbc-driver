@@ -36,6 +36,7 @@
 #include "IscResultSet.h"
 #include "IscStatement.h"
 #include "IscResultSetMetaData.h"
+#include "IscArray.h"
 #include "IscBlob.h"
 #include "IscConnection.h"
 #include "SQLError.h"
@@ -67,6 +68,8 @@ IscResultSet::IscResultSet(IscStatement *iscStatement)
 		values.alloc (numberColumns);
 		allocConversions();
 		}
+	activePosRowInSet = 0;
+	statysPositionRow = enBEFORE_FIRST;
 }
 
 IscResultSet::~IscResultSet()
@@ -116,6 +119,84 @@ bool IscResultSet::next()
 
 	for (int n = 0; n < numberColumns; ++n, ++var, ++value)
 		statement->setValue (value, var);
+
+	return true;
+}
+
+bool IscResultSet::setCurrentRowInBufferStaticCursor(int nRow)
+{
+	return sqlda->setCurrentRowInBufferStaticCursor(nRow);
+}
+
+bool IscResultSet::readStaticCursor()
+{
+	if (!statement)
+		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
+
+	ISC_STATUS statusVector [20];
+
+	int dialect = statement->connection->getDatabaseDialect ();
+	int ret;
+
+	sqlda->initStaticCursor(statement->connection);
+	sqlda->setCurrentRowInBufferStaticCursor(0);
+	while(!(ret = GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda)))
+		sqlda->copyNextSqldaInBufferStaticCursor();
+
+	if ( ret != 100 )
+		THROW_ISC_EXCEPTION (statusVector);
+
+	sqlda->setCurrentRowInBufferStaticCursor(0);
+	sqlda->copyNextSqldaFromBufferStaticCursor();
+
+	return true;
+}
+
+void IscResultSet::copyNextSqldaInBufferStaticCursor()
+{
+	sqlda->copyNextSqldaInBufferStaticCursor();
+}
+
+void IscResultSet::copyNextSqldaFromBufferStaticCursor()
+{
+	sqlda->copyNextSqldaFromBufferStaticCursor();
+
+	XSQLVAR *var = sqlda->sqlda->sqlvar;
+    Value *value = values.values;
+
+	for (int n = 0; n < numberColumns; ++n, ++var, ++value)
+		statement->setValue (value, var);
+}
+
+int IscResultSet::getCountRowsStaticCursor()
+{
+	return sqlda->getCountRowsStaticCursor();
+}
+
+bool IscResultSet::getDataFromStaticCursor (int column, int cType, void * pointer, int bufferLength, long * indicatorPointer)
+{
+	if ( !(activePosRowInSet > 0 && activePosRowInSet <= sqlda->getCountRowsStaticCursor()) )
+		return false;
+
+	XSQLVAR *var = sqlda->sqlda->sqlvar + column - 1;
+    Value *value = values.values + column - 1;
+
+	sqlda->setCurrentRowInBufferStaticCursor(activePosRowInSet-1);
+	sqlda->copyNextSqldaFromBufferStaticCursor();
+	if ( !*(long*)var->sqldata )
+		value->type = Null;
+	else if ( (var->sqltype & ~1) == SQL_ARRAY )
+	{
+		SIscArrayData * ptArr = (SIscArrayData *)*(long*)var->sqldata;
+		IscArray iscArr(ptArr);
+		iscArr.fetchArrayToString();
+		value->setString(iscArr.getString(),false);
+	}
+	else if ( (var->sqltype & ~1) == SQL_BLOB )
+	{
+		IscBlob * ptBlob = (IscBlob *)*(long*)var->sqldata;
+		value->setString(ptBlob->getString(),false);
+	}
 
 	return true;
 }
@@ -464,17 +545,24 @@ const char* IscResultSet::getSchemaName(int index)
 	return sqlda->getOwnerName (index);
 }
 
+void IscResultSet::setPosRowInSet(int posRow)
+{
+	activePosRowInSet = posRow;
+}	
+
+int IscResultSet::getPosRowInSet()
+{
+	return activePosRowInSet;
+}	
 
 bool IscResultSet::isBeforeFirst()
 {
-	NOT_YET_IMPLEMENTED;
-	return 0;
+	return statysPositionRow == enBEFORE_FIRST;
 }
 
 bool IscResultSet::isAfterLast()
 {
-	NOT_YET_IMPLEMENTED;
-	return 0;
+	return statysPositionRow == enAFTER_LAST;
 }
 
 bool IscResultSet::isFirst()
@@ -491,12 +579,12 @@ bool IscResultSet::isLast()
 
 void IscResultSet::beforeFirst()
 {
-	NOT_YET_IMPLEMENTED;
+	statysPositionRow = enBEFORE_FIRST;
 }
 
 void IscResultSet::afterLast()
 {
-	NOT_YET_IMPLEMENTED;
+	statysPositionRow = enAFTER_LAST;
 }
 
 bool IscResultSet::first()
