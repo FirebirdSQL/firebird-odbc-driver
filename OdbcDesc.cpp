@@ -67,65 +67,39 @@ OdbcDesc::OdbcDesc(OdbcDescType type, OdbcConnection *connect)
 		bDefined = false;
 	else
 		bDefined = true;
-
-	switch( headType )
-	{
-	case odtImplementationParameter:
-	case odtImplementationRow:
-	case odtImplementationGetData:
-		convert = new OdbcConvert(parentStmt);
-		listBind = new ListBindColumn;
-		break;
-
-	default:
-		convert = NULL;
-		listBind = NULL;
-	}
 }
 
-void OdbcDesc::setParent(OdbcStatement *parent)
-{ 
-	parentStmt = parent;
-	if ( convert )
-		convert->setParent(parent);
-}
-
-void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaData)
+void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaDataOut, StatementMetaData * ptMetaDataIn)
 {
-	metaData = ptMetaData;
+	metaDataIn = ptMetaDataIn;
+	metaDataOut = ptMetaDataOut;
 
 	if( headType == odtImplementationParameter )
-		return;
+	{
+#pragma FB_COMPILER_MESSAGE("All param count FIXME!")
+//		headCount = metaDataIn->getColumnCount() + metaDataOut->getColumnCount();
+//		getDescRecord (headCount);
+	}
+	else
+	{
+		bDefined = false;
+		removeRecords();
 
-	bDefined = false;
-	removeRecords();
-	delAllBindColumn();
+		headAllocType = SQL_DESC_ALLOC_AUTO;
+		headArraySize = 1;
+		headArrayStatusPtr = (SQLUSMALLINT*)NULL;
+		headBindOffsetPtr = (SQLINTEGER*)NULL;
+		headRowsProcessedPtr = (SQLUINTEGER*)NULL;
+		headCount = 0;
 
-	headAllocType = SQL_DESC_ALLOC_AUTO;
-	headArraySize = 1;
-	headArrayStatusPtr = (SQLUSMALLINT*)NULL;
-	headBindOffsetPtr = (SQLINTEGER*)NULL;
-	headRowsProcessedPtr = (SQLUINTEGER*)NULL;
-	headCount = 0;
+		if(	metaDataOut == NULL )
+			return;
 
-	if(	metaData == NULL )
-		return;
+		bDefined = true;
 
-	bDefined = true;
-
-	headCount = metaData->getColumnCount();
-	getDescRecord (headCount);
-}
-
-// Use to odtImplementationParameter and odtImplementationRow
-void OdbcDesc::setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd)
-{ 
-	convert->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtrInd);
-}
-
-void OdbcDesc::setBindOffsetPtrFrom(SQLINTEGER	*bindOffsetPtr)
-{ 
-	convert->setBindOffsetPtrFrom(bindOffsetPtr);
+		headCount = metaDataOut->getColumnCount();
+		getDescRecord (headCount);
+	}
 }
 
 void OdbcDesc::removeRecords()
@@ -148,7 +122,12 @@ void OdbcDesc::clearPrepared()
 	{
 		for (int n = 0; n < recordSlots; ++n)
 			if ( records [n] )
+			{
 				records [n]->isPrepared = false;
+				records [n]->freeLocalDataPtr();
+				if ( records [n]->headSqlVarPtr )
+					records [n]->headSqlVarPtr->restoreOrgPtrSqlData();
+			}
 	}
 }
  
@@ -156,10 +135,13 @@ void OdbcDesc::updateDefined()
 {
 	if (records)
 	{
-		int countColumn = metaData->getColumnCount();
+		int countColumn = metaDataOut->getColumnCount();
 		for (int n = 1; n <= countColumn; ++n)
 			if (records [n] && records [n]->isDefined == false )
-				defFromMetaData(n, records [n]);
+			{
+				records [n]->freeLocalDataPtr();
+				defFromMetaDataOut(n, records [n]);
+			}
 	}
 	bDefined = true;
 }
@@ -204,34 +186,9 @@ OdbcDesc::~OdbcDesc()
 		connection->descriptorDeleted (this);
 
 	removeRecords();
-
-	delete convert;
-	delete listBind;
 }
 
-// 	Info -> ASSERT( headType == odtImplementationGetData )
-int OdbcDesc::setConvFnForGetData(int recNumber, DescRecord * recordTo, DescRecord *& recordIRD)
-{
-	recordIRD = getDescRecord(recNumber);
-
-	if ( !recordIRD->isDefined )
-		defFromMetaData(recNumber,recordIRD);
-
-	if( recordTo->conciseType == SQL_C_DEFAULT )
-	{
-		recordIRD->setDefault(recordTo);
-		recordTo->conciseType = getDefaultFromSQLToConciseType(recordIRD->type);
-	}
-//	else if ( !recordTo->isDefined )
-//		defFromMetaData(recNumber,recordTo);
-
-	recordTo->fnConv = convert->getAdresFunction(recordIRD,recordTo);
-	recordTo->isPrepared = true;
-
-	return convert->isIdentity() && recNumber;
-}
-
-void OdbcDesc::defFromMetaData(int recNumber, DescRecord * record)
+void OdbcDesc::defFromMetaDataIn(int recNumber, DescRecord * record)
 {
 	int realSqlType;
 
@@ -239,144 +196,74 @@ void OdbcDesc::defFromMetaData(int recNumber, DescRecord * record)
 	record->caseSensitive = SQL_FALSE;
 	record->catalogName = "";
 	record->datetimeIntervalCode = 0;
-	record->displaySize = metaData->getColumnDisplaySize(recNumber);
+	record->displaySize = metaDataIn->getColumnDisplaySize(recNumber);
 	record->fixedPrecScale = SQL_FALSE;
-	record->label = metaData->getColumnLabel(recNumber);
-	record->length = metaData->getColumnDisplaySize(recNumber);
+	record->label = metaDataIn->getColumnLabel(recNumber);
+	record->length = metaDataIn->getColumnDisplaySize(recNumber);
 	record->literalPrefix = "\"";
 	record->literalSuffix = "\"";
-	record->localTypeName = metaData->getSqlTypeName(recNumber);
-	record->name = metaData->getColumnName(recNumber);
-	record->baseColumnName = metaData->getColumnName(recNumber);
-	record->nullable = metaData->isNullable(recNumber);
-	record->octetLength = metaData->getPrecision(recNumber);
-	record->precision = metaData->getPrecision(recNumber);
-	record->scale = metaData->getScale(recNumber);
+	record->localTypeName = metaDataIn->getSqlTypeName(recNumber);
+	record->name = metaDataIn->getColumnName(recNumber);
+	record->baseColumnName = metaDataIn->getColumnName(recNumber);
+	record->nullable = metaDataIn->isNullable(recNumber);
+	record->octetLength = metaDataIn->getPrecision(recNumber);
+	record->precision = metaDataIn->getPrecision(recNumber);
+	record->scale = metaDataIn->getScale(recNumber);
 	record->schemaName = "";
 	record->searchable = SQL_PRED_NONE;
-	record->tableName = metaData->getTableName(recNumber);
-	record->baseTableName = metaData->getTableName(recNumber);
-	record->type = metaData->getColumnType(recNumber, realSqlType);
+	record->tableName = metaDataIn->getTableName(recNumber);
+	record->baseTableName = metaDataIn->getTableName(recNumber);
+	record->type = metaDataIn->getColumnType(recNumber, realSqlType);
 	record->conciseType = getConciseType(realSqlType);
-	record->typeName = metaData->getColumnTypeName(recNumber);
+	record->typeName = metaDataIn->getColumnTypeName(recNumber);
 	record->unNamed = !record->name.IsEmpty() ? SQL_NAMED : SQL_UNNAMED;
 	record->unSigned = SQL_FALSE;
 	record->updaTable = SQL_ATTR_WRITE;
 	record->isDefined = true;
 
-	metaData->getSqlData(recNumber, (char *&)record->dataPtr, (short *&)record->indicatorPtr, record->dataBlobPtr);
+	record->isBlobOrArray = metaDataIn->isBlobOrArray (recNumber);
+
+	metaDataIn->getSqlData(recNumber, record->dataBlobPtr, record->headSqlVarPtr);
+	record->dataPtr = (SQLPOINTER)record->headSqlVarPtr->getSqlData();
+	record->indicatorPtr = (SQLINTEGER*)record->headSqlVarPtr->getSqlInd();
 }
 
-// 	Info -> ASSERT( headType == odtImplementationParameter )
-int OdbcDesc::setConvFn(int recNumber, DescRecord * recordTo)
+void OdbcDesc::defFromMetaDataOut(int recNumber, DescRecord * record)
 {
-	if ( !metaData )
-		return -1;
+	int realSqlType;
 
-	DescRecord *record = getDescRecord(recNumber);
+	record->autoUniqueValue = SQL_FALSE;
+	record->caseSensitive = SQL_FALSE;
+	record->catalogName = "";
+	record->datetimeIntervalCode = 0;
+	record->displaySize = metaDataOut->getColumnDisplaySize(recNumber);
+	record->fixedPrecScale = SQL_FALSE;
+	record->label = metaDataOut->getColumnLabel(recNumber);
+	record->length = metaDataOut->getColumnDisplaySize(recNumber);
+	record->literalPrefix = "\"";
+	record->literalSuffix = "\"";
+	record->localTypeName = metaDataOut->getSqlTypeName(recNumber);
+	record->name = metaDataOut->getColumnName(recNumber);
+	record->baseColumnName = metaDataOut->getColumnName(recNumber);
+	record->nullable = metaDataOut->isNullable(recNumber);
+	record->octetLength = metaDataOut->getPrecision(recNumber);
+	record->precision = metaDataOut->getPrecision(recNumber);
+	record->scale = metaDataOut->getScale(recNumber);
+	record->schemaName = "";
+	record->searchable = SQL_PRED_NONE;
+	record->tableName = metaDataOut->getTableName(recNumber);
+	record->baseTableName = metaDataOut->getTableName(recNumber);
+	record->type = metaDataOut->getColumnType(recNumber, realSqlType);
+	record->conciseType = getConciseType(realSqlType);
+	record->typeName = metaDataOut->getColumnTypeName(recNumber);
+	record->unNamed = !record->name.IsEmpty() ? SQL_NAMED : SQL_UNNAMED;
+	record->unSigned = SQL_FALSE;
+	record->updaTable = SQL_ATTR_WRITE;
+	record->isDefined = true;
 
-	if( recNumber == 0 )
-		recordTo->setDefault(record);
-	else
-	{
-		if ( !record->isDefined )
-			defFromMetaData(recNumber,record);
-		
-		if( recordTo->conciseType == SQL_C_DEFAULT )
-		{
-			record->setDefault(recordTo);
-			recordTo->conciseType = getDefaultFromSQLToConciseType(record->type);
-		}
-	}
-
-	record->fnConv = convert->getAdresFunction(record,recordTo);
-	record->isPrepared = true;
-	recordTo->sizeColumnExtendedFetch = getConciseSize(recordTo->conciseType, recordTo->length);
-	recordTo->isPrepared = true;
-
-	return convert->isIdentity() && recNumber;
-}
-
-void OdbcDesc::addGetDataColumn(int recNumber, DescRecord * recordImp)
-{
-	DescRecord *record = getDescRecord(recNumber);
-	CBindColumn bindCol(recNumber,recordImp,record);
-	(*listBind)(recNumber) = bindCol;
-}
-
-RETCODE OdbcDesc::returnGetData(int recNumber)
-{
-	CBindColumn &bindCol = (*listBind)[recNumber];
-	return (convert->*bindCol.appRecord->fnConv)(bindCol.impRecord,bindCol.appRecord);
-}
-
-void OdbcDesc::addBindColumn(int recNumber, DescRecord * recordApp)
-{
-	DescRecord *recordImp = getDescRecord(recNumber);
-	CBindColumn bindCol(recNumber,recordImp,recordApp);
-
-	int j = listBind->SearchAndInsert( &bindCol );
-	if( j < 0 )
-		(*listBind)[-j-1] = bindCol;
-}
-
-void OdbcDesc::delBindColumn(int recNumber)
-{
-}
-
-void OdbcDesc::delAllBindColumn()
-{
-	listBind->removeAll();
-}
-
-// 	Info -> ASSERT( headType == odtImplementationRow )
-void OdbcDesc::setZeroColumn(int rowNumber)
-{
-	CBindColumn * bindCol = listBind->GetHeadPosition();
-	if ( bindCol && !bindCol->column )
-		convert->setZeroColumn(bindCol->appRecord, rowNumber);
-}
-
-RETCODE OdbcDesc::returnData()
-{
-	RETCODE retCode, ret = SQL_SUCCESS;
-	CBindColumn * bindCol = listBind->GetHeadPosition();
-	while( bindCol )
-	{
-		retCode = (convert->*bindCol->impRecord->fnConv)(bindCol->impRecord,bindCol->appRecord);
-		if ( retCode != SQL_SUCCESS )
-		{
-			ret = retCode;
-			if ( ret != SQL_SUCCESS_WITH_INFO )
-				break;
-		}
-		bindCol = listBind->GetNext();
-	}
-	return ret;
-}
-
-RETCODE OdbcDesc::returnDataFromExtededFetch()
-{
-	RETCODE retCode, ret = SQL_SUCCESS;
-	SQLINTEGER	&bindOffsetPtrTo = convert->getBindOffsetPtrTo();
-	SQLINTEGER	&currentRow = *parentStmt->bindOffsetPtr;
-
-	CBindColumn * bindCol = listBind->GetHeadPosition();
-	while( bindCol )
-	{
-		DescRecord *& appRecord = bindCol->appRecord;
-		bindOffsetPtrTo = appRecord->sizeColumnExtendedFetch * currentRow;
-
-		retCode = (convert->*bindCol->impRecord->fnConv)(bindCol->impRecord, appRecord);
-		if ( retCode != SQL_SUCCESS )
-		{
-			ret = retCode;
-			if ( ret != SQL_SUCCESS_WITH_INFO )
-				break;
-		}
-		bindCol = listBind->GetNext();
-	}
-	return ret;
+	metaDataOut->getSqlData(recNumber, record->dataBlobPtr, record->headSqlVarPtr);
+	record->dataPtr = (SQLPOINTER)record->headSqlVarPtr->getSqlData();
+	record->indicatorPtr = (SQLINTEGER*)record->headSqlVarPtr->getSqlInd();
 }
 
 OdbcObjectType OdbcDesc::getType()
@@ -874,6 +761,8 @@ struct infoDebSetDescField
 } debSetDescField[]=
 {
 	__DebSetDescField(SQL_ERROR),
+	__DebSetDescField(SQL_DESC_PARAMETER_TYPE),
+	__DebSetDescField(SQL_DESC_CONCISE_TYPE),
 	__DebSetDescField(SQL_DESC_COUNT),
 	__DebSetDescField(SQL_DESC_TYPE),
 	__DebSetDescField(SQL_DESC_LENGTH),
@@ -1175,22 +1064,12 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 			case odtApplicationRow:
 			case odtApplicationParameter:
 				if (record)
-				{
-					// help fn. SQLSetDescRec 
+				{	// help fn. SQLSetDescRec 
 					record->dataPtr = value;
-					if ( headType == odtApplicationRow )
-					{
-						int ret = parentStmt->implementationRowDescriptor->setConvFn(recNumber, record);
-						if( ret == 1 )// isIdentity
-						{ 
-							// Temp
-							// if ( isStaticCursor() )
-								parentStmt->implementationRowDescriptor->addBindColumn(recNumber, record);
-						}
-						else if( ret == 0 )
-							parentStmt->implementationRowDescriptor->addBindColumn(recNumber, record);
-					}
+					record->isDefined = true;
+					record->isPrepared = false;
 				}
+				break;
 			case odtImplementationParameter:
 				break;
 
@@ -1206,13 +1085,14 @@ RETCODE OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value, 
 	return sqlSuccess();
 }
 
+inline
 DescRecord* OdbcDesc::getDescRecord(int number, bool bCashe)
 {
 	if (number >= recordSlots)
 	{
 		int oldSlots = recordSlots;
 		DescRecord **oldRecords = records;
-		recordSlots = number + (bCashe ? 20 : 0);
+		recordSlots = number + (bCashe ? 20 : 1);
 		records = new DescRecord* [recordSlots];
 		memset (records, 0, sizeof (DescRecord*) * recordSlots);
 		if (oldSlots)
@@ -1225,10 +1105,18 @@ DescRecord* OdbcDesc::getDescRecord(int number, bool bCashe)
 	if (number > headCount)
 		headCount = number;
 
-	DescRecord *record = records [number];
+	DescRecord * &record = records[number];
 
 	if (record == NULL)
-		records [number] = record = new DescRecord;
+	{
+		record = new DescRecord;
+		switch(headType)
+		{
+		case odtImplementationRow:
+		case odtImplementationParameter:
+			record->isIndicatorSqlDa = true;
+		}
+	}
 
 	return record;		
 }
@@ -1386,7 +1274,7 @@ int OdbcDesc::getConciseType(int type)
 	return type;
 }
 
-int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType)
+int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType, int bufferLength)
 {
 	int cType;
 
@@ -1431,13 +1319,22 @@ int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType)
 		cType = SQL_C_TIMESTAMP;
 		break;
 	case JDBC_DATE:
-		cType = SQL_C_TYPE_DATE;
+		if ( bufferLength == 11 ) // standart for string '1992-12-12' + '\0'
+			cType = SQL_C_CHAR;
+		else
+			cType = SQL_C_TYPE_DATE;
 		break;
 	case JDBC_TIME:
-		cType = SQL_C_TYPE_TIME;
+		if ( bufferLength == 14 ) // standart for string 'hh:mm:ss.mmmm' + '\0'
+			cType = SQL_C_CHAR;
+		else
+			cType = SQL_C_TYPE_TIME;
 		break;
 	case JDBC_TIMESTAMP:
-		cType = SQL_C_TYPE_TIMESTAMP;
+		if ( bufferLength == 25 ) // standart for string '1992-12-12 hh:mm:ss.mmmm' + '\0'
+			cType = SQL_C_CHAR;
+		else
+			cType = SQL_C_TYPE_TIMESTAMP;
 		break;
 	default:
 		cType = SQL_C_DEFAULT;
