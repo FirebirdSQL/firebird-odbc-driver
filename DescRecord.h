@@ -45,6 +45,7 @@ public:
 	int				isBlobOrArray;
 	bool			data_at_exec;
 	bool			startedTransfer;
+	int				sizeColumnExtendedFetch;
 	SQLINTEGER		dataOffset;
 	long			currentFetched;
 	Blob			*dataBlobPtr; // for blob or array 

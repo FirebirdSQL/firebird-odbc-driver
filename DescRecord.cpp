@@ -40,6 +40,7 @@ DescRecord::DescRecord()
 	isBlobOrArray = 0;
 	data_at_exec = false;
 	startedTransfer	= false;
+	sizeColumnExtendedFetch = 0;
 	dataOffset = 0;
 	currentFetched = 0;
 	dataBlobPtr = NULL;
