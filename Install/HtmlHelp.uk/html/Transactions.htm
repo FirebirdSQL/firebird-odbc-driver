@@ -1,0 +1,74 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  This editing was done by Paul Beach of IBPhoenix
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Транзакції</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_transactions"></A><h1>Транзакції</h1></P>
+
+<P>Firebird підтримує слідуючі рівні ізоляції транзакції:</P>
+
+<P>&nbsp;&nbsp;&nbsp;1 Завершене читання(read committed), значення по замовчюванню),<BR>
+&nbsp;&nbsp;&nbsp;3 Послідовне перетворення(serializable)<BR>
+&nbsp;&nbsp;&nbsp;4 Встановлення версій(versioning). </P>
+
+<P>Firebird виконує блокування рівня строки завжди в будь-якому випадку.</P>
+
+<P>Firebird виконує оптимістичне блокування. Ваша транзакція не пробує
+блокувати запис, поки Ви не запрошуєте операцію модифікації, котра
+змінює цей запис. Це означає, що це можливо, хоча вкрай рідко, 
+для вашої модифікації, щоб терпіти невдачу, тому що другий клиєнт 
+блокував запис, навіть якщо Ви розпочали Вашу транзакцію раніше ніж
+інший клиєнт.</P>
+
+<P>Firebird використовує версіоний двигун, щоб забезпечити степінь
+деталювання більш точніше ніж забезпечення традиційного блокування
+рівня строки. Версійний двигун дозволяє будь-якій кількості клієнтів читати
+непротирічну копію будь-якого записа, навіть якщо в той самий час інший
+клиєнт змінює той самий запис. Читаючі і пишучі один той самий
+запис николи не блокують один одного.</P>
+
+<P>Також передбачено підтримку "two  phase  commit  transactions". Ця
+можливість дозволяє максимально на 16 різних Firebird базах даних виконувати
+commit(завершення) транзакції. Наприклад, використовуючи інструкцію<BR></P>
+
+<UL><B>SQLSetConnectAttr (connection, 4000, (void*) TRUE, 0);</B></UL>
+
+<P>Ви повідомляєте Firebird ODBC, що це з'єднання повинно бути присутнім в
+схемі "two  phase  commit  transactions". Піключив цією командой декілька
+з'єднаннь і виконуючи на будь-якому з'єднання Commit або Rollback, Ви отримаєте
+схему "two  phase  commit  transactions". Для виключення з'єднання з схеми
+використовуйте інструкцію:</P>
+
+<UL><B>SQLSetConnectAttr (connection, 4000, (void*) FALSE, 0); </B></UL>
+
+<P>Для більш детального знайомства з цими і іншими можливостями будьласка, 
+розгляньте приклади.
+</P>
+
+</BODY>
+</HTML>

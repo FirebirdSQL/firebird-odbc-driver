@@ -1,0 +1,65 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  This editing was done by Paul Beach of IBPhoenix
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Робочі потоки</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_multithread"></A><h1>Робочі потоки</h1></P>
+
+<P>Firebird ODBC драйвер забезпечує два рівні захисту робочої нитки.
+Через сумісне використання середовища або дескриптора з'єднання.</P>
+
+<P>Якщо драйвер сформовано, використовуючи слідуюче визначення:
+
+	<ul><B>#define DRIVER_LOCKED_LEVEL &nbsp;&nbsp;&nbsp; DRIVER_LOCKED_LEVEL_NONE</B></ul>
+
+це означає, що драйвер сформовано без підтримки контролю робочих потоків. 
+Це забезпечує найбільшу швидкість, але вся відповідальність
+за управління робочих потоків зміщено в Firebird клиєнтську бібліотеку.<BR>
+<B>Примітка.</B> В слідуючих версіях це визначення буде основне, після
+виходу версії Firebird 2.0 і пізніше, так як ті версії забезпечать контроль
+робочих потоків на рівні клиєнтської частини.</P>
+
+<P><B>Значення по замовчюванню</B>: Якщо драйвер сформовано, використовуючи слідуюче визначення:
+
+	<ul><B>#define DRIVER_LOCKED_LEVEL &nbsp;&nbsp;&nbsp; DRIVER_LOCKED_LEVEL_CONNECT</B></ul>
+
+це означає, що драйвер контролює робочі потоки на рівні з'єднання. Іншими словами
+всі потоки котрі виконують запити до цього з'єднання стають в чергу і виконуються
+для одного з'єднання послідовно.</P>
+
+<P>Якщо драйвер сформовано, використовуючи слідуюче визначення: </P>
+
+	<ul><B>#define DRIVER_LOCKED_LEVEL &nbsp;&nbsp;&nbsp; DRIVER_LOCKED_LEVEL_ENV</B></ul>
+
+це означає, що драйвер контролює робочі потоки на рівні середовища. Іншими словами
+всі потоки всіх з'єднаннь одного середовища стають в чергу і виконуються послідовно.
+Це не найкраще вирішення проблемі блокування, томущо в одно середовище
+попадають всі з'єднання з однією базой, но різних задач на одному рабочому місці.</P>
+
+</BODY>
+</HTML>
