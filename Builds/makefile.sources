@@ -37,6 +37,7 @@ ISCDBCSRC = \
 	SQLError.cpp \
 	SqlTime.cpp \
 	Stream.cpp \
+	SupportFunctions.cpp \
 	TimeStamp.cpp \
 	TypesResultSet.cpp \
 	Value.cpp \
