@@ -81,9 +81,7 @@ $(BUILDDIR)\OdbcJdbc.res : $(ODBCJDBCDIR)\OdbcJdbc.rc
 $(BUILDDIR)\OdbcJdbcSetup.res : $(ODBCJDBCSDIR)\OdbcJdbcSetup.rc
 	@$(RSC) $(RSCFLAGS) $(ODBCJDBCSDIR)\OdbcJdbcSetup.rc
 #
-ISCDBCDEFFILE	= $(ISCDBCDIR)\IscDbc.def
 ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)\OdbcJdbc.def
-ODBCJDBCSDEFFILE= $(ODBCJDBCSDIR)\OdbcJdbcSetup.def
 #
 all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSDLL)
 #
@@ -103,13 +101,13 @@ OdbcJdbcSetup : $(ODBCJDBCSDLL)
 # Build the library from the object modules
 #
 $(ISCDBCDLL) : $(OBJS_ISCDBC) $(BUILDDIR)\IscDbc.res
-	$(LD) $(LINKFLAGS) $(**) /pdb:"$(BUILDDIR)\IscDbc.pdb" /def:"$(ISCDBCDEFFILE)" /out:"$(ISCDBCDLL)" /implib:"$(ISCDBCLIB)" 
+	$(LD) $(LINKFLAGS) $(**) /pdb:"$(BUILDDIR)\IscDbc.pdb" /out:"$(ISCDBCDLL)" /implib:"$(ISCDBCLIB)" /EXPORT:createConnection
 #
 $(ODBCJDBCDLL) : $(OBJS_ODBCJDBC) $(BUILDDIR)\OdbcJdbc.res
 	$(LD) $(TARGETDIR)\IscDbc.lib user32.lib odbccp32.lib $(LINKFLAGS) $(BUILDDIR)\JString.obj $(**) /pdb:"$(BUILDDIR)\OdbcJdbc.pdb" /def:"$(ODBCJDBCDEFFILE)" /out:"$(ODBCJDBCDLL)" /implib:"$(ODBCJDBCLIB)" 
 #
 $(ODBCJDBCSDLL) : $(OBJS_ODBCJDBCS) $(BUILDDIR)\OdbcJdbcSetup.res
-	$(LD) $(LINKFLAGS) /libpath:"$(COMPDIR)\MFC\lib" $(**) /pdb:"$(BUILDDIR)\OdbcJdbc.pdb" /def:"$(ODBCJDBCSDEFFILE)" /out:"$(ODBCJDBCSDLL)" /implib:"$(ODBCJDBCSLIB)" 
+	$(LD) user32.lib comdlg32.lib odbccp32.lib $(LINKFLAGS) /libpath:"$(COMPDIR)\MFC\lib" $(BUILDDIR)\JString.obj $(**) /pdb:"$(BUILDDIR)\OdbcJdbc.pdb" /out:"$(ODBCJDBCSDLL)" /implib:"$(ODBCJDBCSLIB)" /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE
 #
 # End
 #

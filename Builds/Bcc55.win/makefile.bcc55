@@ -17,12 +17,16 @@ TARGETDIR	= Release
 BUILDDIR 	= $(TARGETDIR)\obj
 #
 COMPFLAGS	= -n$(BUILDDIR) \
-		  -w- -a8 -VM -VF -jb -j1 -Hc -H=$(BUILDDIR)\bcc.csm \
+		  -w- -a8 -jb -j1 -Hc -H=$(BUILDDIR)\bcc.csm \
 		  -DWIN32 -D_WINDOWS \
 		  -I.\ -I$(FBINCDIR) -I$(COMPDIR)\Include -I$(ISCDBCDIR) -I$(ODBCJDBCDIR)
+#		  -w- -a8 -VM -VF -jb -j1 -Hc -H=$(BUILDDIR)\bcc.csm \
 #
-LD		= ilink32
-LINKFLAGS	= -Gn -Gi -Tpd -ad -L$(COMPDIR)\lib -x
+RCINCLUDE       = -i$(COMPDIR)\Include
+BRCC 		= $(COMPDIR)\bin\brcc32 -dWIN32 -d_WIN32
+LD		= $(COMPDIR)\bin\ilink32
+BCC 		= $(COMPDIR)\bin\bcc32
+LINKFLAGS	= -q -Gn -Gi -Tpd -ad -L$(COMPDIR)\lib -x
 STARTUP		= c0d32.obj
 LIBRARIES	= import32.lib cw32mt.lib
 ISCDBCDLL       = $(TARGETDIR)\IscDbc.dll
@@ -37,27 +41,32 @@ COMPFLAGS	= $(COMPFLAGS) -DNDEBUG
 #
 COMPFLAGS	= $(COMPFLAGS) -tWCR -lGn -tWM -q
 #
+.rc.res:
+  	@$(BRCC) $(RCINCLUDE) -fo$@ $*.rc
+#
 .cpp.obj :
-	@bcc32 $(COMPFLAGS) -c $*.cpp
+	@$(BCC) $(COMPFLAGS) -c $*.cpp
 #
 ISCDBCLIB       	= $(ISCDBCDLL:.dll=.lib)
 ISCDBCDIRBCC 		= $(ISCDBCDIR:/=\)
 ODBCJDBCDIRBCC 		= $(ODBCJDBCDIR:/=\)
-ODBCJDBCDIRSBCC		= $(ODBCJDBCSETUPDIR:/=\)
+ODBCJDBCSDIRBCC		= $(ODBCJDBCSETUPDIR:/=\)
 LIST_ISCDBCOBJ 		= $(ISCDBCSRC:.cpp=.obj)
 LIST_ODBCJDBCOBJ	= $(ODBCJDBCSRC:.cpp=.obj)
 LIST_ODBCJDBCSOBJ	= $(ODBCJDBCSETUPSRC:.cpp=.obj)
 #
-.PATH.cpp	= $(ISCDBCDIRBCC);$(ODBCJDBCDIRBCC);$(ODBCJDBCDIRSBCC)
+.PATH.cpp	= $(ISCDBCDIRBCC);$(ODBCJDBCDIRBCC);$(ODBCJDBCSDIRBCC)
 .PATH.obj	= $(BUILDDIR)
+.PATH.rc	= $(ISCDBCDIRBCC);$(ODBCJDBCDIRBCC);$(ODBCJDBCSDIRBCC)
+.PATH.res	= $(BUILDDIR)
 #
 ISCDBCDEFFILE	= 
 #ISCDBCDEFFILE	= $(ISCDBCDIRBCC)\IscDbc.def
 ODBCJDBCDEFFILE	= $(ODBCJDBCDIRBCC)\OdbcJdbc.def
-ODBCJDBCSDEFFILE= $(ODBCJDBCDIRSBCC)\OdbcJdbcSetup.def
+ODBCJDBCSDEFFILE= 
+#ODBCJDBCSDEFFILE= $(ODBCJDBCSDIRBCC)\OdbcJdbcSetup.def
 #
-#all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSDLL)
-all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL)
+all :	createdirs IscDbc OdbcJdbc OdbcJdbcSetup
 #
 # Silently creates the target and build directories
 createdirs :
@@ -68,20 +77,20 @@ createdirs :
 clean :
 	@if exist $(BUILDDIR) rm -fr $(TARGETDIR)
 #
-IscDbc 		: $(ISCDBCDLL)
-OdbcJdbc 	: $(ODBCJDBCDLL)
-OdbcJdbcSetup 	: $(ODBCJDBCSDLL)
+IscDbc 		: $(BUILDDIR)\IscDbc.res $(ISCDBCDLL)
+OdbcJdbc 	: $(BUILDDIR)\OdbcJdbc.res $(ODBCJDBCDLL)
+OdbcJdbcSetup 	: $(BUILDDIR)\OdbcJdbcSetup.res $(ODBCJDBCSDLL)
 #
 # Build the library from the object modules
 #
 $(ISCDBCDLL) 	: $(LIST_ISCDBCOBJ)
-	$(LD) $(LINKFLAGS) $(STARTUP) $(**:$(ISCDBCDIRBCC)=$(BUILDDIR)) ,$(ISCDBCDLL),,$(LIBRARIES),$(ISCDBCDEFFILE),
+	@$(LD) $(LINKFLAGS) $(STARTUP) $(**:$(ISCDBCDIRBCC)=$(BUILDDIR)) ,$(ISCDBCDLL),,$(LIBRARIES),$(ISCDBCDEFFILE), $(BUILDDIR)\IscDbc.res
 #
 $(ODBCJDBCDLL) 	: $(LIST_ODBCJDBCOBJ)
-	$(LD) $(LINKFLAGS) $(STARTUP) $(BUILDDIR)\JString.obj $(**:$(ODBCJDBCDIRBCC)=$(BUILDDIR)) ,$(ODBCJDBCDLL),,$(LIBRARIES) $(ISCDBCLIB) odbccp32.lib ,$(ODBCJDBCDEFFILE),
+	@$(LD) $(LINKFLAGS) $(STARTUP) $(BUILDDIR)\JString.obj $(**:$(ODBCJDBCDIRBCC)=$(BUILDDIR)) ,$(ODBCJDBCDLL),,$(LIBRARIES) $(ISCDBCLIB) odbccp32.lib ,$(ODBCJDBCDEFFILE), $(BUILDDIR)\OdbcJdbc.res
 #
 $(ODBCJDBCSDLL)	: $(LIST_ODBCJDBCSOBJ)
-	$(LD) $(LINKFLAGS) $(STARTUP) $(**:$(ODBCJDBCDIRSBCC)=$(BUILDDIR)) ,$(ODBCJDBCSDLL),,$(LIBRARIES) odbccp32.lib ,$(ODBCJDBCSDEFFILE),
+	@$(LD) $(LINKFLAGS) $(STARTUP) $(BUILDDIR)\JString.obj $(**:$(ODBCJDBCSDIRBCC)=$(BUILDDIR)) ,$(ODBCJDBCSDLL),,$(LIBRARIES) user32.lib comdlg32.lib odbccp32.lib,$(ODBCJDBCSDEFFILE),$(BUILDDIR)\OdbcJdbcSetup.res
 #
 # End
 #

@@ -55,8 +55,14 @@ else
 DEBUGFLAGS	= -DNDEBUG
 endif
 #
-.res.rc  :
-	@$(WINDRES) -i $*.rc -I rc -o $*.res -O coff 
+$(BUILDDIR)/%.res  : $(ISCDBCDIR)/%.rc
+	$(WINDRES) --include-dir "$(MINGWDIR)/include" -i $(firstword $<) -I rc -o $@ -O coff 
+#
+$(BUILDDIR)/%.res  : $(ODBCJDBCDIR)/%.rc
+	$(WINDRES) --include-dir "$(MINGWDIR)/include" -i $(firstword $<) -I rc -o $@ -O coff 
+#
+$(BUILDDIR)/%.res  : $(ODBCJDBCSETUPDIR)/%.rc
+	$(WINDRES) --include-dir "$(MINGWDIR)/include" -i $(firstword $<) -I rc -o $@ -O coff 
 #
 $(BUILDDIR)/%.o: $(ISCDBCDIR)/%.cpp
 	$(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
@@ -71,8 +77,7 @@ ISCDBCLIB       = $(ISCDBCDLL:.dll=.a)
 ODBCJDBCLIB     = $(ODBCJDBCDLL:.dll=.a)
 ODBCJDBCSLIB    = $(ODBCJDBCSDLL:.dll=.a)
 #
-all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL)
-#all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSDLL)
+all :	createdirs IscDbc OdbcJdbc OdbcJdbcSetup
 #
 # Silently creates the target and build directories
 createdirs :
@@ -89,14 +94,14 @@ OdbcJdbcSetup 	: $(ODBCJDBCSDLL)
 #
 # Build the library from the object modules
 #
-$(ISCDBCDLL) : $(LIST_ISCDBCOBJ)
-	$(LD) $(LINKFLAGS) --implib $(ISCDBCLIB) $(LIST_ISCDBCOBJ) --def $(ISCDBCDEFFILE) -o $(ISCDBCDLL)
+$(ISCDBCDLL) : $(LIST_ISCDBCOBJ) $(BUILDDIR)/IscDbc.res
+	$(LD) $(LINKFLAGS) --implib $(ISCDBCLIB) $(LIST_ISCDBCOBJ) $(BUILDDIR)/IscDbc.res --def $(ISCDBCDEFFILE) -o $(ISCDBCDLL)
 #
-$(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ)
-	$(LD) $(LINKFLAGS) --implib $(ODBCJDBCLIB) $(BUILDDIR)/JString.o $(LIST_ODBCJDBCOBJ) -lodbccp32 --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
+$(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ) $(BUILDDIR)/OdbcJdbc.res
+	$(LD) $(LINKFLAGS) --implib $(ODBCJDBCLIB) $(BUILDDIR)/JString.o $(LIST_ODBCJDBCOBJ) $(BUILDDIR)/OdbcJdbc.res -lodbccp32 --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
 #
-$(ODBCJDBCSDLL) : $(LIST_ODBCJDBCSOBJ)
-	$(LD) $(LINKFLAGS) --implib $(ODBCJDBCSLIB) $(LIST_ODBCJDBCSOBJ) -lodbccp32 --def $(ODBCJDBCSDEFFILE) -o $(ODBCJDBCSDLL)
+$(ODBCJDBCSDLL) : $(LIST_ODBCJDBCSOBJ) $(BUILDDIR)/OdbcJdbcSetup.res
+	$(LD) $(LINKFLAGS) --implib $(ODBCJDBCSLIB) $(BUILDDIR)/JString.o $(LIST_ODBCJDBCSOBJ) $(BUILDDIR)/OdbcJdbcSetup.res -luser32 -lcomdlg32 -lodbccp32 --def $(ODBCJDBCSDEFFILE) -o $(ODBCJDBCSDLL)
 #
 # End
 #
