@@ -562,6 +562,7 @@ ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to
 			case SQL_C_BINARY:
 				if ( from->isIndicatorSqlDa && from->dataBlobPtr && from->dataBlobPtr->isArray() )
 					return &OdbcConvert::convBlobToString;
+				return &OdbcConvert::convVarStringToString;
 			default:
 				return &OdbcConvert::notYetImplemented;
 			}

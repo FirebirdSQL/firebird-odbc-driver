@@ -322,7 +322,8 @@ const char* IscDatabaseMetaData::getDatabaseProductName()
 
 const char* IscDatabaseMetaData::getDatabaseProductVersion()
 	{
-	return connection->attachment->serverVersion;
+	return "01.05.0000";
+//	return connection->attachment->serverVersion;
 	}
 
 int IscDatabaseMetaData::getDatabasePageSize()
