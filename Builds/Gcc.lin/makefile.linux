@@ -1,13 +1,33 @@
 #
+#     The contents of this file are subject to the Initial
+#     Developer's Public License Version 1.0 (the "License");
+#     you may not use this file except in compliance with the
+#     License. You may obtain a copy of the License at
+#     http://www.ibphoenix.com/idpl.html.
+#
+#     Software distributed under the License is distributed on
+#     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+#     express or implied.  See the License for the specific
+#     language governing rights and limitations under the License.
+#
+#
+#     The Original Code was created by Vladimir Tsvigun.
+#
+#     Copyright (c) 2003 Vladimir Tsvigun
+#     All Rights Reserved.
+#
+#
+
 DEBUG = No
 #
-.PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean postbuild
+.PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean postbuild install uninstall package
 #
 GCC		= g++
+
+ifndef $(ODBCMANAGER)
 ODBCMANAGER	= unixODBC
 #ODBCMANAGER	= iODBC
-FBCLIENT	= gds
-#FBCLIENT	= fbclient
+endif
 
 #
 # Start build
@@ -22,26 +42,34 @@ INCLUDEDIR      = -I/usr/local/include \
 EXTLIBDIR       = -L/usr/local/lib \
                   -L/usr/lib
 else
-LIBODBCINST	= -lodbcinst
-INCLUDEDIR      = -I/mnt/third_party/odbc/unixODBC/linux-2.2.7/include \
-                  -I/mnt/third_party/interbase/linux-2003-03-10/include
-EXTLIBDIR       = -L/mnt/third_party/interbase/linux-2003-03-10/lib \
-                  -L/mnt/third_party/odbc/unixODBC/linux-2.2.7/lib
+LIBODBCINST	    = -lodbcinst
+INCLUDEDIR      = -I/usr/include
+EXTLIBDIR       = -L/usr/lib
+endif
+
+ifdef INTERBASE
+INCLUDEDIR      := -I/opt/interbase/include -I/usr/include/odbc $(INCLUDEDIR)
+EXTLIBDIR       := -L/opt/interbase/lib -L/usr/lib/unixODBC $(EXTLIBDIR)
+FBCLIENT        = gds
+else
+INCLUDEDIR      = -I/opt/firebird/include -I/usr/include/odbc
+EXTLIBDIR       := -L/opt/firebird/lib -L/usr/lib/unixODBC $(EXTLIBDIR)
+FBCLIENT        = fbclient
 endif
 #
 
 ifeq (Yes,$(DEBUG))
-TARGETDIR	= Debug
+TARGETDIR	    = Debug
 else
-TARGETDIR	= Release
+TARGETDIR	    = Release
 endif
 #
-BUILDDIR 	= $(TARGETDIR)/obj
+BUILDDIR 	    = $(TARGETDIR)/obj
 #
-LIST_ISCDBCSRC 		= $(addprefix $(ISCDBCDIR)/, $(ISCDBCSRC))
-LIST_ISCDBCOBJ 		= $(addprefix $(BUILDDIR)/, $(ISCDBCSRC:.cpp=.o))
-LIST_ODBCJDBCSRC	= $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSRC))
-LIST_ODBCJDBCOBJ	= $(addprefix $(BUILDDIR)/, $(ODBCJDBCSRC:.cpp=.o))
+LIST_ISCDBCSRC 		    = $(addprefix $(ISCDBCDIR)/, $(ISCDBCSRC))
+LIST_ISCDBCOBJ 		    = $(addprefix $(BUILDDIR)/, $(ISCDBCSRC:.cpp=.o))
+LIST_ODBCJDBCSRC	    = $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSRC))
+LIST_ODBCJDBCOBJ	    = $(addprefix $(BUILDDIR)/, $(ODBCJDBCSRC:.cpp=.o))
 LIST_ODBCJDBCSETUPSRC	= $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSETUPSRC_LINUX))
 LIST_ODBCJDBCSETUPOBJ	= $(addprefix $(BUILDDIR)/, $(ODBCJDBCSETUPSRC_LINUX:.cpp=.o))
 #
@@ -51,9 +79,12 @@ COMPFLAGS	= -g -w -D_REENTRANT -D_PTHREADS -DEXTERNAL $(INCLUDEDIR)
 LINKFLAGS	= -shared
 EXTLIBS		= $(EXTLIBDIR) -lcrypt -ldl
 #
-ISCDBCDLL       = $(TARGETDIR)/IscDbc.so
-ODBCJDBCDLL     = $(TARGETDIR)/OdbcJdbc.so
-ODBCJDBCSETUPDLL= $(TARGETDIR)/OdbcJdbcS.so
+ISCDBC			= libIscDbc.so
+ISCDBCDLL       = $(TARGETDIR)/$(ISCDBC)
+ODBCJDBC		= libOdbcJdbc.so
+ODBCJDBCDLL     = $(TARGETDIR)/$(ODBCJDBC)
+ODBCJDBCSETUP	= libOdbcJdbcS.so
+ODBCJDBCSETUPDLL= $(TARGETDIR)/$(ODBCJDBCSETUP)
 ISCDBCDEFFILE	= $(ISCDBCDIR)/IscDbc.def
 ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)/OdbcJdbc.def
 ODBCJDBCSDEFFILE= $(ODBCJDBCSETUPDIR)/OdbcJdbcSetup.def
@@ -107,6 +138,25 @@ postbuild : $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
 	@-strip -s $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
 	@-tar -cf OdbcJdbc_Snapshot.tar $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
 	@-gzip -9 -S .gz OdbcJdbc_Snapshot.tar
+#
+install : 
+	for afile in $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL); do cp $$afile /usr/lib/unixODBC; done
+	ln -s /usr/lib/unixODBC/$(ISCDBC) /usr/lib/unixODBC/libIscDbc
+#
+uninstall : 
+	rm /usr/lib/unixODBC/$(ISCDBC) /usr/lib/unixODBC/$(ODBCJDBC) /usr/lib/unixODBC/$(ODBCJDBCSETUP) /usr/lib/unixODBC/libIscDbc
+#
+package :
+	-strip -s $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+	-rm OdbcJdbc_Snapshot.tar.gz
+	tar -C $(TARGETDIR) -cvzf OdbcJdbcLibs.tar.gz $(ISCDBC) $(ODBCJDBC) $(ODBCJDBCSETUP)
+	tar -C ../../Install/HtmlHelp --exclude=CVS -cvzf OdbcJdbcDocs.tar.gz html/ 
+	tar -C ../../Install/Linux -cf OdbcJdbc_Snapshot.tar install.sh readme.txt DriverTemplate.ini FirebirdDSNTemplate.ini InterBaseDSNTemplate.ini
+	tar -uf OdbcJdbc_Snapshot.tar OdbcJdbcLibs.tar.gz OdbcJdbcDocs.tar.gz
+	rm OdbcJdbcLibs.tar.gz  OdbcJdbcDocs.tar.gz
+	gzip -9 -S .gz OdbcJdbc_Snapshot.tar 
+#
+
 #
 # End
 #
