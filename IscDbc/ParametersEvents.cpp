@@ -24,7 +24,6 @@
 
 #include <string.h>
 #include "IscDbc.h"
-#include "ParameterEvent.h"
 #include "ParametersEvents.h"
 
 namespace IscDbcLibrary {
@@ -37,6 +36,7 @@ ParametersEvents::ParametersEvents()
 {
 	useCount = 1;
 	parameters = NULL;
+	parameterPositions = NULL;
 	count = 0;
 }
 
@@ -48,7 +48,13 @@ ParametersEvents::~ParametersEvents()
 void ParametersEvents::putNameEvent( const char * name )
 {
 	++count;
-	parameters = new ParameterEvent( parameters, name, strlen( name ) );
+
+	ParameterEvent **parameter = &parameters;
+
+	while ( *parameter )
+		parameter = &(*parameter)->nextParameter;
+
+	*parameter = new ParameterEvent( *parameter, name, strlen( name ) );
 }
 
 int ParametersEvents::findIndex( const char * name )
@@ -61,65 +67,43 @@ int ParametersEvents::findIndex( const char * name )
 	return -1;
 }
 
-int ParametersEvents::getCount()
-{
-	return count;
-}
-
 const char* ParametersEvents::getNameEvent( int index )
 {
+	if ( index < 0 || index >= count )
+		return NULL;
+
 	ParameterEvent *parameter = parameters;
 
-	for ( int n = 0; n < count; ++n, parameter = parameter->nextParameter )
-		if ( n == index )
-			return parameter->nameEvent;
+	while ( index-- )
+		parameter = parameter->nextParameter;
 
-	return NULL;
-}
-
-int ParametersEvents::lengthNameEvent( int index )
-{
-	ParameterEvent *parameter = parameters;
-
-	for ( int n = 0; n < count; ++n, parameter = parameter->nextParameter )
-		if ( n == index )
-			return parameter->lengthNameEvent;
-
-	return 0;
+	return parameter->nameEvent;
 }
 
 unsigned long ParametersEvents::getCountExecutedEvents( int index )
 {
+	if ( index < 0 || index >= count )
+		return 0;
+
 	ParameterEvent *parameter = parameters;
 
-	for ( int n = 0; n < count; ++n, parameter = parameter->nextParameter )
-		if ( n == index )
-			return parameter->countEvents;
+	while ( index-- )
+		parameter = parameter->nextParameter;
 
-	return 0;
-}
-
-void ParametersEvents::updateCountExecutedEvents( int index, unsigned long newCount )
-{
-	ParameterEvent *parameter = parameters;
-
-	for ( int n = 0; n < count; ++n, parameter = parameter->nextParameter )
-		if ( n == index )
-		{
-			parameter->countEvents = newCount;
-			return;
-		}
+	return parameter->countEvents;
 }
 
 bool ParametersEvents::isChanged( int index )
 {
+	if ( index < 0 || index >= count )
+		return false;
+
 	ParameterEvent *parameter = parameters;
 
-	for ( int n = 0; n < count; ++n, parameter = parameter->nextParameter )
-		if ( n == index )
-			return parameter->changed;
+	while ( index-- )
+		parameter = parameter->nextParameter;
 
-	return false;
+	return parameter->changed;
 }
 
 void ParametersEvents::clear()

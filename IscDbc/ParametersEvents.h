@@ -26,6 +26,7 @@
 #define _ParametersEvents_H_
 
 #include "Connection.h"
+#include "ParameterEvent.h"
 
 namespace IscDbcLibrary {
 
@@ -46,15 +47,42 @@ public:
 	virtual void		addRef();
 	virtual int			release();
 
-	int	lengthNameEvent( int index );
-	void updateCountExecutedEvents( int index, unsigned long newCount );
+	inline ParameterEvent *getHeadPosition( int pos = 0 );
+	inline ParameterEvent *getNext();
 	void clear();
 
 public:
 	int				useCount;
 	ParameterEvent	*parameters;
+	ParameterEvent	*parameterPositions;
 	int				count;
 };
+
+inline
+int ParametersEvents::getCount()
+{
+	return count;
+}
+
+inline
+ParameterEvent* ParametersEvents::getHeadPosition( int pos )
+{
+	parameterPositions = parameters;
+
+	while ( pos-- )
+		parameterPositions = parameterPositions->nextParameter;
+
+	return parameterPositions;
+}
+
+inline
+ParameterEvent* ParametersEvents::getNext()
+{
+	if ( !parameterPositions )
+		return NULL;
+
+	return ( parameterPositions = parameterPositions->nextParameter );
+}
 
 }; // end namespace IscDbcLibrary
 
