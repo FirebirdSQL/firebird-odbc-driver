@@ -34,7 +34,7 @@ ODBCJDBCDLL     = $(TARGETDIR)\OdbcJdbc.dll
 ODBCJDBCSDLL    = $(TARGETDIR)\OdbcJdbcSetup.dll
 #
 !ifdef DEBUG
-DEBUGFLAGS	= /MTd /Gm /Zi /Od /D "_DEBUG" /D "DEBUG" /D "LOGGING" /FR"$(INTDIR)\\" 
+DEBUGFLAGS	= /MTd /Gm /Zi /Od /D "_DEBUG" /D "DEBUG" /D "LOGGING" /FR"$(BUILDDIR)\\" 
 LINKFLAGS	= $(LINKFLAGS) /incremental:yes /debug /pdbtype:sept
 RSCFLAGS	= /l 0x409 /fo"$*.res" /I "$(COMPDIR)\Include" /I "$(COMPDIR)\MFC\Include" /d "DEBUG" /d "_DEBUG" 
 !else
