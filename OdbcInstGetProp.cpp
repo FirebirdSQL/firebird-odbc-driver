@@ -1,8 +1,17 @@
 
 #ifndef _WIN32
+#include <stdlib.h>
+#include <memory.h>
+#include <stdio.h>
+#include <string.h>
 #include <odbcinstext.h>
 
 #include "SetupAttributes.h"
+
+#ifndef TRUE
+#define FALSE	0
+#define TRUE	1
+#endif
 
 static const char *charsets []= 
 { 
