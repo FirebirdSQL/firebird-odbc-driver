@@ -1,17 +1,20 @@
-/*
- *  The contents of this file are subject to the J Public License 
- *  Version 1.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at http://www.IBPhoenix.com/JPL.html
+//*
  *  
- *  Software distributed under the License is distributed on an 
- *  "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express 
- *  or implied.  See the License for the specific language governing 
- *  rights and limitations under the License. 
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/idpl.html. 
  *
- *  The Original Code was created by Ann W. Harrison
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
  *
- *  Copyright (c) 2000 Ann W. Harrison
+ *
+ *  The Original Code was created by Ann W. Harrison for IBPhoenix.
+ *
+ *  Copyright (c) Ann W. Harrison
  *  All Rights Reserved.
  */
 
