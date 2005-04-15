@@ -2590,7 +2590,8 @@ SQLRETURN OdbcStatement::executeRollback()
 
 SQLRETURN OdbcStatement::executeCreateDatabase()
 {
-	return connection->sqlExecuteCreateDatabase( sqlPrepareString );
+	connection->connection->sqlExecuteCreateDatabase( sqlPrepareString );
+	return SQL_SUCCESS;
 }
 
 SQLRETURN OdbcStatement::sqlGetTypeInfo(int dataType)
