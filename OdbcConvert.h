@@ -82,7 +82,7 @@ public:
 	void setZeroColumn(DescRecord * to, long rowNumber);
 	void setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd);
 	void setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd);
-	ADRESS_FUNCTION getAdresFunction(DescRecord * from, DescRecord * to);
+	ADRESS_FUNCTION getAdressFunction(DescRecord * from, DescRecord * to);
 	inline SQLPOINTER getAdressBindDataFrom(char * pointer);
 	inline SQLINTEGER *getAdressBindIndFrom(char * pointer);
 	inline SQLPOINTER getAdressBindDataTo(char * pointer);

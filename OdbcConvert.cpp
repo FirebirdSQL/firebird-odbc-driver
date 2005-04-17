@@ -109,7 +109,7 @@ void OdbcConvert::setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bi
 		bindOffsetPtrIndFrom = &tempBindOffsetPtr;
 }
 
-ADRESS_FUNCTION OdbcConvert::getAdresFunction(DescRecord * from, DescRecord * to)
+ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * to)
 {
 	bIdentity = false;
 

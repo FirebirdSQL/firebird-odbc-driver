@@ -1566,7 +1566,7 @@ SQLRETURN OdbcStatement::prepareGetData(int column, DescRecord *recordARD)
 		recordARD->conciseType = implementationRowDescriptor->getDefaultFromSQLToConciseType(recordIRD->type, recordARD->length);
 	}
 
-	recordARD->fnConv = convert->getAdresFunction(recordIRD,recordARD);
+	recordARD->fnConv = convert->getAdressFunction(recordIRD,recordARD);
 
 	if ( !recordARD->fnConv )
 	{
@@ -2300,7 +2300,7 @@ void OdbcStatement::bindInputOutputParam(int param, DescRecord * recordApp)
 			recordApp->conciseType = ipd->getDefaultFromSQLToConciseType ( record->type );
 		}
 
-		recordApp->fnConv = convert->getAdresFunction ( recordApp, record );
+		recordApp->fnConv = convert->getAdressFunction( recordApp, record );
 
 //		if ( convert->isIdentity() )
 			addBindParam ( param, record, recordApp );
@@ -2316,7 +2316,7 @@ void OdbcStatement::bindInputOutputParam(int param, DescRecord * recordApp)
 			recordApp->conciseType = ipd->getDefaultFromSQLToConciseType(record->type);
 		}
 
-		record->fnConv = convert->getAdresFunction(record, recordApp);
+		record->fnConv = convert->getAdressFunction(record, recordApp);
 
 //		if ( convert->isIdentity() )
 			addBindColumn ( param, record, recordApp );
@@ -2350,7 +2350,7 @@ void OdbcStatement::bindOutputColumn(int column, DescRecord * recordApp)
 		}
 	}
 
-	record->fnConv = convert->getAdresFunction ( record, recordApp );
+	record->fnConv = convert->getAdressFunction( record, recordApp );
 	recordApp->sizeColumnExtendedFetch = ird->getConciseSize ( recordApp->conciseType, recordApp->length );
 
 //	if ( convert->isIdentity() )
