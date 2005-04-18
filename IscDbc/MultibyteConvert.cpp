@@ -48,6 +48,7 @@ struct IntlCharsets
 	CODE_CHARSETS( OCTETS		,  1, 1 )
 	CODE_CHARSETS( ASCII		,  2, 1 )
 	CODE_CHARSETS( UNICODE_FSS	,  3, 3 )
+	CODE_CHARSETS( NEXT			,  4, 1 )
 	CODE_CHARSETS( SJIS_0208	,  5, 2 )
 	CODE_CHARSETS( EUJC_0208	,  6, 2 )
 	CODE_CHARSETS( JIS_0208		,  7, 2 )
@@ -63,9 +64,20 @@ struct IntlCharsets
 	CODE_CHARSETS( DOS862		, 17, 1 )
 	CODE_CHARSETS( DOS864		, 18, 1 )
 	CODE_CHARSETS( NEXT			, 19, 1 )
+	CODE_CHARSETS( NEXT			, 20, 1 )
 	CODE_CHARSETS( ISO8859_1	, 21, 1 )
 	CODE_CHARSETS( ISO8859_2	, 22, 1 )
 	CODE_CHARSETS( ISO8859_3	, 23, 1 )
+	CODE_CHARSETS( NEXT			, 24, 1 )
+	CODE_CHARSETS( NEXT			, 25, 1 )
+	CODE_CHARSETS( NEXT			, 26, 1 )
+	CODE_CHARSETS( NEXT			, 27, 1 )
+	CODE_CHARSETS( NEXT			, 28, 1 )
+	CODE_CHARSETS( NEXT			, 29, 1 )
+	CODE_CHARSETS( NEXT			, 30, 1 )
+	CODE_CHARSETS( NEXT			, 31, 1 )
+	CODE_CHARSETS( NEXT			, 32, 1 )
+	CODE_CHARSETS( NEXT			, 33, 1 )
 	CODE_CHARSETS( ISO8859_4	, 34, 1 )
 	CODE_CHARSETS( ISO8859_5	, 35, 1 )
 	CODE_CHARSETS( ISO8859_6	, 36, 1 )
@@ -73,6 +85,9 @@ struct IntlCharsets
 	CODE_CHARSETS( ISO8859_8	, 38, 1 )
 	CODE_CHARSETS( ISO8859_9	, 39, 1 )
 	CODE_CHARSETS( ISO8859_13	, 40, 1 )
+	CODE_CHARSETS( NEXT			, 41, 1 )
+	CODE_CHARSETS( NEXT			, 42, 1 )
+	CODE_CHARSETS( NEXT			, 43, 1 )
 	CODE_CHARSETS( KSC_5601		, 44, 2 )
 	CODE_CHARSETS( DOS852		, 45, 1 )
 	CODE_CHARSETS( DOS857		, 46, 1 )
@@ -111,6 +126,12 @@ int findCharsetsCode( const char *charset )
 	return 0;
 }
 
+int getCharsetSize( const int charsetCode )
+{
+	if ( charsetCode < 0 || charsetCode > SIZE_OF_LISTCHARSETS )
+		return 1;
+	return listCharsets[ charsetCode ].size;
+}
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -136,7 +157,7 @@ static Tab tab[] =
 	0,
 }; 
 
-unsigned int fss_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthForWCS )
+unsigned int fss_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthForMBS )
 {
 	int l, c0, c;
 	bool bContinue = true;
@@ -146,6 +167,8 @@ unsigned int fss_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthFor
 	if ( !mbs || !wcs )
 		return 0; 
 
+	const char *mbsEnd = mbs + lengthForMBS;
+
 	do
 	{
 		l = c0 = *mbs & 0xff;
@@ -153,6 +176,12 @@ unsigned int fss_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthFor
 		for ( t = tab; t->cmask; t++)
 		{ 
 			++mbs;
+			if ( mbs > mbsEnd )
+			{
+				*wcs = L'\0';
+				return length;
+			}
+
 			if ( ( c0 & t->cmask ) == t->cval )
 			{ 
 				l &= t->lmask; 
@@ -164,6 +193,10 @@ unsigned int fss_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthFor
 				}
 				
 				*wcs++ = (wchar_t)l;
+
+				if ( (wchar_t)l == L'\0' )
+					return length;
+
 				length++;
 				break;
 			} 
@@ -184,7 +217,7 @@ unsigned int fss_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthFor
 			l = ( l << 6 ) | c; 
 		}
 
-	} while ( bContinue && length < lengthForWCS );
+	} while ( bContinue );
 
 	return length;
 }
