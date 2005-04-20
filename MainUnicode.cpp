@@ -31,6 +31,10 @@
 #include "SafeEnvThread.h"
 #include "Main.h"
 
+#define GETCONNECT_STMT( hStmt ) (((OdbcStatement*)hStmt)->connection)
+#define GETCONNECT_DESC( hDesc ) (((OdbcDesc*)hDesc)->connection)
+#define GETCONNECT_HNDL( hObjt ) (((OdbcObject*)hObjt)->getConnection())
+
 using namespace OdbcJdbcLibrary;
 extern UINT codePage; // from Main.cpp
 
@@ -45,8 +49,14 @@ class ConvertingString
 	int			lengthString;
 	typestring	isWhy;
 	bool		returnCountOfBytes;
+	OdbcConnection *connection;
 	
 public:
+	void setConnection( OdbcConnection *connect )
+	{
+		connection = connect;
+	}
+
 	ConvertingString() 
 	{
 		isWhy = NONE;
@@ -55,10 +65,12 @@ public:
 		byteString = NULL;
 		realLength = NULL;
 		lengthString = 0;
+		connection = NULL;
 	}
 
 	ConvertingString( int length, SQLWCHAR *wcString, TypeRealLen *pLength = NULL, bool retCountOfBytes = true )
 	{
+		connection = NULL;
 		realLength = pLength;
 		returnCountOfBytes = retCountOfBytes;
 
@@ -79,24 +91,9 @@ public:
 		Alloc();
 	}
 
-	ConvertingString( int length, SQLCHAR *mbString )
+	ConvertingString( OdbcConnection *connect, SQLWCHAR *wcString, int length )
 	{
-		returnCountOfBytes = true;
-
-		if ( mbString )
-		{
-			isWhy = WIDECHARS;
-			byteString = mbString;
-			lengthString = length;
-		}
-		else
-			isWhy = NONE;
-
-		Alloc();
-	}
-
-	ConvertingString( SQLWCHAR *wcString, int length )
-	{
+		connection = connect;
 		realLength = NULL;
 		unicodeString = NULL;
 		returnCountOfBytes = true;
@@ -110,25 +107,8 @@ public:
 			lengthString = 0;
 		}
 	}
-	
-	ConvertingString( SQLCHAR *mbString, int length )
-	{
-		realLength = NULL;
-		byteString = NULL;
-		returnCountOfBytes = true;
-		isWhy = WIDECHARS;
-
-		if ( mbString )
-			convStringToUnicode( mbString, length );
-		else
-		{
-			unicodeString = NULL;
-			lengthString = 0;
-		}
-	}
 
 	operator SQLCHAR*()	{ return byteString; }
-	operator SQLWCHAR*() { return unicodeString; }
 	operator int() { return lengthString; }
 	operator SQLSMALLINT() { return lengthString; }
 	operator SQLINTEGER() { return lengthString; }
@@ -137,42 +117,28 @@ public:
 	{
 		switch ( isWhy )
 		{
-		case WIDECHARS:
-			if ( byteString )
-			{
-#ifdef _WIN32
-				size_t len = WideCharToMultiByte( codePage, 0, unicodeString, -1,
-										(LPSTR)byteString, lengthString, NULL, NULL );
-#else
-				size_t len = wcstombs( (LPSTR)byteString, (const wchar_t*)unicodeString, lengthString );
-#endif
-				if ( len > 0 )
-				{
-					len--;
-					byteString[ len ] = '\0';
-
-					if ( realLength )
-						*realLength = len;
-				}
-			}
-
-			delete[] unicodeString;
-			break;
-
 		case BYTESCHARS:
+
 			if ( unicodeString )
 			{
-#ifdef _WIN32
-				size_t len = MultiByteToWideChar( codePage, 0, (const char*)byteString, -1,
-											  unicodeString, lengthString );
-#else
-				size_t len = mbstowcs( (wchar_t*)unicodeString, (const char*)byteString, lengthString );
-#endif
-				if ( len > 0 )
+				size_t len;
+
+				if ( connection )
+					len = connection->MbsToWcs( (wchar_t*)unicodeString, (const char*)byteString, lengthString );
+				else
 				{
 #ifdef _WIN32
-					len--;
+					len = MultiByteToWideChar( codePage, 0, (const char*)byteString, -1,
+											  unicodeString, lengthString );
+					if ( len > 0 )
+						len--;
+#else
+					len = mbstowcs( (wchar_t*)unicodeString, (const char*)byteString, lengthString );
 #endif
+				}
+
+				if ( len > 0 )
+				{
 					*(LPWSTR)(unicodeString + len) = L'\0';
 
 					if ( realLength )
@@ -197,74 +163,57 @@ public:
 
 	SQLCHAR * convUnicodeToString( SQLWCHAR *wcString, int length )
 	{
+		size_t bytesNeeded;
+		wchar_t *ptEndWC = NULL;
+		wchar_t saveWC;
+
 		if ( length == SQL_NTS )
 			length = wcslen( (const wchar_t*)wcString );
-
-#ifdef _WIN32
-		size_t bytesNeeded = WideCharToMultiByte( codePage, 0, wcString, length, NULL, 0, NULL, NULL );
-#else
-		size_t bytesNeeded;
+		else if ( wcString[length] != L'\0' )
 		{
-#pragma FB_COMPILER_MESSAGE("Check up this moment for Linux. FIXME!")
-			wchar_t save = wcString[length];
-			wcString[length] = L'\0';
-			bytesNeeded = wcstombs( NULL, (const wchar_t*)wcString, length );
-			wcString[length] = save;
+			ptEndWC = &wcString[length];
+			saveWC = *ptEndWC;
+			*ptEndWC = L'\0';
 		}
+
+		if ( connection )
+			bytesNeeded = connection->WcsToMbs( NULL, (const wchar_t*)wcString, length );
+		else
+		{
+#ifdef _WIN32
+			bytesNeeded = WideCharToMultiByte( codePage, 0, wcString, length, NULL, 0, NULL, NULL );
+#else
+			bytesNeeded = wcstombs( NULL, (const wchar_t*)wcString, length );
 #endif
+		}
 
 		byteString = new SQLCHAR[ bytesNeeded + 2 ];
 
+		if ( connection )
+			connection->WcsToMbs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
+		else
+		{
 #ifdef _WIN32
-		WideCharToMultiByte( codePage, 0, wcString, length, (LPSTR)byteString, bytesNeeded, NULL, NULL );
+			WideCharToMultiByte( codePage, 0, wcString, length, (LPSTR)byteString, bytesNeeded, NULL, NULL );
 #else
-		wcstombs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
+			wcstombs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
 #endif
+		}
 
 		byteString[ bytesNeeded ] = '\0';
 		lengthString = bytesNeeded;
 
+		if ( ptEndWC )
+			*ptEndWC = saveWC;
+
 		return byteString;
 	}
-
-	SQLWCHAR * convStringToUnicode( SQLCHAR *mbString, int length )
-	{
-		if ( length == SQL_NTS )
-			length = strlen( (char*)mbString );
-		
-#ifdef _WIN32
-		size_t nWCharNeeded = MultiByteToWideChar( codePage, MB_PRECOMPOSED, (const char*)mbString, length, NULL, 0 );
-#else
-		size_t nWCharNeeded = mbstowcs( NULL, (const char*)mbString, length );
-#endif
-
-		unicodeString = new SQLWCHAR[ ( nWCharNeeded + 1 ) * 2 ];
-
-#ifdef _WIN32
-		nWCharNeeded = MultiByteToWideChar( codePage, MB_PRECOMPOSED, (const char*)mbString, length,
-						 unicodeString, nWCharNeeded );
-#else
-		nWCharNeeded = mbstowcs( (wchar_t*)unicodeString, (const char*)mbString, nWCharNeeded );
-#endif
-
-		*(LPWSTR)(unicodeString + nWCharNeeded) = L'\0';
-		lengthString = nWCharNeeded * 2;
-
-		return unicodeString;
-	} 
 
 protected:
 	void Alloc()
 	{
 		switch ( isWhy )
 		{
-		case WIDECHARS:
-			if ( lengthString )
-				unicodeString = new SQLWCHAR[ ( lengthString + 1 ) * 2 ];
-			else
-				unicodeString = NULL;
-			break;
-
 		case BYTESCHARS:
 			if ( lengthString )
 				byteString = new SQLCHAR[ lengthString + 2 ];
@@ -307,6 +256,7 @@ SQLRETURN SQL_API SQLColAttributesW( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
 		{
 			ConvertingString<> CharacterAttribute( bufferLength,
 														(SQLWCHAR *)characterAttribute, stringLength );
+			CharacterAttribute.setConnection( GETCONNECT_STMT( hStmt ) );
 
 			return ((OdbcStatement*) hStmt)->sqlColAttribute( columnNumber, fieldIdentifier,
 											(SQLPOINTER)(SQLCHAR*)CharacterAttribute, CharacterAttribute,
@@ -329,9 +279,9 @@ SQLRETURN SQL_API SQLConnectW( SQLHDBC hDbc,
 	TRACE ("SQLConnectW");
 	GUARD_HDBC( hDbc );
 
-	ConvertingString<> ServerName( serverName, nameLength1 );
-	ConvertingString<> UserName( userName, nameLength2 );
-	ConvertingString<> Authentication( authentication, nameLength3 );
+	ConvertingString<> ServerName( (OdbcConnection*)hDbc, serverName, nameLength1 );
+	ConvertingString<> UserName( (OdbcConnection*)hDbc, userName, nameLength2 );
+	ConvertingString<> Authentication( (OdbcConnection*)hDbc, authentication, nameLength3 );
 
 	return ((OdbcConnection*) hDbc)->sqlConnect( ServerName, ServerName, UserName,
 												UserName, Authentication, Authentication );
@@ -349,6 +299,7 @@ SQLRETURN SQL_API SQLDescribeColW( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
 	GUARD_HSTMT( hStmt );
 
 	ConvertingString<> ColumnName( bufferLength, columnName, nameLength, false );
+	ColumnName.setConnection( GETCONNECT_STMT( hStmt ) );
 
 	return ((OdbcStatement*) hStmt)->sqlDescribeCol( columnNumber,
 													ColumnName, ColumnName,
@@ -372,12 +323,14 @@ SQLRETURN SQL_API SQLErrorW( SQLHENV hEnv,
 	if ( hStmt )
 	{
 		GUARD_HSTMT( hStmt );
+		Buffer.setConnection( GETCONNECT_STMT( hStmt ) );
 		return ((OdbcStatement*)hStmt)->sqlError( State, nativeErrorCode, Buffer,
 												 Buffer, msgLength );
 	}
 	if ( hDbc )
 	{
 		GUARD_HDBC( hDbc );
+		Buffer.setConnection( (OdbcConnection*)hDbc );
 		return ((OdbcConnection*)hDbc)->sqlError( State, nativeErrorCode, Buffer,
 												 Buffer, msgLength );
 	}
@@ -395,7 +348,7 @@ SQLRETURN SQL_API SQLExecDirectW( SQLHSTMT hStmt, SQLWCHAR *statementText, SQLIN
 	TRACE ("SQLExecDirectW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> StatementText( statementText, textLength );
+	ConvertingString<> StatementText( GETCONNECT_STMT( hStmt ), statementText, textLength );
 
 	return ((OdbcStatement*) hStmt)->sqlExecuteDirect( StatementText, StatementText );
 }
@@ -410,6 +363,7 @@ SQLRETURN SQL_API SQLGetCursorNameW( SQLHSTMT hStmt, SQLWCHAR *cursorName,
 
 	bool isByte = false;
 	ConvertingString<> CursorName( bufferLength, cursorName, nameLength, isByte );
+	CursorName.setConnection( GETCONNECT_STMT( hStmt ) );
 
 	return ((OdbcStatement*) hStmt)->sqlGetCursorName( CursorName, CursorName, nameLength );
 }
@@ -422,7 +376,7 @@ SQLRETURN SQL_API SQLPrepareW( SQLHSTMT hStmt,
 	TRACE ("SQLPrepareW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> StatementText( statementText, textLength );
+	ConvertingString<> StatementText( GETCONNECT_STMT( hStmt ), statementText, textLength );
 	
 	return ((OdbcStatement*) hStmt)->sqlPrepare( StatementText, StatementText );
 }
@@ -435,7 +389,7 @@ SQLRETURN SQL_API SQLSetCursorNameW( SQLHSTMT hStmt, SQLWCHAR *cursorName,
 	TRACE ("SQLSetCursorNameW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> CursorName( cursorName, nameLength );
+	ConvertingString<> CursorName( GETCONNECT_STMT( hStmt ), cursorName, nameLength );
 
 	return ((OdbcStatement*) hStmt)->sqlSetCursorName( CursorName, CursorName );
 }
@@ -451,10 +405,10 @@ SQLRETURN SQL_API SQLColumnsW( SQLHSTMT hStmt,
 	TRACE ("SQLColumnsW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> CatalogName( catalogName, nameLength1 );
-	ConvertingString<> SchemaName( schemaName, nameLength2 );
-	ConvertingString<> TableName( tableName, nameLength3 );
-	ConvertingString<> ColumnName( columnName, nameLength4 );
+	ConvertingString<> CatalogName( GETCONNECT_STMT( hStmt ), catalogName, nameLength1 );
+	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), schemaName, nameLength2 );
+	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), tableName, nameLength3 );
+	ConvertingString<> ColumnName( GETCONNECT_STMT( hStmt ), columnName, nameLength4 );
 
 	return ((OdbcStatement*) hStmt)->sqlColumns( CatalogName, CatalogName,
 												SchemaName, SchemaName,
@@ -472,8 +426,9 @@ SQLRETURN SQL_API SQLDriverConnectW( SQLHDBC hDbc, SQLHWND hWnd, SQLWCHAR *szCon
 	TRACE ("SQLDriverConnectW");
 	GUARD_HDBC( hDbc );
 
-	ConvertingString<> ConnStrIn( szConnStrIn, cbConnStrIn );
+	ConvertingString<> ConnStrIn( (OdbcConnection*)hDbc, szConnStrIn, cbConnStrIn );
 	ConvertingString<> ConnStrOut( cbConnStrOutMax, szConnStrOut, pcbConnStrOut, false );
+	ConnStrOut.setConnection( (OdbcConnection*)hDbc );
 
 	return ((OdbcConnection*) hDbc)->sqlDriverConnect( hWnd, ConnStrIn, ConnStrIn,
 													ConnStrOut, ConnStrOut, pcbConnStrOut,
@@ -496,7 +451,10 @@ SQLRETURN SQL_API SQLGetConnectOptionW( SQLHDBC hDbc, SQLUSMALLINT option, SQLPO
 	case SQL_ATTR_TRANSLATE_LIB:
 		{
 			bufferLength = SQL_MAX_OPTION_STRING_LENGTH;
+
 			ConvertingString<> ConnStrOut( bufferLength, (SQLWCHAR *)value );
+			ConnStrOut.setConnection( (OdbcConnection*)hDbc );
+
 			return ((OdbcConnection*) hDbc)->sqlGetConnectAttr( option,
 										(SQLPOINTER)(SQLCHAR*)value, bufferLength, NULL);
 		}
@@ -560,6 +518,7 @@ SQLRETURN SQL_API SQLGetInfoW( SQLHDBC hDbc, SQLUSMALLINT infoType, SQLPOINTER i
 		if ( bufferLength > 0 )
 		{
 			ConvertingString<> InfoValue( bufferLength, (SQLWCHAR *)infoValue, stringLength );
+			InfoValue.setConnection( (OdbcConnection*)hDbc );
 
 			return ((OdbcConnection*) hDbc)->sqlGetInfo( infoType, (SQLPOINTER)(SQLCHAR*)InfoValue,
 														InfoValue, stringLength );
@@ -601,7 +560,9 @@ SQLRETURN SQL_API SQLSetConnectOptionW( SQLHDBC hDbc, SQLUSMALLINT option, SQLUL
 	case SQL_ATTR_TRANSLATE_LIB:
 		{
 			SQLINTEGER bufferLength = SQL_MAX_OPTION_STRING_LENGTH;
-			ConvertingString<> Value( (SQLWCHAR *)value, bufferLength );
+
+			ConvertingString<> Value( (OdbcConnection*)hDbc, (SQLWCHAR *)value, bufferLength );
+
 			return ((OdbcConnection*) hDbc)->sqlSetConnectAttr( option, 
 												(SQLPOINTER)(SQLCHAR*)Value, Value );
 		}
@@ -622,9 +583,9 @@ SQLRETURN SQL_API SQLSpecialColumnsW( SQLHSTMT hStmt, SQLUSMALLINT identifierTyp
 	TRACE ("SQLSpecialColumnsW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> CatalogName( catalogName, nameLength1 );
-	ConvertingString<> SchemaName( schemaName, nameLength2 );
-	ConvertingString<> TableName( tableName, nameLength3 );
+	ConvertingString<> CatalogName( GETCONNECT_STMT( hStmt ), catalogName, nameLength1 );
+	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), schemaName, nameLength2 );
+	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), tableName, nameLength3 );
 
 	return ((OdbcStatement*) hStmt)->sqlSpecialColumns( identifierType,
 														CatalogName, CatalogName,
@@ -644,9 +605,9 @@ SQLRETURN SQL_API SQLStatisticsW( SQLHSTMT hStmt,
 	TRACE ("SQLStatisticsW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> CatalogName( catalogName, nameLength1 );
-	ConvertingString<> SchemaName( schemaName, nameLength2 );
-	ConvertingString<> TableName( tableName, nameLength3 );
+	ConvertingString<> CatalogName( GETCONNECT_STMT( hStmt ), catalogName, nameLength1 );
+	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), schemaName, nameLength2 );
+	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), tableName, nameLength3 );
 
 	return ((OdbcStatement*) hStmt)->sqlStatistics( CatalogName, CatalogName,
 													SchemaName, SchemaName,
@@ -665,10 +626,10 @@ SQLRETURN SQL_API SQLTablesW( SQLHSTMT hStmt,
 	TRACE ("SQLTablesW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> CatalogName( catalogName, nameLength1 );
-	ConvertingString<> SchemaName( schemaName, nameLength2 );
-	ConvertingString<> TableName( tableName, nameLength3 );
-	ConvertingString<> TableType( tableType, nameLength4 );
+	ConvertingString<> CatalogName( GETCONNECT_STMT( hStmt ), catalogName, nameLength1 );
+	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), schemaName, nameLength2 );
+	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), tableName, nameLength3 );
+	ConvertingString<> TableType( GETCONNECT_STMT( hStmt ), tableType, nameLength4 );
 
 	return ((OdbcStatement*) hStmt)->sqlTables( CatalogName, CatalogName,
 												SchemaName, SchemaName,
@@ -688,8 +649,9 @@ SQLRETURN SQL_API SQLBrowseConnectW( SQLHDBC hDbc,
 
 	bool isByte = !( cbConnStrIn % 2 );
 
-	ConvertingString<> ConnStrIn( szConnStrIn, isByte ? cbConnStrIn : cbConnStrIn * 2 );
+	ConvertingString<> ConnStrIn( (OdbcConnection*)hDbc, szConnStrIn, isByte ? cbConnStrIn : cbConnStrIn * 2 );
 	ConvertingString<> ConnStrOut( cbConnStrOutMax, szConnStrOut, pcbConnStrOut );
+	ConnStrOut.setConnection( (OdbcConnection*)hDbc );
 
 	return ((OdbcConnection*) hDbc)->sqlBrowseConnect( ConnStrIn, ConnStrIn,
 													  ConnStrOut, ConnStrOut,
@@ -728,12 +690,12 @@ SQLRETURN SQL_API SQLForeignKeysW( SQLHSTMT hStmt,
 	TRACE ("SQLForeignKeysW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> PkCatalogName( szPkCatalogName, cbPkCatalogName );
-	ConvertingString<> PkSchemaName( szPkSchemaName, cbPkSchemaName );
-	ConvertingString<> PkTableName( szPkTableName, cbPkTableName );
-	ConvertingString<> FkCatalogName( szFkCatalogName, cbFkCatalogName );
-	ConvertingString<> FkSchemaName( szFkSchemaName, cbFkSchemaName );
-	ConvertingString<> FkTableName( szFkTableName, cbFkTableName );
+	ConvertingString<> PkCatalogName( GETCONNECT_STMT( hStmt ), szPkCatalogName, cbPkCatalogName );
+	ConvertingString<> PkSchemaName( GETCONNECT_STMT( hStmt ), szPkSchemaName, cbPkSchemaName );
+	ConvertingString<> PkTableName( GETCONNECT_STMT( hStmt ), szPkTableName, cbPkTableName );
+	ConvertingString<> FkCatalogName( GETCONNECT_STMT( hStmt ), szFkCatalogName, cbFkCatalogName );
+	ConvertingString<> FkSchemaName( GETCONNECT_STMT( hStmt ), szFkSchemaName, cbFkSchemaName );
+	ConvertingString<> FkTableName( GETCONNECT_STMT( hStmt ), szFkTableName, cbFkTableName );
 
 	return ((OdbcStatement*) hStmt)->sqlForeignKeys( PkCatalogName, PkCatalogName,
 													PkSchemaName, PkSchemaName,
@@ -758,9 +720,10 @@ SQLRETURN SQL_API SQLNativeSqlW( SQLHDBC hDbc,
 	
 	bool isByte = !( cbSqlStrIn % 2 );
 
-	ConvertingString<> SqlStrIn( szSqlStrIn, cbSqlStrIn );
+	ConvertingString<> SqlStrIn( (OdbcConnection*)hDbc, szSqlStrIn, cbSqlStrIn );
 	ConvertingString<SQLINTEGER> SqlStr( cbSqlStrMax, szSqlStr, pcbSqlStr,
 															isByte ? true : false );
+	SqlStr.setConnection( (OdbcConnection*)hDbc );
 
 	return ((OdbcConnection*) hDbc)->sqlNativeSql( SqlStrIn, SqlStrIn,
 												  SqlStr, SqlStr, pcbSqlStr );
@@ -776,9 +739,9 @@ SQLRETURN SQL_API SQLPrimaryKeysW( SQLHSTMT hStmt,
 	TRACE ("SQLPrimaryKeysW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> CatalogName( szCatalogName, cbCatalogName );
-	ConvertingString<> SchemaName( szSchemaName, cbSchemaName );
-	ConvertingString<> TableName( szTableName, cbTableName );
+	ConvertingString<> CatalogName( GETCONNECT_STMT( hStmt ), szCatalogName, cbCatalogName );
+	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), szSchemaName, cbSchemaName );
+	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), szTableName, cbTableName );
 
 	return ((OdbcStatement*) hStmt)->sqlPrimaryKeys( CatalogName, CatalogName,
 													SchemaName, SchemaName,
@@ -796,10 +759,10 @@ SQLRETURN SQL_API SQLProcedureColumnsW( SQLHSTMT hStmt,
 	TRACE ("SQLProcedureColumnsW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> CatalogName( szCatalogName, cbCatalogName );
-	ConvertingString<> SchemaName( szSchemaName, cbSchemaName );
-	ConvertingString<> ProcName( szProcName, cbProcName );
-	ConvertingString<> ColumnName( szColumnName, cbColumnName );
+	ConvertingString<> CatalogName( GETCONNECT_STMT( hStmt ), szCatalogName, cbCatalogName );
+	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), szSchemaName, cbSchemaName );
+	ConvertingString<> ProcName( GETCONNECT_STMT( hStmt ), szProcName, cbProcName );
+	ConvertingString<> ColumnName( GETCONNECT_STMT( hStmt ), szColumnName, cbColumnName );
 
 	return ((OdbcStatement*) hStmt)->sqlProcedureColumns( CatalogName, CatalogName,
 														 SchemaName, SchemaName,
@@ -817,9 +780,9 @@ SQLRETURN SQL_API SQLProceduresW( SQLHSTMT hStmt,
 	TRACE ("SQLProceduresW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> CatalogName( szCatalogName, cbCatalogName );
-	ConvertingString<> SchemaName( szSchemaName, cbSchemaName );
-	ConvertingString<> ProcName( szProcName, cbProcName );
+	ConvertingString<> CatalogName( GETCONNECT_STMT( hStmt ), szCatalogName, cbCatalogName );
+	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), szSchemaName, cbSchemaName );
+	ConvertingString<> ProcName( GETCONNECT_STMT( hStmt ), szProcName, cbProcName );
 
 	return ((OdbcStatement*) hStmt)->sqlProcedures( CatalogName, CatalogName,
 												   SchemaName, SchemaName,
@@ -836,9 +799,9 @@ SQLRETURN SQL_API SQLTablePrivilegesW( SQLHSTMT hStmt,
 	TRACE ("SQLTablePrivilegesW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> CatalogName( szCatalogName, cbCatalogName );
-	ConvertingString<> SchemaName( szSchemaName, cbSchemaName );
-	ConvertingString<> TableName( szTableName, cbTableName );
+	ConvertingString<> CatalogName( GETCONNECT_STMT( hStmt ), szCatalogName, cbCatalogName );
+	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), szSchemaName, cbSchemaName );
+	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), szTableName, cbTableName );
 
 	return ((OdbcStatement*) hStmt)->sqlTablePrivileges( CatalogName, CatalogName,
 														SchemaName, SchemaName,
@@ -856,10 +819,10 @@ SQLRETURN SQL_API SQLColumnPrivilegesW( SQLHSTMT hStmt,
 	TRACE ("SQLColumnPrivilegesW");
 	GUARD_HSTMT( hStmt );
 
-	ConvertingString<> CatalogName( szCatalogName, cbCatalogName );
-	ConvertingString<> SchemaName( szSchemaName, cbSchemaName );
-	ConvertingString<> TableName( szTableName, cbTableName );
-	ConvertingString<> ColumnName( szColumnName, cbColumnName );
+	ConvertingString<> CatalogName( GETCONNECT_STMT( hStmt ), szCatalogName, cbCatalogName );
+	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), szSchemaName, cbSchemaName );
+	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), szTableName, cbTableName );
+	ConvertingString<> ColumnName( GETCONNECT_STMT( hStmt ), szColumnName, cbColumnName );
 
 	return ((OdbcStatement*) hStmt)->sqlColumnPrivileges( CatalogName, CatalogName,
 														 SchemaName, SchemaName,
@@ -916,6 +879,7 @@ SQLRETURN SQL_API SQLColAttributeW( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
 		{
 			ConvertingString<> CharacterAttribute( bufferLength, 
 									(SQLWCHAR *)characterAttribute, stringLength );
+			CharacterAttribute.setConnection( GETCONNECT_STMT( hStmt ) );
 
 			return ((OdbcStatement*)hStmt)->sqlColAttribute( columnNumber, fieldIdentifier,
 								(SQLPOINTER)(SQLCHAR*)CharacterAttribute, CharacterAttribute,
@@ -945,6 +909,7 @@ SQLRETURN SQL_API SQLGetConnectAttrW( SQLHDBC hDbc,
 		if ( bufferLength > 0 || bufferLength == SQL_NTS )
 		{
 			ConvertingString<SQLINTEGER> Value( bufferLength, (SQLWCHAR *)value, stringLength );
+			Value.setConnection( (OdbcConnection*)hDbc );
 
 			return ((OdbcConnection*) hDbc)->sqlGetConnectAttr( attribute, 
 											(SQLPOINTER)(SQLCHAR*)Value, Value, stringLength );
@@ -983,6 +948,7 @@ SQLRETURN SQL_API SQLGetDescFieldW( SQLHDESC hDesc, SQLSMALLINT recNumber,
 			bool isByte = !( bufferLength % 2 );
 
 			ConvertingString<SQLINTEGER> Value( bufferLength, (SQLWCHAR *)value, stringLength );
+			Value.setConnection( GETCONNECT_DESC( hDesc ) );
 
 			return ((OdbcDesc*) hDesc)->sqlGetDescField( recNumber, fieldIdentifier,
 											(SQLPOINTER)(SQLCHAR*)Value, Value, stringLength );
@@ -1006,6 +972,7 @@ SQLRETURN SQL_API SQLGetDescRecW( SQLHDESC hDesc,
 	GUARD_HDESC( hDesc );
 
 	ConvertingString<> Name( bufferLength, name, stringLength );
+	Name.setConnection( GETCONNECT_DESC( hDesc ) );
 
 	return ((OdbcDesc*) hDesc)->sqlGetDescRec( recNumber, Name, Name,
 											  stringLength, type, subType, 
@@ -1035,6 +1002,7 @@ SQLRETURN SQL_API SQLGetDiagFieldW( SQLSMALLINT handleType, SQLHANDLE handle,
 		if ( bufferLength > 0 || bufferLength == SQL_NTS )
 		{
 			ConvertingString<> DiagInfo( bufferLength, (SQLWCHAR *)diagInfo, stringLength );
+			DiagInfo.setConnection( GETCONNECT_HNDL( handle ) );
 
 			return ((OdbcObject*) handle)->sqlGetDiagField( recNumber, diagIdentifier,
 											(SQLPOINTER)(SQLCHAR*)DiagInfo, DiagInfo, stringLength );
@@ -1065,6 +1033,7 @@ SQLRETURN SQL_API SQLGetDiagRecW( SQLSMALLINT handleType, SQLHANDLE handle,
 // however ODBC.DLL wait Number of Character
 	bool isByte = false;
 	ConvertingString<> MessageText( bufferLength, messageText, textLength, isByte );
+	MessageText.setConnection( GETCONNECT_HNDL( handle ) );
 
 	return ((OdbcObject*) handle)->sqlGetDiagRec( handleType, recNumber, State,
 												 nativeError, MessageText,
@@ -1091,6 +1060,7 @@ SQLRETURN SQL_API SQLGetStmtAttrW( SQLHSTMT hStmt,
 		else if ( bufferLength > 0 || bufferLength == SQL_NTS )
 		{
 			ConvertingString<SQLINTEGER> Value( bufferLength, (SQLWCHAR *)value, stringLength );
+			Value.setConnection( GETCONNECT_STMT( hStmt ) );
 
 			return ((OdbcStatement*) hStmt)->sqlGetStmtAttr( attribute,
 											(SQLPOINTER)(SQLCHAR*)Value, Value, stringLength );
@@ -1117,7 +1087,7 @@ SQLRETURN SQL_API SQLSetConnectAttrW( SQLHDBC hDbc, SQLINTEGER attribute,
 
 		if ( stringLength > 0 || stringLength == SQL_NTS )
 		{
-			ConvertingString<> Value( (SQLWCHAR *)value, stringLength );
+			ConvertingString<> Value( (OdbcConnection*)hDbc, (SQLWCHAR *)value, stringLength );
 
 			return ((OdbcConnection*) hDbc)->sqlSetConnectAttr( attribute,
 														(SQLPOINTER)(SQLCHAR*)Value, Value );
@@ -1162,7 +1132,7 @@ SQLRETURN SQL_API SQLSetDescFieldW( SQLHDESC hDesc,
 			else
 				len = bufferLength / 2;
 
-			ConvertingString<> Value( (SQLWCHAR *)value, len );
+			ConvertingString<> Value( GETCONNECT_DESC( hDesc ), (SQLWCHAR *)value, len );
 
 			return ((OdbcDesc*) hDesc)->sqlSetDescField( recNumber, fieldIdentifier,
 													(SQLPOINTER)(SQLCHAR*)Value, Value );
