@@ -164,60 +164,112 @@ unsigned int fss_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthFor
 	Tab *t; 
 	unsigned int length = 0;
 
-	if ( !mbs || !wcs )
+	if ( !mbs || !*mbs )
 		return 0; 
 
 	const char *mbsEnd = mbs + lengthForMBS;
 
-	do
+	if ( wcs != NULL )
 	{
-		l = c0 = *mbs & 0xff;
+		do
+		{
+			l = c0 = *mbs & 0xff;
 
-		for ( t = tab; t->cmask; t++)
-		{ 
-			++mbs;
-			if ( mbs > mbsEnd )
-			{
-				*wcs = L'\0';
-				return length;
-			}
-
-			if ( ( c0 & t->cmask ) == t->cval )
+			for ( t = tab; t->cmask; t++)
 			{ 
-				l &= t->lmask; 
+				++mbs;
+				if ( mbs > mbsEnd )
+				{
+					*wcs = L'\0';
+					return length;
+				}
 
-				if ( l < t->lval )
+				if ( ( c0 & t->cmask ) == t->cval )
+				{ 
+					l &= t->lmask; 
+
+					if ( l < t->lval )
+					{
+						bContinue = false;
+						break;
+					}
+					
+					*wcs++ = (wchar_t)l;
+
+					if ( (wchar_t)l == L'\0' )
+						return length;
+
+					length++;
+					break;
+				} 
+
+				if ( !*mbs )
 				{
 					bContinue = false;
 					break;
 				}
-				
-				*wcs++ = (wchar_t)l;
 
-				if ( (wchar_t)l == L'\0' )
+				c = ( *mbs ^ 0x80 ) & 0xFF; 
+
+				if ( c & 0xC0 )
+				{
+					break;
+				}
+
+				l = ( l << 6 ) | c; 
+			}
+
+		} while ( bContinue );
+	}
+	else
+	{
+		do
+		{
+			l = c0 = *mbs & 0xff;
+
+			for ( t = tab; t->cmask; t++)
+			{ 
+				++mbs;
+				if ( mbs > mbsEnd )
+				{
 					return length;
+				}
 
-				length++;
-				break;
-			} 
+				if ( ( c0 & t->cmask ) == t->cval )
+				{ 
+					l &= t->lmask; 
 
-			if ( !*mbs )
-			{
-				bContinue = false;
-				break;
+					if ( l < t->lval )
+					{
+						bContinue = false;
+						break;
+					}
+					
+					if ( (wchar_t)l == L'\0' )
+						return length;
+
+					length++;
+					break;
+				} 
+
+				if ( !*mbs )
+				{
+					bContinue = false;
+					break;
+				}
+
+				c = ( *mbs ^ 0x80 ) & 0xFF; 
+
+				if ( c & 0xC0 )
+				{
+					break;
+				}
+
+				l = ( l << 6 ) | c; 
 			}
 
-			c = ( *mbs ^ 0x80 ) & 0xFF; 
-
-			if ( c & 0xC0 )
-			{
-				break;
-			}
-
-			l = ( l << 6 ) | c; 
-		}
-
-	} while ( bContinue );
+		} while ( bContinue );
+	}
 
 	return length;
 }
@@ -230,31 +282,57 @@ unsigned int fss_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFor
 	Tab *t; 
 	unsigned int length = 0;
 
-	if ( !mbs || !wcs )
+	if ( !wcs || !*wcs )
 		return 0; 
 
-	do
+	if ( mbs != NULL )
 	{
-		l = *wcs; 
+		do
+		{
+			l = *wcs; 
 
-		for ( t = tab; t->cmask; t++ )
-		{ 
-			if ( l <= t->lmask )
+			for ( t = tab; t->cmask; t++ )
 			{ 
-				c = t->shift; 
-				*mbs++ = (char)(t->cval | ( l >> c )); 
-				++length;
-				while ( c > 0 && length < lengthForMBS )
+				if ( l <= t->lmask )
 				{ 
-					c -= 6; 
-					*(mbs++) = 0x80 | ( ( l >> c ) & 0x3F ); 
+					c = t->shift; 
+					*mbs++ = (char)(t->cval | ( l >> c )); 
 					++length;
+					while ( c > 0 && length < lengthForMBS )
+					{ 
+						c -= 6; 
+						*(mbs++) = 0x80 | ( ( l >> c ) & 0x3F ); 
+						++length;
+					} 
+					break;
 				} 
-				break;
 			} 
-		} 
 
-	} while ( *(++wcs) != L'\0' && bContinue && length < lengthForMBS );
+		} while ( *(++wcs) != L'\0' && bContinue && length < lengthForMBS );
+	}
+	else
+	{
+		do
+		{
+			l = *wcs; 
+
+			for ( t = tab; t->cmask; t++ )
+			{ 
+				if ( l <= t->lmask )
+				{ 
+					c = t->shift; 
+					++length;
+					while ( c > 0 && length < lengthForMBS )
+					{ 
+						c -= 6; 
+						++length;
+					} 
+					break;
+				} 
+			} 
+
+		} while ( *(++wcs) != L'\0' && bContinue && length < lengthForMBS );
+	}
 
 	return length;
 }
