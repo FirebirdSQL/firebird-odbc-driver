@@ -171,7 +171,7 @@ public:
 			length = wcslen( (const wchar_t*)wcString );
 		else if ( wcString[length] != L'\0' )
 		{
-			ptEndWC = &wcString[length];
+			ptEndWC = (wchar_t*)&wcString[length];
 			saveWC = *ptEndWC;
 			*ptEndWC = L'\0';
 		}
