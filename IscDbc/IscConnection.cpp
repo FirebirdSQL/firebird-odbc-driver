@@ -50,6 +50,7 @@
 #include "EnvShare.h"
 #include "IscConnection.h"
 #include "IscProceduresResultSet.h"
+#include "IscTablePrivilegesResultSet.h"
 #include "SQLError.h"
 #include "IscOdbcStatement.h"
 #include "IscCallableStatement.h"
@@ -964,6 +965,33 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 		attachment->openDatabase (dbName, properties);
 		databaseHandle = attachment->databaseHandle;
 		GDS = attachment->GDS;
+
+		if ( !attachment->isRoles && !attachment->admin )
+		{
+			IscTablePrivilegesResultSet resultSet ( (IscDatabaseMetaData *)getMetaData() );
+			resultSet.allTablesAreSelectable = true;
+			resultSet.getTablePrivileges( NULL, NULL, "RDB$ROLES" );
+
+			if ( resultSet.getCountRowsStaticCursor() )
+			{
+				int len1 = strlen( attachment->userName );
+				int len2;
+				char *beg = resultSet.sqlda->getVarying( 5, len2 );
+				char *end = beg + len2;
+				char *save = end;
+
+				while ( end > beg && *(--end) == ' ');
+
+				if ( save != end )
+				{
+					len2 = end - beg + 1;
+					*(end+1) = '\0';
+				}
+
+				if( len1 == len2 && !strncmp( attachment->userName, beg, len1 ) )
+					attachment->admin = true;
+			}
+		}
 	}
 	catch ( SQLException& exception )
 	{

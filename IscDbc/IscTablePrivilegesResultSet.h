@@ -36,6 +36,8 @@ public:
 	virtual bool nextFetch();
     void getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern);
     IscTablePrivilegesResultSet(IscDatabaseMetaData *metaData);
+
+	bool	allTablesAreSelectable;
 };
 
 }; // end namespace IscDbcLibrary

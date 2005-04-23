@@ -45,6 +45,7 @@ namespace IscDbcLibrary {
 IscTablePrivilegesResultSet::IscTablePrivilegesResultSet(IscDatabaseMetaData *metaData)
         : IscMetaDataResultSet(metaData)
 {
+	allTablesAreSelectable = metaData->allTablesAreSelectable();
 }
 
 void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
@@ -62,7 +63,7 @@ void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const
 
 	char * ptFirst = sql + strlen(sql);
 
-	if ( !metaData->allTablesAreSelectable() )
+	if ( !allTablesAreSelectable )
 	{
 		char buf[256];
 		int len = sprintf (buf, "and priv.rdb$object_type = 0\n"
