@@ -192,6 +192,11 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	if (role && *role)
 	{
 		userAccess = role;
+
+		char *ch = (char *)(const char *)userAccess;
+		while ( (*ch = UPPER ( *ch )) )
+			++ch;
+
 		userType = 13;
 		isRoles = true;
 		*p++ = isc_dpb_sql_role_name;
