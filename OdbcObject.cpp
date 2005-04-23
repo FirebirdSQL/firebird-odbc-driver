@@ -55,10 +55,10 @@ SQLRETURN OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQ
 {
 	int count = strlen (value);
 	*returnLength = count;
-	--maxLength;
 
-	if (ptr)
+	if ( ptr && maxLength > 0 )
 	{
+		--maxLength;
 		if (count <= maxLength)
 		{
 			strcpy ((char*) ptr, value);
@@ -77,10 +77,10 @@ SQLRETURN OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQ
 {
 	int count = strlen (value);
 	*returnLength = count;
-	--maxLength;
 
-	if (ptr)
+	if ( ptr && maxLength > 0 )
 	{
+		--maxLength;
 		if (count <= maxLength)
 		{
 			strcpy ((char*) ptr, value);
