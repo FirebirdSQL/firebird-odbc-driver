@@ -29,7 +29,13 @@
 
 namespace IscDbcLibrary {
 
-#define MAKEHEAD(a, b, c, d)  *(QUAD*)sqlvar = ((QUAD)(((long) ((long)(((short)(a+1)) | ((unsigned long)((short)(b))) << 16)) ) | ((UQUAD)((long) ((long)(((short)(c)) | ((unsigned long)((short)(d))) << 16)) )) << 32))
+#define MAKEHEAD(a, b, c, d)	\
+{								\
+    sqlvar->sqltype = a + 1;	\
+    sqlvar->sqlscale = b;		\
+    sqlvar->sqlsubtype = c;		\
+    sqlvar->sqllen = d;			\
+}
 
 class IscHeadSqlVar : public HeadSqlVar
 {
