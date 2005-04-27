@@ -407,11 +407,13 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 	{
 		char name [256];
 		char value [256];
+		int nameLength;
 		char *q = name;
 		char c;
 		while (p < end && (c = *p++) != '=' && c != ';')
 			*q++ = c;
 		*q = 0;
+		nameLength = q - name;
 		q = value;
 		if (c == '=')
 		{
@@ -421,29 +423,30 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 				*q++ = c;
 		}
 		*q = 0;
-		if (!strncasecmp (name, SETUP_DSN, LEN_KEY(SETUP_DSN)) )
+
+#		define IS_KEYWORD(keyword) \
+				( nameLength == LEN_KEY( keyword ) && !strncasecmp( name, keyword, LEN_KEY( keyword ) ) )
+
+		if ( IS_KEYWORD( SETUP_DSN ) )
 			dsn = value;
-		else if (!strncasecmp (name, KEY_FILEDSN, LEN_KEY(KEY_FILEDSN)) )
+		else if ( IS_KEYWORD( KEY_FILEDSN ) )
 			filedsn = value;
-		else if (!strncasecmp (name, KEY_SAVEDSN, LEN_KEY(KEY_SAVEDSN)) )
+		else if ( IS_KEYWORD( KEY_SAVEDSN ) )
 			savedsn = value;
-		else if (!strncasecmp (name, KEY_DSN_DATABASE, LEN_KEY(KEY_DSN_DATABASE))
-			|| !strncasecmp (name, SETUP_DBNAME, LEN_KEY(SETUP_DBNAME)) )
+		else if ( IS_KEYWORD( KEY_DSN_DATABASE ) || IS_KEYWORD( SETUP_DBNAME ) )
 			databaseName = value;
-		else if ( !strncasecmp( name, SETUP_DBNAMEALWAYS, LEN_KEY( SETUP_DBNAMEALWAYS ) ) )
+		else if ( IS_KEYWORD( SETUP_DBNAMEALWAYS ) )
 		{
 			databaseName = value;
 			databaseAlways = true;
 		}
-		else if (!strncasecmp (name, SETUP_PAGE_SIZE, LEN_KEY(SETUP_PAGE_SIZE)) )
+		else if ( IS_KEYWORD( SETUP_PAGE_SIZE ) )
 			pageSize = value;
-		else if (!strncasecmp (name, SETUP_CLIENT, LEN_KEY(SETUP_CLIENT)) )
+		else if ( IS_KEYWORD( SETUP_CLIENT ) )
 			client = value;
-		else if (!strncasecmp (name, KEY_DSN_UID, LEN_KEY(KEY_DSN_UID))
-			|| !strncasecmp (name, SETUP_USER, LEN_KEY(SETUP_USER)))
+		else if ( IS_KEYWORD( KEY_DSN_UID ) || IS_KEYWORD( SETUP_USER ) )
 			account = value;
-		else if (!strncasecmp (name, KEY_DSN_PWD, LEN_KEY(KEY_DSN_PWD))
-			|| !strncasecmp (name, SETUP_PASSWORD, LEN_KEY(SETUP_PASSWORD)) )
+		else if ( IS_KEYWORD( KEY_DSN_PWD )	|| IS_KEYWORD( SETUP_PASSWORD ) )
 		{
 			if ( strlen(value) > 40 )
 			{
@@ -455,60 +458,57 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 			else
 				password = value;
 		}
-		else if (!strncasecmp (name, SETUP_ROLE, LEN_KEY(SETUP_ROLE)))
+		else if ( IS_KEYWORD( SETUP_ROLE ) )
 			role = value;
-		else if (!strncasecmp (name, KEY_DSN_CHARSET, LEN_KEY(KEY_DSN_CHARSET))
-			|| !strncasecmp (name, SETUP_CHARSET, LEN_KEY(SETUP_CHARSET)) )
+		else if ( IS_KEYWORD( KEY_DSN_CHARSET ) || IS_KEYWORD( SETUP_CHARSET ) )
 			charset = value;
-		else if (!strncasecmp (name, SETUP_DRIVER, LEN_KEY(SETUP_DRIVER)) )
+		else if ( IS_KEYWORD( SETUP_DRIVER ) )
 			driver = value;
-		else if (!strncasecmp (name, KEY_DSN_JDBC_DRIVER, LEN_KEY(KEY_DSN_JDBC_DRIVER))
-			|| !strncasecmp (name, SETUP_JDBC_DRIVER, LEN_KEY(SETUP_JDBC_DRIVER)) )
+		else if ( IS_KEYWORD( KEY_DSN_JDBC_DRIVER ) || IS_KEYWORD( SETUP_JDBC_DRIVER ) )
 			jdbcDriver = value;
-		else if (!strncasecmp (name, SETUP_READONLY_TPB, LEN_KEY(SETUP_READONLY_TPB)) )
+		else if ( IS_KEYWORD( SETUP_READONLY_TPB ) )
 		{
 			if( *value == 'Y')
 				optTpb |=TRA_ro;
 
 			defOptions |= DEF_READONLY_TPB;
 		}
-		else if (!strncasecmp (name, SETUP_DIALECT, LEN_KEY(SETUP_DIALECT)) )
+		else if ( IS_KEYWORD( SETUP_DIALECT ) )
 		{
 			if( *value == '1')
 				dialect3 = false;
 
 			defOptions |= DEF_DIALECT;
 		}
-		else if (!strncasecmp (name, SETUP_NOWAIT_TPB, LEN_KEY(SETUP_NOWAIT_TPB)) )
+		else if ( IS_KEYWORD( SETUP_NOWAIT_TPB ) )
 		{
 			if( *value == 'Y')
 				optTpb |=TRA_nw;
 
 			defOptions |= DEF_NOWAIT_TPB;
 		}
-		else if (!strncasecmp (name, KEY_DSN_QUOTED, LEN_KEY(KEY_DSN_QUOTED))
-			|| !strncasecmp (name, SETUP_QUOTED, LEN_KEY(SETUP_QUOTED)) )
+		else if ( IS_KEYWORD( KEY_DSN_QUOTED ) || IS_KEYWORD( SETUP_QUOTED ) )
 		{
 			if( *value == 'N')
 				quotedIdentifier = false;
 
 			defOptions |= DEF_QUOTED;
 		}
-		else if ( !strncasecmp (name, SETUP_SENSITIVE, LEN_KEY(SETUP_SENSITIVE)) )
+		else if ( IS_KEYWORD( SETUP_SENSITIVE ) )
 		{
 			if( *value == 'Y')
 				sensitiveIdentifier = true;
 
 			defOptions |= DEF_SENSITIVE;
 		}
-		else if ( !strncasecmp (name, SETUP_AUTOQUOTED, LEN_KEY(SETUP_AUTOQUOTED)) )
+		else if ( IS_KEYWORD( SETUP_AUTOQUOTED ) )
 		{
 			if( *value == 'Y')
 				autoQuotedIdentifier = true;
 
 			defOptions |= DEF_AUTOQUOTED;
 		}
-		else if (!strncasecmp (name, "ODBC", 4))
+		else if ( IS_KEYWORD( "ODBC" ) )
 			;
 		else
 			postError ("01S00", "Invalid connection string attribute");
