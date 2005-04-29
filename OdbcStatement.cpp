@@ -2054,7 +2054,7 @@ SQLRETURN OdbcStatement::sqlSetCursorName(SQLCHAR * name, int nameLength)
 
 	try
 	{
-		if( !statement->isActive() )
+		if( statement->isActiveNone() )
 			setPreCursorName = true;
 		else
 		{
