@@ -374,6 +374,7 @@ public:
 	virtual bool		isActiveSelect() = 0;
 	virtual bool		isActiveProcedure() = 0;
 	virtual bool		isActiveModify() = 0;
+	virtual bool		isActiveNone() = 0;
 	virtual int			objectVersion() = 0;
 	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) = 0;
 	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr) = 0;

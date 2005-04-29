@@ -88,6 +88,7 @@ public:
 	virtual bool isActiveSelect(){ return typeStmt == stmtSelect; }
 	virtual bool isActiveProcedure(){ return typeStmt == stmtProcedure; }
 	virtual bool isActiveModify(){ return !!(typeStmt & stmtModify); }
+	virtual bool isActiveNone(){ return typeStmt == stmtNone; }
 	virtual ~IscStatement();
 
 	virtual int getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
