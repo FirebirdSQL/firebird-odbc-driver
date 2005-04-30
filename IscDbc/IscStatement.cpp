@@ -297,8 +297,8 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 			// Close cursors too.
 			ISC_STATUS statusVector [20];
 			connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_close);
-			// Cursor already closed
-			if ( !(statusVector[1] == 335544569 && statusVector[5] == -501) )
+			// Cursor already closed or not assigned
+			if ( statusVector[1] && statusVector[1] != 335544569 )
 				THROW_ISC_EXCEPTION (connection, statusVector);
 		}
 	}
