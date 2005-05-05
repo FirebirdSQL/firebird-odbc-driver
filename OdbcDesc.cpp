@@ -241,7 +241,7 @@ void OdbcDesc::defFromMetaDataIn(int recNumber, DescRecord * record)
 	record->literalPrefix = "\"";
 	record->literalSuffix = "\"";
 	record->localTypeName = metaDataIn->getSqlTypeName(recNumber);
-	record->name = metaDataIn->getColumnName(recNumber);
+	record->name = metaDataIn->getColumnLabel(recNumber);
 	record->baseColumnName = metaDataIn->getColumnName(recNumber);
 	record->nullable = metaDataIn->isNullable(recNumber);
 	record->octetLength = metaDataIn->getPrecision(recNumber);
@@ -281,7 +281,7 @@ void OdbcDesc::defFromMetaDataOut(int recNumber, DescRecord * record)
 	record->literalPrefix = "\"";
 	record->literalSuffix = "\"";
 	record->localTypeName = metaDataOut->getSqlTypeName(recNumber);
-	record->name = metaDataOut->getColumnName(recNumber);
+	record->name = metaDataOut->getColumnLabel(recNumber);
 	record->baseColumnName = metaDataOut->getColumnName(recNumber);
 	record->nullable = metaDataOut->isNullable(recNumber);
 	record->octetLength = metaDataOut->getPrecision(recNumber);

@@ -676,12 +676,19 @@ int Sqlda::getColumnDisplaySize(int index)
 	return var->sqllen;
 }
 
-const char* Sqlda::getColumnName(int index)
+const char* Sqlda::getColumnLabel(int index)
 {
 	XSQLVAR *var = Var(index);
 
 	if (var->aliasname [0])
 		return var->aliasname;
+
+	return var->sqlname;
+}
+
+const char* Sqlda::getColumnName(int index)
+{
+	XSQLVAR *var = Var(index);
 
 	return var->sqlname;
 }

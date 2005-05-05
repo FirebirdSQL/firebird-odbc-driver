@@ -73,7 +73,7 @@ int IscStatementMetaData::getColumnDisplaySize(int index)
 
 const char* IscStatementMetaData::getColumnLabel(int index)
 {
-	return sqlda->getColumnName(index);
+	return sqlda->getColumnLabel(index);
 }
 
 const char* IscStatementMetaData::getSqlTypeName(int index)

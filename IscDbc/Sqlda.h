@@ -79,6 +79,7 @@ public:
 	bool isNullable (int index);
 	int getScale (int index);
 	int getPrecision (int index);
+	const char* getColumnLabel (int index);
 	const char* getColumnName (int index);
 	int getColumnDisplaySize (int index);
 	short getSubType(int index);

@@ -1520,7 +1520,7 @@ SQLRETURN OdbcStatement::sqlDescribeCol(int col,
 	{
 		int realSqlType;
 		StatementMetaData *metaData = getStatementMetaDataIRD();
-		const char *name = metaData->getColumnName (col);
+		const char *name = metaData->getColumnLabel (col);
 		setString (name, colName, nameSize, nameLength);
 		if (sqlType)
 			*sqlType = metaData->getColumnType (col, realSqlType);
@@ -1534,7 +1534,7 @@ SQLRETURN OdbcStatement::sqlDescribeCol(int col,
 		char tempDebugStr [128];
 		sprintf (tempDebugStr, "Column %.2d %31s has type %.3d, scale %.3d, precision %.3d \n", 
 				col,
-				metaData->getColumnName(col),
+				metaData->getColumnLabel(col),
 				metaData->getColumnType (col, realSqlType),
 				metaData->getScale (col),
 				metaData->getPrecision (col)
@@ -3092,16 +3092,17 @@ SQLRETURN OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER att
 		switch (fieldId)
 		{
 		case SQL_DESC_LABEL:
+		case SQL_COLUMN_NAME:
+		case SQL_DESC_NAME:
 			string = metaData->getColumnLabel (column);
 			break;
 
 		case SQL_DESC_BASE_COLUMN_NAME:
-		case SQL_COLUMN_NAME:
-		case SQL_DESC_NAME:
 			string = metaData->getColumnName (column);
 			break;
+
 		case SQL_DESC_UNNAMED:
-			value = (metaData->getColumnName (column)) ? SQL_NAMED : SQL_UNNAMED;
+			value = (metaData->getColumnLabel (column)) ? SQL_NAMED : SQL_UNNAMED;
 			break;
 
 		case SQL_DESC_UNSIGNED:
