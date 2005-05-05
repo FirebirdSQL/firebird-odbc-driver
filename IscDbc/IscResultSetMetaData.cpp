@@ -104,7 +104,7 @@ int IscResultSetMetaData::objectVersion()
 
 const char* IscResultSetMetaData::getColumnLabel(int index)
 {
-	return getColumnName (index);
+	return resultSet->getColumnLabel (index);
 }
 
 bool IscResultSetMetaData::isSigned(int index)
