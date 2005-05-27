@@ -134,4 +134,7 @@ IDS_ERROR_MESSAGE_17, // "Config DSN"
 ,
 IDS_ERROR_MESSAGE_18, // "Invalid characters are included in the data source name: []{}(),;?*=!@\\"
 	"Имя источника данных содержит недопустимые символы: []{}(),;?*=!@\\"
+,
+IDS_ERROR_MESSAGE_19, // "Create database '%s' failed"
+	"Создать базу данных '%s' не удалось"
 }
