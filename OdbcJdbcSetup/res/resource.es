@@ -21,6 +21,9 @@ IDS_BUTTON_CANCEL, // "Cancel"
 IDS_STATIC_DSN, // "Data Source Name (DSN)"
 	"Nombre de Origen de Datos (DSN)"
 ,
+IDS_STATIC_DESCRIPTION, // "Description"
+	"Description"
+,
 IDS_STATIC_DATABASE, // "Database"
 	"Base de Datos"
 ,

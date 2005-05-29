@@ -21,6 +21,9 @@ IDS_BUTTON_CANCEL, // "Cancel"
 IDS_STATIC_DSN, // "Data Source Name (DSN)"
 	"Имя источника данных (DSN)"
 ,
+IDS_STATIC_DESCRIPTION, // "Description"
+	"Примечание"
+,
 IDS_STATIC_DATABASE, // "Database"
 	"База данных"
 ,
