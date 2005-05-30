@@ -86,6 +86,7 @@ public:
 	virtual void addRef();
 	virtual bool isActiveDDL(){ return typeStmt == stmtDDL; }
 	virtual bool isActiveSelect(){ return typeStmt == stmtSelect; }
+	virtual bool isActiveCursor(){ return typeStmt == stmtSelect && openCursor; }
 	virtual bool isActiveProcedure(){ return typeStmt == stmtProcedure; }
 	virtual bool isActiveModify(){ return !!(typeStmt & stmtModify); }
 	virtual bool isActiveNone(){ return typeStmt == stmtNone; }
@@ -112,6 +113,7 @@ public:
 	Sqlda			outputSqlda;
 	int				summaryUpdateCount;
 	int				typeStmt;
+	bool			openCursor;
 };
 
 }; // end namespace IscDbcLibrary

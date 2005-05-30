@@ -108,6 +108,7 @@ IscStatement::IscStatement(IscConnection *connect)
 	useCount = 1;
 	numberColumns = 0;
 	statementHandle = NULL;
+	openCursor = false;
 	typeStmt = stmtNone;
 	resultsCount = 0;
 	resultsSequence	= 0;
@@ -149,8 +150,12 @@ void IscStatement::close()
 		resultSet->close();
 	END_FOR;
 
-	if (typeStmt == stmtSelect && connection->autoCommit)
-		connection->commitAuto();
+	if ( typeStmt == stmtSelect )
+	{
+		openCursor = false;
+		if ( connection->autoCommit )
+			connection->commitAuto();
+	}
 }
 
 void IscStatement::setMaxFieldSize(int max)
@@ -289,6 +294,7 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 	resultSets.deleteItem (resultSet);
 	if (resultSets.isEmpty())
 	{
+		openCursor = false;
 		typeStmt = stmtNone;
 		if ( connection )
 		{
@@ -339,6 +345,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 	
 	outputSqlda.allocBuffer ( this );
 
+	openCursor			= false;
 	typeStmt			= stmtNone;
 	resultsCount		= 1;
 	resultsSequence		= 0;
@@ -379,9 +386,9 @@ bool IscStatement::execute()
 	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle, 
 			dialect, inputSqlda, NULL))
 	{
-		clearSelect();
 		if (connection->autoCommit)
 			connection->rollbackAuto();
+		clearSelect();
 		THROW_ISC_EXCEPTION (connection, statusVector);
 	}
 
@@ -391,6 +398,8 @@ bool IscStatement::execute()
 
 	if ( typeStmt == stmtSelect )
 		typeStmt = stmtNone;
+
+	openCursor = false;
 
 	switch (statementType)
 	{
@@ -406,6 +415,7 @@ bool IscStatement::execute()
 	case isc_info_sql_stmt_select:
 	case isc_info_sql_stmt_select_for_upd:
 		typeStmt = stmtSelect;
+		openCursor = true;
 		break;
 
 	case isc_info_sql_stmt_insert:
