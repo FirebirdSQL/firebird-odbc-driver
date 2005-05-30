@@ -301,7 +301,7 @@ unsigned int fss_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFor
 					while ( c > 0 && length < lengthForMBS )
 					{ 
 						c -= 6; 
-						*(mbs++) = 0x80 | ( ( l >> c ) & 0x3F ); 
+						*(mbs++) = (char)(0x80 | ( ( l >> c ) & 0x3F ));
 						++length;
 					} 
 					break;
