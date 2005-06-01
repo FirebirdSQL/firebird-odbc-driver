@@ -140,4 +140,7 @@ IDS_ERROR_MESSAGE_18, // "Invalid characters are included in the data source nam
 ,
 IDS_ERROR_MESSAGE_19, // "Create database '%s' failed"
 	"Создать базу данных '%s' не удалось"
+,
+IDS_ERROR_MESSAGE_20, // "Open database '%s' failed"
+	"Открыть базу данных '%s' не удалось"
 }
