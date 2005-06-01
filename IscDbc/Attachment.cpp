@@ -235,7 +235,22 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 			else
 			{
 				JString text;
-				text.Format ("File Database is used by another process");
+				
+				switch ( statusVector [7] )
+				{
+				case isc_io_access_err:
+					text.Format ("File Database is used by another process");
+					break;
+
+				case isc_io_open_err:
+					text.Format ("File Database is not found");
+					break;
+
+				default:
+					text.Format ("Unavailable Database");
+					break;
+				}
+
 				throw SQLEXCEPTION ( statusVector [1], text );
 			}
 		}
