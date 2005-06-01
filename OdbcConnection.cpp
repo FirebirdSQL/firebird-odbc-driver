@@ -947,8 +947,9 @@ SQLRETURN OdbcConnection::sqlDisconnect()
 		connection = NULL;
 		connected = false;
 	}
-	catch (SQLException& exception)
+	catch ( std::exception &ex )
 	{
+		SQLException &exception = (SQLException&)ex;
 		postError ("01002", exception);
 		connection = NULL;
 		connected = false;
@@ -1551,8 +1552,9 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 		connection->setExtInitTransaction( optTpb );
 		connection->setUseAppOdbcVersion( env->useAppOdbcVersion );
 	}
-	catch (SQLException& exception)
+	catch ( std::exception &ex )
 	{
+		SQLException &exception = (SQLException&)ex;
 		if ( env->envShare )
 			env->envShare = NULL;
 		if (properties)
@@ -1585,8 +1587,9 @@ SQLRETURN OdbcConnection::sqlEndTran(int operation)
 				connection->rollbackAuto();
 			}
 		}
-		catch (SQLException& exception)
+		catch ( std::exception &ex )
 		{
+			SQLException &exception = (SQLException&)ex;
 			postError ("S1000", exception);
 			return SQL_ERROR;
 		}
@@ -1602,8 +1605,9 @@ SQLRETURN OdbcConnection::sqlExecuteCreateDatabase(const char * sqlString)
 	{
 		connection->sqlExecuteCreateDatabase( sqlString );
 	}
-	catch (SQLException& exception)
+	catch ( std::exception &ex )
 	{
+		SQLException &exception = (SQLException&)ex;
 		postError( "HY000", exception );
 		return SQL_ERROR;
 	}

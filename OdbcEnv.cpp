@@ -131,8 +131,9 @@ SQLRETURN OdbcEnv::sqlEndTran(int operation)
 		{
 			envShare->sqlEndTran (operation);
 		}
-		catch (SQLException& exception)
+		catch ( std::exception &ex )
 		{
+			SQLException &exception = (SQLException&)ex;
 			postError ("HY000", exception);
 			return SQL_ERROR;
 		}
@@ -197,8 +198,9 @@ SQLRETURN OdbcEnv::sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength
 		if (lengthPtr)
 			*lengthPtr = sizeof (long);
 	}
-	catch (SQLException& exception)
+	catch ( std::exception &ex )
 	{
+		SQLException &exception = (SQLException&)ex;
 		postError ("HY000", exception);
 		return SQL_ERROR;
 	}
@@ -225,8 +227,9 @@ SQLRETURN OdbcEnv::sqlSetEnvAttr(int attribute, SQLPOINTER value, int length)
 			return sqlReturn (SQL_ERROR, "HYC00", "Optional feature not implemented");
 		}
 	}
-	catch (SQLException& exception)
+	catch ( std::exception &ex )
 	{
+		SQLException &exception = (SQLException&)ex;
 		postError ("HY000", exception);
 		return SQL_ERROR;
 	}

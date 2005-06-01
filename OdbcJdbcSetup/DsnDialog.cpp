@@ -676,8 +676,9 @@ void CDsnDialog::OnTestConnection(HWND hDlg)
 		connection = NULL;
 		MessageBox(hDlg, _TR( IDS_MESSAGE_01, "Connection successful!" ), TEXT(strHeadDlg), MB_ICONINFORMATION|MB_OK);
 	}
-	catch (SQLException& exception)
+	catch ( std::exception &ex )
 	{
+		SQLException &exception = (SQLException&)ex;
 		char buffer[2048];
 		JString text = exception.getText();
 		if (properties)

@@ -95,7 +95,7 @@ SQLError::SQLError(Stream * trace, SqlCode code, const char * txt, ...)
 	sqlcode = (int) code;
 }
 
-SQLError::~SQLError ()
+SQLError::~SQLError () throw()
 {
 /**************************************
  *

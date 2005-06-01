@@ -9,6 +9,8 @@
 #ifndef __SQLEXCEPTION_H
 #define __SQLEXCEPTION_H
 
+#include <exception>
+
 #ifdef _WIN32xxx
 #define DllExport	__declspec( dllexport )
 #else
@@ -35,7 +37,7 @@ enum SqlCode {
 	NO_RECORDS_FOR_FETCH = -508 // No current record for fetch operation 335544348L
 	};
 
-class DllExport SQLException 
+class DllExport SQLException : public std::exception
 {
 public:
 	//virtual void		addRef() = 0;
