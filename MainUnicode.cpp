@@ -35,6 +35,7 @@
 #define GETCONNECT_DESC( hDesc ) (((OdbcDesc*)hDesc)->connection)
 #define GETCONNECT_HNDL( hObjt ) (((OdbcObject*)hObjt)->getConnection())
 
+extern FILE	*logFile;
 using namespace OdbcJdbcLibrary;
 extern UINT codePage; // from Main.cpp
 
@@ -283,8 +284,23 @@ SQLRETURN SQL_API SQLConnectW( SQLHDBC hDbc,
 	ConvertingString<> UserName( (OdbcConnection*)hDbc, userName, nameLength2 );
 	ConvertingString<> Authentication( (OdbcConnection*)hDbc, authentication, nameLength3 );
 
-	return ((OdbcConnection*) hDbc)->sqlConnect( ServerName, ServerName, UserName,
+	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlConnect( ServerName, ServerName, UserName,
 												UserName, Authentication, Authentication );
+	LOG_PRINT(( logFile, 
+				"SQLConnectW           : Line %d\n"
+				"   +status            : %d\n"
+				"   +hDbc              : %p\n"
+				"   +serverName        : %S\n"
+				"   +userName          : %S\n"
+				"   +authentication    : %S\n\n",
+					__LINE__,
+					ret,
+					hDbc,
+					serverName ? serverName : (SQLWCHAR*)"",
+					userName ? userName : (SQLWCHAR*)"",
+					authentication ? authentication : (SQLWCHAR*)"" ));
+
+	return ret;
 }
 
 ///// SQLDescribeColW /////	ODBC 1.0	///// ISO 92
@@ -430,9 +446,22 @@ SQLRETURN SQL_API SQLDriverConnectW( SQLHDBC hDbc, SQLHWND hWnd, SQLWCHAR *szCon
 	ConvertingString<> ConnStrOut( cbConnStrOutMax, szConnStrOut, pcbConnStrOut, false );
 	ConnStrOut.setConnection( (OdbcConnection*)hDbc );
 
-	return ((OdbcConnection*) hDbc)->sqlDriverConnect( hWnd, ConnStrIn, ConnStrIn,
+	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlDriverConnect( hWnd, ConnStrIn, ConnStrIn,
 													ConnStrOut, ConnStrOut, pcbConnStrOut,
 													fDriverCompletion );
+	LOG_PRINT(( logFile, 
+				"SQLDriverConnectW     : Line %d\n"
+				"   +status            : %d\n"
+				"   +hDbc              : %p\n"
+				"   +szConnStrIn       : %S\n"
+				"   +szConnStrOut      : %S\n\n",
+					__LINE__,
+					ret,
+					hDbc,
+					szConnStrIn ? szConnStrIn : (SQLWCHAR*)"",
+					szConnStrOut ? szConnStrOut : (SQLWCHAR*)"" ));
+
+	return ret;
 }
 
 ///// SQLGetConnectOptionW /////  Level 1	///// Deprecated
