@@ -38,6 +38,9 @@ public:
 	}
 };
 
+MBSTOWCS adressMbsToWcs( int charsetCode );
+WCSTOMBS adressWcsToMbs( int charsetCode );
+
 unsigned int fss_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int length );
 unsigned int fss_wcstombs( char *mbs, const wchar_t *wcs, unsigned int length );
 

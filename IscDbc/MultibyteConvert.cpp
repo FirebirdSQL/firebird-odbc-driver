@@ -136,6 +136,36 @@ int getCharsetSize( const int charsetCode )
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+WCSTOMBS adressWcsToMbs( int charsetCode )
+{
+	switch ( charsetCode )
+	{
+	case 0: // NONE
+		return wcstombs;
+	case 3: // UNICODE_FSS
+		return fss_wcstombs;
+	default:
+		break;
+	}
+
+	return wcstombs;
+}
+
+MBSTOWCS adressMbsToWcs( int charsetCode )
+{
+	switch ( charsetCode )
+	{
+	case 0: // NONE
+		return mbstowcs;
+	case 3: // UNICODE_FSS
+		return fss_mbstowcs;
+	default:
+		break;
+	}
+
+	return mbstowcs;
+}
+
 typedef struct
 { 
 	int		cmask; 
@@ -278,7 +308,6 @@ unsigned int fss_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFor
 { 
 	long l; 
 	int c;
-	bool bContinue = true;
 	Tab *t; 
 	unsigned int length = 0;
 
@@ -298,7 +327,7 @@ unsigned int fss_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFor
 					c = t->shift; 
 					*mbs++ = (char)(t->cval | ( l >> c )); 
 					++length;
-					while ( c > 0 && length < lengthForMBS )
+					while ( c > 0 )
 					{ 
 						c -= 6; 
 						*(mbs++) = (char)(0x80 | ( ( l >> c ) & 0x3F ));
@@ -308,7 +337,7 @@ unsigned int fss_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFor
 				} 
 			} 
 
-		} while ( *(++wcs) != L'\0' && bContinue && length < lengthForMBS );
+		} while ( *(++wcs) != L'\0' );
 	}
 	else
 	{
@@ -322,7 +351,7 @@ unsigned int fss_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFor
 				{ 
 					c = t->shift; 
 					++length;
-					while ( c > 0 && length < lengthForMBS )
+					while ( c > 0 )
 					{ 
 						c -= 6; 
 						++length;
@@ -331,7 +360,7 @@ unsigned int fss_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFor
 				} 
 			} 
 
-		} while ( *(++wcs) != L'\0' && bContinue && length < lengthForMBS );
+		} while ( *(++wcs) != L'\0' );
 	}
 
 	return length;
