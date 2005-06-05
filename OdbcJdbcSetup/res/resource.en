@@ -143,4 +143,7 @@ IDS_ERROR_MESSAGE_19, // "Create database '%s' failed"
 ,
 IDS_ERROR_MESSAGE_20, // "Open database '%s' failed"
 	"Open database '%s' failed"
+,
+IDS_BUTTON_SERVICES, // "Services"
+	"Services"
 }
