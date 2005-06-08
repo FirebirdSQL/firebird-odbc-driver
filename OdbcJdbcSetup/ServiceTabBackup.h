@@ -31,14 +31,32 @@ namespace OdbcJdbcSetupLibrary {
 
 class CServiceTabBackup : public CServiceTabChild
 {
+	enum
+	{ 	
+		enIgnoreChecksums	= 0x01,
+		enIgnoreLimbo		= 0x02,
+		enMetadataOnly		= 0x04,
+		enNoGarbageCollect	= 0x08,
+		enOldDescriptions	= 0x10,
+		enNonTransportable  = 0x20,
+		enConvert			= 0x40,
+		enExpand			= 0x80
+	};
+
 public:
 	CServiceTabBackup();
 	~CServiceTabBackup();
 
 public:
-	void UpdateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
-	bool createDialogIndirect( void );
+	void updateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
+	bool onCommand( HWND hWnd, int nCommand );
+	bool OnFindFileBackup( void );
+	bool createDialogIndirect( CServiceTabCtrl *parentTabCtrl );
 	bool buildDlgChild( HWND hWndParent );
+
+public:
+	ULONG   backupParameters;
+	JString backupPathFile;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

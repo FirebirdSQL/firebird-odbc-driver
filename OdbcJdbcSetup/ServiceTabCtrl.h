@@ -45,8 +45,7 @@ public:
 
 	void SetDisabledDlgItem( HWND hDlg, int ID, BOOL bDisabled = TRUE );
 	void UpdateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
-	BOOL OnInitDialog( HWND hDlg );
-
+	bool OnInitDialog( HWND hDlg );
 	bool buildDlgBackup( LPDLGTEMPLATE &resource );
 	bool childDlgRestore( LPDLGTEMPLATE &resource );
 	bool childDlgRepair( LPDLGTEMPLATE &resource );
@@ -56,6 +55,10 @@ public:
 	CServiceTabBackup   backup;
 	CServiceTabRestore  restore;
 	CServiceTabRepair   repair;
+	JString             database;
+	JString             password;
+	JString             user;
+	JString             role;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

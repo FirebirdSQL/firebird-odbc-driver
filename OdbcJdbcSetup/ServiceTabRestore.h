@@ -36,9 +36,15 @@ public:
 	~CServiceTabRestore();
 
 public:
-	void UpdateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
-	bool createDialogIndirect( void );
+	void updateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
+	bool onCommand( HWND hWnd, int nCommand );
+	bool OnFindFileBackup( void );
+	bool createDialogIndirect( CServiceTabCtrl *parentTabCtrl );
 	bool buildDlgChild( HWND hWndParent );
+
+public:
+	ULONG   restoreParameters;
+	JString backupPathFile;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

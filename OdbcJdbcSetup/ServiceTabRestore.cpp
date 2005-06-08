@@ -28,11 +28,9 @@
 #include "OdbcJdbcSetup.h"
 #include "../IscDbc/Connection.h"
 #include "CommonUtil.h"
-#include "DsnDialog.h"
 #include "../SetupAttributes.h"
-#include "ServiceTabChild.h"
 #include "ServiceClient.h"
-#include "ServiceTabRestore.h"
+#include "ServiceTabCtrl.h"
 
 #undef _TR
 #define _TR( id, msg ) msg
@@ -44,24 +42,42 @@ extern int currentCP;
 
 CServiceTabRestore::CServiceTabRestore() : CServiceTabChild()
 {
+	restoreParameters = 0;
 }
 
 CServiceTabRestore::~CServiceTabRestore()
 {
 }
 
-void CServiceTabRestore::UpdateData( HWND hDlg, BOOL bSaveAndValidate )
+void CServiceTabRestore::updateData( HWND hDlg, BOOL bSaveAndValidate )
 {
+	CServiceTabChild::updateData( hDlg, bSaveAndValidate );
+
+	if ( bSaveAndValidate )
+	{
+		GetDlgItemText( hDlg, IDC_BACKUP_FILE, backupPathFile.getBuffer( 256 ), 256 );
+
+		restoreParameters = 0;
+	}
+	else
+	{
+		SetDisabledDlgItem( hDlg, IDOK );
+
+		SetDlgItemText( hDlg, IDC_BACKUP_FILE, (const char*)backupPathFile );
+	}
 }
 
 BOOL CALLBACK wndproCServiceTabRestoreChild( HWND hWndChildTab, UINT message, UINT wParam, LONG lParam )
 {
+	HWND hWndParent = GetParent( hWndChildTab );
+	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
+	int iPage = TabCtrl_GetCurSel( hWndParent );
+	CServiceTabChild *child = tabData->childTab[iPage];
+
 	switch ( message )
 	{
     case WM_INITDIALOG:
 		{
-			HWND hWndParent = GetParent( hWndChildTab );
-			PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
 			RECT rcTabHdr;
 
 			SetRectEmpty( &rcTabHdr ); 
@@ -69,18 +85,30 @@ BOOL CALLBACK wndproCServiceTabRestoreChild( HWND hWndChildTab, UINT message, UI
 			tabData->hWndChildTab = hWndChildTab;
 			SetWindowPos( tabData->hWndChildTab, NULL, -rcTabHdr.left, -rcTabHdr.top, 0, 0, 
 						  SWP_NOSIZE | SWP_NOZORDER );
+			{
+				char buffer[10];
+				HWND hWndBox = GetDlgItem( hWndChildTab, IDC_COMBOBOX_PAGE_SIZE );
+				for ( int i = 0; i < 6; i++ )
+				{
+					sprintf( buffer, "%d", 1024 << i );
+					SendMessage( hWndBox, CB_ADDSTRING, 0, (LPARAM)buffer );
+				}
+				SendMessage( hWndBox, CB_SETCURSEL, 3, 0 ); // 8192
+			}
+			child->updateData( hWndChildTab, FALSE );
 		}
 		return TRUE;
 
 	case WM_DESTROY:
 		{
-			HWND hWndParent = GetParent( hWndChildTab );
-			PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
 			//ASSERT( tabData->hWndChildTab == hWndChildTab );
 		}
 		return TRUE;
 
 	case WM_COMMAND:
+		if ( child->onCommand( hWndChildTab, LOWORD( wParam ) ) )
+			return TRUE;
+
         switch ( LOWORD( wParam ) ) 
 		{
         case IDCANCEL:
@@ -95,8 +123,37 @@ BOOL CALLBACK wndproCServiceTabRestoreChild( HWND hWndChildTab, UINT message, UI
     return FALSE;
 }
 
-bool CServiceTabRestore::createDialogIndirect()
+bool CServiceTabRestore::onCommand( HWND hWnd, int nCommand )
 {
+	if ( CServiceTabChild::onCommand( hWnd, nCommand ) )
+		return true;
+
+	switch ( nCommand ) 
+	{
+	case IDC_FIND_FILE_BACKUP:
+		updateData( hWnd );
+		if ( OnFindFileBackup() )
+			updateData( hWnd, FALSE );
+		return true;
+	}
+	return false;
+}
+
+bool CServiceTabRestore::OnFindFileBackup()
+{
+	char * szCaption    = "Select Firebird backup file";
+	char * szOpenFilter = "Firebird Backup Files (*.bac;*.backup)\0*.bac;*.backup\0"
+                          "All files (*.*)\0*.*\0"
+                          "\0";
+	char * szDefExt     = "*.bac";
+
+	return CServiceTabChild::OnFindFile( szCaption, szOpenFilter, szDefExt, backupPathFile );
+}
+
+bool CServiceTabRestore::createDialogIndirect( CServiceTabCtrl *parentTabCtrl )
+{
+	CServiceTabChild::createDialogIndirect( parentTabCtrl );
+
 	CreateDialogIndirect( m_hInstance,
 						  resource,
 						  parent,

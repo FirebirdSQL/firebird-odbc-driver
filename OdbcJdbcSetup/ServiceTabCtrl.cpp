@@ -28,7 +28,6 @@
 #include "OdbcJdbcSetup.h"
 #include "../IscDbc/Connection.h"
 #include "CommonUtil.h"
-#include "DsnDialog.h"
 #include "../SetupAttributes.h"
 #include "ServiceClient.h"
 #include "ServiceTabCtrl.h"
@@ -63,14 +62,14 @@ void CServiceTabCtrl::UpdateData( HWND hDlg, BOOL bSaveAndValidate )
 {
 }
 
-BOOL CServiceTabCtrl::OnInitDialog( HWND hDlg )
+bool CServiceTabCtrl::OnInitDialog( HWND hDlg )
 {
 	HWND hWndTab = GetDlgItem( hDlg, IDC_SERVICE_TABCTRL );
     TCITEM tie;
 
     tie.mask = TCIF_TEXT | TCIF_IMAGE; 
     tie.iImage = -1; 
-	tabData.hDlg = hDlg;
+	tabData.tabCtrl = this;
 	tabData.hWndTab = hWndTab;
     tie.lParam = (ULONG)&tabData;
 
@@ -90,9 +89,9 @@ BOOL CServiceTabCtrl::OnInitDialog( HWND hDlg )
     TabCtrl_InsertItem( hWndTab, 2, &tie );
 
     SetWindowLong( hWndTab, GWL_USERDATA, (ULONG)&tabData ); 
-	backup.createDialogIndirect(); 
+	backup.createDialogIndirect( this );
 
-	return TRUE;
+	return true;
 }
 
 BOOL CALLBACK wndproCServiceTabCtrl( HWND hDlg, UINT message, WORD wParam, LONG lParam )
@@ -140,7 +139,7 @@ BOOL CALLBACK wndproCServiceTabCtrl( HWND hDlg, UINT message, WORD wParam, LONG 
 				{
 				case TCN_SELCHANGE:
 					if ( !tabData->hWndChildTab )
-						tabData->childTab[iPage]->createDialogIndirect();
+						tabData->childTab[iPage]->createDialogIndirect( tabData->tabCtrl );
 					break;
 
 				case TCN_SELCHANGING:

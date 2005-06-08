@@ -28,11 +28,12 @@ namespace OdbcJdbcSetupLibrary {
 
 	enum enServiceTabCtrl { COUNT_PAGE = 3 };
 
+class CServiceTabCtrl;
 class CServiceTabChild;
 
 typedef struct _TAG_DIALOG_HEADER
 { 
-	HWND               hDlg;
+	CServiceTabCtrl    *tabCtrl;
 	HWND               hWndTab;
 	HWND               hWndChildTab;
 	CServiceTabChild*  childTab[COUNT_PAGE];

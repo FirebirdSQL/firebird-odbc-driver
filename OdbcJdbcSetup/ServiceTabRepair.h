@@ -36,8 +36,9 @@ public:
 	~CServiceTabRepair();
 
 public:
-	void UpdateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
-	bool createDialogIndirect( void );
+	void updateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
+	bool onCommand( HWND hWnd, int nCommand );
+	bool createDialogIndirect( CServiceTabCtrl *parentTabCtrl );
 	bool buildDlgChild( HWND hWndParent );
 };
 

@@ -28,11 +28,9 @@
 #include "OdbcJdbcSetup.h"
 #include "../IscDbc/Connection.h"
 #include "CommonUtil.h"
-#include "DsnDialog.h"
 #include "../SetupAttributes.h"
-#include "ServiceTabChild.h"
 #include "ServiceClient.h"
-#include "ServiceTabBackup.h"
+#include "ServiceTabCtrl.h"
 
 #undef _TR
 #define _TR( id, msg ) msg
@@ -44,24 +42,68 @@ extern int currentCP;
 
 CServiceTabBackup::CServiceTabBackup() : CServiceTabChild()
 {
+	backupParameters = 0;
+	backupPathFile = " ";
 }
 
 CServiceTabBackup::~CServiceTabBackup()
 {
 }
 
-void CServiceTabBackup::UpdateData( HWND hDlg, BOOL bSaveAndValidate )
+void CServiceTabBackup::updateData( HWND hDlg, BOOL bSaveAndValidate )
 {
+	CServiceTabChild::updateData( hDlg, bSaveAndValidate );
+
+	if ( bSaveAndValidate )
+	{
+		GetDlgItemText( hDlg, IDC_BACKUP_FILE, backupPathFile.getBuffer( 256 ), 256 );
+
+		backupParameters = 0;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_IGNORE_CHECKSUM, BM_GETCHECK, 0, 0 ) )
+			backupParameters |= enIgnoreChecksums;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_IGNORE_TRANS_LIMBO, BM_GETCHECK, 0, 0 ) )
+			backupParameters |= enIgnoreLimbo;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_ONLY_METADATA, BM_GETCHECK, 0, 0 ) )
+			backupParameters |= enMetadataOnly;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_NO_GARBAGE, BM_GETCHECK, 0, 0 ) )
+			backupParameters |= enNoGarbageCollect;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_OLD_METADATA, BM_GETCHECK, 0, 0 ) )
+			backupParameters |= enOldDescriptions;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_NO_TRANSPORTABLE, BM_GETCHECK, 0, 0 ) )
+			backupParameters |= enNonTransportable;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_CONV_EXT_TABLE, BM_GETCHECK, 0, 0 ) )
+			backupParameters |= enConvert;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_NO_COMPRESS, BM_GETCHECK, 0, 0 ) )
+			backupParameters |= enExpand;
+	}
+	else
+	{
+		SetDisabledDlgItem( hDlg, IDOK );
+
+		SetDlgItemText( hDlg, IDC_BACKUP_FILE, (const char*)backupPathFile );
+
+        CheckDlgButton ( hDlg, IDC_CHECK_IGNORE_CHECKSUM, backupParameters & enIgnoreChecksums );
+        CheckDlgButton ( hDlg, IDC_CHECK_IGNORE_TRANS_LIMBO, backupParameters & enIgnoreLimbo );
+        CheckDlgButton ( hDlg, IDC_CHECK_ONLY_METADATA, backupParameters & enMetadataOnly );
+        CheckDlgButton ( hDlg, IDC_CHECK_NO_GARBAGE, backupParameters & enNoGarbageCollect );
+        CheckDlgButton ( hDlg, IDC_CHECK_OLD_METADATA, backupParameters & enOldDescriptions );
+        CheckDlgButton ( hDlg, IDC_CHECK_NO_TRANSPORTABLE, backupParameters & enNonTransportable );
+        CheckDlgButton ( hDlg, IDC_CHECK_CONV_EXT_TABLE, backupParameters & enConvert );
+        CheckDlgButton ( hDlg, IDC_CHECK_NO_COMPRESS, backupParameters & enExpand );
+	}
 }
 
 BOOL CALLBACK wndproCServiceTabBackup( HWND hWndChildTab, UINT message, UINT wParam, LONG lParam )
 {
+	HWND hWndParent = GetParent( hWndChildTab );
+	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
+	int iPage = TabCtrl_GetCurSel( hWndParent );
+	CServiceTabChild *child = tabData->childTab[iPage];
+
 	switch ( message )
 	{
     case WM_INITDIALOG:
 		{
-			HWND hWndParent = GetParent( hWndChildTab );
-			PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
 			RECT rcTabHdr;
 
 			SetRectEmpty( &rcTabHdr ); 
@@ -69,34 +111,66 @@ BOOL CALLBACK wndproCServiceTabBackup( HWND hWndChildTab, UINT message, UINT wPa
 			tabData->hWndChildTab = hWndChildTab;
 			SetWindowPos( tabData->hWndChildTab, NULL, -rcTabHdr.left, -rcTabHdr.top, 0, 0, 
 						  SWP_NOSIZE | SWP_NOZORDER );
+			child->updateData( hWndChildTab, FALSE );
 		}
 		return TRUE;
 
 	case WM_DESTROY:
 		{
-			HWND hWndParent = GetParent( hWndChildTab );
-			PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
 			//ASSERT( tabData->hWndChildTab == hWndChildTab );
 		}
 		return TRUE;
 
 	case WM_COMMAND:
-        switch ( LOWORD( wParam ) ) 
-		{
-        case IDCANCEL:
+
+		if ( child->onCommand( hWndChildTab, LOWORD( wParam ) ) )
 			return TRUE;
 
-        case IDOK:
-            return TRUE;
-        }
+		switch ( LOWORD( wParam ) ) 
+		{
+		case IDCANCEL:
+			return TRUE;
+
+		case IDOK:
+			return TRUE;
+		}
         break;
 	}
 
     return FALSE;
 }
 
-bool CServiceTabBackup::createDialogIndirect()
+bool CServiceTabBackup::onCommand( HWND hWnd, int nCommand )
 {
+	if ( CServiceTabChild::onCommand( hWnd, nCommand ) )
+		return true;
+
+	switch ( nCommand ) 
+	{
+	case IDC_FIND_FILE_BACKUP:
+		updateData( hWnd );
+		if ( OnFindFileBackup() )
+			updateData( hWnd, FALSE );
+		return true;
+	}
+	return false;
+}
+
+bool CServiceTabBackup::OnFindFileBackup()
+{
+	char * szCaption    = "Select Firebird backup file";
+	char * szOpenFilter = "Firebird Backup Files (*.bac;*.backup)\0*.bac;*.backup\0"
+                          "All files (*.*)\0*.*\0"
+                          "\0";
+	char * szDefExt     = "*.bac";
+
+	return CServiceTabChild::OnFindFile( szCaption, szOpenFilter, szDefExt, backupPathFile );
+}
+
+bool CServiceTabBackup::createDialogIndirect( CServiceTabCtrl *parentTabCtrl )
+{
+	CServiceTabChild::createDialogIndirect( parentTabCtrl );
+
 	CreateDialogIndirect( m_hInstance,
 						  resource,
 						  parent,

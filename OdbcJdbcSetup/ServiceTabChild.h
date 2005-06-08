@@ -26,6 +26,8 @@
 
 namespace OdbcJdbcSetupLibrary {
 
+using namespace classJString;
+
 /////////////////////////////////////////////////////////////////////////////
 // CServiceTabChild dialog
 
@@ -36,13 +38,19 @@ public:
 	virtual ~CServiceTabChild();
 
 public:
-	void SetDisabledDlgItem( HWND hDlg, int ID, BOOL bDisabled = TRUE );
-	virtual void UpdateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
-	virtual bool createDialogIndirect( void );
+	void SetDisabledDlgItem( HWND hWnd, int ID, BOOL bDisabled = TRUE );
+	bool IsLocalhost( char *fullPathFileName, int &offset );
+	void CheckRemotehost( char *fullPathFileName );
+	bool OnFindFileDatabase( void );
+	bool OnFindFile( char *szCaption, char *szOpenFilter, char *szDefExt, JString &pathFile );
+	virtual void updateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
+	virtual bool onCommand( HWND hWnd, int nCommand );
+	virtual bool createDialogIndirect( CServiceTabCtrl *parentTabCtrl );
 	virtual bool buildDlgChild( HWND hWndParent );
 	CServiceTabChild* getObject();
 
 public:
+	CServiceTabCtrl *tabCtrl;
 	HWND            parent;
 	LPDLGTEMPLATE   resource;
 };

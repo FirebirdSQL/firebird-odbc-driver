@@ -28,11 +28,9 @@
 #include "OdbcJdbcSetup.h"
 #include "../IscDbc/Connection.h"
 #include "CommonUtil.h"
-#include "DsnDialog.h"
 #include "../SetupAttributes.h"
-#include "ServiceTabChild.h"
 #include "ServiceClient.h"
-#include "ServiceTabRepair.h"
+#include "ServiceTabCtrl.h"
 
 #undef _TR
 #define _TR( id, msg ) msg
@@ -50,18 +48,30 @@ CServiceTabRepair::~CServiceTabRepair()
 {
 }
 
-void CServiceTabRepair::UpdateData( HWND hDlg, BOOL bSaveAndValidate )
+void CServiceTabRepair::updateData( HWND hDlg, BOOL bSaveAndValidate )
 {
+	CServiceTabChild::updateData( hDlg, bSaveAndValidate );
+
+	if ( bSaveAndValidate )
+	{
+	}
+	else
+	{
+		SetDisabledDlgItem( hDlg, IDOK );
+	}
 }
 
 BOOL CALLBACK wndproCServiceTabRepairChild( HWND hWndChildTab, UINT message, UINT wParam, LONG lParam )
 {
+	HWND hWndParent = GetParent( hWndChildTab );
+	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
+	int iPage = TabCtrl_GetCurSel( hWndParent );
+	CServiceTabChild *child = tabData->childTab[iPage];
+
 	switch ( message )
 	{
     case WM_INITDIALOG:
 		{
-			HWND hWndParent = GetParent( hWndChildTab );
-			PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
 			RECT rcTabHdr;
 
 			SetRectEmpty( &rcTabHdr ); 
@@ -69,18 +79,20 @@ BOOL CALLBACK wndproCServiceTabRepairChild( HWND hWndChildTab, UINT message, UIN
 			tabData->hWndChildTab = hWndChildTab;
 			SetWindowPos( tabData->hWndChildTab, NULL, -rcTabHdr.left, -rcTabHdr.top, 0, 0, 
 						  SWP_NOSIZE | SWP_NOZORDER );
+			child->updateData( hWndChildTab, FALSE );
 		}
 		return TRUE;
 
 	case WM_DESTROY:
 		{
-			HWND hWndParent = GetParent( hWndChildTab );
-			PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
 			//ASSERT( tabData->hWndChildTab == hWndChildTab );
 		}
 		return TRUE;
 
 	case WM_COMMAND:
+		if ( child->onCommand( hWndChildTab, LOWORD( wParam ) ) )
+			return TRUE;
+
         switch ( LOWORD( wParam ) ) 
 		{
         case IDCANCEL:
@@ -95,8 +107,18 @@ BOOL CALLBACK wndproCServiceTabRepairChild( HWND hWndChildTab, UINT message, UIN
     return FALSE;
 }
 
-bool CServiceTabRepair::createDialogIndirect()
+bool CServiceTabRepair::onCommand( HWND hWnd, int nCommand )
 {
+	if ( CServiceTabChild::onCommand( hWnd, nCommand ) )
+		return true;
+
+	return false;
+}
+
+bool CServiceTabRepair::createDialogIndirect( CServiceTabCtrl *parentTabCtrl )
+{
+	CServiceTabChild::createDialogIndirect( parentTabCtrl );
+
 	CreateDialogIndirect( m_hInstance,
 						  resource,
 						  parent,
