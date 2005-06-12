@@ -42,6 +42,9 @@ extern int currentCP;
 
 CServiceTabRepair::CServiceTabRepair() : CServiceTabChild()
 {
+	isVisibleValidateOptions = true;
+	repairParameters = enValidateDb;
+	validateParameters = 0;
 }
 
 CServiceTabRepair::~CServiceTabRepair()
@@ -54,10 +57,48 @@ void CServiceTabRepair::updateData( HWND hDlg, BOOL bSaveAndValidate )
 
 	if ( bSaveAndValidate )
 	{
+		repairParameters = 0;
+        if ( SendDlgItemMessage( hDlg, IDC_RADIO_VALIDATE_DB, BM_GETCHECK, 0, 0 ) )
+		{
+			repairParameters = enValidateDb;
+			validateParameters = 0;
+			if ( SendDlgItemMessage( hDlg, IDC_CHECK_IGNORE_CHECKSUM, BM_GETCHECK, 0, 0 ) )
+				validateParameters |= enIgnoreChecksum;
+			if ( SendDlgItemMessage( hDlg, IDC_CHECK_KILL_SHADOWS, BM_GETCHECK, 0, 0 ) )
+				validateParameters |= enKillShadows;
+			if ( SendDlgItemMessage( hDlg, IDC_CHECK_VALIDATE_RECORD, BM_GETCHECK, 0, 0 ) )
+				validateParameters |= enFull;
+			if ( SendDlgItemMessage( hDlg, IDC_CHECK_READONLY, BM_GETCHECK, 0, 0 ) )
+				validateParameters |= enCheckDb;
+		}
+
+        if ( SendDlgItemMessage( hDlg, IDC_RADIO_SWEEP_DB, BM_GETCHECK, 0, 0 ) )
+			repairParameters = enSweepDb;
+        if ( SendDlgItemMessage( hDlg, IDC_RADIO_PREPARE_DB, BM_GETCHECK, 0, 0 ) )
+			repairParameters = enMendDb;
+        if ( SendDlgItemMessage( hDlg, IDC_RADIO_LIST_LIMBO_TR, BM_GETCHECK, 0, 0 ) )
+			repairParameters = enListLimboTrans;
+        if ( SendDlgItemMessage( hDlg, IDC_RADIO_REPAIR_LIMBO_TR, BM_GETCHECK, 0, 0 ) )
+			repairParameters = enFixListLimboTrans;
 	}
 	else
 	{
-		SetDisabledDlgItem( hDlg, IDOK );
+		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
+
+        CheckDlgButton( hDlg, IDC_RADIO_VALIDATE_DB, repairParameters & enValidateDb );
+
+		if ( repairParameters == enValidateDb )
+		{
+			CheckDlgButton( hDlg, IDC_CHECK_IGNORE_CHECKSUM, validateParameters & enIgnoreChecksum );
+			CheckDlgButton( hDlg, IDC_CHECK_KILL_SHADOWS, validateParameters & enKillShadows );
+			CheckDlgButton( hDlg, IDC_CHECK_VALIDATE_RECORD, validateParameters & enFull );
+			CheckDlgButton( hDlg, IDC_CHECK_READONLY, validateParameters & enCheckDb );
+		}
+
+        CheckDlgButton( hDlg, IDC_RADIO_SWEEP_DB, repairParameters & enSweepDb );
+        CheckDlgButton( hDlg, IDC_RADIO_PREPARE_DB, repairParameters & enMendDb );
+        CheckDlgButton( hDlg, IDC_RADIO_LIST_LIMBO_TR, repairParameters & enListLimboTrans );
+        CheckDlgButton( hDlg, IDC_RADIO_REPAIR_LIMBO_TR, repairParameters & enFixListLimboTrans );
 	}
 }
 
@@ -84,24 +125,12 @@ BOOL CALLBACK wndproCServiceTabRepairChild( HWND hWndChildTab, UINT message, UIN
 		return TRUE;
 
 	case WM_DESTROY:
-		{
-			//ASSERT( tabData->hWndChildTab == hWndChildTab );
-		}
+		child->updateData( hWndChildTab );
 		return TRUE;
 
 	case WM_COMMAND:
 		if ( child->onCommand( hWndChildTab, LOWORD( wParam ) ) )
 			return TRUE;
-
-        switch ( LOWORD( wParam ) ) 
-		{
-        case IDCANCEL:
-			return TRUE;
-
-        case IDOK:
-            return TRUE;
-        }
-        break;
 	}
 
     return FALSE;
@@ -112,17 +141,189 @@ bool CServiceTabRepair::onCommand( HWND hWnd, int nCommand )
 	if ( CServiceTabChild::onCommand( hWnd, nCommand ) )
 		return true;
 
+	switch ( nCommand ) 
+	{
+	case IDC_BUTTON_VIEW_LOG:
+		viewLogFile();
+		return true;
+
+	case IDOK:
+		deleteTempLogFile();
+		updateData( hWnd );
+		startRepairDatabase();
+		return true;
+
+	case IDC_RADIO_VALIDATE_DB:
+		hideValidateOptions( false );
+		return true;
+
+	case IDC_RADIO_SWEEP_DB:
+	case IDC_RADIO_PREPARE_DB:
+	case IDC_RADIO_LIST_LIMBO_TR:
+	case IDC_RADIO_REPAIR_LIMBO_TR:
+		hideValidateOptions( true );
+		return true;
+	}
+
 	return false;
+}
+
+void CServiceTabRepair::hideValidateOptions( bool hide )
+{
+	if ( (isVisibleValidateOptions && !hide) || (!isVisibleValidateOptions && hide) )
+		return;
+
+	int nCmdShow = hide ? SW_HIDE : SW_SHOW;
+	isVisibleValidateOptions = !hide;
+
+	ShowWindow( GetDlgItem( hDlg, IDC_CHECK_IGNORE_CHECKSUM ), nCmdShow );
+	ShowWindow( GetDlgItem( hDlg, IDC_CHECK_KILL_SHADOWS ), nCmdShow );
+	ShowWindow( GetDlgItem( hDlg, IDC_CHECK_VALIDATE_RECORD ), nCmdShow );
+	ShowWindow( GetDlgItem( hDlg, IDC_CHECK_READONLY ), nCmdShow );
+	ShowWindow( GetDlgItem( hDlg, IDC_GROUPBOX_VALIDATE_OPTIONS ), nCmdShow );
+}
+
+void CServiceTabRepair::addParameters( CServiceClient &services )
+{
+	CServiceTabChild::addParameters( services );
+}
+
+void CServiceTabRepair::startRepairDatabase()
+{
+	CServiceClient services;
+
+	if ( database.IsEmpty() || user.IsEmpty() || password.IsEmpty() )
+	{
+		// add error message
+		return;
+	}
+
+	try
+	{
+		DWORD dwWritten;
+		int lengthOut;
+		int pos = 0;
+		char buffer[1024];
+		HWND hWndBar = GetDlgItem( hDlg, IDC_PROGRESS_BAR );
+
+		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
+
+		if ( !services.initServices() )
+		{
+			// add error message
+			return;
+		}
+
+		SendMessage( hWndBar, PBM_SETPOS, (WPARAM)0 , (LPARAM)NULL );
+		addParameters( services );
+
+		switch ( repairParameters )
+		{
+		case enValidateDb:
+			services.startRepairDatabase( repairParameters, validateParameters );
+			break;
+
+		case enMendDb:
+			services.startRepairDatabase( repairParameters, enIgnoreChecksum );
+			break;
+
+		case enFixListLimboTrans:
+			services.startRepairDatabase( enListLimboTrans, 0 );
+			break;
+
+		default:
+			services.startRepairDatabase( repairParameters, 0 );
+			break;
+		}
+
+		if ( createTempLogFile() )
+		{
+			ULONG countRows = 0;
+			EnableWindow( GetDlgItem( hDlg, IDOK ), FALSE );
+
+			switch( repairParameters )
+			{
+			case enListLimboTrans:
+			case enFixListLimboTrans:
+				while ( services.nextQueryLimboTransactionInfo( buffer, sizeof ( buffer ), lengthOut ) )
+				{
+					strcpy( &buffer[lengthOut], "<br>" );
+					lengthOut += 4;
+					WriteFile( hTmpFile, buffer, lengthOut, &dwWritten, NULL );
+					++countRows;
+				}
+				break;
+
+			default:
+				while ( services.nextQuery( buffer, sizeof ( buffer ), lengthOut ) )
+				{
+					strcpy( &buffer[lengthOut], "<br>" );
+					lengthOut += 4;
+					WriteFile( hTmpFile, buffer, lengthOut, &dwWritten, NULL );
+					++countRows;
+				}
+			}
+
+			if ( !countRows )
+			{
+				char *pt;
+				int lengthPt;
+
+				switch ( repairParameters )
+				{
+				case enValidateDb:
+					pt = "<UL><B>Validate database - SUCCESS</UL></B>";
+					break;
+				case enSweepDb:
+					pt = "<UL><B>Sweep database - SUCCESS</UL></B>";
+					break;
+				case enMendDb:
+					pt = "<UL><B>Prepare for backup - SUCCESS</UL></B>";
+					break;
+				case enListLimboTrans:
+					pt = "<UL><B>List limbo transactions - I have not</UL></B>";
+					break;
+				default:
+				//case enValidateDb:
+					pt = "<UL><B>Repair limbo trans - SUCCESS</UL></B>";
+					break;
+				}
+
+				lengthPt = strlen( pt );
+				WriteFile( hTmpFile, pt, lengthPt, &dwWritten, NULL );
+			}
+
+			writeFooterToLogFile();
+			EnableWindow( GetDlgItem( hDlg, IDOK ), TRUE );
+		}
+
+		SendMessage( hWndBar, PBM_SETPOS, (WPARAM)100 , (LPARAM)NULL );
+		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
+	}
+	catch ( std::exception &ex )
+	{
+		writeFooterToLogFile();
+		EnableWindow( GetDlgItem( hDlg, IDOK ), TRUE );
+		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
+
+		char buffer[1024];
+		SQLException &exception = (SQLException&)ex;
+		JString text = exception.getText();
+		sprintf(buffer, "sqlcode %d, fbcode %d - %s", exception.getSqlcode(), exception.getFbcode(), (const char*)text );
+		MessageBox( NULL, buffer, TEXT( "Error!" ), MB_ICONERROR | MB_OK );
+	}
+
+	services.closeService();
 }
 
 bool CServiceTabRepair::createDialogIndirect( CServiceTabCtrl *parentTabCtrl )
 {
 	CServiceTabChild::createDialogIndirect( parentTabCtrl );
 
-	CreateDialogIndirect( m_hInstance,
-						  resource,
-						  parent,
-						  wndproCServiceTabRepairChild );
+	hDlg = CreateDialogIndirect( m_hInstance,
+                                 resource,
+                                 parent,
+                                 wndproCServiceTabRepairChild );
 	return true;
 }
 
@@ -143,7 +344,7 @@ bool CServiceTabRepair::buildDlgChild( HWND hWndParent )
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 25;         // NumberOfItems
+	*p++ = 24;         // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
@@ -174,17 +375,16 @@ bool CServiceTabRepair::buildDlgChild( HWND hWndParent )
     TMP_BUTTONCONTROL ( "Kill unavaliable shadows",IDC_CHECK_KILL_SHADOWS,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,170,97,143,10 )
     TMP_BUTTONCONTROL ( "Validate record fragments",IDC_CHECK_VALIDATE_RECORD, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,170,113,143,10 )
     TMP_BUTTONCONTROL ( "Read only validation",IDC_CHECK_READONLY,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,170,129,143,10 )
-    TMP_DEFPUSHBUTTON ( "Execute",IDOK,12,153,83,14 )
-    TMP_PUSHBUTTON    ( "View log",IDC_BUTTON_VIEW_LOG,72,172,88,14 )
-    TMP_PUSHBUTTON    ( "Save log",IDC_BUTTON_SAVE_LOG,169,172,85,14 )
+    TMP_DEFPUSHBUTTON ( "Execute",IDOK,72,172,88,14 )
+    TMP_PUSHBUTTON    ( "View log",IDC_BUTTON_VIEW_LOG,169,172,85,14 )
     TMP_LTEXT         ( "Database",IDC_STATIC,7,0,218,8 )
     TMP_LTEXT         ( "Database Account",IDC_STATIC,7,25,107,8 )
     TMP_LTEXT         ( "Password",IDC_STATIC,126,25,72,8 )
     TMP_LTEXT         ( "Role",IDC_STATIC,214,25,105,8 )
     TMP_LTEXT         ( "Note: To validate a dabase disconnect all database connections first.", IDC_STATIC,7,53,312,8 )
     TMP_GROUPBOX      ( "Operation",IDC_STATIC,7,66,148,83 )
-    TMP_GROUPBOX      ( "Validation options",IDC_STATIC,160,66,159,83 )
-    TMP_EDITTEXT      ( IDC_EDIT_VIEW_LOG_LINE,100,154,219,13,ES_AUTOHSCROLL )
+    TMP_GROUPBOX      ( "Validation options",IDC_GROUPBOX_VALIDATE_OPTIONS,160,66,159,83 )
+    TMP_NAMECONTROL   ( "ProgressBar", IDC_PROGRESS_BAR, "msctls_progress32",WS_BORDER,7,154,312,13 )
 
 	return true;
 }

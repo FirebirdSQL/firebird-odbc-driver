@@ -35,9 +35,18 @@ class CServiceClient
 
 public:
 
-	bool initServices( const char *sharedLibrary );
+	bool initServices( const char *sharedLibrary = NULL );
 	bool checkVersion( void );
 	bool createDatabase( void );
+	void startBackupDatabase( ULONG options );
+	void startRestoreDatabase( ULONG options );
+	void exitRestoreDatabase( void );
+	void startStaticticsDatabase( ULONG options );
+	void startShowDatabaseLog( void );
+	void startRepairDatabase( ULONG options, ULONG optionsValidate );
+	bool nextQuery( char *outBuffer, int length, int &lengthOut );
+	bool nextQueryLimboTransactionInfo( char *outBuffer, int length, int &lengthOut );
+	void closeService();
 	void putParameterValue( const char * name, const char * value );
 
 public:

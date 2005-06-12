@@ -31,6 +31,31 @@ namespace OdbcJdbcSetupLibrary {
 
 class CServiceTabRestore : public CServiceTabChild
 {
+	enum enumRestoreParameters
+	{ 	
+		enMetadataOnly       = 0x0004,
+		enDeactivateIndexes  = 0x0100,
+		enNoShadow           = 0x0200,
+		enNoValidityCheck    = 0x0400,
+		enOneRelationAtATime = 0x0800,
+		enReplace            = 0x1000, // if not then enCreateNewDB = 0x2000,
+		enUseAllSpace        = 0x4000
+	};
+
+	enum enumRestoreExecutedPart
+	{ 	
+		enDomains            = 0x0001,
+		enTables             = 0x0002,
+		enFunctions          = 0x0004,
+		enGenerators         = 0x0008,
+		enStoredProcedures   = 0x0010,
+		enExceptions         = 0x0020,
+		enDataForTables      = 0x0040,
+		enTriggers           = 0x0080,
+		enPrivileges         = 0x0100,
+		enSqlRoles           = 0x0200
+	};
+
 public:
 	CServiceTabRestore();
 	~CServiceTabRestore();
@@ -38,13 +63,17 @@ public:
 public:
 	void updateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	bool onCommand( HWND hWnd, int nCommand );
+	void addParameters( CServiceClient &services );
+	void onStartRestore();
 	bool OnFindFileBackup( void );
 	bool createDialogIndirect( CServiceTabCtrl *parentTabCtrl );
 	bool buildDlgChild( HWND hWndParent );
 
 public:
 	ULONG   restoreParameters;
-	JString backupPathFile;
+	JString	pageSize;
+	JString	buffersSize;
+	bool    noReadOnly;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

@@ -30,6 +30,7 @@ using namespace classJString;
 
 /////////////////////////////////////////////////////////////////////////////
 // CServiceTabChild dialog
+class CServiceClient;
 
 class CServiceTabChild
 {
@@ -39,20 +40,38 @@ public:
 
 public:
 	void SetDisabledDlgItem( HWND hWnd, int ID, BOOL bDisabled = TRUE );
+	bool createTempLogFile( void );
+	void deleteTempLogFile( void );
 	bool IsLocalhost( char *fullPathFileName, int &offset );
+	bool setServerName( void );
 	void CheckRemotehost( char *fullPathFileName );
 	bool OnFindFileDatabase( void );
 	bool OnFindFile( char *szCaption, char *szOpenFilter, char *szDefExt, JString &pathFile );
+	bool setDefaultName( char *szDefExt, JString &pathFile );
 	virtual void updateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	virtual bool onCommand( HWND hWnd, int nCommand );
+	virtual void addParameters( CServiceClient &services );
 	virtual bool createDialogIndirect( CServiceTabCtrl *parentTabCtrl );
 	virtual bool buildDlgChild( HWND hWndParent );
+	virtual bool viewLogFile();
+	virtual void writeHeadToLogFile();
+	virtual void writeFooterToLogFile();
 	CServiceTabChild* getObject();
 
 public:
 	CServiceTabCtrl *tabCtrl;
+	JString         client;
+	JString         server;
+	JString         database;
+	JString         password;
+	JString         user;
+	JString         role;
 	HWND            parent;
+	HWND            hDlg;
 	LPDLGTEMPLATE   resource;
+	HANDLE          hTmpFile;
+	JString         logPathFile;
+	JString         backupPathFile;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

@@ -52,7 +52,10 @@ CServiceClient::~CServiceClient()
 		properties->release();
 
 	if ( services )
+	{
+		services->closeService();
 		services->release();
+	}
 
 	if ( libraryHandle )
 		CLOSE_SHARE_LIBLARY( libraryHandle );
@@ -140,6 +143,51 @@ bool CServiceClient::createDatabase()
 	}
 
 	return true;
+}
+
+void CServiceClient::startBackupDatabase( ULONG options )
+{
+	services->startBackupDatabase( properties, options );
+}
+
+void CServiceClient::startRestoreDatabase( ULONG options )
+{
+	services->startRestoreDatabase( properties, options );
+}
+
+void CServiceClient::exitRestoreDatabase()
+{
+	services->exitRestoreDatabase();
+}
+
+void CServiceClient::startStaticticsDatabase( ULONG options )
+{
+	services->startStaticticsDatabase( properties, options );
+}
+
+void CServiceClient::startShowDatabaseLog()
+{
+	services->startShowDatabaseLog( properties );
+}
+
+void CServiceClient::startRepairDatabase( ULONG options, ULONG optionsValidate )
+{
+	services->startRepairDatabase( properties, options, optionsValidate );
+}
+
+bool CServiceClient::nextQuery( char *outBuffer, int length, int &lengthOut )
+{
+	return services->nextQuery( outBuffer, length, lengthOut );
+}
+
+bool CServiceClient::nextQueryLimboTransactionInfo( char *outBuffer, int length, int &lengthOut )
+{
+	return services->nextQueryLimboTransactionInfo( outBuffer, length, lengthOut );
+}
+
+void CServiceClient::closeService()
+{
+	services->closeService();
 }
 
 }; // end namespace OdbcJdbcSetupLibrary

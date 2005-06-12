@@ -50,13 +50,15 @@ public:
 public:
 	void updateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	bool onCommand( HWND hWnd, int nCommand );
+	void addParameters( CServiceClient &services );
+	void onStartBackup();
 	bool OnFindFileBackup( void );
 	bool createDialogIndirect( CServiceTabCtrl *parentTabCtrl );
 	bool buildDlgChild( HWND hWndParent );
 
 public:
 	ULONG   backupParameters;
-	JString backupPathFile;
+	JString	blockingFactor;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

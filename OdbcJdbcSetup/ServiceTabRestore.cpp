@@ -43,6 +43,7 @@ extern int currentCP;
 CServiceTabRestore::CServiceTabRestore() : CServiceTabChild()
 {
 	restoreParameters = 0;
+	noReadOnly = true;
 }
 
 CServiceTabRestore::~CServiceTabRestore()
@@ -58,12 +59,57 @@ void CServiceTabRestore::updateData( HWND hDlg, BOOL bSaveAndValidate )
 		GetDlgItemText( hDlg, IDC_BACKUP_FILE, backupPathFile.getBuffer( 256 ), 256 );
 
 		restoreParameters = 0;
+
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_NO_INDEX, BM_GETCHECK, 0, 0 ) )
+			restoreParameters |= enDeactivateIndexes;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_NO_SHADOW, BM_GETCHECK, 0, 0 ) )
+			restoreParameters |= enNoShadow;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_NO_VALIDITY, BM_GETCHECK, 0, 0 ) )
+			restoreParameters |= enNoValidityCheck;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_COMMIT, BM_GETCHECK, 0, 0 ) )
+			restoreParameters |= enOneRelationAtATime;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_REPLACE, BM_GETCHECK, 0, 0 ) )
+			restoreParameters |= enReplace;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_FULL_SPACE, BM_GETCHECK, 0, 0 ) )
+			restoreParameters |= enUseAllSpace;
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_ONLY_METADATA, BM_GETCHECK, 0, 0 ) )
+			restoreParameters |= enMetadataOnly;
+
+        if ( SendDlgItemMessage( hDlg, IDC_CHECK_NO_READONLY, BM_GETCHECK, 0, 0 ) )
+			noReadOnly = false;
+		else
+			noReadOnly = true;
+
+		HWND hWnd = GetDlgItem( hDlg, IDC_COMBOBOX_PAGE_SIZE );
+		int nLen = GetWindowTextLength( hWnd );
+		if ( nLen > 0 )
+			GetWindowText( hWnd, pageSize.getBuffer( nLen ), nLen + 1 );
+		else
+			GetWindowText( hWnd, pageSize.getBuffer( 256 ), 256 + 1 );
+
+		hWnd = GetDlgItem( hDlg, IDC_SIZE_BUFFERS );
+		nLen = GetWindowTextLength( hWnd );
+		if ( nLen > 0 )
+			GetWindowText( hWnd, buffersSize.getBuffer( nLen ), nLen + 1 );
+		else
+			GetWindowText( hWnd, buffersSize.getBuffer( 256 ), 256 + 1 );
 	}
 	else
 	{
-		SetDisabledDlgItem( hDlg, IDOK );
-
+		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
 		SetDlgItemText( hDlg, IDC_BACKUP_FILE, (const char*)backupPathFile );
+
+        CheckDlgButton( hDlg, IDC_CHECK_NO_INDEX, restoreParameters & enDeactivateIndexes );
+        CheckDlgButton( hDlg, IDC_CHECK_NO_SHADOW, restoreParameters & enNoShadow );
+        CheckDlgButton( hDlg, IDC_CHECK_NO_VALIDITY, restoreParameters & enNoValidityCheck );
+        CheckDlgButton( hDlg, IDC_CHECK_COMMIT, restoreParameters & enOneRelationAtATime );
+        CheckDlgButton( hDlg, IDC_CHECK_REPLACE, restoreParameters & enReplace );
+        CheckDlgButton( hDlg, IDC_CHECK_FULL_SPACE, restoreParameters & enUseAllSpace );
+        CheckDlgButton( hDlg, IDC_CHECK_ONLY_METADATA, restoreParameters & enMetadataOnly );
+
+        CheckDlgButton( hDlg, IDC_CHECK_NO_READONLY, !noReadOnly );
+
+		SetDlgItemText(hDlg, IDC_SIZE_BUFFERS, (const char *)buffersSize );
 	}
 }
 
@@ -100,24 +146,12 @@ BOOL CALLBACK wndproCServiceTabRestoreChild( HWND hWndChildTab, UINT message, UI
 		return TRUE;
 
 	case WM_DESTROY:
-		{
-			//ASSERT( tabData->hWndChildTab == hWndChildTab );
-		}
+		child->updateData( hWndChildTab );
 		return TRUE;
 
 	case WM_COMMAND:
 		if ( child->onCommand( hWndChildTab, LOWORD( wParam ) ) )
 			return TRUE;
-
-        switch ( LOWORD( wParam ) ) 
-		{
-        case IDCANCEL:
-			return TRUE;
-
-        case IDOK:
-            return TRUE;
-        }
-        break;
 	}
 
     return FALSE;
@@ -135,17 +169,257 @@ bool CServiceTabRestore::onCommand( HWND hWnd, int nCommand )
 		if ( OnFindFileBackup() )
 			updateData( hWnd, FALSE );
 		return true;
+
+	case IDC_BUTTON_VIEW_LOG:
+		viewLogFile();
+		return true;
+
+	case IDOK:
+		updateData( hWnd );
+		onStartRestore();
+		return true;
 	}
+
 	return false;
+}
+
+void CServiceTabRestore::addParameters( CServiceClient &services )
+{
+	CServiceTabChild::addParameters( services );
+
+	services.putParameterValue( "backupFile", backupPathFile );
+	services.putParameterValue( "serverName", server );
+	services.putParameterValue( SETUP_PAGE_SIZE, pageSize );
+	services.putParameterValue( "buffersSize", buffersSize );
+	services.putParameterValue( "noReadOnly", noReadOnly ? "Y" : "N" );
+}
+
+void CServiceTabRestore::onStartRestore()
+{
+	CServiceClient services;
+
+	if ( backupPathFile.IsEmpty() || database.IsEmpty() 
+		|| user.IsEmpty() || password.IsEmpty() )
+	{
+		// add error message
+		return;
+	}
+
+	try
+	{
+		DWORD dwWritten;
+		int lengthPt;
+		int lengthOut;
+		int pos = 0;
+		char buffer[1024];
+		HWND hWndBar = GetDlgItem( hDlg, IDC_PROGRESS_BAR );
+
+		deleteTempLogFile();
+		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
+
+		if ( !services.initServices() )
+		{
+			// add error message
+			return;
+		}
+
+		SendMessage( hWndBar, PBM_SETPOS, (WPARAM)0 , (LPARAM)NULL );
+		addParameters( services );
+		services.startRestoreDatabase( restoreParameters );
+
+		if ( createTempLogFile() )
+		{
+			ULONG executedPart = 0;
+			EnableWindow( GetDlgItem( hDlg, IDOK ), FALSE );
+
+			while ( services.nextQuery( buffer, sizeof ( buffer ), lengthOut ) )
+			{
+				bool inc = false;
+				char *pt = buffer + 6; // offset 'gbak: '
+
+				if ( *pt == 'r' && !strncasecmp ( pt, "restoring ", sizeof ( "restoring " ) - 1 ) )
+				{
+					pt += sizeof ( "restoring " ) - 1;
+
+					switch ( *pt )
+					{
+					case 'd':
+						if ( !(executedPart & enDomains)
+							&& !strncasecmp ( pt, "domain", sizeof ( "domain" ) - 1 ) )
+						{
+							executedPart |= enDomains;
+							pt = "<UL><B>Domains</UL></B>";
+							lengthPt = strlen( pt );
+							inc = true;
+						}
+						else if ( !(executedPart & enDataForTables)
+							&& !strncasecmp ( pt, "data for table", sizeof ( "data for table" ) - 1 ) )
+						{
+							executedPart |= enDataForTables;
+							pt = "<UL><B>Data For Tables</UL></B>";
+							lengthPt = strlen( pt );
+							inc = true;
+						}
+						break;
+					case 's':
+						if ( !(executedPart & enStoredProcedures)
+							&& !strncasecmp ( pt, "stored procedure", sizeof ( "stored procedure" ) - 1 ) )
+						{
+							executedPart |= enStoredProcedures;
+							pt = "<UL><B>Stored Procedures</UL></B>";
+							lengthPt = strlen( pt );
+							inc = true;
+						}
+						break;
+					case 'S':
+						if ( !(executedPart & enSqlRoles)
+							&& !strncasecmp ( pt, "SQL role", sizeof ( "SQL role" ) - 1 ) )
+						{
+							executedPart |= enSqlRoles;
+							pt = "<UL><B>SQL Roles</UL></B>";
+							lengthPt = strlen( pt );
+							inc = true;
+						}
+						break;
+					case 't':
+						if ( !(executedPart & enTables)
+							&& !strncasecmp ( pt, "table", sizeof ( "table" ) - 1 ) )
+						{
+							executedPart |= enTables;
+							pt = "<UL><B>Tables</UL></B>";
+							lengthPt = strlen( pt );
+							inc = true;
+						}
+						break;
+					case 'f':
+						if ( !(executedPart & enFunctions)
+							&& !strncasecmp ( pt, "function", sizeof ( "function" ) - 1 ) )
+						{
+							executedPart |= enFunctions;
+							pt = "<UL><B>Functions</UL></B>";
+							lengthPt = strlen( pt );
+							inc = true;
+						}
+						break;
+					case 'e':
+						if ( !(executedPart & enExceptions)
+							&& !strncasecmp ( pt, "exception", sizeof ( "exception" ) - 1 ) )
+						{
+							executedPart |= enExceptions;
+							pt = "<UL><B>Exceptions</UL></B>";
+							lengthPt = strlen( pt );
+							inc = true;
+						}
+						break;
+					case 'g':
+						if ( !(executedPart & enGenerators)
+							&& !strncasecmp ( pt, "generator", sizeof ( "generator" ) - 1 ) )
+						{
+							executedPart |= enGenerators;
+							pt = "<UL><B>Generators</UL></B>";
+							lengthPt = strlen( pt );
+							inc = true;
+						}
+						break;
+					}
+				}
+				else if ( *pt == 'c' && !strncasecmp ( pt, "creating indexes ", sizeof ( "creating indexes " ) - 1 ) )
+				{
+					pt = "<UL><B>Creating Indexes</UL></B>";
+					lengthPt = strlen( pt );
+					inc = true;
+				}
+				else if ( *(pt + 4) == 'r' && !strncasecmp ( pt + 4, "restoring ", sizeof ( "restoring " ) - 1 ) )
+				{
+					pt += sizeof ( "restoring " ) - 1 + 4;
+
+					switch ( *pt )
+					{
+					case 't':
+						if ( !(executedPart & enTriggers)
+							&& !strncasecmp ( pt, "trigger", sizeof ( "trigger" ) - 1 ) )
+						{
+							executedPart |= enTriggers;
+							pt = "<UL><B>Triggers</UL></B>";
+							lengthPt = strlen( pt );
+							inc = true;
+						}
+						break;
+					case 'p':
+						if ( !(executedPart & enPrivileges)
+							&& !strncasecmp ( pt, "privilege", sizeof ( "privilege" ) - 1 ) )
+						{
+							executedPart |= enPrivileges;
+							pt = "<UL><B>Privileges</UL></B>";
+							lengthPt = strlen( pt );
+							inc = true;
+						}
+						break;
+					}
+				}
+
+				if ( inc )
+				{
+					if ( false )
+					{
+						RECT rc;
+						HDC hDC;
+						rc.top = 0; rc.left = 5; rc.right = 200; rc.bottom = 13;
+						hDC = GetDC( hDlg );
+						FillRect( hDC, &rc, (HBRUSH)GetStockObject( WHITE_BRUSH ) );
+						TextOut ( hDC, 3, 3, buffer, strlen( buffer ) );
+						ReleaseDC( hDlg, hDC );
+					}
+
+					pos += 8;
+					SendMessage( hWndBar, PBM_SETPOS, (WPARAM)pos , (LPARAM)NULL );
+					WriteFile( hTmpFile, pt, lengthPt, &dwWritten, NULL );
+				}
+
+				strcpy( &buffer[lengthOut], "<br>" );
+				lengthOut += 4;
+				WriteFile( hTmpFile, buffer, lengthOut, &dwWritten, NULL );
+			}
+
+			services.exitRestoreDatabase();
+
+			if ( !noReadOnly )
+			{
+				char *pt = "<UL><B>Database is Read Only</UL></B>";
+				lengthPt = strlen( pt );
+				WriteFile( hTmpFile, pt, lengthPt, &dwWritten, NULL );
+			}
+
+			writeFooterToLogFile();
+			EnableWindow( GetDlgItem( hDlg, IDOK ), TRUE );
+		}
+
+		SendMessage( hWndBar, PBM_SETPOS, (WPARAM)100 , (LPARAM)NULL );
+		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
+	}
+	catch ( std::exception &ex )
+	{
+		writeFooterToLogFile();
+		EnableWindow( GetDlgItem( hDlg, IDOK ), TRUE );
+		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
+
+		char buffer[1024];
+		SQLException &exception = (SQLException&)ex;
+		JString text = exception.getText();
+		sprintf(buffer, "sqlcode %d, fbcode %d - %s", exception.getSqlcode(), exception.getFbcode(), (const char*)text );
+		MessageBox( NULL, buffer, TEXT( "Error!" ), MB_ICONERROR | MB_OK );
+	}
+
+	services.closeService();
 }
 
 bool CServiceTabRestore::OnFindFileBackup()
 {
 	char * szCaption    = "Select Firebird backup file";
-	char * szOpenFilter = "Firebird Backup Files (*.bac;*.backup)\0*.bac;*.backup\0"
+	char * szOpenFilter = "Firebird Backup Files (*.fbk;*.gbk)\0*.fbk;*.gbk\0"
                           "All files (*.*)\0*.*\0"
                           "\0";
-	char * szDefExt     = "*.bac";
+	char * szDefExt     = "*.fbk";
 
 	return CServiceTabChild::OnFindFile( szCaption, szOpenFilter, szDefExt, backupPathFile );
 }
@@ -154,10 +428,13 @@ bool CServiceTabRestore::createDialogIndirect( CServiceTabCtrl *parentTabCtrl )
 {
 	CServiceTabChild::createDialogIndirect( parentTabCtrl );
 
-	CreateDialogIndirect( m_hInstance,
-						  resource,
-						  parent,
-						  wndproCServiceTabRestoreChild );
+	if ( backupPathFile.IsEmpty() )
+		setDefaultName( "fbk", backupPathFile );
+
+	hDlg = CreateDialogIndirect( m_hInstance,
+                                 resource,
+                                 parent,
+                                 wndproCServiceTabRestoreChild );
 	return true;
 }
 
@@ -202,7 +479,7 @@ bool CServiceTabRestore::buildDlgChild( HWND hWndParent )
     TMP_EDITTEXT      ( IDC_USER,7,60,107,12,ES_UPPERCASE | ES_AUTOHSCROLL )
     TMP_EDITTEXT      ( IDC_PASSWORD,125,60,74,12,ES_PASSWORD | ES_AUTOHSCROLL )
     TMP_EDITTEXT      ( IDC_ROLE,212,60,107,12,ES_AUTOHSCROLL )
-    TMP_COMBOBOX      ( IDC_COMBOBOX_PAGE_SIZE,111,77,100,120,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
+    TMP_COMBOBOX      ( IDC_COMBOBOX_PAGE_SIZE,90,77,50,120,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
     TMP_BUTTONCONTROL ( "Deactivate indexes",IDC_CHECK_NO_INDEX,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,16,97,74,10 )
     TMP_BUTTONCONTROL ( "Don't create shadows",IDC_CHECK_NO_SHADOW,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,16,110,81,10 )
     TMP_BUTTONCONTROL ( "Don't validate constraints",IDC_CHECK_NO_VALIDITY, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,123,91,10 )
@@ -210,19 +487,19 @@ bool CServiceTabRestore::buildDlgChild( HWND hWndParent )
     TMP_BUTTONCONTROL ( "Use all space",IDC_CHECK_FULL_SPACE,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,170,97,58,10 )
     TMP_BUTTONCONTROL ( "Creates a read only database",IDC_CHECK_NO_READONLY, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,170,110,105,10 )
     TMP_BUTTONCONTROL ( "Commit each table",IDC_CHECK_COMMIT,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,170,123,72,10 )
-    TMP_EDITTEXT      ( IDC_SIZE_BUFFERS,272,134,39,12,ES_AUTOHSCROLL )
-    TMP_DEFPUSHBUTTON ( "Start restore",IDOK,12,153,83,14 )
-    TMP_PUSHBUTTON    ( "View log",IDC_BUTTON_VIEW_LOG,72,172,88,14 )
-    TMP_PUSHBUTTON    ( "Save log",IDC_BUTTON_SAVE_LOG,169,172,85,14 )
+    TMP_BUTTONCONTROL ( "Restore metadata only",IDC_CHECK_ONLY_METADATA,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,170,136,83,10 )
+    TMP_EDITTEXT      ( IDC_SIZE_BUFFERS,280,77,39,12,ES_AUTOHSCROLL )
+    TMP_DEFPUSHBUTTON ( "Start restore",IDOK,72,172,88,14 )
+    TMP_PUSHBUTTON    ( "View log",IDC_BUTTON_VIEW_LOG,169,172,85,14 )
     TMP_LTEXT         ( "Backup file",IDC_STATIC,7,0,218,8 )
     TMP_LTEXT         ( "Database",IDC_STATIC,7,25,218,8 )
     TMP_LTEXT         ( "Database Account",IDC_STATIC,7,50,107,8 )
     TMP_LTEXT         ( "Password",IDC_STATIC,126,50,72,8 )
     TMP_LTEXT         ( "Role",IDC_STATIC,214,50,105,8 )
-    TMP_LTEXT         ( "Page size",IDC_STATIC,7,78,95,8 )
+    TMP_LTEXT         ( "Page size",IDC_STATIC,7,78,65,8 )
     TMP_GROUPBOX      ( "Restore options",IDC_STATIC,7,89,312,61 )
-    TMP_EDITTEXT      ( IDC_EDIT_VIEW_LOG_LINE,100,154,219,13,ES_AUTOHSCROLL )
-    TMP_LTEXT         ( "Buffers",IDC_STATIC,169,136,95,8 )
+    TMP_NAMECONTROL   ( "ProgressBar", IDC_PROGRESS_BAR, "msctls_progress32",WS_BORDER,7,154,312,13 )
+    TMP_LTEXT         ( "Buffers",IDC_STATIC,200,78,65,8 )
 
 	return true;
 }

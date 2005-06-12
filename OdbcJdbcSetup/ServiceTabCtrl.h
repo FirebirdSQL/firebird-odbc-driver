@@ -28,6 +28,7 @@
 #include "ServiceTabBackup.h"
 #include "ServiceTabRestore.h"
 #include "ServiceTabRepair.h"
+#include "ServiceTabStatistics.h"
 
 namespace OdbcJdbcSetupLibrary {
 
@@ -37,7 +38,7 @@ namespace OdbcJdbcSetupLibrary {
 class CServiceTabCtrl
 {
 public:
-	CServiceTabCtrl();
+	CServiceTabCtrl( HWND hDlgParent );
 	~CServiceTabCtrl();
 
 public:
@@ -46,19 +47,22 @@ public:
 	void SetDisabledDlgItem( HWND hDlg, int ID, BOOL bDisabled = TRUE );
 	void UpdateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	bool OnInitDialog( HWND hDlg );
-	bool buildDlgBackup( LPDLGTEMPLATE &resource );
-	bool childDlgRestore( LPDLGTEMPLATE &resource );
-	bool childDlgRepair( LPDLGTEMPLATE &resource );
+	bool setExecutorForViewLogFile();
 
 public:
-	TAG_DIALOG_HEADER   tabData;
-	CServiceTabBackup   backup;
-	CServiceTabRestore  restore;
-	CServiceTabRepair   repair;
-	JString             database;
-	JString             password;
-	JString             user;
-	JString             role;
+	HWND                  hWndDlg;
+	HWND                  hWndParent;
+	TAG_DIALOG_HEADER     tabData;
+	CServiceTabBackup     backup;
+	CServiceTabRestore    restore;
+	CServiceTabStatistics statistic;
+	CServiceTabRepair     repair;
+	JString               client;
+	JString               database;
+	JString               password;
+	JString               user;
+	JString               role;
+	JString               executorViewLogFile;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

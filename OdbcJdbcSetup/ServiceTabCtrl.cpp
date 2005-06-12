@@ -35,13 +35,17 @@
 #undef _TR
 #define _TR( id, msg ) msg
 
+bool queryCommanKey();
+
 namespace OdbcJdbcSetupLibrary {
 
 extern HINSTANCE m_hInstance;
 extern int currentCP;
 
-CServiceTabCtrl::CServiceTabCtrl()
+CServiceTabCtrl::CServiceTabCtrl( HWND hDlgParent )
 {
+	hWndDlg = NULL;
+	hWndParent = hDlgParent;
 }
 
 CServiceTabCtrl::~CServiceTabCtrl()
@@ -67,6 +71,7 @@ bool CServiceTabCtrl::OnInitDialog( HWND hDlg )
 	HWND hWndTab = GetDlgItem( hDlg, IDC_SERVICE_TABCTRL );
     TCITEM tie;
 
+	hWndDlg = hDlg;
     tie.mask = TCIF_TEXT | TCIF_IMAGE; 
     tie.iImage = -1; 
 	tabData.tabCtrl = this;
@@ -83,10 +88,17 @@ bool CServiceTabCtrl::OnInitDialog( HWND hDlg )
     tie.pszText = " Restore "; 
     TabCtrl_InsertItem( hWndTab, 1, &tie );
 
-	tabData.childTab[2] = repair.getObject();
-	repair.buildDlgChild( hWndTab );
-    tie.pszText = " Validate "; 
+	tabData.childTab[2] = statistic.getObject();
+	statistic.buildDlgChild( hWndTab );
+    tie.pszText = " Statistics "; 
     TabCtrl_InsertItem( hWndTab, 2, &tie );
+
+	tabData.childTab[3] = repair.getObject();
+	repair.buildDlgChild( hWndTab );
+    tie.pszText = " Repair "; 
+    TabCtrl_InsertItem( hWndTab, 3, &tie );
+
+	setExecutorForViewLogFile();
 
     SetWindowLong( hWndTab, GWL_USERDATA, (ULONG)&tabData ); 
 	backup.createDialogIndirect( this );
@@ -159,7 +171,6 @@ BOOL CALLBACK wndproCServiceTabCtrl( HWND hDlg, UINT message, WORD wParam, LONG 
 
 int CServiceTabCtrl::DoModal()
 {
-  	HWND hwnd = NULL;
 	WORD *p, *pdlgtemplate;
 	int nchar;
 	DWORD lStyle;
@@ -172,7 +183,7 @@ int CServiceTabCtrl::DoModal()
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 3;          // NumberOfItems
+	*p++ = 2;          // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
@@ -189,14 +200,68 @@ int CServiceTabCtrl::DoModal()
 	nchar = nCopyAnsiToWideChar( p, TEXT("MS Sans Serif" ) );
 	p += nchar;
 
-    TMP_DEFPUSHBUTTON ( _TR( IDS_BUTTON_OK, "OK" ), IDOK,86,216,60,14 )
-    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_CANCEL, "Cancel" ), IDCANCEL,154,216,60,14 )
-    TMP_TABCONTROL    ( _TR( IDS_BUTTON_OK, "Tab1" ), IDC_SERVICE_TABCTRL, "SysTabControl32",0x0,7,7,328,204 )
+    TMP_DEFPUSHBUTTON ( _TR( IDS_BUTTON_OK, "OK" ), IDOK,144,216,60,14 )
+    TMP_NAMECONTROL   ( "TabControl", IDC_SERVICE_TABCTRL, "SysTabControl32",0x0,7,7,328,204 )
 
-	int nRet = DialogBoxIndirectParam( m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hwnd, (DLGPROC)wndproCServiceTabCtrl, (ULONG)this );
+	int nRet = DialogBoxIndirectParam( m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hWndParent, (DLGPROC)wndproCServiceTabCtrl, (ULONG)this );
 	LocalFree( LocalHandle( pdlgtemplate ) );
 
 	return nRet;
+}
+
+bool CServiceTabCtrl::setExecutorForViewLogFile()
+{
+    HKEY hKey = NULL;
+	UCHAR buffer[512];
+	ULONG bufferLengthOut;
+	ULONG bufferType;
+	LONG ret;
+
+	ret = RegOpenKeyEx( HKEY_CLASSES_ROOT,
+                        "htmlfile\\shell\\opennew\\command",
+                        0,
+                        KEY_EXECUTE,
+                        &hKey );
+
+	if ( ERROR_SUCCESS != ret )
+		return false;
+
+	bufferLengthOut = sizeof ( buffer );
+	ret = RegQueryValueEx( hKey,
+                        "",
+                        NULL,
+                        &bufferType,
+                        buffer,
+                        &bufferLengthOut );
+
+	if ( ERROR_SUCCESS == ret )
+	{
+		int level = 0;
+		unsigned char *pt = buffer;
+
+		while ( *pt )
+		{
+			if ( *pt == '"' )
+			{
+				if ( !level )
+					++level;
+				else
+					--level;
+			}
+			
+			if ( *pt == ' ' && !level )
+				break;
+			++pt;
+		}
+
+		executorViewLogFile.Format( "%.*s", pt - buffer, buffer );
+	}
+	else
+		executorViewLogFile.setString( NULL );
+
+	RegCloseKey( hKey );
+
+	return ERROR_SUCCESS == ret;
 }
 
 }; // end namespace OdbcJdbcSetupLibrary

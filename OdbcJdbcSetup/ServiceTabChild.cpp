@@ -22,6 +22,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include <windows.h>
+#include <stdio.h>
+#include <string.h>
 #include "OdbcJdbcSetup.h"
 #include "../IscDbc/Connection.h"
 #include "CommonUtil.h"
@@ -38,22 +40,74 @@ void ProcessCDError( DWORD dwErrorCode, HWND hWnd );
 
 CServiceTabChild::CServiceTabChild()
 {
+	tabCtrl = NULL;
 	parent = NULL;
+	hDlg = NULL;
 	resource = NULL;
+	hTmpFile = NULL;
 }
 
 CServiceTabChild::~CServiceTabChild()
 {
 	if ( resource )
 		LocalFree( LocalHandle( resource ) );
+
+	deleteTempLogFile();
+}
+
+bool CServiceTabChild::createTempLogFile()
+{
+	SECURITY_ATTRIBUTES sa = { sizeof ( SECURITY_ATTRIBUTES ), NULL, TRUE };
+	char bufferTmpDir[MAX_PATH];
+	char bufferTmpFileName[MAX_PATH];
+
+	deleteTempLogFile();
+
+	GetTempPath( MAX_PATH, bufferTmpDir );
+	GetTempFileName( bufferTmpDir, "OFB", 0, bufferTmpFileName );
+
+	hTmpFile = CreateFile( bufferTmpFileName,
+                           GENERIC_READ | GENERIC_WRITE,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE,
+						   &sa,
+						   CREATE_ALWAYS,
+						   FILE_ATTRIBUTE_TEMPORARY,
+						   NULL );
+
+	if ( hTmpFile == INVALID_HANDLE_VALUE )
+	{
+		hTmpFile = NULL;
+		return false;
+	}
+
+	logPathFile = bufferTmpFileName;
+	writeHeadToLogFile();
+	return true;
+}
+
+void CServiceTabChild::deleteTempLogFile()
+{
+	if ( hTmpFile )
+	{
+		CloseHandle( hTmpFile );
+		hTmpFile = NULL;
+	}
+
+	if ( !logPathFile.IsEmpty() )
+	{
+		DeleteFile( (const char*)logPathFile );
+		logPathFile.setString( NULL );
+	}
 }
 
 void CServiceTabChild::SetDisabledDlgItem( HWND hDlg, int ID, BOOL bDisabled )
 {
 	HWND hWnd = GetDlgItem( hDlg, ID );
 	int style = GetWindowLong( hWnd, GWL_STYLE );
-	if ( bDisabled )style |= WS_DISABLED;
-	else			style &= ~WS_DISABLED;
+	if ( bDisabled )
+		style |= WS_DISABLED;
+	else			
+		style &= ~WS_DISABLED;
 	SetWindowLong( hWnd, GWL_STYLE, style );
 	InvalidateRect( hWnd, NULL, TRUE );
 }
@@ -62,17 +116,18 @@ void CServiceTabChild::updateData( HWND hDlg, BOOL bSaveAndValidate )
 {
 	if ( bSaveAndValidate )
 	{
-		GetDlgItemText( hDlg, IDC_DATABASE, tabCtrl->database.getBuffer( 256 ), 256 );
-		GetDlgItemText( hDlg, IDC_PASSWORD, tabCtrl->password.getBuffer( 256 ), 256 );
-		GetDlgItemText( hDlg, IDC_USER, tabCtrl->user.getBuffer( 256 ), 256 );
-		GetDlgItemText( hDlg, IDC_ROLE, tabCtrl->role.getBuffer( 256 ), 256 );
+		GetDlgItemText( hDlg, IDC_DATABASE, database.getBuffer( 256 ), 256 );
+		setServerName();
+		GetDlgItemText( hDlg, IDC_PASSWORD, password.getBuffer( 256 ), 256 );
+		GetDlgItemText( hDlg, IDC_USER, user.getBuffer( 256 ), 256 );
+		GetDlgItemText( hDlg, IDC_ROLE, role.getBuffer( 256 ), 256 );
 	}
 	else
 	{
-		SetDlgItemText( hDlg, IDC_DATABASE, (const char *)tabCtrl->database );
-		SetDlgItemText( hDlg, IDC_PASSWORD, (const char *)tabCtrl->password );
-		SetDlgItemText( hDlg, IDC_USER, (const char *)tabCtrl->user );
-		SetDlgItemText( hDlg, IDC_ROLE, (const char *)tabCtrl->role );
+		SetDlgItemText( hDlg, IDC_DATABASE, (const char *)database );
+		SetDlgItemText( hDlg, IDC_PASSWORD, (const char *)password );
+		SetDlgItemText( hDlg, IDC_USER, (const char *)user );
+		SetDlgItemText( hDlg, IDC_ROLE, (const char *)role );
 	}
 }
 
@@ -104,6 +159,28 @@ bool CServiceTabChild::IsLocalhost( char *fullPathFileName, int &offset )
 	}
 
 	return nOk;
+}
+
+bool CServiceTabChild::setServerName()
+{
+	const char *pt = database;
+	const char *end = pt;
+
+	if ( database.IsEmpty() )
+		return false;
+
+	while ( *++end && *end != ':' );
+
+	int length = end - pt;
+
+	if ( *end == ':' && length > 1 )
+	{
+		server.Format( "%.*s", length, pt );
+		return true;
+	}
+
+	server.setString( NULL );
+	return false;
 }
 
 void CServiceTabChild::CheckRemotehost( char *fullPathFileName )
@@ -181,7 +258,7 @@ bool CServiceTabChild::OnFindFileDatabase()
 							"All files (*.*)\0*.*\0"
 							"\0";
 
-	strcpy( strFullPathFileName, (const char*)tabCtrl->database );
+	strcpy( strFullPathFileName, (const char*)database );
 
 	if ( bLocalhost = IsLocalhost( strFullPathFileName, offset ), bLocalhost )
 	{
@@ -217,13 +294,13 @@ bool CServiceTabChild::OnFindFileDatabase()
 
 	if ( bLocalhost )
 	{
-		tabCtrl->database = "localhost:";
-		tabCtrl->database += strFullPathFileName;
+		database = "localhost:";
+		database += strFullPathFileName;
 	}
 	else
 	{
 		CheckRemotehost( strFullPathFileName );
-		tabCtrl->database = strFullPathFileName;
+		database = strFullPathFileName;
 	}
 
 	return true;
@@ -266,9 +343,40 @@ bool CServiceTabChild::OnFindFile( char *szCaption, char *szOpenFilter, char *sz
 	return true;
 }
 
+bool CServiceTabChild::setDefaultName( char *szDefExt, JString &pathFile )
+{
+	if ( database.IsEmpty() )
+		return false;
+
+	const char *pt = database;
+	const char *chPoint = pt + database.length();
+
+	if ( !server.IsEmpty() )
+		pt += server.length() + 1; // name and ':'
+
+	while ( chPoint > pt && *--chPoint != '.' );
+
+	if ( *chPoint != '.' )
+		return false;
+
+	pathFile.Format( "%.*s.%s", chPoint - pt, pt, szDefExt );
+	return true;
+}
+
 bool CServiceTabChild::createDialogIndirect( CServiceTabCtrl *parentTabCtrl )
 {
-	tabCtrl = parentTabCtrl;
+	if ( !tabCtrl )
+	{
+		tabCtrl = parentTabCtrl;
+		client = tabCtrl->client;
+		database = tabCtrl->database;
+		setServerName();
+		password = tabCtrl->password;
+		user = tabCtrl->user;
+		role = tabCtrl->role;
+	}
+
+	hDlg = NULL;
 	return true;
 }
 
@@ -289,6 +397,72 @@ bool CServiceTabChild::onCommand( HWND hWnd, int nCommand )
 		return true;
 	}
 	return false;
+}
+
+void CServiceTabChild::addParameters( CServiceClient &services )
+{
+	if ( !user.IsEmpty() )
+		services.putParameterValue( SETUP_USER, user );
+	if ( !password.IsEmpty() )
+		services.putParameterValue( SETUP_PASSWORD, password );
+	if ( !role.IsEmpty() )
+		services.putParameterValue( SETUP_ROLE, role );
+	if ( !database.IsEmpty() )
+		services.putParameterValue( SETUP_DBNAME, database );
+	if ( !client.IsEmpty() )
+		services.putParameterValue( SETUP_CLIENT, client );
+}
+
+bool CServiceTabChild::viewLogFile()
+{
+	if ( !logPathFile.IsEmpty() )
+	{
+		SHELLEXECUTEINFO sh;
+		memset( &sh, 0, sizeof ( SHELLEXECUTEINFO ) );
+		sh.cbSize = sizeof ( SHELLEXECUTEINFO );
+		sh.fMask = SEE_MASK_NOCLOSEPROCESS;
+		sh.hwnd = parent;
+		sh.lpVerb = "open";
+		sh.lpParameters = (const char*)logPathFile;
+		sh.lpFile = (const char*)tabCtrl->executorViewLogFile;
+		sh.lpDirectory = NULL;
+		sh.nShow = SW_SHOWNORMAL;
+
+		if ( !(ShellExecuteEx( &sh ) && ((DWORD)sh.hInstApp > 32)) )
+			return false;
+	}
+	return true;
+}
+
+void CServiceTabChild::writeHeadToLogFile()
+{
+	if ( hTmpFile )
+	{
+		char *head =
+			"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">"
+			"<HTML>"
+			"<HEAD>"
+			"<META HTTP-EQUIV=\"Content-Type\" Content=\"text/html; charset=Windows-1252\">"
+			"<TITLE>OdbcJdbc log file</TITLE>"
+			"</HEAD>"
+			"<BODY BGCOLOR=\"#FFFFFF\" TEXT=\"#000000\">";
+
+		DWORD dwWritten = 0;
+		WriteFile( hTmpFile, head, strlen( head ), &dwWritten, NULL );
+	}
+}
+
+void CServiceTabChild::writeFooterToLogFile()
+{
+	if ( hTmpFile )
+	{
+		char *footer = "</BODY></HTML>";
+		DWORD dwWritten = 0;
+		WriteFile( hTmpFile, footer, strlen( footer ), &dwWritten, NULL );
+		FlushFileBuffers( hTmpFile );
+		CloseHandle( hTmpFile );
+		hTmpFile = NULL;
+	}
 }
 
 CServiceTabChild* CServiceTabChild::getObject()

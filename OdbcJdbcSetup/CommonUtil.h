@@ -26,7 +26,7 @@
 
 namespace OdbcJdbcSetupLibrary {
 
-	enum enServiceTabCtrl { COUNT_PAGE = 3 };
+	enum enServiceTabCtrl { COUNT_PAGE = 4 };
 
 class CServiceTabCtrl;
 class CServiceTabChild;
@@ -100,7 +100,7 @@ LPWORD lpwAlign( LPWORD lpIn);
 #define TMP_RADIOCONTROL(STRTEXT,ID,NAME_CTRL,STYLE,X,Y,CX,CY) \
 	TMP_COMTROL(0x0080,STRTEXT,ID,X,Y,CX,CY, 0x50000009 )
 
-#define TAB_COMTROL(STRTEXT,CTRL_ID,NAME_CTRL,X,Y,CX,CY,STYLE)	\
+#define TMP_NAMECTRL(STRTEXT,CTRL_ID,NAME_CTRL,X,Y,CX,CY,STYLE)	\
 	p = lpwAlign( p );											\
 																\
 	lStyle = STYLE;												\
@@ -125,7 +125,7 @@ LPWORD lpwAlign( LPWORD lpIn);
 	*p++ = 0;  /* advance pointer over nExtraStuff WORD	*/		\
 
 //    CONTROL         "Tab1",IDC_TAB1,"SysTabControl32",0x0,7,7,367,198
-#define TMP_TABCONTROL(STRTEXT,ID,NAME_CTRL,STYLE,X,Y,CX,CY) \
-	TAB_COMTROL(STRTEXT,ID,NAME_CTRL,X,Y,CX,CY, 0x50000000 )
+#define TMP_NAMECONTROL(STRTEXT,ID,NAME_CTRL,STYLE,X,Y,CX,CY) \
+	TMP_NAMECTRL(STRTEXT,ID,NAME_CTRL,X,Y,CX,CY, 0x50000000 )
 
 #endif // !defined(_CommonUtil_h_)

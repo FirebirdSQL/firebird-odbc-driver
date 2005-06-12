@@ -43,7 +43,6 @@ extern int currentCP;
 CServiceTabBackup::CServiceTabBackup() : CServiceTabChild()
 {
 	backupParameters = 0;
-	backupPathFile = " ";
 }
 
 CServiceTabBackup::~CServiceTabBackup()
@@ -75,21 +74,29 @@ void CServiceTabBackup::updateData( HWND hDlg, BOOL bSaveAndValidate )
 			backupParameters |= enConvert;
         if ( SendDlgItemMessage( hDlg, IDC_CHECK_NO_COMPRESS, BM_GETCHECK, 0, 0 ) )
 			backupParameters |= enExpand;
+
+		HWND hWnd = GetDlgItem( hDlg, IDC_BLOCKING_FACTOR );
+		int nLen = GetWindowTextLength( hWnd );
+		if ( nLen > 0 )
+			GetWindowText( hWnd, blockingFactor.getBuffer( nLen ), nLen + 1 );
+		else
+			GetWindowText( hWnd, blockingFactor.getBuffer( 256 ), 256 + 1 );
 	}
 	else
 	{
-		SetDisabledDlgItem( hDlg, IDOK );
-
+		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
 		SetDlgItemText( hDlg, IDC_BACKUP_FILE, (const char*)backupPathFile );
 
-        CheckDlgButton ( hDlg, IDC_CHECK_IGNORE_CHECKSUM, backupParameters & enIgnoreChecksums );
-        CheckDlgButton ( hDlg, IDC_CHECK_IGNORE_TRANS_LIMBO, backupParameters & enIgnoreLimbo );
-        CheckDlgButton ( hDlg, IDC_CHECK_ONLY_METADATA, backupParameters & enMetadataOnly );
-        CheckDlgButton ( hDlg, IDC_CHECK_NO_GARBAGE, backupParameters & enNoGarbageCollect );
-        CheckDlgButton ( hDlg, IDC_CHECK_OLD_METADATA, backupParameters & enOldDescriptions );
-        CheckDlgButton ( hDlg, IDC_CHECK_NO_TRANSPORTABLE, backupParameters & enNonTransportable );
-        CheckDlgButton ( hDlg, IDC_CHECK_CONV_EXT_TABLE, backupParameters & enConvert );
-        CheckDlgButton ( hDlg, IDC_CHECK_NO_COMPRESS, backupParameters & enExpand );
+        CheckDlgButton( hDlg, IDC_CHECK_IGNORE_CHECKSUM, backupParameters & enIgnoreChecksums );
+        CheckDlgButton( hDlg, IDC_CHECK_IGNORE_TRANS_LIMBO, backupParameters & enIgnoreLimbo );
+        CheckDlgButton( hDlg, IDC_CHECK_ONLY_METADATA, backupParameters & enMetadataOnly );
+        CheckDlgButton( hDlg, IDC_CHECK_NO_GARBAGE, backupParameters & enNoGarbageCollect );
+        CheckDlgButton( hDlg, IDC_CHECK_OLD_METADATA, backupParameters & enOldDescriptions );
+        CheckDlgButton( hDlg, IDC_CHECK_NO_TRANSPORTABLE, backupParameters & enNonTransportable );
+        CheckDlgButton( hDlg, IDC_CHECK_CONV_EXT_TABLE, backupParameters & enConvert );
+        CheckDlgButton( hDlg, IDC_CHECK_NO_COMPRESS, backupParameters & enExpand );
+
+		SetDlgItemText( hDlg, IDC_BLOCKING_FACTOR, (const char *)blockingFactor );
 	}
 }
 
@@ -116,25 +123,11 @@ BOOL CALLBACK wndproCServiceTabBackup( HWND hWndChildTab, UINT message, UINT wPa
 		return TRUE;
 
 	case WM_DESTROY:
-		{
-			//ASSERT( tabData->hWndChildTab == hWndChildTab );
-		}
+		child->updateData( hWndChildTab );
 		return TRUE;
 
 	case WM_COMMAND:
-
-		if ( child->onCommand( hWndChildTab, LOWORD( wParam ) ) )
-			return TRUE;
-
-		switch ( LOWORD( wParam ) ) 
-		{
-		case IDCANCEL:
-			return TRUE;
-
-		case IDOK:
-			return TRUE;
-		}
-        break;
+		return child->onCommand( hWndChildTab, LOWORD( wParam ) );
 	}
 
     return FALSE;
@@ -152,17 +145,176 @@ bool CServiceTabBackup::onCommand( HWND hWnd, int nCommand )
 		if ( OnFindFileBackup() )
 			updateData( hWnd, FALSE );
 		return true;
+
+	case IDC_BUTTON_VIEW_LOG:
+		viewLogFile();
+		return true;
+
+	case IDOK:
+		updateData( hWnd );
+		onStartBackup();
+		return true;
 	}
+
 	return false;
+}
+
+void CServiceTabBackup::addParameters( CServiceClient &services )
+{
+	CServiceTabChild::addParameters( services );
+
+	services.putParameterValue( "backupFile", backupPathFile );
+	services.putParameterValue( "serverName", server );
+	services.putParameterValue( "blockingFactor", blockingFactor );
+}
+
+void CServiceTabBackup::onStartBackup()
+{
+	CServiceClient services;
+
+	if ( backupPathFile.IsEmpty() || database.IsEmpty() 
+		|| user.IsEmpty() || password.IsEmpty() )
+	{
+		// add error message
+		return;
+	}
+
+	try
+	{
+		DWORD dwWritten;
+		int lengthOut;
+		int pos = 0;
+		char buffer[1024];
+		HWND hWndBar = GetDlgItem( hDlg, IDC_PROGRESS_BAR );
+
+		deleteTempLogFile();
+		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
+
+		if ( !services.initServices() )
+		{
+			// add error message
+			return;
+		}
+
+		SendMessage( hWndBar, PBM_SETPOS, (WPARAM)0 , (LPARAM)NULL );
+		addParameters( services );
+		services.startBackupDatabase( backupParameters );
+
+		if ( createTempLogFile() )
+		{
+			EnableWindow( GetDlgItem( hDlg, IDOK ), FALSE );
+
+			while ( services.nextQuery( buffer, sizeof ( buffer ), lengthOut ) )
+			{
+				char *pt = buffer + 6; // offset 'gbak: '
+
+				if ( *pt == 'w' && !strncasecmp ( pt, "writing ", sizeof ( "writing " ) - 1 ) )
+				{
+					bool inc = false;
+					pt += sizeof ( "writing " ) - 1;
+
+					switch ( *pt )
+					{
+					case 'd':
+						inc = !strncasecmp ( pt, "domains", sizeof ( "domains" ) - 1 );
+						break;
+					case 's':
+						inc = !strncasecmp ( pt, "shadow files", sizeof ( "shadow files" ) - 1 )
+							  || !strncasecmp ( pt, "stored procedures", sizeof ( "stored procedures" ) - 1 );
+						break;
+					case 't':
+						inc = !strncasecmp ( pt, "tables", sizeof ( "tables" ) - 1 )
+							  || !strncasecmp ( pt, "types", sizeof ( "types" ) - 1 )
+							  || !strncasecmp ( pt, "triggers", sizeof ( "triggers" ) - 1 )
+							  || !strncasecmp ( pt, "trigger messages", sizeof ( "trigger messages" ) - 1 )
+							  || !strncasecmp ( pt, "table constraints", sizeof ( "table constraints" ) - 1 );
+						break;
+					case 'f':
+						inc = !strncasecmp ( pt, "functions", sizeof ( "functions" ) - 1 )
+							  || !strncasecmp ( pt, "filters", sizeof ( "filters" ) - 1 );
+						break;
+					case 'i':
+						inc = !strncasecmp ( pt, "id generators", sizeof ( "id generators" ) - 1 );
+						break;
+					case 'e':
+						inc = !strncasecmp ( pt, "exceptions", sizeof ( "exceptions" ) - 1 );
+						break;
+					case 'C':
+						inc = !strncasecmp ( pt, "Character Sets", sizeof ( "Character Sets" ) - 1 )
+							  || !strncasecmp ( pt, "Collations", sizeof ( "Collations" ) - 1 );
+						break;
+					case 'r':
+						inc = !strncasecmp ( pt, "referential constraints", sizeof ( "referential constraints" ) - 1 );
+						break;
+					case 'c':
+						inc = !strncasecmp ( pt, "check constraints", sizeof ( "check constraints" ) - 1 );
+						break;
+					case 'S':
+						inc = !strncasecmp ( pt, "SQL roles", sizeof ( "SQL roles" ) - 1 );
+						break;
+					}
+
+					if ( inc )
+					{
+						if ( false )
+						{
+							RECT rc;
+							HDC hDC;
+							rc.top = 0; rc.left = 5; rc.right = 200; rc.bottom = 13;
+							hDC = GetDC( hDlg );
+							FillRect( hDC, &rc, (HBRUSH)GetStockObject( WHITE_BRUSH ) );
+							TextOut ( hDC, 3, 3, buffer, strlen( buffer ) );
+							ReleaseDC( hDlg, hDC );
+						}
+
+						pos += 5;
+						SendMessage( hWndBar, PBM_SETPOS, (WPARAM)pos , (LPARAM)NULL );
+						*pt = UPPER( *pt );
+						pt -= 7; // offest '<UL><B>' size = 7
+						lengthOut -= pt - buffer;
+						memcpy( pt, "<UL><B>", 7 );
+						strcpy( &pt[lengthOut], "</UL></B>" );
+						lengthOut += 9; // offest '</UL></B>' size = 9
+						WriteFile( hTmpFile, pt, lengthOut, &dwWritten, NULL );
+						continue;
+					}
+				}
+
+				strcpy( &buffer[lengthOut], "<br>" );
+				lengthOut += 4;
+				WriteFile( hTmpFile, buffer, lengthOut, &dwWritten, NULL );
+			}
+
+			writeFooterToLogFile();
+			EnableWindow( GetDlgItem( hDlg, IDOK ), TRUE );
+		}
+
+		SendMessage( hWndBar, PBM_SETPOS, (WPARAM)100 , (LPARAM)NULL );
+		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
+	}
+	catch ( std::exception &ex )
+	{
+		writeFooterToLogFile();
+		EnableWindow( GetDlgItem( hDlg, IDOK ), TRUE );
+		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
+
+		char buffer[1024];
+		SQLException &exception = (SQLException&)ex;
+		JString text = exception.getText();
+		sprintf(buffer, "sqlcode %d, fbcode %d - %s", exception.getSqlcode(), exception.getFbcode(), (const char*)text );
+		MessageBox( NULL, buffer, TEXT( "Error!" ), MB_ICONERROR | MB_OK );
+	}
+
+	services.closeService();
 }
 
 bool CServiceTabBackup::OnFindFileBackup()
 {
 	char * szCaption    = "Select Firebird backup file";
-	char * szOpenFilter = "Firebird Backup Files (*.bac;*.backup)\0*.bac;*.backup\0"
+	char * szOpenFilter = "Firebird Backup Files (*.fbk;*.gbk)\0*.fbk;*.gbk\0"
                           "All files (*.*)\0*.*\0"
                           "\0";
-	char * szDefExt     = "*.bac";
+	char * szDefExt     = "*.fbk";
 
 	return CServiceTabChild::OnFindFile( szCaption, szOpenFilter, szDefExt, backupPathFile );
 }
@@ -170,11 +322,14 @@ bool CServiceTabBackup::OnFindFileBackup()
 bool CServiceTabBackup::createDialogIndirect( CServiceTabCtrl *parentTabCtrl )
 {
 	CServiceTabChild::createDialogIndirect( parentTabCtrl );
-
-	CreateDialogIndirect( m_hInstance,
-						  resource,
-						  parent,
-						  wndproCServiceTabBackup );
+	
+	if ( backupPathFile.IsEmpty() )
+		setDefaultName( "fbk", backupPathFile );
+	
+	hDlg = CreateDialogIndirect( m_hInstance,
+                                 resource,
+                                 parent,
+                                 wndproCServiceTabBackup );
 	return true;
 }
 
@@ -194,7 +349,7 @@ bool CServiceTabBackup::buildDlgChild( HWND hWndParent )
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 27;         // NumberOfItems
+	*p++ = 26;         // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
@@ -227,9 +382,8 @@ bool CServiceTabBackup::buildDlgChild( HWND hWndParent )
     TMP_BUTTONCONTROL ( "Non transportable format",IDC_CHECK_NO_TRANSPORTABLE, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,170,110,90,10 )
     TMP_BUTTONCONTROL ( "Convert external tables",IDC_CHECK_CONV_EXT_TABLE, "Button",BS_AUTOCHECKBOX | WS_TABSTOP,170,123,84,10 )
     TMP_BUTTONCONTROL ( "Do not compress backup",IDC_CHECK_NO_COMPRESS,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,170,136,91,10 )
-    TMP_DEFPUSHBUTTON ( "Start backup",IDOK,12,153,83,14 )
-    TMP_PUSHBUTTON    ( "View log",IDC_BUTTON_VIEW_LOG,72,172,88,14 )
-    TMP_PUSHBUTTON    ( "Save log",IDC_BUTTON_SAVE_LOG,169,172,85,14 )
+	TMP_DEFPUSHBUTTON ( "Start backup",IDOK,72,172,88,14 )
+    TMP_PUSHBUTTON    ( "View log",IDC_BUTTON_VIEW_LOG,169,172,85,14 )
     TMP_LTEXT         ( "Database",IDC_STATIC,7,0,218,8 )
     TMP_LTEXT         ( "Backup file",IDC_STATIC,7,25,218,8 )
     TMP_LTEXT         ( "Database Account",IDC_STATIC,7,50,107,8 )
@@ -237,7 +391,7 @@ bool CServiceTabBackup::buildDlgChild( HWND hWndParent )
     TMP_LTEXT         ( "Role",IDC_STATIC,214,50,105,8 )
     TMP_LTEXT         ( "Blocking factor (tape volumes)",IDC_STATIC,7,77,95,8 )
     TMP_GROUPBOX      ( "Backup options",IDC_STATIC,7,89,312,61 )
-    TMP_EDITTEXT      ( IDC_EDIT_VIEW_LOG_LINE,100,154,219,13,ES_AUTOHSCROLL )
+    TMP_NAMECONTROL   ( "ProgressBar", IDC_PROGRESS_BAR, "msctls_progress32",WS_BORDER,7,154,312,13 )
 
 	return true;
 }
