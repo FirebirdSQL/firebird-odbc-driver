@@ -138,6 +138,7 @@ void CServiceClient::writeLogFile( char *outBuffer )
 	if ( logFile )
 	{
 		fputs( outBuffer, logFile );
+		fputs( "\n", logFile );
 		fflush( logFile );
 	}
 }
@@ -158,8 +159,8 @@ bool CServiceClient::createDatabase()
 			return false;
 
 		connection = (fn)();
-		connection->openDatabase ( properties->findValue( SETUP_DBNAME, NULL ),
-								   properties );
+		connection->createDatabase( properties->findValue( SETUP_DBNAME, NULL ),
+								    properties );
 		connection->close();
 	}
 	catch ( std::exception &ex )
