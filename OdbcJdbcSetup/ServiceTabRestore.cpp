@@ -208,9 +208,9 @@ void CServiceTabRestore::onStartRestore()
 	try
 	{
 		DWORD dwWritten;
-		int lengthPt;
 		int lengthOut;
 		int pos = 0;
+		char bufferHead[80];
 		char buffer[1024];
 		HWND hWndBar = GetDlgItem( hDlg, IDC_PROGRESS_BAR );
 
@@ -229,151 +229,18 @@ void CServiceTabRestore::onStartRestore()
 
 		if ( createTempLogFile() )
 		{
-			ULONG executedPart = 0;
 			EnableWindow( GetDlgItem( hDlg, IDOK ), FALSE );
 
 			while ( services.nextQuery( buffer, sizeof ( buffer ), lengthOut ) )
 			{
-				bool inc = false;
-				char *pt = buffer + 6; // offset 'gbak: '
+				char *pt = buffer;
 
-				if ( *pt == 'r' && !strncasecmp ( pt, "restoring ", sizeof ( "restoring " ) - 1 ) )
+				if ( services.checkIncrementForRestore( pt, bufferHead ) )
 				{
-					pt += sizeof ( "restoring " ) - 1;
-
-					switch ( *pt )
-					{
-					case 'd':
-						if ( !(executedPart & enDomains)
-							&& !strncasecmp ( pt, "domain", sizeof ( "domain" ) - 1 ) )
-						{
-							executedPart |= enDomains;
-							pt = "<UL><B>Domains</UL></B>";
-							lengthPt = strlen( pt );
-							inc = true;
-						}
-						else if ( !(executedPart & enDataForTables)
-							&& !strncasecmp ( pt, "data for table", sizeof ( "data for table" ) - 1 ) )
-						{
-							executedPart |= enDataForTables;
-							pt = "<UL><B>Data For Tables</UL></B>";
-							lengthPt = strlen( pt );
-							inc = true;
-						}
-						break;
-					case 's':
-						if ( !(executedPart & enStoredProcedures)
-							&& !strncasecmp ( pt, "stored procedure", sizeof ( "stored procedure" ) - 1 ) )
-						{
-							executedPart |= enStoredProcedures;
-							pt = "<UL><B>Stored Procedures</UL></B>";
-							lengthPt = strlen( pt );
-							inc = true;
-						}
-						break;
-					case 'S':
-						if ( !(executedPart & enSqlRoles)
-							&& !strncasecmp ( pt, "SQL role", sizeof ( "SQL role" ) - 1 ) )
-						{
-							executedPart |= enSqlRoles;
-							pt = "<UL><B>SQL Roles</UL></B>";
-							lengthPt = strlen( pt );
-							inc = true;
-						}
-						break;
-					case 't':
-						if ( !(executedPart & enTables)
-							&& !strncasecmp ( pt, "table", sizeof ( "table" ) - 1 ) )
-						{
-							executedPart |= enTables;
-							pt = "<UL><B>Tables</UL></B>";
-							lengthPt = strlen( pt );
-							inc = true;
-						}
-						break;
-					case 'f':
-						if ( !(executedPart & enFunctions)
-							&& !strncasecmp ( pt, "function", sizeof ( "function" ) - 1 ) )
-						{
-							executedPart |= enFunctions;
-							pt = "<UL><B>Functions</UL></B>";
-							lengthPt = strlen( pt );
-							inc = true;
-						}
-						break;
-					case 'e':
-						if ( !(executedPart & enExceptions)
-							&& !strncasecmp ( pt, "exception", sizeof ( "exception" ) - 1 ) )
-						{
-							executedPart |= enExceptions;
-							pt = "<UL><B>Exceptions</UL></B>";
-							lengthPt = strlen( pt );
-							inc = true;
-						}
-						break;
-					case 'g':
-						if ( !(executedPart & enGenerators)
-							&& !strncasecmp ( pt, "generator", sizeof ( "generator" ) - 1 ) )
-						{
-							executedPart |= enGenerators;
-							pt = "<UL><B>Generators</UL></B>";
-							lengthPt = strlen( pt );
-							inc = true;
-						}
-						break;
-					}
-				}
-				else if ( *pt == 'c' && !strncasecmp ( pt, "creating indexes ", sizeof ( "creating indexes " ) - 1 ) )
-				{
-					pt = "<UL><B>Creating Indexes</UL></B>";
-					lengthPt = strlen( pt );
-					inc = true;
-				}
-				else if ( *(pt + 4) == 'r' && !strncasecmp ( pt + 4, "restoring ", sizeof ( "restoring " ) - 1 ) )
-				{
-					pt += sizeof ( "restoring " ) - 1 + 4;
-
-					switch ( *pt )
-					{
-					case 't':
-						if ( !(executedPart & enTriggers)
-							&& !strncasecmp ( pt, "trigger", sizeof ( "trigger" ) - 1 ) )
-						{
-							executedPart |= enTriggers;
-							pt = "<UL><B>Triggers</UL></B>";
-							lengthPt = strlen( pt );
-							inc = true;
-						}
-						break;
-					case 'p':
-						if ( !(executedPart & enPrivileges)
-							&& !strncasecmp ( pt, "privilege", sizeof ( "privilege" ) - 1 ) )
-						{
-							executedPart |= enPrivileges;
-							pt = "<UL><B>Privileges</UL></B>";
-							lengthPt = strlen( pt );
-							inc = true;
-						}
-						break;
-					}
-				}
-
-				if ( inc )
-				{
-					if ( false )
-					{
-						RECT rc;
-						HDC hDC;
-						rc.top = 0; rc.left = 5; rc.right = 200; rc.bottom = 13;
-						hDC = GetDC( hDlg );
-						FillRect( hDC, &rc, (HBRUSH)GetStockObject( WHITE_BRUSH ) );
-						TextOut ( hDC, 3, 3, buffer, strlen( buffer ) );
-						ReleaseDC( hDlg, hDC );
-					}
-
+					int lengthPt = strlen( bufferHead );
 					pos += 8;
 					SendMessage( hWndBar, PBM_SETPOS, (WPARAM)pos , (LPARAM)NULL );
-					WriteFile( hTmpFile, pt, lengthPt, &dwWritten, NULL );
+					WriteFile( hTmpFile, bufferHead, lengthPt, &dwWritten, NULL );
 				}
 
 				strcpy( &buffer[lengthOut], "<br>" );
@@ -386,8 +253,7 @@ void CServiceTabRestore::onStartRestore()
 			if ( !noReadOnly )
 			{
 				char *pt = "<UL><B>Database is Read Only</UL></B>";
-				lengthPt = strlen( pt );
-				WriteFile( hTmpFile, pt, lengthPt, &dwWritten, NULL );
+				WriteFile( hTmpFile, pt, strlen( pt ), &dwWritten, NULL );
 			}
 
 			writeFooterToLogFile();

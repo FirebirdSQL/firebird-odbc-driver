@@ -31,6 +31,20 @@ using namespace IscDbcLibrary;
 
 class CServiceClient
 {
+	enum enumRestoreExecutedPart
+	{ 	
+		enDomains            = 0x0001,
+		enTables             = 0x0002,
+		enFunctions          = 0x0004,
+		enGenerators         = 0x0008,
+		enStoredProcedures   = 0x0010,
+		enExceptions         = 0x0020,
+		enDataForTables      = 0x0040,
+		enTriggers           = 0x0080,
+		enPrivileges         = 0x0100,
+		enSqlRoles           = 0x0200
+	};
+
 	HINSTANCE libraryHandle;
 
 public:
@@ -47,15 +61,27 @@ public:
 	bool nextQuery( char *outBuffer, int length, int &lengthOut );
 	bool nextQueryLimboTransactionInfo( char *outBuffer, int length, int &lengthOut );
 	void closeService();
+	bool openLogFile( const char *logFileName );
+	void writeLogFile( char *outBuffer );
 	void putParameterValue( const char * name, const char * value );
+	bool checkIncrementForBackup( char *&pt );
+	bool checkIncrementForRestore( char *&pt, char *outBufferHead );
+	bool checkIncrementForRepair( char *&pt );
+	void openSemaphore( const char *nameSemaphore );
+	void greenSemaphore( void );
 
 public:
 
 	CServiceClient( void );
 	~CServiceClient( void );
 
-	ServiceManager *services;
-	Properties *properties;
+	ServiceManager  *services;
+	Properties      *properties;
+	ULONG           executedPart;
+	FILE            *logFile;
+#ifdef _WIN32
+	HANDLE          hSemaphore;
+#endif
 };
   
 }; // end namespace OdbcJdbcSetupLibrary

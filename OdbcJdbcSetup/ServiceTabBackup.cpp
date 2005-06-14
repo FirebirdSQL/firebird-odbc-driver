@@ -206,78 +206,20 @@ void CServiceTabBackup::onStartBackup()
 
 			while ( services.nextQuery( buffer, sizeof ( buffer ), lengthOut ) )
 			{
-				char *pt = buffer + 6; // offset 'gbak: '
+				char *pt = buffer;
 
-				if ( *pt == 'w' && !strncasecmp ( pt, "writing ", sizeof ( "writing " ) - 1 ) )
+				if ( services.checkIncrementForBackup( pt ) )
 				{
-					bool inc = false;
-					pt += sizeof ( "writing " ) - 1;
-
-					switch ( *pt )
-					{
-					case 'd':
-						inc = !strncasecmp ( pt, "domains", sizeof ( "domains" ) - 1 );
-						break;
-					case 's':
-						inc = !strncasecmp ( pt, "shadow files", sizeof ( "shadow files" ) - 1 )
-							  || !strncasecmp ( pt, "stored procedures", sizeof ( "stored procedures" ) - 1 );
-						break;
-					case 't':
-						inc = !strncasecmp ( pt, "tables", sizeof ( "tables" ) - 1 )
-							  || !strncasecmp ( pt, "types", sizeof ( "types" ) - 1 )
-							  || !strncasecmp ( pt, "triggers", sizeof ( "triggers" ) - 1 )
-							  || !strncasecmp ( pt, "trigger messages", sizeof ( "trigger messages" ) - 1 )
-							  || !strncasecmp ( pt, "table constraints", sizeof ( "table constraints" ) - 1 );
-						break;
-					case 'f':
-						inc = !strncasecmp ( pt, "functions", sizeof ( "functions" ) - 1 )
-							  || !strncasecmp ( pt, "filters", sizeof ( "filters" ) - 1 );
-						break;
-					case 'i':
-						inc = !strncasecmp ( pt, "id generators", sizeof ( "id generators" ) - 1 );
-						break;
-					case 'e':
-						inc = !strncasecmp ( pt, "exceptions", sizeof ( "exceptions" ) - 1 );
-						break;
-					case 'C':
-						inc = !strncasecmp ( pt, "Character Sets", sizeof ( "Character Sets" ) - 1 )
-							  || !strncasecmp ( pt, "Collations", sizeof ( "Collations" ) - 1 );
-						break;
-					case 'r':
-						inc = !strncasecmp ( pt, "referential constraints", sizeof ( "referential constraints" ) - 1 );
-						break;
-					case 'c':
-						inc = !strncasecmp ( pt, "check constraints", sizeof ( "check constraints" ) - 1 );
-						break;
-					case 'S':
-						inc = !strncasecmp ( pt, "SQL roles", sizeof ( "SQL roles" ) - 1 );
-						break;
-					}
-
-					if ( inc )
-					{
-						if ( false )
-						{
-							RECT rc;
-							HDC hDC;
-							rc.top = 0; rc.left = 5; rc.right = 200; rc.bottom = 13;
-							hDC = GetDC( hDlg );
-							FillRect( hDC, &rc, (HBRUSH)GetStockObject( WHITE_BRUSH ) );
-							TextOut ( hDC, 3, 3, buffer, strlen( buffer ) );
-							ReleaseDC( hDlg, hDC );
-						}
-
-						pos += 5;
-						SendMessage( hWndBar, PBM_SETPOS, (WPARAM)pos , (LPARAM)NULL );
-						*pt = UPPER( *pt );
-						pt -= 7; // offest '<UL><B>' size = 7
-						lengthOut -= pt - buffer;
-						memcpy( pt, "<UL><B>", 7 );
-						strcpy( &pt[lengthOut], "</UL></B>" );
-						lengthOut += 9; // offest '</UL></B>' size = 9
-						WriteFile( hTmpFile, pt, lengthOut, &dwWritten, NULL );
-						continue;
-					}
+					pos += 5;
+					SendMessage( hWndBar, PBM_SETPOS, (WPARAM)pos , (LPARAM)NULL );
+					*pt = UPPER( *pt );
+					pt -= 7; // offest '<UL><B>' size = 7
+					lengthOut -= pt - buffer;
+					memcpy( pt, "<UL><B>", 7 );
+					strcpy( &pt[lengthOut], "</UL></B>" );
+					lengthOut += 9; // offest '</UL></B>' size = 9
+					WriteFile( hTmpFile, pt, lengthOut, &dwWritten, NULL );
+					continue;
 				}
 
 				strcpy( &buffer[lengthOut], "<br>" );

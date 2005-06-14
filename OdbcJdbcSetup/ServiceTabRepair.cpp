@@ -284,7 +284,6 @@ void CServiceTabRepair::startRepairDatabase()
 					pt = "<UL><B>List limbo transactions - I have not</UL></B>";
 					break;
 				default:
-				//case enValidateDb:
 					pt = "<UL><B>Repair limbo trans - SUCCESS</UL></B>";
 					break;
 				}
