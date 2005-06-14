@@ -117,10 +117,15 @@ void CServiceManager::startBackupDatabase( Properties *prop, ULONG options )
 	ADD_PARAM_STRING_LEN16( thd, isc_spb_dbname, param );
 	param = properties->findValue( "backupFile", NULL );
 	ADD_PARAM_STRING_LEN16( thd, isc_spb_bkp_file, param );
-	ADD_PARAM_LEN32( thd, isc_spb_options, options );
+
+	if ( options )
+	{
+		ADD_PARAM_LEN32( thd, isc_spb_options, options );
+	}
+
 	ADD_PARAM( thd, isc_spb_verbose );
 
-	param = properties->findValue( "blockingFactor", NULL );
+	param = properties->findValue( "blockingFactor", "0" );
 	tempVal = atol( param );
 	if ( tempVal )
 	{
@@ -181,19 +186,25 @@ void CServiceManager::startRestoreDatabase( Properties *prop, ULONG options )
 		throw SQLEXCEPTION ( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
 
 	ADD_PARAM( thd, isc_action_svc_restore );
+
 	if ( !(options & isc_spb_res_replace) )
 		options |= isc_spb_res_create;
-	ADD_PARAM_LEN32( thd, isc_spb_options, options );
+
+	if ( options )
+	{
+		ADD_PARAM_LEN32( thd, isc_spb_options, options );
+	}
+
 	ADD_PARAM( thd, isc_spb_verbose );
 
-	param = properties->findValue( SETUP_PAGE_SIZE, NULL );
+	param = properties->findValue( SETUP_PAGE_SIZE, "0" );
 	sizeVal = atol( param );
 	if ( sizeVal )
 	{
 		ADD_PARAM_LEN32( thd, isc_spb_res_page_size, sizeVal );
 	}
 
-	param = properties->findValue( "buffersSize", NULL );
+	param = properties->findValue( "buffersSize", "0" );
 	sizeVal = atol( param );
 	if ( sizeVal )
 	{
@@ -300,7 +311,10 @@ void CServiceManager::startStaticticsDatabase( Properties *prop, ULONG options )
 		while ( *param++ != ':' );
 	ADD_PARAM_STRING_LEN16( thd, isc_spb_dbname, param );
 
-	ADD_PARAM_LEN32( thd, isc_spb_options, options );
+	if ( options )
+	{
+		ADD_PARAM_LEN32( thd, isc_spb_options, options );
+	}
 
 	thdLength = thd - thdBuffer;
 
