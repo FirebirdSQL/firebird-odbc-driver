@@ -112,7 +112,10 @@ bool IscSpecialColumnsResultSet::nextFetch()
 	if (index_id == -1) 
 		index_id = idx_id;
 	else if (idx_id != index_id)
+	{
+		IscResultSet::close();
 		return false;
+	}
 
 	//translate to the SQL type information
 	sqlType.blrType = sqlda->getShort (3);	// field type
