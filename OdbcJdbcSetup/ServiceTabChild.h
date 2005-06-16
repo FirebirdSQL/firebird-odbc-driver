@@ -72,6 +72,7 @@ public:
 	HANDLE          hTmpFile;
 	JString         logPathFile;
 	JString         backupPathFile;
+	int             countError;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

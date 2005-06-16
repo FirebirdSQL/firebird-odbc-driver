@@ -444,7 +444,7 @@ void CServiceManager::startRepairDatabase( Properties *prop, ULONG options, ULON
 		throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
 }
 
-bool CServiceManager::nextQuery( char *outBuffer, int lengthOut, int &lengthRealOut )
+bool CServiceManager::nextQuery( char *outBuffer, int lengthOut, int &lengthRealOut, int &countError )
 {
 	ISC_STATUS status[20];
 	char sendBuffer[] = { isc_info_svc_line };
@@ -458,13 +458,17 @@ bool CServiceManager::nextQuery( char *outBuffer, int lengthOut, int &lengthReal
 	{
 		GDS->_service_query( status, &svcHandle, NULL, 0, NULL, 
 							sizeof( sendBuffer ), sendBuffer, RESPONSE_BUFFER, respBuffer );
-		if ( status[1] )
-			throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
-
 		char *p = respBuffer;
 
 		offset = 0;
 		nextQuery = *p == isc_info_svc_line;
+
+		if ( status[1] )
+		{
+			if ( !nextQuery )
+				throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
+			++countError;
+		}
 
 		ISC_USHORT len = (ISC_USHORT)GDS->_vax_integer( ++p, sizeof ( ISC_USHORT ) );
 		p += sizeof ( ISC_USHORT );
@@ -475,6 +479,7 @@ bool CServiceManager::nextQuery( char *outBuffer, int lengthOut, int &lengthReal
 				length = snprintf( &outBuffer[offset], lengthOut, "\n%s", "no data available at this moment" );
 				lengthOut -= length;
 				offset += length;
+				break;
 			}
 			else
 			{
@@ -483,6 +488,7 @@ bool CServiceManager::nextQuery( char *outBuffer, int lengthOut, int &lengthReal
 					length = snprintf( &outBuffer[offset], lengthOut, "\nFormat error ... <%d>", *p );
 					lengthOut -= length;
 					offset += length;
+					++countError;
 				}
 				nextQuery = false;
 				break;
@@ -500,6 +506,7 @@ bool CServiceManager::nextQuery( char *outBuffer, int lengthOut, int &lengthReal
 			length = snprintf( &outBuffer[offset], lengthOut, "\nFormat error ... encountered <%d>", *p );
 			lengthOut -= length;
 			offset += length;
+			++countError;
 		}
 
 	} while ( false );

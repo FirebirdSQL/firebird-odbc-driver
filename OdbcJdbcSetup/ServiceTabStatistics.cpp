@@ -203,7 +203,7 @@ void CServiceTabStatistics::onStartStatistics()
 		{
 			EnableWindow( GetDlgItem( hDlg, IDOK ), FALSE );
 
-			while ( services.nextQuery( buffer, sizeof ( buffer ), lengthOut ) )
+			while ( services.nextQuery( buffer, sizeof ( buffer ), lengthOut, countError ) )
 			{
 				strcpy( &buffer[lengthOut], "<br>" );
 				lengthOut += 4;

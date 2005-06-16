@@ -62,7 +62,7 @@ public:
 	virtual void startStaticticsDatabase( Properties *prop, ULONG options );
 	virtual void startShowDatabaseLog( Properties *prop );
 	virtual void startRepairDatabase( Properties *prop, ULONG options, ULONG optionsValidate );
-	virtual bool nextQuery( char *outBuffer, int length, int &lengthOut );
+	virtual bool nextQuery( char *outBuffer, int length, int &lengthOut, int &countError );
 	virtual bool nextQueryLimboTransactionInfo( char *outBuffer, int length, int &lengthOut );
 	virtual void closeService();
 	virtual int	getDriverBuildKey();

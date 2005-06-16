@@ -231,7 +231,7 @@ void CServiceTabRestore::onStartRestore()
 		{
 			EnableWindow( GetDlgItem( hDlg, IDOK ), FALSE );
 
-			while ( services.nextQuery( buffer, sizeof ( buffer ), lengthOut ) )
+			while ( services.nextQuery( buffer, sizeof ( buffer ), lengthOut, countError ) )
 			{
 				char *pt = buffer;
 

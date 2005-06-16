@@ -45,6 +45,7 @@ CServiceTabChild::CServiceTabChild()
 	hDlg = NULL;
 	resource = NULL;
 	hTmpFile = NULL;
+	countError = 0;
 }
 
 CServiceTabChild::~CServiceTabChild()
@@ -87,6 +88,8 @@ bool CServiceTabChild::createTempLogFile()
 
 void CServiceTabChild::deleteTempLogFile()
 {
+	countError = 0;
+
 	if ( hTmpFile )
 	{
 		CloseHandle( hTmpFile );

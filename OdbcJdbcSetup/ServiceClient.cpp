@@ -237,9 +237,9 @@ void CServiceClient::startRepairDatabase( ULONG options, ULONG optionsValidate )
 	services->startRepairDatabase( properties, options, optionsValidate );
 }
 
-bool CServiceClient::nextQuery( char *outBuffer, int length, int &lengthOut )
+bool CServiceClient::nextQuery( char *outBuffer, int length, int &lengthOut, int &countError )
 {
-	return services->nextQuery( outBuffer, length, lengthOut );
+	return services->nextQuery( outBuffer, length, lengthOut, countError );
 }
 
 bool CServiceClient::nextQueryLimboTransactionInfo( char *outBuffer, int length, int &lengthOut )
