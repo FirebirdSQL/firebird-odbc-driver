@@ -1075,8 +1075,15 @@ Connection* IscConnection::clone()
 
 void IscConnection::setAutoCommit(bool setting)
 {
-	if(!autoCommit && setting && transactionPending)
-		commitAuto();
+	if ( transactionHandle )
+		commit();
+
+	FOR_OBJECTS (IscStatement*, statement, &statements)
+		if ( statement->isActiveCursor() )
+		{
+			statement->openCursor = false;
+		}
+	END_FOR;
 
 	autoCommit = setting;
 }
