@@ -60,12 +60,11 @@ bool CUsersTabUsers::OnInitDialog()
 	HWND hWndLV = GetDlgItem( hDlg, IDC_USERS_LISTVIEW_LEFT );
 
 	addColumnToListView( hWndLV, 0, "User name", 120 );
-	addColumnToListView( hWndLV, 1, "Group Name", 100 );
-	addColumnToListView( hWndLV, 2, "First Name", 120 );
-	addColumnToListView( hWndLV, 3, "Middle Name", 120 );
-	addColumnToListView( hWndLV, 4, "Last Name", 120 );
-	addColumnToListView( hWndLV, 5, "User ID", 60 );
-	addColumnToListView( hWndLV, 6, "Group ID", 80 );
+	addColumnToListView( hWndLV, 1, "First Name", 120 );
+	addColumnToListView( hWndLV, 2, "Middle Name", 120 );
+	addColumnToListView( hWndLV, 3, "Last Name", 120 );
+	addColumnToListView( hWndLV, 4, "User ID", 60 );
+	addColumnToListView( hWndLV, 5, "Group ID", 80 );
 
 	return true;
 }
