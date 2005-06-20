@@ -77,7 +77,7 @@ void CUsersTabUsers::updateData( HWND hDlg, BOOL bSaveAndValidate )
 	if ( bSaveAndValidate )
 	{
 		HWND hWndLV = GetDlgItem( hDlg, IDC_USERS_LISTVIEW_LEFT );
-		LONG selected = ListView_GetNextItem( hWndLV, -1, LVNI_SELECTED | LVIS_FOCUSED );
+		LONG selected = ListView_GetNextItem( hWndLV, (ULONG)-1, LVNI_SELECTED | LVIS_FOCUSED );
 
 		if ( selected != -1 )
 		{
@@ -110,7 +110,7 @@ void CUsersTabUsers::clearFields()
 bool CUsersTabUsers::isUserSelected()
 {
 	HWND hWndLV = GetDlgItem( hDlg, IDC_USERS_LISTVIEW_LEFT );
-	return -1 != ListView_GetNextItem( hWndLV, -1, LVNI_SELECTED | LVIS_FOCUSED );
+	return -1 != ListView_GetNextItem( hWndLV, (ULONG)-1, LVNI_SELECTED | LVIS_FOCUSED );
 }
 
 bool CUsersTabUsers::addRowToListView()
