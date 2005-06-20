@@ -59,8 +59,10 @@ public:
 	void startStaticticsDatabase( ULONG options );
 	void startShowDatabaseLog( void );
 	void startRepairDatabase( ULONG options, ULONG optionsValidate );
+	void startUsersQuery( void );
 	bool nextQuery( char *outBuffer, int length, int &lengthOut, int &countError );
 	bool nextQueryLimboTransactionInfo( char *outBuffer, int length, int &lengthOut );
+	bool nextQueryUserInfo( char *outBuffer, int lengthOut, int &lengthRealOut );
 	void closeService();
 	bool openLogFile( const char *logFileName );
 	void writeLogFile( char *outBuffer );

@@ -98,6 +98,11 @@ bool CServiceTabCtrl::OnInitDialog( HWND hDlg )
     tie.pszText = " Repair "; 
     TabCtrl_InsertItem( hWndTab, 3, &tie );
 
+	tabData.childTab[4] = users.getObject();
+	users.buildDlgChild( hWndTab );
+    tie.pszText = " Users "; 
+    TabCtrl_InsertItem( hWndTab, 4, &tie );
+
 	setExecutorForViewLogFile();
 
     SetWindowLong( hWndTab, GWL_USERDATA, (ULONG)&tabData ); 

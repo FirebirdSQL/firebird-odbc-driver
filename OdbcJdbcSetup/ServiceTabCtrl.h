@@ -29,6 +29,12 @@
 #include "ServiceTabRestore.h"
 #include "ServiceTabRepair.h"
 #include "ServiceTabStatistics.h"
+#include "UserDialog.h"
+#include "UsersTabChild.h"
+#include "UsersTabMemberShips.h"
+#include "UsersTabRoles.h"
+#include "UsersTabUsers.h"
+#include "ServiceTabUsers.h"
 
 namespace OdbcJdbcSetupLibrary {
 
@@ -57,6 +63,7 @@ public:
 	CServiceTabRestore    restore;
 	CServiceTabStatistics statistic;
 	CServiceTabRepair     repair;
+	CServiceTabUsers      users;
 	JString               client;
 	JString               database;
 	JString               password;

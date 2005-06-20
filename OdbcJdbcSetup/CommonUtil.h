@@ -26,7 +26,7 @@
 
 namespace OdbcJdbcSetupLibrary {
 
-	enum enServiceTabCtrl { COUNT_PAGE = 4 };
+	enum enServiceTabCtrl { COUNT_PAGE = 5 };
 
 class CServiceTabCtrl;
 class CServiceTabChild;
@@ -126,6 +126,6 @@ LPWORD lpwAlign( LPWORD lpIn);
 
 //    CONTROL         "Tab1",IDC_TAB1,"SysTabControl32",0x0,7,7,367,198
 #define TMP_NAMECONTROL(STRTEXT,ID,NAME_CTRL,STYLE,X,Y,CX,CY) \
-	TMP_NAMECTRL(STRTEXT,ID,NAME_CTRL,X,Y,CX,CY, 0x50000000 )
+	TMP_NAMECTRL(STRTEXT,ID,NAME_CTRL,X,Y,CX,CY, 0x50000000 | STYLE )
 
 #endif // !defined(_CommonUtil_h_)

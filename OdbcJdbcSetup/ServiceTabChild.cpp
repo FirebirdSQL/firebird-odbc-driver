@@ -18,7 +18,7 @@
  *  All Rights Reserved.
  */
 
-// ServiceTabChild.cpp: Service Backup Manager class.
+// ServiceTabChild.cpp:
 //
 //////////////////////////////////////////////////////////////////////
 #include <windows.h>

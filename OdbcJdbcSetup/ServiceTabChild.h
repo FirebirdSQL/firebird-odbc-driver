@@ -18,7 +18,7 @@
  *  All Rights Reserved.
  */
 
-// ServiceTabChild.h interface for the Service Backup class.
+// ServiceTabChild.h interface for the Service Tab Child class.
 //
 //////////////////////////////////////////////////////////////////////
 #if !defined(_ServiceTabChild_h_)
