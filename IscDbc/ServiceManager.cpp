@@ -444,6 +444,142 @@ void CServiceManager::startRepairDatabase( Properties *prop, ULONG options, ULON
 		throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
 }
 
+void CServiceManager::startUsersQuery( Properties *prop )
+{
+	ISC_STATUS status[20];
+	char svcName[RESPONSE_BUFFER/12];
+	char spbBuffer[RESPONSE_BUFFER/2];
+	char *spb = spbBuffer;
+	short spbLength;
+	char thdBuffer[RESPONSE_BUFFER/2];
+	char *thd = thdBuffer;
+	short thdLength;
+	char respBuffer[RESPONSE_BUFFER];
+	char *resp = respBuffer;
+	const char *pt;
+	const char *param;
+	const char *paramUser;
+	bool isServer = false;
+	ULONG tempVal;
+
+	properties = prop;
+	ADD_PARAM( spb, isc_spb_version );
+	ADD_PARAM( spb, isc_spb_current_version );
+	param = properties->findValue( SETUP_USER, NULL );
+	ADD_PARAM_STRING_LEN8( spb, isc_spb_user_name, param );
+	param = properties->findValue( SETUP_PASSWORD, NULL );
+	ADD_PARAM_STRING_LEN8( spb, isc_spb_password, param );
+
+	spbLength = spb - spbBuffer;
+
+	if ( !GDS )
+		loadShareLibrary();
+
+	param = properties->findValue( "serverName", NULL );
+
+	if ( param && *param )
+	{
+		//    TCP: ServerName + ":service_mgr"
+		//    SPX: ServerName + "@service_mgr"
+		//    Pipe: "\\\\" + ServerName + "\\service_mgr"
+		//    Local: "service_mgr"
+		sprintf( svcName, "%s:service_mgr", param );
+		isServer = true;
+	}
+	else
+		strcpy( svcName, "service_mgr" );
+
+	if ( GDS->_service_attach( status, 0, svcName, &svcHandle, spbLength, spbBuffer ) )
+		throw SQLEXCEPTION ( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
+
+	do
+	{
+		paramUser = properties->findValue( "userName", NULL );
+
+		param = properties->findValue( "displayUser", NULL );
+		if ( param && *param )
+		{
+			ADD_PARAM( thd, isc_action_svc_display_user );
+			if ( paramUser && *paramUser )
+			{
+				ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_username, paramUser );
+			}
+			break;
+		}
+
+		param = properties->findValue( "deleteUser", NULL );
+		if ( param && *param )
+		{
+			ADD_PARAM( thd, isc_action_svc_delete_user );
+			if ( paramUser && *paramUser )
+			{
+				ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_username, paramUser );
+			}
+			break;
+		}
+
+		param = properties->findValue( "addUser", NULL );
+		if ( param && *param )
+		{
+			ADD_PARAM( thd, isc_action_svc_add_user );
+		}
+		else
+		{
+			param = properties->findValue( "modifyUser", NULL );
+			if ( param && *param )
+			{
+				ADD_PARAM( thd, isc_action_svc_modify_user );
+			}
+		}
+
+		if ( paramUser && *paramUser )
+		{
+			ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_username, paramUser );
+		}
+
+		param = properties->findValue( "userPassword", NULL );
+		if ( param && *param )
+		{
+			ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_password, param );
+		}
+
+		param = properties->findValue( "firstName", NULL );
+		if ( param && *param )
+		{
+			ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_firstname, param );
+		}
+		param = properties->findValue( "middleName", NULL );
+		if ( param && *param )
+		{
+			ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_middlename, param );
+		}
+		param = properties->findValue( "lastName", NULL );
+		if ( param && *param )
+		{
+			ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_lastname, param );
+		}
+
+		param = properties->findValue( "groupId", NULL );
+		if ( param && *param )
+		{
+			tempVal = atol( param );
+			ADD_PARAM_LEN32( thd, isc_spb_sec_groupid, tempVal );
+		}
+		param = properties->findValue( "userId", NULL );
+		if ( param && *param )
+		{
+			tempVal = atol( param );
+			ADD_PARAM_LEN32( thd, isc_spb_sec_userid, tempVal );
+		}
+
+	} while ( false );
+
+	thdLength = thd - thdBuffer;
+
+	if ( GDS->_service_start( status, &svcHandle, NULL, thdLength, thdBuffer ) )
+		throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
+}
+
 bool CServiceManager::nextQuery( char *outBuffer, int lengthOut, int &lengthRealOut, int &countError )
 {
 	ISC_STATUS status[20];
@@ -546,6 +682,7 @@ bool CServiceManager::nextQueryLimboTransactionInfo( char *outBuffer, int length
 				length = snprintf( &outBuffer[offset], lengthOut, "\n%s", "no data available at this moment" );
 				lengthOut -= length;
 				offset += length;
+				break;
 			}
 			else
 			{
@@ -565,6 +702,143 @@ bool CServiceManager::nextQueryLimboTransactionInfo( char *outBuffer, int length
 		offset += length;
 
 		p += len;
+
+		if ( *p != isc_info_truncated && *p != isc_info_end )
+		{
+			length = snprintf( &outBuffer[offset], lengthOut, "\nFormat error ... encountered <%d>", *p );
+			lengthOut -= length;
+			offset += length;
+		}
+
+	} while ( false );
+	
+	lengthRealOut = offset;
+	return nextQuery;
+}
+
+bool CServiceManager::nextQueryUserInfo( char *outBuffer, int lengthOut, int &lengthRealOut )
+{
+	ISC_STATUS status[20];
+	char sendBuffer[] = { isc_info_svc_get_users };
+	char respBuffer[RESPONSE_BUFFER];
+	char *resp = respBuffer;
+	char *out = outBuffer;
+	UserInfo *info = NULL;
+	int length = lengthOut;
+	int offset;
+	bool nextQuery = false;
+
+	do
+	{
+		GDS->_service_query( status, &svcHandle, NULL, 0, NULL, 
+							sizeof( sendBuffer ), sendBuffer, RESPONSE_BUFFER, respBuffer );
+		if ( status[1] )
+			throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
+
+		char *p = respBuffer;
+
+		offset = 0;
+		nextQuery = *p == isc_info_svc_get_users;
+
+		ISC_USHORT len = (ISC_USHORT)GDS->_vax_integer( ++p, sizeof ( ISC_USHORT ) );
+		p += sizeof ( ISC_USHORT );
+		if ( !len )
+		{
+			if ( *p ==  isc_info_data_not_ready )
+			{
+				length = snprintf( &outBuffer[offset], lengthOut, "\n%s", "no data available at this moment" );
+				lengthOut -= length;
+				offset += length;
+				break;
+			}
+			else
+			{
+				if ( *p != isc_info_end )
+				{
+					length = snprintf( &outBuffer[offset], lengthOut, "\nFormat error ... <%d>", *p );
+					lengthOut -= length;
+					offset += length;
+				}
+				nextQuery = false;
+				break;
+			}
+		}
+		
+        while ( *p != isc_info_end )
+        {
+			switch ( *p++ )
+			{
+			case isc_spb_sec_username:
+				if ( !info )
+				{
+					info = (UserInfo*)out;
+					memset( info, 0, sizeof ( UserInfo ) );
+				}
+				else
+				{
+					info->next = (UserInfo*)out;
+					info = info->next;
+					memset( info, 0, sizeof ( UserInfo ) );
+				}
+
+				out += sizeof ( UserInfo );
+
+				len = (ISC_USHORT)GDS->_vax_integer( p, sizeof ( ISC_USHORT ) );
+				p += sizeof ( ISC_USHORT );
+				strncpy( out, p, len );
+				p += len;
+				info->userName = out;
+				out += len;
+				*out++ = '\0';
+				lengthOut -= len + 1;
+				break;
+            
+			case isc_spb_sec_firstname:
+				len = (ISC_USHORT)GDS->_vax_integer( p, sizeof ( ISC_USHORT ) );
+				p += sizeof ( ISC_USHORT );
+				strncpy( out, p, len );
+				p += len;
+				info->firstName = out;
+				out += len;
+				*out++ = '\0';
+				lengthOut -= len + 1;
+				break;
+            
+			case isc_spb_sec_middlename:
+				len = (ISC_USHORT)GDS->_vax_integer( p, sizeof ( ISC_USHORT ) );
+				p += sizeof( ISC_USHORT );
+				strncpy( out, p, len );
+				p += len;
+				info->middleName = out;
+				out += len;
+				*out++ = '\0';
+				lengthOut -= len + 1;
+				break;
+            
+			case isc_spb_sec_lastname:
+				len = (ISC_USHORT)GDS->_vax_integer( p, sizeof ( ISC_USHORT ) );
+				p += sizeof ( ISC_USHORT );
+				strncpy( out, p, len );
+				p += len;
+				info->lastName = out;
+				out += len;
+				*out++ = '\0';
+				lengthOut -= len + 1;
+				break;
+            
+			case isc_spb_sec_groupid:
+				info->groupId = GDS->_vax_integer( p, sizeof ( ISC_ULONG ) );
+				p += sizeof ( ISC_ULONG );
+				break;
+            
+			case isc_spb_sec_userid:
+				info->userId = GDS->_vax_integer( p, sizeof ( ISC_ULONG ) );
+				p += sizeof ( ISC_ULONG );
+				break;
+			}
+        }
+
+		offset = out - outBuffer;
 
 		if ( *p != isc_info_truncated && *p != isc_info_end )
 		{
