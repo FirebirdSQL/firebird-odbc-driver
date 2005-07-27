@@ -58,8 +58,8 @@ void CUserDialog::updateData( HWND hDlg, BOOL bSaveAndValidate )
 		GetDlgItemText( hDlg, IDC_EDIT_USER_FIRST_NAME, parent->firstName.getBuffer(256), 256);
 		GetDlgItemText( hDlg, IDC_EDIT_USER_MIDDLE_NAME, parent->middleName.getBuffer(256), 256);
 		GetDlgItemText( hDlg, IDC_EDIT_USER_LAST_NAME, parent->lastName.getBuffer(256), 256);
-		GetDlgItemText( hDlg, IDC_EDIT_USER_ID, parent->groupId.getBuffer(256), 256);
-		GetDlgItemText( hDlg, IDC_EDIT_GROUP_ID, parent->userId.getBuffer(256), 256);
+		GetDlgItemText( hDlg, IDC_EDIT_USER_ID, parent->userId.getBuffer(256), 256);
+		GetDlgItemText( hDlg, IDC_EDIT_GROUP_ID, parent->groupId.getBuffer(256), 256);
 	}
 	else
 	{
@@ -69,8 +69,8 @@ void CUserDialog::updateData( HWND hDlg, BOOL bSaveAndValidate )
 		SetDlgItemText( hDlg, IDC_EDIT_USER_FIRST_NAME, (const char *)parent->firstName );
 		SetDlgItemText( hDlg, IDC_EDIT_USER_MIDDLE_NAME, (const char *)parent->middleName );
 		SetDlgItemText( hDlg, IDC_EDIT_USER_LAST_NAME, (const char *)parent->lastName );
-		SetDlgItemText( hDlg, IDC_EDIT_USER_ID, (const char *)parent->groupId );
-		SetDlgItemText( hDlg, IDC_EDIT_GROUP_ID, (const char *)parent->userId );
+		SetDlgItemText( hDlg, IDC_EDIT_USER_ID, (const char *)parent->userId );
+		SetDlgItemText( hDlg, IDC_EDIT_GROUP_ID, (const char *)parent->groupId );
 	}
 }
 
