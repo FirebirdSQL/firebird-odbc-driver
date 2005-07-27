@@ -180,7 +180,10 @@ bool CUsersTabUsers::onCommand( HWND hWnd, int nCommand )
 			CUserDialog dlg( this, "New User" );
 			clearFields();
 			if ( IDOK == dlg.DoModal() )
+			{
 				onEditUser( enAddUser );
+				onGetUsersList();
+			}
 		}
 		return true;
 
@@ -190,7 +193,10 @@ bool CUsersTabUsers::onCommand( HWND hWnd, int nCommand )
 			CUserDialog dlg( this, "Modify User" );
 			updateData( hWnd );
 			if ( IDOK == dlg.DoModal() )
+			{
 				onEditUser( enModUser );
+				onGetUsersList();
+			}
 		}
 		return true;
 
@@ -200,7 +206,10 @@ bool CUsersTabUsers::onCommand( HWND hWnd, int nCommand )
 			CUserDialog dlg( this, "Delete User" );
 			updateData( hWnd );
 			if ( IDOK == dlg.DoModal() )
+			{
 				onEditUser( enDelUser );
+				onGetUsersList();
+			}
 		}
 		return true;
 	}
