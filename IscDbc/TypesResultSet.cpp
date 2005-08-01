@@ -136,31 +136,46 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion) : IscResultSet 
 {	
 	dataTypes = dataType;
 
-	switch( dataTypes )
-	{
-	case JDBC_SQL_DATE:
-		dataTypes = JDBC_DATE;
-		break;
-
-	case JDBC_SQL_TIME:
-		dataTypes = JDBC_TIME;
-		break;
-
-	case JDBC_SQL_TIMESTAMP:
-		dataTypes = JDBC_TIMESTAMP;
-		break;
-	}
-
 	int endRow = sizeof (types) / sizeof (types [0]);
 
 	if ( appOdbcVersion == 3 ) // SQL_OV_ODBC3
 	{
+		switch( dataTypes )
+		{
+		case JDBC_SQL_DATE:
+			dataTypes = JDBC_DATE;
+			break;
+
+		case JDBC_SQL_TIME:
+			dataTypes = JDBC_TIME;
+			break;
+
+		case JDBC_SQL_TIMESTAMP:
+			dataTypes = JDBC_TIMESTAMP;
+			break;
+		}
+
 		types[--endRow].typeType = JDBC_TIMESTAMP;
 		types[--endRow].typeType = JDBC_TIME;
 		types[--endRow].typeType = JDBC_DATE;
 	}
 	else
 	{
+		switch( dataTypes )
+		{
+		case JDBC_DATE:
+			dataTypes = JDBC_SQL_DATE;
+			break;
+
+		case JDBC_TIME:
+			dataTypes = JDBC_SQL_TIME;
+			break;
+
+		case JDBC_TIMESTAMP:
+			dataTypes = JDBC_SQL_TIMESTAMP;
+			break;
+		}
+
 		types[--endRow].typeType = JDBC_SQL_TIMESTAMP;
 		types[--endRow].typeType = JDBC_SQL_TIME;
 		types[--endRow].typeType = JDBC_SQL_DATE;
