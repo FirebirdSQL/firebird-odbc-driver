@@ -48,7 +48,7 @@ IscTablesResultSet::IscTablesResultSet(IscDatabaseMetaData *metaData)
 
 void IscTablesResultSet::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char * * types)
 {
-	char sql[2048] =  "select cast (NULL as varchar(7)) as table_cat,\n"				// 1
+	char sql[2048] =  "select cast (' ' as varchar(7)) as table_cat,\n"				// 1
 			          "cast (NULL as varchar(7)) as table_schem,\n"						// 2
 					  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
 					  "cast ('TABLE' as varchar(13)) as table_type,\n"					// 4

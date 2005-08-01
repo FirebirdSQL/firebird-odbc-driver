@@ -504,6 +504,19 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 		{
 			if ( IS_QUOTE( *ptIn ) )
 			{
+				// Warning! For compatible Ms Office 2002 and great
+				// and modify to IscTablesResultSet to catalog 
+				//     select cast (' ' as varchar(7)) as table_cat,\n"				// 1
+				// It's huge hack
+				// if the SELECT * FROM " ".COUNTRY the to SELECT * FROM COUNTRY
+				// 
+				if ( *(unsigned long*)ptIn == 0x2e222022 ) // 0x2e222022 it's four symbols " ".
+				{
+					ptIn += 4;
+					statysModify++;
+					continue;
+				}
+
 				quote = *ptIn;
 				statusQuote ^= 1;
 			}
