@@ -236,6 +236,7 @@ public:
 	int convStringToString(DescRecord * from, DescRecord * to);
 	int convStringToVarString(DescRecord * from, DescRecord * to);
 	int convStringToBlob(DescRecord * from, DescRecord * to);
+	int convStringToBinary(DescRecord * from, DescRecord * to);
 
 	int transferStringToTinyInt(DescRecord * from, DescRecord * to);
 	int transferStringToDateTime(DescRecord * from, DescRecord * to);
@@ -253,6 +254,7 @@ public:
 	int convVarStringToBigint(DescRecord * from, DescRecord * to);
 	int convVarStringToString(DescRecord * from, DescRecord * to);
 	int convVarStringSystemToString(DescRecord * from, DescRecord * to);
+	int convVarStringToBinary(DescRecord * from, DescRecord * to);
 };
 
 }; // end namespace OdbcJdbcLibrary

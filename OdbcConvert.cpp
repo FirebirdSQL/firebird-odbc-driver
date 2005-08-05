@@ -584,7 +584,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 			case SQL_C_BINARY:
 				if ( from->isIndicatorSqlDa && from->dataBlobPtr && from->dataBlobPtr->isArray() )
 					return &OdbcConvert::convBlobToBlob;
-				return &OdbcConvert::convVarStringToString;
+				return &OdbcConvert::convVarStringToBinary;
 			default:
 				return &OdbcConvert::notYetImplemented;
 			}
@@ -670,7 +670,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 			case SQL_C_BINARY:
 				if ( to->isIndicatorSqlDa )
 					return &OdbcConvert::convStringToBlob;
-				return &OdbcConvert::convStringToString;
+				return &OdbcConvert::convStringToBinary;
 			case SQL_C_DATE:
 			case SQL_C_TYPE_DATE:
 			case SQL_C_TIME:
@@ -2347,6 +2347,62 @@ int OdbcConvert::convStreamToBlob(DescRecord * from, DescRecord * to)
 	return SQL_SUCCESS;
 }
 
+int OdbcConvert::convStringToBinary(DescRecord * from, DescRecord * to)
+{
+	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
+	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	if ( from->currentFetched != parentStmt->getCurrentFetched() )
+	{ // new row read
+		from->dataOffset = 0;
+		from->currentFetched = parentStmt->getCurrentFetched();
+	}
+
+	SQLRETURN ret = SQL_SUCCESS;
+	int length = from->length;
+	int dataRemaining = length - from->dataOffset;
+
+	if ( !to->length )
+		length = dataRemaining;
+	else if (!dataRemaining && from->dataOffset)
+	{
+		from->dataOffset = 0;
+		ret = SQL_NO_DATA;
+	}
+	else
+	{
+		int len = MIN(dataRemaining, MAX(0, (long)to->length));
+		 
+		if ( !pointerTo )
+			length = dataRemaining;
+		else
+		{
+			if( len > 0 )
+				memcpy ( pointerTo, pointerFrom + from->dataOffset, len );
+
+			if ( !statusReturnData )
+				from->dataOffset += len;
+
+			if ( len && len < dataRemaining )
+			{
+				OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
+				ret = SQL_SUCCESS_WITH_INFO;
+			}
+				
+			length = dataRemaining;
+		}
+	}
+
+	if ( indicatorTo )
+		*indicatorTo = length;
+
+	return ret;
+}
+
 // for use App to SqlDa
 int OdbcConvert::transferStringToTinyInt(DescRecord * from, DescRecord * to)
 {
@@ -2560,6 +2616,63 @@ ODBCCONVERT_CONV_STRING_TO(VarString,Long,long);
 ODBCCONVERT_CONV_STRING_TO(VarString,Float,float);
 ODBCCONVERT_CONV_STRING_TO(VarString,Double,double);
 ODBCCONVERT_CONV_STRING_TO(VarString,Bigint,QUAD);
+
+int OdbcConvert::convVarStringToBinary(DescRecord * from, DescRecord * to)
+{
+	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
+	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL;
+
+	if ( from->currentFetched != parentStmt->getCurrentFetched() )
+	{ // new row read
+		from->dataOffset = 0;
+		from->currentFetched = parentStmt->getCurrentFetched();
+	}
+
+	SQLRETURN ret = SQL_SUCCESS;
+	int length = *(unsigned short*)pointerFrom;
+	int dataRemaining = length - from->dataOffset;
+
+	if ( !to->length )
+		length = dataRemaining;
+	else if (!dataRemaining && from->dataOffset)
+	{
+		from->dataOffset = 0;
+		ret = SQL_NO_DATA;
+	}
+	else
+	{
+		int len = MIN(dataRemaining, MAX(0, (long)to->length));
+		 
+		if ( !pointerTo )
+			length = dataRemaining;
+		else
+		{
+			pointerFrom += sizeof( short );
+			if( len > 0 )
+				memcpy ( pointerTo, pointerFrom + from->dataOffset, len );
+
+			if ( !statusReturnData )
+				from->dataOffset += len;
+
+			if ( len && len < dataRemaining )
+			{
+				OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
+				ret = SQL_SUCCESS_WITH_INFO;
+			}
+				
+			length = dataRemaining;
+		}
+	}
+
+	if ( indicatorTo )
+		*indicatorTo = length;
+
+	return ret;
+}
 
 int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 {
