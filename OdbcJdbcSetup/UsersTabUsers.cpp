@@ -65,6 +65,7 @@ bool CUsersTabUsers::OnInitDialog()
 	addColumnToListView( hWndLV, 3, "Last Name", 120 );
 	addColumnToListView( hWndLV, 4, "User ID", 60 );
 	addColumnToListView( hWndLV, 5, "Group ID", 80 );
+	onGetUsersList();
 
 	return true;
 }
