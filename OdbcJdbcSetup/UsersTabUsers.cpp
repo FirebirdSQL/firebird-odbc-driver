@@ -87,6 +87,8 @@ void CUsersTabUsers::updateData( HWND hDlg, BOOL bSaveAndValidate )
 			ListView_GetItemText( hWndLV, selected, 3, lastName.getBuffer(256), 256 );
 			ListView_GetItemText( hWndLV, selected, 4, groupId.getBuffer(256), 256 );
 			ListView_GetItemText( hWndLV, selected, 5, userId.getBuffer(256), 256 );
+			password.setString( NULL );
+			passwordConfirm.setString( NULL );
 		}
 		else
 		{
