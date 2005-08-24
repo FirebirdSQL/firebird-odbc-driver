@@ -43,6 +43,7 @@ public:
 	bool OnInitDialog( HWND hWndDlg );
 	void updateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	bool onCommand( HWND hWnd, int nCommand );
+	bool validateFields();
 
 public:
 	CUsersTabUsers  *parent;

@@ -159,6 +159,9 @@ BOOL CALLBACK wndproCUsersTabUsers( HWND hWndChildTab, UINT message, UINT wParam
 		return TRUE;
 
 	case WM_COMMAND:
+		if ( !child->validateAccountFields() )
+			return TRUE;
+
 		if ( child->onCommand( hWndChildTab, LOWORD( wParam ) ) )
 			return TRUE;
 	}
@@ -198,6 +201,13 @@ bool CUsersTabUsers::onCommand( HWND hWnd, int nCommand )
 			if ( IDOK == dlg.DoModal() )
 			{
 				onEditUser( enModUser );
+
+				if ( tabCtrl->user == userName )
+				{
+					tabCtrl->password = password;
+					tabCtrl->updateData( tabCtrl->hDlg, FALSE );
+				}
+
 				onGetUsersList();
 			}
 		}
@@ -239,12 +249,6 @@ void CUsersTabUsers::onEditUser( enumEditUser enOption )
 	int countError;
 	int lengthOut;
 	char bufferOut[1024];
-
-	if ( tabCtrl->user.IsEmpty() || tabCtrl->password.IsEmpty() )
-	{
-		// add error message
-		return;
-	}
 
 	try
 	{

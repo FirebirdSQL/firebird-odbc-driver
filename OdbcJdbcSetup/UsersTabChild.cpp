@@ -65,6 +65,58 @@ bool CUsersTabChild::onCommand( HWND hWnd, int nCommand )
 	return false;
 }
 
+bool CUsersTabChild::validateAccountFields()
+{
+	JString text;
+
+	tabCtrl->updateData( tabCtrl->hDlg );
+
+	do
+	{
+		if ( tabCtrl->user.IsEmpty() )
+		{
+			text = "Bad Database Account.";
+			break;
+		}
+		else
+		{
+			const char *ch = tabCtrl->user;
+
+			while( (*ch++ == ' ') );
+
+			if ( !*--ch )
+			{
+				text = "Bad Database Account.";
+				break;
+			}
+		}
+
+		if ( tabCtrl->password.IsEmpty() )
+		{
+			text = "Bad Password.";
+			break;
+		}
+		else
+		{
+			const char *ch = tabCtrl->password;
+
+			while( (*ch++ == ' ') );
+
+			if ( !*--ch )
+			{
+				text = "Bad Password.";
+				break;
+			}
+		}
+
+		return true;
+
+	} while ( false );
+
+	MessageBox( NULL, text, TEXT( "Error!" ), MB_ICONERROR | MB_OK );
+	return false;
+}
+
 bool CUsersTabChild::createDialogIndirect( CServiceTabUsers *parentTabCtrl )
 {
 	tabCtrl = parentTabCtrl;

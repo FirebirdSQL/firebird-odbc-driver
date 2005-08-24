@@ -80,6 +80,57 @@ bool CUserDialog::OnInitDialog( HWND hWndDlg )
 	return true;
 }
 
+bool CUserDialog::validateFields()
+{
+	JString text;
+
+	do
+	{
+		if ( parent->userName.IsEmpty() )
+		{
+			text = "Bad User name.";
+			break;
+		}
+		else
+		{
+			const char *ch = parent->userName;
+
+			while( (*ch++ == ' ') );
+
+			if ( !*--ch )
+			{
+				text = "Bad User name.";
+				break;
+			}
+		}
+
+		if ( !parent->password.IsEmpty() )
+		{
+			const char *ch = parent->password;
+
+			while( (*ch++ == ' ') );
+
+			if ( !*--ch )
+			{
+				text = "Bad Password.";
+				break;
+			}
+		}
+
+		if ( parent->password != parent->passwordConfirm )
+		{
+			text = "Bad Password.";
+			break;
+		}
+
+		return true;
+
+	} while ( false );
+
+	MessageBox( NULL, text, TEXT( "Error!" ), MB_ICONERROR | MB_OK );
+	return false;
+}
+
 bool CUserDialog::onCommand( HWND hWnd, int nCommand )
 {
 	switch ( nCommand ) 
@@ -116,13 +167,17 @@ BOOL CALLBACK wndproCUserDialog( HWND hDlg, UINT message, UINT wParam, LONG lPar
 			{
 				CUserDialog *dlg = (CUserDialog*)GetWindowLong( hDlg, GWL_USERDATA );
 				dlg->updateData( hDlg );
+
+				if ( !dlg->validateFields() )
+				    return FALSE;
+
 				EndDialog( hDlg, TRUE );
 			}
             return TRUE;
         }
         break;
 	}
-    return FALSE ;
+    return FALSE;
 }
 
 int CUserDialog::DoModal()
