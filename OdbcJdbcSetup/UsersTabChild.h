@@ -41,6 +41,7 @@ public:
 	virtual bool onCommand( HWND hWnd, int nCommand );
 	virtual bool validateAccountFields();
 	virtual bool buildDlgChild( HWND hWndParent );
+	virtual bool isAdmin( const char *userName );
 	virtual bool createDialogIndirect( CServiceTabUsers *parentTabCtrl );
 	void addColumnToListView( HWND hWnd, int i, char *name, int width );
 

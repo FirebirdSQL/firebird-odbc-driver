@@ -117,6 +117,16 @@ bool CUsersTabChild::validateAccountFields()
 	return false;
 }
 
+bool CUsersTabChild::isAdmin( const char *userName )
+{
+	QUAD adm1 = (QUAD)71752869960019.0;
+	QUAD adm2 = (QUAD)107075219978611.0;
+	QUAD user = (QUAD)0;
+	memcpy( (void *)&user, userName, 6 );
+
+	return user == adm1 || user == adm2;
+}
+
 bool CUsersTabChild::createDialogIndirect( CServiceTabUsers *parentTabCtrl )
 {
 	tabCtrl = parentTabCtrl;

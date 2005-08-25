@@ -158,6 +158,28 @@ BOOL CALLBACK wndproCUsersTabUsers( HWND hWndChildTab, UINT message, UINT wParam
 		child->updateData( hWndChildTab );
 		return TRUE;
 
+	case WM_NOTIFY:
+		if ( IDC_USERS_LISTVIEW_LEFT == (int) wParam )
+		{
+			LPNMHDR nm = (LPNMHDR)lParam;
+			if ( LVN_ITEMCHANGED == nm->code )
+			{
+				LPNMLISTVIEW nmItem = (LPNMLISTVIEW)lParam;
+
+				if ( ( LVIS_SELECTED | LVIS_FOCUSED ) == nmItem->uNewState )
+				{
+					JString userName;
+					ListView_GetItemText( nm->hwndFrom, nmItem->iItem, 0, userName.getBuffer(256), 256 );
+
+					bool enable = !child->isAdmin( userName );
+
+					EnableWindow( GetDlgItem( child->hDlg, IDC_BUTTON_MOD_USER ), enable );
+					EnableWindow( GetDlgItem( child->hDlg, IDC_BUTTON_DEL_USER ), enable );
+				}
+			}
+		}
+		return TRUE;
+
 	case WM_COMMAND:
 		if ( !child->validateAccountFields() )
 			return TRUE;
