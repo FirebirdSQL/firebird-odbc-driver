@@ -643,6 +643,7 @@ SQLRETURN OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targe
 		record->length = bufferLength;
 		record->isDefined = true;
 		record->isPrepared = false;
+		record->sizeColumnExtendedFetch = bufferLength;
 
 		if ( implementationRowDescriptor->isDefined() )
 		{
@@ -705,7 +706,8 @@ SQLRETURN OdbcStatement::fetchData()
 					++countFetched;
 					++rowNumber; // Should stand only here!!!
 
-					returnData();
+					if ( fetchRetData == SQL_RD_ON )
+						returnData();
 					
 					bindOffsetPtrTmp += rowBindType;
 					++nRow;
@@ -723,7 +725,8 @@ SQLRETURN OdbcStatement::fetchData()
 					++countFetched;
 					++rowNumber; // Should stand only here!!!
 
-					returnDataFromExtendedFetch();
+					if ( fetchRetData == SQL_RD_ON )
+						returnDataFromExtendedFetch();
 					
 					bindOffsetPtrInd += sizeof(SQLINTEGER);
 					++bindOffsetPtrTmp;
@@ -2376,7 +2379,19 @@ void OdbcStatement::bindOutputColumn(int column, DescRecord * recordApp)
 	}
 
 	record->fnConv = convert->getAdressFunction( record, recordApp );
-	recordApp->sizeColumnExtendedFetch = ird->getConciseSize ( recordApp->conciseType, recordApp->length );
+
+	switch ( recordApp->conciseType )
+	{
+	case SQL_C_CHAR:
+	case SQL_C_WCHAR:
+	case SQL_C_BINARY:
+		if ( recordApp->sizeColumnExtendedFetch )
+			break;
+		postError( "HY090", "Invalid string or buffer length" );
+
+	default:
+		recordApp->sizeColumnExtendedFetch = ird->getConciseSize( recordApp->conciseType, recordApp->length );
+	}
 
 //	if ( convert->isIdentity() )
 		addBindColumn ( column, record, recordApp );
