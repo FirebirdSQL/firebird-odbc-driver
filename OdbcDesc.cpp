@@ -1015,6 +1015,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 				if (record)
 				{
 					record->octetLength = (SQLINTEGER)value;
+					record->sizeColumnExtendedFetch = (SQLINTEGER)value;
 					if ( !record->length ) 
 						record->length = (SQLINTEGER)value;
 				}
