@@ -46,11 +46,23 @@ CComModule _Module;
 
 namespace OdbcJdbcLibrary {
 
+HINSTANCE instanceResourceManager = NULL;
+
 static GUID ResourceManagerGuid = 
 	{ 0x63726561, 0x7465, 0x6420, { 0x62, 0x79, 0x20, 0x56, 0x6C, 0x2E, 0x54, 0x73 } };
 
 IUnknown *transactionManager = NULL; // DTC
 IResourceManagerFactory	*resourceManagerFactory = NULL;
+
+typedef HRESULT (*DtcGetTransactionManager)( char *pszHost,
+											 char *pszTmName,
+											 REFIID rid,
+											 DWORD	dwReserved1,
+											 WORD	wcbReserved2,
+											 void *pvReserved2,
+											 void **ppvObject );
+
+DtcGetTransactionManager fnDtcGetTransactionManager = NULL;
 
 void clearAtlResource()
 {
@@ -67,19 +79,42 @@ void clearAtlResource()
 	}
 }
 
+bool OdbcConnection::IsInstalledMsTdsInterface()
+{
+	if ( !instanceResourceManager )
+	{
+		instanceResourceManager = LoadLibrary("xolehlp.dll");
+	
+		if ( !instanceResourceManager )
+			return false;
+
+		fnDtcGetTransactionManager = (DtcGetTransactionManager)GetProcAddress(
+															instanceResourceManager,
+															"DtcGetTransactionManager" );
+		if ( !fnDtcGetTransactionManager )
+		{
+			FreeLibrary( instanceResourceManager );
+			instanceResourceManager = NULL;
+			return false;
+		}
+	}
+
+	return true;
+}
+
 bool OdbcConnection::enlistTransaction( SQLPOINTER transaction )
 {
 	HRESULT hr;
 
 	if ( !transactionManager )
 	{
-		hr = DtcGetTransactionManager( NULL,
-									  NULL,
-									  IID_IUnknown,
-									  0,
-									  0,
-									  0,
-									  (LPVOID*)&transactionManager );
+		hr = fnDtcGetTransactionManager( NULL,
+										 NULL,
+										 IID_IUnknown,
+										 0,
+										 0,
+										 0,
+										 (LPVOID*)&transactionManager );
 		if ( S_OK != hr )
 			return false;
 
