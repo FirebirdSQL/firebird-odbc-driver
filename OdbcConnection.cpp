@@ -579,11 +579,17 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 	{
 		if (!password.IsEmpty())
 		{
-			char buffer[256];
-			CSecurityPassword security;
-			security.encode( (char*)(const char *)password, buffer );
 			r = appendString (r, ";"KEY_DSN_PWD"=");
-			r = appendString (r, buffer);
+
+			if ( connection->getUseAppOdbcVersion() == SQL_OV_ODBC3 )
+			{
+				char buffer[256];
+				CSecurityPassword security;
+				security.encode( (char*)(const char *)password, buffer );
+				r = appendString (r, buffer);
+			}
+			else
+				r = appendString (r, password);
 		}
 
 		if (!account.IsEmpty())
