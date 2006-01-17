@@ -1027,7 +1027,7 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 			bindOffsetPtr = &bindOffsetPtrTmp;
 			resultSet->setCurrentRowInBufferStaticCursor(rowNumber);
 
-			if( rowBindType )
+			if ( schemaFetchData )
 			{
 				convert->setBindOffsetPtrTo(bindOffsetPtr, bindOffsetPtr);
 				while ( nRow < rowsetSize && rowNumber < sqlDiagCursorRowCount )
