@@ -641,6 +641,7 @@ SQLRETURN OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targe
 		record->dataPtr = targetValuePtr;
 		record->indicatorPtr = indPtr;
 		record->length = bufferLength;
+		record->scale = 0;
 		record->isDefined = true;
 		record->isPrepared = false;
 		record->sizeColumnExtendedFetch = bufferLength;

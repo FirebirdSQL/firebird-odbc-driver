@@ -1390,8 +1390,6 @@ int OdbcDesc::getConciseSize(int type, int length)
 		return sizeof(double);
 
 	case SQL_C_BIT:
-	case SQL_C_SBIGINT:
-	case SQL_C_UBIGINT:
 	case SQL_C_BINARY:
 		return length;
 
@@ -1407,9 +1405,13 @@ int OdbcDesc::getConciseSize(int type, int length)
 	case SQL_TYPE_TIMESTAMP:
 		return sizeof(TIMESTAMP_STRUCT);
 
-	case SQL_C_NUMERIC:
-	case SQL_DECIMAL:
+	case SQL_C_SBIGINT:
+	case SQL_C_UBIGINT:
 		return 8;
+
+	case SQL_DECIMAL:
+	case SQL_C_NUMERIC:
+		return sizeof(tagSQL_NUMERIC_STRUCT);
 	}
 
 	return type;
