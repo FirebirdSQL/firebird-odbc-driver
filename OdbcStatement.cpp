@@ -506,6 +506,7 @@ void OdbcStatement::setResultSet(ResultSet * results, bool fromSystemCatalog)
 	execute = &OdbcStatement::executeStatement;
 	fetchNext = &ResultSet::nextFetch;
 	resultSet = results;
+	isResultSetFromSystemCatalog = fromSystemCatalog;
 	metaData = resultSet->getMetaData();
 	sqldataOutOffsetPtr = resultSet->getSqlDataOffsetPtr();
 
@@ -531,7 +532,6 @@ void OdbcStatement::setResultSet(ResultSet * results, bool fromSystemCatalog)
 
 	if ( fromSystemCatalog )
 	{
-		isResultSetFromSystemCatalog = true;
 		setCursorRowCount(resultSet->getCountRowsStaticCursor());
 	}
 }
