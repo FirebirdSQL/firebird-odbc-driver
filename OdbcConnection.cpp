@@ -245,7 +245,18 @@ bool moduleInit()
 	for (unsigned int n = 0; n < sizeof (supportedFunctions) / sizeof (supportedFunctions [0]); ++n)
 	{
 		int fn = supportedFunctions [n];
-		functionsArray [fn] = SQL_TRUE;
+
+		if ( fn < 100 )
+		{
+			//
+			// SQL_API_ALL_FUNCTIONS is used by an ODBC 2.x application 
+			// to determine support of ODBC 2.x and earlier functions
+			//
+			// where functionsArray should be 100 elements
+			//
+			functionsArray [fn] = SQL_TRUE;
+		}
+
 		ASSERT ((fn >> 4) < SQL_API_ODBC3_ALL_FUNCTIONS_SIZE);
 		functionsBitmap [fn >> 4] |= 1 << (fn & 0xf);
 	}
