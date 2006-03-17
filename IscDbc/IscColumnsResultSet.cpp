@@ -80,7 +80,7 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 {
 	char sql[4096] =
 		"select cast (NULL as varchar(7)) as table_cat,\n"			// 1 - VARCHAR
-				"\tcast (NULL as varchar(7)) as table_schem,\n"		// 2 - VARCHAR
+				"\tcast (tbl.rdb$owner_name as varchar(31)) as table_schem,\n"		// 2 - VARCHAR
 				"\tcast (rfr.rdb$relation_name as varchar(31)) as table_name,\n"	// 3 - VARCHAR NOT NULL
 				"\tcast (rfr.rdb$field_name as varchar(31)) as column_name,\n"		// 4 - VARCHAR NOT NULL
 				"\tfld.rdb$field_type as data_type,\n"				// 5 - SMALLINT NOT NULL
@@ -105,13 +105,17 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 				"\tfld.rdb$field_length as column_length,\n"		// 24
 				"\tfld.rdb$field_precision as column_precision,\n"	// 25
 				"\trfr.rdb$default_source as column_def\n"			// 26
-		"from rdb$relation_fields rfr, rdb$fields fld\n"
-		"where rfr.rdb$field_source = fld.rdb$field_name\n";
+		"from rdb$relation_fields rfr, rdb$fields fld, rdb$relations tbl\n"
+		"where rfr.rdb$field_source = fld.rdb$field_name\n"
+		"	and rfr.rdb$relation_name = tbl.rdb$relation_name\n";
 
 	char * ptFirst = sql + strlen(sql);
 
 	if ( !metaData->allTablesAreSelectable() )
 		metaData->existsAccess(ptFirst, " and ", "rfr", 0, "\n");
+
+	if (schemaPattern && *schemaPattern)
+		expandPattern (ptFirst, " and ","tbl.rdb$owner_name", schemaPattern);
 
 	if (tableNamePattern && *tableNamePattern)
 		expandPattern (ptFirst, " and ","rfr.rdb$relation_name", tableNamePattern);

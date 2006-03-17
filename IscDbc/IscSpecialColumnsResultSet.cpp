@@ -76,6 +76,8 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 		"from rdb$fields f\n"
 			"\tjoin rdb$relation_fields rfr\n" 
 				"\t\ton rfr.rdb$field_source = f.rdb$field_name\n"
+			"\tjoin rdb$relations tbl\n"
+				"\t\ton rfr.rdb$relation_name = tbl.rdb$relation_name\n"
 			"\tjoin rdb$indices i\n"
 				"\t\ton rfr.rdb$relation_name = i.rdb$relation_name\n"
 			"\tjoin rdb$index_segments s\n"
@@ -90,6 +92,9 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 
 	if ( !metaData->allTablesAreSelectable() )
 		metaData->existsAccess(ptFirst, "\t\tand ", "rfr", 0, "\n");
+
+	if(schema && *schema)
+		expandPattern (ptFirst, "\t\tand ","tbl.rdb$owner_name", schema);
 
 	if(table && *table)
 		expandPattern (ptFirst, "\t\tand ","rfr.rdb$relation_name", table);

@@ -50,8 +50,8 @@ IscTablePrivilegesResultSet::IscTablePrivilegesResultSet(IscDatabaseMetaData *me
 
 void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
-	char sql[2048] =  "select cast (NULL as varchar(7)) as table_cat,"						//1
-				          "cast (NULL as varchar(7)) as table_schem,"					//2
+	char sql[2048] =  "select cast (NULL as varchar(7)) as table_cat,"					//1
+				          "cast (tbl.rdb$owner_name as varchar(31)) as table_schem,"	//2
 						  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,"	//3
 						  "cast (priv.rdb$grantor as varchar(31)) as grantor,"			//4
 						  "cast (priv.rdb$user as varchar(31)) as grantee,"				//5
@@ -72,6 +72,9 @@ void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const
 						metaData->getUserAccess(),metaData->getUserType());
 		addString(ptFirst, buf, len);
 	}
+
+    if (schemaPattern && *schemaPattern)
+        expandPattern (ptFirst, " and ","tbl.rdb$owner_name", schemaPattern);
 
     if (tableNamePattern && *tableNamePattern)
         expandPattern (ptFirst, " and ","tbl.rdb$relation_name", tableNamePattern);

@@ -57,14 +57,19 @@ IscIndexInfoResultSet::IscIndexInfoResultSet(IscDatabaseMetaData *metaData)
 
 }
 
+#define SetWhereOrAnd(stat) \
+	(stat ? (stat = false,szWhere) : szAnd)
+
 void IscIndexInfoResultSet::getIndexInfo(const char * catalog, 
 										 const char * schemaPattern, 
 										 const char * tableNamePattern, 
 										 bool unique, bool approximate)
 {
+	const char *szWhere = " where ";
+	const char *szAnd = " and ";
 	char sqlQuery[4096] =
 		"select cast(NULL as varchar(7)) as table_cat,\n"						// 1
-				"\tcast(NULL as varchar(7)) as table_schem,\n"					// 2
+				"\tcast(rl.rdb$owner_name as varchar(31)) as table_schem,\n"	// 2
 				"\tcast(rl.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
 				"\tcast(0 as smallint) as non_unique,\n"						// 4
 				"\tcast(NULL as varchar(31)) as index_qualifier,\n"				// 5
@@ -83,7 +88,7 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 	char sql[2048] =
 		"\tunion\n" 
 		"select cast(NULL as varchar(7)) as table_cat,\n"						// 1
-				"\tcast(NULL as varchar(7)) as table_schem,\n"					// 2
+				"\tcast(tbl.rdb$owner_name as varchar(31)) as table_schem,\n"	// 2
 				"\tcast(idx.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
 				"\tcast((1-idx.rdb$unique_flag) as smallint) as non_unique,\n"	// 4
 				"\tcast(idx.rdb$index_name as varchar(31)) as index_qualifier,\n"	// 5
@@ -98,29 +103,41 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 				"\tcast(idx.rdb$index_type as smallint) as index_type,\n"		// 14
 				"\tcast(relc.rdb$constraint_type as varchar(31)) as constraint_type\n"	// 15
 		"from rdb$indices idx\n"
+			"\tleft join rdb$relations tbl on tbl.rdb$relation_name = idx.rdb$relation_name\n"
 			"\tjoin rdb$index_segments seg on idx.rdb$index_name = seg.rdb$index_name\n"
 			"\tleft join rdb$relation_constraints relc on ( relc.rdb$index_name = idx.rdb$index_name\n";
 
 	char * ptFirst = sqlQuery + strlen(sqlQuery);
 	char * ptSecond = sql + strlen(sql);
+	bool firstWhere = true;
+	bool secondWhere = true;
 
 	if (unique)
+	{
 		addString(ptSecond, "\t\t\tand relc.rdb$relation_name = idx.rdb$relation_name\n"
 							"\t\t\tand ( relc.rdb$constraint_type = 'PRIMARY KEY' or relc.rdb$constraint_type = 'UNIQUE' ) )\n"
 							"where idx.rdb$unique_flag = 1\n");
+		secondWhere = false;
+	}
 	else
 		addString(ptSecond, "\t\t\tand relc.rdb$relation_name = idx.rdb$relation_name )\n");
 
+	if (schemaPattern && *schemaPattern)
+	{
+		expandPattern (ptFirst, SetWhereOrAnd( firstWhere ),"rl.rdb$owner_name", schemaPattern);
+		expandPattern (ptSecond, SetWhereOrAnd( secondWhere ),"tbl.rdb$owner_name", schemaPattern);
+	}
+
 	if (tableNamePattern && *tableNamePattern)
 	{
-		expandPattern (ptFirst, " where ","rl.rdb$relation_name", tableNamePattern);
-		expandPattern (ptSecond, unique ? " and " : " where ","idx.rdb$relation_name", tableNamePattern);
+		expandPattern (ptFirst, SetWhereOrAnd( firstWhere ),"rl.rdb$relation_name", tableNamePattern);
+		expandPattern (ptSecond, SetWhereOrAnd( secondWhere ),"idx.rdb$relation_name", tableNamePattern);
+	}
 
-		if ( !metaData->allTablesAreSelectable() )
-		{
-			metaData->existsAccess(ptFirst, " and ", "rl", 0, "\n");
-			metaData->existsAccess(ptSecond, " and ", "idx", 0, "\n");
-		}
+	if ( !metaData->allTablesAreSelectable() )
+	{
+		metaData->existsAccess(ptFirst, SetWhereOrAnd( firstWhere ), "rl", 0, "\n");
+		metaData->existsAccess(ptSecond, SetWhereOrAnd( secondWhere ), "idx", 0, "\n");
 	}
 
 	addString(ptSecond, " order by 4, 7, 15, 5, 6, 8\n");

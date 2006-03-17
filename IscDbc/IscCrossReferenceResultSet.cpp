@@ -57,11 +57,11 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 {
 	char sql[4096] =
 		"select cast (NULL as varchar(7)) as pktable_cat,\n"	// 1
-				" cast (NULL as varchar(7)) as pktable_schem,\n"// 2
+				" cast (ptbl.rdb$owner_name as varchar(31)) as pktable_schem,\n"	// 2
 				" cast (pidx.rdb$relation_name as varchar(31)) as pktable_name,\n"	// 3
 				" cast (pseg.rdb$field_name as varchar(31)) as pkcolumn_name,\n"	// 4
 				" cast (NULL as varchar(7)) as fktable_cat,\n"	// 5
-				" cast (NULL as varchar(7)) as fktable_schem,\n"// 6
+				" cast (ftbl.rdb$owner_name as varchar(31)) as fktable_schem,\n"// 6
 				" cast (fidx.rdb$relation_name as varchar(31)) as fktable_name,\n"	// 7
 				" cast (fseg.rdb$field_name as varchar(31)) as fkcolumn_name,\n"	// 8
 				" cast (pseg.rdb$field_position+1 as smallint) as key_seq,\n"		// 9
@@ -74,12 +74,16 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 				" refc.rdb$delete_rule\n"						// 16
 
 		"from rdb$relation_constraints fkey,\n"
+		"     rdb$relations ftbl,\n"
+		"     rdb$relations ptbl,\n"
 		"     rdb$indices fidx,\n"
 		"     rdb$indices pidx,\n"
 		"     rdb$index_segments fseg,\n"
 		"     rdb$index_segments pseg,\n"
 		"     rdb$ref_constraints refc\n"
-		"where fkey.rdb$constraint_type = 'FOREIGN KEY'\n";
+		"where fkey.rdb$constraint_type = 'FOREIGN KEY'\n"
+		"     and fidx.rdb$relation_name = ftbl.rdb$relation_name\n"
+		"     and pidx.rdb$relation_name = ptbl.rdb$relation_name\n";
 
 	char * ptFirst = sql + strlen(sql);
 
@@ -96,8 +100,14 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 		"  and pseg.rdb$field_position = fseg.rdb$field_position"
 		"  and refc.rdb$constraint_name = fkey.rdb$constraint_name" );
 
+	if (primarySchema && *primarySchema)
+		expandPattern (ptFirst, " and ","ptbl.rdb$owner_name", primarySchema);
+
 	if (primaryTable && *primaryTable)
 		expandPattern (ptFirst, " and ","pidx.rdb$relation_name", primaryTable);
+
+	if (foreignSchema && *foreignSchema)
+		expandPattern (ptFirst, " and ","ftbl.rdb$owner_name", foreignSchema);
 
 	if (foreignTable && *foreignTable)
 		expandPattern (ptFirst, " and ","fkey.rdb$relation_name", foreignTable);

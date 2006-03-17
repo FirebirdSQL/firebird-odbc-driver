@@ -82,7 +82,7 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 {
 	char sql[4096] =
 		"select cast (NULL as varchar(7)) as procedure_cat,\n"		// 1
-				"\tcast (NULL as varchar(7)) as procedure_schem,\n"	// 2
+				"\tcast (p.rdb$owner_name as varchar(31)) as procedure_schem,\n"		// 2
 				"\tcast (pp.rdb$procedure_name as varchar(31)) as procedure_name,\n"	// 3
 				"\tcast (pp.rdb$parameter_name as varchar(31)) as column_name,\n"		// 4
 				"\tpp.rdb$parameter_type as column_type,\n"			// 5
@@ -102,13 +102,16 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 				"\tcast ('YES' as varchar(3)) as is_nullable,\n"	// 19
 				"\tf.rdb$field_precision as column_precision,\n"	// 20
 				"\tf.rdb$description as remarks_blob\n"				// 21
-		"from rdb$procedure_parameters pp, rdb$fields f\n"
-		"where pp.rdb$field_source = f.rdb$field_name\n";
+		"from rdb$procedure_parameters pp, rdb$fields f, rdb$procedures p\n"
+		"where pp.rdb$field_source = f.rdb$field_name and p.rdb$procedure_name = pp.rdb$procedure_name\n";
 
 	char * ptFirst = sql + strlen(sql);
 
 	if ( sqlType.appOdbcVersion == 2 ) // SQL_OV_ODBC2
 		addString(ptFirst, " and pp.rdb$parameter_type = 0\n" );
+
+	if (schemaPattern && *schemaPattern)
+		expandPattern (ptFirst, " and ","p.rdb$owner_name", schemaPattern);
 
 	if (procedureNamePattern && *procedureNamePattern)
 		expandPattern (ptFirst, " and ","pp.rdb$procedure_name", procedureNamePattern);
