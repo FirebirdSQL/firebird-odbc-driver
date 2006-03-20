@@ -48,7 +48,7 @@ IscTablesResultSet::IscTablesResultSet(IscDatabaseMetaData *metaData)
 
 void IscTablesResultSet::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char * * types)
 {
-	char sql[2048] =  "select cast (' ' as varchar(7)) as table_cat,\n"				// 1
+	char sql[2048] =  "select cast (NULL as varchar(7)) as table_cat,\n"				// 1
 			          "cast (tbl.rdb$owner_name as varchar(31)) as table_schem,\n"		// 2
 					  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
 					  "cast ('TABLE' as varchar(13)) as table_type,\n"					// 4
@@ -60,16 +60,18 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 
 	char * ptFirst = sql + strlen(sql);
 	const char *sep = " where (";
+	bool firstWhere = true;
 
 	if (schemaPattern && *schemaPattern)
 	{
 		expandPattern (ptFirst, " where ","tbl.rdb$owner_name", schemaPattern);
 		sep = " and (";
+		firstWhere = false;
 	}
 
 	if (tableNamePattern && *tableNamePattern)
 	{
-		expandPattern (ptFirst, " where ","tbl.rdb$relation_name", tableNamePattern);
+		expandPattern (ptFirst, firstWhere ? " where " : " and ", "tbl.rdb$relation_name", tableNamePattern);
 		sep = " and (";
 	}
 
