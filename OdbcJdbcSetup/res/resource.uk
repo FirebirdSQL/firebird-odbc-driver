@@ -146,4 +146,13 @@ IDS_ERROR_MESSAGE_20, // "Open database '%s' failed"
 ,
 IDS_BUTTON_SERVICES, // "Services"
 	"Сервiс"
+,
+IDS_USESCHEMA_NULL, // "Set null field SCHEMA"
+	"Поле SCHEMA не використовуеться"
+,
+IDS_USESCHEMA_DEL, // "Remove SCHEMA from SQL query"
+	"Видалити поле SCHEMA з SQL запита"
+,
+IDS_USESCHEMA_FULL, // "Use full SCHEMA"
+	"Поле SCHEMA контролюе сервер"
 }
