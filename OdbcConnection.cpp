@@ -519,6 +519,8 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 
 			defOptions |= DEF_AUTOQUOTED;
 		}
+		else if ( IS_KEYWORD( KEY_DSN_USESCHEMA ) || IS_KEYWORD( SETUP_QUOTED ) )
+			useSchemaIdentifier = value;
 		else if ( IS_KEYWORD( "ODBC" ) )
 			;
 		else
@@ -1555,6 +1557,9 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 		properties->putValue ("autoQuoted", autoQuotedIdentifier ? "Y" : "N");
 		properties->putValue ("databaseAlways", databaseAlways ? "Y" : "N");
 
+		if (useSchemaIdentifier)
+			properties->putValue ("useSchema", useSchemaIdentifier);
+
 		if (pageSize)
 			properties->putValue ("pagesize", pageSize);
 
@@ -1704,6 +1709,9 @@ void OdbcConnection::expandConnectParameters()
 				dialect3 = false;
 		}
 
+		if (useSchemaIdentifier.IsEmpty())
+			useSchemaIdentifier = readAttribute(SETUP_USESCHEMA);
+
 		if ( !(defOptions & DEF_QUOTED) )
 		{
 			options = readAttribute(SETUP_QUOTED);
@@ -1788,6 +1796,9 @@ void OdbcConnection::expandConnectParameters()
 				dialect3 = false;
 		}
 
+		if (useSchemaIdentifier.IsEmpty())
+			useSchemaIdentifier = readAttributeFileDSN (SETUP_USESCHEMA);
+
 		if ( !(defOptions & DEF_QUOTED) )
 		{
 			options = readAttributeFileDSN (SETUP_QUOTED);
@@ -1839,6 +1850,7 @@ void OdbcConnection::saveConnectParameters()
 	writeAttributeFileDSN (SETUP_QUOTED, quotedIdentifier ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_SENSITIVE, sensitiveIdentifier ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_AUTOQUOTED, autoQuotedIdentifier ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_USESCHEMA, useSchemaIdentifier);
 
 	char buffer[256];
 	CSecurityPassword security;

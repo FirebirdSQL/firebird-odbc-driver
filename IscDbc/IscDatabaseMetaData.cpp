@@ -330,6 +330,11 @@ int IscDatabaseMetaData::getDatabasePageSize()
 	return connection->attachment->pageSize;
 	}
 
+const int IscDatabaseMetaData::getUseSchemaIdentifier()
+	{
+	return connection->attachment->getUseSchemaIdentifier();
+	}
+
 const char* IscDatabaseMetaData::getDriverName()
 	{
 	return "IscDbc";

@@ -35,7 +35,7 @@ struct TranslateString
 	{
 		int		id;
 		char	*string;
-	} table[43];
+	} table[64];
 };
 
 #define _TR( id, msg ) ( currentCP == -1 ? msg : translate[currentCP].table[id].string )
@@ -49,9 +49,11 @@ class CDsnDialog
 
 	const char** drivers;
 	const char** charsets;
+	const char** useshemas;
 
 public:
-	CDsnDialog(const char **jdbcDrivers, const char **jdbcCharsets);
+	CDsnDialog( const char **jdbcDrivers, const char **jdbcCharsets,
+				const char **useShemasIdentifier );
 	~CDsnDialog();
 
 // Dialog Data
@@ -64,6 +66,7 @@ public:
 	JString	m_driver;
 	JString	m_role;
 	JString	m_charset;
+	JString	m_useschema;
 	BOOL	m_readonly;
 	BOOL	m_nowait;
 	BOOL	m_dialect3;

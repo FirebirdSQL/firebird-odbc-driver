@@ -59,6 +59,7 @@
 #define QUOTE				16
 #define IDENT				32
 
+#define IS_POINT(p)			((p) == '.')
 #define IS_QUOTE(p)			(charTable [(p)] == QUOTE)
 #define IS_WHITE(p)			(charTable [(p)] == WHITE)
 #define IS_LETTER(p)		(charTable [(p)] & LETTER)
@@ -66,6 +67,9 @@
 #define IS_END_TOKEN(p)		((p) == '\0' || (charTable [(p)] & (PUNCT | WHITE)))
 #define SKIP_WHITE(p)		while (charTable [*p] == WHITE) ++p
 #define SKIP_NO_WHITE(p)	while ( *p && charTable [*p] != WHITE) ++p
+
+#define TOKEN_LENGTH(token)	( sizeof ( token ) - 1 )
+#define IS_MATCH(str,token)	( !strncasecmp( str, token, TOKEN_LENGTH( token ) ) && IS_END_TOKEN(*(str + TOKEN_LENGTH( token ) ) ) )
 
 #define FB_COMPILER_MESSAGE_STR(x) #x
 #define FB_COMPILER_MESSAGE_STR2(x)   FB_COMPILER_MESSAGE_STR(x)

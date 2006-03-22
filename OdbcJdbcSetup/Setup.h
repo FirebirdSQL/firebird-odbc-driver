@@ -61,6 +61,7 @@ public:
 	JString		quoted;
 	JString		sensitive;
 	JString		autoQuoted;
+	JString		useschema;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

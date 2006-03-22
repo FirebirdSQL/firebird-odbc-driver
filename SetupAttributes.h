@@ -46,6 +46,7 @@
 #define SETUP_READONLY_TPB	"ReadOnly"
 #define SETUP_NOWAIT_TPB	"NoWait"
 #define SETUP_DIALECT		"Dialect"
+#define SETUP_USESCHEMA		"UseSchemaIdentifier"
 #define SETUP_QUOTED		"QuotedIdentifier"
 #define SETUP_SENSITIVE		"SensitiveIdentifier"
 #define SETUP_AUTOQUOTED	"AutoQuotedIdentifier"
@@ -59,6 +60,7 @@
 #define KEY_DSN_PWD			"PWD"
 #define KEY_DSN_CHARSET		"CHARSET"
 #define KEY_DSN_QUOTED		"QUOTED"
+#define KEY_DSN_USESCHEMA	"USESCHEMA"
 
 #define LEN_KEY(keydsn) sizeof(keydsn) - 1
 

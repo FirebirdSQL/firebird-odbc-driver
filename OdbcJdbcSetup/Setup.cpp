@@ -83,6 +83,14 @@ static const char *charsets []=
 	"WIN1250", "WIN1251", "WIN1252", "WIN1253", "WIN1254", NULL
 };
 
+static const char *useshemas []= 
+{ 
+	"Set null field SCHEMA",
+	"Remove SCHEMA from SQL query",
+	"Use full SCHEMA",
+	NULL
+};
+
 void MessageBoxError(const char * stageExecuted, char * pathFile);
 void MessageBoxInstallerError(const char * stageExecuted, char * pathOut);
 bool CopyFile(char * sourceFile, char * destFile);
@@ -535,7 +543,7 @@ bool Setup::configureDialog()
 	if ( jdbcDriver.IsEmpty() )
 		jdbcDriver = drivers [0];
 
-	CDsnDialog dialog (drivers, charsets);
+	CDsnDialog dialog( drivers, charsets, useshemas );
 	dialog.m_name = dsn;
 	dialog.m_database = dbName;
 	dialog.m_client = client;
@@ -544,6 +552,7 @@ bool Setup::configureDialog()
 	dialog.m_driver = jdbcDriver;
 	dialog.m_role = role;
 	dialog.m_charset = charset;
+	dialog.m_useschema = useschema;
 
 	if ( IS_CHECK_YES(*(const char*)readonlyTpb) )
 		dialog.m_readonly = TRUE;
@@ -586,6 +595,7 @@ bool Setup::configureDialog()
 	jdbcDriver = dialog.m_driver;
 	role = dialog.m_role;
 	charset = dialog.m_charset;
+	useschema = dialog.m_useschema;
 
 	if( dialog.m_readonly ) readonlyTpb = "Y";
 	else readonlyTpb = "N";
@@ -625,6 +635,7 @@ void Setup::writeAttributes()
 	writeAttribute (SETUP_QUOTED, quoted);
 	writeAttribute (SETUP_SENSITIVE, sensitive);
 	writeAttribute (SETUP_AUTOQUOTED, autoQuoted);
+	writeAttribute( SETUP_USESCHEMA, useschema );
 
 	char buffer[256];
 	CSecurityPassword security;
@@ -646,6 +657,7 @@ void Setup::readAttributes()
 	quoted = readAttribute (SETUP_QUOTED);
 	sensitive = readAttribute (SETUP_SENSITIVE);
 	autoQuoted = readAttribute (SETUP_AUTOQUOTED);
+	useschema = readAttribute( SETUP_USESCHEMA );
 
 	JString pass = readAttribute (SETUP_PASSWORD);
 	if ( pass.length() > 40 )

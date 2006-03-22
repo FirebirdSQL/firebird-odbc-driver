@@ -35,12 +35,21 @@ static const char *d3_1[] =
 	NULL
 };
 
+static const char *useshemas []= 
+{ 
+	"0 - Set null field SCHEMA",
+	"1 - Remove SCHEMA from SQL query",
+	"2 - Use full SCHEMA",
+	NULL
+};
+
 static const char *szHelpPassword = "Your Password will be used to gain additional information from the DBMS and will not be saved anywhere.";
 static const char *szHelpReadOnly = "Init transaction (default Write)";
 static const char *szHelpNoWait = "Init transaction (default Wait)";
 static const char *szHelpQuotedIdentifier = "Quoted identifier (default Yes)";
 static const char *szHelpSensitiveIdentifier = "Sensitive identifier (default No)";
 static const char *szHelpAutoQuotedIdentifier = "On auto quoted identifier (default No)";
+static const char *szHelpUseSchemaIdentifier = "Init use SCHEMA (default SCHEMA set NULL)";
 
 int ODBCINSTGetProperties( HODBCINSTPROPERTY hLastProperty )
 { 
@@ -119,8 +128,8 @@ int ODBCINSTGetProperties( HODBCINSTPROPERTY hLastProperty )
     hLastProperty->pszHelp	    = (char *)strdup( szHelpNoWait );
     hLastProperty->nPromptType      = ODBCINST_PROMPTTYPE_COMBOBOX;
     hLastProperty->bRefresh	    = TRUE;
-    hLastProperty->aPromptData      = (char**)malloc( sizeof(aYesNo) );
-    memcpy( hLastProperty->aPromptData, d3_1, sizeof(aYesNo) );
+    hLastProperty->aPromptData      = (char**)malloc( sizeof(d3_1) );
+    memcpy( hLastProperty->aPromptData, d3_1, sizeof(d3_1) );
     strncpy( hLastProperty->szName, SETUP_DIALECT, INI_MAX_PROPERTY_NAME );
     strcpy( hLastProperty->szValue, "3" );
 
@@ -156,6 +165,17 @@ int ODBCINSTGetProperties( HODBCINSTPROPERTY hLastProperty )
     memcpy( hLastProperty->aPromptData, aYesNo, sizeof(aYesNo) );
     strncpy( hLastProperty->szName, SETUP_AUTOQUOTED, INI_MAX_PROPERTY_NAME );
     strcpy( hLastProperty->szValue, "No" );
+
+    hLastProperty->pNext            = (HODBCINSTPROPERTY)malloc( sizeof(ODBCINSTPROPERTY) );
+    hLastProperty                   = hLastProperty->pNext;
+    memset( hLastProperty, 0, sizeof(ODBCINSTPROPERTY) );
+    hLastProperty->pszHelp	    = (char *)strdup( szHelpUseSchemaIdentifier );
+    hLastProperty->nPromptType      = ODBCINST_PROMPTTYPE_COMBOBOX;
+    hLastProperty->bRefresh	    = TRUE;
+    hLastProperty->aPromptData      = (char**)malloc( sizeof(useshemas) );
+    memcpy( hLastProperty->aPromptData, useshemas, sizeof(useshemas) );
+    strncpy( hLastProperty->szName, SETUP_USESCHEMA, INI_MAX_PROPERTY_NAME );
+    strcpy( hLastProperty->szValue, useshemas[0] );
 
     return 1;
 }

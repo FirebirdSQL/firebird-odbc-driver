@@ -156,6 +156,9 @@ bool IscIndexInfoResultSet::nextFetch()
 	if (!IscResultSet::nextFetch())
 		return false;
 
+	if ( !metaData->getUseSchemaIdentifier() )
+		sqlda->setNull(2);
+
 	short type = sqlda->getShort(7);
 
 	if( type == 0 ) // #define SQL_TABLE_STAT 0

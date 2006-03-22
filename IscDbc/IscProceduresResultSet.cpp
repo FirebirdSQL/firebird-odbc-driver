@@ -90,6 +90,9 @@ bool IscProceduresResultSet::nextFetch()
 	if (!IscResultSet::nextFetch())
 		return false;
 
+	if ( !metaData->getUseSchemaIdentifier() )
+		sqlda->setNull(2);
+
 	if ( sqlda->isNull(4) )
 		sqlda->updateShort(4, 0);
 	if ( sqlda->isNull(5) )

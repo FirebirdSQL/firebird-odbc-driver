@@ -89,6 +89,9 @@ bool IscColumnPrivilegesResultSet::nextFetch()
 	if (!IscResultSet::nextFetch())
 		return false;
 
+	if ( !metaData->getUseSchemaIdentifier() )
+		sqlda->setNull(2);
+
 	int len1, len2;
 	const char *grantor = sqlda->getVarying(5, len1);
 	const char *grantee = sqlda->getVarying(6, len2);

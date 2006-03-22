@@ -42,6 +42,7 @@ public:
 	int getUserType();
 	void existsAccess(char *& stringOut, const char *prefix, const char * relobject, int typeobject, const char *suffix);
 	int getDatabaseDialect();
+	inline int getUseSchemaIdentifier();
 	JString getIscStatusText (ISC_STATUS *statusVector);
 	int release();
 	void addRef();
@@ -62,6 +63,7 @@ public:
 	int			pageSize;
 	int			serverBaseLevel;	
 	int			databaseDialect;
+	int			useSchemaIdentifier;
 	bool		quotedIdentifier;
 	bool		sensitiveIdentifier;
 	bool		autoQuotedIdentifier;
@@ -72,6 +74,12 @@ public:
 	bool		isRoles;
 	Mutex		mutex;
 };
+
+inline
+int Attachment::getUseSchemaIdentifier()
+{
+	return useSchemaIdentifier;
+}
 
 }; // end namespace IscDbcLibrary
 

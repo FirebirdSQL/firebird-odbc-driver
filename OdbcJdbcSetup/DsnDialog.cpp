@@ -101,7 +101,9 @@ HINSTANCE instanceHtmlHelp = NULL;
 BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam);
 void ProcessCDError(DWORD dwErrorCode, HWND hWnd);
 
-CDsnDialog::CDsnDialog(const char **jdbcDrivers, const char **jdbcCharsets)
+CDsnDialog::CDsnDialog( const char **jdbcDrivers,
+						const char **jdbcCharsets,
+						const char **useShemasIdentifier )
 {
 	hwndHtmlHelp = NULL;
 
@@ -113,6 +115,7 @@ CDsnDialog::CDsnDialog(const char **jdbcDrivers, const char **jdbcCharsets)
 	m_driver = "";
 	m_role = "";
 	m_charset = "";
+	m_useschema = "0";
 	m_readonly = FALSE;
 	m_nowait = FALSE;
 	m_dialect3 = TRUE;
@@ -122,6 +125,7 @@ CDsnDialog::CDsnDialog(const char **jdbcDrivers, const char **jdbcCharsets)
 
 	drivers = jdbcDrivers;
 	charsets = jdbcCharsets;
+	useshemas = useShemasIdentifier;
 	m_ptDsnDialog = this;
 }
 
@@ -173,6 +177,15 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 		else
 			GetWindowText(hWnd, m_charset.getBuffer(256), 256+1);
 
+		hWnd = GetDlgItem(hDlg, IDC_COMBOBOX_USE_SCHEMA);
+		
+		int selectUse = SendMessage( hWnd, CB_GETCURSEL, (WPARAM)0, (LPARAM)0 );
+
+		if ( selectUse == CB_ERR )
+			selectUse = 0;
+
+		*m_useschema.getBuffer(1) = selectUse + '0';
+
         m_readonly = SendDlgItemMessage(hDlg, IDC_CHECK_READ, BM_GETCHECK, 0, 0);
         m_nowait = SendDlgItemMessage(hDlg, IDC_CHECK_NOWAIT, BM_GETCHECK, 0, 0);
 
@@ -203,6 +216,18 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 			SetWindowText(hWnd, (const char *)*charsets);
 		else if (SendMessage(hWnd, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)(const char *)m_charset) == CB_ERR)
 			SetWindowText(hWnd, (const char *)m_charset);
+
+		hWnd = GetDlgItem(hDlg, IDC_COMBOBOX_USE_SCHEMA);
+
+		int selectUse = *m_useschema.getString() - '0';
+
+		selectUse = SendMessage( hWnd, CB_SETCURSEL, (WPARAM)selectUse, (LPARAM)0 );
+		
+		if ( selectUse == CB_ERR )
+			selectUse = 0;
+
+		if ( selectUse == CB_ERR || m_useschema.IsEmpty() )
+			SetWindowText( hWnd, _TR( IDS_USESCHEMA_NULL, (const char *)*useshemas ) );
 
         CheckDlgButton(hDlg, IDC_CHECK_READ, m_readonly);
         CheckDlgButton(hDlg, IDC_CHECK_NOWAIT, m_nowait);
@@ -449,6 +474,14 @@ BOOL CDsnDialog::OnInitDialog(HWND hDlg)
 
 	for (const char **charset = charsets; *charset; ++charset)
 		SendMessage(hWndBox, CB_ADDSTRING, 0, (LPARAM)*charset);
+
+	hWndBox = GetDlgItem( hDlg, IDC_COMBOBOX_USE_SCHEMA );
+
+	const char **useshema = useshemas;
+
+	SendMessage( hWndBox, CB_ADDSTRING, 0, (LPARAM)_TR( IDS_USESCHEMA_NULL, *useshema++ ) );
+	SendMessage( hWndBox, CB_ADDSTRING, 1, (LPARAM)_TR( IDS_USESCHEMA_DEL , *useshema++ ) );
+	SendMessage( hWndBox, CB_ADDSTRING, 2, (LPARAM)_TR( IDS_USESCHEMA_FULL, *useshema++ ) );
 
 	return TRUE;
 }
@@ -833,7 +866,7 @@ int DialogBoxDynamic()
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 33;         // NumberOfItems
+	*p++ = 34;         // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
@@ -874,13 +907,14 @@ int DialogBoxDynamic()
     TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_OPTIONS, "Options" ), IDC_STATIC,7,127,296,68 )
     TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_INIT_TRANSACTION, "Transaction" ), IDC_STATIC,10,135,142,33 )
     TMP_LTEXT         ( _TR( IDS_STATIC_CLIENT, "Client" ), IDC_STATIC,7,52,218,8 )
-    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_DIALECT, "Dialect" ), IDC_STATIC,10,169,142,20 )
-    TMP_RADIOCONTROL  ( "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,61,177,16,10 )
-    TMP_RADIOCONTROL  ( "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,91,177,16,10 )
-    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_EXT_PROPERTY, "Extended identifier properties" ), IDC_STATIC,154,135,146,54 )
-    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_QUOTED, "quoted identifiers" ), IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,146,139,9 )
-    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_SENSITIVE, "sensitive identifier" ), IDC_CHECK_SENSITIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,160,139,9 )
-    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_AUTOQUOTED, "autoquoted identifier" ), IDC_CHECK_AUTOQUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,175,139,9 )
+    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_DIALECT, "Dialect" ), IDC_STATIC,10,169,142,23 )
+    TMP_RADIOCONTROL  ( "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,61,179,16,10 )
+    TMP_RADIOCONTROL  ( "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,91,179,16,10 )
+    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_EXT_PROPERTY, "Extended identifier properties" ), IDC_STATIC,154,135,146,57 )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_QUOTED, "quoted identifiers" ), IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,145,139,9 )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_SENSITIVE, "sensitive identifier" ), IDC_CHECK_SENSITIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,155,139,9 )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_AUTOQUOTED, "autoquoted identifier" ), IDC_CHECK_AUTOQUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,165,139,9 )
+    TMP_COMBOBOX      ( IDC_COMBOBOX_USE_SCHEMA,159,176,136,60,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
     TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_TEST_CONNECTION, "Test connection" ), IDC_TEST_CONNECTION,206,106,97,18 )
     TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_HELP_ODBC, "Help" ), IDC_HELP_ODBC,243,200,60,14 )
 

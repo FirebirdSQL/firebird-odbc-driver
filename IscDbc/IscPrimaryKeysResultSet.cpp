@@ -71,4 +71,15 @@ void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * 
 	numberColumns = 6;
 }
 
+bool IscPrimaryKeysResultSet::nextFetch()
+{
+	if (!IscResultSet::nextFetch())
+		return false;
+
+	if ( !metaData->getUseSchemaIdentifier() )
+		sqlda->setNull(2);
+
+	return true;
+}
+
 }; // end namespace IscDbcLibrary

@@ -98,6 +98,7 @@ public:
 	JString		pageSize;
 	int			optTpb;
 	int			defOptions;
+	JString		useSchemaIdentifier;
 	bool		quotedIdentifier;
 	bool		sensitiveIdentifier;
 	bool		autoQuotedIdentifier;

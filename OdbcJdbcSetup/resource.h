@@ -22,6 +22,7 @@
 #define IDC_CHECK_AUTOQUOTED            1016
 #define IDC_TEST_CONNECTION             1017
 #define IDC_HELP_ODBC                   1018
+#define IDC_COMBOBOX_USE_SCHEMA         1019
 #define IDC_STATIC                      -1
 
 //
@@ -70,3 +71,6 @@
 #define IDS_ERROR_MESSAGE_14		40
 #define IDS_ERROR_MESSAGE_15		41
 #define IDS_ERROR_MESSAGE_16		42
+#define IDS_USESCHEMA_NULL              43
+#define IDS_USESCHEMA_DEL               44
+#define IDS_USESCHEMA_FULL              45

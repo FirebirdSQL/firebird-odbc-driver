@@ -479,6 +479,236 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 	return -1;
 }
 
+class CSchemaIdentifier
+{
+public:
+	char	*stringSql;
+	bool	deleteNode;
+	bool	quotedNode;
+	int		begNameNode;
+	short	lengthNameNode;
+
+	CSchemaIdentifier()
+	{
+		remove();
+	}
+	void remove()
+	{ 
+		stringSql = NULL;
+		deleteNode = false;
+		quotedNode = false;
+		begNameNode = 0;
+		lengthNameNode = 0;
+	}
+	CSchemaIdentifier & operator =(const CSchemaIdentifier & src)
+	{ 
+		stringSql = src.stringSql;
+		deleteNode = src.deleteNode;
+		quotedNode = src.quotedNode;
+		begNameNode = src.begNameNode;
+		lengthNameNode = src.lengthNameNode;
+		return  *this;
+	}
+};
+
+typedef MList<CSchemaIdentifier> ListSchemaIdentifier;
+
+bool IscConnection::removeSchemaFromSQL( char *strSql, int lenSql, char *strSqlOut, long &lenSqlOut )
+{
+	ListSchemaIdentifier listSchemaIdentifierAll;
+	ListSchemaIdentifier listSchemaIdentifierTbl;
+	int countNodesShema = 0;
+	int countTblNodesShema = 0;
+	int statysModify = 0;
+	int statusQuote = 0;
+	char *beg = strSql;
+	char *ptIn = strSql;
+	char *ptInEnd = strSql + lenSql;
+	char *ptOut = strSqlOut;
+	char quote;
+	bool success = true;
+	bool defTable = false;
+
+	lenSqlOut = lenSql;
+
+	SKIP_WHITE ( ptIn );
+
+	if ( !IS_MATCH( ptIn, "SELECT" )
+		&& !IS_MATCH( ptIn, "UPDATE" )
+		&& !IS_MATCH( ptIn, "INSERT" )
+		&& !IS_MATCH( ptIn, "DELETE" ) )
+		return false;
+
+	while ( ptIn < ptInEnd )
+	{
+		if ( !statusQuote )
+		{
+			if ( IS_MATCH( ptIn, "FROM" ) )
+			{
+				ptIn += 4;
+				defTable = true;
+			}
+			else if ( defTable && IS_MATCH( ptIn, "WHERE" ) )
+			{
+				ptIn += 5;
+				defTable = false;
+			}
+			else if ( defTable && IS_MATCH( ptIn, "ON" ) )
+			{
+				ptIn += 2;
+				defTable = false;
+			}
+			else if ( IS_POINT( *ptIn ) && (*ptIn + 1) != '*' )
+			{
+				do
+				{
+					bool digit = true;
+					char quoteTmp = 0;
+					char *pt = ptIn - 1;
+
+					if ( IS_QUOTE( *pt ) )
+					{
+						quoteTmp = *pt--;
+						digit = false;
+						while ( pt >= beg && IS_IDENT( *pt ) )
+						{
+							--pt;
+						}
+						if ( *pt != quoteTmp )
+						{
+							success = false;
+							break;
+						}
+					}
+					else
+					{
+						while ( pt >= beg && IS_IDENT( *pt ) )
+						{
+							if ( digit && !ISDIGIT( *pt ) )
+								digit = false;
+							--pt;
+						}
+
+						++pt;
+					}
+
+					if ( !digit )
+					{
+						bool deleteNode = false;
+						char *ptEnd = pt;
+
+						pt = ptIn + 1;
+
+						while ( !(IS_END_TOKEN( *pt )) )
+						{
+							if ( IS_POINT( *pt ) && !deleteNode )
+							{
+								deleteNode = true;
+							}
+							++pt;
+						}
+
+						CSchemaIdentifier &node = listSchemaIdentifierAll( countNodesShema++ );
+
+						node.stringSql = strSql;
+						node.deleteNode = deleteNode;
+						node.quotedNode = !!quoteTmp;
+						node.begNameNode = ptEnd - beg;
+						node.lengthNameNode = ptIn - ptEnd;
+
+						if ( defTable )
+						{
+							CSchemaIdentifier &nodeDef = listSchemaIdentifierTbl( countTblNodesShema++ );
+							nodeDef = node;
+							node.deleteNode = true;
+						}
+
+						ptIn = pt;
+					}
+
+				} while ( false );
+			}
+			else if ( IS_QUOTE( *ptIn ) )
+			{
+				quote = *ptIn;
+				statusQuote ^= 1;
+			}
+		}
+		else if ( quote == *ptIn )
+		{
+			quote = 0;
+			statusQuote ^= 1;
+		}
+
+		++ptIn;
+	}
+
+	if ( countTblNodesShema )
+	{
+		int offset = 0;
+		int offsetNode = 0;
+		int length;
+
+		CSchemaIdentifier *node = listSchemaIdentifierAll.GetRoot();
+
+		while( countNodesShema-- )
+		{
+			bool itsDdelete = false;
+
+			length = node->begNameNode - offsetNode;
+			memcpy( &ptOut[offset], &beg[offsetNode], length );
+			offset += length;
+			offsetNode += length;
+			
+			if ( node->deleteNode )
+				itsDdelete = true;
+			else 
+			{
+				int countTbl = countTblNodesShema;
+
+				CSchemaIdentifier *nodeTbl = listSchemaIdentifierTbl.GetRoot();
+
+				while( countTbl-- )
+				{
+					if ( node->lengthNameNode == nodeTbl->lengthNameNode 
+						&& !strncasecmp( &beg[node->begNameNode],
+										 &beg[nodeTbl->begNameNode],
+										 node->lengthNameNode ) )
+					{
+						itsDdelete = true;
+						break;
+					}
+
+					nodeTbl++;
+				}
+			}
+
+			if ( itsDdelete )
+				offsetNode += node->lengthNameNode + 1;
+
+			node++;
+		}
+
+		if ( lenSql > offsetNode )
+		{
+			length = lenSql - offsetNode;
+			memcpy( &ptOut[offset], &beg[offsetNode], lenSql - offsetNode );
+			offset += length;
+		}
+
+		ptOut[offset] = '\0';
+		lenSqlOut = offset;
+	}
+	else
+	{
+		lenSqlOut = lenSql;
+		memcpy( ptOut, beg, lenSqlOut );
+		ptOut[lenSqlOut] = '\0';
+	}
+
+	return success;
+}
+
 int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 								char * outStatementText, long bufferLength,
 								long * textLength2Ptr)
@@ -494,9 +724,22 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 	char delimiter = *metaData->getIdentifierQuoteString();
 	delimiter = delimiter == ' ' || attachment->databaseDialect < 3 ? 0 : delimiter;
 
+	bool autoRemoveSchemaFromIdentifier = attachment->useSchemaIdentifier == 1;
 	bool autoQuoted = delimiter && attachment->autoQuotedIdentifier;
 
 #pragma FB_COMPILER_MESSAGE("IscConnection::getNativeSql - The temporary decision; FIXME!")
+
+	if ( autoRemoveSchemaFromIdentifier )
+	{
+		statysModify = removeSchemaFromSQL( ptIn, textLength1, ptOut, *textLength2Ptr );
+
+		if ( statysModify )
+		{
+			ptIn = ptOut;
+			textLength1= *textLength2Ptr;
+			ptInEnd = ptIn + textLength1;
+		}
+	}
 
 	while ( ptIn < ptInEnd )
 	{
@@ -504,19 +747,6 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 		{
 			if ( IS_QUOTE( *ptIn ) )
 			{
-				// Warning! For compatible Ms Office 2002 and great
-				// and modify to IscTablesResultSet to catalog 
-				//     select cast (' ' as varchar(7)) as table_cat,\n"				// 1
-				// It's huge hack
-				// if the SELECT * FROM " ".COUNTRY the to SELECT * FROM COUNTRY
-				// 
-				if ( *(unsigned long*)ptIn == 0x2e222022 ) // 0x2e222022 it's four symbols " ".
-				{
-					ptIn += 4;
-					statysModify++;
-					continue;
-				}
-
 				quote = *ptIn;
 				statusQuote ^= 1;
 			}
@@ -660,8 +890,8 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 			while( *ptIn == ' ' )ptIn++;
 
 //	On a note		++ignoreBracket; // ignored { }
-			if ( *ptIn == '?' || *(long*)ptIn == 0x6c6c6163 || *(long*)ptIn == 0x4c4c4143  || *(long*)ptIn == 0x6c6c6143)
-			{	// Check '?' or 'call' or 'CALL' or 'Call'
+			if ( *ptIn == '?' || IS_MATCH( ptIn, "CALL" ) )
+			{	
 				if ( *ptIn == '?' )
 				{
 					ptIn++;
@@ -674,7 +904,7 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 					while( *ptIn == ' ' )ptIn++;
 				}
 
-				if ( *(long*)ptIn != 0x6c6c6163 && *(long*)ptIn != 0x4c4c4143 && *(long*)ptIn != 0x6c6c6143 )
+				if ( !IS_MATCH( ptIn, "CALL" ) )
 					return statysModify;
 
 				ptIn += 4; // 'call'
@@ -696,34 +926,66 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 
 				char procedureName[256];
 				char * end = procedureName;
+				bool repeatWhile;
+				char quote = 0;
 
-				SKIP_WHITE ( ptIn );
-
-				end = procedureName;
-
-				if ( IS_QUOTE(*ptIn) )
+				do
 				{
-					ptIn++;
-					// Wizard VC : example {call ".SP_TEST"(?,?)}
-					if ( *ptIn == '.' )
+					repeatWhile = false;
+
+					SKIP_WHITE ( ptIn );
+
+					end = procedureName;
+					char *ptTmp = ptIn;
+
+					if ( IS_QUOTE( *ptIn ) )
+						quote = *ptIn++;
+
+					if ( autoRemoveSchemaFromIdentifier )
 					{
-						*ptIn = *(ptIn-1);
-						*(ptIn-1) = ' ';
-						ptIn++;
+						while ( !(IS_END_TOKEN(*ptIn)) )
+						{
+							if ( quote && quote == *ptIn )
+								break;
+
+							if ( IS_POINT( *ptIn ) )
+								break;
+
+							*end++ = *ptIn++;
+						}
+
+						if ( quote && quote == *ptIn )
+						{
+							++ptIn;
+							if ( IS_POINT( *ptIn ) )
+								quote = 0;
+						}
+
+						if ( IS_POINT( *ptIn ) )
+						{
+							++ptIn;
+							memmove( quote ? ptTmp + 1 : ptTmp, ptIn, strlen( ptIn ) + 1 );
+							ptIn = ptTmp;
+							repeatWhile = true;
+						}
 					}
-					
-					while ( !(IS_END_TOKEN(*ptIn)) )
-						*end++ = *ptIn++;
+					else
+					{
+						while ( !(IS_END_TOKEN(*ptIn)) )
+						{
+							if ( quote && quote == *ptIn )
+							{
+								++ptIn;
+								quote = 0;
+								break;
+							}
 
-					end--;
+							*end++ = *ptIn++;
+						}
+					}
 
-					if ( !IS_QUOTE(*end) )
-						return statysModify;
-				}
-				else
-					while ( !(IS_END_TOKEN(*ptIn)) )
-						*end++ = UPPER(*ptIn), ++ptIn;
-
+				} while ( repeatWhile );
+				
 				*end = '\0';
 
 				int numIn, numOut;

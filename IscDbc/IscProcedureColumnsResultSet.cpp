@@ -136,6 +136,9 @@ bool IscProcedureColumnsResultSet::nextFetch()
 	if (!IscResultSet::nextFetch())
 		return false;
 
+	if ( !metaData->getUseSchemaIdentifier() )
+		sqlda->setNull(2);
+
 	int parameterType = sqlda->getShort (5);
 	int type = parameterType ? SQL_PARAM_OUTPUT : SQL_PARAM_INPUT;
 	sqlda->updateShort (5, type);

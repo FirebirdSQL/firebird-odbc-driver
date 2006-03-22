@@ -120,6 +120,9 @@ bool IscTablesResultSet::nextFetch()
 	if (!IscResultSet::nextFetch())
 		return false;
 
+	if ( !metaData->getUseSchemaIdentifier() )
+		sqlda->setNull(2);
+
 	if ( sqlda->getShort (6) )
 		sqlda->updateVarying (4, "SYSTEM TABLE");
 	else if ( !sqlda->isNull(7) )

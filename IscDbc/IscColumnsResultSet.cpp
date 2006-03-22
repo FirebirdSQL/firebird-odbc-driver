@@ -144,6 +144,9 @@ bool IscColumnsResultSet::nextFetch()
 		return false;
 	}
 
+	if ( !metaData->getUseSchemaIdentifier() )
+		sqlda->setNull(2);
+
 	int &len = sqlType.lengthIn;
 	
 	len = sqlda->getShort (24);
