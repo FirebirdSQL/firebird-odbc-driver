@@ -526,6 +526,7 @@ bool IscConnection::removeSchemaFromSQL( char *strSql, int lenSql, char *strSqlO
 	char *ptInEnd = strSql + lenSql;
 	char *ptOut = strSqlOut;
 	char quote;
+	char chUpper;
 	bool success = true;
 	bool defTable = false;
 
@@ -533,105 +534,161 @@ bool IscConnection::removeSchemaFromSQL( char *strSql, int lenSql, char *strSqlO
 
 	SKIP_WHITE ( ptIn );
 
-	if ( !IS_MATCH( ptIn, "SELECT" )
-		&& !IS_MATCH( ptIn, "UPDATE" )
-		&& !IS_MATCH( ptIn, "INSERT" )
-		&& !IS_MATCH( ptIn, "DELETE" ) )
+	chUpper = UPPER( *ptIn );
+
+	if ( ( chUpper == 'S' && !IS_MATCH( ptIn, "SELECT" ) )
+		|| ( chUpper == 'U' && !IS_MATCH( ptIn, "UPDATE" ) )
+		|| ( chUpper == 'I' && !IS_MATCH( ptIn, "INSERT" ) )
+		|| ( chUpper == 'D' && !IS_MATCH( ptIn, "DELETE" ) ) )
 		return false;
 
 	while ( ptIn < ptInEnd )
 	{
 		if ( !statusQuote )
 		{
-			if ( IS_MATCH( ptIn, "FROM" ) )
+			chUpper = UPPER( *ptIn );
+
+			switch ( chUpper )
 			{
-				ptIn += 4;
-				defTable = true;
-			}
-			else if ( defTable && IS_MATCH( ptIn, "WHERE" ) )
-			{
-				ptIn += 5;
-				defTable = false;
-			}
-			else if ( defTable && IS_MATCH( ptIn, "ON" ) )
-			{
-				ptIn += 2;
-				defTable = false;
-			}
-			else if ( IS_POINT( *ptIn ) && (*ptIn + 1) != '*' )
-			{
-				do
+			case 'S':
+				if ( IS_MATCH( ptIn, "SELECT" ) )
 				{
-					bool digit = true;
-					char quoteTmp = 0;
-					char *pt = ptIn - 1;
+					ptIn += 6;
+					defTable = false;
+				}
+				else if ( IS_MATCH( ptIn, "SET" ) )
+				{
+					ptIn += 3;
+					defTable = false;
+				}
+				break;
 
-					if ( IS_QUOTE( *pt ) )
+			case 'I':
+				if ( IS_MATCH( ptIn, "INSERT" ) )
+				{
+					ptIn += 6;
+					defTable = true;
+				}
+				break;
+
+			case 'U':
+				if ( IS_MATCH( ptIn, "UPDATE" ) )
+				{
+					ptIn += 6;
+					defTable = true;
+				}
+				break;
+
+			case 'F':
+				if ( IS_MATCH( ptIn, "FROM" ) )
+				{
+					ptIn += 4;
+					defTable = true;
+				}
+				break;
+
+			case 'V':
+				if ( IS_MATCH( ptIn, "VALUES" ) )
+				{
+					ptIn += 6;
+					defTable = false;
+				}
+				break;
+
+			case 'W':
+				if ( IS_MATCH( ptIn, "WHERE" ) )
+				{
+					ptIn += 5;
+					defTable = false;
+				}
+				break;
+
+			case 'O':
+				if ( IS_MATCH( ptIn, "ON" ) )
+				{
+					ptIn += 2;
+					defTable = false;
+				}
+				break;
+
+			case '.':
+				if ( (*ptIn + 1) != '*' )
+				{
+					do
 					{
-						quoteTmp = *pt--;
-						digit = false;
-						while ( pt >= beg && IS_IDENT( *pt ) )
-						{
-							--pt;
-						}
-						if ( *pt != quoteTmp )
-						{
-							success = false;
-							break;
-						}
-					}
-					else
-					{
-						while ( pt >= beg && IS_IDENT( *pt ) )
-						{
-							if ( digit && !ISDIGIT( *pt ) )
-								digit = false;
-							--pt;
-						}
+						bool digit = true;
+						char quoteTmp = 0;
+						char *pt = ptIn - 1;
 
-						++pt;
-					}
-
-					if ( !digit )
-					{
-						bool deleteNode = false;
-						char *ptEnd = pt;
-
-						pt = ptIn + 1;
-
-						while ( !(IS_END_TOKEN( *pt )) )
+						if ( IS_QUOTE( *pt ) )
 						{
-							if ( IS_POINT( *pt ) && !deleteNode )
+							quoteTmp = *pt--;
+							digit = false;
+							while ( pt >= beg && IS_IDENT( *pt ) )
 							{
-								deleteNode = true;
+								--pt;
 							}
+							if ( *pt != quoteTmp )
+							{
+								success = false;
+								break;
+							}
+						}
+						else
+						{
+							while ( pt >= beg && IS_IDENT( *pt ) )
+							{
+								if ( digit && !ISDIGIT( *pt ) )
+									digit = false;
+								--pt;
+							}
+
 							++pt;
 						}
 
-						CSchemaIdentifier &node = listSchemaIdentifierAll( countNodesShema++ );
-
-						node.stringSql = strSql;
-						node.deleteNode = deleteNode;
-						node.quotedNode = !!quoteTmp;
-						node.begNameNode = ptEnd - beg;
-						node.lengthNameNode = ptIn - ptEnd;
-
-						if ( defTable )
+						if ( !digit )
 						{
-							CSchemaIdentifier &nodeDef = listSchemaIdentifierTbl( countTblNodesShema++ );
-							nodeDef = node;
-							node.deleteNode = true;
+							bool deleteNode = false;
+							char *ptEnd = pt;
+
+							pt = ptIn + 1;
+
+							while ( !(IS_END_TOKEN( *pt )) )
+							{
+								if ( IS_POINT( *pt ) && !deleteNode )
+								{
+									deleteNode = true;
+								}
+								++pt;
+							}
+
+							CSchemaIdentifier &node = listSchemaIdentifierAll( countNodesShema++ );
+
+							node.stringSql = strSql;
+							node.deleteNode = deleteNode;
+							node.quotedNode = !!quoteTmp;
+							node.begNameNode = ptEnd - beg;
+							node.lengthNameNode = ptIn - ptEnd;
+
+							if ( defTable )
+							{
+								CSchemaIdentifier &nodeDef = listSchemaIdentifierTbl( countTblNodesShema++ );
+								nodeDef = node;
+								node.deleteNode = true;
+							}
+
+							ptIn = pt;
 						}
 
-						ptIn = pt;
-					}
+					} while ( false );
+				}
+				break;
 
-				} while ( false );
-			}
-			else if ( IS_QUOTE( *ptIn ) )
-			{
+			case '\"':
+			case '\'':
 				quote = *ptIn;
 				statusQuote ^= 1;
+				break;
 			}
 		}
 		else if ( quote == *ptIn )
