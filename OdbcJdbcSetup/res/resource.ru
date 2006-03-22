@@ -128,4 +128,13 @@ IDS_ERROR_MESSAGE_15, // "CopyFile"
 ,
 IDS_ERROR_MESSAGE_16, // "Disk full"
 	"На диске нет свободного места"
+,
+IDS_USESCHEMA_NULL, // "Set null field SCHEMA"
+	"Поле SCHEMA не используется"
+,
+IDS_USESCHEMA_DEL, // "Remove SCHEMA from SQL query"
+	"Удалить поле SCHEMA из SQL запроса"
+,
+IDS_USESCHEMA_FULL, // "Use full SCHEMA"
+	"Поле SCHEMA контролирует сервер"
 }
