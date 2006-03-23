@@ -177,6 +177,11 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		for (const char *q = user; *q;)
 			*p++ = *q++;
 	}
+	else
+	{
+		*p++ = isc_dpb_user_name,
+		*p++ = 0;
+	}
 
 	const char *password = properties->findValue ("password", NULL);
 
@@ -186,6 +191,11 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		*p++ = strlen (password);
 		for (const char *q = password; *q;)
 			*p++ = *q++;
+	}
+	else
+	{
+		*p++ = isc_dpb_password,
+		*p++ = 0;
 	}
 
 	const char *role = properties->findValue ("role", NULL);
