@@ -485,7 +485,7 @@ SQLRETURN SQL_API SQLGetConnectOptionW( SQLHDBC hDbc, SQLUSMALLINT option, SQLPO
 			ConnStrOut.setConnection( (OdbcConnection*)hDbc );
 
 			return ((OdbcConnection*) hDbc)->sqlGetConnectAttr( option,
-										(SQLPOINTER)(SQLCHAR*)value, bufferLength, NULL);
+													ConnStrOut, ConnStrOut, NULL );
 		}
 	default:
 		bufferLength = 0;
