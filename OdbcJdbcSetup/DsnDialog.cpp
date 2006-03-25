@@ -703,6 +703,9 @@ void CDsnDialog::OnTestConnection(HWND hDlg)
 		if ( !m_client.IsEmpty() )
 			properties->putValue ("client", (const char*)m_client);
 
+		if ( m_database.IsEmpty() )
+			m_database = "<empty>";
+
 		connection->openDatabase ( (const char*)m_database, properties );
 		properties->release();
 		connection->close();
