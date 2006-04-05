@@ -344,7 +344,7 @@ bool CopyFile(char * sourceFile, char * destFile)
 
 	uStyle = OF_WRITE | OF_CREATE;
 	dst = OpenFile( destFile, &reopenBuff, uStyle );
-	if ( src == HFILE_ERROR )
+	if ( dst == HFILE_ERROR )
 	{
 		MessageBoxError( _TR( IDS_ERROR_MESSAGE_15, "CopyFile" ), destFile );
 		return false;
