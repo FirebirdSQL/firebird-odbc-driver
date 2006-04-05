@@ -469,6 +469,9 @@ int IscStatement::getUpdateCounts()
 						sizeof (requestInfo), requestInfo,
 						sizeof (buffer), buffer);
 
+	if (statusVector [1])
+		THROW_ISC_EXCEPTION (connection, statusVector);
+
 	int statementType = 0;
 	int insertCount = 0, updateCount = 0, deleteCount = 0;
 
