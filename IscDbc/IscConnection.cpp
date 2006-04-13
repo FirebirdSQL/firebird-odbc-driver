@@ -995,20 +995,25 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 					end = procedureName;
 					char *ptTmp = ptIn;
 
-					if ( IS_QUOTE( *ptIn ) )
-						quote = *ptIn++;
-
 					if ( autoRemoveSchemaFromIdentifier )
 					{
+						if ( IS_QUOTE( *ptIn ) )
+							quote = *ptIn++;
+
 						while ( !(IS_END_TOKEN(*ptIn)) )
 						{
-							if ( quote && quote == *ptIn )
-								break;
-
 							if ( IS_POINT( *ptIn ) )
 								break;
 
-							*end++ = *ptIn++;
+							if ( quote )
+							{
+								if ( quote == *ptIn )
+									break;
+	
+								*end++ = *ptIn++;
+							}
+							else
+								*end++ = UPPER(*ptIn), ++ptIn;
 						}
 
 						if ( quote && quote == *ptIn )
@@ -1018,6 +1023,8 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 								quote = 0;
 						}
 
+						SKIP_WHITE ( ptIn );
+
 						if ( IS_POINT( *ptIn ) )
 						{
 							++ptIn;
@@ -1026,20 +1033,23 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 							repeatWhile = true;
 						}
 					}
-					else
+					else if ( IS_QUOTE( *ptIn ) )
 					{
-						while ( !(IS_END_TOKEN(*ptIn)) )
-						{
-							if ( quote && quote == *ptIn )
-							{
-								++ptIn;
-								quote = 0;
-								break;
-							}
+						quote = *ptIn++;
 
+						while ( !(IS_END_TOKEN(*ptIn)) )
 							*end++ = *ptIn++;
-						}
+
+						end--;
+
+						if ( !IS_QUOTE(*end) || quote != *end )
+							return statysModify;
+
+						quote = 0;
 					}
+					else
+						while ( !(IS_END_TOKEN(*ptIn)) )
+							*end++ = UPPER(*ptIn), ++ptIn;
 
 				} while ( repeatWhile );
 				
