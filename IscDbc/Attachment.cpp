@@ -198,6 +198,21 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		*p++ = 0;
 	}
 
+	const char *timeout = properties->findValue ("timeout", NULL);
+
+	if (timeout && *timeout)
+	{
+		connectionTimeout = atoi(timeout);
+
+		*p++ = isc_dpb_connect_timeout;
+		*p++ = sizeof (long);
+		*p++ = 0;
+		*p++ = (char)connectionTimeout;
+		*p++ = (char)(connectionTimeout >> 8);
+		*p++ = (char)(connectionTimeout >> 16);
+		*p++ = (char)(connectionTimeout >> 24);
+	}
+
 	const char *role = properties->findValue ("role", NULL);
 
 	if (role && *role)

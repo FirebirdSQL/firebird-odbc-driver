@@ -61,6 +61,7 @@ public:
 	JString		serverVersion;
 	JString		databaseProductName;
 	int			pageSize;
+	int			connectionTimeout;
 	int			serverBaseLevel;	
 	int			databaseDialect;
 	int			useSchemaIdentifier;
