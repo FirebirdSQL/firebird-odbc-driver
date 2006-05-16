@@ -46,6 +46,7 @@
 #define SETUP_READONLY_TPB	"ReadOnly"
 #define SETUP_NOWAIT_TPB	"NoWait"
 #define SETUP_DIALECT		"Dialect"
+#define SETUP_TIMEOUT		"Timeout"
 #define SETUP_USESCHEMA		"UseSchemaIdentifier"
 #define SETUP_QUOTED		"QuotedIdentifier"
 #define SETUP_SENSITIVE		"SensitiveIdentifier"

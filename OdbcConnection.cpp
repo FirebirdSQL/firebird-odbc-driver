@@ -453,6 +453,8 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 		}
 		else if ( IS_KEYWORD( SETUP_PAGE_SIZE ) )
 			pageSize = value;
+		else if ( IS_KEYWORD( SETUP_TIMEOUT ) )
+			connectionTimeout = atoi( value );
 		else if ( IS_KEYWORD( SETUP_CLIENT ) )
 			client = value;
 		else if ( IS_KEYWORD( KEY_DSN_UID ) || IS_KEYWORD( SETUP_USER ) )
@@ -1562,6 +1564,13 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 
 		if (pageSize)
 			properties->putValue ("pagesize", pageSize);
+
+		if (connectionTimeout)
+		{
+			char buffer[256];
+			sprintf (buffer, "%d", connectionTimeout);
+			properties->putValue ("timeout", buffer);
+		}
 
 		connection->openDatabase (databaseName, properties);
 		properties->release();
