@@ -206,7 +206,6 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 
 		*p++ = isc_dpb_connect_timeout;
 		*p++ = sizeof (long);
-		*p++ = 0;
 		*p++ = (char)connectionTimeout;
 		*p++ = (char)(connectionTimeout >> 8);
 		*p++ = (char)(connectionTimeout >> 16);
