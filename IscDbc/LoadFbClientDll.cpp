@@ -18,9 +18,9 @@ CFbDll::~CFbDll()
 bool CFbDll::LoadDll (const char * client, const char * clientDef)
 {
 #ifdef _WIN32
-	_Handle = LoadLibrary (client);
+	_Handle = LoadLibraryEx (client, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
 	if ( !_Handle && clientDef )
-		_Handle = LoadLibrary (clientDef);
+		_Handle = LoadLibraryEx (clientDef, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
 #else
 	_Handle = dlopen (client, RTLD_NOW);
 	if ( !_Handle && clientDef )
