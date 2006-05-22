@@ -206,6 +206,35 @@ bool CServiceClient::openDatabase()
 	return true;
 }
 
+bool CServiceClient::dropDatabase()
+{
+	Connection *connection;
+
+	try
+	{
+		ConnectFn fn = (ConnectFn)GET_ENTRY_POINT( libraryHandle, ENTRY_DLL_CREATE_CONNECTION );
+		if (!fn)
+			return false;
+
+		connection = (fn)();
+		connection->openDatabase( properties->findValue( SETUP_DBNAME, NULL ),
+								  properties );
+		connection->close();
+	}
+	catch ( std::exception &ex )
+	{
+		SQLException &exception = (SQLException&)ex;
+		JString text = exception.getText();
+
+		if ( connection )
+			connection->close();
+
+		return false;
+	}
+
+	return true;
+}
+
 void CServiceClient::startBackupDatabase( ULONG options )
 {
 	services->startBackupDatabase( properties, options );

@@ -53,6 +53,7 @@ public:
 	bool checkVersion( void );
 	bool createDatabase( void );
 	bool openDatabase( void );
+	bool dropDatabase( void );
 	void startBackupDatabase( ULONG options );
 	void startRestoreDatabase( ULONG options );
 	void exitRestoreDatabase( void );
