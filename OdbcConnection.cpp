@@ -563,7 +563,8 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 	}
 
 #ifdef _WIN32
-	if ( account.IsEmpty() || password.IsEmpty() )
+	if ( driverCompletion != SQL_DRIVER_NOPROMPT 
+		&& ( account.IsEmpty() || password.IsEmpty() ) )
 	{
 		CConnectDialog dlg;
 		dlg.m_user = account;
