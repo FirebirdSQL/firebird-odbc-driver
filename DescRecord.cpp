@@ -198,13 +198,11 @@ void DescRecord::beginBlobDataTransfer()
 {
 	dataBlobPtr->clear();
 	startedTransfer = true;
-	*indicatorPtr = 0;
 }
 
 void DescRecord::putBlobSegmentData (int length, const void *bytes)
 {
 	dataBlobPtr->putLongSegment (length, (char*)bytes);
-	*indicatorPtr += length;
 }
 
 void DescRecord::endBlobDataTransfer()
