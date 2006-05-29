@@ -943,8 +943,7 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 			ptIn = ptEndBracket;
 
 			ptIn++; // '{'
-			
-			while( *ptIn == ' ' )ptIn++;
+			SKIP_WHITE ( ptIn );
 
 //	On a note		++ignoreBracket; // ignored { }
 			if ( *ptIn == '?' || IS_MATCH( ptIn, "CALL" ) )
@@ -952,21 +951,20 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 				if ( *ptIn == '?' )
 				{
 					ptIn++;
-					while( *ptIn == ' ' )ptIn++;
+					SKIP_WHITE ( ptIn );
 
 					if(*ptIn != '=')
 						return statysModify;
 
 					ptIn++; // '='
-					while( *ptIn == ' ' )ptIn++;
+					SKIP_WHITE ( ptIn );
 				}
 
 				if ( !IS_MATCH( ptIn, "CALL" ) )
 					return statysModify;
 
 				ptIn += 4; // 'call'
-
-				while( *ptIn == ' ' )ptIn++;
+				SKIP_WHITE ( ptIn );
 
 				ptOut = ptEndBracket;
 				int ignoreBr = ignoreBracket;
