@@ -1057,7 +1057,11 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 				bool canSelect;
 
 				if ( !getCountInputParamFromProcedure ( procedureName, numIn, numOut, canSelect ) )
-					return statysModify; // not found
+				{
+					JString text;
+					text.Format( "Unknown procedure '%s'", procedureName );
+					throw SQLEXCEPTION( SYNTAX_ERROR, text );
+				}
 
 				int ret = buildParamProcedure ( ptIn, numIn );
 				
