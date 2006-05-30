@@ -114,7 +114,7 @@ void Attachment::createDatabase(const char *dbName, Properties *properties)
 	const char *charset = properties->findValue ("charset", NULL);
 
 	if (charset && *charset)
-		p += sprintf( p, "SET NAMES \'%s\' ", charset );
+		p += sprintf( p, "DEFAULT CHARACTER SET %s ", charset );
 
 	*p = '\0';
 
