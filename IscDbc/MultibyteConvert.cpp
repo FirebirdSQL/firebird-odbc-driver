@@ -515,12 +515,13 @@ unsigned int utf8_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthFo
 	if ( !wcs )
 		return lengthForMBS * sizeof( *wcs );
 
-	const UCHAR* const mbsEnd = (const UCHAR*)mbs + lengthForMBS;
-	const USHORT* const wcsStart = wcs;
+	const UCHAR* mbsOrg = (const UCHAR*)mbs;
+	const UCHAR* const mbsEnd = mbsOrg + lengthForMBS;
+	const USHORT* const wcsStart = (const USHORT*)wcs;
 
 	for ( ULONG i = 0; i < lengthForMBS; )
 	{
-		UChar32 c = (const UCHAR)mbs[i++];
+		UChar32 c = mbsOrg[i++];
 
 		if ( c <= 0x7F )
 		{
@@ -532,7 +533,7 @@ unsigned int utf8_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthFo
 		{
 			err_position = i - 1;
 
-			c = utf8_nextCharSafeBody( (const PUCHAR)mbs,
+			c = utf8_nextCharSafeBody( mbsOrg,
 									   reinterpret_cast<int32_t*>(&i),
 									   lengthForMBS,
 									   c,
@@ -554,7 +555,7 @@ unsigned int utf8_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthFo
 	}
 
 	*wcs = L'\0';
-	return wcs - wcsStart;
+	return (const USHORT*)wcs - wcsStart;
 }
 
 unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthForMBS )
@@ -569,7 +570,8 @@ unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFo
 	if ( !mbs )
 		return wcsLen * 4;
 
-	const USHORT* const wcsEnd = wcs + wcsLen;
+	const USHORT* wcsOrg = (const USHORT*)wcs;
+	const USHORT* const wcsEnd = wcsOrg + wcsLen;
 	const UCHAR* const mbsStart = (const PUCHAR)mbs;
 	const UCHAR* const mbsEnd = (const PUCHAR)mbs + lengthForMBS;
 
@@ -578,11 +580,11 @@ unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFo
 		if ( !(mbsEnd - (const PUCHAR)mbs) )
 		{
 			err_code = CS_TRUNCATION_ERROR;
-			err_position = i * sizeof( *wcs );
+			err_position = i * sizeof( *wcsOrg );
 			break;
 		}
 
-		UChar32 c = wcs[i++];
+		UChar32 c = wcsOrg[i++];
 
 		if ( c <= 0x7F )
 		{
@@ -592,17 +594,17 @@ unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFo
 		}
 		else
 		{
-			err_position = (i - 1) * sizeof( *wcs );
+			err_position = (i - 1) * sizeof( *wcsOrg );
 
 			if ( U_IS_SURROGATE( c ) )
 			{
 				UChar32 c2;
 
 				if ( U_IS_SURROGATE_LEAD( c ) 
-					&& wcs < wcsEnd
-					&& U16_IS_TRAIL( c2 = *wcs ) )
+					&& wcsOrg < wcsEnd
+					&& U16_IS_TRAIL( c2 = *wcsOrg ) )
 				{
-					++wcs;
+					++wcsOrg;
 					c = U16_GET_SUPPLEMENTARY( c, c2 );
 				}
 				else
