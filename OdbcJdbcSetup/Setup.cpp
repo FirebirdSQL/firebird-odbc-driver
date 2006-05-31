@@ -456,8 +456,13 @@ void Setup::addDsn()
 	if ( quoted.IsEmpty() )
 		quoted = getAttribute (KEY_DSN_QUOTED);
 
-	sensitive = getAttribute ( SETUP_SENSITIVE );
-	autoQuoted = getAttribute ( SETUP_AUTOQUOTED );
+	sensitive = getAttribute( SETUP_SENSITIVE );
+	if ( sensitive.IsEmpty() )
+		sensitive = getAttribute( KEY_DSN_SENSITIVE );
+
+	autoQuoted = getAttribute( SETUP_AUTOQUOTED );
+	if ( autoQuoted.IsEmpty() )
+		autoQuoted = getAttribute( KEY_DSN_AUTOQUOTED );
 
 	char chCheck = UPPER( *(const char*)readonlyTpb );
 	
