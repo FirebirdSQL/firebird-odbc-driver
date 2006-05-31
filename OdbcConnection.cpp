@@ -507,21 +507,21 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 
 			defOptions |= DEF_QUOTED;
 		}
-		else if ( IS_KEYWORD( SETUP_SENSITIVE ) )
+		else if ( IS_KEYWORD( KEY_DSN_SENSITIVE ) || IS_KEYWORD( SETUP_SENSITIVE ) )
 		{
 			if( *value == 'Y')
 				sensitiveIdentifier = true;
 
 			defOptions |= DEF_SENSITIVE;
 		}
-		else if ( IS_KEYWORD( SETUP_AUTOQUOTED ) )
+		else if ( IS_KEYWORD( KEY_DSN_AUTOQUOTED ) || IS_KEYWORD( SETUP_AUTOQUOTED ) )
 		{
 			if( *value == 'Y')
 				autoQuotedIdentifier = true;
 
 			defOptions |= DEF_AUTOQUOTED;
 		}
-		else if ( IS_KEYWORD( KEY_DSN_USESCHEMA ) || IS_KEYWORD( SETUP_QUOTED ) )
+		else if ( IS_KEYWORD( KEY_DSN_USESCHEMA ) || IS_KEYWORD( SETUP_USESCHEMA ) )
 			useSchemaIdentifier = value;
 		else if ( IS_KEYWORD( "ODBC" ) )
 			;
