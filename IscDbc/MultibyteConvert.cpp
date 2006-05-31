@@ -24,6 +24,8 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <wchar.h>
 #endif
 #include <time.h>
 #include <string.h>
@@ -378,6 +380,9 @@ unsigned int fss_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFor
 
 #define	CS_CANT_MAP		0		// Flag table entries that don't map
 
+#ifndef USHORT
+typedef unsigned short USHORT;
+#endif
 typedef signed int int32_t;
 typedef int32_t UChar32;
 typedef wchar_t UChar;
@@ -410,34 +415,15 @@ UChar32  utf8_nextCharSafeBody( const uint8_t *s,
 #define U8_IS_TRAIL(c) (((c)&0xc0)==0x80)
 
 #define U8_LENGTH(c) \
-    ((uint32_t)(c)<=0x7f ? 1 : \
-        ((uint32_t)(c)<=0x7ff ? 2 : \
-            ((uint32_t)(c)<=0xd7ff ? 3 : \
-                ((uint32_t)(c)<=0xdfff || (uint32_t)(c)>0x10ffff ? 0 : \
+    ((uint32_t)(c) <= 0x7f ? 1 : \
+        ((uint32_t)(c) <= 0x7ff ? 2 : \
+            ((uint32_t)(c) <= 0xd7ff ? 3 : \
+                ((uint32_t)(c) <= 0xdfff || (uint32_t)(c) > 0x10ffff ? 0 : \
                     ((uint32_t)(c)<=0xffff ? 3 : 4)\
                 ) \
             ) \
         ) \
     )
-
-#define U8_APPEND_UNSAFE(s, i, c) { \
-    if((uint32_t)(c)<=0x7f) { \
-        (s)[(i)++]=(uint8_t)(c); \
-    } else { \
-        if((uint32_t)(c)<=0x7ff) { \
-            (s)[(i)++]=(uint8_t)(((c)>>6)|0xc0); \
-        } else { \
-            if((uint32_t)(c)<=0xffff) { \
-                (s)[(i)++]=(uint8_t)(((c)>>12)|0xe0); \
-            } else { \
-                (s)[(i)++]=(uint8_t)(((c)>>18)|0xf0); \
-                (s)[(i)++]=(uint8_t)((((c)>>12)&0x3f)|0x80); \
-            } \
-            (s)[(i)++]=(uint8_t)((((c)>>6)&0x3f)|0x80); \
-        } \
-        (s)[(i)++]=(uint8_t)(((c)&0x3f)|0x80); \
-    } \
-}
 
 //
 // This table could be replaced on many machines by
@@ -572,12 +558,13 @@ unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFo
 
 	const USHORT* wcsOrg = (const USHORT*)wcs;
 	const USHORT* const wcsEnd = wcsOrg + wcsLen;
-	const UCHAR* const mbsStart = (const PUCHAR)mbs;
-	const UCHAR* const mbsEnd = (const PUCHAR)mbs + lengthForMBS;
+	UCHAR* mbsOrg = (UCHAR*)mbs;
+	const UCHAR* const mbsStart = (const UCHAR*)mbsOrg;
+	const UCHAR* const mbsEnd = (const UCHAR*)mbsOrg + lengthForMBS;
 
 	for ( ULONG i = 0; i < wcsLen; )
 	{
-		if ( !(mbsEnd - (const PUCHAR)mbs) )
+		if ( !(mbsEnd - mbsOrg) )
 		{
 			err_code = CS_TRUNCATION_ERROR;
 			err_position = i * sizeof( *wcsOrg );
@@ -590,7 +577,7 @@ unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFo
 		{
 			if ( !c )
 				break;
-			*mbs++ = c;
+			*mbsOrg++ = c;
 		}
 		else
 		{
@@ -614,11 +601,27 @@ unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFo
 				}
 			}
 
-			if ( U8_LENGTH( c ) <= mbsEnd - (const PUCHAR)mbs )
+			if ( U8_LENGTH( c ) <= mbsEnd - mbsOrg )
 			{
-				int j = 0;
-				U8_APPEND_UNSAFE( (const PUCHAR)mbs, j, c );
-				mbs += j;
+				if ( (uint32_t)c <= 0x7f )
+					*mbsOrg++ = (uint8_t)c;
+				else
+				{
+					if ( (uint32_t)c <= 0x7ff )
+						*mbsOrg++ = (uint8_t)( (c >> 6) | 0xc0 );
+					else
+					{
+						if ( (uint32_t)c <= 0xffff )
+							*mbsOrg++ = (uint8_t)( ( c >> 12 ) | 0xe0 );
+						else
+						{
+							*mbsOrg++ = (uint8_t)( ( c >> 18 ) | 0xf0 );
+							*mbsOrg++ = (uint8_t)(( ( c >> 12 ) & 0x3f ) | 0x80 );
+						}
+						*mbsOrg++ = (uint8_t)(( ( c >> 6 ) & 0x3f ) | 0x80 );
+					}
+					*mbsOrg++ = (uint8_t) ( ( c & 0x3f ) | 0x80 );
+				}
 			}
 			else
 			{
@@ -628,8 +631,8 @@ unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFo
 		}
 	}
 
-	*mbs = '\0';
-	return ( (const PUCHAR)mbs - mbsStart ) * sizeof( *mbs );
+	*mbsOrg = '\0';
+	return ( mbsOrg - mbsStart ) * sizeof( *mbs );
 }
 
 UChar32  utf8_nextCharSafeBody( const uint8_t *s,
