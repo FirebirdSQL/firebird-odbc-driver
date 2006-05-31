@@ -43,6 +43,8 @@ WCSTOMBS adressWcsToMbs( int charsetCode );
 
 unsigned int fss_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int length );
 unsigned int fss_wcstombs( char *mbs, const wchar_t *wcs, unsigned int length );
+unsigned int utf8_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthForMBS );
+unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthForMBS );
 
 }; // end namespace IscDbcLibrary
 

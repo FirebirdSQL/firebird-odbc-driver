@@ -48,7 +48,7 @@ struct IntlCharsets
 	CODE_CHARSETS( OCTETS		,  1, 1 )
 	CODE_CHARSETS( ASCII		,  2, 1 )
 	CODE_CHARSETS( UNICODE_FSS	,  3, 3 )
-	CODE_CHARSETS( NEXT			,  4, 1 )
+	CODE_CHARSETS( UTF8			,  4, 4 )
 	CODE_CHARSETS( SJIS_0208	,  5, 2 )
 	CODE_CHARSETS( EUJC_0208	,  6, 2 )
 	CODE_CHARSETS( JIS_0208		,  7, 2 )
@@ -144,6 +144,8 @@ WCSTOMBS adressWcsToMbs( int charsetCode )
 		return wcstombs;
 	case 3: // UNICODE_FSS
 		return fss_wcstombs;
+	case 4: // UTF8
+		return utf8_wcstombs;
 	default:
 		break;
 	}
@@ -159,6 +161,8 @@ MBSTOWCS adressMbsToWcs( int charsetCode )
 		return mbstowcs;
 	case 3: // UNICODE_FSS
 		return fss_mbstowcs;
+	case 4: // UTF8
+		return utf8_mbstowcs;
 	default:
 		break;
 	}
@@ -364,6 +368,375 @@ unsigned int fss_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFor
 	}
 
 	return length;
+}
+
+
+// Conversion error codes
+#define	CS_TRUNCATION_ERROR	1	// output buffer too small
+#define	CS_CONVERT_ERROR	2	// can't remap a character
+#define	CS_BAD_INPUT		3	// input string detected as bad
+
+#define	CS_CANT_MAP		0		// Flag table entries that don't map
+
+typedef signed int int32_t;
+typedef int32_t UChar32;
+typedef wchar_t UChar;
+typedef signed char int8_t;
+typedef int8_t UBool;
+typedef unsigned char uint8_t;
+typedef unsigned int uint32_t;
+
+UChar32  utf8_nextCharSafeBody( const uint8_t *s,
+							    int32_t *pi,
+								int32_t length,
+								UChar32 c,
+								UBool strict );
+
+#define U_IS_SURROGATE_LEAD(c) (((c)&0x400)==0)
+#define U_IS_SURROGATE(c) (((c)&0xfffff800)==0xd800)
+
+#define U_IS_UNICODE_NONCHAR(c) \
+    ((c)>=0xfdd0 && \
+     ((uint32_t)(c)<=0xfdef || ((c)&0xfffe)==0xfffe) && \
+     (uint32_t)(c)<=0x10ffff)
+
+#define U16_LEAD(supplementary) (UChar)(((supplementary)>>10)+0xd7c0)
+#define U16_TRAIL(supplementary) (UChar)(((supplementary)&0x3ff)|0xdc00)
+#define U16_IS_TRAIL(c) (((c)&0xfffffc00)==0xdc00)
+#define U16_SURROGATE_OFFSET ((0xd800<<10UL)+0xdc00-0x10000)
+#define U16_GET_SUPPLEMENTARY(lead, trail) \
+    (((lead)<<10UL)+(trail)-U16_SURROGATE_OFFSET)
+
+#define U8_IS_TRAIL(c) (((c)&0xc0)==0x80)
+
+#define U8_LENGTH(c) \
+    ((uint32_t)(c)<=0x7f ? 1 : \
+        ((uint32_t)(c)<=0x7ff ? 2 : \
+            ((uint32_t)(c)<=0xd7ff ? 3 : \
+                ((uint32_t)(c)<=0xdfff || (uint32_t)(c)>0x10ffff ? 0 : \
+                    ((uint32_t)(c)<=0xffff ? 3 : 4)\
+                ) \
+            ) \
+        ) \
+    )
+
+#define U8_APPEND_UNSAFE(s, i, c) { \
+    if((uint32_t)(c)<=0x7f) { \
+        (s)[(i)++]=(uint8_t)(c); \
+    } else { \
+        if((uint32_t)(c)<=0x7ff) { \
+            (s)[(i)++]=(uint8_t)(((c)>>6)|0xc0); \
+        } else { \
+            if((uint32_t)(c)<=0xffff) { \
+                (s)[(i)++]=(uint8_t)(((c)>>12)|0xe0); \
+            } else { \
+                (s)[(i)++]=(uint8_t)(((c)>>18)|0xf0); \
+                (s)[(i)++]=(uint8_t)((((c)>>12)&0x3f)|0x80); \
+            } \
+            (s)[(i)++]=(uint8_t)((((c)>>6)&0x3f)|0x80); \
+        } \
+        (s)[(i)++]=(uint8_t)(((c)&0x3f)|0x80); \
+    } \
+}
+
+//
+// This table could be replaced on many machines by
+// a few lines of assembler code using an
+// "index of first 0-bit from msb" instruction and
+// one or two more integer instructions.
+//
+// For example, on an i386, do something like
+// - MOV AL, leadByte
+// - NOT AL         (8-bit, leave b15..b8==0..0, reverse only b7..b0)
+// - MOV AH, 0
+// - BSR BX, AX     (16-bit)
+// - MOV AX, 6      (result)
+// - JZ finish      (ZF==1 if leadByte==0xff)
+// - SUB AX, BX (result)
+// -finish:
+// (BSR: Bit Scan Reverse, scans for a 1-bit, starting from the MSB)
+//
+// In Unicode, all UTF-8 byte sequences with more than 4 bytes are illegal;
+// lead bytes above 0xf4 are illegal.
+// We keep them in this table for skipping long ISO 10646-UTF-8 sequences.
+//
+const uint8_t utf8_countTrailBytes[256] =
+{
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    3, 3, 3, 3, 3,
+    3, 3, 3,    // illegal in Unicode
+    4, 4, 4, 4, // illegal in Unicode
+    5, 5,       // illegal in Unicode
+    0, 0        // illegal bytes 0xfe and 0xff
+};
+
+static const UChar32
+utf8_minLegal[4]={ 0, 0x80, 0x800, 0x10000 };
+#define UTF8_COUNT_TRAIL_BYTES(leadByte) (utf8_countTrailBytes[(uint8_t)leadByte])
+#define UTF8_MASK_LEAD_BYTE(leadByte, countTrailBytes) ((leadByte)&=(1<<(6-(countTrailBytes)))-1)
+#define UTF8_ERROR_VALUE_1 0x15
+#define UTF8_ERROR_VALUE_2 0x9f
+#define UTF_ERROR_VALUE 0xffff
+#define U_SENTINEL (-1)
+
+static const UChar32 utf8_errorValue[6] = 
+{
+    UTF8_ERROR_VALUE_1,
+	UTF8_ERROR_VALUE_2,
+	UTF_ERROR_VALUE,
+	0x10ffff,
+    0x3ffffff,
+	0x7fffffff
+};
+
+unsigned int utf8_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthForMBS )
+{
+	USHORT err_code = 0;
+	ULONG err_position = 0;
+
+	if ( !wcs )
+		return lengthForMBS * sizeof( *wcs );
+
+	const UCHAR* const mbsEnd = (const UCHAR*)mbs + lengthForMBS;
+	const USHORT* const wcsStart = wcs;
+
+	for ( ULONG i = 0; i < lengthForMBS; )
+	{
+		UChar32 c = (const UCHAR)mbs[i++];
+
+		if ( c <= 0x7F )
+		{
+			if ( !c )
+				break;
+			*wcs++ = c;
+		}
+		else
+		{
+			err_position = i - 1;
+
+			c = utf8_nextCharSafeBody( (const PUCHAR)mbs,
+									   reinterpret_cast<int32_t*>(&i),
+									   lengthForMBS,
+									   c,
+									   -1 );
+
+			if ( c < 0 )
+			{
+				err_code = CS_BAD_INPUT;
+				break;
+			}
+			else if ( c <= 0xFFFF )
+				*wcs++ = c;
+			else
+			{
+				*wcs++ = U16_LEAD( c );
+				*wcs++ = U16_TRAIL( c );
+			}
+		}
+	}
+
+	*wcs = L'\0';
+	return wcs - wcsStart;
+}
+
+unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthForMBS )
+{
+	USHORT err_code = 0;
+	ULONG err_position = 0;
+	ULONG wcsLen = wcslen( wcs );
+
+	if ( !wcs || !*wcs )
+		return 0; 
+
+	if ( !mbs )
+		return wcsLen * 4;
+
+	const USHORT* const wcsEnd = wcs + wcsLen;
+	const UCHAR* const mbsStart = (const PUCHAR)mbs;
+	const UCHAR* const mbsEnd = (const PUCHAR)mbs + lengthForMBS;
+
+	for ( ULONG i = 0; i < wcsLen; )
+	{
+		if ( !(mbsEnd - (const PUCHAR)mbs) )
+		{
+			err_code = CS_TRUNCATION_ERROR;
+			err_position = i * sizeof( *wcs );
+			break;
+		}
+
+		UChar32 c = wcs[i++];
+
+		if ( c <= 0x7F )
+		{
+			if ( !c )
+				break;
+			*mbs++ = c;
+		}
+		else
+		{
+			err_position = (i - 1) * sizeof( *wcs );
+
+			if ( U_IS_SURROGATE( c ) )
+			{
+				UChar32 c2;
+
+				if ( U_IS_SURROGATE_LEAD( c ) 
+					&& wcs < wcsEnd
+					&& U16_IS_TRAIL( c2 = *wcs ) )
+				{
+					++wcs;
+					c = U16_GET_SUPPLEMENTARY( c, c2 );
+				}
+				else
+				{
+					err_code = CS_BAD_INPUT;
+					break;
+				}
+			}
+
+			if ( U8_LENGTH( c ) <= mbsEnd - (const PUCHAR)mbs )
+			{
+				int j = 0;
+				U8_APPEND_UNSAFE( (const PUCHAR)mbs, j, c );
+				mbs += j;
+			}
+			else
+			{
+				err_code = CS_TRUNCATION_ERROR;
+				break;
+			}
+		}
+	}
+
+	*mbs = '\0';
+	return ( (const PUCHAR)mbs - mbsStart ) * sizeof( *mbs );
+}
+
+UChar32  utf8_nextCharSafeBody( const uint8_t *s,
+							    int32_t *pi,
+								int32_t length,
+								UChar32 c,
+								UBool strict )
+{
+    int32_t i = *pi;
+    uint8_t count = UTF8_COUNT_TRAIL_BYTES( c );
+
+    if ( i + count <= length )
+	{
+        uint8_t trail, illegal = 0;
+
+        UTF8_MASK_LEAD_BYTE( c, count );
+
+        // count==0 for illegally leading trail bytes and the illegal bytes 0xfe and 0xff
+        switch ( count )
+		{
+		// each branch falls through to the next one 
+        case 5:
+        case 4:
+            // count>=4 is always illegal: no more than 3 trail bytes in Unicode's UTF-8
+            illegal = 1;
+            break;
+
+        case 3:
+            trail = s[i++];
+            c = ( c <<  6) | ( trail & 0x3f );
+            if ( c < 0x110 )
+                illegal |= ( trail & 0xc0 ) ^ 0x80;
+			else
+			{
+                // code point>0x10ffff, outside Unicode
+                illegal = 1;
+                break;
+            }
+        case 2:
+            trail = s[i++];
+            c = ( c <<  6) | ( trail & 0x3f );
+            illegal |= ( trail & 0xc0 ) ^ 0x80;
+        case 1:
+            trail = s[i++];
+            c = ( c <<  6) | ( trail & 0x3f );
+            illegal |= ( trail & 0xc0 ) ^ 0x80;
+            break;
+
+        case 0:
+            if( strict >= 0 )
+                return UTF8_ERROR_VALUE_1;
+			else
+                return U_SENTINEL;
+        // no default branch to optimize switch()  - all values are covered
+        }
+
+         // All the error handling should return a value
+         // that needs count bytes so that UTF8_GET_CHAR_SAFE() works right.
+         // 
+         // Starting with Unicode 3.0.1, non-shortest forms are illegal.
+         // Starting with Unicode 3.2, surrogate code points must not be
+         // encoded in UTF-8, and there are no irregular sequences any more.
+         // 
+         // U8_ macros (new in ICU 2.4) return negative values for error conditions.
+
+        //  correct sequence - all trail bytes have (b7..b6)==(10)?
+        //  illegal is also set if count>=4
+		// 
+        if ( illegal || c < utf8_minLegal[count] || U_IS_SURROGATE( c ) )
+		{
+            //  error handling
+            uint8_t errorCount = count;
+            //  don't go beyond this sequence
+            i = *pi;
+
+            while ( count > 0 && U8_IS_TRAIL( s[i] ) )
+			{
+                ++i;
+                --count;
+            }
+            
+			if ( strict >= 0 )
+                c = utf8_errorValue[ errorCount - count ];
+			else 
+                c = U_SENTINEL;
+        }
+		else if ( strict > 0 && U_IS_UNICODE_NONCHAR( c ) )
+		{
+            //  strict: forbid non-characters like U+fffe
+            c = utf8_errorValue[ count ];
+        }
+    }
+	else //  too few bytes left
+	{
+        //  error handling
+        int32_t i0 = i;
+        //  don't just set (i)=(length) in case there is an illegal sequence
+
+        while( i < length && U8_IS_TRAIL( s[i] ) )
+            ++i;
+
+        if ( strict >= 0 )
+            c = utf8_errorValue[ i - i0 ];
+		else
+            c = U_SENTINEL;
+    }
+
+    *pi = i;
+    return c;
 }
 
 }; // end namespace IscDbcLibrary
