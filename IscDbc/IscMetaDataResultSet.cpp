@@ -123,7 +123,8 @@ void IscMetaDataResultSet::expandPattern(char *& stringOut, const char *prefix, 
 	int dialect = metaData->connection->getDatabaseDialect();
 	int len;
 
-	if ( dialect == 1 || *metaData->getIdentifierQuoteString() == ' ' )
+	if ( dialect == 1 || *metaData->getIdentifierQuoteString() == ' '
+		|| metaData->storesUpperCaseIdentifiers() )
 	{
 		strcpy( nameObj, pattern );
 		ch = nameObj;
