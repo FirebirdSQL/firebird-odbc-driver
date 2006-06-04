@@ -1702,7 +1702,7 @@ SQLRETURN OdbcStatement::sqlExecute()
 	return sqlSuccess();
 }
 
-SQLRETURN OdbcStatement::sqlExecuteDirect(SQLCHAR * sql, int sqlLength)
+SQLRETURN OdbcStatement::sqlExecDirect(SQLCHAR * sql, int sqlLength)
 {
 	int retcode = sqlPrepare (sql, sqlLength);
 	if (retcode && retcode != SQL_SUCCESS_WITH_INFO)

@@ -85,7 +85,7 @@ public:
 	SQLRETURN sqlBindParameter (int parameter, int type, int cType, int sqlType, int precision, int scale, PTR ptr, int bufferLength, SDWORD *length);
 	SQLRETURN sqlDescribeParam (int parameter, SWORD* sqlType, UDWORD*precision, SWORD*scale,SWORD*nullable);
 	SQLRETURN formatParameter( int parameter );
-	SQLRETURN sqlExecuteDirect (SQLCHAR * sql, int sqlLength);
+	SQLRETURN sqlExecDirect (SQLCHAR * sql, int sqlLength);
 	SQLRETURN sqlExecute();
 	SQLRETURN sqlGetData (int column, int cType, PTR value, int bufferLength, SDWORD *length);
 	SQLRETURN sqlDescribeCol (int col, SQLCHAR *colName, int nameSize, SWORD *nameLength,SWORD*sqlType,UDWORD*precision,SWORD*scale,SWORD *nullable);

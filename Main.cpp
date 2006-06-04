@@ -356,7 +356,7 @@ SQLRETURN SQL_API SQLExecDirect( SQLHSTMT hStmt, SQLCHAR *statementText, SQLINTE
 	TRACE ("SQLExecDirect");
 	GUARD_HSTMT( hStmt );
 
-	return ((OdbcStatement*) hStmt)->sqlExecuteDirect( statementText, textLength );
+	return ((OdbcStatement*) hStmt)->sqlExecDirect( statementText, textLength );
 }
 
 ///// SQLExecute /////	ODBC 1.0	///// ISO 92
