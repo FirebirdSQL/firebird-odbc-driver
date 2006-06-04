@@ -366,7 +366,7 @@ SQLRETURN SQL_API SQLExecDirectW( SQLHSTMT hStmt, SQLWCHAR *statementText, SQLIN
 
 	ConvertingString<> StatementText( GETCONNECT_STMT( hStmt ), statementText, textLength );
 
-	return ((OdbcStatement*) hStmt)->sqlExecuteDirect( StatementText, StatementText );
+	return ((OdbcStatement*) hStmt)->sqlExecDirect( StatementText, StatementText );
 }
 
 ///// SQLGetCursorNameW /////	ODBC 1.0	///// ISO 92
