@@ -50,9 +50,12 @@ public:
 	void	commit();
 	void	rollback();
 
+	JString getDatabaseServerName();
+
 	IscConnection	*connections[MAX_COUNT_DBC_SHARE];
 	int				countConnection;
 	void			*transactionHandle;
+	JString			databaseServerName;
 };
 
 }; // end namespace IscDbcLibrary

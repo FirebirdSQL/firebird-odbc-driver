@@ -1495,6 +1495,11 @@ void IscConnection::connectionFromEnvShare()
 	shareConnected = false;
 }
 
+JString IscConnection::getDatabaseServerName()
+{
+	return environmentShare.getDatabaseServerName();
+}
+
 int	IscConnection::getDriverBuildKey()
 {
 	return MAJOR_VERSION * 1000000 + MINOR_VERSION * 10000 + BUILDNUM_VERSION;

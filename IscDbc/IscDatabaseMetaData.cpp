@@ -312,7 +312,7 @@ bool IscDatabaseMetaData::nullsAreSortedAtEnd()
 
 const char* IscDatabaseMetaData::getDatabaseServerName()
 	{
-	return "Firebird Server";
+	return connection->getDatabaseServerName();
 	}
 
 const char* IscDatabaseMetaData::getDatabaseProductName()

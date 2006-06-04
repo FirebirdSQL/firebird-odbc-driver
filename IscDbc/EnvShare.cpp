@@ -25,7 +25,9 @@
 
 #include "stdio.h"
 #include <stdlib.h>
-
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 #include "IscDbc.h"
 #include "SQLError.h"
 #include "EnvShare.h"
@@ -165,6 +167,14 @@ void EnvShare::rollback()
 		if (statusVector [1])
 			throw SQLEXCEPTION (statusVector [1], connections[0]->attachment->getIscStatusText(statusVector));
 	}
+}
+
+JString EnvShare::getDatabaseServerName()
+{
+	if ( databaseServerName.IsEmpty() )
+		gethostname( databaseServerName.getBuffer( 256 ), 256 );
+
+	return databaseServerName;
 }
 
 }; // end namespace IscDbcLibrary

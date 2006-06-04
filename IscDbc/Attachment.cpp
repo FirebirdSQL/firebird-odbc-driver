@@ -66,6 +66,7 @@ Attachment::Attachment()
 	isRoles = false;
 	userType = 8;
 	useSchemaIdentifier = 0;
+	databaseProductName = "Firebird";
 }
 
 Attachment::~Attachment()
@@ -314,6 +315,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 			
 			case isc_info_version:
 				{
+					JString productName;
 					int level = 0;
 					int major = 0, minor = 0, version = 0;
 					char * start = p + 2;
@@ -343,7 +345,16 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 								if ( *beg == '.' )
 									break;
 								if ( beg < end )
-									databaseProductName = JString( beg, end - beg );
+								{
+									productName = JString( beg, end - beg );
+
+									char *endBeg = beg;
+
+									while( *endBeg != ' ' )
+										endBeg++;
+
+									databaseProductName = JString( beg, endBeg - beg );
+								}
 								beg = end;
 								break;
 							}
@@ -351,7 +362,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 						else
 							beg++;
 					}
-					serverVersion.Format("%02d.%02d.%04d %.*s %s",major,minor,version, tmp ? tmp - start : 0, start, (const char*)databaseProductName);
+					serverVersion.Format( "%02d.%02d.%04d %.*s %s",major,minor,version, tmp ? tmp - start : 0, start, (const char*)productName );
 				}
 				break;
 

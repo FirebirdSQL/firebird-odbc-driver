@@ -78,6 +78,7 @@ public:
 	virtual void connectionFromEnvShare();
 	int	getUseAppOdbcVersion () { return useAppOdbcVersion; }
 	void setUseAppOdbcVersion ( int appOdbcVersion ) { useAppOdbcVersion = appOdbcVersion; }
+	JString getDatabaseServerName();
 	virtual int	getDriverBuildKey();
 	void init();
 	IscConnection (IscConnection *source);
