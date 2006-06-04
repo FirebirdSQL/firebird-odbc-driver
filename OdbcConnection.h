@@ -88,6 +88,7 @@ public:
 	JString		filedsn;
 	JString		savedsn;
 	JString		databaseName;
+	JString		databaseServerName;
 	bool		databaseAlways;
 	JString		client;
 	JString		account;

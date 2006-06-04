@@ -74,6 +74,10 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
+#ifndef _WIN32
+#include <unistd.h>
+#include <dlfcn.h>
+#endif
 #include <string.h>
 #include "OdbcJdbc.h"
 #include "OdbcEnv.h"
@@ -86,14 +90,6 @@
 #include "OdbcDesc.h"
 #include "ConnectDialog.h"
 #include "SecurityPassword.h"
-
-#ifndef _WIN32
-#define ELF
-#endif
-
-#ifdef ELF
-#include <dlfcn.h>
-#endif
 
 #define DEFAULT_DRIVER		"IscDbc"
 
@@ -1105,7 +1101,17 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 		break;
 
 	case SQL_SERVER_NAME:
-		string = metaData->getDatabaseServerName();
+		if ( databaseServerName.IsEmpty() )
+		{
+			if ( !metaData )
+			{
+				DWORD nSize = 256;
+				gethostname( databaseServerName.getBuffer( nSize ), nSize );
+			}
+			else
+				databaseServerName = metaData->getDatabaseServerName();
+		}
+		string = databaseServerName;
 		break;
 
 	case SQL_DATA_SOURCE_NAME:
