@@ -7,7 +7,7 @@ Type=3
 Compiler=-D__GNUWIN32__ -D_WIN32_WINNT=0x0400 -DWINVER=0x0400 -DWIN32 -DNDEBUG -D_WINDOWS_@@_
 CppCompiler=-D__GNUWIN32__ -D_WIN32_WINNT=0x0400 -DWINVER=0x0400 -DWIN32 -DNDEBUG -D_WINDOWS_@@_
 Includes=d:/firebird/include;../../IscDbc
-Linker=-luser32 -lodbccp32_@@_--output-def Release/Obj/libOdbcJdbc.def_@@_--output-lib Release/libOdbcJdbc.a_@@_--def ../../OdbcJdbcMinGW.def_@@_Release/libIscDbc.a_@@_
+Linker=-luser32 -lwsock32 -lodbccp32_@@_--output-def Release/Obj/libOdbcJdbc.def_@@_--output-lib Release/libOdbcJdbc.a_@@_--def ../../OdbcJdbcMinGW.def_@@_Release/libIscDbc.a_@@_
 Libs=
 UnitCount=33
 Folders="Header Files","Resource Files","Source Files"
