@@ -1106,7 +1106,11 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 			if ( !metaData )
 			{
 				DWORD nSize = 256;
+#ifdef _WIN32
+				GetComputerName( databaseServerName.getBuffer( nSize ), &nSize );
+#else
 				gethostname( databaseServerName.getBuffer( nSize ), nSize );
+#endif
 			}
 			else
 				databaseServerName = metaData->getDatabaseServerName();
@@ -1497,8 +1501,7 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 			text.Format ("Unable to connect to data source %s: can't find entrypoint 'createConnection'");
 			return sqlReturn (SQL_ERROR, "08001", text);
 		}
-#endif
-#ifdef ELF
+#else
 		if( !env->libraryHandle )
 		{
 			env->libraryHandle = dlopen (sharedLibrary, RTLD_NOW);
@@ -1536,8 +1539,7 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 #ifdef _WIN32
 			FreeLibrary(env->libraryHandle);
 			env->libraryHandle = NULL;
-#endif
-#ifdef ELF
+#else
 			dlclose (env->libraryHandle);
 			env->libraryHandle = 0;
 #endif

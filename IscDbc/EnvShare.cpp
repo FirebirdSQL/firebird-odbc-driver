@@ -172,7 +172,14 @@ void EnvShare::rollback()
 JString EnvShare::getDatabaseServerName()
 {
 	if ( databaseServerName.IsEmpty() )
-		gethostname( databaseServerName.getBuffer( 256 ), 256 );
+	{
+		DWORD nSize = 256;
+#ifdef _WIN32
+		GetComputerName( databaseServerName.getBuffer( nSize ), &nSize );
+#else
+		gethostname( databaseServerName.getBuffer( nSize ), nSize );
+#endif
+	}
 
 	return databaseServerName;
 }
