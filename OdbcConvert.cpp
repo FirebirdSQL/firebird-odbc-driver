@@ -1878,7 +1878,7 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 
 		if ( !to->length )
 			;
-		else if (!dataRemaining && from->dataOffset)
+		else if (!dataRemaining && ( from->dataOffset || fetched ))
 		{
 			from->dataOffset = 0;
 			ret = SQL_NO_DATA;
@@ -1961,7 +1961,7 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 
 		if ( !to->length )
 			;
-		else if (!dataRemaining && from->dataOffset)
+		else if (!dataRemaining && ( from->dataOffset || fetched ))
 		{
 			from->dataOffset = 0;
 			ret = SQL_NO_DATA;
@@ -2051,7 +2051,7 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 
 		if ( !to->length )
 			;
-		else if (!dataRemaining && from->dataOffset)
+		else if (!dataRemaining && ( from->dataOffset || fetched ))
 		{
 			from->dataOffset = 0;
 			ret = SQL_NO_DATA;
@@ -2224,7 +2224,9 @@ int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
-	if ( from->currentFetched != parentStmt->getCurrentFetched() )
+	bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
+
+	if ( !fetched )
 	{ // new row read
 		from->dataOffset = 0;
 		from->currentFetched = parentStmt->getCurrentFetched();
@@ -2236,7 +2238,7 @@ int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
 
 	if ( !to->length )
 		length = dataRemaining;
-	else if (!dataRemaining && from->dataOffset)
+	else if (!dataRemaining && ( from->dataOffset || fetched ))
 	{
 		from->dataOffset = 0;
 		ret = SQL_NO_DATA;
@@ -2379,7 +2381,9 @@ int OdbcConvert::convStringToBinary(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
-	if ( from->currentFetched != parentStmt->getCurrentFetched() )
+	bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
+
+	if ( !fetched )
 	{ // new row read
 		from->dataOffset = 0;
 		from->currentFetched = parentStmt->getCurrentFetched();
@@ -2391,7 +2395,7 @@ int OdbcConvert::convStringToBinary(DescRecord * from, DescRecord * to)
 
 	if ( !to->length )
 		length = dataRemaining;
-	else if (!dataRemaining && from->dataOffset)
+	else if (!dataRemaining && ( from->dataOffset || fetched ))
 	{
 		from->dataOffset = 0;
 		ret = SQL_NO_DATA;
@@ -2649,7 +2653,9 @@ int OdbcConvert::convVarStringToBinary(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
-	if ( from->currentFetched != parentStmt->getCurrentFetched() )
+	bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
+
+	if ( !fetched )
 	{ // new row read
 		from->dataOffset = 0;
 		from->currentFetched = parentStmt->getCurrentFetched();
@@ -2661,7 +2667,7 @@ int OdbcConvert::convVarStringToBinary(DescRecord * from, DescRecord * to)
 
 	if ( !to->length )
 		length = dataRemaining;
-	else if (!dataRemaining && from->dataOffset)
+	else if (!dataRemaining && ( from->dataOffset || fetched ))
 	{
 		from->dataOffset = 0;
 		ret = SQL_NO_DATA;
@@ -2706,7 +2712,9 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
-	if ( from->currentFetched != parentStmt->getCurrentFetched() )
+	bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
+
+	if ( !fetched )
 	{ // new row read
 		from->dataOffset = 0;
 		from->currentFetched = parentStmt->getCurrentFetched();
@@ -2718,7 +2726,7 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 
 	if ( !to->length )
 		length = dataRemaining;
-	else if (!dataRemaining && from->dataOffset)
+	else if (!dataRemaining && ( from->dataOffset || fetched ))
 	{
 		from->dataOffset = 0;
 		ret = SQL_NO_DATA;
