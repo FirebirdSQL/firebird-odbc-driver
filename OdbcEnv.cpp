@@ -159,8 +159,7 @@ void OdbcEnv::connectionClosed(OdbcConnection * connection)
 		if ( libraryHandle )
 #ifdef _WIN32
 			FreeLibrary(libraryHandle);
-#endif
-#ifdef ELF
+#else
 			dlclose (libraryHandle);
 #endif
 		libraryHandle = NULL;
