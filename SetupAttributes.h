@@ -61,6 +61,8 @@
 #define KEY_DSN_PWD			"PWD"
 #define KEY_DSN_CHARSET		"CHARSET"
 #define KEY_DSN_QUOTED		"QUOTED"
+#define KEY_DSN_SENSITIVE	"SENSITIVE"
+#define KEY_DSN_AUTOQUOTED	"AUTOQUOTED"
 #define KEY_DSN_USESCHEMA	"USESCHEMA"
 
 #define LEN_KEY(keydsn) sizeof(keydsn) - 1
