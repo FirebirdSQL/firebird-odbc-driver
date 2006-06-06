@@ -107,8 +107,7 @@ void CFbDll::Release(void)
 // 	if ( _Handle )
 // #ifdef _WIN32
 // 		FreeLibrary(_Handle);
-// #endif
-// #ifdef ELF
+// #else
 // 		dlclose (_Handle);
 // #endif
 
