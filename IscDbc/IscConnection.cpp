@@ -777,6 +777,7 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 	char * ptEndBracket = NULL;
 	int ignoreBracket = 0;
 	int statusQuote = 0;
+	int statusBracket = 0;
 	char quote;
 	char delimiter = *metaData->getIdentifierQuoteString();
 	delimiter = delimiter == ' ' || attachment->databaseDialect < 3 ? 0 : delimiter;
@@ -797,6 +798,10 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 			ptInEnd = ptIn + textLength1;
 		}
 	}
+
+	SKIP_WHITE ( ptIn );
+
+	bool externalBracket = *ptIn == '(';
 
 	while ( ptIn < ptInEnd )
 	{
@@ -853,6 +858,47 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 					while ( IS_IDENT ( *ptIn ) )
 						*ptOut++ = *ptIn++;
 				continue;
+			}
+			else if ( externalBracket )	// Probably it "(select ...) union (select ...)"
+			{							// convert to  " select ...  union  select ... "
+				if ( !statusBracket )
+				{
+					while ( IS_WHITE ( *ptIn ) )
+						*ptOut++ = *ptIn++;
+
+					if ( *ptIn == '(' )
+					{
+						*ptIn = ' ';
+						++statusBracket;
+						++statysModify;
+					}
+					else
+						externalBracket = false;
+				}
+				else
+				{
+					if ( *ptIn == ')' )
+					{
+						if ( !--statusBracket )
+						{
+							*ptIn = ' ';
+							++statysModify;
+							externalBracket = false;
+
+							while ( IS_WHITE ( *ptIn ) )
+								*ptOut++ = *ptIn++;
+
+							if ( IS_MATCH( ptIn, "UNION" ) )
+							{
+								externalBracket = true;
+
+								while ( IS_IDENT ( *ptIn ) )
+									*ptOut++ = *ptIn++;
+							}
+							continue;
+						}
+					}
+				}
 			}
 		}
 		else if ( quote == *ptIn )
