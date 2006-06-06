@@ -244,7 +244,7 @@ void OdbcDesc::defFromMetaDataIn(int recNumber, DescRecord * record)
 	record->name = metaDataIn->getColumnLabel(recNumber);
 	record->baseColumnName = metaDataIn->getColumnName(recNumber);
 	record->nullable = metaDataIn->isNullable(recNumber);
-	record->octetLength = metaDataIn->getPrecision(recNumber);
+	record->octetLength = metaDataIn->getColumnDisplaySize(recNumber);
 	record->precision = metaDataIn->getPrecision(recNumber);
 	record->scale = metaDataIn->getScale(recNumber);
 	record->schemaName = "";
@@ -284,7 +284,7 @@ void OdbcDesc::defFromMetaDataOut(int recNumber, DescRecord * record)
 	record->name = metaDataOut->getColumnLabel(recNumber);
 	record->baseColumnName = metaDataOut->getColumnName(recNumber);
 	record->nullable = metaDataOut->isNullable(recNumber);
-	record->octetLength = metaDataOut->getPrecision(recNumber);
+	record->octetLength = metaDataOut->getColumnDisplaySize(recNumber);
 	record->precision = metaDataOut->getPrecision(recNumber);
 	record->scale = metaDataOut->getScale(recNumber);
 	record->schemaName = "";
