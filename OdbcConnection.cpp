@@ -1105,7 +1105,7 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 		{
 			if ( !metaData )
 			{
-				DWORD nSize = 256;
+				ULONG nSize = 256;
 #ifdef _WIN32
 				GetComputerName( databaseServerName.getBuffer( nSize ), &nSize );
 #else

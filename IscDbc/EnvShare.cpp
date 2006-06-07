@@ -173,7 +173,7 @@ JString EnvShare::getDatabaseServerName()
 {
 	if ( databaseServerName.IsEmpty() )
 	{
-		DWORD nSize = 256;
+		ULONG nSize = 256;
 #ifdef _WIN32
 		GetComputerName( databaseServerName.getBuffer( nSize ), &nSize );
 #else
