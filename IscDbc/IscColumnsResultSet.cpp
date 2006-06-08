@@ -237,7 +237,7 @@ bool IscColumnsResultSet::getDefSource (int indexIn, int indexTarget)
 	while ( *++beg == ' ' );
 	while ( *end == ' ' ) end--;
 
-	if ( *beg == '\'' )
+	if ( *beg == '\'' && *(beg + 1) != '\'' )
 	{
 		++beg;
 		--end;
