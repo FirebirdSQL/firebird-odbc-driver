@@ -2523,6 +2523,8 @@ SQLRETURN OdbcStatement::executeStatement()
 		resultSet->readStaticCursor(); 
 		setCursorRowCount(resultSet->getCountRowsStaticCursor());
 	}
+	else if ( statement->isActiveModify() && statement->getUpdateCount() <= 0 )
+		return SQL_NO_DATA;
 
 	return SQL_SUCCESS;
 }
