@@ -31,6 +31,9 @@ namespace IscDbcLibrary {
 
 class IscTablesResultSet : public IscMetaDataResultSet  
 {
+	int sqlAllParam;
+	int curentRowAllParam;
+
 public:
 	virtual bool nextFetch();
 	void getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char **types);

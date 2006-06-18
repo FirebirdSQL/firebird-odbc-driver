@@ -44,10 +44,13 @@ namespace IscDbcLibrary {
 IscTablesResultSet::IscTablesResultSet(IscDatabaseMetaData *metaData)
 		: IscMetaDataResultSet(metaData)
 {
+	sqlAllParam = 0;
+	curentRowAllParam = 0;
 }
 
 void IscTablesResultSet::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char * * types)
 {
+	char *sqlAll =  "%";
 	char sql[2048] =  "select cast (NULL as varchar(7)) as table_cat,\n"				// 1
 			          "cast (tbl.rdb$owner_name as varchar(31)) as table_schem,\n"		// 2
 					  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
@@ -59,64 +62,150 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 					  "from rdb$relations tbl\n";
 
 	char * ptFirst = sql + strlen(sql);
+	char * ptSql = sql;
 	const char *sep = " where (";
 	bool firstWhere = true;
-
-	if (schemaPattern && *schemaPattern)
+	
+	do
 	{
-		expandPattern (ptFirst, " where ","tbl.rdb$owner_name", schemaPattern);
-		sep = " and (";
-		firstWhere = false;
-	}
-
-	if (tableNamePattern && *tableNamePattern)
-	{
-		expandPattern (ptFirst, firstWhere ? " where " : " and ", "tbl.rdb$relation_name", tableNamePattern);
-		sep = " and (";
-	}
-
-	if ( !metaData->allTablesAreSelectable() )
-	{
-		metaData->existsAccess(ptFirst, sep, "tbl", 0, ")\n");
-		sep = " and (";
-	}
-
-	char * pt = ptFirst;
-		
-	for (int n = 0; n < typeCount; ++n)
-		if (!strcmp (types [n], "TABLE"))
-			{
-			addString(pt, sep);
-			addString(pt, "(tbl.rdb$view_blr is null and tbl.rdb$system_flag = 0)");
-			sep = " or ";
-			}
-		else if (!strcmp (types [n], "VIEW"))
-			{
-			addString(pt, sep);
-			addString(pt, "tbl.rdb$view_blr is not null");
-			sep = " or ";
-			}
-		else if (!strcmp (types [n], "SYSTEM TABLE"))
-			{
-			addString(pt, sep);
-			addString(pt, "(tbl.rdb$view_blr is null and tbl.rdb$system_flag = 1)");
-			sep = " or ";
-			}
-
-	if ( pt > ptFirst )
+		if ( !(catalog && *catalog) )
+			++sqlAllParam;
+		else if ( *(short*)catalog == *(short*)sqlAll // SQL_ALL_CATALOGS
+			&& !(schemaPattern && *schemaPattern)
+			&& !(tableNamePattern && *tableNamePattern) )
 		{
-		ptFirst = pt;
-		addString(ptFirst, ")\n");
+			ptSql = "select cast (NULL as varchar(7)) as table_cat,\n"	// 1
+				    "cast (NULL as varchar(31)) as table_schem,\n"		// 2
+					"cast (NULL as varchar(31)) as table_name,\n"		// 3
+					"cast (NULL as varchar(13)) as table_type,\n"		// 4
+					"cast (NULL as varchar(255)) as remarks\n"			// 5
+					"from rdb$database tbl\n";
+			sqlAllParam = 1; // empty resulset
+			break;
 		}
 
-	addString(ptFirst, " order by tbl.rdb$system_flag desc, tbl.rdb$owner_name, tbl.rdb$relation_name");
+		if ( !(schemaPattern && *schemaPattern) )
+			++sqlAllParam;
+		else if ( *(short*)schemaPattern == *(short*)sqlAll // SQL_ALL_SCHEMAS
+			&& sqlAllParam
+			&& !(tableNamePattern && *tableNamePattern) )
+		{
+			ptSql = "select distinct cast (NULL as varchar(7)) as table_cat,\n"	 // 1
+			        "cast (tbl.rdb$owner_name as varchar(31)) as table_schem,\n" // 2
+					"cast (NULL as varchar(31)) as table_name,\n"				 // 3
+					"cast (NULL as varchar(13)) as table_type,\n"				 // 4
+					"cast (NULL as varchar(255)) as remarks\n"					 // 5
+				    "from rdb$relations tbl\n";
+			sqlAllParam = 2; // unique owners
+			break;
+		}
 
-	prepareStatement (sql);
+		if ( typeCount == 1
+			&& *(short*)types[0] == *(short*)sqlAll // SQL_ALL_TABLE_TYPES
+			&& sqlAllParam == 2
+			&& !(tableNamePattern && *tableNamePattern) )
+		{
+			ptSql = "select cast (NULL as varchar(7)) as table_cat,\n"		// 1
+				    "cast (NULL as varchar(31)) as table_schem,\n"			// 2
+					"cast (NULL as varchar(31)) as table_name,\n"			// 3
+					"cast ('SYSTEM TABLE' as varchar(13)) as table_type,\n"	// 4
+					"cast (NULL as varchar(255)) as remarks\n"				// 5
+					"from rdb$database tbl\n";
+			sqlAllParam = 3; // unique table types
+			break;
+		}
+
+		sqlAllParam = 0;
+		if (schemaPattern && *schemaPattern)
+		{
+			expandPattern (ptFirst, " where ","tbl.rdb$owner_name", schemaPattern);
+			sep = " and (";
+			firstWhere = false;
+		}
+
+		if (tableNamePattern && *tableNamePattern)
+		{
+			expandPattern (ptFirst, firstWhere ? " where " : " and ", "tbl.rdb$relation_name", tableNamePattern);
+			sep = " and (";
+		}
+
+		if ( !metaData->allTablesAreSelectable() )
+		{
+			metaData->existsAccess(ptFirst, sep, "tbl", 0, ")\n");
+			sep = " and (";
+		}
+
+		char * pt = ptFirst;
+			
+		for (int n = 0; n < typeCount; ++n)
+			if (!strcmp (types [n], "TABLE"))
+				{
+				addString(pt, sep);
+				addString(pt, "(tbl.rdb$view_blr is null and tbl.rdb$system_flag = 0)");
+				sep = " or ";
+				}
+			else if (!strcmp (types [n], "VIEW"))
+				{
+				addString(pt, sep);
+				addString(pt, "tbl.rdb$view_blr is not null");
+				sep = " or ";
+				}
+			else if (!strcmp (types [n], "SYSTEM TABLE"))
+				{
+				addString(pt, sep);
+				addString(pt, "(tbl.rdb$view_blr is null and tbl.rdb$system_flag = 1)");
+				sep = " or ";
+				}
+
+		if ( pt > ptFirst )
+			{
+			ptFirst = pt;
+			addString(ptFirst, ")\n");
+			}
+
+		addString(ptFirst, " order by tbl.rdb$system_flag desc, tbl.rdb$owner_name, tbl.rdb$relation_name");
+
+	} while ( false );
+
+	prepareStatement (ptSql);
 	numberColumns = 5;
 }
 
 bool IscTablesResultSet::nextFetch()
 {
+	if ( sqlAllParam )
+	{
+		if ( sqlAllParam == 1 )
+			return false;
+		else if ( sqlAllParam == 3 && curentRowAllParam )
+		{
+			if ( curentRowAllParam == 1 )
+			{
+				sqlda->restoreBufferToCurrentSqlda();
+				sqlda->updateVarying (4, "TABLE");
+			}
+			else if ( curentRowAllParam == 2 )
+			{
+				sqlda->restoreBufferToCurrentSqlda();
+				sqlda->updateVarying (4, "VIEW");
+			}
+			else
+				return false;
+
+			++curentRowAllParam;
+			return true;
+		}
+ 			
+		if (!IscResultSet::nextFetch())
+			return false;
+
+		if ( sqlAllParam == 3 )
+			sqlda->saveCurrentSqldaToBuffer();
+
+		++curentRowAllParam;
+		return true;
+	}
+
 	if (!IscResultSet::nextFetch())
 		return false;
 

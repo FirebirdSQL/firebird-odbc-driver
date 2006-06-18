@@ -332,6 +332,16 @@ public:
 	{
 		memcpy(orgBuf,nextPosition(),lenRow);
 	}
+
+	void copyToBuffer(char * orgBuf)
+	{
+		memcpy(orgBuf,ptRowBlock,lenRow);
+	}
+
+	void copyToCurrentSqlda(char * orgBuf)
+	{
+		memcpy(ptRowBlock,orgBuf,lenRow);
+	}
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -540,6 +550,16 @@ void Sqlda::copyNextSqldaInBufferStaticCursor()
 void Sqlda::copyNextSqldaFromBufferStaticCursor()
 {
 	*dataStaticCursor >> buffer;
+}
+
+void Sqlda::saveCurrentSqldaToBuffer()
+{
+	dataStaticCursor->copyToBuffer( buffer );
+}
+
+void Sqlda::restoreBufferToCurrentSqlda()
+{
+	dataStaticCursor->copyToCurrentSqlda( buffer );
 }
 
 int Sqlda::getCountRowsStaticCursor()

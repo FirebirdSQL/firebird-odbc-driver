@@ -90,6 +90,8 @@ public:
 	void getAdressFieldFromCurrentRowInBufferStaticCursor(int column, char *& sqldata, short *& sqlind);
 	void copyNextSqldaInBufferStaticCursor();
 	void copyNextSqldaFromBufferStaticCursor();
+	void saveCurrentSqldaToBuffer();
+	void restoreBufferToCurrentSqlda();
 	int getCountRowsStaticCursor();
 	int getColumnCount();
 	void init();
