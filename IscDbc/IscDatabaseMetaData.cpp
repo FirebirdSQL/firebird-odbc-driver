@@ -657,10 +657,9 @@ bool IscDatabaseMetaData::supportsLimitedOuterJoins()
 
 const char* IscDatabaseMetaData::getSchemaTerm()
 	{
-	return "";
-//	return "schema";
-//	ATTENTION! Fb can not at present execute a design
-//	select  *  from "owner"."table"
+	if ( !connection->attachment->getUseSchemaIdentifier() )
+		return "";
+	return "schema";
 	}
 
 const char* IscDatabaseMetaData::getProcedureTerm()
@@ -670,7 +669,7 @@ const char* IscDatabaseMetaData::getProcedureTerm()
 
 const char* IscDatabaseMetaData::getCatalogTerm()
 	{
-	return "system tables";
+	return "database";
 	}
 
 bool IscDatabaseMetaData::isCatalogAtStart()
