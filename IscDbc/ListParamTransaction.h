@@ -46,6 +46,7 @@ public:
 	char		*tpbBuffer;
 	int			lengthTpbBuffer;
 	bool		autoCommit;
+	int			lockTimeout;
 
 	CNodeParamTransaction()
 	{
@@ -70,6 +71,7 @@ public:
 		tpbBuffer = NULL;
 		lengthTpbBuffer = 0;
 		autoCommit = false;
+		lockTimeout = 0;
 	}
 	CNodeParamTransaction & operator =(const CNodeParamTransaction & src)
 	{ 
@@ -84,6 +86,7 @@ public:
 		tpbBuffer = new char[lengthTpbBuffer];
 		memcpy( tpbBuffer, src.tpbBuffer, lengthTpbBuffer );
 		autoCommit = src.autoCommit;
+		lockTimeout = src.lockTimeout;
 
 		return  *this;
 	}

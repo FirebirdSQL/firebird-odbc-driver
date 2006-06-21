@@ -155,4 +155,7 @@ IDS_USESCHEMA_DEL, // "Remove SCHEMA from SQL query"
 ,
 IDS_USESCHEMA_FULL, // "Use full SCHEMA"
 	"Use full SCHEMA"
+,
+IDS_STATIC_LOCKTIMEOUT, // "lock timeout"
+	"lock timeout"
 }

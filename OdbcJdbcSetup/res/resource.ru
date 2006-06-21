@@ -155,4 +155,7 @@ IDS_USESCHEMA_DEL, // "Remove SCHEMA from SQL query"
 ,
 IDS_USESCHEMA_FULL, // "Use full SCHEMA"
 	"ѕоле SCHEMA контролирует сервер"
+,
+IDS_STATIC_LOCKTIMEOUT, // "lock timeout"
+	"врем€ блокировки"
 }
