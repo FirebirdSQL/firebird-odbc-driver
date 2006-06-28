@@ -37,7 +37,10 @@
 
 extern FILE	*logFile;
 using namespace OdbcJdbcLibrary;
+
+#ifdef _WIN32
 extern UINT codePage; // from Main.cpp
+#endif
 
 template <typename TypeRealLen = SQLSMALLINT>
 class ConvertingString
