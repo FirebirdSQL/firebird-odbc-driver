@@ -41,7 +41,6 @@ using namespace IscDbcLibrary;
 
 CServiceClient::CServiceClient()
 {
-	libraryHandle = NULL;
 	services = NULL;
 	properties = NULL;
 	logFile = NULL;
@@ -69,28 +68,13 @@ CServiceClient::~CServiceClient()
 		services->closeService();
 		services->release();
 	}
-
-	if ( libraryHandle )
-		CLOSE_SHARE_LIBLARY( libraryHandle );
 }
 
 bool CServiceClient::initServices( const char *sharedLibrary )
 {
 	try
 	{
-		if ( !sharedLibrary )
-			sharedLibrary = DEFAULT_DRIVER;
-
-		libraryHandle = OPEN_SHARE_LIBLARY( sharedLibrary );
-		if ( !libraryHandle )
-			return false;
-
-		ServiceManagerFn fn = (ServiceManagerFn)GET_ENTRY_POINT( libraryHandle, ENTRY_DLL_CREATE_SERVICES );
-
-		if ( !fn )
-			return false;
-
-		services = (fn)();
+		services = createServices();
 
 		if ( !services )
 			return false;
@@ -154,11 +138,7 @@ bool CServiceClient::createDatabase()
 
 	try
 	{
-		ConnectFn fn = (ConnectFn)GET_ENTRY_POINT( libraryHandle, ENTRY_DLL_CREATE_CONNECTION );
-		if (!fn)
-			return false;
-
-		connection = (fn)();
+		connection = createConnection();
 		connection->createDatabase( properties->findValue( SETUP_DBNAME, NULL ),
 								    properties );
 		connection->close();
@@ -183,11 +163,7 @@ bool CServiceClient::openDatabase()
 
 	try
 	{
-		ConnectFn fn = (ConnectFn)GET_ENTRY_POINT( libraryHandle, ENTRY_DLL_CREATE_CONNECTION );
-		if (!fn)
-			return false;
-
-		connection = (fn)();
+		connection = createConnection();
 		connection->openDatabase( properties->findValue( SETUP_DBNAME, NULL ),
 								  properties );
 		connection->close();
@@ -212,11 +188,7 @@ bool CServiceClient::dropDatabase()
 
 	try
 	{
-		ConnectFn fn = (ConnectFn)GET_ENTRY_POINT( libraryHandle, ENTRY_DLL_CREATE_CONNECTION );
-		if (!fn)
-			return false;
-
-		connection = (fn)();
+		connection = createConnection();
 		connection->openDatabase( properties->findValue( SETUP_DBNAME, NULL ),
 								  properties );
 		connection->close();
