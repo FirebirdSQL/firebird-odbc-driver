@@ -158,4 +158,7 @@ IDS_USESCHEMA_FULL, // "Use full SCHEMA"
 ,
 IDS_STATIC_LOCKTIMEOUT, // "lock timeout"
 	"время блокировки"
+,
+IDS_CHECK_SFTHREAD, // "safe thread"
+	"потоко-безопасный источник"
 }
