@@ -128,4 +128,10 @@ LPWORD lpwAlign( LPWORD lpIn);
 #define TMP_NAMECONTROL(STRTEXT,ID,NAME_CTRL,STYLE,X,Y,CX,CY) \
 	TMP_NAMECTRL(STRTEXT,ID,NAME_CTRL,X,Y,CX,CY, 0x50000000 | STYLE )
 
+#ifdef _WIN64
+#define GW_USERDATA GWLP_USERDATA
+#else // if _WIN32
+#define GW_USERDATA GWL_USERDATA
+#endif
+
 #endif // !defined(_CommonUtil_h_)

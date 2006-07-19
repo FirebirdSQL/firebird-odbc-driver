@@ -148,7 +148,7 @@ BOOL CALLBACK wndproCUserDialog( HWND hDlg, UINT message, UINT wParam, LONG lPar
 	{
     case WM_INITDIALOG:
 
-	    SetWindowLong( hDlg, GWL_USERDATA, (ULONG)lParam ); 
+	    SetWindowLong( hDlg, GW_USERDATA, (ULONG)lParam ); 
 
 		if ( !((CUserDialog*)lParam)->OnInitDialog( hDlg ) )
 			return FALSE;
@@ -165,7 +165,7 @@ BOOL CALLBACK wndproCUserDialog( HWND hDlg, UINT message, UINT wParam, LONG lPar
 
         case IDOK:
 			{
-				CUserDialog *dlg = (CUserDialog*)GetWindowLong( hDlg, GWL_USERDATA );
+				CUserDialog *dlg = (CUserDialog*)GetWindowLong( hDlg, GW_USERDATA );
 				dlg->updateData( hDlg );
 
 				if ( !dlg->validateFields() )

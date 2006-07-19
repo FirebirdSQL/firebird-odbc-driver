@@ -18,7 +18,7 @@
  *  All Rights Reserved.
  */
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 #include <windows.h>
 #else
 #include <wchar.h>
@@ -38,7 +38,7 @@
 extern FILE	*logFile;
 using namespace OdbcJdbcLibrary;
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 extern UINT codePage; // from Main.cpp
 #endif
 
@@ -131,7 +131,7 @@ public:
 					len = connection->MbsToWcs( (wchar_t*)unicodeString, (const char*)byteString, lengthString );
 				else
 				{
-#ifdef _WIN32
+#ifdef _WINDOWS
 					len = MultiByteToWideChar( codePage, 0, (const char*)byteString, -1,
 											  unicodeString, lengthString );
 					if ( len > 0 )
@@ -148,9 +148,9 @@ public:
 					if ( realLength )
 					{
 						if ( returnCountOfBytes )
-							*realLength = len * 2;
+							*realLength = (TypeRealLen)( len * 2 );
 						else
-							*realLength = len;
+							*realLength = (TypeRealLen)len;
 					}
 				}
 			}
@@ -172,7 +172,7 @@ public:
 		wchar_t saveWC;
 
 		if ( length == SQL_NTS )
-			length = wcslen( (const wchar_t*)wcString );
+			length = (int)wcslen( (const wchar_t*)wcString );
 		else if ( wcString[length] != L'\0' )
 		{
 			ptEndWC = (wchar_t*)&wcString[length];
@@ -184,8 +184,8 @@ public:
 			bytesNeeded = connection->WcsToMbs( NULL, (const wchar_t*)wcString, length );
 		else
 		{
-#ifdef _WIN32
-			bytesNeeded = WideCharToMultiByte( codePage, 0, wcString, length, NULL, 0, NULL, NULL );
+#ifdef _WINDOWS
+			bytesNeeded = WideCharToMultiByte( codePage, (DWORD)0, wcString, length, NULL, (int)0, NULL, NULL );
 #else
 			bytesNeeded = wcstombs( NULL, (const wchar_t*)wcString, length );
 #endif
@@ -197,15 +197,15 @@ public:
 			connection->WcsToMbs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
 		else
 		{
-#ifdef _WIN32
-			WideCharToMultiByte( codePage, 0, wcString, length, (LPSTR)byteString, bytesNeeded, NULL, NULL );
+#ifdef _WINDOWS
+			WideCharToMultiByte( codePage, 0, wcString, length, (LPSTR)byteString, (int)bytesNeeded, NULL, NULL );
 #else
 			wcstombs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
 #endif
 		}
 
 		byteString[ bytesNeeded ] = '\0';
-		lengthString = bytesNeeded;
+		lengthString = (int)bytesNeeded;
 
 		if ( ptEndWC )
 			*ptEndWC = saveWC;
@@ -748,7 +748,7 @@ SQLRETURN SQL_API SQLNativeSqlW( SQLHDBC hDbc,
 	GUARD_HDBC( hDbc );
 
 	if ( cbSqlStrIn == SQL_NTS )
-		cbSqlStrIn = wcslen( (const wchar_t*)szSqlStrIn );
+		cbSqlStrIn = (SQLINTEGER)wcslen( (const wchar_t*)szSqlStrIn );
 	
 	bool isByte = !( cbSqlStrIn % 2 );
 
@@ -1160,7 +1160,7 @@ SQLRETURN SQL_API SQLSetDescFieldW( SQLHDESC hDesc,
 			int len;
 			
 			if ( bufferLength == SQL_NTS )
-				len = wcslen( (const wchar_t*)value );
+				len = (int)wcslen( (const wchar_t*)value );
 			else
 				len = bufferLength / 2;
 

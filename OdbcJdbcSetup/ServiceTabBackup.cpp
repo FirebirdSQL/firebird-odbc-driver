@@ -103,7 +103,7 @@ void CServiceTabBackup::updateData( HWND hDlg, BOOL bSaveAndValidate )
 BOOL CALLBACK wndproCServiceTabBackup( HWND hWndChildTab, UINT message, UINT wParam, LONG lParam )
 {
 	HWND hWndParent = GetParent( hWndChildTab );
-	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
+	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GW_USERDATA );
 	int iPage = TabCtrl_GetCurSel( hWndParent );
 	CServiceTabChild *child = tabData->childTab[iPage];
 
@@ -271,7 +271,7 @@ bool CServiceTabBackup::createDialogIndirect( CServiceTabCtrl *parentTabCtrl )
 	hDlg = CreateDialogIndirect( m_hInstance,
                                  resource,
                                  parent,
-                                 wndproCServiceTabBackup );
+                                 (DLGPROC)wndproCServiceTabBackup );
 	return true;
 }
 

@@ -451,7 +451,7 @@ void CServiceTabChild::writeHeadToLogFile()
 			"<BODY BGCOLOR=\"#FFFFFF\" TEXT=\"#000000\">";
 
 		DWORD dwWritten = 0;
-		WriteFile( hTmpFile, head, strlen( head ), &dwWritten, NULL );
+		WriteFile( hTmpFile, head, (DWORD)strlen( head ), &dwWritten, NULL );
 	}
 }
 
@@ -461,7 +461,7 @@ void CServiceTabChild::writeFooterToLogFile()
 	{
 		char *footer = "</BODY></HTML>";
 		DWORD dwWritten = 0;
-		WriteFile( hTmpFile, footer, strlen( footer ), &dwWritten, NULL );
+		WriteFile( hTmpFile, footer, (DWORD)strlen( footer ), &dwWritten, NULL );
 		FlushFileBuffers( hTmpFile );
 		CloseHandle( hTmpFile );
 		hTmpFile = NULL;

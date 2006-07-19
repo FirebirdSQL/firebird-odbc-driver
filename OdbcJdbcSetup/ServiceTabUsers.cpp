@@ -87,7 +87,7 @@ bool CServiceTabUsers::OnInitDialog( HWND hDlg )
     tie.pszText = " MemberShips "; 
     TabCtrl_InsertItem( hWndTab, 2, &tie );
 */
-    SetWindowLong( hWndTab, GWL_USERDATA, (ULONG)&tabData ); 
+    SetWindowLong( hWndTab, GW_USERDATA, (ULONG)&tabData ); 
 	users.createDialogIndirect( this );
 
 	return true;
@@ -96,7 +96,7 @@ bool CServiceTabUsers::OnInitDialog( HWND hDlg )
 BOOL CALLBACK wndproCServiceTabUsersChild( HWND hWndChildTab, UINT message, UINT wParam, LONG lParam )
 {
 	HWND hWndParent = GetParent( hWndChildTab );
-	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
+	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GW_USERDATA );
 	int iPage = TabCtrl_GetCurSel( hWndParent );
 	CServiceTabChild *child = tabData->childTab[iPage];
 
@@ -129,7 +129,7 @@ BOOL CALLBACK wndproCServiceTabUsersChild( HWND hWndChildTab, UINT message, UINT
 			{
 				NMHDR *hdr = (NMHDR*)lParam;
 				HWND hWndTab = hdr->hwndFrom;
-				PUSERS_DIALOG_HEADER tabData = (PUSERS_DIALOG_HEADER)GetWindowLong( hWndTab, GWL_USERDATA );
+				PUSERS_DIALOG_HEADER tabData = (PUSERS_DIALOG_HEADER)GetWindowLong( hWndTab, GW_USERDATA );
 				int iPage = TabCtrl_GetCurSel( hWndTab );
 
 				switch ( hdr->code )
@@ -185,7 +185,7 @@ bool CServiceTabUsers::createDialogIndirect( CServiceTabCtrl *parentTabCtrl )
 	hDlg = CreateDialogIndirect( m_hInstance,
                                  resource,
                                  parent,
-                                 wndproCServiceTabUsersChild );
+                                 (DLGPROC)wndproCServiceTabUsersChild );
 	OnInitDialog( hDlg );
 	return true;
 }

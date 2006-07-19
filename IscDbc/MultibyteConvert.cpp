@@ -22,7 +22,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 #include <windows.h>
 #else
 #include <wchar.h>
@@ -145,9 +145,9 @@ WCSTOMBS adressWcsToMbs( int charsetCode )
 	case 0: // NONE
 		return wcstombs;
 	case 3: // UNICODE_FSS
-		return fss_wcstombs;
+		return (WCSTOMBS)fss_wcstombs;
 	case 4: // UTF8
-		return utf8_wcstombs;
+		return (WCSTOMBS)utf8_wcstombs;
 	default:
 		break;
 	}
@@ -162,9 +162,9 @@ MBSTOWCS adressMbsToWcs( int charsetCode )
 	case 0: // NONE
 		return mbstowcs;
 	case 3: // UNICODE_FSS
-		return fss_mbstowcs;
+		return (MBSTOWCS)fss_mbstowcs;
 	case 4: // UTF8
-		return utf8_mbstowcs;
+		return (MBSTOWCS)utf8_mbstowcs;
 	default:
 		break;
 	}
@@ -548,7 +548,7 @@ unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFo
 {
 	USHORT err_code = 0;
 	ULONG err_position = 0;
-	ULONG wcsLen = wcslen( wcs );
+	ULONG wcsLen = (ULONG)wcslen( wcs );
 
 	if ( !wcs || !*wcs )
 		return 0; 
@@ -632,7 +632,7 @@ unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFo
 	}
 
 	*mbsOrg = '\0';
-	return ( mbsOrg - mbsStart ) * sizeof( *mbs );
+	return (unsigned int)( ( mbsOrg - mbsStart ) * sizeof( *mbs ) );
 }
 
 UChar32  utf8_nextCharSafeBody( const uint8_t *s,

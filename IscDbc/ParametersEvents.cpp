@@ -54,7 +54,7 @@ void ParametersEvents::putNameEvent( const char * name )
 	while ( *parameter )
 		parameter = &(*parameter)->nextParameter;
 
-	*parameter = new ParameterEvent( *parameter, name, strlen( name ) );
+	*parameter = new ParameterEvent( *parameter, name, (int)strlen( name ) );
 }
 
 int ParametersEvents::findIndex( const char * name )

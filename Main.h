@@ -23,7 +23,7 @@
 
 void trace (const char *msg);
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 #define OUTPUT_MONITOR_EXECUTING(msg)  OutputDebugString(msg"\n");
 #else
 #define OUTPUT_MONITOR_EXECUTING(msg)

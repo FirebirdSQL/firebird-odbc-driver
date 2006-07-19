@@ -45,14 +45,14 @@ CServiceClient::CServiceClient()
 	properties = NULL;
 	logFile = NULL;
 	executedPart = 0;
-#ifdef _WIN32
+#ifdef _WINDOWS
 	hSemaphore = NULL;
 #endif
 }
 
 CServiceClient::~CServiceClient()
 {
-#ifdef _WIN32
+#ifdef _WINDOWS
 	if ( hSemaphore )
 		CloseHandle( hSemaphore );
 #endif
@@ -265,7 +265,7 @@ void CServiceClient::closeService()
 
 void CServiceClient::openSemaphore( const char *nameSemaphore )
 {
-#ifdef _WIN32
+#ifdef _WINDOWS
 	hSemaphore = OpenSemaphore( SEMAPHORE_MODIFY_STATE | SYNCHRONIZE, FALSE, nameSemaphore );
 	if ( !hSemaphore ) 
 		hSemaphore = CreateSemaphore( NULL, 0, 1, nameSemaphore );
@@ -274,7 +274,7 @@ void CServiceClient::openSemaphore( const char *nameSemaphore )
 
 void CServiceClient::greenSemaphore()
 {
-#ifdef _WIN32
+#ifdef _WINDOWS
 	ReleaseSemaphore( hSemaphore, 1, NULL );
 #endif
 }

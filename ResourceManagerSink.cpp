@@ -22,7 +22,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 
 #if _MSC_VER > 1000
 
@@ -68,4 +68,4 @@ void ResourceManagerSink::setResourceAsync( TransactionResourceAsync * ptResAsyn
 
 #endif // _MSC_VER > 1000
 
-#endif // _WIN32
+#endif // _WINDOWS

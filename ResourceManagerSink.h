@@ -21,7 +21,7 @@
 // ResourceManagerSink.h interface for the ResourceManagerSink class.
 //
 //////////////////////////////////////////////////////////////////////
-#ifdef _WIN32
+#ifdef _WINDOWS
 
 #if _MSC_VER > 1000
 
@@ -56,4 +56,4 @@ public:
 
 #endif // _MSC_VER > 1000
 
-#endif // _WIN32
+#endif // _WINDOWS

@@ -135,7 +135,7 @@ bool CUsersTabUsers::addRowToListView()
 BOOL CALLBACK wndproCUsersTabUsers( HWND hWndChildTab, UINT message, UINT wParam, LONG lParam )
 {
 	HWND hWndParent = GetParent( hWndChildTab );
-	PUSERS_DIALOG_HEADER tabData = (PUSERS_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
+	PUSERS_DIALOG_HEADER tabData = (PUSERS_DIALOG_HEADER)GetWindowLong( hWndParent, GW_USERDATA );
 	int iPage = TabCtrl_GetCurSel( hWndParent );
 	CUsersTabChild *child = tabData->childTab[iPage];
 
@@ -425,7 +425,7 @@ bool CUsersTabUsers::createDialogIndirect( CServiceTabUsers *parentTabCtrl )
 	hDlg = CreateDialogIndirect( m_hInstance,
                                  resource,
                                  parent,
-                                 wndproCUsersTabUsers );
+                                 (DLGPROC)wndproCUsersTabUsers );
 	OnInitDialog();
 	return true;
 }

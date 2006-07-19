@@ -116,7 +116,7 @@ void CServiceTabRestore::updateData( HWND hDlg, BOOL bSaveAndValidate )
 BOOL CALLBACK wndproCServiceTabRestoreChild( HWND hWndChildTab, UINT message, UINT wParam, LONG lParam )
 {
 	HWND hWndParent = GetParent( hWndChildTab );
-	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
+	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GW_USERDATA );
 	int iPage = TabCtrl_GetCurSel( hWndParent );
 	CServiceTabChild *child = tabData->childTab[iPage];
 
@@ -237,7 +237,7 @@ void CServiceTabRestore::onStartRestore()
 
 				if ( services.checkIncrementForRestore( pt, bufferHead ) )
 				{
-					int lengthPt = strlen( bufferHead );
+					int lengthPt = (int)strlen( bufferHead );
 					pos += 8;
 					SendMessage( hWndBar, PBM_SETPOS, (WPARAM)pos , (LPARAM)NULL );
 					WriteFile( hTmpFile, bufferHead, lengthPt, &dwWritten, NULL );
@@ -253,7 +253,7 @@ void CServiceTabRestore::onStartRestore()
 			if ( !noReadOnly )
 			{
 				char *pt = "<UL><B>Database is Read Only</UL></B>";
-				WriteFile( hTmpFile, pt, strlen( pt ), &dwWritten, NULL );
+				WriteFile( hTmpFile, pt, (DWORD)strlen( pt ), &dwWritten, NULL );
 			}
 
 			writeFooterToLogFile();
@@ -300,7 +300,7 @@ bool CServiceTabRestore::createDialogIndirect( CServiceTabCtrl *parentTabCtrl )
 	hDlg = CreateDialogIndirect( m_hInstance,
                                  resource,
                                  parent,
-                                 wndproCServiceTabRestoreChild );
+                                 (DLGPROC)wndproCServiceTabRestoreChild );
 	return true;
 }
 

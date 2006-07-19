@@ -24,7 +24,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #ifdef DEBUG
-#ifdef _WIN32
+#ifdef _WINDOWS
 #include <windows.h>
 #endif
 #endif

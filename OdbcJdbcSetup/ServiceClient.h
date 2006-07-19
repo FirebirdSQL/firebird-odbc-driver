@@ -83,7 +83,7 @@ public:
 	Properties      *properties;
 	ULONG           executedPart;
 	FILE            *logFile;
-#ifdef _WIN32
+#ifdef _WINDOWS
 	HANDLE          hSemaphore;
 #endif
 };

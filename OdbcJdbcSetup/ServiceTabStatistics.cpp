@@ -91,7 +91,7 @@ void CServiceTabStatistics::updateData( HWND hDlg, BOOL bSaveAndValidate )
 BOOL CALLBACK wndproCServiceTabStatisticChild( HWND hWndChildTab, UINT message, UINT wParam, LONG lParam )
 {
 	HWND hWndParent = GetParent( hWndChildTab );
-	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GWL_USERDATA );
+	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GW_USERDATA );
 	int iPage = TabCtrl_GetCurSel( hWndParent );
 	CServiceTabChild *child = tabData->childTab[iPage];
 
@@ -240,7 +240,7 @@ bool CServiceTabStatistics::createDialogIndirect( CServiceTabCtrl *parentTabCtrl
 	hDlg = CreateDialogIndirect( m_hInstance,
                                  resource,
                                  parent,
-                                 wndproCServiceTabStatisticChild );
+                                 (DLGPROC)wndproCServiceTabStatisticChild );
 	return true;
 }
 

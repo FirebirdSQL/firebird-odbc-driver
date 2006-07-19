@@ -105,7 +105,7 @@ bool CServiceTabCtrl::OnInitDialog( HWND hDlg )
 
 	setExecutorForViewLogFile();
 
-    SetWindowLong( hWndTab, GWL_USERDATA, (ULONG)&tabData ); 
+    SetWindowLong( hWndTab, GW_USERDATA, (ULONG)&tabData ); 
 	backup.createDialogIndirect( this );
 
 	return true;
@@ -117,7 +117,7 @@ BOOL CALLBACK wndproCServiceTabCtrl( HWND hDlg, UINT message, WORD wParam, LONG 
 	{
     case WM_INITDIALOG:
 
-	    SetWindowLong( hDlg, GWL_USERDATA, (ULONG)lParam ); 
+	    SetWindowLong( hDlg, GW_USERDATA, (ULONG)lParam ); 
 
 		if ( !((CServiceTabCtrl*)lParam)->OnInitDialog( hDlg ) )
 			return FALSE;
@@ -134,7 +134,7 @@ BOOL CALLBACK wndproCServiceTabCtrl( HWND hDlg, UINT message, WORD wParam, LONG 
 
         case IDOK:
 			{
-				CServiceTabCtrl *serviceTabCtrl = (CServiceTabCtrl*)GetWindowLong( hDlg, GWL_USERDATA );
+				CServiceTabCtrl *serviceTabCtrl = (CServiceTabCtrl*)GetWindowLong( hDlg, GW_USERDATA );
 				serviceTabCtrl->UpdateData( hDlg );
 				EndDialog( hDlg, TRUE );
 			}
@@ -148,7 +148,7 @@ BOOL CALLBACK wndproCServiceTabCtrl( HWND hDlg, UINT message, WORD wParam, LONG 
 			{
 				NMHDR * hdr = (NMHDR*)lParam;
 				HWND hWndTab = GetDlgItem( hDlg, IDC_SERVICE_TABCTRL );
-				PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndTab, GWL_USERDATA );
+				PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndTab, GW_USERDATA );
 				int iPage = TabCtrl_GetCurSel( hWndTab );
 				int focus = TabCtrl_GetCurFocus( hWndTab );
 

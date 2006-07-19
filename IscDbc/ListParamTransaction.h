@@ -29,7 +29,7 @@
 #include <string.h>
 #include "Mlist.h"
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 #define strcasecmp		stricmp
 #define strncasecmp		strnicmp
 #endif

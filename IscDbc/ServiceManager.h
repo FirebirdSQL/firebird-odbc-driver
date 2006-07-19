@@ -37,7 +37,7 @@
 
 #define ADD_PARAM_STRING_LEN8(par,code,string) \
 			*par++ = code; \
-			*par++ = strlen( string ); \
+			*par++ = (char)strlen( string ); \
 			for ( pt = string; *pt; ) \
 			  *par++ = *pt++
 
