@@ -1,1 +1,1 @@
-@"I:\Program Files\Microsoft SDK\Bin\Win64"\nmake -f makefile.msvc64 %1
+@"I:\Program Files\Microsoft SDK\Bin\Win64"\nmake -f makefile.mssdk64 %1

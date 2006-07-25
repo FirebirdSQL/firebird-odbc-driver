@@ -34,11 +34,11 @@ ODBCJDBCDLL     = $(TARGETDIR)\OdbcFb64.dll
 !ifdef DEBUG
 DEBUGFLAGS	= /MTd /Gm /Zi /Od /D "_DEBUG" /D "DEBUG" /D "LOGGING" /FR"$(BUILDDIR)\\" 
 LINKFLAGS	= $(LINKFLAGS) /incremental:yes /debug /pdbtype:sept
-RSCFLAGS	= /l 0x409 /fo"$*.res" /I "$(COMPDIR)\Include" /I "$(COMPDIR)\MFC\Include" /d "DEBUG" /d "_DEBUG" 
+RSCFLAGS	= /l 0x409 /fo"$*.res" /I "$(COMPDIR)\Include" /I "$(COMPDIR)\MFC\Include" /d "DEBUG" /d "_DEBUG" /d "WIN64" /d "_WIN64" /d "_WINDOWS"
 !else
 DEBUGFLAGS	= /MT /O2 /D "NDEBUG"
 LINKFLAGS	= $(LINKFLAGS) /incremental:no
-RSCFLAGS	= /l 0x409 /fo"$*.res" /I "$(COMPDIR)\Include" /I "$(COMPDIR)\MFC\Include" /d "NDEBUG" 
+RSCFLAGS	= /l 0x409 /fo"$*.res" /I "$(COMPDIR)\Include" /I "$(COMPDIR)\MFC\Include" /d "NDEBUG" /d "WIN64" /d "_WIN64" /d "_WINDOWS"
 !endif
 #
 ODBCJDBCLIB	= $(ODBCJDBCDLL:.dll=.lib)
