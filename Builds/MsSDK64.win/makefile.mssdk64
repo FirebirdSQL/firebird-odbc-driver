@@ -1,5 +1,5 @@
 #
-.PHONY: all createdirs FbOdbc
+.PHONY: all createdirs OdbcFb64
 #
 #DEBUG = 1
 #
@@ -25,11 +25,11 @@ COMPFLAGS	= /nologo /W3 /GX \
 		  /I "$(FBINCDIR)" /I "$(ISCDBCDIR)" /I "$(ODBCJDBCDIR)" \
 		  /D "WIN64" /D "_WIN64" /D "_WINDOWS" \
 		  /D "ISOLATION_AWARE_ENABLED" \
-		  /Fp"$(BUILDDIR)\FbOdbc.pch" /YX /Fo"$(BUILDDIR)\\" \
+		  /Fp"$(BUILDDIR)\OdbcFb64.pch" /YX /Fo"$(BUILDDIR)\\" \
                   /Fd"$(BUILDDIR)\\" /FD /c 
 #
 LINKFLAGS	= /nologo /subsystem:windows /dll /machine:IA64 /libpath:"$(COMPDIR)\lib\IA64" 
-ODBCJDBCDLL     = $(TARGETDIR)\FbOdbc.dll
+ODBCJDBCDLL     = $(TARGETDIR)\OdbcFb64.dll
 #
 !ifdef DEBUG
 DEBUGFLAGS	= /MTd /Gm /Zi /Od /D "_DEBUG" /D "DEBUG" /D "LOGGING" /FR"$(BUILDDIR)\\" 
@@ -68,7 +68,7 @@ OBJS_ODBCJDBCS	= $(BUILDDIR)\$(ODBCJDBCSOBJ:  = Release\Obj^\)
 {$(ODBCJDBCSDIR)}.cpp{$(BUILDDIR)}.obj ::
 	@$(CL) /D "_USRDLL" /D "_WINDLL" $(COMPFLAGS) $(DEBUGFLAGS) -c $<
 #
-$(BUILDDIR)\FbOdbc.res : $(ODBCJDBCDIR)\OdbcJdbc.rc
+$(BUILDDIR)\OdbcFb64.res : $(ODBCJDBCDIR)\OdbcJdbc.rc
 	@$(RSC) $(RSCFLAGS) $(ODBCJDBCDIR)\OdbcJdbc.rc
 #
 ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)\OdbcJdbc.def
@@ -84,12 +84,12 @@ createdirs :
 clean :
 	@if exist $(BUILDDIR) rm -fr $(TARGETDIR)
 #
-FbOdbc : $(ODBCJDBCDLL)
+OdbcFb64 : $(ODBCJDBCDLL)
 #
 # Build the library from the object modules
 #
-$(ODBCJDBCDLL) : $(OBJS_ISCDBC) $(OBJS_ODBCJDBC) $(BUILDDIR)\FbOdbc.res $(OBJS_ODBCJDBCS)
-	@$(LD) version.lib wsock32.lib gdi32.lib shell32.lib advapi32.lib user32.lib comdlg32.lib comctl32.lib odbccp32.lib $(LINKFLAGS) $(**) /pdb:"$(BUILDDIR)\FbOdbc.pdb" /def:"$(ODBCJDBCDEFFILE)" /out:"$(ODBCJDBCDLL)" /implib:"$(ODBCJDBCLIB)" /EXPORT:ConfigDSN /EXPORT:DllInstall,PRIVATE
+$(ODBCJDBCDLL) : $(OBJS_ISCDBC) $(OBJS_ODBCJDBC) $(BUILDDIR)\OdbcFb64.res $(OBJS_ODBCJDBCS)
+	@$(LD) version.lib wsock32.lib gdi32.lib shell32.lib advapi32.lib user32.lib comdlg32.lib comctl32.lib odbccp32.lib $(LINKFLAGS) $(**) /pdb:"$(BUILDDIR)\OdbcFb64.pdb" /def:"$(ODBCJDBCDEFFILE)" /out:"$(ODBCJDBCDLL)" /implib:"$(ODBCJDBCLIB)" /EXPORT:ConfigDSN /EXPORT:DllInstall,PRIVATE
 #
 # End
 #

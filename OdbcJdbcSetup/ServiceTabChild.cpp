@@ -446,7 +446,7 @@ void CServiceTabChild::writeHeadToLogFile()
 			"<HTML>"
 			"<HEAD>"
 			"<META HTTP-EQUIV=\"Content-Type\" Content=\"text/html; charset=Windows-1252\">"
-			"<TITLE>FbOdbc log file</TITLE>"
+			"<TITLE>OdbcFb log file</TITLE>"
 			"</HEAD>"
 			"<BODY BGCOLOR=\"#FFFFFF\" TEXT=\"#000000\">";
 
