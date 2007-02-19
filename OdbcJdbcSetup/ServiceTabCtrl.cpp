@@ -205,7 +205,7 @@ int CServiceTabCtrl::DoModal()
 	nchar = nCopyAnsiToWideChar( p, TEXT("MS Sans Serif" ) );
 	p += nchar;
 
-    TMP_DEFPUSHBUTTON ( _TR( IDS_BUTTON_OK, "OK" ), IDOK,144,216,60,14 )
+    TMP_DEFPUSHBUTTON ( _TR( IDS_BUTTON_CLOSE, "Close" ), IDOK,144,216,60,14 )
     TMP_NAMECONTROL   ( "TabControl", IDC_SERVICE_TABCTRL, "SysTabControl32",0x0,7,7,328,204 )
 
 	int nRet = DialogBoxIndirectParam( m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hWndParent, (DLGPROC)wndproCServiceTabCtrl, (ULONG)this );
