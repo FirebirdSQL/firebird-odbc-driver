@@ -142,34 +142,40 @@ WCSTOMBS adressWcsToMbs( int charsetCode )
 {
 	switch ( charsetCode )
 	{
-	case 0: // NONE
-		return wcstombs;
 	case 3: // UNICODE_FSS
 		return (WCSTOMBS)fss_wcstombs;
 	case 4: // UTF8
 		return (WCSTOMBS)utf8_wcstombs;
+	case 0: // NONE
 	default:
 		break;
 	}
 
+#ifdef _WINDOWS
+	return _WcsToMbs;
+#else
 	return wcstombs;
+#endif
 }
 
 MBSTOWCS adressMbsToWcs( int charsetCode )
 {
 	switch ( charsetCode )
 	{
-	case 0: // NONE
-		return mbstowcs;
 	case 3: // UNICODE_FSS
 		return (MBSTOWCS)fss_mbstowcs;
 	case 4: // UTF8
 		return (MBSTOWCS)utf8_mbstowcs;
+	case 0: // NONE
 	default:
 		break;
 	}
 
+#ifdef _WINDOWS
+	return _MbsToWcs;
+#else
 	return mbstowcs;
+#endif
 }
 
 typedef struct
