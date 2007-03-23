@@ -3,8 +3,6 @@
 #
 #DEBUG = 1
 #
-COMPDIR		= I:\PROGRA~1\MIFD68~1
-#
 CL		= $(COMPDIR)\Bin\Win64\Cl.exe
 RSC		= $(COMPDIR)\Bin\Rc.exe
 LD		= $(COMPDIR)\bin\Win64\link
