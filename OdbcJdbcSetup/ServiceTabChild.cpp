@@ -144,7 +144,7 @@ bool CServiceTabChild::IsLocalhost( char *fullPathFileName, int &offset )
 	offset = 0;
 
 	while(*ptStr && *ptStr == ' ')ptStr++;
-    if(!memicmp(ptStr,"localhost",9))
+    if(!strncasecmp(ptStr,"localhost",9))
 	{
 		ptStr += 9;
 		while(*ptStr && *ptStr == ' ')ptStr++;

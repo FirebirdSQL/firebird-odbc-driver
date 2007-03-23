@@ -31,7 +31,7 @@ size_t _MbsToWcs( wchar_t *wcstr, const char *mbstr, size_t count )
 									  mbstr,
 									  -1,
 									  wcstr,
-									  !wcstr ? 0 : count );
+									  !wcstr ? 0 : (int)count );
 	if ( len > 0 )
 		len--;
 	else if ( wcstr )
