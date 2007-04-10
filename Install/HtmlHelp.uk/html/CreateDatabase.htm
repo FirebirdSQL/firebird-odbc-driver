@@ -1,0 +1,90 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2007 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Приклад створення бази даних</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_create_database_examples"></A><h2>Приклад створення бази даних</h2></P>
+
+<P>1) Створення бази даних з використання ODBC API функції
+<B>SQLConfigDataSource</B>. Такий варіант зручний в випадку сервісних робіт
+з базою даних. Так як ми не отримуємо безпосередньо керування над базою даних.
+
+<PRE> SQLConfigDataSource( NULL,
+                      ODBC_ADD_DSN,
+                      "Firebird/InterBase(r) driver",
+                      "ODBC\0"
+                      "CREATE_DB = D:\\TestService\\test.fdb\0"
+                      "DESCRIPTION = My Firebird database\0"
+                      "UID         = SYSDBA\0"
+                      "PWD         = masterkey\0"
+                      "CHARSET     = NONE\0"
+                      "PAGESIZE    = 8192\0"
+                      "DIALECT     = 3\0" );</PRE>
+
+   
+</P>
+
+
+<P>2) Створення бази даних з використання ODBC API функції
+<B>SQLDriverConnect</B>. Цей випадок зручний при стартових роботах
+програми користувача. Коли драйвер виконує з'єднання, він
+обробляє код помилки сервера і якщо статус помилки вказує що 
+файл бази даних відсутній, то драйвер повторно виконує запит, але
+зпочатку виконує операцію створення бази даних. При успішному виконанні
+ми отримуємо доступ до цієї бази.
+
+<PRE> 
+    UCHAR buffer[1024];
+    SWORD bufferLength;
+
+    SQLDriverConnect( connection, hWnd, 
+                      (UCHAR*)"DRIVER=Firebird/InterBase(r) driver;"
+                      "UID=SYSDBA;"
+                      "PWD=masterkey;"
+                      "PAGESIZE=8192;"
+                      "DBNAMEALWAYS=C:\\Temp\\NewDB.fdb", SQL_NTS,
+                      buffer, sizeof (buffer), &bufferLength,
+                      SQL_DRIVER_NOPROMPT );</PRE></P>
+
+<P>3) Створення бази даних з використання ODBC API функції
+<B>SQLExecDirect</B>. Цей випадок цікавий тим, що база
+створюється на базі вже існуючого з'єднання. Тобто нам не потрібно
+вказувати "DRIVER=Firebird/InterBase(r) driver;", це і інші необхідні
+значення будуть взяті з активного з'єднання. І знову ж таки, після 
+виконання команди ми не отримаємо доступу до бази, для цього
+потрібно використати <B>SQLDriverConnect</B> або <B>SQLConnect</B>.
+
+<PRE> 
+    SQLExecDirect( hStmt, 
+                   "CREATE DATABASE \'C:/TEMP/NEWDB00.FDB\'"
+                   "   PAGE_SIZE 8192"
+                   "   SET NAMES \'NONE\'"
+                   "   USER \'SYSDBA\'"
+                   "   PASSWORD \'masterkey\';",
+                   SQL_NTS );</PRE></P>
+
+</BODY>
+</HTML>

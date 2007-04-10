@@ -28,9 +28,18 @@
 
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000">
 
-<P><A NAME="hid_cursors"></A><h1>Курсори</h1></P>
+<P><A NAME=IND_CURSORS></A><h2>Курсоры</h2></P>
 
-<P>На цей час Firebird ODBC драйвера, курсори
+<P>Для використання курсорів Firebird ODBC драйвера потрібно вказувати
+через <B>SQLSetConnectAttr</B> атрибут <B>SQL_ATTR_ODBC_CURSORS</B>:
+<PRE>
+    // Specify that the Firebird ODBC Cursor is always used, then connect.
+    SQLSetConnectAttr( hdbc, SQL_ATTR_ODBC_CURSORS, (SQLPOINTER)SQL_CUR_USE_DRIVER, 0 );
+    SQLConnect( hdbc, (UCHAR*)connectString, SQL_NTS, NULL, 0, NULL, 0 );
+</PRE>
+
+&nbsp;&nbsp;
+На цей час Firebird ODBC драйвера, курсори
 Динамічний(Dynamic) і Клавіатурний(Keyset) будуть виконуватися в режимі
 Статичний(Static) курсор. Також не можливо модифікувати курсори. 
 Для отримання найбільшої швидкості виконання використовуйте тип курсора вперед
@@ -42,6 +51,27 @@ SQL_ROWSET_SIZE і SQL_ATTR_ROW_ARRAY_SIZE, що дозволяє використовувати
 випадку операція виконується одним оператором(SQLFetch, SQLExtendedFetch, SQLScrollFetch)
 і не виконуються повільні оператори SQLPutData/SQLGetData, але це
 потребує наявності оперативної памяті під ці об'єкти, що не завжди можливо.</P>
+
+<P><A NAME=IND_MS_CURSORS></A><h2>Використання ODBC Бібліотеки Курсора</h2></P>
+
+<P>Ця тема добре висвітлена в MSDN. Але потрібно підкреслити, що ключовим
+моментом, виявляється використання <B>SQLSetConnectAttr</B>, де атрибут
+<B>SQL_ATTR_ODBC_CURSORS</B> має значення <B>SQL_CUR_USE_ODBC</B>:
+
+<PRE>
+    // Specify that the ODBC Cursor Library is always used, then connect.
+    SQLSetConnectAttr( hdbc, SQL_ATTR_ODBC_CURSORS, (SQLPOINTER)SQL_CUR_USE_ODBC, 0 );
+    SQLConnect( hdbc, (UCHAR*)connectString, SQL_NTS, NULL, 0, NULL, 0 );
+</PRE>
+
+Також слід відмітити, що результуючі набори даних заповнюють кеш в rowset буферах,
+тому для поновлення слід визивати:
+<PRE>
+    SQLFetchScroll( hstmtSel, SQL_FETCH_RELATIVE, 0 );
+</PRE>
+
+
+</P>
 
 <P>Для більш детального знайомства з цими і іншими можливостями будьласка, 
 розгляньте приклади.
