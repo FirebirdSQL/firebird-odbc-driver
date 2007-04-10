@@ -28,29 +28,75 @@
 
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000">
 
-<P><A NAME="hid_about_firebird_odbc"></A><h1>Кратко про Firebird ODBC драйвер</h1></P>
+<P><A NAME="hid_about_firebird_odbc"></A><h2>Кратко про Firebird ODBC драйвер</h2></P>
 
 <P>Firebird ODBC driver поддерживает Firebird для Windows, FreeBSD, Solaris,
 и Linux.</P>
 
 <P>Firebird ODBC драйвер состоит из следующих файлов:</P>
 
-<P><B>IscDbc.dll</B> </P>
-
-<P>Интерфейс JDBC, обеспечивает доступ к Firebird через Firebird API.</P>
-
-<P><B>OdbcJdbc.dll </B></P>
+<P><B>OdbcFb32.dll</B> </P>
 
 <P>Обеспечивает ODBC API интерфейс, является провайдером для ODBC Менеджера. 
 В прикладных задачах может использоваться без ODBC Менеджера. </P>
 
-<P><B>OdbcJdbcSetup.dll</B></P>
+<P>Имеет дополнительно интерфейс JDBC, обеспечивая доступ к Firebird 
+через Firebird API.</P>
 
-<P>Выполняет роль инсталятора (деинсталятора) Firebird ODBC драйвера и конфигуратора DSN.</P>
+<P>Также выполняет роль инсталлятора (деинсталлятора) Firebird ODBC драйвера 
+и конфигуратора DSN.</P>
 
-<P><B>OdbcJdbc.chm</B></P>
+
+<P><B>OdbcFb32.chm</B></P>
 
 <P>Помощь по использованию Firebird ODBC драйвера.</P>
 
+<P>Firebird ODBC driver:</P>
+	<UL>
+	<P>- на базе Ms SDK возможна сборка Win64.</P>
+
+	<P>- поддержка Unicode.</P>
+
+	<P>- <A HREF="Multithread.htm">потоко-безопасная</A>
+	     обработка запросов.</P>
+
+	<P>- возможно <A HREF="CreateDatabase.htm">создание базы</A> 
+	     данных посредством функций
+             <B>SQLConfigDataSource</B>, <B>SQLDriverConnect</B>,
+	     <B>SQLExecDirect</B>.</P>
+
+	<P>- на одном соединении возможно выполнять одновременно
+	     <A HREF="Transactions.htm#IND_MANY_TRANSACTIONS">больше одной транзакции</A>.
+	     Транзакции по сути могут быть
+	     разными. Одна "читающая", другая "пишущая", и т.д.</P>
+
+	<P>- допускается создание пула подготовленных
+	     <A HREF="Transactions.htm#IND_DECLARE_TRANSACTION">описаний транзакций</A>,
+	     с присвоением им имен и рабочего пространства. Для 
+	     последующего использования без выполнения 
+	     подготовки(prepare).</P>
+
+	<P>- поддерживается использование 
+	     <A HREF="Events.htm">механизма событий</A>
+	     Firebird сервера.</P>
+
+	<P>- поддерживается <A HREF="Cursors.htm#IND_MS_CURSORS">использование Microsoft ODBC cursors</A>(
+	     odbccr32.dll, odbccu32.dll ).</P>
+
+	<P>- возможно использование <A HREF="Services.htm">сервиса</A>
+	     (backup, restore, statistics, repair) базы данных посредством 
+	     функции <B>SQLConfigDataSource</B>.</P>
+
+	<P>- для совместимости SQL-запросов поддерживается использование
+	     <A HREF="ConfigurationParameters.htm#IND_SCHEMA">схемы</A>(SCHEMA
+	     or OWNER).<BR></P>
+
+	<P>- поддерживается полнофункциональный SQL синтаксис менеджера
+	     <A HREF="Transactions.htm#IND_SQL_TRANSACTION">транзакций</A>(Firebird GPRE).</P>
+
+	<P>- поддерживается использование COM 
+	     <A HREF="MsDTC.htm">технологии</A> Microsoft DTC.</P>
+
+	</UL>
 </BODY>
 </HTML>

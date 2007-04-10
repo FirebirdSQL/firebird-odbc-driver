@@ -28,7 +28,7 @@
 
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000">
 
-<P><A NAME="hid_connection_parameters"></A><h1>Атрибуты Соединения</h1></P>
+<P><A NAME="hid_connection_parameters"></A><h2>Атрибуты Соединения</h2></P>
 
 <P>
 Атрибуты Соединения - подстроки(параметры), используемые, чтобы определить как выполнить
@@ -163,6 +163,30 @@ Set auto quoted identifier
   </tr>
   <tr>
     <td>&nbsp;
+Select Use Schema
+      </td>
+    <td>&nbsp;
+		<B>USESCHEMA</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Lock Timeout on wait transaction
+      </td>
+    <td>&nbsp;
+		<B>LOCKTIMEOUT</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Safe Thread
+      </td>
+    <td>&nbsp;
+		<B>SAFETHREAD</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
 File DSN
       </td>
     <td>&nbsp;
@@ -180,7 +204,7 @@ Save DSN
 </table>
 
 <P>&nbsp;&nbsp;
-Функция ODBC API SQLDriverConnect использует эти атрибуты в следующей 
+Функция ODBC API <B>SQLDriverConnect</B> использует эти атрибуты в следующей 
 последовательности, сначала принимаются атрибуты, определенные в строке 
 соединения, затем при наличии отсутствующей объязательной информации 
 берет данные из определенного <B>FILEDSN</B> или <B> DSN.</B>
@@ -193,6 +217,91 @@ Save DSN
 </P>
 
 <P>Также смотри <A HREF="ConnectionExamples.htm">примеры соединения</A></P>
+
+<P>Дополнительные ключевые слова определены из следующей таблицы.</P>
+
+<table width="60%" cellspacing=0 cellpadding=2 border=1 cols=2>
+  <tr>
+    <td width="40%" bgcolor="#d5d5d5" align="center">
+      	<B>Ключевое слово</B>
+    </td>
+    <td width="60%" bgcolor="#d5d5d5" align="center">
+	<B>Сокращенная форма</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Backup File
+      </td>
+    <td>&nbsp;
+		<B>BACKUPFILE</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Log File Services
+      </td>
+    <td>&nbsp;
+		<B>LOGFILE</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Create Database
+      </td>
+    <td>&nbsp;
+		<B>CREATE_DB</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Backup Database
+      </td>
+    <td>&nbsp;
+		<B>BACKUP_DB</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Restore Database
+      </td>
+    <td>&nbsp;
+		<B>RESTORE_DB</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Repair Database
+      </td>
+    <td>&nbsp;
+		<B>REPAIR_DB</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Compact Database
+      </td>
+    <td>&nbsp;
+		<B>COMPACT_DB</B>, for future use
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Drop Database
+      </td>
+    <td>&nbsp;
+		<B>DROP_DB</B>, for future use
+      </td>
+  </tr>
+</table>
+
+<P>&nbsp;&nbsp;
+Функция ODBC API <B>SQLConfigDataSource</B> использует эти атрибуты для
+выполнения услуг над базой данных программным путем, без дополнительных
+утилит.
+</P>
+
+<P>Также смотри <A HREF="ServicesExamples.htm">примеры использования услуг</A></P>
 
 </BODY>
 </HTML>

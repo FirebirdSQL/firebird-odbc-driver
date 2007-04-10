@@ -28,9 +28,17 @@
 
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000">
 
-<P><A NAME="hid_cursors"></A><h1>Курсоры</h1></P>
+<P><A NAME=IND_CURSORS></A><h2>Курсоры</h2></P>
 
-<P>В текущей реализации Firebird ODBC драйвера, курсоры
+<P>Для использования курсоров Firebird ODBC драйвера следует
+указывать команды:
+<PRE>
+    // Specify that the Firebird ODBC Cursor is always used, then connect.
+    SQLSetConnectAttr( hdbc, SQL_ATTR_ODBC_CURSORS, (SQLPOINTER)SQL_CUR_USE_DRIVER, 0 );
+    SQLConnect( hdbc, (UCHAR*)connectString, SQL_NTS, NULL, 0, NULL, 0 );
+</PRE>
+
+  В текущей реализации Firebird ODBC драйвера, курсоры
 Динамический(Dynamic) и Клавиатурный(Keyset) будут выполняться в режиме
 Статический(Static) курсор. Также не возможно модифицировать курсоры. 
 Для получения максимальной эффективности используйте тип курсора вперед
@@ -42,6 +50,24 @@ SQL_ROWSET_SIZE и SQL_ATTR_ROW_ARRAY_SIZE, что позволяет использовать
 так как не выполняются медленные операторы SQLPutData/SQLGetData, однако
 это требует наличия выделенной памяти под эти объекты, что не всегда
 возможно.</P>
+
+<P><A NAME=IND_MS_CURSORS></A><h2>Использование ODBC Библиотеки Курсора</h2></P>
+
+<P>Эта тема хорошо изложена в MSDN. Однако нужно подчеркнуть, что ключевым
+моментом, является использование утверждения перед соединением:
+<PRE>
+    // Specify that the ODBC Cursor Library is always used, then connect.
+    SQLSetConnectAttr( hdbc, SQL_ATTR_ODBC_CURSORS, (SQLPOINTER)SQL_CUR_USE_ODBC, 0 );
+    SQLConnect( hdbc, (UCHAR*)connectString, SQL_NTS, NULL, 0, NULL, 0 );
+</PRE>
+Так же следует отметить, что наборы данных кешируются в rowset буферах,
+по этому для обновления следует использовать:
+<PRE>
+    SQLFetchScroll( hstmtSel, SQL_FETCH_RELATIVE, 0 );
+</PRE>
+
+
+</P>
 
 <P>Для более подробного ознакомления с этими и другими возможностями
 пожалуйста, рассмотрите примеры.

@@ -27,6 +27,10 @@
 			<param name="Local" value="html/ConnectionExamples.htm">
 			</OBJECT>
 		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Сервисы Firebird ODBC">
+			<param name="Local" value="html/Services.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
 			<param name="Name" value="Использование">
 			<param name="Local" value="html/Usage.htm">
 			</OBJECT>
@@ -44,12 +48,20 @@
 				<param name="Local" value="html/Transactions.htm">
 				</OBJECT>
 			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="Транзакции MS DTC">
+				<param name="Local" value="html/MsDTC.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
 				<param name="Name" value="Защита пароля">
 				<param name="Local" value="html/SecurityPassword.htm">
 				</OBJECT>
 			<LI> <OBJECT type="text/sitemap">
 				<param name="Name" value="Курсоры">
 				<param name="Local" value="html/Cursors.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="События Firebird сервера">
+				<param name="Local" value="html/Events.htm">
 				</OBJECT>
 			<LI> <OBJECT type="text/sitemap">
 				<param name="Name" value="Сохраненные Процедуры">
@@ -62,6 +74,14 @@
 			<LI> <OBJECT type="text/sitemap">
 				<param name="Name" value="Использование с Clarion">
 				<param name="Local" value="html\Clarion.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="Использование сервиса">
+				<param name="Local" value="html\ServicesExamples.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="Создание базы данных">
+				<param name="Local" value="html\CreateDatabase.htm">
 				</OBJECT>
 		</UL>
 		<LI> <OBJECT type="text/sitemap">
