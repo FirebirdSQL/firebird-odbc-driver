@@ -50,6 +50,9 @@ size_t _WcsToMbs( char *mbstr,  const wchar_t *wcstr, size_t count )
 									  !mbstr ? 0 : (int)count,
 									  NULL,
 									  NULL );
+	if ( len > 0 )
+		len--;
+
 	return len;
 }
 
