@@ -1,0 +1,101 @@
+<!--  
+ *     Los contenidos de este archivo están sujetos a la Versión 1.0 de la
+ *     Licencia Pública de los Desarrolladores Iniciales (la "Licencia"); 
+ *     usted no puede utilizar este archivo excepto en conformidad con 
+ *     la Licencia. Puede obtener una copia de la Licencia en 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl(en inglés)
+ *
+ *     El software distribuído bajo la Licencia es distribuída en 
+ *     términos "TAL COMO ESTA", SIN GARANTIAS DE NINGUN TIPO, ni 
+ *     expresas ni implícitas.  Vea la Licencia para el lenguaje  
+ *     específico que controla derechos y limitaciones bajo la Licencia.
+ *
+ *
+ *  Código original creado por Vladimir Tsvigun para IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  Todos los derechos reservados.
+ *
+ *  Traduccion al Espanol: Gerardo Czajkowski
+ *  Correcciones: Jorge Andres Brugger
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Procedimientos</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_procedures"></A><h1>Procedimientos Almacenados</h1>
+
+<P>Firebird soporta dos mecanismos para llamar a un procedimiento almacenado:</P>
+
+<P><B>execute procedure MyProc(?,?) </B></P>
+
+<P>En este ejemplo el procedimiento almacenado espera recibir datos basados en
+los parámetros que le son pasados. Si los parámetros no son válidos, nada
+será devuelto.</P>
+
+<P><B>select * from MyProc(?,?) </B></P>
+
+<P>En este ejemplo el procedimiento almacenado espera generar un set de
+resultado.</P>
+
+<P>Programas como Microsoft Excel etc. utilizan lo siguiente para llamar a un
+procedimiento almacenado: </P>
+
+<P> <B>{[? =] Call MyProc (?,?)}</B>.<BR></P>
+
+<P>El controlador Firebird ODBC determina qué tipo de llamado utilizará para
+ejecutar el procedimiento almacenado dependiendo de cómo fue construído ese
+procedimiento. La clave de ésto es la utilización de la palabra <i>SUSPEND</i>
+en la definición del procedimiento almacenado.</P>
+
+<P> Si el código BLR para el procedimiento almacenado contiene <i> if (countSUSPEND == 1)</i>
+como sería el caso al utilizar la siguiente definición:</P>
+
+<P>create procedure PRUEBA<BR>
+&nbsp;&nbsp;as<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;begin<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;end
+</P>
+
+<P>Entonces el controlador ODBC utilizará <b>execute procedure PRUEBA</b>.</P>
+
+<P>Si el código BLR para el procedimiento almacenado contiene <i>if (countSUSPEND &gt; 1)</i>
+como sería al utilizar ésta definición:</P>
+
+<P>create procedure &quot;TODOS_LOS_IDIOMAS&quot;				<BR>&nbsp;&nbsp;
+	returns (&quot;CODIGO&quot;  varchar(5),			<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&quot;CATEGORIA&quot;  varchar(5),			<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&quot;PAIS&quot;  varchar(15),			<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&quot;IDIOMA&quot;  varchar(15))			<BR>&nbsp;&nbsp;
+	as						<BR>&nbsp;&nbsp;
+	BEGIN						<BR>&nbsp;&nbsp;&nbsp;&nbsp; &quot;IDIOMA&quot; = null;				<BR>&nbsp;&nbsp;&nbsp;&nbsp;
+	    FOR SELECT codigo_tarea, categoria_tarea, pais_tarea FROM tarea 	<BR>&nbsp;&nbsp;&nbsp;&nbsp;
+	    INTO :codigo, :categoria, :pais 				<BR>&nbsp;&nbsp;&nbsp;&nbsp;
+	    DO								<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		BEGIN							<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		    FOR SELECT idiomas FROM mostrar_idiomas(:codigo, :categoria, :pais) 		<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		    INTO :idioma						<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			DO						<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			    <B>SUSPEND;</B>				<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			    /* Insertar agradables separadores entre filas */	<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+codigo = '=====';				<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+categoria = '=====';				<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+pais = '===============';		<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+idioma = '==============';			<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			    <B>SUSPEND; </B>				<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		END					<BR>&nbsp;&nbsp;&nbsp;&nbsp;
+	END</P>
+
+<P>Entonces el controlador ODBC utilizará <B>select * from &quot;TODOS_LOS_IDIOMAS&quot;</B></P>
+
+<P>Para mayores detalles sobre cómo hacer ésto y otros temas avanzados por
+favor consulte los ejemplos.</P>
+
+</BODY>
+</HTML>

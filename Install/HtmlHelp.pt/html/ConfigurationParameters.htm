@@ -1,0 +1,171 @@
+<!--
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  Traduzido e Editado por / Translated and Edited by
+ *  Alexandre Benson Smith
+ *  benson@thorsoftware.com.br
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV = "CONTENT-TYPE" CONTENT = "text/html; charset=windows-1252">
+<TITLE> Configura&ccedil;&atilde;o ODBC do Firebird</TITLE>
+</HEAD>
+
+<BODY BGCOLOR = "#FFFFFF" TEXT = "#000000">
+
+<P><A NAME = "hid_fb_odbc_configuration"></A><H1>Par&acirc;metros de Configura&ccedil;&atilde;o do Driver ODBC Firebird</H1></P>
+
+<P>&Eacute; utilizado para a defini&ccedil;&atilde;o dos par&acirc;metros de conex&atilde;o com a base de dados.
+O dialog box cont&eacute;m os par&acirc;metros que correspondem aos
+<A HREF = "ConnectionAttributes.htm"> atributos de conex&atilde;o</A></P>
+
+<P><B> Data Source Name (DSN) - Nome da Fonte de Dados (NFD)</B></P>
+
+	<P>Requirido.<BR>
+        Nome &uacute;nico para identifica&ccedil;&atilde;o da fonte de dados <BR>
+        <CODE>Exemplo</CODE> : &ldquo;Conecta usando FbEmbed&rdquo; ou &ldquo;ConectaFbServer&rdquo;</P>
+
+<P><B> Description &ndash; Descri&ccedil;&atilde;o<I> (ser&aacute; adicionado em vers&otilde;es futuras do driver)</I></B></P>
+
+	<P>N&atilde;o requerido. <BR>
+	Uma descri&ccedil;&atilde;o detalhada da fonte de dados.</P>
+
+<P><B>Driver</B></P>
+
+	<P>Requerido.<BR>
+	<CODE>Sempre</CODE>:<B>IscDbc</B></P>
+
+<P><B> Database &ndash; Banco de Dados</B></P>
+
+	<P>Requerido.<BR>
+	Define o nome e localiza&ccedil;&atilde;o do banco de dados, local, remoto
+	ou atrav&eacute;s de um alias (apelido).<BR>
+	Veja <A HREF = "ConnectionExamples.htm#IND_DBNAME">exemplos</A></P>
+	
+<P><B> Client - Cliente</B></P>
+
+	<P>Requerido quando se usa a vers&atilde;o embarcada do servidor (embedded).
+	Permite que se especifique a linha de comando para inicar a vers&atilde;o
+	Embarcada do Firebird (fbembed)	ou o cliente do Firebird (gds32, fbclient).</P>
+
+<P><B> Database Account &ndash; Conta no Banco de Dados</B></P>
+	<P>N&atilde;o Requerido. <BR>
+	O nome do usu&aacute;rio a se conectar ao banco de dados Firebird.
+	Se n&atilde;o for especificado o ODBC ir&aacute; solicitar pelo ID
+	do usu&aacute;rio (<B>UID</B> ou <B>USER</B>) no momento da conex&atilde;o
+	da fonte de dados.</P>
+
+<P><B> Password - Senha</B></P>
+
+	<P>N&atilde;o requerido. <BR>
+	A senha a ser usada com o ID do usu&aacute;rio na conex&atilde;o com o
+	banco de dados Firebird. Se n&atilde;o for especificada, o ODBC ir&aacute;
+	solicitar a senha (<B>PWD</B> ou <B>PASSWORD</B> ) no momento da conex&atilde;o
+	da fonte de dados. Se preenchido a senha &eacute; automaticamente criptografada
+	e armazenada em odbc.ini. Definir uma senha aqui n&atilde;o deve ser um risco de
+	seguran&ccedil;a.</P>
+
+<P><B>Role</B></P>
+
+	<P>N&atilde;o Requerido. <BR>
+	Regras:<BR>
+		1. Se definido, mas o login for SYSDBA, o role &eacute; ignorado. <BR>
+		2. Se definido, e o login n&atilde;o for SYSDBA, o login &eacute; ignorado.</P>
+		
+<P><B> Character Set &ndash; Conjunto de Caracteres</B></P>
+
+	<P>N&atilde;o requerido. <BR>
+	Define o conjunto padr&atilde;o de caracteres.</P>
+	
+<P><B>Options - Op&ccedil;&otilde;es</B></P>
+	<UL>
+        <B> Transaction - Transa&ccedil;&atilde;o</B><BR>
+        Especifica o tipo de transa&ccedil;&atilde;o ao se conectar ao banco de dados Firebird</P>
+
+        	<UL>
+                <P><B>Read (default write) &ndash; M&eacute;todo de Acesso (padr&atilde;o write)</B><BR>
+                
+                Write: Acessa o banco de dados no modo de Leitura e Grava&ccedil;&atilde;o.<BR>
+		Read: Acessa o banco de dados no modo somente de Leitura.</P>
+		
+		<P><B>Nowait (default wait) &ndash; Comportamento de travamento (padr&atilde;o wait)</B><BR>
+
+		Wait: A transa&ccedil;&atilde;o ir&aacute; esperar caso encontre um conflito de
+		travamento (lock conflict). <BR>
+		Nowait: A transa&ccedil;&atilde;o ir&aacute; retornar um erro imediatamente caso
+		encontre um conflito de travamento(lock conflict).</P>
+                </UL>
+	<P><B>Dialect - Dialeto</B></P>
+    
+	<P>Tipicamente 1 ou 3, os dialetos SQL foram introduzidos na vers&atilde;o 6.0
+	do Interbase, para dar suporte as novas funcionalidades do SQL incluindo
+	identificadores delimitados (delimited identifiers). Os dialetos v&aacute;lidos
+	s&atilde;o:
+	        <UL>
+		1 &ndash; O Parser processa como se fosse a vers&atilde;o 5.x do Interbase.<BR>
+		2 &ndash; Modo de aviso de transi&ccedil;&atilde;o. O InterBaseV6, e o
+		Firebird avisar&aacute; sobre constru&ccedil;&otilde;es ambiguas de SQL
+		e emite um erro ou uma mensagem de aviso. <BR>
+		3 &ndash; O parser processa qualquer coisa delimitada por apostr&oacute;fes (')
+		como constantes string, e qualquer coisa entre aspas (&ldquo;)
+		como identificadores delimitados (SQL delimited identifiers)</UL></P>
+		
+	<P><B>Quoted Identifier &ndash; Identificadores entre Aspas</B></P>
+	
+		<P>Esta op&ccedil;&atilde;o garante compatibilidade com
+		bancos de dados criados em dialeto 1</P>
+		
+	<P><B>Sensitive Identifier &ndash; Identificadores sens&iacute;veis a caixa
+        (mai&uacute;sculo/min&uacute;sculo)</B></P>
+        
+        	<P>Esta op&ccedil;&atilde;o muda a propriedade SQL_IDENTIFIER_CASE
+        	(padr&atilde;o SQL_IC_UPPER, op&ccedil;&otilde;es SQL_IC_UPPER ou
+        	SQL_IC_SENSITIVE)</P>
+        	
+	<P><B>Autoquoted Identifier &ndash; Identificador entre Aspas (autom&aacute;tico)</B></P>
+	
+		<P>padr&atilde;o NO (op&ccedil;&otilde;es YES ou NO)<BR>
+		Converteria automaticamente esta senten&ccedil;a
+  			<UL>
+    			SELECT A.Test_Field FROM Mixed_Caps_Table A<BR>
+			ORDER BY A.Test_Field</UL>
+    		para
+			<UL>
+                	SELECT A.&quot;Test_Field&quot; FROM &quot;Mixed_Caps_Table&quot; A<BR>
+                	ORDER BY A.&quot;Test_Field&quot;</UL>
+                	
+		<B>Nota</B> : Se a seguinte senten&ccedil;a for utilizada a
+		convers&atilde;o ser&aacute; err&ocirc;nea. <BR>
+		Muda de:
+			<UL>
+			Select A.Test_Field From Mixed_Caps_Table A<BR>
+			Order By A.Test_Field</UL>
+		to
+			<UL>
+			"Select" A."Test_Field" "From" "Mixed_Caps_Table" A<BR>
+			"Order" "By" A."Test_Field"</UL></P>
+
+	</UL>
+	
+        <P><I> Todas as palavras que contiverem letras em mai&uacute;sculas e min&uacute;sculas
+        ao mesmo tempo (Mixed Case) ser&atilde;o convertidas para identificadores delimitados,
+        tome cuidado.</I></P>
+
+</BODY>
+</HTML>

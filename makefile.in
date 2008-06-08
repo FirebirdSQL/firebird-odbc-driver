@@ -1,0 +1,32 @@
+DateTime.o: IscDbc/DateTime.cpp IscDbc/Engine.h IscDbc/JString.h \
+ IscDbc/DateTime.h IscDbc/SQLError.h IscDbc/SQLException.h
+DescRecord.o: DescRecord.cpp OdbcDesc.h OdbcObject.h OdbcJdbc.h \
+ IscDbc/JString.h DescRecord.h
+JString.o: IscDbc/JString.cpp IscDbc/JString.h
+Main.o: Main.cpp OdbcEnv.h OdbcObject.h OdbcJdbc.h IscDbc/JString.h \
+ OdbcConnection.h OdbcDesc.h OdbcStatement.h
+OdbcConnection.o: OdbcConnection.cpp OdbcJdbc.h OdbcConnection.h \
+ OdbcDesc.h OdbcObject.h IscDbc/JString.h OdbcEnv.h SetupAttributes.h \
+ IscDbc/Connection.h IscDbc/Blob.h IscDbc/Properties.h \
+ IscDbc/SQLException.h OdbcStatement.h InfoItems.h
+OdbcDateTime.o: OdbcDateTime.cpp OdbcDateTime.h IscDbc/Connection.h \
+ IscDbc/Blob.h IscDbc/Properties.h IscDbc/SQLException.h \
+ IscDbc/TimeStamp.h IscDbc/SqlTime.h IscDbc/DateTime.h OdbcStatement.h \
+ OdbcObject.h OdbcJdbc.h IscDbc/JString.h
+OdbcDesc.o: OdbcDesc.cpp OdbcDesc.h OdbcObject.h OdbcJdbc.h \
+ IscDbc/JString.h OdbcConnection.h DescRecord.h
+OdbcEnv.o: OdbcEnv.cpp OdbcJdbc.h OdbcEnv.h OdbcObject.h \
+ IscDbc/JString.h OdbcConnection.h OdbcDesc.h
+OdbcError.o: OdbcError.cpp OdbcJdbc.h OdbcError.h IscDbc/JString.h
+OdbcObject.o: OdbcObject.cpp OdbcObject.h OdbcJdbc.h IscDbc/JString.h \
+ OdbcError.h IscDbc/SQLException.h
+OdbcStatement.o: OdbcStatement.cpp OdbcStatement.h OdbcObject.h \
+ OdbcJdbc.h IscDbc/JString.h OdbcConnection.h OdbcDesc.h OdbcError.h \
+ IscDbc/Connection.h IscDbc/Blob.h IscDbc/Properties.h \
+ IscDbc/SQLException.h OdbcDateTime.h IscDbc/TimeStamp.h \
+ IscDbc/SqlTime.h IscDbc/DateTime.h
+SQLError.o: IscDbc/SQLError.cpp IscDbc/Engine.h IscDbc/JString.h \
+ IscDbc/SQLError.h IscDbc/SQLException.h IscDbc/Stream.h
+SqlTime.o: IscDbc/SqlTime.cpp IscDbc/SqlTime.h
+TimeStamp.o: IscDbc/TimeStamp.cpp IscDbc/Engine.h IscDbc/JString.h \
+ IscDbc/TimeStamp.h IscDbc/SqlTime.h IscDbc/DateTime.h

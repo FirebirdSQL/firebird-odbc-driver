@@ -1,0 +1,73 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<!-- Sitemap 1.0 -->
+</HEAD><BODY>
+<OBJECT type="text/site properties">
+	<param name="ImageType" value="Folder">
+</OBJECT>
+<UL>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Firebird ODBC">
+		<param name="Local" value="html/FirebirdODBC.htm">
+		<param name="ImageNumber" value="1">
+		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Configuraci&oacute;n">
+			<param name="Local" value="html/ConfigurationParameters.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Atributos de Conexi&oacute;n">
+			<param name="Local" value="html/ConnectionAttributes.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Ejemplos de Conexi&oacute;n">
+			<param name="Local" value="html/ConnectionExamples.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Utilizaci&oacute;n">
+			<param name="Local" value="html/Usage.htm">
+			</OBJECT>
+		<UL>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="Entorno">
+				<param name="Local" value="html/Environment.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="Multithreading">
+				<param name="Local" value="html/Multithread.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="Transacciones">
+				<param name="Local" value="html/Transactions.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="Contrase&ntilde;a de seguridad">
+				<param name="Local" value="html/SecurityPassword.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="Cursores">
+				<param name="Local" value="html/Cursors.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="Procedimientos">
+				<param name="Local" value="html/Procedures.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="Matrices">
+				<param name="Local" value="html/Array.htm">
+				</OBJECT>
+		</UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Acerca del controlador Firebird ODBC">
+			<param name="Local" value="html/About.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Derechos de Autor de Firebird ODBC">
+			<param name="Local" value="html/Copyright.htm">
+			</OBJECT>
+	</UL>
+</UL>
+</BODY></HTML>

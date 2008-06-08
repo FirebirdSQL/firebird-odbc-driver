@@ -1,0 +1,12 @@
+; OdbcJdbcSetupMinGw.def : Declares the module parameters for the MinGw DLL.
+
+LIBRARY      "OdbcJdbcSetup"
+DESCRIPTION  'OdbcJdbcSetup Windows Dynamic Link Library'
+
+EXPORTS
+    ; Explicit exports can go here
+	ConfigDSN=ConfigDSN@16
+	ConfigDriver=ConfigDriver@28
+	DllRegisterServer=DllRegisterServer@0
+	DllUnregisterServer=DllUnregisterServer@0
+	DllInstall=DllInstall@8

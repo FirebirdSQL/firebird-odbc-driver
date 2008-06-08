@@ -1,0 +1,83 @@
+<!--  
+ *     Los contenidos de este archivo están sujetos a la Versión 1.0 de la
+ *     Licencia Pública de los Desarrolladores Iniciales (la "Licencia"); 
+ *     usted no puede utilizar este archivo excepto en conformidad con 
+ *     la Licencia. Puede obtener una copia de la Licencia en 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl(en inglés)
+ *
+ *     El software distribuído bajo la Licencia es distribuída en 
+ *     términos "TAL COMO ESTA", SIN GARANTIAS DE NINGUN TIPO, ni 
+ *     expresas ni implícitas.  Vea la Licencia para el lenguaje  
+ *     específico que controla derechos y limitaciones bajo la Licencia.
+ *
+ *
+ *  Código original creado por Vladimir Tsvigun para IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  Todos los derechos reservados.
+ *
+ *  Traduccion al Espanol: Gerardo Czajkowski
+ *  Correcciones: Jorge Andres Brugger
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Transacciones</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_transactions"></A><h1>Transacciones</h1><P>Firebird soporta los
+siguientes niveles de aislamiento de transacciones:</P>
+
+<P>&nbsp;&nbsp;&nbsp;1 (leer concretados, predeterminado),<BR>
+&nbsp;&nbsp;&nbsp;3 (serializable)<BR>
+&nbsp;&nbsp;&nbsp;4 (versionado). </P>
+
+<P>Firebird implementa bloqueo a nivel de fila en todos los casos.</P>
+
+<P>Firebird realiza bloqueos de tipo optimista, su transacción no intentará
+bloquear un registro hasta que usted emita una operación de actualización que
+afecte ése registro. Esto quiere decir que es posible, aunque inusual, que su
+actualización falle porque otro cliente ha bloqueado el registro, aún si su
+transacción fue iniciada antes que la del otro cliente.</P>
+
+<P>Firebird utiliza un motor de versionado único para conseguir una
+granularidad más fina que la suministrada por el bloqueo a nivel de fila
+tradicional. El motor de versionado permite que cualquier número de clientes
+pueda leer una copia coherente de cualquier registro, aún si al mismo tiempo
+otro cliente está actualizando esa misma fila. Lectores y escritores nunca se
+bloquean entre ellos, y el motor de base de datos Firebird mantiene estas
+versiones de registro transparentemente hasta donde al cliente le interese.</P>
+
+<P>También se provee soporte para concreciones de transacción de dos fases (two
+phase commit transactions) entre dos diferentes bases de datos
+Firebird. Existe una restricción en la cual solo hasta 10 bases de datos pueden
+ser empleadas simultáneamente en una concreción de transacción de dos fases.
+Si necesitara utilizar una concreción de transacción de dos fases deberá
+utilizar la siguiente llamada: </P>
+
+<UL><B>SQLSetConnectAttr (conexion, 4000, (void*) TRUE, 0);</B></UL>
+
+<P>Esta llamada crea una conexión común. </P>
+
+<P>Para cancelar la conexión común: </P>
+
+<UL><B>SQLSetConnectAttr (conexion, 4000, (void*) FALSE, 0); </B></UL>
+
+<P>Firebird ODBC utiliza una transacción por conexión de manera
+predeterminada, sin embargo puede utilizarse una estructura de transacción más
+flexible programáticamente. Por ejemplo, puede emplear múltiples transacciones
+en una conexión, donde una conexión puede estar siendo usada
+simultáneamente por un número de transacciones de lectura/escritura. También
+es posible hacer uso de conexiones independientes a diferentes bases de datos Firebird
+para llevar a cabo una concreción de transacción de dos fases entre múltiples
+bases de datos.</P>
+
+<P>Para mayores detalles sobre cómo hacer ésto y otros temas avanzados por<br>
+favor consulte los ejemplos.</P>
+
+</BODY>
+</HTML>

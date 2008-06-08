@@ -1,0 +1,66 @@
+<!--
+ *     The contents of this file are subject to the Initial
+ *     Developer's Public License Version 1.0 (the "License");
+ *     you may not use this file except in compliance with the
+ *     License. You may obtain a copy of the License at
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+ *     express or implied.  See the License for the specific
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *
+ *  Copyright (c) 2004 Paul Reeves
+ *  All Rights Reserved.
+ *
+ *  This translation and editing was done by Vladimir Tsvigun
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Using the Firebird ODBC driver with Clarion</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<h2>Використання Firebird ODBC драйвер з Clarion</h2>
+
+Clarion користувачі мають можливість працювати з змішаними іменами об'єктів в Firebird,
+при умовах вказаних нижче.
+<p>
+<ol>
+<li>
+	Створіть Вашу базу даних в Firebird. 
+	Ви можете використовувати назви таблиць подібно "Pending_Invoices" 
+	и поля подібно "Order_Number". 
+</li>
+<li>
+	Створіть DSN для бази даних, і обов'язково відмітьте
+	всі опції в розділі "Розширені Реквизити Ідентифікатора" 
+</li>
+<li>
+	Відкрийте Ваш словник, і імпортуйте множинні таблиці
+	з ODBC джерела. Це буде працювати, але не пробуйте переглядати
+	або використовувати файли в App.
+</li>
+<li>
+	Для кожного поля, вкажіть 'Зовнішньє Ім'я' назву поля, обмежену
+	кавичками (наприклад, вкажіть "Order_Number" у зовнішньому імені). 
+</li>
+<li>
+	Це все що потрібно було зробити! 
+	Тепер використовуйте Ваш словник з Mixed_Case_Identificators 
+	без проблем. Але памятайте - Ви повинні використовувати подвійні кавички 
+	для об'єктних назв у всіх SQL запитах в межах Clarion. 
+</li>
+</ol>
+
+
+<p><cite> Thanks to Jorge Andres Brugger, Vernon Godwin and Vladimir Tsvigun for
+the info contained in this document.</cite>
+</BODY>
+</HTML>

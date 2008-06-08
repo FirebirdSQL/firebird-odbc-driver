@@ -1,0 +1,484 @@
+Changes made to OdbcJdbc codebase
+
+!!  Add changes in descending date order - ie, newest at the top.
+!!  First, document the changes in the source code header template 
+!!  using the format below and then paste them into this document. 
+
+
+ *	2003-03-24	Value.cpp
+ *				Contributed by Norbert Meyer
+ *				Improve memory cleanup Value::getString()
+ 
+ *	2003-03-24	IscColumnsResultSet.cpp
+ *				Contributed by Norbert Meyer
+ *				o Add some breaks to case statements in adjustResults()
+ *				o In IscColumnsResultSet::getBLRLiteral use delete[] s
+ *				  instead of delete.s
+ 
+ *	2003-03-24	IscResultSet.cpp
+ *				Contributed by Andrew Gough
+ *				In IscResultSet::reset() delete the 'conversions' 
+ *				array itself as well as the array elements.
+
+ *	2003-03-24	IscConnection.cpp
+ *				Contributed by Norbert Meyer
+ *				If ++attachment means attachment->addRef() then
+ *				let's say so.
+
+ *	2003-03-24	IscStatement.cpp
+ *				Contributed by Norbert Meyer
+ *				use value->setString (length, data, true); if not, 
+ *				the String is not nullterminated, but used as
+ *				nullterminated String in ODBCStatement::setValue()
+ *				(case SQL_C_CHAR: ...). You can also check the 
+ *				length in ODBCStatement::setValue, but there is no
+ *				function getStringLength...
+
+ *	2003-03-24	OdbcConnection.cpp
+ *				Contributed by Norbert Meyer (NOMEY)
+ *				delete Statements before close connection 
+ *				(statement-destructor needs connection-pointer 
+ *				for call connection->deleteStatement.  
+ *				If connection->deleteStatement not called, 
+ *				you get an AV if you use Statements and call 
+ *				  SQLDisconnect(...); 
+ *				  SQLFreeHandle(..., connection);
+
+ *	2003-03-24	OdbcStatement.cpp
+ *				Contributed by Norbert Meyer (NOMEY)
+ *				o In sqlExtendedFetch() add support for
+ *				  applications which only check rowCountPointer
+ *				o In setValue()
+ *				  Empty strings have len = 0, so test for that
+ *				o In setParameter() and executeStatement()
+ *				  test for binding->indicatorPointer
+
+ *	2003-03-24	OdbcStatement.cpp
+ *				IscStatement.cpp
+ *				Contributed by Carlos Guzman Alvarez
+ *				Remove updatePreparedResultSet from OdbStatement 
+ *				and achieve the same goal in another way.
+
+ *	2003-03-24	IscStatement.cpp
+ *				Contributed by Vladimir Tcvigyn
+ *				Fix for timestamp bug (line 497)
+
+ *	2003-03-24	Test directory
+ *				Contributed by Roger Gammans
+ *				Fixes for some non-standard code. Specifically 
+ *				const correctness and specifying function return types.
+
+ *	2003-03-24	OdbcStatement.cpp
+ *				Contributed by Roger Gammans
+ *				Fix a segv in SQLBindCol()
+
+ *	2003-03-24	main.cpp
+ *				Contributed by Roger Gammans
+ *				Fix SQLError prototype to match the prototype
+ *				in the sql.h header file. This stops g++ 
+ *				generating SQLError as a C++ name-mangled 
+ *				entry point. A C function entry is used 
+ *				allowing correct binding to the driver manager.
+
+ *	2002-08-12	IscStatement.cpp
+ *				Contributed by Roger Gammans
+ *				Close the cursor when releasing a result set.
+
+ *	2002-12-05	OdbcConnection.cpp 
+ *				Contributed by C. Guzman Alvarez
+ *				SQLGetInfo returns more info.
+ *				Solve error in SQL_ORDER_BY_COLUMNS_IN_SELECT.
+
+ *	2002-11-25	Values.cpp
+ *				Contributed by C. G. Alvarez
+ *				Minor adjustment to improve handling of 
+ *				NUMERIC and DECIMAL
+
+ *  2002-11-25	Sqlda.cpp
+ *				Contributed by C. G. Alvarez
+ *				Changes to support better handling of 
+ *				NUMERIC and DECIMAL
+
+ *	2002-11-24	Value.cpp
+ *				OdbcStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Improved handling of TIME datatype
+
+ *	2002-11-24	IscColumnsResultSet.cpp
+ *				IscProcedureColumnsResultSet.cpp
+ *				IscSpecialColumnsResultSet.cpp
+ *				IscSqlType.cpp
+ *				Contributed by C. G. Alvarez
+ *				Improve handling of NUMERIC and DECIMAL fields
+
+ *  2002-11-21  IscSqlType.cpp
+ *              Contributed by C G Alvarez
+ *				Amended DATE/TIME datatypes 
+ *				from JDBC_***** to JDBC_SQL_*****
+
+ *	2002-11-21	OdbcStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Modification to OdbcStatement::sqlExtendedFetch
+ *				to support SQL_API_SQLEXTENDEDFETCH
+
+ *	2002-11-21	Reorganized the MSVC build settings.
+ *
+ *				OdbcJdbcSetup must now be built separately, 
+ *				_before_ building the driver (OdbcJdbc). It 
+ *				need only be built once.
+ *
+ *				When building the driver in debug mode
+ *				the build process will automatically register 
+ *				the newly compiled driver. It can then be 
+ *				debugged with the application of choice.
+ 
+ *  2002-10-11  
+ *				Contributed by C. G. Alvarez
+ *              Extensive modifications to all classes 
+ *              that query database metadata and return 
+ *              result sets based on those queries.
+ 
+ *  2002-10-11	Sqlda.cpp
+ *				Contributed by C. G. Alvarez
+ *              Extensive modifications to getDisplaySixe()
+ *              and getPrecision() to take advantage of MAX_****
+ *              constants. Other mods. to getSqlType()
+
+ *  2002-10-11  IscSqlType.cpp
+ *              Contributed by C G Alvarez
+ *              Extensive modifications to the getType()
+ *              that take advantage of the new MAX_***** 
+ *              constants in IscDbc.h
+
+ *  2002-10-11  IscDbc.h
+ *              Contributed by C G Alvarez
+ *              Added MAX_***** constants that simplify
+ *              much coding in other classes.
+
+ *	2002-10-11	IscPreparedStatement.cpp
+ *	            Contributed by C. G. Alvarez
+ *              Added/modified Blob/Clob support
+
+ *	2002-10-11	IscDatabaseMetaData.cpp
+ *				Contributed by C. G. Alvarez
+ *				Implemented full list of keywords
+ *              Implemented getSearchStringEscape()
+ *              Implemented getExtraNameCharacters()
+ *              Implemented supportsConvert()
+
+ *  2002-10-11	IscCallableStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Implemented new Blob and Clob support
+
+ *  2002-10-11	Attachment.cpp
+ *				Contributed by C. G. Alvarez
+ *				Added isc_info_page_size
+ *              to openDatabase()
+
+ *  2002-10-11	OdbcStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Extensive modifications to blob reading and writing
+
+ *  2002-10-11	OdbcStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Added sqlNumParams()
+
+ *	2002-10-11	OdbcDesc.cpp
+ *              Contributed by C G Alvarez
+ *              Added sqlGetDescField()
+
+ *	2002-10-11	main.cpp
+ *				Contributed by C G Alvarez
+ *              Implement SQLNumParams()
+ 
+ *	2002-10-11	main.cpp
+ *				Contributed by C G Alvarez
+ *              Implement SQLTablePrivileges()
+ 
+ *  2002-10-11  main.cpp
+ *				Contributed by C G Alvarez
+ *				Implement SQLColumnPrivileges()
+ 
+ *	2002-10-11	main.cpp
+ *				Contributed by C G Alvarez
+ *              Implement SQLGetDescField()
+
+ *	2002-10-10	InfoItems.h
+ *				Contributed by C. G. Alvarez
+ *              Extensive changes to the return types
+
+ *  2002-08-14	OdbcStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Minor enhancements to sqlGetSmtAttr and sqlSetStmtAttr.
+
+ *  2002-08-12	IscTablePrivilegesResultSet.h,.cpp created 
+ *				Changed Main.cpp, OdbcStatement.cpp, IscDatabaseMetadata.cpp
+ *				Implement sqlTablePrivileges()
+ *				Contributed by Carlos G. Alvarez
+
+ *	2002-08-12	OdbcStatement.cpp
+ *				IscResultSetMetaData.cpp
+ *				IscMetaDataResultSet.cpp
+ *				Added changes from C. G. Alvarez to so that
+ *				SQLColAttributes() called with SQL_COLUMN_TYPE_NAME returns 
+ *				the name of the type instead of the number of the type.
+ *				Similarly, sqlColAttribute() will return string for 
+ *				SQL_DESC_TYPE_NAME.
+ *				
+ *				Added sqlTablePrivileges()
+
+
+ *  2002-08-12	Sqlda.cpp
+ *				Contributed by C. G. Alvarez
+ *				Added getColumnTypeName()
+
+ *	2002-08-12	IscDbc.h
+ *				Contributed by C. G. Alvarez
+ *				Define some maximum values
+ *
+
+ *	2002-08-12	Types.h
+ *				Contributed by C. G. Alvarez
+ *				Cleanup some redundant declarations.
+
+ *	2002-08-12	OdbcConnection.cpp 
+ *				Contributed by C. G. Alvarez
+ *				Added SQL_API_SQLGETCONNECTOPTION to list of 
+ *				supported functions
+ *
+ *				Added more items to sqlGetInfo()
+
+ *	2002-08-12	IscStatement.cpp
+ *				Contributed by C. G. Alvarez
+ *				Added more graceful detection of statements that do
+ *				not return a result set.	
+
+ *  2002-08-02	Sqlda.cpp
+ *				Contributed by C. G. Alvarez
+ *				Change getColumnType to pass var->sqlscale to getSQLType.   
+ *				Change getSQLTypeName to keep in sync with this. 
+ *				The purpose is to allow return of DECIMAL as JDBC_DECIMAL 
+ *				instead of JDBC_BIGINT.
+
+ *  2002-08-02  main.cpp, OdbcEnv.cpp
+ *				Contributed by C G Alvarez
+ *				Implement SQLGetEnvAttr()
+
+ *	2002-07-08	OdbcStatement.cpp
+ *				Added changes from C. G. Alvarez to return
+ *				SQL_DESC_UNNAMED and SQL_DESC_BASE_TABLE_NAME
+ *				from sqlColAtrribute()
+
+ *	2002-07-06	OdbcJdbcSetup.dsp
+ *				Added post-build step to automatically register 
+ *				newly built driver if debug build is successful. (PR)
+ *				
+
+ *  2002-07-02  OdbcConnection.cpp 
+ *				Added better management of txn isolation
+ *				contributed by C. G. Alvarez
+
+ *	2002-07-02	IscProcedureColumnsResultSet.cpp
+ *				Contributed by C. G. Alvarez
+ *				Fixed invalid table alias in typos in 
+ *				getProcedureColumns()
+
+ *	2002-07-01	TypesResultSet.h
+ *				Extended and amended to support SQLGetTypeInfo
+ *				with OleDb and .Net.			C. G. Alvarez
+
+ *	2002-07-01	Types.h
+ *				Added some type definitions.	C. G. Alvarez
+
+ *  2002-07-01  OdbcConnection.cpp 
+ *				Added SQL_API_SQLSETCONNECTOPTION to 
+ *				supportedFunctions	C. G. Alvarez
+
+ *	2002-06-26	OdbcStatement.cpp
+ *				Added changes from C. G. Alvarez to provide 
+ *				better support for remote views.
+
+ *	2002-06-26	OdbcStatement::OdbcStatement
+ *				Initialised numberColumns in constructor (Roger Gammans)
+
+ *	2002-06-26	OdbcConnection::sqlGetInfo
+ *				Added call to clearErrors() at start of 
+ *				the method(Roger Gammans).
+
+ *	2002-06-25	IscDatabaseMetaData.cpp
+ *				C. G.Alvarez
+ *				Implement getDatabaseServerName()
+
+ *  2002-06-25	Connection.h
+ *				Contributed by C. G. Alvarez
+ *				declare getDatabaseServerName() in DatabaseMetaData
+
+ *	2002-06-25  OdbcConnection.cpp  
+ *				Contributed by C. G. Alvarez
+ *				Return Database Server Name from sqlGetInfo
+  
+ *	2002-06-17	OdbcStatement::setParameter()
+ *				Submitted by C. G. Alvarez
+ *				Added code to handle returning strings that are not
+ *				null terminated.
+
+ *	2002-06-17	IscCallableStatement.cpp 
+ *				Submitted by C. G. Alvarez
+ *				Overloaded SetString with a length parameter.
+
+ *	2002-06-17	IscPreparedStatement.cpp 
+ *				Submitted by C. G. Alvarez
+ *				Overloaded SetString with a length parameter.
+
+ *	2002-06-08  OdbcConnection.cpp 
+ *				Contributed by C. G. Alvarez
+ *				sqlSetConnectAttr() and connect()
+ *				now supports SQL_ATTR_TXN_ISOLATION
+
+ *	2002-06-08  IscConnection::startTransaction()
+ *				Contributed by Carlos Alvarez. New implementation
+ *				to better support different transaction options.
+ *
+
+ *	2002-06-08	OdbcStatement.cpp
+ *				Submitted by B. Schulte
+ *				sqlNumResultCols().
+ *				This fixes the bug : ' I can't edit my remote-views 
+ *				in Visual FoxPro'. If the resultSet does not exist, 
+ *				execute it, to get a valid resultSet. Foxpro calls 
+ *				this function to get all column-descriptions for 
+ *				its remote-views. 
+
+ *	2002-06-08	OdbcConnection.cpp
+ *				Contributed by C. G. Alvarez
+ *				Changed sqlDriverConnect() to better support
+ *				Crystal Reports.
+
+ *	2002-06-08	Setup.cpp
+ *				Added changes suggested by C. G. Alvarez to 
+ *				correctly locate the driver if already 
+ *				installed and to correctly report any errors.
+ 
+ *	2002-06-04	OdbcdStatement.cpp
+ *				submitted by Robert Milharcic
+ *				Extensive changes to improve writing and 
+ *				retrieval of binary blobs
+ 
+ *	2002-06-04	IscStatement.cpp
+ *				Amended setValue() again. (Robert Miharcic)
+ *					Hopefully this means that we finally 
+ *					have got SQL_CHAR and SQL_VARYING right.
+ 
+ *	2002-06-04	IscPreparedStatement.cpp
+ *				Contributed by Robert Milharcic
+ *				o Added beginDataTransfer(), putSegmentData()
+ *				  and endDataTransfer().
+ 
+*	2002-06-04	IscCallableStatement.cpp
+ *				Contributed by Robert Milharcic
+ *				o Added beginDataTransfer(), putSegmentData()
+ *				  and endDataTransfer().
+
+ *	2002-06-04	Connection.h
+ *				Contributed by Robert Milharcic
+ *				o Added declarations for beginDataTransfer()
+ *				  putSegmentData() and endDataTransfer()
+ 
+ *	2002-06-04	Sqlda.cpp
+ *				Contributed by Robert Milharcic
+ *				Amended getDisplaySize() and getPrecision()
+ *				to return char and varchar lengths more correctly.
+
+ *	2002-05-21	BinaryBlob.cpp
+ *				Change release() to test useCount <=0
+ *	
+
+ *	2002-05-20	Updated OdbcStatement.cpp 
+ *
+ *				Contributed by Robert Milharcic
+ *				o Several changes to allow reading of binary blobs
+ *				  See code commented with //Added by RM or //From RM
+
+ *	2002-05-20	BinaryBlob.cpp
+ *
+ *				Contributed by Robert Milharcic
+ *				o Start with useCount of 0
+
+ *	2002-05-20	IscConnection.cpp
+ *		
+ *				Contributed by Robert Milharcic
+ *				o better management of statements
+
+ *	2002-05-20	OdbcEnv.cpp
+ *
+ *				Contributed by Robert Milharcic
+ *				o allocHandle() - Fix typo in assignment to connections
+
+ *	2002-05-20	IscProcedureColumnsResultSet.cpp
+ *
+ *				Contributed by C. G. Alvarez
+ *				o qualify the column names in getProcedureColumns()
+
+ *	2002-05-20	IscIndexInfoResultSet.cpp
+ *
+ *				Contributed by ? 
+ *				o qualify the column names in getIndexInfo()
+
+ *	2002-05-20	Value.cpp
+ *				Contributed by Bernhard Schulte
+ *				o Updated setValue() to support changes 
+ *				  in timestamp conversion.	
+
+ *	2002-05-20	TimeStamp.cpp
+ *				Contributed by Bernhard Schulte
+ *				o Bring operator() up-to-date with other timestamp changes.
+ *				o ditto decodeTime().
+
+ *	2002-05-20	IscStatement.cpp
+ *
+ *			    Added contributions from Bernhard Schulte
+ *				o ::setValue() amended to
+ *				  fix problem with trailing blanks.
+ *
+ *				o Update setValue() to support changes to the 
+ *				  OdbcStatement datetime routines.
+
+ *	2002-05-20	Updated OdbcStatement.cpp
+ *
+ *				Contributed by Bernhard Schulte 
+ *				o Use TimeStamp instead of DateTime in setParameter().
+
+ * 2002-05-20	Updated OdbcDateTime.cpp
+ *
+ *				Contributed by Bernhard Schulte 
+ *				- improvements to conversion routines to allow
+ *          			  working with dates outside the range of 1900-2039
+ *				o TimeStamp Struct to Timestamp 
+ *				o DateTime to Date Struct 
+ *				o TimeStamp to Timestamp Struct
+ *				o ndate takes a new parameter - seconds, 
+ *				  because days won't fit in otherwise.
+ 
+ * 2002-04-30  Updated main.cpp
+ *
+ *			    Added suggestions from Carlos G. Alvarez
+ *			    o Test for logfile before trying to close it.
+ *			    o Changed parameter types for SQLSetConnectOption
+
+ * 2002-04-30  Updated IscStatement.cpp
+ *
+ *			    Added suggestions from LiWeimin
+ *			    o IscStatement::setValue
+ *			      When writing a varchar decrement the sqllen by 2
+ *			      before the test.
+ *
+ *			    o IscStatement::getIscDate
+ *			      Don't modify the date returned with this expression
+ *			        / (24 * 60 * 60) + baseDate
+ *			      just return the date.
+
+ * 2002-04-30  Setup.cpp
+ *
+ *				Suggestion from Paul Schmidt
+ *				Add role to Setup::configureDialog()
+

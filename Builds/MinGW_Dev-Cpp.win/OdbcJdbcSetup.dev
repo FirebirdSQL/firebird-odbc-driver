@@ -1,0 +1,426 @@
+[Project]
+FileName=OdbcJdbcSetup.dev
+Name=OdbcJdbcSetup
+Ver=1
+IsCpp=1
+Type=3
+Compiler=-D__GNUWIN32__ -D_WIN32_WINNT=0x0400 -DWINVER=0x0400 -DWIN32 -DNDEBUG -D_WINDOWS -D_USRDLL -D_WINDLL_@@_
+CppCompiler=-D__GNUWIN32__ -D_WIN32_IE=0x0400 -D_WIN32_WINNT=0x0400 -DWINVER=0x0400 -DWIN32 -DNDEBUG -D_WINDOWS -D_USRDLL -D_WINDLL -DISOLATION_AWARE_ENABLED_@@_
+Includes=d:/firebird/include;../..;../../IscDbc
+Linker=-lversion -lgdi32 -lshell32 -ladvapi32 -luser32 -lcomdlg32 -lcomctl32 -lstdc++ -lodbccp32_@@_--output-def ./Release/Obj/libOdbcJdbcSetup.def_@@_--output-lib ./Release/libOdbcJdbcSetup.a_@@_--def ../../OdbcJdbcSetup/OdbcJdbcSetupMinGw.def_@@_
+Libs=
+UnitCount=38
+Folders="Header Files","Resource Files","Source Files"
+ObjFiles=
+PrivateResource=OdbcJdbcSetup_private.rc
+ResourceIncludes=
+MakeIncludes=
+Icon=
+ExeOutput=./Release
+ObjectOutput=./Release/Obj
+OverrideOutput=0
+OverrideOutputName=OdbcJdbcSetup.dll
+HostApplication=
+CommandLine=
+IncludeVersionInfo=1
+SupportXPThemes=0
+CompilerSet=1
+CompilerSettings=000000000000000000
+
+[Unit1]
+FileName=..\..\OdbcJdbcSetup\DsnDialog.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit2]
+FileName=..\..\IscDbc\JString.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit3]
+FileName=..\..\OdbcJdbcSetup\OdbcJdbcSetup.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit4]
+FileName=..\..\OdbcJdbcSetup\Setup.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit5]
+FileName=..\..\OdbcJdbcSetup\DsnDialog.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit6]
+FileName=..\..\OdbcJdbcSetup\OdbcJdbcSetup.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit7]
+FileName=..\..\OdbcJdbcSetup\Resource.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit8]
+FileName=..\..\OdbcJdbcSetup\Setup.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit9]
+FileName=..\..\SetupAttributes.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit10]
+FileName=..\..\OdbcJdbcSetup\OdbcJdbcSetup.rc
+Folder=Resource Files
+Compile=1
+CompileCpp=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[VersionInfo]
+Major=0
+Minor=1
+Release=1
+Build=1
+LanguageID=1033
+CharsetID=1252
+CompanyName=
+FileVersion=0.1
+FileDescription=Developed using the Dev-C++ IDE
+InternalName=
+LegalCopyright=
+LegalTrademarks=
+OriginalFilename=OdbcJdbcSetup.dll
+ProductName=OdbcJdbcSetup
+ProductVersion=0.1
+AutoIncBuildNr=0
+
+[Unit11]
+FileName=..\..\OdbcJdbcSetup\ServiceClient.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit12]
+FileName=..\..\OdbcJdbcSetup\ServiceClient.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit13]
+FileName=..\..\OdbcJdbcSetup\ServiceTabBackup.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit14]
+FileName=..\..\OdbcJdbcSetup\ServiceTabBackup.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit15]
+FileName=..\..\OdbcJdbcSetup\ServiceTabChild.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit16]
+FileName=..\..\OdbcJdbcSetup\ServiceTabChild.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit17]
+FileName=..\..\OdbcJdbcSetup\ServiceTabCtrl.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit18]
+FileName=..\..\OdbcJdbcSetup\ServiceTabCtrl.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit19]
+FileName=..\..\OdbcJdbcSetup\ServiceTabRepair.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit20]
+FileName=..\..\OdbcJdbcSetup\ServiceTabRepair.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit21]
+FileName=..\..\OdbcJdbcSetup\ServiceTabRestore.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit22]
+FileName=..\..\OdbcJdbcSetup\ServiceTabRestore.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit23]
+FileName=..\..\OdbcJdbcSetup\ServiceTabStatistics.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit24]
+FileName=..\..\OdbcJdbcSetup\ServiceTabStatistics.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit25]
+FileName=..\..\OdbcJdbcSetup\CommonUtil.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit26]
+FileName=..\..\OdbcJdbcSetup\CommonUtil.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit27]
+FileName=..\..\OdbcJdbcSetup\ServiceTabUsers.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit28]
+FileName=..\..\OdbcJdbcSetup\ServiceTabUsers.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit29]
+FileName=..\..\OdbcJdbcSetup\UserDialog.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit30]
+FileName=..\..\OdbcJdbcSetup\UserDialog.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit31]
+FileName=..\..\OdbcJdbcSetup\UsersTabChild.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit32]
+FileName=..\..\OdbcJdbcSetup\UsersTabChild.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit33]
+FileName=..\..\OdbcJdbcSetup\UsersTabMemberShips.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit34]
+FileName=..\..\OdbcJdbcSetup\UsersTabMemberShips.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit35]
+FileName=..\..\OdbcJdbcSetup\UsersTabRoles.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit36]
+FileName=..\..\OdbcJdbcSetup\UsersTabRoles.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit37]
+FileName=..\..\OdbcJdbcSetup\UsersTabUsers.cpp
+Folder="Source Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit38]
+FileName=..\..\OdbcJdbcSetup\UsersTabUsers.h
+Folder="Header Files"
+Compile=1
+CompileCpp=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=

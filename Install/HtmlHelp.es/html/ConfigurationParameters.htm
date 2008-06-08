@@ -1,0 +1,170 @@
+<!--  
+ *     Los contenidos de este archivo están sujetos a la Versión 1.0 de la
+ *     Licencia Pública de los Desarrolladores Iniciales (la "Licencia"); 
+ *     usted no puede utilizar este archivo excepto en conformidad con 
+ *     la Licencia. Puede obtener una copia de la Licencia en 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl(en inglés)
+ *
+ *     El software distribuído bajo la Licencia es distribuída en 
+ *     términos "TAL COMO ESTA", SIN GARANTIAS DE NINGUN TIPO, ni 
+ *     expresas ni implícitas.  Vea la Licencia para el lenguaje  
+ *     específico que controla derechos y limitaciones bajo la Licencia.
+ *
+ *
+ *  Código original creado por Vladimir Tsvigun para IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  Todos los derechos reservados.
+ *
+ *  Traduccion al Espanol: Gerardo Czajkowski
+ *  Correcciones: Jorge Andres Brugger
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Configuración de Firebird ODBC</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_fb_odbc_configuration"></A><h1>Firebird ODBC: Parámetros de
+Configuración</h1><P>Son empleados para definir los parámetros de conexión
+a la base de datos. La ventana contiene los parámetros que corresponden a los <A HREF="ConnectionAttributes.htm">atributos
+de conexión</A></P>
+
+<P><B>Nombre de Origen de Datos (Data Source Name, DSN)</B></P>
+
+<P>Obligatorio.&nbsp;<BR>
+Nombre único del Tipo de Servidor.<BR>
+	<CODE>Ejemplo</CODE>: “Conectar desde FbEmbed” o “ConectarFbServer”</P>
+
+<P><B>Descripción (Description)</B></P>
+
+<P>Opcional.<BR>
+Descripción más detallada del origen de datos.</P>
+
+<P><B>Controlador (Driver)</B></P>
+
+	<P>Obligatorio.<BR>
+    <code>Siempre</code>: <B>IscDbc</B></P>
+
+<P><B>Base de Datos (Database)</B></P>
+
+<P>Obligatorio.<BR>
+Especifica la ubicación de una base de datos localmente, remotamente or a
+través de un alias.<BR>
+
+<P><CODE>Ejemplo de ubicación remota</CODE>:<BR>
+
+		<B>172.17.2.10:/usr/local/efldata/mcsAddress.fdb</B></P>
+
+	<P><CODE>Ejemplo de ubicación local</CODE>:<BR>
+
+    <B>C:\fbdatabase\mcsAddress.fdb</B></P>
+
+<P><CODE>Ejemplo con alias</CODE>:<BR>
+Utilizando el set de ejemplo del archivo aliases.conf de Firebird (dummy = c:\data\dummy.fdb)<BR>
+
+<code>emplear</code>: <B>dummy</B></P>
+
+<P><B>Cliente (Client)</B></P>
+
+<P>Requerido cuando se utiliza el Servidor incrustado (embedded Server). Permite
+especificar una línea de comando para iniciar la base de datos de Firebird
+incrustada (fbembed) o el cliente SQL de Firebird (gds32,fbclient).</P>
+
+<P><B>Cuenta de Base de Datos (Database Account)</B></P>
+
+<P>Opcional.<BR>
+Nombre de Usuario a ser utilizado al conectarse una base de datos Firebird. Si
+no se especifica, ODBC le solicitará una Identificación de Usuario (<B>UID</B>
+ó <B>USER</B>) al conectarse al recurso de datos.</P>
+
+<P><B>Contraseña (Password)</B></P>
+
+<P>Opcional.<BR>
+La contraseña a ser empleada con la Identificación de Usuario al conectarse
+una base de datos Firebird. Si no se especifica, ODBC le solicitará una
+contraseña (<B>PWD</B> ó <B>PASSWORD</B>) al conectarse al recurso de datos.
+Si es especificada, la contraseña es automáticamente encriptada y almacenada en
+el archivo odbc.ini. Especificar aquí la contraseña no debería implicar un
+riesgo de seguridad.</P>
+
+<P><B>Rol (Role)</B></P>
+
+<P>Opcional.<BR>
+Reglas:<BR>
+		1. Si es definido pero el nombre de usuario es SYSDBA, el rol es ignorado.<BR>
+		2. Si es definido y el nombre de usuario no es SYSDBA, el nombre de usuario es ignorado.</P>
+
+<P><B>Set de Caracteres (Character Set)</B></P>
+
+	<P>Opcional.<BR>
+    Especifica el set de caracteres predeterminado.</P>
+
+<P><B>Opciones (Options)</B></P>
+	<UL>
+    <B>Transacción (Transaction)</B><BR>
+    Especifica un formato de transacción al conectarse una base de datos Firebird.
+	        <UL>
+        <P><B>Lectura (Read) - write por omisión</B><BR>
+
+		Write: Accede a la base de datos en modo Lectura/Escritura.<BR>
+		Read: Accede a la base de datos en modo Sólo Lectura.</P>
+
+        <P><B>No Esperar (Nowait) - wait por omisión</B><BR>
+
+		Wait: La transacción esperará si encuentra un conflicto por bloqueo.<BR>
+		Nowait: La transacción inmediatamente devolverá un error si encuentra
+        un conflicto por bloqueo.</P>
+		</UL>
+	<P><B>Dialecto (Dialect)</B></P>
+
+    <P>Típicamente 1 ó 3, los dialectos SQL fueron introducidos en InterBase
+    6.0 para dar soporte a un número de nuevas características SQL incluyendo
+    identificadores delimitados. Los dialectos válidos son:
+		<UL>
+		1 - El analizador gramatical procesa como se haría en InterBase V5.<BR>
+		2 - Señalador transicional. InterBaseV6 y Firebird señalan las
+        estructuras SQL ambiguas y emiten un mensaje de error o de advertencia.<BR>
+		3 - El analizador gramatical procesa todo lo delimitado con comillas
+        simples como constantes de cadena de caracteres y todo lo delimitado por
+        comillas dobles como identificadores delimitados de SQL.</UL>
+
+	<P><B>Identificador Delimitado (Quoted Identifier)</B></P>
+
+		<P>Esta opción asegura compatibilidad con bases de datos creadas en
+        dialecto 1. </P>
+
+	<P><B>Identificador Sensitivo (Sensitive Identifier)</B></P>
+
+    <P>Esta opción cambia la propiedad de SQL_IDENTIFIER_CASE (SQL_IC_UPPER por
+    omisión, seleccione SQL_IC_UPPER ó SQL_IC_SENSITIVE)</P>
+
+	<P><B>Identificador Delimitado Automáticamente (Autoquoted Identifier)</B></P>
+
+		<P>NO por omisión (seleccione YES ó NO)<BR>
+        Debería convertir:
+			<UL>
+			SELECT A.Campo_Prueba FROM Tabla_Mayusculas_Minusculas A<BR>
+			ORDER BY A.Campo_Prueba</UL>
+    en:
+			<UL>
+			SELECT A.&quot;Campo_Prueba&quot; FROM &quot;Tabla_Mayusculas_Minusculas&quot; A<BR>
+			ORDER BY A.&quot;Campo_Prueba&quot;</UL>
+
+		<B>Nota</B>: Si se utiliza lo siguiente la conversión será incorrecta.<BR>
+    Cambiar de:&nbsp;
+			<UL>
+			Select A.Campo_Prueba From Tabla_Mayusculas_Minusculas A<BR>
+			Order By A.Campo_Prueba</UL>
+    a:
+			<UL>
+			"Select" A.&quot;Campo_Prueba&quot; "From" &quot;Tabla_Mayusculas_Minusculas&quot; A<BR>
+			"Order" "By" A.&quot;Campo_Prueba&quot;</UL>
+
+	</UL>
+</BODY>
+</HTML>

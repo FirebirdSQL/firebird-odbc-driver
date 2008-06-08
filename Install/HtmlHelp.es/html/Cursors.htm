@@ -1,0 +1,47 @@
+<!--  
+ *     Los contenidos de este archivo están sujetos a la Versión 1.0 de la
+ *     Licencia Pública de los Desarrolladores Iniciales (la "Licencia"); 
+ *     usted no puede utilizar este archivo excepto en conformidad con 
+ *     la Licencia. Puede obtener una copia de la Licencia en 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl(en inglés)
+ *
+ *     El software distribuído bajo la Licencia es distribuída en 
+ *     términos "TAL COMO ESTA", SIN GARANTIAS DE NINGUN TIPO, ni 
+ *     expresas ni implícitas.  Vea la Licencia para el lenguaje  
+ *     específico que controla derechos y limitaciones bajo la Licencia.
+ *
+ *
+ *  Código original creado por Vladimir Tsvigun para IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  Todos los derechos reservados.
+ *
+ *  Traduccion al Espanol: Gerardo Czajkowski
+ *  Correcciones: Jorge Andres Brugger
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Cursores</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_cursors"></A><h1>Cursores</h1>
+
+<P>En el actual controlador Firebird ODBC los tipos de cursor Dynamic y Keyset
+serán modificados para utilizar el tipo Static, por lo tanto no es posible
+actualizar los sets. Para obtener mejor rendimiento utilice el tipo de cursor ForwardOnly.
+Operadores de lectura: (SQLFetch, SQLExtendedFetch, SQLScrollFetch) utilice SQL_ROWSET_SIZE
+y SQL_ATTR_ROW_ARRAY_SIZE. Para mayor performance al emplear campos tipo Blob use
+el operador 
+SQLBindParameter (sin importar el tamaño del campo Blob) ya que ésto
+trabajará a mayor velocidad que utilizando SQLPutData/ SQLGetData.</P>
+
+<P>Para mayores detalles sobre cómo hacer esto y para otros temas avanzados por
+favor vea los ejemplos..</P>
+
+</BODY>
+</HTML>

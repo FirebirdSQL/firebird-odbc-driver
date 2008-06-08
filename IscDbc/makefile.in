@@ -1,0 +1,131 @@
+AsciiBlob.o: AsciiBlob.cpp Engine.h JString.h AsciiBlob.h Blob.h \
+ Stream.h BinaryBlob.h
+Attachment.o: Attachment.cpp IscDbc.h JString.h Attachment.h Mutex.h \
+ SQLError.h SQLException.h Parameters.h Properties.h IscConnection.h \
+ Connection.h Blob.h LinkedList.h
+BinaryBlob.o: BinaryBlob.cpp Engine.h JString.h BinaryBlob.h Blob.h \
+ Stream.h AsciiBlob.h
+DateTime.o: DateTime.cpp Engine.h JString.h DateTime.h SQLError.h \
+ SQLException.h
+Error.o: Error.cpp Engine.h JString.h Error.h SQLError.h \
+ SQLException.h
+IscBlob.o: IscBlob.cpp IscDbc.h JString.h IscBlob.h BinaryBlob.h \
+ Blob.h Stream.h Connection.h Properties.h SQLException.h \
+ IscResultSet.h LinkedList.h Values.h DateTime.h SqlTime.h TimeStamp.h \
+ IscConnection.h IscStatement.h Sqlda.h SQLError.h
+IscCallableStatement.o: IscCallableStatement.cpp IscDbc.h JString.h \
+ IscCallableStatement.h Connection.h Blob.h Properties.h \
+ SQLException.h IscPreparedStatement.h IscStatement.h LinkedList.h \
+ Sqlda.h Values.h DateTime.h SqlTime.h TimeStamp.h IscConnection.h \
+ Value.h Types.h Stream.h SQLError.h
+IscColumnsResultSet.o: IscColumnsResultSet.cpp IscDbc.h JString.h \
+ IscColumnsResultSet.h IscMetaDataResultSet.h IscResultSet.h \
+ Connection.h Blob.h Properties.h SQLException.h LinkedList.h Values.h \
+ DateTime.h SqlTime.h TimeStamp.h IscSqlType.h IscConnection.h \
+ IscDatabaseMetaData.h IscPreparedStatement.h IscStatement.h Sqlda.h \
+ IscBlob.h BinaryBlob.h Stream.h
+IscConnection.o: IscConnection.cpp IscDbc.h JString.h IscConnection.h \
+ Connection.h Blob.h Properties.h SQLException.h LinkedList.h \
+ SQLError.h IscCallableStatement.h IscPreparedStatement.h \
+ IscStatement.h Sqlda.h Values.h DateTime.h SqlTime.h TimeStamp.h \
+ IscDatabaseMetaData.h Parameters.h Attachment.h Mutex.h
+IscCrossReferenceResultSet.o: IscCrossReferenceResultSet.cpp IscDbc.h \
+ JString.h IscCrossReferenceResultSet.h IscMetaDataResultSet.h \
+ IscResultSet.h Connection.h Blob.h Properties.h SQLException.h \
+ LinkedList.h Values.h DateTime.h SqlTime.h TimeStamp.h
+IscDatabaseMetaData.o: IscDatabaseMetaData.cpp IscDbc.h JString.h \
+ IscDatabaseMetaData.h Connection.h Blob.h Properties.h SQLException.h \
+ LinkedList.h IscConnection.h Attachment.h Mutex.h SQLError.h \
+ IscResultSet.h Values.h DateTime.h SqlTime.h TimeStamp.h \
+ IscTablesResultSet.h IscMetaDataResultSet.h IscColumnsResultSet.h \
+ IscSqlType.h IscIndexInfoResultSet.h IscPrimaryKeysResultSet.h \
+ IscCrossReferenceResultSet.h IscProceduresResultSet.h \
+ IscProcedureColumnsResultSet.h TypesResultSet.h \
+ IscSpecialColumnsResultSet.h
+IscIndexInfoResultSet.o: IscIndexInfoResultSet.cpp IscDbc.h JString.h \
+ IscIndexInfoResultSet.h IscMetaDataResultSet.h IscResultSet.h \
+ Connection.h Blob.h Properties.h SQLException.h LinkedList.h Values.h \
+ DateTime.h SqlTime.h TimeStamp.h IscDatabaseMetaData.h
+IscMetaDataResultSet.o: IscMetaDataResultSet.cpp IscDbc.h JString.h \
+ IscMetaDataResultSet.h IscResultSet.h Connection.h Blob.h \
+ Properties.h SQLException.h LinkedList.h Values.h DateTime.h \
+ SqlTime.h TimeStamp.h IscDatabaseMetaData.h SQLError.h \
+ IscConnection.h Value.h Types.h Stream.h
+IscPreparedStatement.o: IscPreparedStatement.cpp IscDbc.h JString.h \
+ IscPreparedStatement.h Connection.h Blob.h Properties.h \
+ SQLException.h IscStatement.h LinkedList.h Sqlda.h Values.h \
+ SQLError.h IscResultSet.h DateTime.h SqlTime.h TimeStamp.h \
+ IscConnection.h BinaryBlob.h Stream.h AsciiBlob.h Value.h Types.h \
+ IscStatementMetaData.h
+IscPrimaryKeysResultSet.o: IscPrimaryKeysResultSet.cpp IscDbc.h \
+ JString.h IscPrimaryKeysResultSet.h IscMetaDataResultSet.h \
+ IscResultSet.h Connection.h Blob.h Properties.h SQLException.h \
+ LinkedList.h Values.h DateTime.h SqlTime.h TimeStamp.h
+IscProcedureColumnsResultSet.o: IscProcedureColumnsResultSet.cpp \
+ IscDbc.h JString.h IscProcedureColumnsResultSet.h \
+ IscMetaDataResultSet.h IscResultSet.h Connection.h Blob.h \
+ Properties.h SQLException.h LinkedList.h Values.h DateTime.h \
+ SqlTime.h TimeStamp.h IscSqlType.h IscStatement.h Sqlda.h \
+ IscConnection.h
+IscProceduresResultSet.o: IscProceduresResultSet.cpp IscDbc.h \
+ JString.h IscProceduresResultSet.h IscMetaDataResultSet.h \
+ IscResultSet.h Connection.h Blob.h Properties.h SQLException.h \
+ LinkedList.h Values.h DateTime.h SqlTime.h TimeStamp.h
+IscResultSet.o: IscResultSet.cpp IscDbc.h JString.h IscResultSet.h \
+ Connection.h Blob.h Properties.h SQLException.h LinkedList.h Values.h \
+ DateTime.h SqlTime.h TimeStamp.h IscStatement.h Sqlda.h \
+ IscResultSetMetaData.h IscBlob.h BinaryBlob.h Stream.h \
+ IscConnection.h SQLError.h Value.h Types.h
+IscResultSetMetaData.o: IscResultSetMetaData.cpp IscDbc.h JString.h \
+ IscResultSetMetaData.h Connection.h Blob.h Properties.h \
+ SQLException.h IscResultSet.h LinkedList.h Values.h DateTime.h \
+ SqlTime.h TimeStamp.h SQLError.h Sqlda.h
+IscSpecialColumnsResultSet.o: IscSpecialColumnsResultSet.cpp IscDbc.h \
+ JString.h IscConnection.h Connection.h Blob.h Properties.h \
+ SQLException.h LinkedList.h IscDatabaseMetaData.h IscResultSet.h \
+ Values.h DateTime.h SqlTime.h TimeStamp.h IscPreparedStatement.h \
+ IscStatement.h Sqlda.h IscBlob.h BinaryBlob.h Stream.h IscSqlType.h \
+ IscSpecialColumnsResultSet.h IscMetaDataResultSet.h
+IscSqlType.o: IscSqlType.cpp IscDbc.h JString.h IscSqlType.h
+IscStatement.o: IscStatement.cpp IscDbc.h JString.h IscStatement.h \
+ Connection.h Blob.h Properties.h SQLException.h LinkedList.h Sqlda.h \
+ IscResultSet.h Values.h DateTime.h SqlTime.h TimeStamp.h \
+ IscConnection.h Attachment.h Mutex.h IscBlob.h BinaryBlob.h Stream.h \
+ SQLError.h Value.h Types.h
+IscStatementMetaData.o: IscStatementMetaData.cpp IscDbc.h JString.h \
+ IscStatementMetaData.h Connection.h Blob.h Properties.h \
+ SQLException.h IscPreparedStatement.h IscStatement.h LinkedList.h \
+ Sqlda.h Values.h
+IscTablesResultSet.o: IscTablesResultSet.cpp IscDbc.h JString.h \
+ IscTablesResultSet.h IscMetaDataResultSet.h IscResultSet.h \
+ Connection.h Blob.h Properties.h SQLException.h LinkedList.h Values.h \
+ DateTime.h SqlTime.h TimeStamp.h IscConnection.h \
+ IscDatabaseMetaData.h IscPreparedStatement.h IscStatement.h Sqlda.h \
+ IscBlob.h BinaryBlob.h Stream.h
+JString.o: JString.cpp JString.h
+LinkedList.o: LinkedList.cpp Engine.h JString.h LinkedList.h
+Lock.o: Lock.cpp Lock.h Mutex.h
+Mutex.o: Mutex.cpp Mutex.h
+Parameter.o: Parameter.cpp Parameter.h
+Parameters.o: Parameters.cpp Engine.h JString.h Parameters.h \
+ Properties.h Parameter.h
+SQLError.o: SQLError.cpp Engine.h JString.h SQLError.h SQLException.h \
+ Stream.h
+SqlTime.o: SqlTime.cpp SqlTime.h
+Sqlda.o: Sqlda.cpp IscDbc.h JString.h Sqlda.h SQLError.h \
+ SQLException.h Value.h Types.h TimeStamp.h SqlTime.h DateTime.h \
+ Stream.h Blob.h IscConnection.h Connection.h Properties.h \
+ LinkedList.h IscStatement.h
+Stream.o: Stream.cpp Engine.h JString.h Stream.h SQLError.h \
+ SQLException.h Blob.h
+TimeStamp.o: TimeStamp.cpp Engine.h JString.h TimeStamp.h SqlTime.h \
+ DateTime.h
+TypesResultSet.o: TypesResultSet.cpp IscDbc.h JString.h \
+ TypesResultSet.h IscResultSet.h Connection.h Blob.h Properties.h \
+ SQLException.h LinkedList.h Values.h DateTime.h SqlTime.h TimeStamp.h \
+ Types.h
+Value.o: Value.cpp Engine.h JString.h Value.h Types.h TimeStamp.h \
+ SqlTime.h DateTime.h Stream.h Blob.h SQLError.h SQLException.h \
+ BinaryBlob.h AsciiBlob.h
+Values.o: Values.cpp Engine.h JString.h Values.h Value.h Types.h \
+ TimeStamp.h SqlTime.h DateTime.h Stream.h Blob.h

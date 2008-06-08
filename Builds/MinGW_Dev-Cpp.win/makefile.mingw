@@ -1,0 +1,113 @@
+#
+#DEBUG=1
+#
+.PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean
+#
+#    Init variables for compile MinGW
+#
+MINGWDIR	= "d:/MinGw"
+# Windows 2000/NT
+#VER_WINNT	= -D_WIN32_WINNT=0x0500 -DWINVER=0x0500
+# Win98/Me
+VER_WINNT	= -D_WIN32_WINNT=0x0400 -DWINVER=0x0400
+#
+# Start build
+#
+include ../makefile.sources
+include ../makefile.environ
+#
+MINGWDIRBIN	= $(MINGWDIR)/bin
+MINGWDIRLIB	= $(MINGWDIR)/lib
+#
+ifdef DEBUG
+TARGETDIR	= Debug
+else
+TARGETDIR	= Release
+endif
+#
+BUILDDIR 	= $(TARGETDIR)/obj
+#
+LIST_ISCDBCSRC 	=   $(addprefix $(ISCDBCDIR)/, $(ISCDBCSRC))
+LIST_ISCDBCOBJ 	=   $(addprefix $(BUILDDIR)/, $(ISCDBCSRC:.cpp=.o))
+LIST_ODBCJDBCSRC=   $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSRC))
+LIST_ODBCJDBCOBJ=   $(addprefix $(BUILDDIR)/, $(ODBCJDBCSRC:.cpp=.o))
+LIST_ODBCJDBCSSRC=  $(addprefix $(ODBCJDBCSETUPDIR)/, $(ODBCJDBCSETUPSRC))
+LIST_ODBCJDBCSOBJ=  $(addprefix $(BUILDDIR)/, $(ODBCJDBCSETUPSRC:.cpp=.o))
+#
+COMPFLAGS	= -I"$(MINGWDIR)/include/c++" -I"$(MINGWDIR)/include/c++/mingw32" \
+		  -I"$(MINGWDIR)/include/c++/backward" -I"$(MINGWDIR)/include" \
+		  -I$(ISCDBCDIR) -I$(ODBCJDBCDIR) -I$(FBINCDIR) \
+		  -D_WIN32_IE=0x0400 -DWIN32 -D_WIN32 -D_WINDOWS -DISOLATION_AWARE_ENABLED $(VER_WINNT)
+#
+LINKFLAGS	= -L"$(MINGWDIR)/lib" --add-stdcall-alias -mwindows --driver-name,g++
+#
+LD		= $(MINGWDIRBIN)/dllwrap.exe --mno-cygwin
+GCC		= $(MINGWDIRBIN)/g++.exe
+WINDRES		= $(MINGWDIRBIN)/windres.exe
+#
+ISCDBCDLL       = $(TARGETDIR)/IscDbc.dll
+ODBCJDBCDLL     = $(TARGETDIR)/OdbcFb32.dll
+ODBCJDBCSDLL    = $(TARGETDIR)/OdbcJdbcSetup.dll
+ISCDBCDEFFILE	= $(ISCDBCDIR)/IscDbc.def
+ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)/OdbcJdbcMinGw.def
+ODBCJDBCSDEFFILE= $(ODBCJDBCSETUPDIR)/OdbcJdbcSetupMinGw.def
+#
+ifdef DEBUG
+DEBUGFLAGS	= -g -O2 -D_DEBUG -DDEBUG -DLOGGING -fexceptions 
+else
+DEBUGFLAGS	= -DNDEBUG
+endif
+#
+$(BUILDDIR)/%.res  : $(ISCDBCDIR)/%.rc
+	$(WINDRES) --include-dir "$(MINGWDIR)/include" -i $(firstword $<) -I rc -o $@ -O coff 
+#
+$(BUILDDIR)/%.res  : $(ODBCJDBCDIR)/%.rc
+	$(WINDRES) --include-dir "$(MINGWDIR)/include" -i $(firstword $<) -I rc -o $@ -O coff 
+#
+$(BUILDDIR)/%.res  : $(ODBCJDBCSETUPDIR)/%.rc
+	$(WINDRES) --include-dir "$(MINGWDIR)/include" -i $(firstword $<) -I rc -o $@ -O coff 
+#
+$(BUILDDIR)/%.o: $(ISCDBCDIR)/%.cpp
+	$(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
+#
+$(BUILDDIR)/%.o: $(ODBCJDBCDIR)/%.cpp
+	$(GCC) $(COMPFLAGS) $(COMPEXTFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
+#
+$(BUILDDIR)/%.o: $(ODBCJDBCSETUPDIR)/%.cpp
+	$(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
+#
+ISCDBCLIB       = $(ISCDBCDLL:.dll=.a)
+ODBCJDBCLIB     = $(ODBCJDBCDLL:.dll=.a)
+ODBCJDBCSLIB    = $(ODBCJDBCSDLL:.dll=.a)
+#
+all :	createdirs IscDbc OdbcJdbc OdbcJdbcSetup
+#
+# Silently creates the target and build directories
+createdirs :
+	@-mkdir $(TARGETDIR) > nul
+	@-mkdir $(BUILDDIR) > nul
+#
+# Silently cleanup and deletes the target and build directories
+clean :
+	@-rm -fr $(TARGETDIR)
+#
+IscDbc 		: $(ISCDBCDLL)
+OdbcJdbc 	: $(ODBCJDBCDLL)
+OdbcJdbcSetup 	: $(ODBCJDBCSDLL)
+#
+# Build the library from the object modules
+#
+$(ISCDBCDLL) : $(LIST_ISCDBCOBJ) $(BUILDDIR)/IscDbc.res
+#	$(LD) $(LINKFLAGS) --implib $(ISCDBCLIB) $(LIST_ISCDBCOBJ) $(BUILDDIR)/IscDbc.res -lwsock32 -lstdc++ --def $(ISCDBCDEFFILE) -o $(ISCDBCDLL)
+#
+#$(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ) $(BUILDDIR)/OdbcJdbc.res
+#	$(LD) $(LINKFLAGS) --implib $(ODBCJDBCLIB) $(BUILDDIR)/JString.o $(BUILDDIR)/Mutex.o $(LIST_ODBCJDBCOBJ) $(BUILDDIR)/OdbcJdbc.res -lodbccp32 -lwsock32 -lstdc++ --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
+#
+$(ODBCJDBCSDLL) : $(LIST_ODBCJDBCSOBJ) $(BUILDDIR)/OdbcJdbcSetup.res
+#	$(LD) $(LINKFLAGS) --implib $(ODBCJDBCSLIB) $(BUILDDIR)/JString.o $(LIST_ODBCJDBCSOBJ) $(BUILDDIR)/OdbcJdbcSetup.res -lversion -lgdi32 -lshell32 -ladvapi32 -luser32 -lcomdlg32 -lcomctl32 -lodbccp32 -lstdc++ --def $(ODBCJDBCSDEFFILE) -o $(ODBCJDBCSDLL)
+#
+$(ODBCJDBCDLL) : $(LIST_ISCDBCOBJ) $(LIST_ODBCJDBCOBJ) $(LIST_ODBCJDBCSOBJ) $(BUILDDIR)/OdbcJdbc.res
+	$(LD) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(LIST_ODBCJDBCOBJ) $(LIST_ODBCJDBCSOBJ) $(BUILDDIR)/OdbcJdbc.res -lversion -lgdi32 -lshell32 -ladvapi32 -luser32 -lcomdlg32 -lcomctl32 -lodbccp32 -lwsock32 -lstdc++ --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
+#
+# End
+#

@@ -1,0 +1,17 @@
+#
+#    examples for solaris
+#FBINCDIR	= /mnt/third_party/interbase/sun5-2003-3-10/include
+#FBLIBDIR	= /mnt/third_party/interbase/sun5-2003-3-10/lib
+#
+!ifdef FIREBIRD
+FBINCDIR	= $(FIREBIRD)/include
+FBLIBDIR	= $(FIREBIRD)/lib
+!else
+FBINCDIR	= d:/Firebird/include
+FBLIBDIR	= d:/Firebird/lib
+!endif
+#
+ISCDBCDIR 		= ../../IscDbc
+ODBCJDBCDIR 		= ../..
+ODBCJDBCSETUPDIR 	= ../../OdbcJdbcSetup
+#

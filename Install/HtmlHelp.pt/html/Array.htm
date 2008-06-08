@@ -1,0 +1,48 @@
+<!--
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  Traduzido e Editado por / Translated and Edited by
+ *  Alexandre Benson Smith
+ *  benson@thorsoftware.com.br
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV = "CONTENT-TYPE" CONTENT = "text/html; charset=windows-1252">
+<TITLE> Tipo de dados: Array</TITLE>
+</HEAD>
+
+<BODY BGCOLOR = "#FFFFFF" TEXT = "#000000">
+            
+<P><A NAME = "hid_data_type_array"></A><H1>Tipo de dados Array</H1></P>
+
+<P>Para modificar campos do tipo array unidimensional, voc&ecirc; precisa seguir estas regras:</P>
+
+<P>- Tipos Simples (inteiros, etc.) defina o valor do seu campo como {1, 2, 3}<BR>
+- Strings (char, varchar, etc.) defina o valor do seu campo como {'1', '2', '3'}</P>
+            </UL>
+<P>&nbsp;&nbsp;
+Se voc&ecirc; editar elementos da array, por exemplo elementos 1, 2, e 5 e n&atilde;o especificar os outros elementos
+(neste caso 3 e 4), ent&atilde;o estes elementos n&atilde;o especificados ser&atilde;o zerados (quando num&eacute;ricos)
+e vazios (quando strings). Em alguns programas onde colunas s&atilde;o dependentes dos dados de uma array, &eacute;
+poss&iacute;vel, caso a array esteja nula, que se entre com os dados da coluna sem a verifica&ccedil;&atilde;o ser
+executada nos elementos da array para a valida&ccedil;&atilde;o dos dados da coluna. Nestas circunst&acirc;ncias,
+&eacute; necess&aacute;rio que primeiro se informe os dados da array e depois os dados da coluna.</P>
+        
+</BODY>
+</HTML>

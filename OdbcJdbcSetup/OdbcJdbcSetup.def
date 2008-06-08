@@ -1,0 +1,11 @@
+; OdbcJdbcSetup.def : Declares the module parameters for the DLL.
+
+LIBRARY      "OdbcJdbcSetup"
+DESCRIPTION  'OdbcJdbcSetup Windows Dynamic Link Library'
+
+EXPORTS
+    ; Explicit exports can go here
+	ConfigDSN=ConfigDSN@16
+	DllRegisterServer
+	DllUnregisterServer
+	DllInstall

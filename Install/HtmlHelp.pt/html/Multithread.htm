@@ -1,0 +1,58 @@
+<!--
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  Traduzido e Editado por / Translated and Edited by
+ *  Alexandre Benson Smith
+ *  benson@thorsoftware.com.br
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV = "CONTENT-TYPE" CONTENT = "text/html; charset=windows-1252">
+<TITLE>Multithread</TITLE>
+</HEAD>
+
+<BODY BGCOLOR = "#ffffff" TEXT = "#000000">
+
+<P><A NAME = "hid_multithread"></A><H1>Multithreading</H1></P>
+
+<P>O driver ODBC do Firebird permite dois n&iacute;veis de prote&ccedil;&atilde;o 
+de threads. Atrav&eacute;s do compartilhamento ou dos &ldquo;hanldes&rdquo; de 
+ambiente ou dos &ldquo;handles&rdquo; de conex&atilde;o.</P>
+
+<P>Se o driver for compilado com o seguinte define:</P>
+        <UL><B>#define DRIVER_LOCKED_LEVEL &nbsp;&nbsp;&nbsp; DRIVER_LOCKED_LEVEL_NONE</B></UL>
+
+<P>ent&atilde;o o driver ser&aacute; compilado sem suporte a multi-threading. Isto 
+permite a melhor performance, entretanto a responsabilidade do controle dos threads 
+&eacute; transferido a biblioteca cliente do Firebird.</P>
+
+<P><B>Padr&atilde;o</B> : O driver &eacute; compilado usando o seguinte define:
+        <UL><B>#define DRIVER_LOCKED_LEVEL &nbsp;&nbsp;&nbsp; DRIVER_LOCKED_LEVEL_CONNECT</B></UL>
+
+ent&atilde;o uma &uacute;nica conex&atilde;o pode compartilhar m&uacute;ltiplos threads locais.
+
+<P>Se o driver for compilado usando este define:</P>
+
+        <UL><B>#define DRIVER_LOCKED_LEVEL &nbsp;&nbsp;&nbsp; DRIVER_LOCKED_LEVEL_ENV</B></UL>
+        
+<P>ent&atilde;o um &uacute;nico handle de ambiente (environment handle) pode 
+ser compartilhado por m&uacute;ltiplos threads locais.</P>
+
+</BODY>
+</HTML>

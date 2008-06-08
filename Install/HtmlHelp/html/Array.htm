@@ -1,0 +1,47 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  This translation and editing was done by Paul Beach of IBPhoenix
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+<TITLE>Data type Array</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_data_type_array"></A><h1>Data type Array</h1></P>
+
+<P>To modify single dimension array data type fields, you need to conform to the following rules:</P>
+
+<P>- Simple types (integer etc) specify as {1, 2, 3}<BR>
+- String types (char etc) specify as {'1’, ‘2’, ‘3’}</P>
+
+<P>&nbsp;&nbsp;
+If you edit an element of the array e.g. element 1, 2 and 5 and do not specify the other elements of the array,
+e.g. 3 and 4 then the other elements of the array will be zeroed (integer), or blank (string).
+With some programs where columns are dependent on array data,
+It is possible, if the array column is null to enter the column data without a check being made
+on the various array elements for the validity of that column data. In such circumstances it
+is necessary to enter the array elements before entering the column data.</P>
+
+</BODY>
+</HTML>
