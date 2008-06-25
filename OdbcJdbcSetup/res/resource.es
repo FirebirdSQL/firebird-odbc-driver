@@ -21,6 +21,9 @@ IDS_BUTTON_CANCEL, // "Cancel"
 IDS_STATIC_DSN, // "Data Source Name (DSN)"
 	"Nombre de Origen de Datos (DSN)"
 ,
+IDS_STATIC_DESCRIPTION, // "Description"
+	"Description"
+,
 IDS_STATIC_DATABASE, // "Database"
 	"Base de Datos"
 ,
@@ -129,6 +132,21 @@ IDS_ERROR_MESSAGE_15, // "CopyFile"
 IDS_ERROR_MESSAGE_16, // "Disk full"
 	"Disco lleno"
 ,
+IDS_ERROR_MESSAGE_17, // "Config DSN"
+	"Config DSN"
+,
+IDS_ERROR_MESSAGE_18, // "Invalid characters are included in the data source name: []{}(),;?*=!@\\"
+	"Invalid characters are included in the data source name: []{}(),;?*=!@\\"
+,
+IDS_ERROR_MESSAGE_19, // "Create database '%s' failed"
+	"Create database '%s' failed"
+,
+IDS_ERROR_MESSAGE_20, // "Open database '%s' failed"
+	"Open database '%s' failed"
+,
+IDS_BUTTON_SERVICES, // "Services"
+	"Services"
+,
 IDS_USESCHEMA_NULL, // "Set null field SCHEMA"
 	"Set null field SCHEMA"
 ,
@@ -137,4 +155,10 @@ IDS_USESCHEMA_DEL, // "Remove SCHEMA from SQL query"
 ,
 IDS_USESCHEMA_FULL, // "Use full SCHEMA"
 	"Use full SCHEMA"
+,
+IDS_STATIC_LOCKTIMEOUT, // "lock timeout"
+	"lock timeout"
+,
+IDS_CHECK_SFTHREAD, // "safe thread"
+	"safe thread"
 }

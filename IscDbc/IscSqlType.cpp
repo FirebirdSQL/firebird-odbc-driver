@@ -52,21 +52,40 @@ void IscSqlType::buildType ()
 		{
 		case blr_text:
 		case blr_text2:
+			{
 			if ( length == 1 && characterId == 1 )
-			{
-			type = JDBC_TINYINT;
-			typeName = "TINYINT";
-			bufferLength = length;
-			length = MAX_TINYINT_LENGTH;
-			}
+				{
+				type = JDBC_TINYINT;
+				typeName = "TINYINT";
+				bufferLength = length;
+				length = MAX_TINYINT_LENGTH;
+				}
 			else
-			{
-			type = JDBC_CHAR;
-			typeName = "CHAR";
-			bufferLength = length;
+				{
+				type = JDBC_CHAR;
+				typeName = "CHAR";
+
+				if ( characterId > 2 && lengthCharIn ) // > ASCII
+					{
+					length = lengthCharIn;
+					if ( characterId == 4 || characterId == 3 ) // UTF8 || UNICODE_FSS
+						type = JDBC_WCHAR;
+					}
+				}
 			}
 			break;
-
+/*
+		case blr_boolean:
+			{
+			type = JDBC_BOOLEAN;
+			typeName = "BOOLEAN";
+			length = MAX_BOOLEAN_LENGTH;
+			bufferLength = sizeof(short);
+			if ( !precision ) // for calculate fields
+				precision = length;
+			}
+			break;
+*/
 		case blr_short:
 			{
 			type = JDBC_SMALLINT;
@@ -125,6 +144,13 @@ void IscSqlType::buildType ()
 			{
 			type = JDBC_VARCHAR;
 			typeName = "VARCHAR";
+
+			if ( characterId > 2 && lengthCharIn ) // > ASCII
+				{
+				length = lengthCharIn;
+				if ( characterId == 4 || characterId == 3 ) // UTF8 || UNICODE_FSS
+					type = JDBC_WVARCHAR;
+				}
 			}
 			break;
 

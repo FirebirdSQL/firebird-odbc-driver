@@ -1,4 +1,4 @@
-#ifdef _WIN32
+#ifdef _WINDOWS
 #include <windows.h>
 #endif
 
@@ -9,7 +9,7 @@
 
 namespace OdbcJdbcLibrary {
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 void * MutexEnvThread::mutexLockedLevelDll = NULL;
 #endif
 #ifdef _PTHREADS

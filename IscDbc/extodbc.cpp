@@ -263,7 +263,7 @@ void getStatInformations(IscConnection * connection, char bNumberCall)
 
 	ftime(&time_buffer);
 	ptStat->elapsed =
-		(time_buffer.time - LARGE_NUMBER) * 100 + (time_buffer.millitm / 10);
+		(long)(time_buffer.time - LARGE_NUMBER) * 100 + (time_buffer.millitm / 10);
 
 	GDS->_database_info(statusVector, &Db,item_length, items, buffer_length, buffer);
 
@@ -351,7 +351,7 @@ int getStatInformations(IscConnection * connection, const void * info_buffer, in
 
 	ftime(&time_buffer);
 	ptStat->elapsed =
-		(time_buffer.time - LARGE_NUMBER) * 100 + (time_buffer.millitm / 10);
+		(long)(time_buffer.time - LARGE_NUMBER) * 100 + (time_buffer.millitm / 10);
 
 	GDS->_database_info(statusVector, &Db,item_length, items, buffer_length, buffer);
 
@@ -487,12 +487,12 @@ int strBuildStatInformations(const void * info_buffer, int bufferLength,short *l
 			case 'b':
 			case 'c':
 			case 'x':
-				sprintf((char*)p, "%d", delta);
+				sprintf((char*)p, "%ld", delta);
 				while (*p)
 					p++;
 				break;
 			case 'e':
-				sprintf(p, "%d.%.2d", delta / 100, delta % 100);
+				sprintf(p, "%ld.%.2ld", delta / 100, delta % 100);
 				while (*p)
 					p++;
 				break;

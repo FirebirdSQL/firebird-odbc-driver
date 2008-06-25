@@ -64,6 +64,7 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 	char * ptFirst = sql + strlen(sql);
 	char * ptSql = sql;
 	const char *sep = " where (";
+	char * pt;
 	bool firstWhere = true;
 	
 	do
@@ -74,13 +75,18 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 			&& !(schemaPattern && *schemaPattern)
 			&& !(tableNamePattern && *tableNamePattern) )
 		{
-			ptSql = "select cast (NULL as varchar(7)) as table_cat,\n"	// 1
+			*ptSql = '\0';
+			pt = ptSql;
+			addString(pt, "select cast( '");
+			addString(pt, metaData->getDSN());
+			addString(pt, "' as varchar(7)) as table_cat,\n"	        // 1
 				    "cast (NULL as varchar(31)) as table_schem,\n"		// 2
 					"cast (NULL as varchar(31)) as table_name,\n"		// 3
 					"cast (NULL as varchar(13)) as table_type,\n"		// 4
 					"cast (NULL as varchar(255)) as remarks\n"			// 5
-					"from rdb$database tbl\n";
-			sqlAllParam = 1; // empty resulset
+					"from rdb$database tbl\n");
+			*pt = '\0';
+			sqlAllParam = 2; 
 			break;
 		}
 
@@ -135,7 +141,7 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 			sep = " and (";
 		}
 
-		char * pt = ptFirst;
+		pt = ptFirst;
 			
 		for (int n = 0; n < typeCount; ++n)
 			if (!strcmp (types [n], "TABLE"))

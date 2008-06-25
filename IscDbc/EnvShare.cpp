@@ -25,7 +25,7 @@
 
 #include "stdio.h"
 #include <stdlib.h>
-#ifndef _WIN32
+#ifndef _WINDOWS
 #include <unistd.h>
 #endif
 #include "IscDbc.h"
@@ -40,12 +40,13 @@ EnvShare environmentShare;
 
 EnvShare::EnvShare()
 {
+	listTransaction = NULL;
 	clear();
 }
 
 EnvShare::~EnvShare()
 {
-
+	delete listTransaction;
 }
 
 void EnvShare::clear()
@@ -60,15 +61,13 @@ bool EnvShare::addConnection (IscConnection * connect)
 	if ( countConnection >= MAX_COUNT_DBC_SHARE )
 		return false;
 	
-	int i;
+	int n = countConnection;
 
-	for ( i = 0; i < countConnection; i++ )
-		if ( connections[i] == connect )
-			break;
+	while ( n-- )
+		if ( connections[n] == connect )
+			return true;
 
-	if ( i == countConnection )
-		connections[countConnection++] = connect;
-
+	connections[countConnection++] = connect;
 	return true;
 }
 
@@ -119,10 +118,8 @@ void EnvShare::startTransaction()
 			&shDb[9].db, shDb[9].countOpt, shDb[9].opt
 			);
 
-		if (statusVector [1])
-		{
-			throw SQLEXCEPTION (statusVector [1], connections[0]->attachment->getIscStatusText(statusVector));
-		}
+		if ( statusVector [1] )
+			throw SQLEXCEPTION( connections[0]->GDS->_sqlcode( statusVector ), statusVector [1], connections[0]->attachment->getIscStatusText( statusVector ) );
 
 		for ( i = 0; i < countConnection; i++ )
 			connections[i]->attachment->transactionHandle = transactionHandle;
@@ -148,11 +145,12 @@ void EnvShare::commit()
 	{
 		ISC_STATUS statusVector [20];
 		connections[0]->GDS->_commit_transaction (statusVector, &transactionHandle);
+		connections[0]->transactionInfo.transactionPending = false;
 
-		if (statusVector [1])
+		if ( statusVector [1] )
 		{
 			rollback();
-			throw SQLEXCEPTION (statusVector [1], connections[0]->attachment->getIscStatusText(statusVector));
+			throw SQLEXCEPTION( connections[0]->GDS->_sqlcode( statusVector ), statusVector [1], connections[0]->attachment->getIscStatusText( statusVector ) );
 		}
 	}
 }
@@ -163,10 +161,36 @@ void EnvShare::rollback()
 	{
 		ISC_STATUS statusVector [20];
 		connections[0]->GDS->_rollback_transaction (statusVector, &transactionHandle);
+		connections[0]->transactionInfo.transactionPending = false;
 
-		if (statusVector [1])
-			throw SQLEXCEPTION (statusVector [1], connections[0]->attachment->getIscStatusText(statusVector));
+		if ( statusVector [1] )
+			throw SQLEXCEPTION( connections[0]->GDS->_sqlcode( statusVector ), statusVector [1], connections[0]->attachment->getIscStatusText( statusVector ) );
 	}
+}
+
+void EnvShare::addParamTransactionToList( CNodeParamTransaction &par )
+{
+	int node;
+
+	if ( !listTransaction )
+		listTransaction = new ListParamTransaction( 5 );
+
+	node = listTransaction->SearchAndInsert( &par );
+	if ( node < 0 ) node = ~node;
+	(*listTransaction)[node] = par;
+}
+
+bool EnvShare::findParamTransactionFromList( CNodeParamTransaction &par )
+{
+	if ( !listTransaction )
+		return false;
+
+	int node = listTransaction->Search( &par );
+	if ( node == ~0 )
+		return false;
+
+	par = (*listTransaction)[node];
+	return true;
 }
 
 JString EnvShare::getDatabaseServerName()
@@ -174,7 +198,7 @@ JString EnvShare::getDatabaseServerName()
 	if ( databaseServerName.IsEmpty() )
 	{
 		ULONG nSize = 256;
-#ifdef _WIN32
+#ifdef _WINDOWS
 		GetComputerName( databaseServerName.getBuffer( nSize ), &nSize );
 #else
 		gethostname( databaseServerName.getBuffer( nSize ), nSize );

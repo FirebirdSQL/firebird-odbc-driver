@@ -82,6 +82,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "IscDbc.h"
+#include "ListParamTransaction.h"
 #include "IscStatement.h"
 #include "IscResultSet.h"
 #include "IscConnection.h"
@@ -108,6 +109,10 @@ IscStatement::IscStatement(IscConnection *connect)
 	useCount = 1;
 	numberColumns = 0;
 	statementHandle = NULL;
+	transactionLocal = false;
+	transactionStatusChange = false;
+	transactionStatusChangingToLocal = false;
+
 	openCursor = false;
 	typeStmt = stmtNone;
 	resultsCount = 0;
@@ -136,6 +141,261 @@ IscStatement::~IscStatement()
 	}
 }
 
+void IscStatement::rollbackLocal()
+{
+	InfoTransaction	&tr = transactionInfo;
+
+	if ( tr.transactionHandle )
+	{
+		ISC_STATUS statusVector[20];
+		connection->GDS->_rollback_transaction( statusVector, &tr.transactionHandle );
+
+		if ( statusVector[1] )
+			THROW_ISC_EXCEPTION( connection, statusVector );
+	}
+	tr.transactionPending = false;
+}
+
+void IscStatement::commitLocal()
+{
+	InfoTransaction	&tr = transactionInfo;
+
+	if ( tr.transactionHandle )
+	{
+		ISC_STATUS statusVector[20];
+		connection->GDS->_commit_transaction( statusVector, &tr.transactionHandle );
+
+		if ( !tr.nodeParamTransaction && transactionLocal )
+			transactionLocal = false;
+
+		if ( statusVector[1] )
+		{
+			rollbackLocal();
+			THROW_ISC_EXCEPTION( connection, statusVector );
+		}
+	}
+	tr.transactionPending = false;
+}
+
+void IscStatement::setReadOnlyTransaction()
+{
+	transactionLocal = true;
+
+	transactionInfo.transactionHandle = NULL;
+	transactionInfo.transactionIsolation = 0x00000002L; // SQL_TXN_READ_COMMITTED
+	transactionInfo.transactionPending = false;
+	transactionInfo.autoCommit = true;
+	transactionInfo.transactionExtInit = TRA_ro | TRA_nw;
+}
+
+void IscStatement::setActiveLocalParamTransaction()
+{
+	transactionStatusChange = true;
+	transactionStatusChangingToLocal = true;
+
+	if ( connection->tmpParamTransaction )
+	{
+		CNodeParamTransaction &tmp = *connection->tmpParamTransaction;
+
+		if ( tmp.tpbBuffer && tmp.lengthTpbBuffer )
+		{
+			if ( !transactionInfo.nodeParamTransaction )
+				transactionInfo.nodeParamTransaction = new CNodeParamTransaction;
+
+			*transactionInfo.nodeParamTransaction = tmp;
+		}
+
+		delete connection->tmpParamTransaction;
+		connection->tmpParamTransaction = NULL;
+	}
+	else
+	{
+		transactionInfo.setParam( connection->transactionInfo );
+	}
+}
+
+void IscStatement::delActiveLocalParamTransaction()
+{
+	transactionStatusChange = true;
+	transactionStatusChangingToLocal = false;
+
+	if ( transactionInfo.nodeParamTransaction )
+	{
+		delete transactionInfo.nodeParamTransaction;
+		transactionInfo.nodeParamTransaction = NULL;
+	}
+
+	transactionInfo.setParam( connection->transactionInfo );
+}
+
+void IscStatement::declareLocalParamTransaction()
+{
+	transactionStatusChange = false;
+	transactionStatusChangingToLocal = false;
+
+	if ( connection->tmpParamTransaction )
+	{
+		CNodeParamTransaction &tmp = *connection->tmpParamTransaction;
+
+		if ( tmp.tpbBuffer && tmp.lengthTpbBuffer )
+		{
+			if ( !transactionInfo.nodeParamTransaction )
+				transactionInfo.nodeParamTransaction = new CNodeParamTransaction;
+
+			*transactionInfo.nodeParamTransaction = tmp;
+		}
+
+		delete connection->tmpParamTransaction;
+		connection->tmpParamTransaction = NULL;
+	}
+}
+
+void IscStatement::switchTransaction( bool local )
+{
+	transactionStatusChange = true;
+
+	if ( local && transactionInfo.nodeParamTransaction )
+		transactionStatusChangingToLocal = true;
+	else
+		transactionStatusChangingToLocal = false;
+}
+
+void* IscStatement::startTransaction()
+{
+	if ( connection->shareConnected )
+		return connection->startTransaction();
+
+	InfoTransaction	*tr = transactionLocal ? &transactionInfo : &connection->transactionInfo;
+
+	if ( !statementHandle && transactionStatusChange )
+	{
+		if ( transactionStatusChangingToLocal )
+		{
+			tr = &transactionInfo;
+			transactionLocal = true;
+		}
+		else
+		{
+			tr = &connection->transactionInfo;
+			transactionLocal = false;
+		}
+
+		transactionStatusChange = false;
+	}
+
+    if ( tr->transactionHandle )
+        return tr->transactionHandle;
+
+	if ( transactionStatusChange )
+	{
+		if ( transactionStatusChangingToLocal )
+		{
+			tr = &transactionInfo;
+			transactionLocal = true;
+		}
+		else
+		{
+			tr = &connection->transactionInfo;
+			transactionLocal = false;
+		}
+
+		transactionStatusChange = false;
+
+		if ( tr->transactionHandle )
+			return tr->transactionHandle;
+	}
+
+    ISC_STATUS statusVector[20];
+    char    iscTpb[9], *tpbBuffer;
+	int		count;
+
+	if ( !tr->nodeParamTransaction )
+	{
+		tpbBuffer = iscTpb;
+		count = sizeof( iscTpb ) - 4; // 4 it's size block for Lock Timeout Wait Transactions
+
+		iscTpb[0] = isc_tpb_version3;
+		iscTpb[1] = tr->transactionExtInit & TRA_ro ? isc_tpb_read : isc_tpb_write;
+		iscTpb[2] = tr->transactionExtInit & TRA_nw ? isc_tpb_nowait : isc_tpb_wait;
+
+		/* Isolation level */
+		switch( tr->transactionIsolation )
+		{
+		case 0x00000008L:
+			// SQL_TXN_SERIALIZABLE:
+			iscTpb[3] = isc_tpb_consistency;
+			count = 4;
+			break;
+
+		case 0x00000004L:
+			// SQL_TXN_REPEATABLE_READ:
+			iscTpb[3] = isc_tpb_concurrency;
+			count = 4;
+			break;
+
+		case 0x00000001L:
+			// SQL_TXN_READ_UNCOMMITTED:
+			if ( tr->transactionExtInit & TRA_nw )
+			{
+				iscTpb[3] = isc_tpb_rec_version;
+				count = 4;
+			}
+			else
+			{
+				iscTpb[3] = isc_tpb_read_committed;
+				iscTpb[4] = isc_tpb_rec_version;
+			}
+			break;
+
+		case 0x00000002L:
+		default:
+			// SQL_TXN_READ_COMMITTED:
+			if ( tr->transactionExtInit & TRA_nw )
+			{
+				iscTpb[3] = isc_tpb_no_rec_version;
+				count = 4;
+			}
+			else
+			{
+				iscTpb[3] = isc_tpb_read_committed;
+				iscTpb[4] = isc_tpb_no_rec_version;
+			}
+			break;
+		}
+
+		if ( !(tr->transactionExtInit & TRA_nw) 
+			&& connection->attachment->isFirebirdVer2_0()
+			&& connection->attachment->getUseLockTimeoutWaitTransactions() )
+		{
+			char *pt = &iscTpb[count];
+
+			*pt++ = isc_tpb_lock_timeout;
+			*pt++ = sizeof ( short );
+			*pt++ = (char)connection->attachment->getUseLockTimeoutWaitTransactions();
+			*pt++ = (char)(connection->attachment->getUseLockTimeoutWaitTransactions() >> 8);
+
+			count += 4;
+		}
+	}
+	else
+	{
+		tpbBuffer = tr->nodeParamTransaction->tpbBuffer;
+		count = tr->nodeParamTransaction->lengthTpbBuffer;
+		tr->autoCommit = tr->nodeParamTransaction->autoCommit;
+	}
+
+    connection->GDS->_start_transaction( statusVector, &tr->transactionHandle, 1, &connection->attachment->databaseHandle,
+            count, tpbBuffer );
+
+    if ( statusVector[1] )
+		THROW_ISC_EXCEPTION( connection, statusVector );
+
+	if ( !tr->autoCommit )
+		tr->transactionPending = true;
+
+    return tr->transactionHandle;
+}
+
 IscResultSet* IscStatement::createResultSet()
 {
 	IscResultSet *resultSet = new IscResultSet (this);
@@ -153,7 +413,12 @@ void IscStatement::close()
 	if ( typeStmt == stmtSelect )
 	{
 		openCursor = false;
-		if ( connection->autoCommit )
+		if ( transactionLocal )
+		{
+			if ( transactionInfo.autoCommit )
+				commitLocal();
+		}
+		else if ( connection->transactionInfo.autoCommit )
 			connection->commitAuto();
 	}
 }
@@ -294,19 +559,29 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 	resultSets.deleteItem (resultSet);
 	if (resultSets.isEmpty())
 	{
-		openCursor = false;
-		typeStmt = stmtNone;
 		if ( connection )
 		{
-			if (connection->autoCommit)
+			if ( transactionLocal )
+			{
+				if ( transactionInfo.autoCommit )
+					commitLocal();
+			}
+			else if ( connection->transactionInfo.autoCommit )
 				connection->commitAuto();
-			// Close cursors too.
-			ISC_STATUS statusVector [20];
-			connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_close);
-			// Cursor already closed or not assigned
-			if ( statusVector[1] && statusVector[1] != 335544569 )
-				THROW_ISC_EXCEPTION (connection, statusVector);
+
+			if ( isActiveCursor() )
+			{
+				// Close cursors too.
+				ISC_STATUS statusVector[20];
+				connection->GDS->_dsql_free_statement( statusVector, &statementHandle, DSQL_close );
+				// Cursor already closed or not assigned
+				if ( statusVector[1] && statusVector[1] != 335544569)
+					THROW_ISC_EXCEPTION (connection, statusVector);
+			}
 		}
+
+		openCursor = false;
+		typeStmt = stmtNone;
 	}
 }
 
@@ -318,7 +593,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 
 	// Make sure we have a transaction started.  Allocate a statement.
 
-	void *transHandle = connection->startTransaction();
+	void *transHandle = startTransaction();
 	ISC_STATUS statusVector [20];
 	GDS->_dsql_allocate_statement (statusVector, &connection->databaseHandle, &statementHandle);
 
@@ -346,7 +621,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 	outputSqlda.allocBuffer ( this );
 
 	openCursor			= false;
-	typeStmt			= stmtNone;
+	typeStmt			= stmtPrepare;
 	resultsCount		= 1;
 	resultsSequence		= 0;
 	int statementType	= getUpdateCounts();
@@ -375,18 +650,18 @@ void IscStatement::prepareStatement(const char * sqlString)
 
 bool IscStatement::execute()
 {
-	if ( typeStmt == stmtSelect && connection->autoCommit && resultSets.isEmpty())
+	if ( typeStmt == stmtSelect && connection->transactionInfo.autoCommit && resultSets.isEmpty() )
 		clearSelect();
 
 	// Make sure there is a transaction
 	ISC_STATUS statusVector [20];
-	void *transHandle = connection->startTransaction();
+	void *transHandle = startTransaction();
 
 	int dialect = connection->getDatabaseDialect ();
 	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle, 
 			dialect, inputSqlda, NULL))
 	{
-		if (connection->autoCommit)
+		if ( connection->transactionInfo.autoCommit )
 			connection->rollbackAuto();
 		clearSelect();
 		THROW_ISC_EXCEPTION (connection, statusVector);
@@ -406,7 +681,12 @@ bool IscStatement::execute()
 	case isc_info_sql_stmt_ddl:
 		{
 			clearSelect();
-			if (connection->autoCommit)
+			if ( transactionLocal )
+			{
+				if ( transactionInfo.autoCommit )
+					commitLocal();
+			}
+			else if ( connection->transactionInfo.autoCommit )
 				connection->commitAuto();
 			freeStatementHandle();
 		}
@@ -421,7 +701,12 @@ bool IscStatement::execute()
 	case isc_info_sql_stmt_insert:
 	case isc_info_sql_stmt_update:
 	case isc_info_sql_stmt_delete:
-		if (connection->autoCommit)
+		if ( transactionLocal )
+		{
+			if ( transactionInfo.autoCommit )
+				commitLocal();
+		}
+		else if ( connection->transactionInfo.autoCommit )
 			connection->commitAuto();
 		break;
 	}
@@ -432,13 +717,13 @@ bool IscStatement::execute()
 bool IscStatement::executeProcedure()
 {
 	ISC_STATUS statusVector [20];
-	void *transHandle = connection->startTransaction();
+	void *transHandle = startTransaction();
 
 	int dialect = connection->getDatabaseDialect ();
 	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle,
 			dialect, inputSqlda, outputSqlda))
 	{
-		if (connection->autoCommit)
+		if ( connection->transactionInfo.autoCommit )
 			connection->rollbackAuto();
 		THROW_ISC_EXCEPTION (connection, statusVector);
 	}
@@ -551,6 +836,10 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				}
 				break;
 
+			case SQL_BOOLEAN:
+				value->setValue (*(TYPE_BOOLEAN*) var->sqldata, var->sqlscale);
+				break;
+
 			case SQL_SHORT:
 				value->setValue (*(short*) var->sqldata, var->sqlscale);
 				break;
@@ -646,8 +935,14 @@ void IscStatement::clearSelect()
 	{
 		resultsCount = 0;
 		resultsSequence	= 0;
+		openCursor = false;
 		typeStmt = stmtNone;
-		if(connection->autoCommit)
+		if ( transactionLocal )
+		{
+			if ( transactionInfo.autoCommit )
+				commitLocal();
+		}
+		else if ( connection->transactionInfo.autoCommit )
 			connection->commitAuto();
 		freeStatementHandle();
 	}

@@ -105,8 +105,12 @@ bool IscProceduresResultSet::nextFetch()
 
 static int gen_blr(int *user_arg, int /*offset*/, char * string)
 {
+	if ( (*user_arg) > 1 )
+		return 1;
+
 	if ( strstr(string,"blr_send") )
 		(*user_arg)++;
+
 	return 1;
 }
 

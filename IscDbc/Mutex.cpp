@@ -22,7 +22,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 #include <windows.h>
 #endif
 
@@ -36,8 +36,8 @@ namespace classMutex {
 
 Mutex::Mutex()
 {
-#ifdef _WIN32
-	mutex = CreateMutex (NULL, false, NULL);
+#ifdef _WINDOWS
+	InitializeCriticalSection (&mutex);
 #endif
 
 #ifdef _PTHREADS
@@ -48,8 +48,8 @@ Mutex::Mutex()
 
 Mutex::~Mutex()
 {
-#ifdef _WIN32
-	CloseHandle (mutex);
+#ifdef _WINDOWS
+	DeleteCriticalSection( &mutex );
 #endif
 
 #ifdef _PTHREADS
@@ -59,8 +59,8 @@ Mutex::~Mutex()
 
 void Mutex::lock()
 {
-#ifdef _WIN32
-	int result = WaitForSingleObject (mutex, INFINITE);
+#ifdef _WINDOWS
+	EnterCriticalSection (&mutex);
 #endif
 
 #ifdef _PTHREADS
@@ -70,8 +70,8 @@ void Mutex::lock()
 
 void Mutex::release()
 {
-#ifdef _WIN32
-	ReleaseMutex (mutex);
+#ifdef _WINDOWS
+	LeaveCriticalSection (&mutex);
 #endif
 
 #ifdef _PTHREADS

@@ -45,6 +45,7 @@ public:
 	virtual bool allProceduresAreCallable();
 	virtual bool allTablesAreSelectable();
 	virtual const char* getURL();
+	virtual const char* getDSN();
 	virtual const char* getUserName();
 	virtual const int getUserType();
 	virtual void existsAccess(char *& stringOut, const char *prefix, const char * relobject, int typeobject, const char *suffix);
@@ -210,6 +211,7 @@ public:
 	virtual const char* getUserAccess();
 	virtual int getDatabasePageSize();
 	virtual const int getUseSchemaIdentifier();
+	virtual const int getUseLockTimeoutWaitTransactions();
 	virtual bool supportsStatementMetaData();
 	virtual ResultSet* getUDTs(const char* catalog, const char* schemaPattern, const char* typeNamePattern, int* types);
 	virtual StatementMetaData* getMetaDataTypeInfo(ResultSet* setTypeInfo);

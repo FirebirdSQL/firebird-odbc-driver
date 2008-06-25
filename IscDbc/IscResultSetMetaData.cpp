@@ -87,6 +87,11 @@ int IscResultSetMetaData::getPrecision(int index)
 	return resultSet->getPrecision (index);
 }
 
+int IscResultSetMetaData::getNumPrecRadix(int index)
+{
+	return resultSet->getNumPrecRadix (index);
+}
+
 int IscResultSetMetaData::getScale(int index)
 {
 	return resultSet->getScale (index);

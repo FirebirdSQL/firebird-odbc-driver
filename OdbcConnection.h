@@ -26,7 +26,8 @@
 #define _ODBCCONNECTION_H_
 
 #include "OdbcDesc.h"
-#include "IscDbc/JString.h"	// Added by ClassView
+#include "IscDbc/JString.h"
+#include "Headers/OdbcUserEvents.h"
 
 namespace OdbcJdbcLibrary {
 
@@ -42,7 +43,8 @@ class OdbcConnection : public OdbcObject
 		DEF_DIALECT = 4,
 		DEF_QUOTED = 8,
 		DEF_SENSITIVE = 16,
-		DEF_AUTOQUOTED = 32
+		DEF_AUTOQUOTED = 32,
+		DEF_SAFETHREAD = 64
 	};
 
 public:
@@ -72,24 +74,47 @@ public:
 	SQLRETURN sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, SQLSMALLINT * stringLength2Ptr);
 	SQLRETURN sqlNativeSql(SQLCHAR * inStatementText, SQLINTEGER textLength1,	SQLCHAR * outStatementText, SQLINTEGER bufferLength, SQLINTEGER * textLength2Ptr);
 	SQLRETURN sqlSetConnectAttr( SQLINTEGER attribute, SQLPOINTER value, SQLINTEGER stringLength );
+	virtual OdbcConnection* getConnection();
 	virtual OdbcObjectType getType();
+
+	void initUserEvents( PODBC_EVENTS_BLOCK_INFO infoEvents );
+	void updateResultEvents( char *updated );
+	void requeueEvents();
+
 	OdbcConnection(OdbcEnv *parent);
 	~OdbcConnection();
+
 	void Lock();
 	void UnLock();
+
+#ifdef _WINDOWS
+#if _MSC_VER > 1000
+
+public:
+	// realised into TransactionResourceAsync.cpp
+	bool IsInstalledMsTdsInterface();
+	bool enlistTransaction( SQLPOINTER globalTransaction );
+
+#endif // _MSC_VER > 1000
+#endif // _WINDOWS
+
+public:
 
 	OdbcEnv		*env;
 	Connection	*connection;
 	OdbcStatement*	statements;
 	OdbcDesc*	descriptors;
+	UserEvents	*userEvents;
 	bool		connected;
+	bool		safeThread;
 	int			connectionTimeout;
 	JString		dsn;
+	JString		description;
 	JString		filedsn;
 	JString		savedsn;
 	JString		databaseName;
 	JString		databaseServerName;
-	bool		databaseAlways;
+	int			databaseAccess;
 	JString		client;
 	JString		account;
 	JString		password;
@@ -100,6 +125,7 @@ public:
 	int			optTpb;
 	int			defOptions;
 	JString		useSchemaIdentifier;
+	JString		useLockTimeoutWaitTransactions;
 	bool		quotedIdentifier;
 	bool		sensitiveIdentifier;
 	bool		autoQuotedIdentifier;
@@ -111,6 +137,20 @@ public:
 	int			cursors;			// default is SQL_CUR_USE_DRIVER
 	int			statementNumber;
 	int			levelBrowseConnect;
+	int			charsetCode;
+	WCSTOMBS	WcsToMbs;
+	MBSTOWCS	MbsToWcs;
+
+	PODBC_USER_EVENTS_INTERFASE userEventsInterfase;
+
+#ifdef _WINDOWS
+#if _MSC_VER > 1000
+
+	bool		enlistConnect;
+
+#endif // _MSC_VER > 1000
+#endif
+
 };
 
 class SafeConnectThread
@@ -119,7 +159,7 @@ class SafeConnectThread
 public:
 	SafeConnectThread(OdbcConnection * connect)
 	{
-		if(connect && connect->connected)
+		if(connect && connect->safeThread && connect->connected)
 		{
 			connection=connect;
 			connection->Lock();

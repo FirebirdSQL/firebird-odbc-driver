@@ -252,7 +252,7 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 
 	if ( countDefined )
 	{
-		int lenOldSql = strlen(strSql);
+		int lenOldSql = (int)strlen(strSql);
 		tempSql = (char *)malloc ( countDefined * 3 + lenOldSql + 1);
 		labelParamArray = (int *)malloc ( countDefined * sizeof(int) );
 		int n, offset = 0;

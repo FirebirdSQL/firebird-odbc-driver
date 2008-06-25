@@ -124,6 +124,9 @@
 // OdbcStatement.cpp: implementation of the OdbcStatement class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifndef _WINDOWS
+#include <wchar.h>
+#endif
 #include <memory.h>
 #include <string.h>
 #include <stdio.h>
@@ -151,13 +154,13 @@ using namespace IscDbcLibrary;
 void TraceOutput(char * msg,long val)
 {
 	char buf[80];
-	sprintf(buf,"\t%s = %d : %x\n",msg,val,val);
+	sprintf( buf, "\t%s = %ld : %p\n", msg, val, val );
 	OutputDebugString(buf);
 }
 
 //	Bound Address + Binding Offset + ((Row Number – 1) x Element Size)
 //	*ptr = binding->pointer + bindOffsetPtr + ((1 – 1) * rowBindType); // <-- for single row
-#define GETBOUNDADDRESS(binding)	(unsigned long)binding->dataPtr + (unsigned long)bindOffsetPtr; 
+#define GETBOUNDADDRESS(binding)	( (unsigned long)binding->dataPtr + ( applicationParamDescriptor->headBindType ? (unsigned long)bindOffsetPtr : 0 ) );
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -168,6 +171,7 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	connection = connect;
 	resultSet = NULL;
 	statement = connection->connection->createInternalStatement();
+	bulkInsert = NULL;
 	execute = &OdbcStatement::executeStatement;
 	fetchNext = &ResultSet::nextFetch;
 	schemaFetchData = true;
@@ -186,29 +190,26 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	implementationParamDescriptor = connection->allocDescriptor (odtImplementationParameter);
 	implementationGetDataDescriptor = NULL;
 	fetchRetData = SQL_RD_ON;
-	rowBindType = SQL_BIND_BY_COLUMN;
-	paramBindType = SQL_BIND_BY_COLUMN;
 	sqldataOutOffsetPtr = NULL;
-	bindOffsetPtr = NULL;
-	paramsetSize = 0;
 	numberColumns = 0;
+	rowNumberParamArray = 0;
 	registrationOutParameter = false;
 	isRegistrationOutParameter = false;
 	isResultSetFromSystemCatalog = false;
 	isFetchStaticCursor = false;
-	paramsProcessedPtr = NULL;
 	currency = SQL_CONCUR_READ_ONLY;
 	cursorType = SQL_CURSOR_FORWARD_ONLY;
-	cursorName.Format ("cursor%d", statementNumber);
+	cursorName.Format ("SQL_CUR%d", statementNumber);
 	setPreCursorName = false;
 	cursorScrollable = SQL_NONSCROLLABLE;
 	asyncEnable = false;
-    rowArraySize  = applicationRowDescriptor->headArraySize;
 	enableAutoIPD = SQL_TRUE;
 	useBookmarks = SQL_UB_OFF;
 	cursorSensitivity = SQL_INSENSITIVE;
 	fetchBookmarkPtr = NULL;
 	noscanSQL = SQL_NOSCAN_OFF;
+	bindOffsetColumnWiseBinding = 0;
+	bindOffsetIndColumnWiseBinding = 0;
 
 	listBindIn = new ListBindColumn;
 	convert = new OdbcConvert(this);
@@ -232,6 +233,12 @@ OdbcStatement::~OdbcStatement()
 	delete listBindOut;
 	delete listBindGetData;
 	connection->statementDeleted (this);
+	delete bulkInsert;
+}
+
+OdbcConnection* OdbcStatement::getConnection()
+{
+	return connection;
 }
 
 OdbcObjectType OdbcStatement::getType()
@@ -379,32 +386,32 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 	}
 #endif
 
-	if ( noscanSQL == SQL_NOSCAN_OFF )
-	{
-		long lenstrSQL = strlen(string);
-		long lennewstrSQL = lenstrSQL + 4096;
-		
-		retNativeSQL = connection->connection->getNativeSql( string, lenstrSQL, tempNative. getBuffer( lennewstrSQL ), lennewstrSQL, &lenstrSQL );
-
-		if ( retNativeSQL > 0 )
-		{
-			retNativeSQL = 0;
-			string = tempNative;
-		}
-	}
-
-#ifdef DEBUG
-	{
-		char tempDebugStr [8196];
-		sprintf (tempDebugStr, "Preparing statement:\n\t%.8170s\n", string);
-		OutputDebugString (tempDebugStr);
-	}
-#endif
-
-	sqlPrepareString = string;
-
 	try
 	{
+		if ( noscanSQL == SQL_NOSCAN_OFF )
+		{
+			long lenstrSQL = (long)strlen(string);
+			long lennewstrSQL = lenstrSQL + 4096;
+			
+			retNativeSQL = connection->connection->getNativeSql( string, lenstrSQL, tempNative. getBuffer( lennewstrSQL ), lennewstrSQL, &lenstrSQL );
+
+			if ( retNativeSQL > 0 )
+			{
+				retNativeSQL = 0;
+				string = tempNative;
+			}
+		}
+
+#ifdef DEBUG
+		{
+			char tempDebugStr [8196];
+			sprintf (tempDebugStr, "Preparing statement:\n\t%.8170s\n", string);
+			OutputDebugString (tempDebugStr);
+		}
+#endif
+
+		sqlPrepareString = string;
+
 		implementationParamDescriptor->releasePrepared();
 
 		if ( !retNativeSQL )
@@ -432,6 +439,12 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 			
 			if ( enableAutoIPD == SQL_TRUE )
 				rebindParam();
+
+			if ( setPreCursorName )
+			{
+				statement->setCursorName (cursorName);
+				setPreCursorName = false;
+			}
 		}
 		else 
 		{
@@ -448,13 +461,23 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 			case -3: // create database
 				execute = &OdbcStatement::executeCreateDatabase;
 				break;
-			}
-		}
 
-		if ( setPreCursorName )
-		{
-			statement->setCursorName (cursorName);
-			setPreCursorName = false;
+			case -4: // use local statement param Transaction
+				statement->setActiveLocalParamTransaction();
+				execute = &OdbcStatement::executeNone;
+				break;
+
+			case -7: // declare local statement param Transaction
+				statement->declareLocalParamTransaction();
+				execute = &OdbcStatement::executeNone;
+				break;
+
+			case -5: // use connect param Transaction
+			case -6: // use all connections param Transaction
+				statement->delActiveLocalParamTransaction();
+				execute = &OdbcStatement::executeNone;
+				break;
+			}
 		}
 	}
 	catch ( std::exception &ex )
@@ -499,6 +522,12 @@ void OdbcStatement::releaseResultSet()
 		delete listBindGetData;
 		listBindGetData = NULL;
 	}
+
+	if ( bulkInsert )
+	{
+		delete bulkInsert;
+		bulkInsert = NULL;
+	}
 }
 
 void OdbcStatement::setResultSet(ResultSet * results, bool fromSystemCatalog)
@@ -529,6 +558,7 @@ void OdbcStatement::setResultSet(ResultSet * results, bool fromSystemCatalog)
 	rowNumber = 0;
 	indicatorRowNumber = 0;
 	lastRowsetSize = 0;
+	rowNumberParamArray = 0;
 
 	if ( fromSystemCatalog )
 	{
@@ -550,8 +580,8 @@ void OdbcStatement::rebindColumn()
 		DescRecord *imprec = implementationRowDescriptor->getDescRecord (0);
 		imprec->dataPtr = &rowNumber;
 		imprec->indicatorPtr = &indicatorRowNumber;
-		record->octetLengthPtr = &indicatorRowNumber;
 		record->initZeroColumn();
+		bindOutputColumn ( 0, record );
 	}
 
 	for (int column = 1, columnApp = 1; column <= nCount && columnApp <= nCountApp; ++column,  ++columnApp)
@@ -573,7 +603,7 @@ void OdbcStatement::addBindColumn(int column, DescRecord * recordFrom, DescRecor
 
 	int j = listBindOut->SearchAndInsert( &bindCol );
 	if( j < 0 )
-		(*listBindOut)[-j-1] = bindCol;
+		(*listBindOut)[~j] = bindCol;
 	else
 		(*listBindOut)[j] = bindCol;
 }
@@ -594,12 +624,13 @@ SQLRETURN OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targe
 		switch (targetType)
 		{
 		case SQL_C_CHAR:
+		case SQL_C_WCHAR:
 		case SQL_C_SHORT:
 		case SQL_C_SSHORT:
 		case SQL_C_USHORT:
 		case SQL_C_LONG:
 		case SQL_C_SLONG:
-		case SQL_C_ULONG:
+		case SQL_C_ULONG: // case SQL_C_BOOKMARK:
 		case SQL_C_FLOAT:
 		case SQL_C_DOUBLE:
 		case SQL_C_BIT:
@@ -608,9 +639,7 @@ SQLRETURN OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targe
 		case SQL_C_UTINYINT:
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-		case SQL_C_BINARY:
-		//case SQL_C_BOOKMARK:
-		//case SQL_C_VARBOOKMARK:
+		case SQL_C_BINARY: // case SQL_C_VARBOOKMARK:
 		case SQL_C_DATE:
 		case SQL_C_TIME:
 		case SQL_C_TIMESTAMP:
@@ -620,16 +649,29 @@ SQLRETURN OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targe
 		case SQL_TYPE_TIME:
 		case SQL_TYPE_TIMESTAMP:
 		case SQL_C_DEFAULT:
-		//case SQL_C_GUID:
+		case SQL_C_INTERVAL_YEAR:
+		case SQL_C_INTERVAL_MONTH:
+		case SQL_C_INTERVAL_DAY:
+		case SQL_C_INTERVAL_HOUR:
+		case SQL_C_INTERVAL_MINUTE:
+		case SQL_C_INTERVAL_SECOND:
+		case SQL_C_INTERVAL_YEAR_TO_MONTH:
+		case SQL_C_INTERVAL_DAY_TO_HOUR:
+		case SQL_C_INTERVAL_DAY_TO_MINUTE:
+		case SQL_C_INTERVAL_DAY_TO_SECOND:
+		case SQL_C_INTERVAL_HOUR_TO_MINUTE:
+		case SQL_C_INTERVAL_HOUR_TO_SECOND:
+		case SQL_C_INTERVAL_MINUTE_TO_SECOND:
+		case SQL_C_GUID:
 			break;
 			
 		default:
 			{
 			JString msg;
-			msg.Format ("Invalid application datatype (%d)", targetType);
+			msg.Format ("Invalid application buffer type (%d)", targetType);
 			LOG_MSG ((const char*) msg);
 			LOG_MSG ("\n");
-			return sqlReturn (SQL_ERROR, "HY03", (const char*) msg);
+			return sqlReturn( SQL_ERROR, "HY003", (const char*)msg );
 			}
 		}
 
@@ -648,17 +690,25 @@ SQLRETURN OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targe
 
 		if ( implementationRowDescriptor->isDefined() )
 		{
+			if ( column > implementationRowDescriptor->headCount )
+				return sqlReturn (SQL_ERROR, "07009", "Invalid descriptor index");
+
 			if ( !column )
 			{
 				DescRecord *imprec = implementationRowDescriptor->getDescRecord (column);
 				imprec->dataPtr = &rowNumber;
 				imprec->indicatorPtr = &indicatorRowNumber;
-				record->octetLengthPtr = &indicatorRowNumber;
 				record->initZeroColumn();
 			}
 
 			bindOutputColumn ( column, record);
 			record->length = bufferLength;
+		}
+
+		if ( bulkInsert )
+		{
+			delete bulkInsert;
+			bulkInsert = NULL;
 		}
 	}
 	catch ( std::exception &ex )
@@ -688,7 +738,8 @@ SQLRETURN OdbcStatement::fetchData()
 	SQLUSMALLINT *statusPtr = implementationRowDescriptor->headArrayStatusPtr ? implementationRowDescriptor->headArrayStatusPtr
 								: NULL;
 	int nCountRow = applicationRowDescriptor->headArraySize;
-	SQLINTEGER	*bindOffsetPtrSave = bindOffsetPtr;
+	SQLINTEGER *&bindOffsetPtr = applicationRowDescriptor->headBindOffsetPtr;
+	SQLINTEGER *bindOffsetPtrSave = bindOffsetPtr;
 
 	try
 	{
@@ -696,6 +747,7 @@ SQLRETURN OdbcStatement::fetchData()
 
 		if ( !eof )
 		{
+			int rowBindType = applicationRowDescriptor->headBindType;
 			SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
 			bindOffsetPtr = &bindOffsetPtrTmp;
 
@@ -822,6 +874,7 @@ char *strDebOrientFetch[]=
 
 SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 {
+	SQLINTEGER *&bindOffsetPtr = applicationRowDescriptor->headBindOffsetPtr;
 	int rowsetSize = applicationRowDescriptor->headArraySize;
 	bool bFetchAbsolute;
 	SQLUINTEGER rowCount;
@@ -1024,6 +1077,7 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 			SQLUSMALLINT *statusPtr = implementationRowDescriptor->headArrayStatusPtr ? implementationRowDescriptor->headArrayStatusPtr
 										: NULL;
 			SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
+			int rowBindType = applicationRowDescriptor->headBindType;
 
 			bindOffsetPtr = &bindOffsetPtrTmp;
 			resultSet->setCurrentRowInBufferStaticCursor(rowNumber);
@@ -1182,7 +1236,6 @@ SQLRETURN OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEG
 
 	implementationRowDescriptor->headRowsProcessedPtr = rowCountPointer;
 	implementationRowDescriptor->headArrayStatusPtr = rowStatusArray;
-	applicationRowDescriptor->headArraySize = rowArraySize ? rowArraySize : 1;
 
 	if ( isFetchStaticCursor )
 		return sqlFetchScrollCursorStatic (orientation, offset);
@@ -1226,6 +1279,140 @@ SQLRETURN OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQ
 		break;
 	case SQL_DELETE:
 		break;
+	}
+
+	return sqlSuccess();
+}
+
+SQLRETURN OdbcStatement::sqlBulkOperations( int operation )
+{
+	SQLRETURN ret = SQL_SUCCESS;
+	clearErrors();
+
+	if ( !resultSet )
+		return sqlReturn( SQL_ERROR, "24000", "Invalid cursor state" );
+
+	try
+	{
+		switch ( operation )
+		{
+		case SQL_ADD:
+			if ( !bulkInsert )
+			{
+				JString	sqlInsertString;
+				int column;
+				int count;
+				OdbcDesc *& ird = implementationRowDescriptor;
+				StatementMetaData *metaData = ird->metaDataOut;
+				int columnCount = ird->metaDataOut->getColumnCount();
+
+				connection->allocHandle( SQL_HANDLE_STMT, (SQLHANDLE*)&bulkInsert );
+				
+				*bulkInsert->applicationParamDescriptor = *applicationRowDescriptor;
+				*bulkInsert->implementationParamDescriptor = *implementationRowDescriptor;
+
+				OdbcDesc *appDesc = bulkInsert->applicationParamDescriptor;
+				DescRecord *record;
+
+				sqlInsertString = "INSERT INTO ";
+				sqlInsertString += metaData->getTableName( 1 );
+				sqlInsertString += "( ";
+
+				for ( count = 0, column = 1; column <= columnCount; column++ )
+				{
+					record = appDesc->getDescRecord( column );
+
+					if ( record->indicatorPtr && *record->indicatorPtr == SQL_COLUMN_IGNORE )
+						continue;
+
+					if ( count++ )
+						sqlInsertString += ", ";
+
+					sqlInsertString += metaData->getColumnName( column );
+				}
+
+				sqlInsertString += ") values (";
+
+				for ( count = 0, column = 1; column <= columnCount; column++ )
+				{
+					record = appDesc->getDescRecord( column );
+
+					if ( record->indicatorPtr && *record->indicatorPtr == SQL_COLUMN_IGNORE )
+						continue;
+
+					if ( count++ )
+						sqlInsertString += ", ";
+
+					sqlInsertString += "?";
+				}
+
+				sqlInsertString += ")";
+
+				JString	sqlTransactionString =
+						 "DECLARE TRANSACTION LOCAL\n"
+						 "READ WRITE\n"
+						 "ISOLATION LEVEL\n"
+						 "READ COMMITTED NO RECORD_VERSION NO WAIT\n";
+								
+				ret = bulkInsert->sqlExecDirect( (SQLCHAR*)(const char*)sqlTransactionString,
+												sqlTransactionString.length() );
+				if ( !SQL_SUCCEEDED( ret ) )
+					return ret;
+
+				if ( connection->autoCommit )
+					bulkInsert->statement->switchTransaction( true );
+
+				ret = bulkInsert->sqlPrepare( (SQLCHAR*)(const char*)sqlInsertString,
+											  sqlInsertString.length() );
+				if ( !SQL_SUCCEEDED( ret ) )
+					return ret;
+			}
+			else
+			{
+				bulkInsert->statement->switchTransaction( connection->autoCommit );
+				bulkInsert->clearErrors();
+				bulkInsert->applicationParamDescriptor->headArraySize
+										= applicationRowDescriptor->headArraySize;
+			}
+
+			ret = bulkInsert->executeStatementParamArray();
+			if ( !SQL_SUCCEEDED( ret ) )
+			{
+				bulkInsert->statement->rollbackLocal();
+				return ret;
+			}
+
+			if ( connection->autoCommit )
+				bulkInsert->statement->commitLocal();
+
+			if ( bulkInsert->infoPosted )
+				*this << bulkInsert;
+
+			return sqlSuccess();
+
+		case SQL_FETCH_BY_BOOKMARK:
+			if ( isStaticCursor() )
+				return sqlFetchScrollCursorStatic( SQL_FETCH_BOOKMARK, 0 );
+
+		case SQL_UPDATE_BY_BOOKMARK:
+		case SQL_DELETE_BY_BOOKMARK:
+		default :
+			return sqlReturn( SQL_ERROR, "IM001", (const char*)"Driver does not support this function" );
+		}
+	}
+	catch ( std::exception &ex )
+	{
+		if ( bulkInsert )
+		{
+			if ( bulkInsert->infoPosted )
+				*this << bulkInsert;
+
+			bulkInsert->statement->rollbackLocal();
+		}
+
+		SQLException &exception = (SQLException&)ex;
+		postError( "HY000", exception );
+		return SQL_ERROR;
 	}
 
 	return sqlSuccess();
@@ -1301,7 +1488,7 @@ SQLRETURN OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTE
 	if ( crowKeyset > 0 )
 		sqlSetStmtAttr(SQL_ATTR_KEYSET_SIZE, (SQLPOINTER)crowKeyset, 0);
 	else
-		sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)crowRowset, 0);
+		sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)(SQLINTEGER)crowRowset, 0);
 
 	return sqlSuccess();
 }
@@ -1387,6 +1574,12 @@ void OdbcStatement::releaseBindings()
 		delete listBindGetData;
 		listBindGetData = NULL;
 	}
+
+	if ( bulkInsert )
+	{
+		delete bulkInsert;
+		bulkInsert = NULL;
+	}
 }
 
 void OdbcStatement::releaseParameters()
@@ -1399,8 +1592,6 @@ void OdbcStatement::releaseParameters()
 	implementationParamDescriptor->setDefined( false );
 	implementationParamDescriptor->clearPrepared();
 	applicationParamDescriptor->removeRecords();
-	paramsetSize = 0;
-	paramsProcessedPtr = NULL;
 }
 
 SQLRETURN OdbcStatement::sqlStatistics(SQLCHAR * catalog, int catLength, 
@@ -1844,6 +2035,11 @@ SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 			 case SQL_NUMERIC:
 				cType = SQL_C_CHAR;
 				break;
+			 case SQL_WCHAR:
+			 case SQL_WVARCHAR:
+			 case SQL_WLONGVARCHAR:
+				cType = SQL_C_WCHAR;
+				break;
 			 case SQL_BIT:
 				cType = SQL_C_BIT;
 				break;
@@ -1853,6 +2049,7 @@ SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 			 case SQL_SMALLINT:
 				cType = SQL_C_SSHORT;
 				break;
+			 case SQL_BOOLEAN:
 			 case SQL_INTEGER:
 				cType = SQL_C_SLONG;
 				break;
@@ -1889,17 +2086,57 @@ SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 			 case SQL_TYPE_TIMESTAMP:
 				cType = SQL_C_TYPE_TIMESTAMP;
 				break;
+			case SQL_INTERVAL_YEAR:
+				cType = SQL_C_INTERVAL_YEAR;
+				break;
+			case SQL_INTERVAL_MONTH:
+				cType = SQL_C_INTERVAL_MONTH;
+				break;
+			case SQL_INTERVAL_DAY:
+				cType = SQL_C_INTERVAL_DAY;
+				break;
+			case SQL_INTERVAL_HOUR:
+				cType = SQL_C_INTERVAL_HOUR;
+				break;
+			case SQL_INTERVAL_MINUTE:
+				cType = SQL_C_INTERVAL_MINUTE;
+				break;
+			case SQL_INTERVAL_SECOND:
+				cType = SQL_C_INTERVAL_SECOND;
+				break;
+			case SQL_INTERVAL_YEAR_TO_MONTH:
+				cType = SQL_C_INTERVAL_YEAR_TO_MONTH;
+				break;
+			case SQL_INTERVAL_DAY_TO_HOUR:
+				cType = SQL_C_INTERVAL_DAY_TO_HOUR;
+				break;
+			case SQL_INTERVAL_DAY_TO_MINUTE:
+				cType = SQL_C_INTERVAL_DAY_TO_MINUTE;
+				break;
+			case SQL_INTERVAL_DAY_TO_SECOND:
+				cType = SQL_C_INTERVAL_DAY_TO_SECOND;
+				break;
+			case SQL_INTERVAL_HOUR_TO_MINUTE:
+				cType = SQL_C_INTERVAL_HOUR_TO_MINUTE;
+				break;
+			case SQL_INTERVAL_HOUR_TO_SECOND:
+				cType = SQL_C_INTERVAL_HOUR_TO_SECOND;
+				break;
+			case SQL_INTERVAL_MINUTE_TO_SECOND:
+				cType = SQL_C_INTERVAL_MINUTE_TO_SECOND;
+				break;
 			}
 
 		switch (cType)
 		{
 		case SQL_C_CHAR:
+		case SQL_C_WCHAR:
 		case SQL_C_SHORT:
 		case SQL_C_SSHORT:
 		case SQL_C_USHORT:
 		case SQL_C_LONG:
 		case SQL_C_SLONG:
-		case SQL_C_ULONG:
+		case SQL_C_ULONG: // case SQL_C_BOOKMARK:
 		case SQL_C_FLOAT:
 		case SQL_C_DOUBLE:
 		case SQL_C_BIT:
@@ -1908,7 +2145,7 @@ SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 		case SQL_C_UTINYINT:
 		case SQL_C_SBIGINT:
 		case SQL_C_UBIGINT:
-		case SQL_C_BINARY:
+		case SQL_C_BINARY: // case SQL_C_VARBOOKMARK:
 		case SQL_C_DATE:
 		case SQL_C_TIME:
 		case SQL_C_TIMESTAMP:
@@ -1917,9 +2154,20 @@ SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 		case SQL_C_TYPE_TIMESTAMP:
 		case SQL_C_NUMERIC:
 		case SQL_DECIMAL:
-		//case SQL_C_BOOKMARK:
-		//case SQL_C_VARBOOKMARK:
-		//case SQL_C_GUID:
+		case SQL_C_INTERVAL_YEAR:
+		case SQL_C_INTERVAL_MONTH:
+		case SQL_C_INTERVAL_DAY:
+		case SQL_C_INTERVAL_HOUR:
+		case SQL_C_INTERVAL_MINUTE:
+		case SQL_C_INTERVAL_SECOND:
+		case SQL_C_INTERVAL_YEAR_TO_MONTH:
+		case SQL_C_INTERVAL_DAY_TO_HOUR:
+		case SQL_C_INTERVAL_DAY_TO_MINUTE:
+		case SQL_C_INTERVAL_DAY_TO_SECOND:
+		case SQL_C_INTERVAL_HOUR_TO_MINUTE:
+		case SQL_C_INTERVAL_HOUR_TO_SECOND:
+		case SQL_C_INTERVAL_MINUTE_TO_SECOND:
+		case SQL_C_GUID:
 			break;
 
 		default:
@@ -1946,6 +2194,7 @@ SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 		record->dataPtr = ptr;
 		record->octetLength = bufferLength;
 		record->length = bufferLength;
+		record->sizeColumnExtendedFetch = bufferLength;
 		record->octetLengthPtr = length;
 		record->indicatorPtr = length;
 		record->data_at_exec = false; // Is defined in the moment SQLExecute or SqlExecDirect
@@ -2171,7 +2420,7 @@ SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int buffe
 			break;
 
 		case SQL_ROWSET_SIZE:
-			value = rowArraySize;
+			value = applicationRowDescriptor->headArraySize;
 			TRACE02(SQL_ROWSET_SIZE,value);
 			break;
 
@@ -2196,7 +2445,7 @@ SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int buffe
 			break;
 
 		case SQL_ATTR_PARAM_BIND_TYPE:
-			value = SQL_PARAM_BIND_BY_COLUMN;	// no row binding
+			value = applicationParamDescriptor->headBindType;
 			TRACE02(SQL_ATTR_PARAM_BIND_TYPE,value);
 			break;
 
@@ -2211,7 +2460,7 @@ SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int buffe
 			break;
 
 		case SQL_ATTR_ROW_BIND_TYPE:
-			value = (long) rowBindType;
+			value = applicationRowDescriptor->headBindType;
 			TRACE02(SQL_ATTR_ROW_BIND_TYPE,value);
 			break;
 
@@ -2223,32 +2472,32 @@ SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int buffe
 		case SQL_ATTR_USE_BOOKMARKS:
 			value = useBookmarks;
 			TRACE02(SQL_ATTR_USE_BOOKMARKS,value);
-			break;
+		    break;
 
 		case SQL_ATTR_CURSOR_SENSITIVITY:
 			value = cursorSensitivity;
 			TRACE02(SQL_ATTR_CURSOR_SENSITIVITY,value);
-			break;
+		    break;
 
 		case SQL_ATTR_ENABLE_AUTO_IPD:		// 15 
 			value = enableAutoIPD;
 			TRACE02(SQL_ATTR_ENABLE_AUTO_IPD,value);
-			break;
+		    break;
 
 		case SQL_ATTR_PARAMSET_SIZE:		// 22
-			value = (long)paramsetSize;
+			value = applicationParamDescriptor->headArraySize;
 			TRACE02(SQL_ATTR_PARAMSET_SIZE,value);
 			break;
 
 		case SQL_ATTR_FETCH_BOOKMARK_PTR:		//	16
 			value = (long)fetchBookmarkPtr;
 			TRACE02(SQL_ATTR_FETCH_BOOKMARK_PTR,value);
-			break;
+		    break;
 
 		case SQL_ATTR_NOSCAN:					// 2
 			value = noscanSQL;
 			TRACE02(SQL_ATTR_NOSCAN,value);
-			break;
+		    break;
 
 		default:
 			return sqlReturn (SQL_ERROR, "HYC00", "Optional feature not implemented");
@@ -2298,6 +2547,9 @@ SQLRETURN OdbcStatement::transferDataToBlobParam ( DescRecord *recordApp )
 	switch (recordApp->conciseType)
 	{
 	case SQL_C_CHAR:
+		ret = convert->convStreamHexStringToBlob(bindCol.appRecord,bindCol.impRecord);
+		break;
+	case SQL_C_WCHAR:
 		ret = convert->convStreamHexStringToBlob(bindCol.appRecord,bindCol.impRecord);
 		break;
 	case SQL_C_BINARY:
@@ -2366,7 +2618,11 @@ void OdbcStatement::bindOutputColumn(int column, DescRecord * recordApp)
 	DescRecord *record = ird->getDescRecord ( column );
 
 	if( !column )
+	{
 		recordApp->setDefault ( record );
+		recordApp->isZeroColumn = true;
+		record->isZeroColumn = true;
+	}
 	else
 	{
 		if ( !record->isDefined )
@@ -2388,6 +2644,14 @@ void OdbcStatement::bindOutputColumn(int column, DescRecord * recordApp)
 	case SQL_C_BINARY:
 		if ( recordApp->sizeColumnExtendedFetch )
 			break;
+
+		// NS: if buffer is the NULL pointer, that is, if BindCol was used to 
+		// unbind the buffer, do not care about passed zero buffer length. This
+		// is the violation of SQL/CLI spec, but seems harmless and is necessary
+		// to support Firebird as the back-end for MS Project 2003 
+		if ( !recordApp->dataPtr )
+			break;
+
 		postError( "HY090", "Invalid string or buffer length" );
 
 	default:
@@ -2433,8 +2697,9 @@ bool OdbcStatement::registerOutParameter()
 	return true;
 }
 
-SQLRETURN OdbcStatement::inputParam()
+SQLRETURN OdbcStatement::inputParam( bool arrayColumnWiseBinding )
 {
+	SQLRETURN retCode, ret = SQL_SUCCESS;
 	StatementMetaData *metaData = statement->getStatementMetaDataIPD();
 	int nInputParam = metaData->getColumnCount();
 
@@ -2463,6 +2728,15 @@ SQLRETURN OdbcStatement::inputParam()
 		{
 			DescRecord *record = applicationParamDescriptor->getDescRecord (n);
 
+			if ( arrayColumnWiseBinding )
+			{
+				bindOffsetColumnWiseBinding = ( *applicationParamDescriptor->headBindOffsetPtr
+												+ rowNumberParamArray ) * record->sizeColumnExtendedFetch;
+
+				convert->setBindOffsetPtrFrom ( &bindOffsetColumnWiseBinding, 
+												&bindOffsetIndColumnWiseBinding );
+			}
+
 			if ( record->data_at_exec )
 			{
 				parameterNeedData = n;
@@ -2486,6 +2760,7 @@ SQLRETURN OdbcStatement::inputParam()
 					switch (record->conciseType)
 					{
 					case SQL_C_CHAR:
+					case SQL_C_WCHAR:
 					case SQL_C_BINARY:
 						if ( !record->dataBlobPtr )
 							metaData->createBlobDataTransfer ( parameterNeedData, record->dataBlobPtr );
@@ -2498,19 +2773,25 @@ SQLRETURN OdbcStatement::inputParam()
 					 (record->indicatorPtr && *record->indicatorPtr == SQL_NULL_DATA) )
 			{
 				CBindColumn &bindCol = (*listBindIn)[n-1];
-				SQLRETURN ret = (convert->*bindCol.appRecord->fnConv)(bindCol.appRecord,bindCol.impRecord);
+				retCode = (convert->*bindCol.appRecord->fnConv)(bindCol.appRecord,bindCol.impRecord);
+				if ( retCode != SQL_SUCCESS )
+				{
+					ret = retCode;
+					if ( ret != SQL_SUCCESS_WITH_INFO )
+						break;
+				}
 			}
 		}
 	}
 
-	return SQL_SUCCESS;
+	return ret;
 }
 
 SQLRETURN OdbcStatement::executeStatement()
 {
 	SQLRETURN ret;
 
-	if ( (ret = inputParam()) )
+	if ( (ret = inputParam(), ret) && ret != SQL_SUCCESS_WITH_INFO )
 		return ret;
 
 	statement->executeStatement();
@@ -2524,7 +2805,15 @@ SQLRETURN OdbcStatement::executeStatement()
 		setCursorRowCount(resultSet->getCountRowsStaticCursor());
 	}
 	else if ( statement->isActiveModify() && statement->getUpdateCount() <= 0 )
-		return SQL_NO_DATA;
+	{
+		if ( connection->env->useAppOdbcVersion == SQL_OV_ODBC3 )
+			return SQL_NO_DATA;
+		else
+		{
+			postError( "01S03", "No rows updated or deleted" );
+			return SQL_SUCCESS_WITH_INFO;
+		}
+	}
 
 	return SQL_SUCCESS;
 }
@@ -2533,35 +2822,45 @@ SQLRETURN OdbcStatement::executeStatementParamArray()
 {
 	SQLRETURN ret = SQL_SUCCESS;
 	SQLUINTEGER rowCount = 0;
-	SQLUINTEGER *rowCountPt = applicationParamDescriptor->headRowsProcessedPtr ? applicationParamDescriptor->headRowsProcessedPtr
+	SQLUINTEGER *rowCountPt = implementationParamDescriptor->headRowsProcessedPtr ? implementationParamDescriptor->headRowsProcessedPtr
 								: &rowCount;
-	SQLUSMALLINT *statusPtr = applicationParamDescriptor->headArrayStatusPtr ? applicationParamDescriptor->headArrayStatusPtr
+	SQLUSMALLINT *statusPtr = implementationParamDescriptor->headArrayStatusPtr ? implementationParamDescriptor->headArrayStatusPtr
 								: NULL;
 	int rowSize = applicationParamDescriptor->headBindType;
-	int nRow = 0;
 	int nCountRow = applicationParamDescriptor->headArraySize;
 	SQLINTEGER	*&headBindOffsetPtr = applicationParamDescriptor->headBindOffsetPtr;
 	SQLINTEGER	*bindOffsetPtrSave = headBindOffsetPtr;
 	SQLINTEGER	bindOffsetPtrTmp = headBindOffsetPtr ? *headBindOffsetPtr : 0;
+	bool arrayColumnWiseBinding = rowSize == SQL_PARAM_BIND_BY_COLUMN;
 
 	headBindOffsetPtr = &bindOffsetPtrTmp;
+	*rowCountPt = rowNumberParamArray = 0;
 
-	while ( nRow < nCountRow )
+	while ( rowNumberParamArray < nCountRow )
 	{
-		if ( (ret = inputParam()) )
+		if ( arrayColumnWiseBinding )
+			bindOffsetIndColumnWiseBinding = ( bindOffsetPtrTmp + rowNumberParamArray ) * sizeof ( SQLINTEGER );
+
+		if ( (ret = inputParam( arrayColumnWiseBinding ), ret) && ret != SQL_SUCCESS_WITH_INFO )
 		{
 			headBindOffsetPtr = bindOffsetPtrSave;
 			convert->setBindOffsetPtrFrom ( applicationParamDescriptor->headBindOffsetPtr, applicationParamDescriptor->headBindOffsetPtr );
+			if ( statusPtr )
+				*statusPtr = SQL_PARAM_ERROR;
 			return ret;
 		}
 
 		statement->executeStatement();
 
+		if ( statusPtr )
+			*statusPtr++ = ret == SQL_SUCCESS_WITH_INFO ? SQL_PARAM_SUCCESS_WITH_INFO : SQL_PARAM_SUCCESS;
+
 		bindOffsetPtrTmp += rowSize;
 		parameterNeedData = 1;
-		++nRow;
+		++rowNumberParamArray;
 	}
 
+	*rowCountPt = rowNumberParamArray;
 	headBindOffsetPtr = bindOffsetPtrSave;
 	convert->setBindOffsetPtrFrom ( applicationParamDescriptor->headBindOffsetPtr, applicationParamDescriptor->headBindOffsetPtr );
 
@@ -2575,7 +2874,7 @@ SQLRETURN OdbcStatement::executeProcedure()
 {
 	SQLRETURN ret;
 
-	if ( (ret = inputParam()) )
+	if ( (ret = inputParam(), ret) && ret != SQL_SUCCESS_WITH_INFO )
 		return ret;
 
 	if ( !registrationOutParameter )
@@ -2623,12 +2922,51 @@ SQLRETURN OdbcStatement::executeProcedure()
 
 SQLRETURN OdbcStatement::executeCommit()
 {
+	if ( bulkInsert )
+		bulkInsert->statement->commitLocal();
+
+	if ( statement->isActiveLocalTransaction() )
+	{
+		try
+		{
+			statement->commitLocal();
+			return SQL_SUCCESS;
+		}
+		catch ( std::exception &ex )
+		{
+			SQLException &exception = (SQLException&)ex;
+			postError( "S1000", exception );
+			return SQL_ERROR;
+		}
+	}
 	return connection->sqlEndTran( SQL_COMMIT );
 }
 	
 SQLRETURN OdbcStatement::executeRollback()
 {
+	if ( bulkInsert )
+		bulkInsert->statement->rollbackLocal();
+
+	if ( statement->isActiveLocalTransaction() )
+	{
+		try
+		{
+			statement->rollbackLocal();
+			return SQL_SUCCESS;
+		}
+		catch ( std::exception &ex )
+		{
+			SQLException &exception = (SQLException&)ex;
+			postError( "S1000", exception );
+			return SQL_ERROR;
+		}
+	}
 	return connection->sqlEndTran( SQL_ROLLBACK );
+}
+
+SQLRETURN OdbcStatement::executeNone()
+{
+	return sqlSuccess();
 }
 
 SQLRETURN OdbcStatement::executeCreateDatabase()
@@ -2670,6 +3008,7 @@ SQLRETURN OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 		return sqlReturn (SQL_ERROR, "HY000", "General error :: OdbcStatement::sqlParamData");
 
 	DescRecord *binding = applicationParamDescriptor->getDescRecord ( parameterNeedData );
+	SQLINTEGER *bindOffsetPtr = applicationParamDescriptor->headBindOffsetPtr;
 
 	*(unsigned long*)ptr = GETBOUNDADDRESS(binding);
 
@@ -2692,6 +3031,7 @@ SQLRETURN OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 					switch (binding->conciseType)
 					{
 					case SQL_C_CHAR:
+					case SQL_C_WCHAR:
 					case SQL_C_BINARY:
 						if ( !binding->dataBlobPtr )
 						{
@@ -2753,39 +3093,32 @@ SQLRETURN OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
 		if ( !binding->startedTransfer )
 			binding->beginBlobDataTransfer();
 
-		switch (binding->conciseType)
-		{
-		case SQL_C_CHAR:
-			if(valueSize == SQL_NTS)
-				valueSize = strlen( (char*)value );
+		if ( valueSize == SQL_NTS )
+			if ( binding->conciseType == SQL_C_CHAR )
+				valueSize = (SQLINTEGER)strlen( (char*)value );
+			else // if ( binding->conciseType == SQL_C_WCHAR )
+				valueSize = (SQLINTEGER)wcslen( (wchar_t*)value );
 
-		case SQL_C_BINARY:
-			if( valueSize )
-				binding->putBlobSegmentData (valueSize, value);
-			break;
-		}
+		if( valueSize )
+			binding->putBlobSegmentData (valueSize, value);
 	}
 	else
 	{
 		if ( !binding->startedTransfer )
 			binding->startedTransfer = true;
 
-		switch (binding->conciseType)
-		{
-		case SQL_C_CHAR:
-			if(valueSize == SQL_NTS)
-				valueSize = strlen( (char*)value );
-		default:
-			{
-				CBindColumn &bindParam = (*listBindIn)[ parameterNeedData - 1 ];
-				SQLPOINTER valueSave = binding->dataPtr;
-				binding->dataPtr = value;
-				*binding->indicatorPtr = valueSize;
-				(convert->*bindParam.appRecord->fnConv)(bindParam.appRecord,bindParam.impRecord);
-				binding->dataPtr = valueSave;
-			}
-			break;
-		}
+		if ( valueSize == SQL_NTS )
+			if ( binding->conciseType == SQL_C_CHAR )
+				valueSize = (SQLINTEGER)strlen( (char*)value );
+			else // if ( binding->conciseType == SQL_C_WCHAR )
+				valueSize = (SQLINTEGER)wcslen( (wchar_t*)value );
+
+		CBindColumn &bindParam = (*listBindIn)[ parameterNeedData - 1 ];
+		SQLPOINTER valueSave = binding->dataPtr;
+		binding->dataPtr = value;
+		*binding->indicatorPtr = valueSize;
+		(convert->*bindParam.appRecord->fnConv)(bindParam.appRecord,bindParam.impRecord);
+		binding->dataPtr = valueSave;
 	}
 	return sqlSuccess();
 }
@@ -2826,7 +3159,7 @@ SQLRETURN OdbcStatement::returnDataFromExtendedFetch()
 {
 	SQLRETURN retCode, ret = SQL_SUCCESS;
 	SQLINTEGER	&bindOffsetPtrTo = convert->getBindOffsetPtrTo();
-	SQLINTEGER	&currentRow = *bindOffsetPtr;
+	SQLINTEGER	&currentRow = *applicationRowDescriptor->headBindOffsetPtr;
 	int count = listBindOut->GetCount();
 	convert->statusReturnData = true;
 
@@ -2874,31 +3207,26 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 			break;
 
 		case SQL_ATTR_PARAM_BIND_TYPE:		// 18
-			paramBindType = (int) ptr;
 			applicationParamDescriptor->headBindType = (SQLINTEGER) ptr;
 			TRACE02(SQL_ATTR_PARAM_BIND_TYPE,(int) ptr);
 			break;
 
 		case SQL_ATTR_PARAM_BIND_OFFSET_PTR:// 17
-			paramBindOffset = ptr;
 			applicationParamDescriptor->headBindOffsetPtr = (SQLINTEGER*)ptr;
 			TRACE02(SQL_ATTR_PARAM_BIND_OFFSET_PTR,(int) ptr);
 			break;
 
 		case SQL_ATTR_PARAMS_PROCESSED_PTR:	// 21
-			paramsProcessedPtr = ptr;
 			implementationParamDescriptor->headRowsProcessedPtr = (SQLUINTEGER*) ptr;
 			TRACE02(SQL_ATTR_PARAMS_PROCESSED_PTR,(int) ptr);
 			break;
 
 		case SQL_ATTR_PARAMSET_SIZE:		// 22
-			paramsetSize = (int) ptr;
 			applicationParamDescriptor->headArraySize = (SQLUINTEGER)ptr;
 			TRACE02(SQL_ATTR_PARAMSET_SIZE,(int) ptr);
 			break;
 
 		case SQL_ATTR_ROW_BIND_TYPE:		// SQL_BIND_TYPE 5
-			rowBindType = (int) ptr;
 			applicationRowDescriptor->headBindType = (SQLINTEGER)ptr;
 			TRACE02(SQL_ATTR_ROW_BIND_TYPE,(int) ptr);
 			break;
@@ -2910,7 +3238,7 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 
 		case SQL_ATTR_KEYSET_SIZE:           // 8
 		case SQL_ROWSET_SIZE:                // 9
-			rowArraySize = (int) ptr;
+			applicationRowDescriptor->headArraySize = (int) ptr;
 			TRACE02(SQL_ROWSET_SIZE,(int) ptr);
 			break;
 				
@@ -2920,7 +3248,6 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 			break;
 
 		case SQL_ATTR_ROW_BIND_OFFSET_PTR:	// 23
-			bindOffsetPtr = (SQLINTEGER*) ptr;
 			applicationRowDescriptor->headBindOffsetPtr = (SQLINTEGER*)ptr;
 			TRACE02(SQL_ATTR_ROW_BIND_OFFSET_PTR,(int) ptr);
 			break;
@@ -3126,10 +3453,14 @@ SQLRETURN OdbcStatement::sqlRowCount(SQLINTEGER *rowCount)
 	return sqlSuccess();
 }
 
-SQLRETURN OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT *strLengthPtr, SQLPOINTER numericAttributePtr)
+#ifdef _WIN64
+SQLRETURN OdbcStatement::sqlColAttribute( int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT *strLengthPtr, SQLLEN *numericAttributePtr )
+#else
+SQLRETURN OdbcStatement::sqlColAttribute( int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT *strLengthPtr, SQLPOINTER numericAttributePtr )
+#endif
 {
 	clearErrors();
-	int value;
+	SQLLEN value;
 	const char *string = NULL;
 	int realSqlType;
 
@@ -3231,6 +3562,18 @@ SQLRETURN OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER att
 			string = metaData->getCatalogName (column);
 			break;
 
+		case SQL_DESC_NUM_PREC_RADIX:
+			value = metaData->getNumPrecRadix (column);
+			break;
+
+		case MSSQL_CA_SS_COLUMN_HIDDEN: //	TRUE if the column referenced is part of a hidden primary key (FOR BROWSE)
+			value = 0;					
+			break;
+
+		case MSSQL_CA_SS_COLUMN_KEY: // TRUE if the column referenced is part of a primary key for the row (FOR BROWSE)
+			value = metaData->isColumnPrimaryKey( column );
+			break;
+
 		default:
 			{
 			JString msg;
@@ -3249,7 +3592,15 @@ SQLRETURN OdbcStatement::sqlColAttribute(int column, int fieldId, SQLPOINTER att
 	if (string)
 		setString (string, (SQLCHAR*) attributePtr, bufferLength, strLengthPtr);
 	else if (numericAttributePtr)
+	{
+#ifdef _WIN64
+		*(SQLLEN*) numericAttributePtr = value;
+		if ( strLengthPtr ) *strLengthPtr = sizeof ( SQLLEN );
+#else
 		*(SQLINTEGER*) numericAttributePtr = value;
+		if ( strLengthPtr ) *strLengthPtr = sizeof ( SQLINTEGER );
+#endif
+	}
 
 	return sqlSuccess();
 }

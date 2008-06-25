@@ -85,6 +85,13 @@ public:
 	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtPlan( value, bufferLength, lengthPtr ); }  
 	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtType( value, bufferLength, lengthPtr ); }  
 	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtInfoCountRecords( value, bufferLength, lengthPtr ); }  
+	virtual void		rollbackLocal(){ IscStatement::rollbackLocal(); }
+	virtual void		commitLocal(){ IscStatement::commitLocal(); }
+	virtual bool		isActiveLocalTransaction(){ return IscStatement::isActiveLocalTransaction(); }
+	virtual void		setActiveLocalParamTransaction(){ IscStatement::setActiveLocalParamTransaction(); }
+	virtual void		delActiveLocalParamTransaction(){ IscStatement::delActiveLocalParamTransaction(); }
+	virtual void		declareLocalParamTransaction(){ IscStatement::declareLocalParamTransaction(); }
+	virtual void		switchTransaction(bool local){ IscStatement::switchTransaction( local ); }
 
 //}}} end class Statement without specification jdbc
 

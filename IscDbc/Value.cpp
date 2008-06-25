@@ -100,7 +100,7 @@ void Value::setString(const char * string, bool copy)
 
 	type = String;
 	copyFlag = copy;
-	data.string.length = strlen (string);
+	data.string.length = (int)strlen (string);
 
 	if (copy)
 		{
@@ -508,6 +508,38 @@ long Value::getLong(int scale)
 	return 0;
 }
 
+bool Value::getBoolean()
+{
+	switch (type)
+	{
+	case Null:
+		return false;
+
+	case Short:
+		return !!data.smallInt;
+
+	case Long:
+		return !!data.integer;
+
+	case Char:
+	case Varchar:
+	case String:
+		{
+		double divisor;
+		QUAD quad = convertToQuad (divisor);
+		if (divisor == 1)
+			return !!quad;
+		return !!(quad / divisor);
+		}
+
+	case Quad:
+	default:
+		return !!getQuad();
+	}
+
+	return 0;
+}
+
 short Value::getShort(int scale)
 {
 	switch (type)
@@ -624,7 +656,7 @@ char* Value::getString(char **tempPtr)
 			NOT_YET_IMPLEMENTED;
 		}
 
-	length = strlen (temp);
+	length = (int)strlen (temp);
 
 	if (!tempPtr)	//NOMEY +
 		throw SQLEXCEPTION (BUG_CHECK, "NULL-Pointer in Value::getString"); //NOMEY +

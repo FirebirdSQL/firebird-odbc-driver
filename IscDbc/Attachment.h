@@ -43,32 +43,43 @@ public:
 	void existsAccess(char *& stringOut, const char *prefix, const char * relobject, int typeobject, const char *suffix);
 	int getDatabaseDialect();
 	inline int getUseSchemaIdentifier();
+	inline int getUseLockTimeoutWaitTransactions();
 	JString getIscStatusText (ISC_STATUS *statusVector);
 	int release();
 	void addRef();
+	void loadClientLiblary( Properties *properties );
+	bool isFirebirdVer2_0(){ return majorFb == 2; }
 	void createDatabase(const char *dbName, Properties *properties);
 	void openDatabase(const char * dbName, Properties * properties);
 	Attachment();
 	~Attachment();
 
 	CFbDll		*GDS;
-	void		*databaseHandle;
+	isc_db_handle databaseHandle;
 	void		*transactionHandle; // for two phase
+	JString		dsn;
 	JString		databaseName;
+	JString		databaseServerName;
+	JString		databaseNameFromServer;
 	JString		userName;
 	JString		userAccess;
 	int			userType;
 	JString		serverVersion;
 	JString		databaseProductName;
+	int			majorFb;
+	int			minorFb;
+	int			versionFb;
+	int			charsetCode;
 	int			pageSize;
 	int			connectionTimeout;
 	int			serverBaseLevel;	
 	int			databaseDialect;
 	int			useSchemaIdentifier;
+	int			useLockTimeoutWaitTransactions;
 	bool		quotedIdentifier;
 	bool		sensitiveIdentifier;
 	bool		autoQuotedIdentifier;
-	bool		databaseAlways;
+	int			databaseAccess;
 	int			transactionIsolation;
 	int			useCount;
 	bool		admin;
@@ -80,6 +91,12 @@ inline
 int Attachment::getUseSchemaIdentifier()
 {
 	return useSchemaIdentifier;
+}
+
+inline
+int Attachment::getUseLockTimeoutWaitTransactions()
+{
+	return useLockTimeoutWaitTransactions;
 }
 
 }; // end namespace IscDbcLibrary

@@ -1,31 +1,16 @@
 Microsoft Visual Studio Solution File, Format Version 7.00
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IscDbc", "IscDbc.vcproj", "{E639FD0E-BAC3-4857-A8C5-3754FDC33522}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OdbcJdbc", "OdbcJdbc.vcproj", "{C6127398-654D-4196-B8C1-5BB32D75D7FD}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OdbcJdbcSetup", "OdbcJdbcSetup.vcproj", "{85E1087F-90AC-4CED-B064-02D1576077BD}"
 EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		ConfigName.0 = Debug
 		ConfigName.1 = Release
 	EndGlobalSection
-	GlobalSection(ProjectDependencies) = postSolution
-		{C6127398-654D-4196-B8C1-5BB32D75D7FD}.0 = {E639FD0E-BAC3-4857-A8C5-3754FDC33522}
-	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
-		{E639FD0E-BAC3-4857-A8C5-3754FDC33522}.Debug.ActiveCfg = Debug|Win32
-		{E639FD0E-BAC3-4857-A8C5-3754FDC33522}.Debug.Build.0 = Debug|Win32
-		{E639FD0E-BAC3-4857-A8C5-3754FDC33522}.Release.ActiveCfg = Release|Win32
-		{E639FD0E-BAC3-4857-A8C5-3754FDC33522}.Release.Build.0 = Release|Win32
 		{C6127398-654D-4196-B8C1-5BB32D75D7FD}.Debug.ActiveCfg = Debug|Win32
 		{C6127398-654D-4196-B8C1-5BB32D75D7FD}.Debug.Build.0 = Debug|Win32
 		{C6127398-654D-4196-B8C1-5BB32D75D7FD}.Release.ActiveCfg = Release|Win32
 		{C6127398-654D-4196-B8C1-5BB32D75D7FD}.Release.Build.0 = Release|Win32
-		{85E1087F-90AC-4CED-B064-02D1576077BD}.Debug.ActiveCfg = Debug|Win32
-		{85E1087F-90AC-4CED-B064-02D1576077BD}.Debug.Build.0 = Debug|Win32
-		{85E1087F-90AC-4CED-B064-02D1576077BD}.Release.ActiveCfg = Release|Win32
-		{85E1087F-90AC-4CED-B064-02D1576077BD}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

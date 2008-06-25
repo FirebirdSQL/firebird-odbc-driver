@@ -42,6 +42,7 @@ enum OdbcObjectType {
 	};
 
 class OdbcError;
+class OdbcConnection;
 
 class OdbcObject  
 {
@@ -52,7 +53,8 @@ public:
 	SQLRETURN sqlGetDiagRec (int handleType, int recNumber, SQLCHAR*sqlState,SQLINTEGER*nativeErrorPtr,SQLCHAR*messageText,int bufferLength,SQLSMALLINT*textLengthPtr);
 	OdbcError* postError (const char *state, JString msg);
 	const char * getString (char **temp, const UCHAR *string, int length, const char *defaultValue);
-	OdbcError* postError (const char *sqlState, SQLException& exception);
+	OdbcError* postError (const char *sqlState, SQLException &exception);
+	void operator <<(OdbcObject * obj);
 	void clearErrors();
 	OdbcError* postError (OdbcError *error);
 	virtual SQLRETURN sqlError (UCHAR *stateBuffer, SDWORD *nativeCode, UCHAR *msgBuffer, int msgBufferLength, SWORD *msgLength);
@@ -63,6 +65,7 @@ public:
 	void notYetImplemented (const char *msg);
 	virtual SQLRETURN allocHandle (int handleType, SQLHANDLE *outputHandle);
 	int sqlSuccess();
+	virtual OdbcConnection* getConnection() = 0;
 	virtual OdbcObjectType getType() = 0;
 	int sqlReturn (int code, const char *state, const char *text, int nativeCode = 0);
 	SQLRETURN returnStringInfo (SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT* returnLength, const char * value);

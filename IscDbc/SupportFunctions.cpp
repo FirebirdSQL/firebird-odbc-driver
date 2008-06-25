@@ -22,7 +22,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 #include <windows.h>
 #endif
 #include <time.h>
@@ -37,7 +37,7 @@ namespace IscDbcLibrary {
 #define ADD_SUPPORT_FN( typeFn, key, nameSql, nameFb, translateFn )																	\
 	fn.set( SupportFunctions::typeFn, key, nameSql, sizeof(nameSql)-1, nameFb, sizeof(nameFb)-1, &SupportFunctions::translateFn );	\
 	if ( j = listSupportFunctions.SearchAndInsert( &fn ), j < 0 )																	\
-		listSupportFunctions[-j-1] = fn																								\
+		listSupportFunctions[~j] = fn																								\
 
 SupportFunctions supportFn;
 
@@ -63,7 +63,7 @@ SupportFunctions::SupportFunctions()
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_CONCAT, 			"CONCAT", 			"CONCAT",			defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_DIFFERENCE, 		"DIFFERENCE", 		"DIFFERENCE",		defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_INSERT, 			"INSERT", 			"INSERT",			defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LCASE, 			"LCASE", 			"LCASE",			defaultTranslator);
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LCASE, 			"LCASE", 			"LOWER",			defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LEFT, 			"LEFT", 			"LEFT",				defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LENGTH, 			"LENGTH", 			"LENGTH",			defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LOCATE, 			"LOCATE", 			"LOCATE",			defaultTranslator);
@@ -150,7 +150,7 @@ void SupportFunctions::translateNativeFunction ( char *&ptIn, char *&ptOut )
 	char * end = ptIn;
 
 	while( *end && *end != ' ' && *end != '(' )end++;
-	fn.lenSqlFn = end - ptIn;
+	fn.lenSqlFn = (int)( end - ptIn );
 
 	if ( fn.lenSqlFn )
 	{
@@ -165,8 +165,8 @@ void SupportFunctions::translateNativeFunction ( char *&ptIn, char *&ptOut )
 
 void SupportFunctions::defaultTranslator ( char *&ptIn, char *&ptOut )
 {
-	int offset = ptIn - ptOut;
-	lenOut = strlen ( ptOut );
+	int offset = (int)( ptIn - ptOut );
+	lenOut = (int)strlen ( ptOut );
 	lenSqlFn = supportFn->lenSqlFn;
 	lenFbFn = supportFn->lenFbFn;
 
@@ -178,14 +178,14 @@ void SupportFunctions::defaultTranslator ( char *&ptIn, char *&ptOut )
 void SupportFunctions::fullreplaceTranslator ( char *&ptIn, char *&ptOut )
 {
 	lenFbFn = supportFn->lenFbFn;
-	lenOut = strlen ( ptOut );
+	lenOut = (int)strlen ( ptOut );
 
 	while( *ptIn && *ptIn != ')' && *ptIn != '}' )ptIn++;
 
 	if( *ptIn != ')' && *ptIn != '}' )
 		return;
 
-	lenSqlFn = ptIn - ptOut;
+	lenSqlFn = (int)( ptIn - ptOut );
 
 	if( *ptIn == ')' )
 		lenSqlFn++;
@@ -199,7 +199,7 @@ void SupportFunctions::fullreplaceTranslator ( char *&ptIn, char *&ptOut )
 void SupportFunctions::convertTranslator ( char *&ptIn, char *&ptOut )
 {
 	lenFbFn = supportFn->lenFbFn;
-	lenOut = strlen ( ptOut );
+	lenOut = (int)strlen ( ptOut );
 	char * paramSqlType, * paramValue, * end;
 	int lenSqlType, lenValue;
 	const char * type = NULL;
@@ -224,7 +224,7 @@ void SupportFunctions::convertTranslator ( char *&ptIn, char *&ptOut )
 	if ( *end != ',' )
 		return;
 
-	lenValue = end - paramValue;
+	lenValue = (int)( end - paramValue );
 	end++; // ','
 
 	paramSqlType = end;
@@ -236,10 +236,14 @@ void SupportFunctions::convertTranslator ( char *&ptIn, char *&ptOut )
 
 	while ( *end && *end!=' ' && *end!=')' ) end++;
 
-	lenSqlType = end - paramSqlType;
+	lenSqlType = (int)( end - paramSqlType );
 
 	switch ( lenSqlType )
 	{
+	case 7:
+		if ( !strncasecmp ( paramSqlType, "SQL_BIT", lenSqlType) )
+			type = "char character set octets";
+		break;
 	case 8:
 		if ( !strncasecmp ( paramSqlType, "SQL_CHAR", lenSqlType) )
 			type = "char";
@@ -290,14 +294,52 @@ void SupportFunctions::convertTranslator ( char *&ptIn, char *&ptOut )
 		if ( !strncasecmp ( paramSqlType, "SQL_LONGVARCHAR", lenSqlType) )
 			type = "blob sub_type 1";
 		break;
+//	case 16:
+//		if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_DAY", lenSqlType) )
+//			type = "interval sub_type 3";
+//		break;
 	case 17:
 		if ( !strncasecmp ( paramSqlType, "SQL_LONGVARBINARY", lenSqlType) )
 			type = "blob";
+//		else if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_YEAR", lenSqlType) )
+//			type = "interval sub_type 1";
+//		else if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_HOUR", lenSqlType) )
+//			type = "interval sub_type 4";
 		break;
 	case 18:
 		if ( !strncasecmp ( paramSqlType, "SQL_TYPE_TIMESTAMP", lenSqlType) )
 			type = "timestamp";
+//		else if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_MONTH", lenSqlType) )
+//			type = "interval sub_type 2";
 		break;
+//	case 19:
+//		if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_MINUTE", lenSqlType) )
+//			type = "interval sub_type 5";
+//		else if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_SECOND", lenSqlType) )
+//			type = "interval sub_type 6";
+//		break;
+//	case 24:
+//		if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_DAY_TO_HOUR", lenSqlType) )
+//			type = "interval sub_type 8";
+//		break;
+//	case 26:
+//		if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_YEAR_TO_MONTH", lenSqlType) )
+//			type = "interval sub_type 3";
+//		else if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_DAY_TO_MINUTE", lenSqlType) )
+//			type = "interval sub_type 9";
+//		else if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_DAY_TO_SECOND", lenSqlType) )
+//			type = "interval sub_type 10";
+//		break;
+//	case 27:
+//		if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_HOUR_TO_MINUTE", lenSqlType) )
+//			type = "interval sub_type 11";
+//		else if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_HOUR_TO_SECOND", lenSqlType) )
+//			type = "interval sub_type 12";
+//		break;
+//	case 28:
+//		if ( !strncasecmp ( paramSqlType, "SQL_INTERVAL_MINUTE_TO_SECOND", lenSqlType) )
+//			type = "interval sub_type 13";
+//		break;
 	default:
 		return;
 	}
@@ -315,10 +357,10 @@ void SupportFunctions::convertTranslator ( char *&ptIn, char *&ptOut )
 	memcpy( ptOut, " cast(", 6 ); ptOut += 6 ;
 	memcpy( ptOut, paramValue, lenValue ); ptOut += lenValue ;
 
-	lenSqlFn = end - ptOut;
+	lenSqlFn = (int)( end - ptOut );
 // allSize : ' as ' : lentype : ') '
 //             4   + lentype +  2
-	lenSqlType = strlen(type);
+	lenSqlType = (int)strlen(type);
 	lenFbFn = 6 + lenSqlType;
 
 	if ( lenSqlFn > lenFbFn )
@@ -335,7 +377,7 @@ void SupportFunctions::convertTranslator ( char *&ptIn, char *&ptOut )
 void SupportFunctions::bracketfromTranslator ( char *&ptIn, char *&ptOut )
 {
 	lenFbFn = supportFn->lenFbFn;
-	lenOut = strlen ( ptOut );
+	lenOut = (int)strlen ( ptOut );
 
 	while( *ptIn && *ptIn != '(' )ptIn++;
 
@@ -343,7 +385,7 @@ void SupportFunctions::bracketfromTranslator ( char *&ptIn, char *&ptOut )
 		return;
 
 	ptIn++; // '('
-	lenSqlFn = ptIn - ptOut;
+	lenSqlFn = (int)( ptIn - ptOut );
 
 	writeResult ( supportFn->nameFbFn, ptOut );
 	ptIn = ptOut;

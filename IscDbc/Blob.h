@@ -18,6 +18,7 @@ public:
 	virtual int		release() = 0;
 	virtual void	clear() = 0;
 	virtual void	getBytes (long pos, long length, void *buffer) = 0;
+	virtual void	getBytesW (long pos, long length, void *buffer) = 0;
 	virtual void	getBinary (long pos, long length, void *buffer) = 0;
 	virtual void	getHexString (long pos, long length, void *buffer) = 0;
 	virtual int		length() = 0;

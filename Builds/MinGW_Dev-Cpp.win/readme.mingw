@@ -1,0 +1,7 @@
+
+    For build from Dev-C++
+
+       - create d:/Firebird/include and copy ibase.h iberror.h 
+       - run Dev-C++
+       - open OdbcJdbc.dev
+       - build all

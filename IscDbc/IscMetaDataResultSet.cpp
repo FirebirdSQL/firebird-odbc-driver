@@ -56,6 +56,7 @@ void IscMetaDataResultSet::prepareStatement(const char * sql)
 {
 	close();
 	statement = new IscStatement ( metaData->connection );
+	//statement->setReadOnlyTransaction();
 	statement->prepareStatement (sql);
 	statement->execute();
 	initResultSet ( statement );
@@ -146,7 +147,7 @@ void IscMetaDataResultSet::expandPattern(char *& stringOut, const char *prefix, 
 
 void IscMetaDataResultSet::addString(char *& stringOut, const char * string, int length)
 {
-	int len = length ? length : strlen(string);
+	int len = length ? length : (int)strlen(string);
 	memcpy ( stringOut, string, len);
 	stringOut += len;
 }

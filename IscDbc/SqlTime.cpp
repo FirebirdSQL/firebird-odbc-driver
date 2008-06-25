@@ -53,7 +53,7 @@ int SqlTime::getString(const char * format, int length, char * buffer)
 	time->tm_min = minutes % 60;
 	time->tm_sec = (timeValue / ISC_TIME_SECONDS_PRECISION) % 60;
 
-	return strftime (buffer, length, format, time);
+	return (int)strftime (buffer, length, format, time);
 }
 
 }; // end namespace IscDbcLibrary

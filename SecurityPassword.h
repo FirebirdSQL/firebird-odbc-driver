@@ -68,7 +68,7 @@ public:
 
 	void buildKey( char * pass )
 	{
-		int len = strlen(pass);
+		int len = (int)strlen(pass);
 
 		if ( !len )
 			return;
@@ -113,7 +113,7 @@ public:
 	void encode ( char *password, char *passkey )
 	{
 		char *pt = passkey;
-		int len = strlen(password);
+		int len = (int)strlen(password);
 		buildKey( password );
 		initShifts();
 		memcpy ( pt, securityKey, sizeof(securityKey) );
@@ -137,7 +137,7 @@ public:
 		if ( !*passkey )
 			return;
 
-		int lenkey = strlen ( passkey );
+		int lenkey = (int)strlen ( passkey );
 		if ( lenkey % 2 )
 			return;
 

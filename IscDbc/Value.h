@@ -48,6 +48,7 @@ public:
 	Value (const char *string);
 	int compare (Value *value);
 
+	bool	getBoolean();
 	short	getShort(int scale = 0);
 	long	getLong(int scale = 0);
 	QUAD	getQuad(int scale = 0);

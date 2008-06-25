@@ -96,6 +96,7 @@ public:
 							SQLSMALLINT	precision, SQLSMALLINT scale, SQLPOINTER dataPtr, 
 							SQLINTEGER *stringLengthPtr, SQLINTEGER *indicatorPtr);
 
+	virtual OdbcConnection* getConnection();
 	virtual OdbcObjectType getType();
 	OdbcDesc(OdbcDescType type, OdbcConnection *connect);
 	~OdbcDesc();

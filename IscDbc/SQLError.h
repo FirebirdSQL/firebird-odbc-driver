@@ -34,17 +34,19 @@ public:
 	virtual int release();
 	virtual void addRef();
 	virtual const char* getTrace();
-	SQLError (int sqlcode, const char *text, ...);
+	SQLError (int sqlcode, int fbcode, const char *text, ...);
 	SQLError (SqlCode sqlcode, const char *text, ...);
 	SQLError (Stream *trace, SqlCode code, const char *txt,...);
 	~SQLError() throw();
 
+	virtual int			getFbcode ();
 	virtual int			getSqlcode ();
 	virtual const char	*getText();
 
 	//void		Delete();
 	operator	const char*();
 
+	int		fbcode;
 	int		sqlcode;
 	JString	text;
 	JString	stackTrace;

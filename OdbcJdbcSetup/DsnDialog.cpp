@@ -24,8 +24,11 @@
 #include <string.h>
 #include "OdbcJdbcSetup.h"
 #include "../IscDbc/Connection.h"
+#include "CommonUtil.h"
 #include "DsnDialog.h"
 #include "../SetupAttributes.h"
+#include "ServiceTabCtrl.h"
+#include "ServiceClient.h"
 
 namespace OdbcJdbcSetupLibrary {
 
@@ -92,29 +95,32 @@ void initCodePageTranslate( int userLCID )
 		}
 }
 
-using namespace classJString;
 using namespace IscDbcLibrary;
 
-CDsnDialog * m_ptDsnDialog = NULL;
 HINSTANCE instanceHtmlHelp = NULL;
 
-BOOL CALLBACK wndprocDsnDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam);
+BOOL CALLBACK wndprocDsnDialog( HWND hDlg, UINT message, WORD wParam, LONG lParam);
 void ProcessCDError(DWORD dwErrorCode, HWND hWnd);
 
-CDsnDialog::CDsnDialog( const char **jdbcDrivers,
+CDsnDialog::CDsnDialog( HWND hDlgParent, 
+					    const char **jdbcDrivers,
 						const char **jdbcCharsets,
 						const char **useShemasIdentifier )
 {
+	m_hWndDlg = NULL;
+	m_hWndParent = hDlgParent;
 	hwndHtmlHelp = NULL;
 
 	m_database = "";
 	m_client = "";
 	m_name = "";
+	m_description = "";
 	m_password = "";
 	m_user = "";
 	m_driver = "";
 	m_role = "";
 	m_charset = "";
+	m_locktimeout = "";
 	m_useschema = "0";
 	m_readonly = FALSE;
 	m_nowait = FALSE;
@@ -122,19 +128,17 @@ CDsnDialog::CDsnDialog( const char **jdbcDrivers,
 	m_quoted = TRUE;
 	m_sensitive = FALSE;
 	m_autoQuoted = FALSE;
+	m_safeThread = FALSE;
 
 	drivers = jdbcDrivers;
 	charsets = jdbcCharsets;
 	useshemas = useShemasIdentifier;
-	m_ptDsnDialog = this;
 }
 
 CDsnDialog::~CDsnDialog()
 {
 	if ( instanceHtmlHelp && hwndHtmlHelp )
 		PostMessage( hwndHtmlHelp, WM_DESTROY, (WPARAM)0, (LPARAM)0 );
-
-	m_ptDsnDialog = NULL;
 }
 
 void CDsnDialog::SetDisabledDlgItem(HWND hDlg, int ID, BOOL bDisabled)
@@ -156,6 +160,7 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 		GetDlgItemText(hDlg, IDC_DATABASE, m_database.getBuffer(256), 256);
 		GetDlgItemText(hDlg, IDC_CLIENT, m_client.getBuffer(256), 256);
 		GetDlgItemText(hDlg, IDC_NAME, m_name.getBuffer(256), 256);
+		GetDlgItemText(hDlg, IDC_DESCRIPTION, m_description.getBuffer(256), 256);
 		GetDlgItemText(hDlg, IDC_PASSWORD, m_password.getBuffer(256), 256);
 		GetDlgItemText(hDlg, IDC_USER, m_user.getBuffer(256), 256);
 
@@ -189,19 +194,29 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
         m_readonly = SendDlgItemMessage(hDlg, IDC_CHECK_READ, BM_GETCHECK, 0, 0);
         m_nowait = SendDlgItemMessage(hDlg, IDC_CHECK_NOWAIT, BM_GETCHECK, 0, 0);
 
+		hWnd = GetDlgItem(hDlg, IDC_LOCKTIMEOUT);
+
+		nLen = GetWindowTextLength(hWnd);
+		if (nLen > 0)
+			GetWindowText(hWnd, m_locktimeout.getBuffer(nLen), nLen+1);
+		else
+			GetWindowText(hWnd, m_locktimeout.getBuffer(256), 256+1);
+
         m_dialect3 = IsDlgButtonChecked(hDlg, IDC_DIALECT3);
 
 		m_quoted = SendDlgItemMessage(hDlg, IDC_CHECK_QUOTED, BM_GETCHECK, 0, 0);
 		m_sensitive = SendDlgItemMessage(hDlg, IDC_CHECK_SENSITIVE, BM_GETCHECK, 0, 0);
 		m_autoQuoted = SendDlgItemMessage(hDlg, IDC_CHECK_AUTOQUOTED, BM_GETCHECK, 0, 0);
+		m_safeThread = SendDlgItemMessage(hDlg, IDC_CHECK_SFTHREAD, BM_GETCHECK, 0, 0);
 	}
 	else
 	{
-		SetDlgItemText(hDlg, IDC_DATABASE, (const char *)m_database);
-		SetDlgItemText(hDlg, IDC_CLIENT, (const char *)m_client);
-		SetDlgItemText(hDlg, IDC_NAME, (const char *)m_name);
-		SetDlgItemText(hDlg, IDC_PASSWORD, (const char *)m_password);
-		SetDlgItemText(hDlg, IDC_USER, (const char *)m_user);
+		SetDlgItemText( hDlg, IDC_DATABASE, (const char *)m_database );
+		SetDlgItemText( hDlg, IDC_CLIENT, (const char *)m_client );
+		SetDlgItemText( hDlg, IDC_NAME, (const char *)m_name );
+		SetDlgItemText( hDlg, IDC_DESCRIPTION, (const char *)m_description );
+		SetDlgItemText( hDlg, IDC_PASSWORD, (const char *)m_password );
+		SetDlgItemText( hDlg, IDC_USER, (const char *)m_user );
 
 		hWnd = GetDlgItem(hDlg, IDC_DRIVER);
 
@@ -213,9 +228,9 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 		hWnd = GetDlgItem(hDlg, IDC_CHARSET);
 
 		if ( m_charset.IsEmpty() )
-			SetWindowText(hWnd, (const char *)*charsets);
-		else if (SendMessage(hWnd, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)(const char *)m_charset) == CB_ERR)
-			SetWindowText(hWnd, (const char *)m_charset);
+			SetWindowText( hWnd, (const char *)*charsets);
+		else if ( SendMessage( hWnd, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)(const char *)m_charset) == CB_ERR )
+			SetWindowText( hWnd, (const char *)m_charset);
 
 		hWnd = GetDlgItem(hDlg, IDC_COMBOBOX_USE_SCHEMA);
 
@@ -229,33 +244,47 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 		if ( selectUse == CB_ERR || m_useschema.IsEmpty() )
 			SetWindowText( hWnd, _TR( IDS_USESCHEMA_NULL, (const char *)*useshemas ) );
 
-        CheckDlgButton(hDlg, IDC_CHECK_READ, m_readonly);
-        CheckDlgButton(hDlg, IDC_CHECK_NOWAIT, m_nowait);
-        CheckDlgButton ( hDlg, IDC_CHECK_QUOTED, m_quoted );
+        CheckDlgButton( hDlg, IDC_CHECK_READ, m_readonly );
+        CheckDlgButton( hDlg, IDC_CHECK_NOWAIT, m_nowait );
+		SetDlgItemText( hDlg, IDC_LOCKTIMEOUT, (const char *)m_locktimeout );
 
-		CheckRadioButton(hDlg, IDC_DIALECT3, IDC_DIALECT1, m_dialect3 ? IDC_DIALECT3 : IDC_DIALECT1);
+		if ( !m_nowait )
+		{
+			EnableWindow( GetDlgItem( hDlg, IDC_LOCKTIMEOUT ), TRUE );
+			SetDisabledDlgItem( hDlg, IDC_STATIC_LOCKTIMEOUT, FALSE );
+		}
+		else
+		{
+			EnableWindow( GetDlgItem( hDlg, IDC_LOCKTIMEOUT ), FALSE );
+			SetDisabledDlgItem( hDlg, IDC_STATIC_LOCKTIMEOUT );
+		}
+
+        CheckDlgButton( hDlg, IDC_CHECK_QUOTED, m_quoted );
+
+		CheckRadioButton( hDlg, IDC_DIALECT3, IDC_DIALECT1, m_dialect3 ? IDC_DIALECT3 : IDC_DIALECT1 );
 		if ( m_dialect3 )
 		{
-			SetDisabledDlgItem ( hDlg, IDC_CHECK_QUOTED, FALSE );
+			SetDisabledDlgItem( hDlg, IDC_CHECK_QUOTED, FALSE );
 			if ( m_quoted )
 			{
-				SetDisabledDlgItem ( hDlg, IDC_CHECK_SENSITIVE, FALSE );
-				SetDisabledDlgItem ( hDlg, IDC_CHECK_AUTOQUOTED, FALSE );
+				SetDisabledDlgItem( hDlg, IDC_CHECK_SENSITIVE, FALSE );
+				SetDisabledDlgItem( hDlg, IDC_CHECK_AUTOQUOTED, FALSE );
 			}
 			else
 			{
-				SetDisabledDlgItem ( hDlg, IDC_CHECK_SENSITIVE );
-				SetDisabledDlgItem ( hDlg, IDC_CHECK_AUTOQUOTED );
+				SetDisabledDlgItem( hDlg, IDC_CHECK_SENSITIVE );
+				SetDisabledDlgItem( hDlg, IDC_CHECK_AUTOQUOTED );
 			}
 		}
 		else
 		{
-			SetDisabledDlgItem ( hDlg, IDC_CHECK_SENSITIVE );
-			SetDisabledDlgItem ( hDlg, IDC_CHECK_AUTOQUOTED );
+			SetDisabledDlgItem( hDlg, IDC_CHECK_SENSITIVE );
+			SetDisabledDlgItem( hDlg, IDC_CHECK_AUTOQUOTED );
 		}
 
-        CheckDlgButton ( hDlg, IDC_CHECK_SENSITIVE, m_sensitive );
-        CheckDlgButton ( hDlg, IDC_CHECK_AUTOQUOTED, m_autoQuoted );
+        CheckDlgButton( hDlg, IDC_CHECK_SENSITIVE, m_sensitive );
+        CheckDlgButton( hDlg, IDC_CHECK_AUTOQUOTED, m_autoQuoted );
+        CheckDlgButton( hDlg, IDC_CHECK_SFTHREAD, m_safeThread );
 	}
 }
 
@@ -272,7 +301,7 @@ BOOL CDsnDialog::IsLocalhost(char * fullPathFileName, int &nSme)
 	nSme = 0;
 
 	while(*ptStr && *ptStr == ' ')ptStr++;
-    if(!memicmp(ptStr,"localhost",9))
+    if(!strncasecmp(ptStr,"localhost",9))
 	{
 		ptStr += 9;
 		while(*ptStr && *ptStr == ' ')ptStr++;
@@ -397,8 +426,21 @@ BOOL CDsnDialog::OnFindFile()
 
     if (!GetOpenFileName(&ofn))
 	{
-		ProcessCDError(CommDlgExtendedError(), NULL );
-		return FALSE;
+		DWORD dwErrorCode = CommDlgExtendedError();
+
+		if (dwErrorCode != FNERR_INVALIDFILENAME)
+		{
+			ProcessCDError(dwErrorCode, NULL );
+			return FALSE;
+		}
+
+		strFullPathFileName[0] = '\0';
+
+		if (!GetOpenFileName(&ofn))
+		{
+			ProcessCDError(CommDlgExtendedError(), NULL );
+			return FALSE;
+		}
 	}
 
 	if ( bLocalhost )
@@ -456,24 +498,19 @@ BOOL CDsnDialog::OnFindFileClient()
 	return TRUE;
 }
 
-int DialogBoxDynamic();
-
-int CDsnDialog::DoModal()
+BOOL CDsnDialog::OnInitDialog( HWND hDlg )
 {
-	return DialogBoxDynamic();
-}
+	HWND hWndBox = GetDlgItem( hDlg, IDC_DRIVER );
 
-BOOL CDsnDialog::OnInitDialog(HWND hDlg) 
-{
-	HWND hWndBox = GetDlgItem(hDlg, IDC_DRIVER);
+	m_hWndDlg = hDlg;
 
 	for (const char **driver = drivers; *driver; ++driver)
-		SendMessage(hWndBox, CB_ADDSTRING, 0, (LPARAM)*driver);
+		SendMessage( hWndBox, CB_ADDSTRING, 0, (LPARAM)*driver );
 
-	hWndBox = GetDlgItem(hDlg, IDC_CHARSET);
+	hWndBox = GetDlgItem( hDlg, IDC_CHARSET );
 
 	for (const char **charset = charsets; *charset; ++charset)
-		SendMessage(hWndBox, CB_ADDSTRING, 0, (LPARAM)*charset);
+		SendMessage( hWndBox, CB_ADDSTRING, 0, (LPARAM)*charset );
 
 	hWndBox = GetDlgItem( hDlg, IDC_COMBOBOX_USE_SCHEMA );
 
@@ -486,7 +523,7 @@ BOOL CDsnDialog::OnInitDialog(HWND hDlg)
 	return TRUE;
 }
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 
 #ifndef _WIN64
 #define DWORD_PTR DWORD
@@ -533,75 +570,106 @@ void CDsnDialog::WinHtmlHelp( HWND hDlg )
 
 BOOL CALLBACK wndprocDsnDialog( HWND hDlg, UINT message, WORD wParam, LONG lParam )
 {
-	switch (message) 
+	CDsnDialog *dsnDialog = (CDsnDialog *)GetWindowLong( hDlg, GW_USERDATA );
+
+	switch ( message )
 	{
     case WM_INITDIALOG:
 
-		if ( !m_ptDsnDialog->OnInitDialog(hDlg) )
+	    SetWindowLong( hDlg, GW_USERDATA, (ULONG)lParam ); 
+		if ( !((CDsnDialog*)lParam)->OnInitDialog( hDlg ) )
 			return FALSE;
-
-		m_ptDsnDialog->UpdateData(hDlg, FALSE);
-
+		((CDsnDialog*)lParam)->UpdateData( hDlg, FALSE );
 		return TRUE;
 
 	case WM_COMMAND:
-        switch (LOWORD(wParam)) 
+        switch ( LOWORD( wParam ) ) 
 		{
         case IDCANCEL:
-			EndDialog(hDlg, FALSE);
-			return(TRUE);
+			EndDialog( hDlg, FALSE );
+			return TRUE;
 
 		case IDC_FIND_FILE:
-			m_ptDsnDialog->UpdateData(hDlg);
-			if ( m_ptDsnDialog->OnFindFile() )
-				m_ptDsnDialog->UpdateData(hDlg, FALSE);
+			dsnDialog->UpdateData( hDlg );
+			if ( dsnDialog->OnFindFile() )
+				dsnDialog->UpdateData( hDlg, FALSE );
 			break;
 
 		case IDC_FIND_FILE_CLIENT:
-			m_ptDsnDialog->UpdateData(hDlg);
-			if ( m_ptDsnDialog->OnFindFileClient() )
-				m_ptDsnDialog->UpdateData(hDlg, FALSE);
+			dsnDialog->UpdateData( hDlg );
+			if ( dsnDialog->OnFindFileClient() )
+				dsnDialog->UpdateData( hDlg, FALSE );
+			break;
+
+        case IDC_BUTTON_SERVICE:
+			{
+				CServiceTabCtrl dialog( dsnDialog->m_hWndDlg );
+
+				dsnDialog->UpdateData( hDlg );
+				dialog.client = dsnDialog->m_client;
+				dialog.database = dsnDialog->m_database;
+				dialog.user = dsnDialog->m_user;
+				dialog.password = dsnDialog->m_password;
+				dialog.role = dsnDialog->m_role;
+
+				dialog.DoModal();
+			}
 			break;
 
         case IDC_TEST_CONNECTION:
-			m_ptDsnDialog->OnTestConnection(hDlg);
+			dsnDialog->UpdateData( hDlg );
+			dsnDialog->OnTestConnection( hDlg );
 			break;
 
 		case IDC_DIALECT1:
-			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE);
-			m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AUTOQUOTED);
+			dsnDialog->SetDisabledDlgItem( hDlg, IDC_CHECK_SENSITIVE );
+			dsnDialog->SetDisabledDlgItem( hDlg, IDC_CHECK_AUTOQUOTED );
 			break;
 
 		case IDC_DIALECT3:
-			m_ptDsnDialog->UpdateData(hDlg);
-			if ( m_ptDsnDialog->m_quoted )
+			dsnDialog->UpdateData( hDlg );
+			if ( dsnDialog->m_quoted )
 			{
-				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE, FALSE);
-				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AUTOQUOTED, FALSE);
+				dsnDialog->SetDisabledDlgItem( hDlg, IDC_CHECK_SENSITIVE, FALSE );
+				dsnDialog->SetDisabledDlgItem( hDlg, IDC_CHECK_AUTOQUOTED, FALSE );
 			}
 			break;
 
 		case IDC_CHECK_QUOTED:
-			m_ptDsnDialog->UpdateData(hDlg);
-			if ( !m_ptDsnDialog->m_quoted )
+			dsnDialog->UpdateData( hDlg );
+			if ( !dsnDialog->m_quoted )
 			{
-				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE);
-				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AUTOQUOTED);
+				dsnDialog->SetDisabledDlgItem( hDlg, IDC_CHECK_SENSITIVE );
+				dsnDialog->SetDisabledDlgItem( hDlg, IDC_CHECK_AUTOQUOTED );
 			}
-			else if ( m_ptDsnDialog->m_dialect3 )
+			else if ( dsnDialog->m_dialect3 )
 			{
-				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_SENSITIVE, FALSE);
-				m_ptDsnDialog->SetDisabledDlgItem(hDlg, IDC_CHECK_AUTOQUOTED, FALSE);
+				dsnDialog->SetDisabledDlgItem( hDlg, IDC_CHECK_SENSITIVE, FALSE );
+				dsnDialog->SetDisabledDlgItem( hDlg, IDC_CHECK_AUTOQUOTED, FALSE );
+			}
+			break;
+
+		case IDC_CHECK_NOWAIT:
+			dsnDialog->UpdateData( hDlg );
+			if ( !dsnDialog->m_nowait )
+			{
+				EnableWindow( GetDlgItem( hDlg, IDC_LOCKTIMEOUT ), TRUE );
+				dsnDialog->SetDisabledDlgItem( hDlg, IDC_STATIC_LOCKTIMEOUT, FALSE );
+			}
+			else
+			{
+				EnableWindow( GetDlgItem( hDlg, IDC_LOCKTIMEOUT ), FALSE );
+				dsnDialog->SetDisabledDlgItem( hDlg, IDC_STATIC_LOCKTIMEOUT );
 			}
 			break;
 
         case IDC_HELP_ODBC:
-			m_ptDsnDialog->WinHtmlHelp( hDlg );
+			dsnDialog->WinHtmlHelp( hDlg );
 			break;
 
         case IDOK:
-			m_ptDsnDialog->UpdateData(hDlg);
-            EndDialog(hDlg, TRUE);
+			dsnDialog->UpdateData( hDlg );
+			EndDialog( hDlg, TRUE );
             return TRUE;
         }
         break;
@@ -609,14 +677,7 @@ BOOL CALLBACK wndprocDsnDialog( HWND hDlg, UINT message, WORD wParam, LONG lPara
     return FALSE ;
 }
 
-#ifdef _WIN32
-
-typedef Connection* (*ConnectFn)();
-
-int CDsnDialog::getDriverBuildKey()
-{
-	return MAJOR_VERSION * 1000000 + MINOR_VERSION * 10000 + BUILDNUM_VERSION;
-}
+#ifdef _WINDOWS
 
 void CDsnDialog::removeNameFileDBfromMessage(char * message)
 {
@@ -641,94 +702,71 @@ void CDsnDialog::removeNameFileDBfromMessage(char * message)
 	}
 }
 
-void CDsnDialog::OnTestConnection(HWND hDlg)
+void CDsnDialog::OnTestConnection( HWND hDlg )
 {
-	Connection	* connection = NULL;
-	Properties *properties = NULL;
-	HINSTANCE libraryHandle;
     char strHeadDlg[256];
 
-	GetWindowText(hDlg,strHeadDlg,sizeof(strHeadDlg));
+	GetWindowText( hDlg, strHeadDlg, sizeof ( strHeadDlg ) );
 
 	try
 	{
-		UpdateData(hDlg);
+		CServiceClient services;
 
-		libraryHandle = LoadLibrary ((const char *)m_driver);
-		if ( !libraryHandle )
+		UpdateData( hDlg );
+
+		if ( !services.initServices( m_driver ) )
 		{
 			JString text;
-			text.Format ( _TR( IDS_ERROR_MESSAGE_01, "Unable to connect to data source: library '%s' failed to load" ), (const char *)m_driver);
-			MessageBox(hDlg, text, TEXT(strHeadDlg), MB_ICONERROR|MB_OK);
-			return;
-		}
-#ifdef __BORLANDC__
-		ConnectFn fn = (ConnectFn) GetProcAddress (libraryHandle, "_createConnection");
-#else
-		ConnectFn fn = (ConnectFn) GetProcAddress (libraryHandle, "createConnection");
-#endif
-		if (!fn)
-		{
-			JString text;
-			text.Format ( _TR( IDS_ERROR_MESSAGE_02, "Unable to connect to data source %s: can't find entrypoint 'createConnection'" ) );
-			MessageBox(hDlg, text, TEXT(strHeadDlg), MB_ICONERROR|MB_OK);
+			text.Format ( _TR( IDS_ERROR_MESSAGE_01, "Unable to connect to data source: library '%s' failed to load" ), (const char *)m_driver );
+			MessageBox( hDlg, text, TEXT(strHeadDlg), MB_ICONERROR|MB_OK);
 			return;
 		}
 
-		connection = (fn)();
-
-		if ( getDriverBuildKey() != connection->getDriverBuildKey() )
+		if ( !services.checkVersion() )
 		{
-			connection->close();
-			connection = NULL;
-
-			FreeLibrary(libraryHandle);
-			libraryHandle = NULL;
-
 			JString text;
-			text.Format ( _TR( IDS_ERROR_MESSAGE_03, " Unable to load %s Library : can't find ver. %s " ), (const char *)m_driver, DRIVER_VERSION);
-			MessageBox(hDlg, (const char*)text, _TR( IDS_MESSAGE_02, "Connection failed!" ), MB_ICONINFORMATION|MB_OK);
+			text.Format ( _TR( IDS_ERROR_MESSAGE_03, " Unable to load %s Library : can't find ver. %s " ), (const char *)m_driver, DRIVER_VERSION );
+			MessageBox( hDlg, (const char*)text, _TR( IDS_MESSAGE_02, "Connection failed!" ), MB_ICONINFORMATION|MB_OK);
 			return;
 		}
 
-		properties = connection->allocProperties();
-		if ( !m_name.IsEmpty() )
-			properties->putValue ("user", (const char*)m_user);
+		if ( !m_user.IsEmpty() )
+			services.putParameterValue( SETUP_USER, m_user );
 		if ( !m_password.IsEmpty() )
-			properties->putValue ("password", (const char*)m_password);
+			services.putParameterValue( SETUP_PASSWORD, m_password );
 		if ( !m_role.IsEmpty() )
-			properties->putValue ("role", (const char*)m_role);
+			services.putParameterValue( SETUP_ROLE, m_role );
 		if ( !m_charset.IsEmpty() )
-			properties->putValue ("charset", (const char*)m_charset);
+			services.putParameterValue( KEY_DSN_CHARSET, m_charset );
 		if ( !m_client.IsEmpty() )
-			properties->putValue ("client", (const char*)m_client);
+			services.putParameterValue( SETUP_CLIENT, m_client );
+		
+		services.putParameterValue( SETUP_DIALECT, m_dialect3 ? "3" : "1" );
 
-		if ( m_database.IsEmpty() )
-			m_database = "<empty>";
+		if ( !m_database.IsEmpty() )
+			services.putParameterValue( SETUP_DBNAME, m_database );
 
-		connection->openDatabase ( (const char*)m_database, properties );
-		properties->release();
-		connection->close();
-		connection = NULL;
-		MessageBox(hDlg, _TR( IDS_MESSAGE_01, "Connection successful!" ), TEXT(strHeadDlg), MB_ICONINFORMATION|MB_OK);
+		if ( m_database.IsEmpty() || !services.openDatabase() )
+		{
+			JString text;
+			text.Format ( _TR( IDS_ERROR_MESSAGE_20, "Open database '%s' failed" ), (const char *)m_database );
+			MessageBox( hDlg, text, TEXT( strHeadDlg ), MB_ICONERROR | MB_OK );
+			return;
+		}
+
+		MessageBox( hDlg, _TR( IDS_MESSAGE_01, "Connection successful!" ), TEXT( strHeadDlg ), MB_ICONINFORMATION | MB_OK );
 	}
 	catch ( std::exception &ex )
 	{
 		SQLException &exception = (SQLException&)ex;
 		char buffer[2048];
 		JString text = exception.getText();
-		if (properties)
-			properties->release();
-		if ( connection )
-			connection->close();
 
 		sprintf( buffer, "%s\n%s", _TR( IDS_MESSAGE_02, "Connection failed!" ), (const char*)text );
 		removeNameFileDBfromMessage ( buffer );
 
-		MessageBox(hDlg, TEXT(buffer), TEXT(strHeadDlg), MB_ICONERROR|MB_OK);
+		MessageBox( hDlg, TEXT( buffer ), TEXT( strHeadDlg ), MB_ICONERROR | MB_OK );
 	}
-
-	FreeLibrary ( libraryHandle );
 }
 #endif
 
@@ -776,92 +814,13 @@ void ProcessCDError(DWORD dwErrorCode, HWND hWnd)
 	MessageBox( hWnd, stringID, TEXT( _TR( IDS_DLG_TITLE_SETUP, "FireBird ODBC Setup" ) ), MB_OK );
 }
 
-int nCopyAnsiToWideChar (LPWORD lpWCStr, LPCSTR lpAnsiIn)
+int CDsnDialog::DoModal()
 {
-  int cchAnsi = lstrlen(lpAnsiIn);
-  return MultiByteToWideChar(GetACP(), MB_PRECOMPOSED, lpAnsiIn, cchAnsi,(LPWSTR) lpWCStr, cchAnsi) + 1;
-}
-
-LPWORD lpwAlign ( LPWORD lpIn)
-{
-  ULONG ul;
-
-  ul = (ULONG) lpIn;
-  ul +=3;
-  ul >>=2;
-  ul <<=2;
-  return (LPWORD) ul;
-}
-
-
-#define TMP_COMTROL(CONTROL,STRTEXT,CTRL_ID,X,Y,CX,CY,STYLE)	\
-	p = lpwAlign (p);											\
-																\
-	lStyle = STYLE;												\
-	*p++ = LOWORD (lStyle);										\
-	*p++ = HIWORD (lStyle);										\
-	*p++ = 0;			/* LOWORD (lExtendedStyle) */			\
-	*p++ = 0;			/* HIWORD (lExtendedStyle) */			\
-	*p++ = X;			/* x  */								\
-	*p++ = Y;			/* y  */								\
-	*p++ = CX;			/* cx */								\
-	*p++ = CY;			/* cy */								\
-	*p++ = CTRL_ID;		/* ID */								\
-																\
-	*p++ = (WORD)0xffff;										\
-	*p++ = (WORD)CONTROL;										\
-																\
-	/* copy the text of the item */								\
-	nchar = nCopyAnsiToWideChar (p, TEXT(STRTEXT));				\
-	p += nchar;													\
-																\
-	*p++ = 0;  /* advance pointer over nExtraStuff WORD	*/		\
-
-
-//    PUSHBUTTON      "Browse",IDC_FIND_FILE,189,42,36,14
-#define TMP_PUSHBUTTON(STRTEXT,ID,X,Y,CX,CY) \
-	TMP_COMTROL(0x0080,STRTEXT,ID,X,Y,CX,CY, (BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | WS_TABSTOP) )
-
-#define TMP_DEFPUSHBUTTON(STRTEXT,ID,X,Y,CX,CY)	\
-	TMP_COMTROL(0x0080,STRTEXT,ID,X,Y,CX,CY, (BS_DEFPUSHBUTTON | WS_VISIBLE | WS_CHILD | WS_TABSTOP) )
-
-//    EDITTEXT        IDC_NAME,7,17,102,12,ES_AUTOHSCROLL
-#define TMP_EDITTEXT(ID,X,Y,CX,CY,STYLE) \
-	TMP_COMTROL(0x0081,"",ID,X,Y,CX,CY, 0x50810080|STYLE )
-
-//    COMBOBOX        IDC_DRIVER,123,17,102,47,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-#define TMP_COMBOBOX(ID,X,Y,CX,CY,STYLE) \
-	TMP_COMTROL(0x0085,"",ID,X,Y,CX,CY, (STYLE | WS_VISIBLE | WS_CHILD ) )
-
-//    LTEXT           "Data Source Name (DSN)",IDC_STATIC,7,7,83,8
-#define TMP_LTEXT(STRTEXT,ID,X,Y,CX,CY)	\
-	TMP_COMTROL(0x0082,STRTEXT,(short)ID,X,Y,CX,CY, ( WS_VISIBLE | WS_CHILD ) )
-
-//    GROUPBOX        "Options",IDC_STATIC,7,111,223,49
-#define TMP_GROUPBOX(STRTEXT,ID,X,Y,CX,CY) \
-	TMP_COMTROL(0x0080,STRTEXT,(short)ID,X,Y,CX,CY, (BS_GROUPBOX | WS_VISIBLE | WS_CHILD | WS_TABSTOP) )
-
-//    CONTROL         "read (default write)",IDC_CHECK_READ,"Button", BS_AUTOCHECKBOX | WS_TABSTOP,18,129,69,10
-#define TMP_BUTTONCONTROL(STRTEXT,ID,NAME_CTRL,STYLE,X,Y,CX,CY) \
-	TMP_COMTROL(0x0080,STRTEXT,ID,X,Y,CX,CY, 0x50010003 )
-
-//    CONTROL         "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,104,154,16,10
-#define TMP_RADIOCONTROL(STRTEXT,ID,NAME_CTRL,STYLE,X,Y,CX,CY) \
-	TMP_COMTROL(0x0080,STRTEXT,ID,X,Y,CX,CY, 0x50000009 )
-
-//IDD_DSN_PROPERTIES DIALOG DISCARDABLE  0, 0, 237, 186
-//STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-//CAPTION "FireBird ODBC Setup"
-//FONT 8, "MS Sans Serif"
-
-int DialogBoxDynamic()
-{
-	HWND hwnd = NULL;
 	WORD  *p, *pdlgtemplate;
 	int   nchar;
 	DWORD lStyle;
 
-	pdlgtemplate = p = (PWORD) LocalAlloc (LPTR, 4096);
+	pdlgtemplate = p = (PWORD)LocalAlloc( LPTR, 4096 );
 	lStyle = DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE;
 
 	*p++ = LOWORD (lStyle);
@@ -869,16 +828,16 @@ int DialogBoxDynamic()
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 34;         // NumberOfItems
+	*p++ = 42;         // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
 	*p++ = 310;        // cx
-	*p++ = 221;        // cy
+	*p++ = 252;        // cy
 	*p++ = 0;          // Menu
 	*p++ = 0;          // Class
 
-	/* copy the title of the dialog */
+	// copy the title of the dialog
 	nchar = nCopyAnsiToWideChar (p, TEXT( _TR( IDS_DLG_TITLE_SETUP, "FireBird ODBC Setup" ) ) );
 	p += nchar;
 
@@ -888,40 +847,48 @@ int DialogBoxDynamic()
 
     TMP_EDITTEXT      ( IDC_NAME,7,12,184,12,ES_AUTOHSCROLL )
     TMP_COMBOBOX      ( IDC_DRIVER,196,12,107,47,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
-    TMP_EDITTEXT      ( IDC_DATABASE,7,37,231,12,ES_AUTOHSCROLL )
-    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_FIND_FILE, "Browse" ), IDC_FIND_FILE,243,36,60,14 )
-    TMP_EDITTEXT      ( IDC_CLIENT,7,62,231,12,ES_AUTOHSCROLL )
-    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_FIND_FILE, "Browse" ), IDC_FIND_FILE_CLIENT,243,61,60,14 )
-    TMP_EDITTEXT      ( IDC_USER,7,87,107,12,ES_UPPERCASE | ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_PASSWORD,118,87,74,12,ES_PASSWORD | ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_ROLE,196,87,107,12,ES_AUTOHSCROLL )
-    TMP_COMBOBOX      ( IDC_CHARSET,7,112,100,120,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
-    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_READ, "read (default write)" ), IDC_CHECK_READ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,144,136,10 )
-    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_NOWAIT, "nowait (default wait)" ), IDC_CHECK_NOWAIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,154,136,10 )
-    TMP_DEFPUSHBUTTON ( _TR( IDS_BUTTON_OK, "OK" ), IDOK,86,200,60,14 )
-    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_CANCEL, "Cancel" ), IDCANCEL,154,200,60,14 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_DESCRIPTION, "Description" ), IDC_STATIC,7,26,218,8 )
+    TMP_EDITTEXT      ( IDC_DESCRIPTION,7,36,296,12,ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_DATABASE,7,61,231,12,ES_AUTOHSCROLL )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_FIND_FILE, "Browse" ), IDC_FIND_FILE,243,60,60,14 )
+    TMP_EDITTEXT      ( IDC_CLIENT,7,86,231,12,ES_AUTOHSCROLL )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_FIND_FILE, "Browse" ), IDC_FIND_FILE_CLIENT,243,85,60,14 )
+    TMP_EDITTEXT      ( IDC_USER,7,111,107,12,ES_UPPERCASE | ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_PASSWORD,118,111,74,12,ES_PASSWORD | ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_ROLE,196,111,107,12,ES_AUTOHSCROLL )
+    TMP_COMBOBOX      ( IDC_CHARSET,7,136,100,120,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_READ, "read (default write)" ), IDC_CHECK_READ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,168,136,10 )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_NOWAIT, "nowait (default wait)" ), IDC_CHECK_NOWAIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,178,136,10 )
+    TMP_EDITTEXT      ( IDC_LOCKTIMEOUT,24,188,23,10,ES_AUTOHSCROLL )
+    TMP_LTEXT         ( _TR( IDS_STATIC_LOCKTIMEOUT, "Lock Timeout" ), IDC_STATIC_LOCKTIMEOUT,50,189,86,8 )
+    TMP_DEFPUSHBUTTON ( _TR( IDS_BUTTON_OK, "OK" ), IDOK,86,233,60,14 )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_CANCEL, "Cancel" ), IDCANCEL,154,233,60,14 )
     TMP_LTEXT         ( _TR( IDS_STATIC_DSN, "Data Source Name (DSN)" ), IDC_STATIC,7,2,167,8 )
-    TMP_LTEXT         ( _TR( IDS_STATIC_DATABASE, "Database" ), IDC_STATIC,7,27,218,8 )
-    TMP_LTEXT         ( _TR( IDS_STATIC_ACCOUNT, "Database Account" ), IDC_STATIC,7,77,107,8 )
-    TMP_LTEXT         ( _TR( IDS_STATIC_PASSWORD, "Password" ), IDC_STATIC,119,77,72,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_DATABASE, "Database" ), IDC_STATIC,7,51,218,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_ACCOUNT, "Database Account" ), IDC_STATIC,7,101,107,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_PASSWORD, "Password" ), IDC_STATIC,119,101,72,8 )
     TMP_LTEXT         ( _TR( IDS_STATIC_DRIVER, "Driver" ), IDC_STATIC,197,2,103,8 )
-    TMP_LTEXT         ( _TR( IDS_STATIC_ROLE, "Role" ), IDC_STATIC,197,77,105,8 )
-    TMP_LTEXT         ( _TR( IDS_STATIC_CHARSET, "Character Set" ), IDC_STATIC,7,102,98,8 )
-    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_OPTIONS, "Options" ), IDC_STATIC,7,127,296,68 )
-    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_INIT_TRANSACTION, "Transaction" ), IDC_STATIC,10,135,142,33 )
-    TMP_LTEXT         ( _TR( IDS_STATIC_CLIENT, "Client" ), IDC_STATIC,7,52,218,8 )
-    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_DIALECT, "Dialect" ), IDC_STATIC,10,169,142,23 )
-    TMP_RADIOCONTROL  ( "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,61,179,16,10 )
-    TMP_RADIOCONTROL  ( "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,91,179,16,10 )
-    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_EXT_PROPERTY, "Extended identifier properties" ), IDC_STATIC,154,135,146,57 )
-    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_QUOTED, "quoted identifiers" ), IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,145,139,9 )
-    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_SENSITIVE, "sensitive identifier" ), IDC_CHECK_SENSITIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,155,139,9 )
-    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_AUTOQUOTED, "autoquoted identifier" ), IDC_CHECK_AUTOQUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,165,139,9 )
-    TMP_COMBOBOX      ( IDC_COMBOBOX_USE_SCHEMA,159,176,136,60,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
-    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_TEST_CONNECTION, "Test connection" ), IDC_TEST_CONNECTION,206,106,97,18 )
-    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_HELP_ODBC, "Help" ), IDC_HELP_ODBC,243,200,60,14 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_ROLE, "Role" ), IDC_STATIC,197,101,105,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_CHARSET, "Character Set" ), IDC_STATIC,7,126,98,8 )
+    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_OPTIONS, "Options" ), IDC_STATIC,7,151,296,77 )
+    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_INIT_TRANSACTION, "Transaction" ), IDC_STATIC,10,159,142,42 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_CLIENT, "Client" ), IDC_STATIC,7,76,218,8 )
+    TMP_GROUPBOX      ( "", IDC_STATIC,10,196,142,17 )
+    TMP_LTEXT         ( "Dialect", IDC_STATIC,14,202,41,10 )
+    TMP_RADIOCONTROL  ( "3",IDC_DIALECT3,"Button",BS_AUTORADIOBUTTON,61,202,16,10 )
+    TMP_RADIOCONTROL  ( "1",IDC_DIALECT1,"Button",BS_AUTORADIOBUTTON,91,202,16,10 )
+    TMP_GROUPBOX      ( "", IDC_STATIC,10,208,142,17 )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_SFTHREAD, "safe thread" ), IDC_CHECK_SFTHREAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,214,136,10 )
+    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_EXT_PROPERTY, "Extended identifier properties" ), IDC_STATIC,154,159,146,66 )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_QUOTED, "quoted identifiers" ), IDC_CHECK_QUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,169,139,9 )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_SENSITIVE, "sensitive identifier" ), IDC_CHECK_SENSITIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,181,139,9 )
+    TMP_BUTTONCONTROL ( _TR( IDS_CHECK_AUTOQUOTED, "autoquoted identifier" ), IDC_CHECK_AUTOQUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,193,139,9 )
+    TMP_COMBOBOX      ( IDC_COMBOBOX_USE_SCHEMA,159,207,136,60,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_TEST_CONNECTION, "Test connection" ), IDC_TEST_CONNECTION,216,130,87,18 )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_SERVICES, "Services" ), IDC_BUTTON_SERVICE,118,130,87,18 )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_HELP_ODBC, "Help" ), IDC_HELP_ODBC,243,233,60,14 )
 
-	int nRet = DialogBoxIndirect(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hwnd, (DLGPROC)wndprocDsnDialog);
+	int nRet = DialogBoxIndirectParam(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, m_hWndParent, (DLGPROC)wndprocDsnDialog, (ULONG)this );
 	LocalFree (LocalHandle (pdlgtemplate));
 
 	return nRet;

@@ -60,6 +60,7 @@ public:
 	int length();
 	void getHexString(long pos, long length, void * address);
 	void getBytes (long pos, long length, void *address);
+	void getBytesW (long pos, long length, void *address);
 	void getBinary (long pos, long length, void * address);
 	BinaryBlob (int minSegmentSize);
 	BinaryBlob();

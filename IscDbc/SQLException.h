@@ -42,6 +42,7 @@ class DllExport SQLException : public std::exception
 public:
 	//virtual void		addRef() = 0;
 	//virtual int		release() = 0;
+	virtual int			getFbcode () = 0;
 	virtual int			getSqlcode () = 0;
 	virtual const char	*getText() = 0;
 	virtual const char	*getTrace() = 0;

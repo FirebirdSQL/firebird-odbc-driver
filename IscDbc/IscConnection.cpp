@@ -45,6 +45,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <time.h>
+#include <locale.h>
 #include <string.h>
 #include "IscDbc.h"
 #include "EnvShare.h"
@@ -53,13 +54,16 @@
 #include "IscTablePrivilegesResultSet.h"
 #include "SQLError.h"
 #include "IscOdbcStatement.h"
+#include "IscUserEvents.h"
 #include "IscCallableStatement.h"
 #include "IscDatabaseMetaData.h"
 #include "Parameters.h"
+#include "ParametersEvents.h"
 #include "Attachment.h"
 #include "Mlist.h"
 #include "SupportFunctions.h"
 #include "../SetupAttributes.h"
+#include "MultibyteConvert.h"
 
 namespace IscDbcLibrary {
 
@@ -75,7 +79,23 @@ extern EnvShare environmentShare;
 
 extern "C" Connection* createConnection()
 {
+	setlocale( LC_ALL, ".ACP" );
 	return new IscConnection;
+}
+
+InfoTransaction::InfoTransaction()
+{
+	transactionHandle = NULL;
+	transactionIsolation = 0;
+	transactionPending = false;
+	autoCommit = true;
+	transactionExtInit = 0;
+	nodeParamTransaction = NULL;
+}
+
+InfoTransaction::~InfoTransaction()
+{
+	delete nodeParamTransaction;
 }
 
 IscConnection::IscConnection()
@@ -94,14 +114,11 @@ void IscConnection::init()
 {
 	useCount = 1;
 	metaData = NULL;
-	transactionHandle = NULL;
-	transactionIsolation = 0;
-	transactionPending = false;
-	autoCommit = true;
 	shareConnected = false;
 	attachment = NULL;
-	transactionExtInit = 0;
+	userEvents = NULL;
 	useAppOdbcVersion = 3; // SQL_OV_ODBC3
+	tmpParamTransaction = NULL;
 }
 
 IscConnection::~IscConnection()
@@ -111,6 +128,11 @@ IscConnection::~IscConnection()
 
 	if (attachment)
 		attachment->release();
+
+	delete tmpParamTransaction;
+
+	if ( userEvents )
+		userEvents->release();
 }
 
 bool IscConnection::isConnected()
@@ -153,42 +175,77 @@ PreparedStatement* IscConnection::prepareStatement(const char * sqlString)
 	return statement;
 }
 
+UserEvents* IscConnection::prepareUserEvents( PropertiesEvents *context, callbackEvent astRoutine, void *userAppData )
+{
+	if ( userEvents )
+		throw SQLEXCEPTION( APPLICATION_ERROR, "this is executed" );
+
+	try
+	{
+		userEvents = new IscUserEvents( this, context, astRoutine, userAppData );
+		// it's used App user and IscConnection
+		// We have useCount == 2
+		userEvents->addRef();
+	}
+	catch (...)
+	{
+		delete userEvents;
+		throw;
+	}
+
+	return userEvents;
+}
+
 void IscConnection::commit()
 {
-	if (transactionHandle)
-	{
-		ISC_STATUS statusVector [20];
-		GDS->_commit_transaction (statusVector, &transactionHandle);
+	InfoTransaction	&tr = transactionInfo;
 
-		if (statusVector [1])
+	if ( tr.transactionHandle )
+	{
+		ISC_STATUS statusVector[20];
+		GDS->_commit_transaction( statusVector, &tr.transactionHandle );
+
+		if ( statusVector[1] )
 		{
 			rollback();
-			throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
+			THROW_ISC_EXCEPTION ( this, statusVector );
 		}
 	}
-	transactionPending = false;
+	tr.transactionPending = false;
 }
 
 void IscConnection::rollback()
 {
-	if (transactionHandle)
-	{
-		ISC_STATUS statusVector [20];
-		GDS->_rollback_transaction (statusVector, &transactionHandle);
+	InfoTransaction	&tr = transactionInfo;
 
-		if (statusVector [1])
-			throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
+	if ( tr.transactionHandle )
+	{
+		ISC_STATUS statusVector[20];
+		GDS->_rollback_transaction( statusVector, &tr.transactionHandle );
+
+		if ( statusVector[1] )
+			THROW_ISC_EXCEPTION ( this, statusVector );
 	}
-	transactionPending = false;
+	tr.transactionPending = false;
 }
 
 void IscConnection::prepareTransaction()
 {
+	InfoTransaction	&tr = transactionInfo;
+
+	if ( tr.transactionHandle )
+	{
+		ISC_STATUS statusVector[20];
+		GDS->_prepare_transaction2( statusVector, &tr.transactionHandle, 0, 0 );
+
+		if ( statusVector[1] )
+			THROW_ISC_EXCEPTION ( this, statusVector );
+	}
 }
 
 bool IscConnection::getTransactionPending()
 {
-	return transactionPending;
+	return 	transactionInfo.transactionPending;
 }
 
 void* IscConnection::getHandleDb()
@@ -198,31 +255,33 @@ void* IscConnection::getHandleDb()
 
 void* IscConnection::startTransaction()
 {
+	InfoTransaction	&tr = transactionInfo;
+
 	if ( shareConnected )
 	{
 		if ( !attachment->transactionHandle )
 		{
 			environmentShare.startTransaction();
 			// ASSERT (!autoCommit)
-			transactionPending = true;
+			tr.transactionPending = true;
 		}
 
 		return attachment->transactionHandle;
 	}
 
-    if (transactionHandle)
-        return transactionHandle;
+    if ( tr.transactionHandle )
+        return tr.transactionHandle;
 
-    ISC_STATUS statusVector [20];
+    ISC_STATUS statusVector[20];
 
-    char    iscTpb[5];
-	int		count = sizeof( iscTpb );
+    char    iscTpb[9];
+	int		count = sizeof( iscTpb ) - 4; // 4 it's size block for Lock Timeout Wait Transactions
 
     iscTpb[0] = isc_tpb_version3;
-    iscTpb[1] = transactionExtInit & TRA_ro ? isc_tpb_read : isc_tpb_write;
-    iscTpb[2] = transactionExtInit & TRA_nw ? isc_tpb_nowait : isc_tpb_wait;
+    iscTpb[1] = tr.transactionExtInit & TRA_ro ? isc_tpb_read : isc_tpb_write;
+    iscTpb[2] = tr.transactionExtInit & TRA_nw ? isc_tpb_nowait : isc_tpb_wait;
     /* Isolation level */
-    switch( transactionIsolation )
+    switch( tr.transactionIsolation )
     {
         case 0x00000008L:
             // SQL_TXN_SERIALIZABLE:
@@ -250,16 +309,30 @@ void* IscConnection::startTransaction()
             break;
     }
 
-    GDS->_start_transaction( statusVector, &transactionHandle, 1, &attachment->databaseHandle,
+	if ( !(tr.transactionExtInit & TRA_nw) 
+		&& attachment->isFirebirdVer2_0()
+		&& attachment->getUseLockTimeoutWaitTransactions() )
+	{
+		char *pt = &iscTpb[count];
+
+		*pt++ = isc_tpb_lock_timeout;
+		*pt++ = sizeof ( short );
+		*pt++ = (char)attachment->getUseLockTimeoutWaitTransactions();
+		*pt++ = (char)(attachment->getUseLockTimeoutWaitTransactions() >> 8);
+
+		count += 4;
+	}
+
+    GDS->_start_transaction( statusVector, &tr.transactionHandle, 1, &attachment->databaseHandle,
             count, iscTpb );
 
-    if (statusVector [1])
-        throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
+    if ( statusVector [1] )
+		THROW_ISC_EXCEPTION ( this, statusVector );
 
-	if (!autoCommit)
-		transactionPending = true;
+	if ( !tr.autoCommit )
+		tr.transactionPending = true;
 
-    return transactionHandle;
+    return tr.transactionHandle;
 }
 
 Statement* IscConnection::createStatement()
@@ -479,6 +552,408 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 	return -1;
 }
 
+#define IS_MATCH_EXT(token)	isMatchExt( ptOut, token, sizeof ( token ) - 1 )
+
+inline
+bool IscConnection::isMatchExt( char *& string, const char *keyWord, const int length )
+{
+	if ( ( length == 1 && *string == *keyWord )
+		|| ( !strncasecmp( string, keyWord, length ) && IS_END_TOKEN( *(string + length) ) ) )
+	{
+		string += length;
+		SKIP_WHITE ( string );
+		return true;
+	}
+	return false;
+}
+
+bool IscConnection::paramTransactionModes( char *& string, short &transFlags, bool expectIsolation )
+{
+	char *& ptOut = string;
+
+	if ( IS_MATCH_EXT( "READ" ) ) 
+	{
+		if ( IS_MATCH_EXT( "ONLY" ) ) 
+		{
+			if ( expectIsolation )
+				throw SQLEXCEPTION( SYNTAX_ERROR, "after SNAPSHOT not ONLY" );
+
+			transFlags |= TRA_ro;
+			return true;
+		}
+		else if ( IS_MATCH_EXT( "WRITE" ) ) 
+		{
+			if ( expectIsolation )
+				throw SQLEXCEPTION( SYNTAX_ERROR, "after SNAPSHOT not WRITE" );
+
+			return true;
+		}
+
+		if ( !( IS_MATCH_EXT( "COMMITTED" ) || IS_MATCH_EXT( "UNCOMMITTED" ) ) )
+			throw SQLEXCEPTION( SYNTAX_ERROR, "should be keyword COMMITTED or UNCOMMITTED" );
+	
+		transFlags |= TRA_read_committed;
+
+		if ( IS_MATCH_EXT( "NO" ) ) 
+		{
+			if ( IS_MATCH_EXT( "RECORD_VERSION" ) )
+				return true;
+			else if ( IS_MATCH_EXT( "WAIT" ) ) 
+			{
+				transFlags |= TRA_nw;
+				return true;
+			}
+
+			throw SQLEXCEPTION( SYNTAX_ERROR, "should be keyword WAIT or VERSION" );
+		}
+
+		if ( IS_MATCH_EXT( "RECORD_VERSION" ) )
+			transFlags |= TRA_rec_version;
+
+		return true;
+	}
+	else if ( IS_MATCH_EXT( "SNAPSHOT" ) ) 
+	{
+		if ( IS_MATCH_EXT( "TABLE" ) ) 
+		{
+			transFlags |= TRA_con;
+
+			IS_MATCH_EXT( "STABILITY" );
+		}
+		return true;
+	}
+	else if ( IS_MATCH_EXT( "REPEATABLE" ) )
+	{
+		if ( IS_MATCH_EXT( "READ" ) ) 
+		{
+			transFlags |= TRA_con;
+			return true;
+		}
+		throw SQLEXCEPTION( SYNTAX_ERROR, "should be keyword READ after REPEATABLE" );
+	}
+	else if ( IS_MATCH_EXT( "SERIALIZABLE" ) )
+	{
+		return true;
+	}
+
+	return false;
+}
+
+void IscConnection::parseReservingTable( char *& string, char *& tpbBuffer, short transFlags )
+{
+	char *saveLockMode[256];
+	int countTable = 0;
+	char lockMode = 0;
+	char *& ptOut = string;
+	char *beg = tpbBuffer + 2;
+	char *end;
+
+	while ( true )
+    {
+		saveLockMode[countTable++] = beg - 2;
+		char &lengthTableName = *(beg - 1);
+		end = beg;
+
+		while ( !IS_END_TOKEN( *ptOut ) )
+			*end++ = *ptOut++;
+
+		lengthTableName = end - beg;
+
+		SKIP_WHITE ( ptOut );
+    	//		SYNTAX_ERROR ("relation name");
+
+		char &lockLevel = *end++;
+
+		IS_MATCH_EXT( "FOR" );
+		lockLevel = (transFlags & TRA_con) ? isc_tpb_protected : isc_tpb_shared;
+		lockMode = isc_tpb_lock_read;
+
+		if ( IS_MATCH_EXT( "PROTECTED" ) )
+			lockLevel = isc_tpb_protected;
+		else if ( IS_MATCH_EXT( "EXCLUSIVE" ) )
+			lockLevel = isc_tpb_exclusive;
+		else if ( IS_MATCH_EXT( "SHARED" ) )
+			lockLevel = isc_tpb_shared;
+
+		if ( IS_MATCH_EXT( "WRITE" ) )
+		{
+			if ( transFlags & TRA_ro )
+				throw SQLEXCEPTION( SYNTAX_ERROR, "write lock requested for a read_only transaction" );
+
+			lockMode = isc_tpb_lock_write;
+		}
+		else 
+			IS_MATCH_EXT( "READ" );
+
+		if ( !( IS_MATCH_EXT( "," ) ) )
+			break;
+
+		beg = end + 2;
+	}
+
+	tpbBuffer = end;
+
+	if ( countTable )
+	{
+		//
+		// get the lock level and mode and apply them to all the
+		// relations in the list
+		//
+		do
+			*saveLockMode[--countTable] = lockMode;
+		while ( countTable );
+	}
+}
+
+int IscConnection::buildParamTransaction( char *& string, char boolDeclare )
+{
+	CNodeParamTransaction node;
+	bool localParamTransaction = false;
+	char tpbBuffer[4096]; // Note: Fb(gpre) use 4000
+	char *& ptOut = string;
+	short transFlags = 0;
+	int ret = 0;
+
+	SKIP_WHITE ( ptOut );
+
+	if ( IS_MATCH_EXT( "LOCAL" ) )
+		localParamTransaction = true;
+
+	if ( IS_MATCH_EXT( "NAME" ) )
+	{
+		int &len = node.lengthNameTransaction = 0;
+		char *end = node.nameTransaction;
+
+		while ( !IS_END_TOKEN( *ptOut ) && len < node.getMaxLengthName() )
+			*end++ = *ptOut++, len++;
+
+		SKIP_WHITE ( ptOut );
+
+		if ( IS_MATCH_EXT( "USING" ) )
+		{
+			transFlags |= TRA_inc;
+			int &len = node.lengthNameUnique = 0;
+			char *end = node.nameUnique;
+
+			while ( !IS_END_TOKEN( *ptOut ) && len < node.getMaxLengthName() )
+				*end++ = *ptOut++, len++;
+		}
+
+		if ( !*ptOut || IS_MATCH_EXT( "GO" ) )
+		{
+			if ( boolDeclare )
+				throw SQLEXCEPTION( SYNTAX_ERROR, "bad declare param transaction" );
+
+			// find ParamTransaction from Environment
+			if ( node.lengthNameTransaction )
+			{
+				if ( environmentShare.findParamTransactionFromList( node ) )
+				{
+					if ( localParamTransaction )
+					{
+						if ( !tmpParamTransaction )
+							tmpParamTransaction = new CNodeParamTransaction;
+
+						*tmpParamTransaction = node;
+						ret = -4; // for local stmt = -4
+					}
+					else
+					{
+						if ( !transactionInfo.nodeParamTransaction )
+							transactionInfo.nodeParamTransaction = new CNodeParamTransaction;
+
+						*transactionInfo.nodeParamTransaction = node;
+						ret = -5; // for connection  = -5
+					}
+
+					return ret;
+				}
+			}
+			throw SQLEXCEPTION( SYNTAX_ERROR, "transaction name not found" );
+		}
+	}
+
+	while ( true )
+	{
+		if ( IS_MATCH_EXT( "ISOLATION" ) )
+		{
+			IS_MATCH_EXT( "LEVEL" );
+
+			if ( !paramTransactionModes( ptOut, transFlags, true ) )
+				throw SQLEXCEPTION( SYNTAX_ERROR, "should be keyword SNAPSHOT" );
+
+			continue;
+		}
+
+		if ( paramTransactionModes( ptOut, transFlags, false ))
+			continue;
+
+		if ( IS_MATCH_EXT( "NO" ) )
+		{
+			if ( IS_MATCH_EXT( "WAIT" ) )
+			{
+				transFlags |= TRA_nw;
+				continue;
+			}
+			
+			if ( IS_MATCH_EXT( "RECORD_VERSION" ) )
+				throw SQLEXCEPTION( SYNTAX_ERROR, "NO RECORD_VERSION use only with READ COMMITTED" );
+
+			throw SQLEXCEPTION( SYNTAX_ERROR, "should be keyword WAIT" );
+		}
+
+		if ( IS_MATCH_EXT( "RECORD_VERSION" ) )
+			throw SQLEXCEPTION( SYNTAX_ERROR, "RECORD_VERSION use only with READ COMMITTED" );
+
+		if ( IS_MATCH_EXT( "WAIT" ) )
+		{
+			if ( IS_MATCH_EXT( "LOCK" ) )
+			{
+				if ( !IS_MATCH_EXT( "TIMEOUT" ) )
+					throw SQLEXCEPTION( SYNTAX_ERROR, "should be keyword LOCK TIMEOUT" );
+
+				char buffer[MAX_SMALLINT_LENGTH + 1];
+				int lenBuffer = 0;
+				char *end = buffer;
+
+				while ( !IS_END_TOKEN( *ptOut )
+						&& ISDIGIT( *ptOut )
+						&& lenBuffer < MAX_SMALLINT_LENGTH )
+				{
+					*end++ = *ptOut++;
+					lenBuffer++;
+				}
+
+				if ( !IS_END_TOKEN( *ptOut ) )
+					throw SQLEXCEPTION( SYNTAX_ERROR, "should be keyword LOCK TIMEOUT <value>" );
+
+				*end = '\0';
+				node.lockTimeout = atoi( buffer );
+			}
+			continue;
+		}
+                                          
+		if ( IS_MATCH_EXT( "AUTOCOMMIT" ) )
+		{
+			transFlags |= TRA_autocommit;
+			continue;
+		}
+
+		if ( IS_MATCH_EXT( "NO_AUTO_UNDO" ) )
+		{
+			transFlags |= TRA_no_auto_undo;
+			continue;
+		}
+		break;
+	}
+
+	char* text = tpbBuffer;
+	*text++ = isc_tpb_version3;
+	*text++ = (transFlags & TRA_ro) ? isc_tpb_read : isc_tpb_write;
+	if (transFlags & TRA_con)
+		*text++ = isc_tpb_consistency;
+	else if (transFlags & TRA_read_committed)
+		*text++ = isc_tpb_read_committed;
+	else
+		*text++ = isc_tpb_concurrency;
+
+	if ( transFlags & TRA_nw )
+		*text++ = isc_tpb_nowait;
+	else
+	{
+		*text++ = isc_tpb_wait;
+
+		if ( node.lockTimeout && attachment->isFirebirdVer2_0() )
+		{
+			*text++ = isc_tpb_lock_timeout;
+			*text++ = sizeof ( short );
+			*text++ = (char)node.lockTimeout;
+			*text++ = (char)(node.lockTimeout >> 8);
+		}
+	}
+
+	if ( transFlags & TRA_read_committed )
+	{
+		*text++ = (transFlags & TRA_rec_version) ?
+			isc_tpb_rec_version : isc_tpb_no_rec_version;
+	}
+
+	if (transFlags & TRA_no_auto_undo)
+		*text++ = isc_tpb_no_auto_undo;
+
+	if ( IS_MATCH_EXT( "RESERVING" ) )
+	{
+		transFlags |= TRA_rrl;
+		parseReservingTable( ptOut, text, transFlags );
+	}
+	
+	if ( IS_MATCH_EXT( "USING" ) )
+	{
+		transFlags |= TRA_inc;
+		int &len = node.lengthNameUnique = 0;
+		char *end = node.nameUnique;
+
+		while ( !IS_END_TOKEN( *ptOut ) && len < node.getMaxLengthName() )
+			*end++ = *ptOut++, len++;
+	}
+
+	int tpb_len = text - tpbBuffer;
+
+	if ( tpb_len > 0 )
+	{
+		if ( transFlags & TRA_autocommit )
+			node.autoCommit = true;
+
+		node.setTpbBuffer( tpbBuffer, tpb_len );
+
+		if ( boolDeclare )
+		{
+			if ( !node.lengthNameTransaction )
+			{
+				if ( !localParamTransaction )
+					throw SQLEXCEPTION( SYNTAX_ERROR, "bad declare param transaction" );
+
+				if ( !tmpParamTransaction )
+					tmpParamTransaction = new CNodeParamTransaction;
+
+				*tmpParamTransaction = node;
+				ret = -7; // declare for local stmt = -7
+			}
+
+			if ( node.lengthNameTransaction )
+			{
+				environmentShare.addParamTransactionToList( node );
+				ret = -6; // for all connections  = -6 it's named param Transaction
+			}
+		}
+		else if ( localParamTransaction )
+		{
+			if ( !tmpParamTransaction )
+				tmpParamTransaction = new CNodeParamTransaction;
+
+			*tmpParamTransaction = node;
+			ret = -4; // for local stmt = -4
+		}
+		else
+		{
+			ret = -5; // for connection  = -5
+
+			if ( !transactionInfo.nodeParamTransaction )
+				transactionInfo.nodeParamTransaction = new CNodeParamTransaction;
+
+			*transactionInfo.nodeParamTransaction = node;
+
+			if ( node.lengthNameTransaction )
+			{
+				environmentShare.addParamTransactionToList( node );
+				ret = -6; // for all connections  = -6 it's named param Transaction
+			}
+		}
+	}
+
+	return ret;
+}
+
 class CSchemaIdentifier
 {
 public:
@@ -658,6 +1133,9 @@ bool IscConnection::removeSchemaFromSQL( char *strSql, int lenSql, char *strSqlO
 								if ( IS_POINT( *pt ) && !deleteNode )
 								{
 									deleteNode = true;
+
+									if ( defTable )
+										ptIn = pt;
 								}
 								++pt;
 							}
@@ -928,11 +1406,33 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 
 		SKIP_WHITE ( ptOut );
 
-		if ( !strncasecmp (ptOut, "COMMIT", 6) && IS_END_TOKEN(*(ptOut + 6)) )
+		if ( IS_MATCH( ptOut, "COMMIT" ) )
 			statysModify = -1;
-		else if ( !strncasecmp (ptOut, "ROLLBACK", 8) && IS_END_TOKEN(*(ptOut + 8)) )
+		else if ( IS_MATCH( ptOut, "ROLLBACK" ) )
 			statysModify = -2;
-		else if ( !strncasecmp (ptOut, "CREATE", 6) || !strncasecmp (ptOut, "ALTER", 5) )
+		else if ( IS_MATCH_EXT( "SET" ) )
+		{
+			if ( IS_MATCH_EXT( "TRANSACTION" ) )
+			{
+				// for local stmt = -4
+				// for connection  = -5
+				// for all connections  = -6 it's named param Transaction
+				statysModify = buildParamTransaction( ptOut );
+			}
+		}
+		else if ( IS_MATCH_EXT( "DECLARE" ) )
+		{
+			char boolDeclare = true;
+
+			if ( IS_MATCH_EXT( "TRANSACTION" ) )
+			{
+				// for local stmt = -4
+				// for connection  = -5
+				// for all connections  = -6 it's named param Transaction
+				statysModify = buildParamTransaction( ptOut, boolDeclare );
+			}
+		}
+		else if ( IS_MATCH( ptOut, "CREATE" ) || IS_MATCH( ptOut, "ALTER" ) )
 		{
 			bool bContinue = true;
 
@@ -942,10 +1442,9 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 			{
 				ptOut += 6;
 
-				#define LENSTR_DATABASE 8 
 				SKIP_WHITE ( ptOut );
 
-				if ( !strncasecmp (ptOut, "DATABASE", LENSTR_DATABASE) && IS_END_TOKEN(*(ptOut+LENSTR_DATABASE)) )
+				if ( IS_MATCH( ptOut, "DATABASE" ) )
 				{
 					statysModify = -3;
 					bContinue = false;
@@ -960,13 +1459,11 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 
 					if ( *ptOut )
 					{
-						#define LENSTR_TINYINT 7 
-
-						if ( !strncasecmp (ptOut, "TINYINT", LENSTR_TINYINT) && IS_END_TOKEN(*(ptOut+LENSTR_TINYINT)) )
+						if ( IS_MATCH( ptOut, "TINYINT" ) )
 						{
 							const char * nameTinyint = "CHAR CHARACTER SET OCTETS";
 							int lenNameTinyint = 25;
-							int offset = lenNameTinyint - LENSTR_TINYINT;
+							int offset = lenNameTinyint - TOKEN_LENGTH( "TINYINT" );
 
 							memmove(ptOut + offset, ptOut, strlen(ptOut) + 1 );
 							memcpy(ptOut, nameTinyint, lenNameTinyint);
@@ -1169,6 +1666,8 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 				// Check 'oj' or 'OJ'
 				if ( *(short*)ptIn == 0x6a6f || *(short*)ptIn == 0x4a4f )
 					ptIn += 2; // 'oj'
+				else if ( IS_MATCH( ptOut, "INTERVAL" ) )
+					ptIn += 8; // 'INTERVAL'
 				else
 				{
 					ptIn += 2; // 'fn'
@@ -1295,6 +1794,21 @@ DatabaseMetaData* IscConnection::getMetaData()
 	return metaData;
 }
 
+int IscConnection::getConnectionCharsetCode()
+{
+	return attachment->charsetCode;
+}
+
+WCSTOMBS IscConnection::getConnectionWcsToMbs()
+{
+	return adressWcsToMbs( attachment->charsetCode );
+}
+
+MBSTOWCS IscConnection::getConnectionMbsToWcs()
+{
+	return adressMbsToWcs( attachment->charsetCode );
+}
+
 int IscConnection::hasRole(const char * schemaName, const char * roleName)
 {
 	NOT_YET_IMPLEMENTED;
@@ -1315,7 +1829,7 @@ void IscConnection::sqlExecuteCreateDatabase(const char * sqlString)
 	if ( GDS->_dsql_execute_immediate( statusVector, &newdb, &trans, 0, (char*)sqlString, 3, NULL ) )
     {
 		if ( statusVector[1] )
-			throw SQLEXCEPTION ( statusVector [1], getIscStatusText( statusVector ) );
+			THROW_ISC_EXCEPTION ( this, statusVector );
 	}
 	
 	GDS->_commit_transaction( statusVector, &trans );
@@ -1336,7 +1850,7 @@ void IscConnection::createDatabase(const char * dbName, Properties * properties)
 		delete attachment;
 		attachment = NULL;
 		GDS = NULL;
-		throw SQLEXCEPTION ( exception.getSqlcode() , exception.getText() );
+		throw SQLEXCEPTION ( (SqlCode)exception.getSqlcode() , exception.getText() );
 	}
 	catch (...)
 	{
@@ -1356,7 +1870,7 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 		databaseHandle = attachment->databaseHandle;
 		GDS = attachment->GDS;
 
-		if ( !attachment->isRoles && !attachment->admin )
+		if ( databaseHandle && !attachment->isRoles && !attachment->admin )
 		{
 			IscTablePrivilegesResultSet resultSet ( (IscDatabaseMetaData *)getMetaData() );
 			resultSet.allTablesAreSelectable = true;
@@ -1364,7 +1878,7 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 
 			if ( resultSet.getCountRowsStaticCursor() )
 			{
-				int len1 = strlen( attachment->userName );
+				int len1 = (int)strlen( attachment->userName );
 				int len2;
 				char *beg = resultSet.sqlda->getVarying( 5, len2 );
 				char *end = beg + len2;
@@ -1388,7 +1902,7 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 		delete attachment;
 		attachment = NULL;
 		GDS = NULL;
-		throw SQLEXCEPTION ( exception.getSqlcode() , exception.getText() );
+		throw SQLEXCEPTION ( (SqlCode)exception.getSqlcode(), exception.getFbcode(), exception.getText() );
 	}
 	catch (...)
 	{
@@ -1448,6 +1962,11 @@ Properties* IscConnection::allocProperties()
 	return new Parameters;
 }
 
+PropertiesEvents* IscConnection::allocPropertiesEvents()
+{
+	return new ParametersEvents;
+}
+
 int IscConnection::objectVersion()
 {
 	return CONNECTION_VERSION;
@@ -1465,15 +1984,17 @@ Connection* IscConnection::clone()
 
 void IscConnection::setAutoCommit(bool setting)
 {
-	if( !autoCommit && setting && transactionPending )
+	InfoTransaction	&tr = transactionInfo;
+
+	if( !tr.autoCommit && setting && tr.transactionPending )
 		commitAuto();
 
-	autoCommit = setting;
+	tr.autoCommit = setting;
 }
 
 bool IscConnection::getAutoCommit()
 {
-	return autoCommit;
+	return transactionInfo.autoCommit;
 }
 
 const char*	IscConnection::getCatalog()
@@ -1489,12 +2010,12 @@ void IscConnection::setCatalog(const char* catalog)
 
 void IscConnection::setTransactionIsolation(int level)
 {
-	transactionIsolation = level;
+	transactionInfo.transactionIsolation = level;
 }
 
 int IscConnection::getTransactionIsolation()
 {
-	return transactionIsolation;
+	return transactionInfo.transactionIsolation;
 }
 
 bool IscConnection::isClosed()
@@ -1522,7 +2043,7 @@ const char*	IscConnection::nativeSQL(const char *sqlString)
 
 void IscConnection::setExtInitTransaction(int optTpb)
 {
-	transactionExtInit = optTpb;
+	transactionInfo.transactionExtInit = optTpb;
 }
 
 EnvironmentShare* IscConnection::getEnvironmentShare()
@@ -1543,12 +2064,15 @@ void IscConnection::connectionFromEnvShare()
 
 JString IscConnection::getDatabaseServerName()
 {
-	return environmentShare.getDatabaseServerName();
+	if ( attachment->databaseServerName.IsEmpty() )
+		return environmentShare.getDatabaseServerName();
+
+	return attachment->databaseServerName;
 }
 
 int	IscConnection::getDriverBuildKey()
 {
-	return MAJOR_VERSION * 1000000 + MINOR_VERSION * 10000 + BUILDNUM_VERSION;
+	return DRIVER_BUILD_KEY;
 }
 
 void IscConnection::addRef()
@@ -1589,28 +2113,36 @@ CallableStatement* IscConnection::prepareCall(const char * sqlString)
 
 void IscConnection::commitAuto()
 {
+	bool callRetaining = false;
+
 	FOR_OBJECTS (IscStatement*, statement, &statements)
 		if ( statement->isActiveCursor() )
-		{
-			commitRetaining();
-			return;
-		}
+			callRetaining = true;
+		else if ( statement->isActiveLocalTransaction() )
+			statement->commitLocal();
 	END_FOR;
 
-	commit();
+	if ( callRetaining )
+		commitRetaining();
+	else
+		commit();
 }
 
 void IscConnection::rollbackAuto()
 {
+	bool callRetaining = false;
+
 	FOR_OBJECTS (IscStatement*, statement, &statements)
 		if ( statement->isActiveCursor() )
-		{
-			rollbackRetaining();
-			return;
-		}
+			callRetaining = true;
+		else if ( statement->isActiveLocalTransaction() )
+			statement->rollbackLocal();
 	END_FOR;
 
-	rollback();
+	if ( callRetaining )
+		rollbackRetaining();
+	else
+		rollback();
 }
 
 int IscConnection::getDatabaseDialect()
@@ -1620,34 +2152,43 @@ int IscConnection::getDatabaseDialect()
 
 void IscConnection::commitRetaining()
 {
-	if (transactionHandle)
-	{
-		ISC_STATUS statusVector [20];
-		GDS->_commit_retaining (statusVector, &transactionHandle);
+	InfoTransaction	&tr = transactionInfo;
 
-		if (statusVector [1])
+	if ( tr.transactionHandle )
+	{
+		ISC_STATUS statusVector[20];
+		GDS->_commit_retaining( statusVector, &tr.transactionHandle );
+
+		if ( statusVector[1] )
 		{
 			rollbackRetaining();
-			throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
+			THROW_ISC_EXCEPTION ( this, statusVector );
 		}
 	}
-	transactionPending = false;
+	tr.transactionPending = false;
 }
 
 void IscConnection::rollbackRetaining()
 {
-	if (transactionHandle)
-	{
-		ISC_STATUS statusVector [20];
-		GDS->_rollback_retaining (statusVector, &transactionHandle);
+	InfoTransaction	&tr = transactionInfo;
 
-		if (statusVector [1])
+	if ( tr.transactionHandle )
+	{
+		ISC_STATUS statusVector[20];
+		try
 		{
-			rollback();
-			throw SQLEXCEPTION (statusVector [1], getIscStatusText (statusVector));
+			GDS->_rollback_retaining( statusVector, &tr.transactionHandle );
+		}
+		catch (...)
+		{
+			if ( statusVector[1] )
+			{
+				rollback();
+				THROW_ISC_EXCEPTION ( this, statusVector );
+			}
 		}
 	}
-	transactionPending = false;
+	tr.transactionPending = false;
 }
 
 }; // end namespace IscDbcLibrary

@@ -28,18 +28,24 @@
 #ifndef __ISCDBC_H_
 #define __ISCDBC_H_
 
+#include <stdlib.h>
+#include <string.h>
 #include <ibase.h>
 #include "JString.h"
 #include "LoadFbClientDll.h"
 
+#ifndef SQL_BOOLEAN
+#define SQL_BOOLEAN		590
+#endif
+
 #ifndef NULL
-#define NULL		0
+#define NULL			0
 #endif
 
 #define SQLEXCEPTION		SQLError
 #define NOT_YET_IMPLEMENTED	throw SQLEXCEPTION (FEATURE_NOT_YET_IMPLEMENTED, "not yet implemented")
 #define NOT_SUPPORTED(type,rellen,rel,collen,col) throw SQLEXCEPTION (UNSUPPORTED_DATATYPE, "datatype is not supported in ODBC: %s column %*s.%*s", type,rellen,rel,collen,col)
-#define THROW_ISC_EXCEPTION(connection, statusVector) throw SQLEXCEPTION (statusVector [1], connection->getIscStatusText (statusVector))
+#define THROW_ISC_EXCEPTION(connection, statusVector) throw SQLEXCEPTION ( connection->GDS->_sqlcode( statusVector ), statusVector [1], connection->getIscStatusText (statusVector))
 #define OFFSET(type,fld)	(int)&(((type*)0)->fld)
 #define MAX(a,b)			((a > b) ? a : b)
 #define MIN(a,b)			((a < b) ? a : b)
@@ -84,10 +90,17 @@
 #define CONVERSION_CHECK_DEBUG(bool_assign)
 #endif																
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 
+#if _MSC_VER >= 1400 // VC80 and later
+#define strcasecmp		_stricmp
+#define strncasecmp		_strnicmp
+#else
 #define strcasecmp		stricmp
 #define strncasecmp		strnicmp
+#endif // _MSC_VER >= 1400
+
+#define snprintf		_snprintf
 #define fcvt			_fcvt
 #define gcvt			_gcvt
 
@@ -145,6 +158,8 @@ int getWalDatabase(IscConnection *connection, const void * info_buffer, int buff
 int strBuildStatInformations(const void * info_buffer, int bufferLength,short *lengthPtr);
 void getStatInformations(IscConnection *connection, char bVanCall);
 int getStatInformations(IscConnection *connection, const void * info_buffer, int bufferLength,short *lengthPtr);
+int findCharsetsCode( const char *charset );
+int getCharsetSize( const int charsetCode );
 }; // end namespace IscDbcLibrary
 
 #endif

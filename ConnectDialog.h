@@ -21,7 +21,7 @@
 #if !defined(_CONDIALOG_H_INCLUDED_)
 #define _CONDIALOG_H_INCLUDED_
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 
 // ConnectDialog.h : header file
 //
@@ -54,6 +54,6 @@ public:
 
 }; // end namespace OdbcJdbcLibrary
 
-#endif // _WIN32
+#endif // _WINDOWS
 
 #endif // !defined(_CONDIALOG_H_INCLUDED_)

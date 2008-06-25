@@ -21,6 +21,9 @@ IDS_BUTTON_CANCEL, // "Cancel"
 IDS_STATIC_DSN, // "Data Source Name (DSN)"
 	"Iм'я джерела даних (DSN)"
 ,
+IDS_STATIC_DESCRIPTION, // "Description"
+	"Примiтка - розширина назва джерела даних (DSN)"
+,
 IDS_STATIC_DATABASE, // "Database"
 	"Розмiщення бази даних"
 ,
@@ -129,6 +132,21 @@ IDS_ERROR_MESSAGE_15, // "CopyFile"
 IDS_ERROR_MESSAGE_16, // "Disk full"
 	"На диску немає вiльного мiсця"
 ,
+IDS_ERROR_MESSAGE_17, // "Config DSN"
+	"Конфiгуратор джерела даних"
+,
+IDS_ERROR_MESSAGE_18, // "Invalid characters are included in the data source name: []{}(),;?*=!@\\"
+	"Iм'я джерела даних мiстить недопустимi символи: []{}(),;?*=!@\\"
+,
+IDS_ERROR_MESSAGE_19, // "Create database '%s' failed"
+	"Неможливо створити базу даних '%s'"
+,
+IDS_ERROR_MESSAGE_20, // "Open database '%s' failed"
+	"Неможливо вiдкрити базу даних '%s'"
+,
+IDS_BUTTON_SERVICES, // "Services"
+	"Сервiс"
+,
 IDS_USESCHEMA_NULL, // "Set null field SCHEMA"
 	"Поле SCHEMA не використовуеться"
 ,
@@ -137,4 +155,10 @@ IDS_USESCHEMA_DEL, // "Remove SCHEMA from SQL query"
 ,
 IDS_USESCHEMA_FULL, // "Use full SCHEMA"
 	"Поле SCHEMA контролюе сервер"
+,
+IDS_STATIC_LOCKTIMEOUT, // "lock timeout"
+	"час блокування"
+,
+IDS_CHECK_SFTHREAD, // "safe thread"
+	"потоко-безпечне джерело"
 }

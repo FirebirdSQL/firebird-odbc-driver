@@ -44,6 +44,12 @@ class DescRecord;
 class OdbcStatement;
 class OdbcConvert;
 
+//
+//	from odbcss.h
+//
+#define MSSQL_CA_SS_COLUMN_HIDDEN		1211 //	Column is hidden (FOR BROWSE)
+#define MSSQL_CA_SS_COLUMN_KEY			1212 //	Column is key column (FOR BROWSE)
+
 enum enFetchType { NoneFetch, Fetch, ExtendedFetch, FetchScroll };
 
 typedef SQLRETURN (OdbcStatement::*EXECUTE_FUNCTION)();
@@ -56,10 +62,15 @@ public:
 	inline SQLRETURN fetchData();
 	inline SQLRETURN returnData();
 	inline SQLRETURN returnDataFromExtendedFetch();
-	SQLRETURN sqlColAttribute (int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT* strLengthPtr, SQLPOINTER numericAttributePtr);
+#ifdef _WIN64
+	SQLRETURN sqlColAttribute( int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT *strLengthPtr, SQLLEN *numericAttributePtr );
+#else
+	SQLRETURN sqlColAttribute( int column, int fieldId, SQLPOINTER attributePtr, int bufferLength, SQLSMALLINT *strLengthPtr, SQLPOINTER numericAttributePtr );
+#endif
 	SQLRETURN sqlFetchScroll (int orientation, int offset);
 	SQLRETURN sqlFetchScrollCursorStatic(int orientation, int offset);
 	SQLRETURN sqlSetPos (SQLUSMALLINT rowNumber, SQLUSMALLINT operation, SQLUSMALLINT lockType);
+	SQLRETURN sqlBulkOperations( int operation );
 	SQLRETURN sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGER crowKeyset, SQLUSMALLINT crowRowset);
 	SQLRETURN sqlExtendedFetch (int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray);
 	SQLRETURN sqlRowCount (SQLINTEGER *rowCount);
@@ -68,12 +79,13 @@ public:
 	SQLRETURN	sqlPutData (SQLPOINTER value, SQLINTEGER valueSize);
 	SQLRETURN sqlGetTypeInfo (int dataType);
 	bool 	registerOutParameter();
-	SQLRETURN inputParam();
+	SQLRETURN inputParam( bool arrayColumnWiseBinding = false );
 	SQLRETURN executeStatement();
 	SQLRETURN executeStatementParamArray();
 	SQLRETURN executeProcedure();
 	SQLRETURN executeCommit();
 	SQLRETURN executeRollback();
+	SQLRETURN executeNone();
 	SQLRETURN executeCreateDatabase();
 	SQLRETURN sqlGetCursorName (SQLCHAR *name, int bufferLength, SQLSMALLINT *nameLength);
 	SQLRETURN sqlGetStmtAttr (int attribute, SQLPOINTER value, int bufferLength, SQLINTEGER *lengthPtr);
@@ -116,12 +128,13 @@ public:
 	void delBindColumn(int column);
 	void addBindParam(int param, DescRecord * recordFrom, DescRecord * recordTo);
 	void delBindParam(int param);
+	virtual OdbcConnection* getConnection();
 	virtual OdbcObjectType getType();
 	OdbcStatement(OdbcConnection *connect, int statementNumber);
 	~OdbcStatement();
 	bool isStaticCursor(){ return cursorType != SQL_CURSOR_FORWARD_ONLY && cursorScrollable == SQL_SCROLLABLE || isResultSetFromSystemCatalog; }
 	long getCurrentFetched(){ return countFetched; }
-	bool getSchemaFetchData(){ return rowBindType || bindOffsetPtr; }
+	bool getSchemaFetchData(){ return applicationRowDescriptor->headBindType || applicationRowDescriptor->headBindOffsetPtr; }
 	inline StatementMetaData	*getStatementMetaDataIRD();
 	inline void clearErrors();
 	SQLRETURN prepareGetData(int column, DescRecord *recordARD);
@@ -148,6 +161,7 @@ public:
 	FETCH_FUNCTION		fetchNext;
 	InternalStatement	*statement;
 	StatementMetaData	*metaData;
+	OdbcStatement		*bulkInsert;
 	int					numberColumns;
 	bool				registrationOutParameter;
 	bool				isRegistrationOutParameter;
@@ -162,26 +176,22 @@ public:
 	bool				isResultSetFromSystemCatalog;
 	bool				isFetchStaticCursor;
 	bool				schemaFetchData;
-	int					rowBindType;
-	int					paramBindType;
-	int					rowArraySize;
 
 	int					fetchRetData;
-	void				*paramBindOffset;
-	void				*paramsProcessedPtr;
-	int					paramsetSize;
 	SQLINTEGER			*sqldataOutOffsetPtr;
-	SQLINTEGER			*bindOffsetPtr;
 	SQLUINTEGER			enableAutoIPD;
 	SQLINTEGER			useBookmarks;
 	SQLINTEGER			cursorSensitivity;
 	SQLPOINTER			fetchBookmarkPtr;
 	SQLUINTEGER			noscanSQL;
+	SQLINTEGER			bindOffsetColumnWiseBinding;
+	SQLINTEGER			bindOffsetIndColumnWiseBinding;
 	int					currency;
 	int					cursorType;
 	int					cursorScrollable;
 	bool				asyncEnable;
 	int					rowNumber;
+	int					rowNumberParamArray;
 	int					lastRowsetSize;
 	long				indicatorRowNumber;
 	int					maxRows;

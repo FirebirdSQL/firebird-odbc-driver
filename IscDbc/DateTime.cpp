@@ -124,7 +124,7 @@ DateTime DateTime::convert(const char *dateString, int length)
 
 	if (match (TODAY, dateString))
 		{
-		date.date = time (NULL);
+		date.date = (long) time (NULL);
 		return date;
 		}
 
@@ -297,7 +297,7 @@ int DateTime::getString (const char * format, int length, char *buffer)
 	memset (time, 0, sizeof (tmTemp));
 	
 	decodeDate (date, time);
-	return strftime (buffer, length, format, time);
+	return (int)strftime (buffer, length, format, time);
 	
 }
 
@@ -310,7 +310,7 @@ long DateTime::getToday()
 	time->tm_min = 0;
 	time->tm_sec = 0;
 
-	return mktime (time);
+	return (long) mktime (time);
 }
 
 long DateTime::getNow()
@@ -318,7 +318,7 @@ long DateTime::getNow()
 	time_t t;
 	time (&t);
 
-	return t;
+	return (long) t;
 }
 
 double DateTime::getDouble()

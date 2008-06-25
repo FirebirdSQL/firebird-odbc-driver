@@ -44,14 +44,16 @@ public:
 							stmtUpdate		= 8, 
 							stmtDelete		= 16, 
 							stmtProcedure	= 32,
-							stmtModify		= 128
+							stmtModify		= 128,
+							stmtPrepare		= 256
 						};
 
 	void freeStatementHandle();
 	void clearSelect();
-	//void rollbackAuto();
-	//void* getTransaction();
-	//void commitAuto();
+	void rollbackLocal();
+	void commitLocal();
+	void setReadOnlyTransaction();
+	void* startTransaction();
 	static ISC_TIME getIscTime (SqlTime value);
 	static ISC_TIMESTAMP getIscTimeStamp (TimeStamp value);
 	static ISC_DATE getIscDate (DateTime date);
@@ -78,9 +80,9 @@ public:
 	virtual void cancel();
 	virtual bool execute (const char *sqlString);
 	virtual void close();
-	inline virtual void setMaxFieldSize(int max);
-	inline virtual void setMaxRows(int max);
-	inline virtual void setQueryTimeout(int seconds);
+	virtual void setMaxFieldSize(int max);
+	virtual void setMaxRows(int max);
+	virtual void setQueryTimeout(int seconds);
 
 	virtual int release();
 	virtual void addRef();
@@ -98,6 +100,11 @@ public:
 	{ return getTypeStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  
 	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr)
 	{ return getInfoCountRecordsStatement(connection, statementHandle, value,bufferLength,lengthPtr); }  
+	virtual bool		isActiveLocalTransaction(){ return transactionLocal; }
+	virtual void		setActiveLocalParamTransaction();
+	virtual void		delActiveLocalParamTransaction();
+	virtual void		declareLocalParamTransaction();
+	virtual void		switchTransaction( bool local );
 
 	IscResultSet*	createResultSet();
 	LinkedList		resultSets;
@@ -108,7 +115,11 @@ public:
 	int				resultsCount;
 	int				resultsSequence;
 	isc_stmt_handle	statementHandle;
-	//void*			transactionHandle;
+	InfoTransaction	transactionInfo;
+	bool			transactionLocal;
+	bool			transactionStatusChange;
+	bool			transactionStatusChangingToLocal;
+
 	Sqlda			inputSqlda;
 	Sqlda			outputSqlda;
 	int				summaryUpdateCount;

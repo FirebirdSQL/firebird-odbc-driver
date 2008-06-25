@@ -33,13 +33,12 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <stdlib.h>
-#include "SetupAttributes.h"
 #include "OdbcJdbc.h"
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
 #include "IscDbc/SQLException.h"
 #include <odbcinst.h>
-#ifndef _WIN32
+#ifndef _WINDOWS
 #include <dlfcn.h>
 #endif
 
@@ -51,24 +50,23 @@ namespace OdbcJdbcLibrary {
 
 OdbcEnv::OdbcEnv()
 {
-	libraryHandle = NULL;
 	envShare = NULL;
 	connections = NULL;
 	useAppOdbcVersion = SQL_OV_ODBC3;
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 	activeDrv = NULL;
 	endDrv = NULL;
 	activeDSN = NULL;
 	endDSN = NULL;
 #endif
 
-#ifndef _WIN32
+#ifndef _WINDOWS
 	if (!(odbcIniFileName = getenv ("ODBCINI")))
 #endif
 		odbcIniFileName = "ODBC.INI";
 
-#ifndef _WIN32
+#ifndef _WINDOWS
 	if (!(odbcInctFileName = getenv ("ODBCINST")))
 #endif
 		odbcInctFileName = "ODBCINST.INI";
@@ -89,6 +87,11 @@ void OdbcEnv::UnLockEnv()
 	mutex.release();
 }
 
+OdbcConnection* OdbcEnv::getConnection()
+{
+	return NULL;
+}
+
 OdbcObjectType OdbcEnv::getType()
 {
 	return odbcTypeEnv;
@@ -104,9 +107,7 @@ SQLRETURN OdbcEnv::allocHandle(int handleType, SQLHANDLE * outputHandle)
 
 	OdbcConnection *connection = new OdbcConnection (this);
 	connection->next = connections;
-//Orig.
-//	connections = connections;
-//From R. Milharcic
+
 	connections = connection;
 	*outputHandle = (SQLHANDLE)connection;
 
@@ -153,17 +154,7 @@ void OdbcEnv::connectionClosed(OdbcConnection * connection)
 		}
 
 	if( !connections )
-	{
 		envShare = NULL;
-
-		if ( libraryHandle )
-#ifdef _WIN32
-			FreeLibrary(libraryHandle);
-#else
-			dlclose (libraryHandle);
-#endif
-		libraryHandle = NULL;
-	}
 }
 
 SQLRETURN OdbcEnv::sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
@@ -176,6 +167,10 @@ SQLRETURN OdbcEnv::sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength
 	{
 		switch (attribute)
 			{
+			case SQL_ATTR_CONNECTION_POOLING:
+				value = SQL_CP_OFF;
+				break;
+
 			case SQL_ATTR_ODBC_VERSION:
 				value = SQL_OV_ODBC3;
 				break;
@@ -215,6 +210,7 @@ SQLRETURN OdbcEnv::sqlSetEnvAttr(int attribute, SQLPOINTER value, int length)
 	{
 		switch (attribute)
 		{
+		case SQL_ATTR_CONNECTION_POOLING:
 		case SQL_ATTR_OUTPUT_NTS:
 			break;
 
@@ -244,7 +240,7 @@ SQLRETURN OdbcEnv::sqlDrivers(SQLUSMALLINT direction,
 							SQLSMALLINT bufferLength2,
 							SQLSMALLINT * nameLength2Ptr )
 {
-#ifdef _WIN32
+#ifdef _WINDOWS
 	switch( direction )
 	{
 	case SQL_FETCH_NEXT:
@@ -282,7 +278,7 @@ SQLRETURN OdbcEnv::sqlDrivers(SQLUSMALLINT direction,
 
 	if ( serverName && bufferLength1)
 	{
-		int lenDrv = strlen(activeDrv);
+		int lenDrv = (int)strlen(activeDrv);
 		int len = MIN(lenDrv, (int)MAX(0, (int)bufferLength1-1));
 		 
 		if ( len > 0 ) 
@@ -299,7 +295,7 @@ SQLRETURN OdbcEnv::sqlDrivers(SQLUSMALLINT direction,
 
 	if ( description && bufferLength2)
 	{
-		int lenDes = strlen(DRIVER_FULL_NAME);
+		int lenDes = (int)strlen(DRIVER_FULL_NAME);
 		int len = MIN(lenDes, (int)MAX(0, (int)bufferLength2-1));
 		 
 		if ( len > 0 ) 
@@ -327,7 +323,7 @@ SQLRETURN OdbcEnv::sqlDataSources(SQLUSMALLINT direction,
 								SQLSMALLINT bufferLength2,
 								SQLSMALLINT * nameLength2Ptr )
 {
-#ifdef _WIN32
+#ifdef _WINDOWS
 	switch( direction )
 	{
 	case SQL_FETCH_NEXT:
@@ -373,7 +369,7 @@ SQLRETURN OdbcEnv::sqlDataSources(SQLUSMALLINT direction,
 
 	if ( serverName && bufferLength1)
 	{
-		int lenDSN = strlen(activeDSN);
+		int lenDSN = (int)strlen(activeDSN);
 		int len = MIN(lenDSN, (int)MAX(0, (int)bufferLength1-1));
 		 
 		if ( len > 0 ) 
@@ -390,7 +386,7 @@ SQLRETURN OdbcEnv::sqlDataSources(SQLUSMALLINT direction,
 
 	if ( description && bufferLength2)
 	{
-		int lenDes = strlen(DRIVER_FULL_NAME);
+		int lenDes = (int)strlen(DRIVER_FULL_NAME);
 		int len = MIN(lenDes, (int)MAX(0, (int)bufferLength2-1));
 		 
 		if ( len > 0 ) 
@@ -410,13 +406,13 @@ SQLRETURN OdbcEnv::sqlDataSources(SQLUSMALLINT direction,
 	return sqlSuccess();
 }
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 BOOL OdbcEnv::getDrivers()
 {
 	const char	* odbcDrivers = "ODBC Drivers";
 	char * ptStr, * ptStrEnd, * ptStrSave;
 	char bufferDrv[SQL_MAX_DSN_LENGTH + 1];
-	int lenName = strlen(DRIVER_FULL_NAME);
+	int lenName = (int)strlen(DRIVER_FULL_NAME);
 	int n=0, nRead, nLen;
 
 	clearErrors();
@@ -454,7 +450,7 @@ bool OdbcEnv::getDataSources( SQLUSMALLINT wConfigMode )
 	const char	* odbcDataSources = "ODBC Data Sources";
 	char * ptStr, * ptStrEnd, * ptStrSave;
 	char bufferDSN[SQL_MAX_DSN_LENGTH + 1];
-	int lenName = strlen(DRIVER_FULL_NAME);
+	int lenName = (int)strlen(DRIVER_FULL_NAME);
 	int n=0, nRead, nLen;
 
 	clearErrors();

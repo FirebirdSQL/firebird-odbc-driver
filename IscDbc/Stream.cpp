@@ -330,6 +330,55 @@ int Stream::getSegment(int offset, int len, void * ptr)
 	return len - length;
 }
 
+int Stream::getSegmentW(int offset, int len, void * ptr)
+{
+	int n = 0;
+	int length = len;
+	char *address = (char*) ptr;
+	Segment *segment;
+
+	if ( consecutiveRead && currentRead )
+	{
+		segment = currentRead;
+		n = currentN;
+	}
+	else
+		segment = segments;
+
+	for (; segment; n += segment->length, segment = segment->next)
+		if (n + segment->length > offset)
+		{
+			int off = offset - n;
+			int l = MIN (length, segment->length - off);
+			int ret = (int)mbstowcs( (wchar_t *)address, segment->address + off, l );
+			if( ret == -1 )
+				break;
+			address += ret * 2;
+			length -= l;
+			offset += l;
+			if (!length)
+			{
+				if ( consecutiveRead )
+				{
+					currentN = n;
+
+					if ( l < segment->length )
+						currentRead = segment;
+					else if ( segment->next )
+					{
+						currentRead = segment->next;
+						currentN += segment->length;
+					}
+					else
+						currentRead = NULL;
+				}
+				break;
+			}
+		}
+
+	return len - length;
+}
+
 void Stream::setSegment(Segment * segment, int length, void* address)
 {
 	segment->length = length;
@@ -452,7 +501,7 @@ char* Stream::alloc(long length)
 void Stream::putSegment(const char * string)
 {
 	if (string [0])
-		putSegment (strlen (string), string, true);
+		putSegment ((int)strlen (string), string, true);
 }
 
 char* Stream::getString()

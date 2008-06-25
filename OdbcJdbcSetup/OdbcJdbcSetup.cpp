@@ -21,6 +21,7 @@
 // OdbcJdbcSetup.cpp : Defines the initialization routines for the DLL.
 //
 #include "OdbcJdbcSetup.h"
+#include <commctrl.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -34,17 +35,20 @@ namespace OdbcJdbcSetupLibrary {
 
 HINSTANCE m_hInstance = NULL;
 void initCodePageTranslate(  int userLCID );
+void getParamFromCommandLine();
 
 };
 
 using namespace OdbcJdbcSetupLibrary;
 
-BOOL APIENTRY DllMain(  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID )
+BOOL APIENTRY DllMainSetup( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID )
 {
 	if ( fdwReason == DLL_PROCESS_ATTACH )
 	{
 		m_hInstance = hinstDLL;
+		InitCommonControls();
 		initCodePageTranslate( GetUserDefaultLCID() );
+		getParamFromCommandLine();
 	}
 
     return TRUE;

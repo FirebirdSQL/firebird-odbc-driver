@@ -28,9 +28,20 @@
 namespace OdbcJdbcSetupLibrary {
 
 using namespace classJString;
+class CDsnDialog;
 
 class Setup  
 {
+	enum 
+	{
+		enOpenDb	= 0x00,
+		enCreateDb	= 0x01,
+		enBackupDb	= 0x02,
+		enRestoreDb	= 0x04,
+		enRepairDb	= 0x08,
+		enDropDb	= 0x10
+	};
+
 public:
 	JString readAttribute (const char *attribute);
 	void readAttributes();
@@ -38,16 +49,18 @@ public:
 	void writeAttributes();
 	void writeAttribute (const char *attribute, const char *value);
 	JString getAttribute (const char *attribute);
-	void removeDsn();
-	void addDsn();
+	void getParameters();
+	bool removeDsn();
+	bool addDsn();
 	void configDsn();
 	Setup (HWND windowHandle, const char *drvr, const char *attr);
 	~Setup();
 
 	HWND		hWnd;
 	JString		driver;
-	const char *attributes;
+	const char  *attributes;
 	JString		dsn;
+	JString		description;
 	JString		dbName;
 	JString		client;
 	JString		user;
@@ -61,7 +74,11 @@ public:
 	JString		quoted;
 	JString		sensitive;
 	JString		autoQuoted;
+	JString		pageSize;
 	JString		useschema;
+	JString		locktimeout;
+	JString		safeThread;
+	ULONG		serviceDb;
 };
 
 }; // end namespace OdbcJdbcSetupLibrary

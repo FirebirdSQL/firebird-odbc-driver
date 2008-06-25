@@ -79,6 +79,7 @@ public:
 	bool isNullable (int index);
 	int getScale (int index);
 	int getPrecision (int index);
+	int getNumPrecRadix(int index);
 	const char* getColumnLabel (int index);
 	const char* getColumnName (int index);
 	int getColumnDisplaySize (int index);
@@ -111,11 +112,13 @@ public:
 	bool isNull(int index);
 	void setNull(int index);
 
+	bool getBoolean (int index);
 	short getShort (int index);
 	long getInt (int index);
 	char * getText (int index, int &len);
 	char * getVarying (int index, int &len);
 
+	void updateBoolean (int index, bool value);
 	void updateShort (int index, short value);
 	void updateInt (int index, int value);
 	void updateText (int index, const char* value);

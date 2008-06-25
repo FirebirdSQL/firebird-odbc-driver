@@ -43,6 +43,8 @@ enum Type {
 	Binaryblob,		// on disk blob
 	BlobPtr,		// pointer to Blob object
 	SqlTimestamp,	// 64 bit version
+
+	Boolean
 	};
 
 // Type Encoded Record Types

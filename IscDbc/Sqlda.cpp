@@ -454,6 +454,10 @@ void Sqlda::allocBuffer ( IscStatement *stmt )
 			length += 2;
 			break;
 
+		case SQL_BOOLEAN:
+			length = sizeof (TYPE_BOOLEAN);
+			break;
+
 		case SQL_SHORT:
 			length = sizeof (short);
 			break;
@@ -579,7 +583,7 @@ void Sqlda::print()
 	for (int n = 0; n < sqlda->sqld; ++n, ++var)
 		{
 		char *p = var->sqldata;
-		printf ("%d. type %d, len %d, addr %x (%x) ",
+		printf ("%d. type %d, len %d, addr %p (%p) ",
 				n, var->sqltype, var->sqllen, p, var->sqlind);
 		if ((var->sqltype & 1) && *var->sqlind == -1)
 			printf ("<null>");
@@ -594,12 +598,16 @@ void Sqlda::print()
 					printf ("'%.*s'", *(short*) p, p + 2);
 					break;
 
+				case SQL_BOOLEAN:
+					printf ("%d", *(TYPE_BOOLEAN*) p);
+					break;
+
 				case SQL_SHORT:
 					printf ("%d", *(short*) p);
 					break;
 
 				case SQL_LONG:
-					printf ("%d", *(long*) p);
+					printf ("%ld", *(long*) p);
 					break;
 
 				case SQL_FLOAT:
@@ -640,6 +648,14 @@ void Sqlda::print()
 		}
 }
 
+// Warning!
+// It's hack, for exclude system filed description
+// Return SQLDA for all system field has 31 length 
+// and charsetId 3 (UNICODE_FSS) it's error!
+//
+//	if ( !(var->sqllen % getCharsetSize( var->sqlsubtype )) )
+//		return var->sqllen / getCharsetSize( var->sqlsubtype );
+//
 int Sqlda::getColumnDisplaySize(int index)
 {
 	CAttrSqlVar *var = orgVar(index);
@@ -649,7 +665,12 @@ int Sqlda::getColumnDisplaySize(int index)
 	case SQL_TEXT:
 		if ( var->sqllen == 1 && var->sqlsubtype == 1 )
 			return MAX_TINYINT_LENGTH + 1;
+		if ( !(var->sqllen % getCharsetSize( var->sqlsubtype )) )
+			return var->sqllen / getCharsetSize( var->sqlsubtype );
 		return var->sqllen;
+
+	case SQL_BOOLEAN:
+		return sizeof(TYPE_BOOLEAN) + 2;
 
 	case SQL_SHORT:
 		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_SHORT_LENGTH + 2,
@@ -693,6 +714,9 @@ int Sqlda::getColumnDisplaySize(int index)
 		return MAX_TIMESTAMP_LENGTH;
 	}
 
+	if ( !(var->sqllen % getCharsetSize( var->sqlsubtype )) )
+		return var->sqllen / getCharsetSize( var->sqlsubtype );
+
 	return var->sqllen;
 }
 
@@ -722,7 +746,12 @@ int Sqlda::getPrecision(int index)
 	case SQL_TEXT:
 		if ( var->sqllen == 1 && var->sqlsubtype == 1 )
 			return MAX_TINYINT_LENGTH;
+		if ( !(var->sqllen % getCharsetSize( var->sqlsubtype )) )
+			return var->sqllen / getCharsetSize( var->sqlsubtype );
 		return var->sqllen;
+
+	case SQL_BOOLEAN:
+		return sizeof(TYPE_BOOLEAN);
 
 	case SQL_SHORT:
 		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_SHORT_LENGTH,
@@ -766,7 +795,30 @@ int Sqlda::getPrecision(int index)
 		return MAX_TIMESTAMP_LENGTH;
 	}
 
+	if ( !(var->sqllen % getCharsetSize( var->sqlsubtype )) )
+		return var->sqllen / getCharsetSize( var->sqlsubtype );
+
 	return var->sqllen;
+}
+
+int Sqlda::getNumPrecRadix(int index)
+{
+	CAttrSqlVar *var = orgVar(index);
+
+	switch (var->sqltype & ~1)
+	{
+	case SQL_SHORT:
+	case SQL_LONG:
+	case SQL_QUAD:
+	case SQL_INT64:
+		return 10;
+	case SQL_FLOAT:
+	case SQL_DOUBLE:
+	case SQL_D_FLOAT:
+		return 2;
+	}
+
+	return 0;
 }
 
 int Sqlda::getScale(int index)
@@ -812,10 +864,21 @@ int Sqlda::getSqlType(CAttrSqlVar *var, int &realSqlType)
 	case SQL_TEXT:
 		if ( var->sqllen == 1 && var->sqlsubtype == 1 )
 			return (realSqlType = JDBC_TINYINT);
+		else if ( ( var->sqlsubtype == 3 // UNICODE_FSS
+				    || var->sqlsubtype == 4 ) // UTF8
+			&& !(var->sqllen % getCharsetSize( var->sqlsubtype )) )
+			return (realSqlType = JDBC_WCHAR);
 		return (realSqlType = JDBC_CHAR);
 
 	case SQL_VARYING:
+		if ( ( var->sqlsubtype == 3 // UNICODE_FSS
+				    || var->sqlsubtype == 4 ) // UTF8
+			&& !(var->sqllen % getCharsetSize( var->sqlsubtype )) )
+			return (realSqlType = JDBC_WVARCHAR);
 		return (realSqlType = JDBC_VARCHAR);
+
+	case SQL_BOOLEAN:
+		return (realSqlType = JDBC_BOOLEAN);
 
 	case SQL_SHORT:
 		realSqlType = JDBC_SMALLINT;
@@ -873,6 +936,9 @@ const char* Sqlda::getSqlTypeName ( CAttrSqlVar *var )
 
 	case SQL_VARYING:
 		return "VARCHAR";
+
+	case SQL_BOOLEAN:
+		return "BOOLEAN";
 
 	case SQL_SHORT:
 		return SET_INFO_FROM_SUBTYPE ( "NUMERIC", "DECIMAL", "SMALLINT");
@@ -958,6 +1024,11 @@ void Sqlda::setValue(int slot, Value * value, IscStatement	*stmt)
 			var->sqllen = value->data.string.length;
 			break;
 
+		case Boolean:
+			var->sqltype = SQL_BOOLEAN;
+			var->sqllen = sizeof (TYPE_BOOLEAN);
+			break;
+
 		case Short:
 			var->sqltype = SQL_SHORT;
 			var->sqllen = sizeof (short);
@@ -1021,7 +1092,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscStatement *stmt)
 	IscConnection * connection = stmt->connection;
 	CFbDll * GDS = connection->GDS;
 	isc_blob_handle blobHandle = NULL;
-	isc_tr_handle transactionHandle = connection->startTransaction();
+	isc_tr_handle transactionHandle = stmt->startTransaction();
 	GDS->_create_blob2 (statusVector, 
 					  &connection->databaseHandle,
 					  &transactionHandle,
@@ -1167,6 +1238,15 @@ void Sqlda::setNull(int index)
 	*(short*)Var(index)->sqlind = -1;
 }
 
+bool Sqlda::getBoolean (int index)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_BOOLEAN);
+	if ( isNull ( index) )
+		return 0;
+	return !!*(TYPE_BOOLEAN*)var->sqldata;
+}
+
 short Sqlda::getShort (int index)
 {
 	XSQLVAR *var = Var(index);
@@ -1212,6 +1292,14 @@ char * Sqlda::getVarying (int index, int &len)
 }
 
 ////////////////////////////////////////////////////////
+
+void Sqlda::updateBoolean (int index, bool value)
+{
+	XSQLVAR *var = Var(index);
+	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_BOOLEAN);
+	*(TYPE_BOOLEAN*)var->sqldata = value;
+	*var->sqlind = 0;
+}
 
 void Sqlda::updateShort (int index, short value)
 {

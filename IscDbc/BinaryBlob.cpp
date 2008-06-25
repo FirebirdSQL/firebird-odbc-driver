@@ -169,6 +169,14 @@ void BinaryBlob::getBytes(long pos, long length, void * address)
 	offset += Stream::getSegment (pos, length, address);
 }
 
+void BinaryBlob::getBytesW(long pos, long length, void * address)
+{
+	if (!populated)
+		populate();
+
+	offset += Stream::getSegmentW (pos, length, address);
+}
+
 int BinaryBlob::length()
 {
 	if (!populated)

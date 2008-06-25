@@ -8,3 +8,4 @@ EXPORTS
 	ConfigDSN=ConfigDSN@16
 	DllRegisterServer
 	DllUnregisterServer
+	DllInstall

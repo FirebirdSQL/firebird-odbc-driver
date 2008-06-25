@@ -3,10 +3,8 @@
 #
 #DEBUG = 1
 #
-COMPDIR		= D:\PROGRA~1\VS6\VC98
-#
 CL		= $(COMPDIR)\bin\cl.exe
-RSC		= D:\PROGRA~1\VS6\Common\MSDev98\Bin\rc.exe
+RSC		= $(COMPDIRDEV)\Bin\rc.exe
 #
 !include ../makefile.environ
 !include ../makefile.sources
@@ -20,9 +18,10 @@ TARGETDIR	= Release
 BUILDDIR 	= $(TARGETDIR)\obj
 #
 COMPFLAGS	= /nologo /W3 /GX \
-		  /I "$(COMPDIR)\Include" /I "$(COMPDIR)\MFC\Include" \
+		  /I "$(COMPDIR)\Include" /I "$(COMPDIR)\ATL\Include" \
 		  /I "$(FBINCDIR)" /I "$(ISCDBCDIR)" /I "$(ODBCJDBCDIR)" \
 		  /D "WIN32" /D "_WIN32" /D "_WINDOWS" \
+		  /D "ISOLATION_AWARE_ENABLED" \
 		  /Fp"$(BUILDDIR)\IscDbc.pch" /YX /Fo"$(BUILDDIR)\\" \
                   /Fd"$(BUILDDIR)\\" /FD /c 
 #
@@ -30,7 +29,7 @@ LD		= $(COMPDIR)\bin\link
 #
 LINKFLAGS	= /nologo /subsystem:windows /dll /machine:I386 /libpath:"$(COMPDIR)\lib" 
 ISCDBCDLL       = $(TARGETDIR)\IscDbc.dll
-ODBCJDBCDLL     = $(TARGETDIR)\OdbcJdbc.dll
+ODBCJDBCDLL     = $(TARGETDIR)\OdbcFb32.dll
 ODBCJDBCSDLL    = $(TARGETDIR)\OdbcJdbcSetup.dll
 #
 !ifdef DEBUG
@@ -67,7 +66,7 @@ OBJS_ODBCJDBCS	= $(BUILDDIR)\$(ODBCJDBCSOBJ:  = Release\Obj^\)
 	@$(CL) $(COMPFLAGS) $(DEBUGFLAGS) -c $<
 #
 {$(ODBCJDBCDIR)}.cpp{$(BUILDDIR)}.obj ::
-	@$(CL) $(COMPFLAGS) $(DEBUGFLAGS) -c $<
+	@$(CL) $(COMPFLAGS) $(COMPEXTFLAGS) $(DEBUGFLAGS) -c $<
 #
 {$(ODBCJDBCSDIR)}.cpp{$(BUILDDIR)}.obj ::
 	@$(CL) /D "_USRDLL" /D "_WINDLL" $(COMPFLAGS) $(DEBUGFLAGS) -c $<
@@ -100,14 +99,16 @@ OdbcJdbcSetup : $(ODBCJDBCSDLL)
 #
 # Build the library from the object modules
 #
-$(ISCDBCDLL) : $(OBJS_ISCDBC) $(BUILDDIR)\IscDbc.res
-	@$(LD) wsock32.lib $(LINKFLAGS) $(**) /pdb:"$(BUILDDIR)\IscDbc.pdb" /out:"$(ISCDBCDLL)" /implib:"$(ISCDBCLIB)" /EXPORT:createConnection
+$(ISCDBCDLL) : 
+#$(ISCDBCDLL) : $(OBJS_ISCDBC) $(BUILDDIR)\IscDbc.res
+#	@$(LD) wsock32.lib $(LINKFLAGS) $(**) /pdb:"$(BUILDDIR)\IscDbc.pdb" /out:"$(ISCDBCDLL)" /implib:"$(ISCDBCLIB)" /EXPORT:createConnection /EXPORT:createServices
 #
-$(ODBCJDBCDLL) : $(OBJS_ODBCJDBC) $(BUILDDIR)\OdbcJdbc.res
-	@$(LD) $(TARGETDIR)\IscDbc.lib wsock32.lib user32.lib odbccp32.lib $(LINKFLAGS) $(BUILDDIR)\JString.obj $(BUILDDIR)\Mutex.obj $(**) /pdb:"$(BUILDDIR)\OdbcJdbc.pdb" /def:"$(ODBCJDBCDEFFILE)" /out:"$(ODBCJDBCDLL)" /implib:"$(ODBCJDBCLIB)" 
+$(ODBCJDBCDLL) : $(OBJS_ISCDBC) $(OBJS_ODBCJDBC) $(BUILDDIR)\OdbcJdbc.res $(OBJS_ODBCJDBCS)
+	@$(LD) version.lib wsock32.lib gdi32.lib shell32.lib advapi32.lib user32.lib comdlg32.lib comctl32.lib odbccp32.lib $(LINKFLAGS) $(**) /pdb:"$(BUILDDIR)\OdbcJdbc.pdb" /def:"$(ODBCJDBCDEFFILE)" /out:"$(ODBCJDBCDLL)" /implib:"$(ODBCJDBCLIB)" /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE /EXPORT:ConfigDriver,PRIVATE
 #
-$(ODBCJDBCSDLL) : $(OBJS_ODBCJDBCS) $(BUILDDIR)\OdbcJdbcSetup.res
-	@$(LD) user32.lib comdlg32.lib odbccp32.lib $(LINKFLAGS) /libpath:"$(COMPDIR)\MFC\lib" $(BUILDDIR)\JString.obj $(**) /pdb:"$(BUILDDIR)\OdbcJdbc.pdb" /out:"$(ODBCJDBCSDLL)" /implib:"$(ODBCJDBCSLIB)" /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE
+$(ODBCJDBCSDLL) :
+#$(ODBCJDBCSDLL) : $(OBJS_ODBCJDBCS) $(BUILDDIR)\OdbcJdbcSetup.res
+#	@$(LD) version.lib gdi32.lib shell32.lib advapi32.lib user32.lib comdlg32.lib comctl32.lib odbccp32.lib $(LINKFLAGS) /libpath:"$(COMPDIR)\MFC\lib" $(BUILDDIR)\JString.obj $(**) /pdb:"$(BUILDDIR)\OdbcJdbc.pdb" /out:"$(ODBCJDBCSDLL)" /implib:"$(ODBCJDBCSLIB)" /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE /EXPORT:ConfigDriver,PRIVATE
 #
 # End
 #

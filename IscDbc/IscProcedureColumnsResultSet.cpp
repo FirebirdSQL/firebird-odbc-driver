@@ -182,7 +182,9 @@ void IscProcedureColumnsResultSet::adjustResults (IscSqlType &sqlType)
 	switch (sqlType.type)
 	{
 	case JDBC_CHAR:
+	case JDBC_WCHAR:
 	case JDBC_VARCHAR:
+	case JDBC_WVARCHAR:
 	case JDBC_LONGVARCHAR:
 	case JDBC_LONGVARBINARY:
 	case JDBC_DATE:
@@ -230,7 +232,9 @@ void IscProcedureColumnsResultSet::adjustResults (IscSqlType &sqlType)
 	{
 	case JDBC_LONGVARCHAR:
 	case JDBC_LONGVARBINARY:
+	case JDBC_WVARCHAR:
 	case JDBC_VARCHAR:
+	case JDBC_WCHAR:
 	case JDBC_CHAR:
 		sqlda->updateInt (17, sqlda->getInt (8));
 		break;

@@ -1,12 +1,8 @@
 1)==================================================================
   For connect from unixODBC :
-    create the reference IscDbc on IscDbc.so
 
     Into share folder :
-    IscDbc         <------------      reference IscDbc on IscDbc.so
-    IscDbc.so
-    OdbcJdbc.so
-    OdbcJdbcS.so
+    libOdbcFb32.so
 
 2)==================================================================
 Conrtributed by On Tuesday 28 October 2003 19:23, Yves Glodt wrote:
@@ -23,14 +19,9 @@ takes to set it up manually (thanks to Vladimir Tsvigun):
 (On debian unstable, using the FB1.02 deb)
 
 first, untar the OdbcJdbc_Snapshot.tar.gz into /usr/lib
-Then, still being in /usr/lib, create a symlink to IscDbc.so:
-ln -s IscDbc.so IscDbc
 
 Then you should have this in /usr/lib:
-OdbcJdbcS.so*
-OdbcJdbc.so*
-IscDbc.so*
-IscDbc -> IscDbc.so*
+libOdbcFb32.so*
 
 
 The odbc-config-files in /etc shoud look like this:
@@ -39,8 +30,8 @@ odbcinst.ini:
 --------------------
 [Firebird]
 Description     = InterBase/Firebird ODBC Driver
-Driver          = /usr/lib/OdbcJdbc.so
-Setup           = /usr/lib/OdbcJdbcS.so
+Driver          = /usr/lib/libOdbcFb32.so
+Setup           = /usr/lib/libOdbcFb32.so
 Threading 	= 1
 FileUsage       = 1
 CPTimeout       =

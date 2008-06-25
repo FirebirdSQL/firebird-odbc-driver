@@ -54,8 +54,8 @@ public:
 //	virtual	BigDecimal	getBigDecimal( const char *columnName, int scale );
 //	virtual	InputStream getBinaryStream( int columnIndex );
 //	virtual	InputStream getBinaryStream( const char *columnName );
-//	virtual	bool		getBoolean( int columnIndex );
-//	virtual	bool		getBoolean( const char *columnName );
+	virtual	bool		getBoolean( int columnIndex );
+	virtual	bool		getBoolean( const char *columnName );
 	virtual char		getByte (int columnIndex);
 	virtual char		getByte (const char *columnName);
 //	virtual byte[]		getBytes( int columnIndex );

@@ -26,14 +26,46 @@
 
 
 #define BUILDTYPE_VERSION 	"WI_T"
-#define MAJOR_VERSION 		1
-#define MINOR_VERSION 		3
+#define MAJOR_VERSION 		2
+#define MINOR_VERSION 		0
 #define REVNO_VERSION 		0
 
+#ifdef _WIN64
+#define SUFFIX_BUILD		"64"
+#else
+#define SUFFIX_BUILD		"32"
+#endif
+
 #define DRIVER_FULL_NAME	"Firebird/InterBase(r) driver"
-#define DRIVER_NAME			"OdbcJdbc"
+#define DRIVER_NAME			"OdbcFb" SUFFIX_BUILD
+#define DEFAULT_DRIVER		"IscDbc"
+
+#ifdef _WINDOWS
+#define DRIVER_SETUP		"Setup"
+#define DRIVER_EXT			".dll"
+#else
+#define DRIVER_SETUP		"S"
+#define DRIVER_EXT			".so"
+#endif
+
+#define VALUE_FILE_EXT		"*.fdb,*.gdb"
+#define VALUE_API_LEVEL		"1"
+#define VALUE_CONNECT_FUN	"YYY"
+#define VALUE_FILE_USAGE	"0"
+#define VALUE_DRIVER_VER	"03.51"
+#define VALUE_SQL_LEVEL		"1"
+
+#define INSTALL_DRIVER		"Driver"
+#define INSTALL_SETUP		"Setup"
+#define INSTALL_FILE_EXT	"FileExtns"
+#define INSTALL_API_LEVEL	"APILevel"
+#define INSTALL_CONNECT_FUN	"ConnectFunctions"
+#define INSTALL_FILE_USAGE	"FileUsage"
+#define INSTALL_DRIVER_VER	"DriverODBCVer"
+#define INSTALL_SQL_LEVEL	"SQLLevel"
 
 #define SETUP_DSN			"DSN"
+#define SETUP_DESCRIPTION	"Description"
 #define SETUP_DBNAME		"Dbname"
 #define SETUP_DBNAMEALWAYS	"DbnameAlways"
 #define SETUP_CLIENT		"Client"
@@ -52,11 +84,22 @@
 #define SETUP_SENSITIVE		"SensitiveIdentifier"
 #define SETUP_AUTOQUOTED	"AutoQuotedIdentifier"
 #define SETUP_PAGE_SIZE		"PageSize"
+#define SETUP_LOCKTIMEOUT	"LockTimeoutWaitTransactions"
+#define SETUP_SAFETHREAD    "SafeThread"
+
+#define FLAG_DATABASEACCESS	"DatabaseAccess"
 
 #define KEY_DSN_JDBC_DRIVER	"JDBC_DRIVER"
 #define KEY_FILEDSN			"FILEDSN"
 #define KEY_SAVEDSN			"SAVEDSN"
 #define KEY_DSN_DATABASE	"DATABASE"
+#define KEY_DSN_BACKUPFILE	"BACKUPFILE"
+#define KEY_DSN_LOGFILE		"LOGFILE"
+#define KEY_DSN_CREATE_DB	"CREATE_DB"
+#define KEY_DSN_BACKUP_DB	"BACKUP_DB"
+#define KEY_DSN_RESTORE_DB	"RESTORE_DB"
+#define KEY_DSN_REPAIR_DB	"REPAIR_DB"
+#define KEY_DSN_DROP_DB	    "DROP_DB"
 #define KEY_DSN_UID			"UID"
 #define KEY_DSN_PWD			"PWD"
 #define KEY_DSN_CHARSET		"CHARSET"
@@ -64,12 +107,34 @@
 #define KEY_DSN_SENSITIVE	"SENSITIVE"
 #define KEY_DSN_AUTOQUOTED	"AUTOQUOTED"
 #define KEY_DSN_USESCHEMA	"USESCHEMA"
+#define KEY_DSN_LOCKTIMEOUT	"LOCKTIMEOUT"
+#define KEY_DSN_SAFETHREAD	"SAFETHREAD"
 
 #define LEN_KEY(keydsn) sizeof(keydsn) - 1
 
 #define BUILD_STR(x)	#x
 #define BUILD_STR1(x)	x
 #define BUILD_STR2(x)   BUILD_STR(x)
+
+#if MAJOR_VERSION < 10
+#define ZERO_MAJOR "0"
+#else
+#define ZERO_MAJOR
+#endif
+
+#if MINOR_VERSION < 10
+#define ZERO_MINOR "0"
+#else
+#define ZERO_MINOR
+#endif
+
+#if BUILDNUM_VERSION   < 100
+#define ZERO_BUILDNUM "00"
+#elif BUILDNUM_VERSION < 1000
+#define ZERO_BUILDNUM "0"
+#else
+#define ZERO_BUILDNUM
+#endif
 
 #define BUILD_DRIVER_VERSION(major,minor,buildnum) major"."minor"."buildnum
 #ifdef __BORLANDC__
@@ -78,10 +143,15 @@
 #define BUILD_VERSION_STR(major,minor,revno,buildnum) major "." minor "." revno "." buildnum
 #endif
 
-#define DRIVER_VERSION		BUILD_DRIVER_VERSION( "0" BUILD_STR2( MAJOR_VERSION ), "0" BUILD_STR2( MINOR_VERSION ), "00" BUILD_STR2( BUILDNUM_VERSION ) )
+#define FILE_DESCRIPTION_STR	DRIVER_NAME "\0"
+#define INTERNAL_NAME_STR		DRIVER_NAME "\0"
+#define ORIGINAL_FILENAME_STR	DRIVER_NAME DRIVER_EXT "\0"
+
+#define DRIVER_VERSION		BUILD_DRIVER_VERSION( ZERO_MAJOR BUILD_STR2( MAJOR_VERSION ), ZERO_MINOR BUILD_STR2( MINOR_VERSION ), ZERO_BUILDNUM BUILD_STR2( BUILDNUM_VERSION ) )
 #define FILE_VERSION		MAJOR_VERSION,MINOR_VERSION,REVNO_VERSION,BUILDNUM_VERSION
 #define FILE_VERSION_STR	BUILDTYPE_VERSION BUILD_VERSION_STR( BUILD_STR2( MAJOR_VERSION ), BUILD_STR2( MINOR_VERSION ), BUILD_STR2(REVNO_VERSION), BUILD_STR2(BUILDNUM_VERSION) ) "\0"
 #define PRODUCT_VERSION		FILE_VERSION
 #define PRODUCT_VERSION_STR	BUILD_VERSION_STR ( BUILD_STR2( MAJOR_VERSION ), BUILD_STR2( MINOR_VERSION ), BUILD_STR2( REVNO_VERSION ), BUILD_STR2( BUILDNUM_VERSION ) ) "\0"
+#define DRIVER_BUILD_KEY	( MAJOR_VERSION * 1000000 + MINOR_VERSION * 10000 + BUILDNUM_VERSION )
 
 #endif

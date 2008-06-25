@@ -74,7 +74,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
-#ifndef _WIN32
+#ifndef _WINDOWS
 #include <unistd.h>
 #include <dlfcn.h>
 #endif
@@ -83,7 +83,6 @@
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
 #include <odbcinst.h>
-#include "SetupAttributes.h"
 #include "IscDbc/Connection.h"
 #include "IscDbc/SQLException.h"
 #include "OdbcStatement.h"
@@ -91,21 +90,20 @@
 #include "ConnectDialog.h"
 #include "SecurityPassword.h"
 
-#define DEFAULT_DRIVER		"IscDbc"
-
 #define SQL_FBGETPAGEDB			180
 #define SQL_FBGETWALDB			181
 #define SQL_FBGETSTATINFODB		182
 
-#define ODBC_DRIVER_VERSION	"03.00"
-//#define ODBC_DRIVER_VERSION	SQL_SPEC_STRING
-#define ODBC_VERSION_NUMBER	"03.00.0000"
+#define BUILD_ODBC_VER(zero1,major,zero2,minor,zero3,build) zero1 #major "." zero2 #minor "." zero3 #build
+#define STR_BUILD_ODBC_VER(zero1,major,zero2,minor,zero3,build) BUILD_ODBC_VER( zero1, major, zero2, minor, zero3, build )
+
+#define ODBC_DRIVER_VERSION	"03.51.0000"
+#define ODBC_VERSION_NUMBER	STR_BUILD_ODBC_VER( ZERO_MAJOR, MAJOR_VERSION, ZERO_MINOR, MINOR_VERSION, ZERO_BUILDNUM, BUILDNUM_VERSION )
 
 namespace OdbcJdbcLibrary {
 
+using namespace IscDbcLibrary;
 using namespace classSecurityPassword;
-
-typedef Connection* (*ConnectFn)();
 
 static const int supportedFunctions [] = {
             // Deprecated but important stuff
@@ -194,28 +192,42 @@ static const int supportedFunctions [] = {
             SQL_API_SQLMORERESULTS,
         };
 
-enum InfoType { infoString, infoShort, infoLong, infoUnsupported };
+enum InfoType { infoNone, infoString, infoShort, infoLong, infoUnsupported };
+
 struct TblInfoItem
 {
 	int			item;
+#ifdef DEBUG
 	const char	*name;
+#endif
 	InfoType	type;
 	const char	*value;
 };
 
+#ifdef DEBUG
 #define CITEM(item,value)	{item, #item, infoString, value},
 #define SITEM(item,value)	{item, #item, infoShort, (char*) value},
 #define NITEM(item,value)	{item, #item, infoLong, (char*) value},
 #define UITEM(item,value)	{item, #item, infoUnsupported, (char*) value},
+#define LAST_ITEM			{ 0, NULL, infoNone, NULL }
+#else
+#define CITEM(item,value)	{item, infoString, value},
+#define SITEM(item,value)	{item, infoShort, (char*) value},
+#define NITEM(item,value)	{item, infoLong, (char*) value},
+#define UITEM(item,value)	{item, infoUnsupported, (char*) value},
+#define LAST_ITEM			{ 0, infoNone, NULL }
+#endif
 
 static const TblInfoItem tblInfoItems [] = {
 #include "InfoItems.h"
-            {0, 0, infoShort, 0}
+			LAST_ITEM
         };
 
 struct InfoItem
 {
+#ifdef DEBUG
 	const char	*name;
+#endif
 	InfoType	type;
 	const char	*value;
 };
@@ -257,13 +269,15 @@ bool moduleInit()
 		functionsBitmap [fn >> 4] |= 1 << (fn & 0xf);
 	}
 
-	for (const TblInfoItem *t = tblInfoItems; t->name; ++t)
+	for (const TblInfoItem *t = tblInfoItems; t->type; ++t)
 	{
 		int slot = INFO_SLOT (t->item);
 		ASSERT (slot >= 0 && slot < INFO_SLOTS);
 		InfoItem *item = infoItems + slot;
+#ifdef DEBUG
 		ASSERT (item->name == NULL);
 		item->name = t->name;
+#endif
 		item->type = t->type;
 		item->value = t->value;
 	}
@@ -286,12 +300,14 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 {
 	env					= parent;
 	connected			= false;
+	safeThread			= true;
 	levelBrowseConnect	= 0;
-	databaseAlways		= false;
+	databaseAccess		= OPEN_DB;
 	connectionTimeout	= 0;
 	connection			= NULL;
 	statements			= NULL;
 	descriptors			= NULL;
+	userEvents			= NULL;
 	asyncEnabled		= SQL_ASYNC_ENABLE_OFF;
 	autoCommit			= true;
 	cursors				= SQL_CUR_USE_DRIVER; //Org
@@ -304,29 +320,54 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	quotedIdentifier	= true;
 	sensitiveIdentifier  = false;
 	autoQuotedIdentifier = false;
+	userEventsInterfase	= NULL;
+	charsetCode			= 0; // NONE
+
+#ifdef _WINDOWS
+#if _MSC_VER > 1000
+	enlistConnect = false;
+#endif // _MSC_VER > 1000
+	WcsToMbs			= _WcsToMbs;
+	MbsToWcs			= _MbsToWcs;
+#else
+	WcsToMbs			= wcstombs;
+	MbsToWcs			= mbstowcs;
+#endif // _WINDOWS
+
 }
 
 OdbcConnection::~OdbcConnection()
 {
-	if (connection)
+	if ( userEvents )
+		userEvents->release();
+
+	if ( userEventsInterfase )
+		delete userEventsInterfase;
+
+	if ( connection )
 		connection->close();
 
-	while (statements)
+	while ( statements )
 	{
 		OdbcStatement* statement = statements;
 		statements = (OdbcStatement*)statement->next;
 		delete statement;
 	}
 	
-	while (descriptors)
+	while ( descriptors )
 	{
 		OdbcDesc* descriptor = descriptors;
 		descriptors = (OdbcDesc*)descriptor->next;
 		delete descriptor;
 	}
 
-	if (env)
+	if ( env )
 		env->connectionClosed (this);
+}
+
+OdbcConnection* OdbcConnection::getConnection()
+{
+	return this;
 }
 
 OdbcObjectType OdbcConnection::getType()
@@ -338,8 +379,34 @@ SQLRETURN OdbcConnection::sqlSetConnectAttr( SQLINTEGER attribute, SQLPOINTER va
 {
 	clearErrors();
 
-	switch (attribute)
+	switch ( attribute )
 	{
+#ifdef _WINDOWS
+#if _MSC_VER > 1000
+
+	case 1207: // SQL_ENLIST_IN_DTC Enlist connection in the DTC transaction
+
+		if ( !IsInstalledMsTdsInterface() )
+		{
+			return sqlReturn( SQL_ERROR, 
+							  "IM001", 
+							  "Unable start DTC transaction : library 'xolehlp.dll' failed to load" );
+		}
+
+		enlistTransaction( value );
+		autoCommit = false;
+		if ( connection )
+			connection->setAutoCommit( autoCommit );
+		break;
+
+#endif // _MSC_VER > 1000
+#endif
+
+	case SQL_ATTR_ANSI_APP:
+		if ( (int) value == SQL_AA_FALSE )
+			return sqlReturn (SQL_ERROR, "IM001", "Driver does not support this function");
+		break;
+
 	case SQL_ATTR_HANDLE_DBC_SHARE: // 4000
 		if (connection)
 		{
@@ -379,6 +446,34 @@ SQLRETURN OdbcConnection::sqlSetConnectAttr( SQLINTEGER attribute, SQLPOINTER va
 	case SQL_ATTR_ACCESS_MODE:
 		accessMode = (int)value;
 		break;
+
+	case SQL_FB_INIT_EVENTS:
+		if ( !connection )
+			return sqlReturn( SQL_ERROR, "08003", "Connection does not exist" );
+
+		if ( stringLength != sizeof ( ODBC_EVENTS_BLOCK_INFO ) )
+			return sqlReturn( SQL_ERROR, "01S02", "Option value changed" );
+
+		initUserEvents( (PODBC_EVENTS_BLOCK_INFO)value );
+		break;
+
+	case SQL_FB_UPDATECOUNT_EVENTS:
+		if ( !connection )
+			return sqlReturn( SQL_ERROR, "08003", "Connection does not exist" );
+
+		if ( !userEventsInterfase )
+			return sqlReturn( SQL_ERROR, "01S02", "Option value changed" );
+
+		updateResultEvents( (char*)value );
+		break;
+
+	case SQL_FB_REQUEUE_EVENTS:
+
+		if ( !userEventsInterfase )
+			return sqlReturn( SQL_ERROR, "01S02", "Option value changed" );
+
+		requeueEvents();
+		break;
 	}
 
 	return sqlSuccess();
@@ -417,10 +512,14 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 		int nameLength;
 		char *q = name;
 		char c;
-		while (p < end && (c = *p++) != '=' && c != ';')
+		while (p < end && (c = *p++) && c != '=' && c != ';')
 			*q++ = c;
 		*q = 0;
 		nameLength = q - name;
+
+		if ( !nameLength )
+			continue;
+
 		q = value;
 		if (c == '=')
 		{
@@ -436,16 +535,23 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 
 		if ( IS_KEYWORD( SETUP_DSN ) )
 			dsn = value;
+		else if ( IS_KEYWORD( SETUP_DESCRIPTION ) )
+			description = value;
 		else if ( IS_KEYWORD( KEY_FILEDSN ) )
 			filedsn = value;
 		else if ( IS_KEYWORD( KEY_SAVEDSN ) )
 			savedsn = value;
 		else if ( IS_KEYWORD( KEY_DSN_DATABASE ) || IS_KEYWORD( SETUP_DBNAME ) )
 			databaseName = value;
-		else if ( IS_KEYWORD( SETUP_DBNAMEALWAYS ) )
+		else if ( IS_KEYWORD( SETUP_DBNAMEALWAYS ) || IS_KEYWORD( KEY_DSN_CREATE_DB ) )
 		{
 			databaseName = value;
-			databaseAlways = true;
+			databaseAccess = CREATE_DB;
+		}
+		else if ( IS_KEYWORD( KEY_DSN_DROP_DB ) )
+		{
+			databaseName = value;
+			databaseAccess = DROP_DB;
 		}
 		else if ( IS_KEYWORD( SETUP_PAGE_SIZE ) )
 			pageSize = value;
@@ -519,6 +625,15 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 		}
 		else if ( IS_KEYWORD( KEY_DSN_USESCHEMA ) || IS_KEYWORD( SETUP_USESCHEMA ) )
 			useSchemaIdentifier = value;
+		else if ( IS_KEYWORD( KEY_DSN_LOCKTIMEOUT ) || IS_KEYWORD( SETUP_LOCKTIMEOUT ) )
+			useLockTimeoutWaitTransactions = value;
+		else if ( IS_KEYWORD( KEY_DSN_SAFETHREAD ) || IS_KEYWORD( SETUP_SAFETHREAD ) )
+		{
+			if( *value == 'N')
+				safeThread = false;
+
+			defOptions |= DEF_SAFETHREAD;
+		}
 		else if ( IS_KEYWORD( "ODBC" ) )
 			;
 		else
@@ -558,7 +673,7 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 		r = appendString (r, charset);
 	}
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 	if ( driverCompletion != SQL_DRIVER_NOPROMPT 
 		&& ( account.IsEmpty() || password.IsEmpty() ) )
 	{
@@ -577,7 +692,7 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 		password = dlg.m_password;
 		role = dlg.m_role;
 	}
-#endif // _WIN32
+#endif // _WINDOWS
 
 	SQLRETURN ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
@@ -628,6 +743,7 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 			r = appendString (r, filedsn);
 		}
 
+		*r++ = ';';
 		*r = '\0';
 
 		if (setString ((UCHAR*) returnString, r - returnString, outConnectBuffer, connectBufferLength, outStringLength))
@@ -854,7 +970,7 @@ SQLRETURN OdbcConnection::sqlNativeSql( SQLCHAR * inStatementText, SQLINTEGER te
 		return sqlReturn( SQL_ERROR, "HY009", "Invalid use of null pointer" );
 
 	if ( textLength1 == SQL_NTS )
-		textLength1 = strlen( (const char *)inStatementText );
+		textLength1 = (SQLINTEGER)strlen( (const char *)inStatementText );
 	else if ( textLength1 < 0 )
 		return sqlReturn( SQL_ERROR, "HY090", "Invalid string or buffer length" );
 
@@ -863,14 +979,24 @@ SQLRETURN OdbcConnection::sqlNativeSql( SQLCHAR * inStatementText, SQLINTEGER te
 	const char * outText;
 	SQLRETURN ret = SQL_SUCCESS;
 
-	if ( !connection->getNativeSql( (const char *)inStatementText, textLength1, 
-						tempNative.getBuffer ( textLength ), textLength, &textLength ) )
+	try
 	{
-		textLength = textLength1;
-		outText = (const char *)inStatementText;
+		if ( !connection->getNativeSql( (const char *)inStatementText, textLength1, 
+							tempNative.getBuffer ( textLength ), textLength, &textLength ) )
+		{
+			textLength = textLength1;
+			outText = (const char *)inStatementText;
+		}
+		else
+			outText = (const char *)tempNative;
+
 	}
-	else
-		outText = (const char *)tempNative;
+	catch ( std::exception &ex )
+	{
+		SQLException &exception = (SQLException&)ex;
+		postError( "HY000", exception );
+		return SQL_ERROR;
+	}
 
 	if( textLength2Ptr )
 		*textLength2Ptr = textLength;
@@ -913,7 +1039,12 @@ JString OdbcConnection::readAttributeFileDSN(const char * attribute)
 
 void OdbcConnection::writeAttributeFileDSN(const char * attribute, const char * value)
 {
+#ifdef _IODBCUNIX_H
+	// note: (char*)value - only for iODBC from Linux
+	SQLWriteFileDSN (savedsn, "ODBC", attribute, (char*)value);
+#else
 	SQLWriteFileDSN (savedsn, "ODBC", attribute, value);
+#endif
 }
 
 SQLRETURN OdbcConnection::sqlGetFunctions(SQLUSMALLINT functionId, SQLUSMALLINT * supportedPtr)
@@ -988,7 +1119,7 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 	InfoItem *item = infoItems + slot;
 	int n;
 
-	if (slot < 0 || slot >= INFO_SLOTS || item->name == NULL)
+	if ( slot < 0 || slot >= INFO_SLOTS || item->type == infoNone )
 		return sqlReturn (SQL_ERROR, "HY096", "Information type out of range");
 
 	const char *string = item->value;
@@ -1102,19 +1233,7 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 
 	case SQL_SERVER_NAME:
 		if ( databaseServerName.IsEmpty() )
-		{
-			if ( !metaData )
-			{
-				ULONG nSize = 256;
-#ifdef _WIN32
-				GetComputerName( databaseServerName.getBuffer( nSize ), &nSize );
-#else
-				gethostname( databaseServerName.getBuffer( nSize ), nSize );
-#endif
-			}
-			else
-				databaseServerName = metaData->getDatabaseServerName();
-		}
+			databaseServerName = metaData->getDatabaseServerName();
 		string = databaseServerName;
 		break;
 
@@ -1479,56 +1598,7 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 
 	try
 	{
-#ifdef _WIN32
-		if( !env->libraryHandle )
-		{
-			env->libraryHandle = LoadLibrary (sharedLibrary);
-			if ( !env->libraryHandle )
-			{
-				JString text;
-				text.Format ("Unable to connect to data source: library '%s' failed to load", sharedLibrary);
-				return sqlReturn (SQL_ERROR, "08001", text);
-			}
-		}
-#ifdef __BORLANDC__
-		ConnectFn fn = (ConnectFn) GetProcAddress (env->libraryHandle, "_createConnection");
-#else
-		ConnectFn fn = (ConnectFn) GetProcAddress (env->libraryHandle, "createConnection");
-#endif
-		if (!fn)
-		{
-			JString text;
-			text.Format ("Unable to connect to data source %s: can't find entrypoint 'createConnection'");
-			return sqlReturn (SQL_ERROR, "08001", text);
-		}
-#else
-		if( !env->libraryHandle )
-		{
-			env->libraryHandle = dlopen (sharedLibrary, RTLD_NOW);
-			if (!env->libraryHandle)
-			{
-				JString text;
-				const char *msg = dlerror();
-				text.Format ("Unable to connect to data source: library '%s' failed to load: %s",
-							 sharedLibrary, msg);
-				return sqlReturn (SQL_ERROR, "08001", text);
-			}
-		}
-		ConnectFn fn = (ConnectFn) dlsym (env->libraryHandle, "createConnection");
-		if (!fn)
-		{
-			JString text;
-			const char *msg = dlerror();
-			if (!msg)
-			{
-				text.Format ("Unable to connect to data source %s: can't find entrypoint 'createConnection'", sharedLibrary);
-				msg = text;
-			}
-			return sqlReturn (SQL_ERROR, "08001", msg);
-		}
-#endif
-		connection = (fn)();
-		//connection = createConnection();
+		connection = createConnection();
 
 		if ( getDriverBuildKey() != connection->getDriverBuildKey() )
 		{
@@ -1536,17 +1606,9 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 			connection = NULL;
 			env->envShare = NULL;
 
-#ifdef _WIN32
-			FreeLibrary(env->libraryHandle);
-			env->libraryHandle = NULL;
-#else
-			dlclose (env->libraryHandle);
-			env->libraryHandle = 0;
-#endif
-
 			JString text;
-			text.Format (" Unable to load %s Library : can't find ver. %s ", sharedLibrary, DRIVER_VERSION);
-			return sqlReturn (SQL_ERROR, "HY000", text);
+			text.Format( " Unable to load %s Library : can't find ver. %s ", sharedLibrary, DRIVER_VERSION );
+			return sqlReturn( SQL_ERROR, "HY000", text );
 		}
 
 		properties = connection->allocProperties();
@@ -1560,16 +1622,25 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 			properties->putValue ("charset", charset);
 		if (client)
 			properties->putValue ("client", client);
+		if (dsn)
+			properties->putValue ("dsn", dsn);
 
 		properties->putValue ("dialect", dialect3 ? "3" : "1");
 
 		properties->putValue ("quoted", quotedIdentifier ? "Y" : "N");
 		properties->putValue ("sensitive", sensitiveIdentifier ? "Y" : "N");
 		properties->putValue ("autoQuoted", autoQuotedIdentifier ? "Y" : "N");
-		properties->putValue ("databaseAlways", databaseAlways ? "Y" : "N");
+
+		properties->putValue ("databaseAccess",
+								databaseAccess == CREATE_DB ? "1" 
+								: databaseAccess == DROP_DB ? "2" 
+								: "0");
 
 		if (useSchemaIdentifier)
 			properties->putValue ("useSchema", useSchemaIdentifier);
+
+		if (useLockTimeoutWaitTransactions)
+			properties->putValue ("useLockTimeout", useLockTimeoutWaitTransactions);
 
 		if (pageSize)
 			properties->putValue ("pagesize", pageSize);
@@ -1591,18 +1662,23 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 		connection->setTransactionIsolation( transactionIsolation );
 		connection->setExtInitTransaction( optTpb );
 		connection->setUseAppOdbcVersion( env->useAppOdbcVersion );
+		charsetCode = connection->getConnectionCharsetCode();
+		WcsToMbs = connection->getConnectionWcsToMbs();
+		MbsToWcs = connection->getConnectionMbsToWcs();
 	}
 	catch ( std::exception &ex )
 	{
 		SQLException &exception = (SQLException&)ex;
 		if ( env->envShare )
 			env->envShare = NULL;
-		if (properties)
+
+		if ( properties )
 			properties->release();
-		JString text = exception.getText();
+
 		connection->close();
 		connection = NULL;
-		return sqlReturn (SQL_ERROR, "08004", text);
+
+		return sqlReturn( SQL_ERROR, "08004", exception.getText(), exception.getSqlcode() );
 	}
 
 	connected = true;
@@ -1671,6 +1747,9 @@ void OdbcConnection::expandConnectParameters()
 	{
 		JString options;
 
+		if (description.IsEmpty())
+			description = readAttribute (SETUP_DESCRIPTION);
+
 		if (databaseName.IsEmpty())
 			databaseName = readAttribute (SETUP_DBNAME);
 
@@ -1730,6 +1809,17 @@ void OdbcConnection::expandConnectParameters()
 		if (useSchemaIdentifier.IsEmpty())
 			useSchemaIdentifier = readAttribute(SETUP_USESCHEMA);
 
+		if (useLockTimeoutWaitTransactions.IsEmpty())
+			useLockTimeoutWaitTransactions = readAttribute(SETUP_LOCKTIMEOUT);
+
+		if ( !(defOptions & DEF_SAFETHREAD) )
+		{
+			options = readAttribute(SETUP_SAFETHREAD);
+
+			if(*(const char *)options == 'N')
+				safeThread = false;
+		}
+
 		if ( !(defOptions & DEF_QUOTED) )
 		{
 			options = readAttribute(SETUP_QUOTED);
@@ -1757,6 +1847,9 @@ void OdbcConnection::expandConnectParameters()
 	else if (!filedsn.IsEmpty())
 	{
 		JString options;
+
+		if (description.IsEmpty())
+			description = readAttributeFileDSN (SETUP_DESCRIPTION);
 
 		if (databaseName.IsEmpty())
 			databaseName = readAttributeFileDSN (SETUP_DBNAME);
@@ -1817,6 +1910,17 @@ void OdbcConnection::expandConnectParameters()
 		if (useSchemaIdentifier.IsEmpty())
 			useSchemaIdentifier = readAttributeFileDSN (SETUP_USESCHEMA);
 
+		if (useLockTimeoutWaitTransactions.IsEmpty())
+			useLockTimeoutWaitTransactions = readAttributeFileDSN (SETUP_LOCKTIMEOUT);
+
+		if ( !(defOptions & DEF_SAFETHREAD) )
+		{
+			options = readAttribute(SETUP_SAFETHREAD);
+
+			if(*(const char *)options == 'N')
+				safeThread = false;
+		}
+
 		if ( !(defOptions & DEF_QUOTED) )
 		{
 			options = readAttributeFileDSN (SETUP_QUOTED);
@@ -1856,6 +1960,7 @@ void OdbcConnection::expandConnectParameters()
 void OdbcConnection::saveConnectParameters()
 {
 	writeAttributeFileDSN (SETUP_DRIVER, DRIVER_FULL_NAME);
+	writeAttributeFileDSN (SETUP_DESCRIPTION, description);
 	writeAttributeFileDSN (SETUP_DBNAME, databaseName);
 	writeAttributeFileDSN (SETUP_CLIENT, client);
 	writeAttributeFileDSN (SETUP_USER, account);
@@ -1869,6 +1974,8 @@ void OdbcConnection::saveConnectParameters()
 	writeAttributeFileDSN (SETUP_SENSITIVE, sensitiveIdentifier ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_AUTOQUOTED, autoQuotedIdentifier ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_USESCHEMA, useSchemaIdentifier);
+	writeAttributeFileDSN (SETUP_LOCKTIMEOUT, useLockTimeoutWaitTransactions);
+	writeAttributeFileDSN (SETUP_SAFETHREAD, safeThread ? "Y" : "N");
 
 	char buffer[256];
 	CSecurityPassword security;
@@ -1962,6 +2069,70 @@ SQLRETURN OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int b
 		*lengthPtr = sizeof (long);
 
 	return sqlSuccess();
+}
+
+void OdbcConnection::initUserEvents( PODBC_EVENTS_BLOCK_INFO infoEvents )
+{
+	try
+	{
+		PropertiesEvents *propertiesEvents = connection->allocPropertiesEvents();
+		PODBC_EVENT_INFO nextNameEvent = infoEvents->events;
+
+		for ( int i = 0; i < infoEvents->count; i++, nextNameEvent++ )
+		{
+			propertiesEvents->putNameEvent( nextNameEvent->nameEvent );
+			nextNameEvent->countEvents = ~0lu;
+			nextNameEvent->changed = false;
+		}
+
+		userEvents = connection->prepareUserEvents( propertiesEvents, infoEvents->lpAstProc );
+		propertiesEvents->release();
+
+		userEventsInterfase = new ODBC_USER_EVENTS_INTERFASE;
+		userEventsInterfase->userData = infoEvents->userData;
+		userEventsInterfase->hdbc = infoEvents->hdbc;
+		userEventsInterfase->events = infoEvents->events;
+		userEventsInterfase->count = infoEvents->count;
+	}
+	catch ( std::exception &ex )
+	{
+		SQLException &exception = (SQLException&)ex;
+		postError( "HY000", exception );
+	}
+}
+
+void OdbcConnection::updateResultEvents( char *updated )
+{
+	try
+	{
+		userEvents->updateResultEvents( updated );
+
+		PODBC_EVENT_INFO nextNameEvent = userEventsInterfase->events;
+
+		for ( int i = 0; i < userEventsInterfase->count; i++, nextNameEvent++ )
+		{
+			nextNameEvent->countEvents = userEvents->getCountEvents( i );
+			nextNameEvent->changed = userEvents->isChanged( i );
+		}
+	}
+	catch ( std::exception &ex )
+	{
+		SQLException &exception = (SQLException&)ex;
+		postError( "HY000", exception );
+	}
+}
+
+void OdbcConnection::requeueEvents()
+{
+	try
+	{
+		userEvents->queEvents( userEventsInterfase );
+	}
+	catch ( std::exception &ex )
+	{
+		SQLException &exception = (SQLException&)ex;
+		postError( "HY000", exception );
+	}
 }
 
 }; // end namespace OdbcJdbcLibrary

@@ -118,7 +118,7 @@ void IscBlob::fetchBlob()
 {
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
-	void *transactionHandle = connection->startTransaction();
+	void *transactionHandle = statement->startTransaction();
 	isc_blob_handle blobHandle = NULL;
 
 	int ret = connection->GDS->_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
@@ -176,7 +176,7 @@ void IscBlob::writeBlob(char * sqldata)
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 	isc_blob_handle blobHandle = NULL;
-	isc_tr_handle transactionHandle = connection->startTransaction();
+	isc_tr_handle transactionHandle = statement->startTransaction();
 	GDS->_create_blob2 ( statusVector, 
 					  &connection->databaseHandle,
 					  &transactionHandle,
@@ -205,7 +205,7 @@ void IscBlob::writeStreamHexToBlob(char * sqldata)
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 	isc_blob_handle blobHandle = NULL;
-	isc_tr_handle transactionHandle = connection->startTransaction();
+	isc_tr_handle transactionHandle = statement->startTransaction();
 	GDS->_create_blob2 ( statusVector, 
 					  &connection->databaseHandle,
 					  &transactionHandle,
@@ -234,7 +234,7 @@ void IscBlob::writeBlob(char * sqldata, char *data, long length)
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 	isc_blob_handle blobHandle = NULL;
-	isc_tr_handle transactionHandle = connection->startTransaction();
+	isc_tr_handle transactionHandle = statement->startTransaction();
 	GDS->_create_blob2 ( statusVector, 
 					  &connection->databaseHandle,
 					  &transactionHandle,
@@ -297,7 +297,7 @@ void IscBlob::directOpenBlob( char * sqldata )
 	if ( directBlobHandle )
 		GDS->_close_blob (statusVector, &directBlobHandle);
 
-	void *transactionHandle = connection->startTransaction();
+	void *transactionHandle = statement->startTransaction();
 	int ret = GDS->_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
 							  &directBlobHandle, (ISC_QUAD*) sqldata, 0, NULL);
 	if (ret)
@@ -429,7 +429,7 @@ void IscBlob::directCreateBlob( char * sqldata )
 	if ( directBlobHandle )
 		GDS->_close_blob (statusVector, &directBlobHandle);
 
-	void *transactionHandle = connection->startTransaction();
+	void *transactionHandle = statement->startTransaction();
 	GDS->_create_blob2 ( statusVector, 
 					  &connection->databaseHandle,
 					  &transactionHandle,

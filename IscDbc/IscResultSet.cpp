@@ -85,7 +85,7 @@ void IscResultSet::initResultSet(IscStatement *iscStatement)
 	statysPositionRow = enBEFORE_FIRST;
 }
 
-// Is used only for cursors OdbcJdbc
+// Is used only for cursors OdbcFb
 // It is forbidden to use in IscDbc
 bool IscResultSet::nextFetch()
 {
@@ -477,6 +477,16 @@ short IscResultSet::getShort(int id)
 short IscResultSet::getShort(const char * columnName)
 {
 	return getValue (columnName)->getShort();
+}
+
+bool IscResultSet::getBoolean(int id)
+{
+	return getValue (id)->getBoolean();
+}
+
+bool IscResultSet::getBoolean(const char * columnName)
+{
+	return getValue (columnName)->getBoolean();
 }
 
 int IscResultSet::objectVersion()

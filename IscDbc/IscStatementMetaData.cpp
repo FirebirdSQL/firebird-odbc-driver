@@ -26,8 +26,11 @@
 #include "IscBlob.h"
 #include "IscArray.h"
 #include "IscHeadSqlVar.h"
+#include "IscStatement.h"
 #include "IscStatementMetaData.h"
+#include "IscColumnKeyInfo.h"
 #include "Sqlda.h"
+#include "MultibyteConvert.h"
 
 namespace IscDbcLibrary {
 
@@ -54,6 +57,11 @@ int IscStatementMetaData::getColumnType(int index, int &realSqlType)
 int IscStatementMetaData::getPrecision(int index)
 {
 	return sqlda->getPrecision (index);
+}
+
+int IscStatementMetaData::getNumPrecRadix(int index)
+{
+	return sqlda->getNumPrecRadix (index);
 }
 
 int IscStatementMetaData::getScale(int index)
@@ -144,6 +152,13 @@ int IscStatementMetaData::isBlobOrArray(int index)
 	return sqlda->isBlobOrArray(index);
 }
 
+bool IscStatementMetaData::isColumnPrimaryKey( int index )
+{
+	IscColumnKeyInfo keyInfo( (IscDatabaseMetaData*)statement->connection->getMetaData() );
+
+	return keyInfo.getColumnKeyInfo( sqlda->getTableName( index ), sqlda->getColumnName( index ) );
+}
+
 const char* IscStatementMetaData::getSchemaName(int index)
 {
 	return sqlda->getOwnerName (index);
@@ -192,6 +207,16 @@ void IscStatementMetaData::getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar 
 	ptHeadSqlVar = new IscHeadSqlVar(var);
 
 	createBlobDataTransfer(index, ptDataBlob);
+}
+
+WCSTOMBS IscStatementMetaData::getAdressWcsToMbs( int index )
+{
+	return adressWcsToMbs( sqlda->getSubType( index ) & 0xff );
+}
+
+MBSTOWCS IscStatementMetaData::getAdressMbsToWcs( int index )
+{
+	return adressMbsToWcs( sqlda->getSubType( index ) & 0xff );
 }
 
 int IscStatementMetaData::objectVersion()

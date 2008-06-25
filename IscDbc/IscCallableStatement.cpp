@@ -95,7 +95,7 @@ bool IscCallableStatement::execute()
 	ISC_STATUS statusVector [20];
 	values.alloc (numberColumns);
 	int numberParameters = inputSqlda.getColumnCount();
-	void *transHandle = connection->startTransaction();
+	void *transHandle = startTransaction();
 	int n;
 
 	for (n = 0; n < numberParameters; ++n)
@@ -123,6 +123,11 @@ bool IscCallableStatement::execute()
 int IscCallableStatement::objectVersion()
 {
 	return CALLABLESTATEMENT_VERSION;
+}
+
+bool IscCallableStatement::getBoolean(int id)
+{
+	return getValue (id)->getBoolean();
 }
 
 short IscCallableStatement::getShort(int id)

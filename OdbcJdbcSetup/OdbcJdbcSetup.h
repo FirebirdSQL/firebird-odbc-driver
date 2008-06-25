@@ -28,6 +28,27 @@
 #include <windows.h>
 #include "../IscDbc/JString.h"
 
+#ifdef _WINDOWS
+#include <windows.h>
+
+#if _MSC_VER >= 1400 // VC80 and later
+#define strcasecmp		_stricmp
+#define strncasecmp		_strnicmp
+#else
+#define strcasecmp		stricmp
+#define strncasecmp		strnicmp
+#endif // _MSC_VER >= 1400
+
+#define snprintf		_snprintf
+#define swprintf		_snwprintf
+#endif
+
+#define ISLOWER(c)			((c) >= 'a' && (c) <= 'z')
+#define UPPER(c)			((ISLOWER (c)) ? (c) - 'a' + 'A' : (c))
+#define IS_END_TOKEN(c)		((c) == '\0' || (c) == ';' || (c) == '\n' || (c) == '\r' || (c) == '\t')
+#define IS_CHECK_YES(c)		((c) == 'Y' || (c) == '1')
+#define IS_CHECK_NO(c)		((c) == 'N' || (c) == '0')
+
 #include "resource.h"		// main symbols
 
 #endif // !defined(_ODBCJDBCSETUP_H_INCLUDED_)

@@ -57,6 +57,7 @@ public:
 	virtual int		getSegmentToBinary(int offset, int len, void * ptr);
 	virtual int		getSegmentToHexStr(int offset, int len, void * ptr);
 	virtual int		getSegment (int offset, int length, void* address);
+	virtual int		getSegmentW (int offset, int length, void* address);
 	virtual void	putSegment (const char *string);
 	virtual void	putSegment (int length, const char *address, bool copy);
 	virtual int		getLength();

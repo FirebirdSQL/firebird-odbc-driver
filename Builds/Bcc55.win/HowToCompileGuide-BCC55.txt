@@ -1,0 +1,109 @@
+   How to compile guide with free Borland C++ Command Line 
+                     Tool version 5.5.1
+
+   In order to compile OdbcJdbc Firebird driver with free Borland C++ 
+Command Line Tool version 5.5.1, few steps are necessary to be followed. 
+This is complete guide, from compiler download, compiler installation, 
+few preparation to compile and compiling driver itself. Complete process 
+is organized in few sections.
+
+I hope this little guide will be useful.
+
+Installing Borland C++ free Commandline tool v 5.5.1 
+
+1. Download Borland C++ free Commandline tool v 5.5.1 from Borland's 
+   official site at www.borland.com. File is named as 
+   freecommandLinetools.exe
+
+2. Execute freecommandLinetools.exe and follow instructions. 
+   Assuming chosen folder is:
+
+	 c:\Borland\BCC55
+
+
+   Creating needed odbccp32.lib file. File odbccp32.lib need 
+to be created in order to compile driver
+
+1. Find odbccp32.dll library in Windows system folder (in W2000, 
+   it is usually in c:\winnt\system32) and copy it into temp folder.
+
+2. Create odbccp32.lib file from odbccp32.dll with following command:
+
+	c:\Borland\Bcc55\Bin\implib -c odbccp32.lib odbccp32.dll
+
+3. Copy created file odbccp32.lib to following folder:
+
+	c:\Borland\Bcc55\lib\PSDK 
+
+
+Compiling OdbcJdbc driver itself
+
+
+1. Create temp folder, for example:
+
+	md C:\FBODBC
+
+2. Create following sub folders:
+
+	md C:\FBODBC\Firebird
+        md C:\FBODBC\Firebird\Include
+	md C:\FBODBC\OdbcJdbc
+
+3. Extract OdbcJdbc sources to C:\FBODBC\OdbcJdbc
+
+4. Download Firebird sources from official site www.firebird.org.
+
+5. Extract Firebird sources to some other temp folder and copy to
+
+	C:\FBODBC\Firebird\Include only following files:
+
+	blr.h
+	fb_types.h
+	ibase.h
+	iberror.h
+
+6. Check and change paths to your correspondent paths from file:
+
+	c:\FBODBC\OdbcJdbc\Builds\makefile.environ
+
+	In this case, paths are follows: 
+
+	FBINCDIR	= c:\FBODBC\Firebird\include
+	FBLIBDIR	= c:\FBODBC\Firebird\lib
+
+
+7. Depending on chosen environment, execute one of the following 
+   batches in order to create OdbcJdbc DLLs:
+
+	From folder c:\FBODBC\OdbcJdbc\Builds\Bcc55.win
+
+	For NT (W2000/XP/w2003) - BuildNT.bat
+	For W98/Me              - Build98.bat
+
+
+	Resulting DLLs are in folder:
+
+	c:\FBODBC\OdbcJdbc\Builds\Bcc55.win\Release
+
+8. Install driver with following command (not recommended):
+
+	From folder c:\FBODBC\OdbcJdbc\Builds\Bcc55.win
+
+	RegSvr32 .\OdbcJdbcSetup.dll
+
+9. If last command fails, using full paths to regsvr32 and 
+   OdbcJdbcSetup.dll may be of help. For W2000, that is following 
+   command (recommended):
+
+	c:\winnt\system32\RegSvr32 /i c:\FBODBC\OdbcJdbc\Builds\Bcc55.win\Release\OdbcJdbcSetup.dll
+
+10. Enjoy using Firebird through ODBC!
+
+
+
+    Special thanks to Vladimir Tsvigun for wonderful job maintaining 
+and improving this driver, for all his help and support.
+
+Contributor	: Sasa Zeman
+Contact 	: public@szutils.net
+Web site	: www.szutils.net

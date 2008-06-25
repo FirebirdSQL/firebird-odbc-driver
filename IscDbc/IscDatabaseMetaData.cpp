@@ -265,6 +265,11 @@ const char* IscDatabaseMetaData::getURL()
 	return 0;
 	}
 
+const char* IscDatabaseMetaData::getDSN()
+	{
+	return connection->attachment->dsn;
+	}
+
 const char* IscDatabaseMetaData::getUserName()
 	{
 	return connection->attachment->userName;
@@ -333,6 +338,11 @@ int IscDatabaseMetaData::getDatabasePageSize()
 const int IscDatabaseMetaData::getUseSchemaIdentifier()
 	{
 	return connection->attachment->getUseSchemaIdentifier();
+	}
+
+const int IscDatabaseMetaData::getUseLockTimeoutWaitTransactions()
+	{
+	return connection->attachment->getUseLockTimeoutWaitTransactions();
 	}
 
 const char* IscDatabaseMetaData::getDriverName()
@@ -933,7 +943,7 @@ bool IscDatabaseMetaData::supportsTransactionIsolationLevel(int level)
 	switch (level)
 		{
 		case TRANSACTION_READ_UNCOMMITTED:
-			return false;
+			return true;
 
 		/**
 		 * Dirty reads are prevented; non-repeatable reads and phantom

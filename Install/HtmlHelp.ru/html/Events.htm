@@ -1,0 +1,231 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2007 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Использование событий Firebird базы данных</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME=IND_EVENTS></A><h2>Использование событий Firebird базы данных</h2></P>
+
+<P>
+&nbsp;&nbsp;&nbsp;За основу возьмем базу <B>employee.fdb</B> и в ней таблицу <B>SALES</B>. 
+Для этой таблицы есть триггер <B>post_new_order</B>, в котором вызывается 
+команда<BR>
+ <UL><B>POST_EVENT 'new_order';</B><BR></UL>
+&nbsp;&nbsp;&nbsp;
+Следует уточнить, что триггер срабатывает после вставки записи в таблицу.
+Теперь попробуем решить следующую задачу, нам нужно после вставки
+новой записи в таблицу <B>SALES</B> изменить поле статуса записи
+с состояния <B>'new'</B> в <B>'open'</B>. Предположим что запись была 
+успешно вставлена и сервер выполнил генерацию события <B>'new_order'</B>.
+Рассмотрим ключевые моменты для успешного решения задачи.</P>
+
+<P>&nbsp;&nbsp;&nbsp;
+- подключить файл описания интерфейса ODBC, обеспечивающего обработку 
+событий Firebird базы данных.
+<PRE>
+#include "OdbcUserEvents.h"
+</PRE>
+
+&nbsp;&nbsp;&nbsp;
+- указать в таблице <B>eventInfo</B> какие события нас интересуют. В нашем 
+случае нас будет интересовать только событие <B>'new_order'</B>. Событие
+<B>'change_order'</B> указано только с целью подчеркнуть, что можно 
+контролировать одновременно не одно событие, а много.
+
+<PRE>
+ODBC_EVENT_INFO eventInfo[] =
+{
+	INIT_ODBC_EVENT("new_order"),
+	INIT_ODBC_EVENT("change_order")
+};
+</PRE>
+
+&nbsp;&nbsp;&nbsp;
+- создать структуру <B>MyUniqueData</B> хранения данных
+необходимых для решения задачи. В нашем случае поле
+<B>event_flag</B> будет сигнализировать, что событие от сервера
+доставлено и мы можем приступать к работе.
+
+<PRE>
+struct MyUniqueData
+{
+	int event_flag;
+	//... other define for use into astRoutine
+};
+</PRE>
+
+&nbsp;&nbsp;&nbsp;
+- создать callback функцию <B>astRoutine</B>, которая будет
+активизироваться в случае возникновения событий, которые
+мы определили для контроля в таблице <B>eventInfo</B>. 
+
+<PRE>
+void astRoutine( void *userEventsInterfase, short length, char * updated )
+{
+    PODBC_USER_EVENTS_INTERFASE userInterfase = (PODBC_USER_EVENTS_INTERFASE)userEventsInterfase;
+    SQLSetConnectAttr( userInterfase->hdbc, SQL_FB_UPDATECOUNT_EVENTS, (SQLPOINTER)updated, SQL_LEN_BINARY_ATTR( length ) );
+    MyUniqueData &myData = *(MyUniqueData*)userInterfase->userData;
+    myData.event_flag++;
+    printf( "ast routine was called\n" );
+}
+</PRE>
+
+Функция обязательно должна иметь вызов:<BR>
+
+ <PRE><B>
+    SQLSetConnectAttr( userInterfase->hdbc,
+                       SQL_FB_UPDATECOUNT_EVENTS, 
+                       (SQLPOINTER)updated, 
+                       SQL_LEN_BINARY_ATTR( length ) );
+ </B></PRE>
+Он необходим для обновления состояния событий в нашей структуре
+<B>eventInfo</B>. Которая, имеет поле <B>countEvents</B> указывающее
+на общее количество срабатываний события и поле <B>bool	changed;</B>
+принимающее состояние <B>true</B> когда при обновлении состояния
+событий счетчик <B>countEvents</B> до обновления и после отличается.
+В нашем случае, нам интересен сам факт регистрации события, по этому
+мы выполняем команду:
+
+<PRE>
+    myData.event_flag++;
+</PRE>
+
+которая является примитивным механизмом синхронизации для
+рабочего потока, который собственно будет выполнять нашу основную
+задачу. Схему его работы мы рассмотрим ниже.<BR>
+
+&nbsp;&nbsp;&nbsp;
+- в строке соединения или при формировании DNS нужно устанавливать
+опцию <B>NOWAIT</B> в положение <B>OFF</B>.<BR> 
+
+&nbsp;&nbsp;&nbsp;
+- обязательно нужно указать следующее утверждение:
+<PRE>
+    // Specify that the Firebird ODBC Cursor is always used, then connect.
+    SQLSetConnectAttr( hdbc, SQL_ATTR_ODBC_CURSORS, (SQLPOINTER)SQL_CUR_USE_DRIVER, 0 );
+    SQLConnect( hdbc, (UCHAR*)connectString, SQL_NTS, NULL, 0, NULL, 0 );
+</PRE>
+
+&nbsp;&nbsp;&nbsp;
+- выполнить подготовку SQL запроса курсора, он нам необходим для 
+демонстрации механизма событий. В Вашем случае он будет другим.
+
+<PRE>
+    SQLPrepare( stmtSel, (UCHAR*)
+		"SELECT po_number"
+		" FROM sales"
+                " WHERE order_status = 'new'"
+		" FOR UPDATE",
+		SQL_NTS );
+</PRE>
+
+&nbsp;&nbsp;&nbsp;
+- установить курсору имя <B>'C'</B>, это имя будет
+использоваться для выполнения SQL запроса на модификацию.
+
+<PRE>
+    char *cursor = "C";
+    SQLSetCursorName( stmtSel, (UCHAR*)cursor, sizeof( cursor ) );
+</PRE>
+
+&nbsp;&nbsp;&nbsp;
+- выполнить подготовку SQL запроса на модификацию, он нам 
+необходим для демонстрации механизма событий. В Вашем случае 
+он будет другим.
+
+<PRE>
+    SQLPrepare( stmtUpd, (UCHAR*) 
+		"UPDATE sales"
+                " SET order_status = 'open'"
+		" WHERE CURRENT OF C",
+	        SQL_NTS );
+</PRE>
+
+
+&nbsp;&nbsp;&nbsp;
+- выполнить инициализацию структуры <B>ODBC_EVENTS_BLOCK_INFO</B>,
+которая обеспечит работу интерфейса событий и передать ее драйверу.
+
+<PRE>
+    myData.event_flag = 0;
+    ODBC_EVENTS_BLOCK_INFO eventsBlockInfo = INIT_EVENTS_BLOCK_INFO( hdbc, eventInfo, astRoutine, &myData );
+
+    SQLSetConnectAttr( hdbc, SQL_FB_INIT_EVENTS, (SQLPOINTER)&eventsBlockInfo, SQL_LEN_BINARY_ATTR((int)sizeof( eventsBlockInfo )) );
+</PRE>
+
+&nbsp;&nbsp;&nbsp;
+- сообщить соединению, что мы готовы принимать события.
+
+<PRE>
+    SQLSetConnectAttr( hdbc, SQL_FB_REQUEUE_EVENTS, (SQLPOINTER)NULL, 0 );
+</PRE>
+
+&nbsp;&nbsp;&nbsp;
+- запустить обработчик событий.
+
+<PRE>
+    while ( !iret )
+    {
+        // If the event was triggered, reset the buffer and re-queue 
+	if ( myData.event_flag )
+	{
+	    myData.event_flag = 0;
+	    // Check for first ast_call.  isc_que_events fires
+	    // each event to get processing started
+	    if ( first )
+	         first = 0;
+	    else
+	    {
+		// Select query to look at triggered events
+		ret = SQLExecute( stmtSel );
+
+		for (;;)
+		{
+			ret = SQLFetch( stmtSel );
+			if ( ret == SQL_NO_DATA_FOUND )
+				break;
+			ret = SQLExecute( stmtUpd );
+		}
+
+	    /* Re-queue for the next event */
+	    SQLSetConnectAttr( hdbc, SQL_FB_REQUEUE_EVENTS, (SQLPOINTER)NULL, 0 );
+
+	    /* This does not block, but as a sample program there is nothing
+	    ** else for us to do, so we will take a nap
+	    */
+	    Sleep(1000);
+	}
+    }	
+</PRE>
+
+</P>
+
+<P>Для более подробного ознакомления с этими и другими возможностями
+пожалуйста, рассмотрите примеры.
+</P>
+
+
+</BODY>
+</HTML>

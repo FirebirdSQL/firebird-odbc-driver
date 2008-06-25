@@ -130,8 +130,8 @@ if (!string)
 	return;
 	}
 
-int l1 = strlen (string);
-int	l2 = strlen (stuff);
+int l1 = (int)strlen (string);
+int	l2 = (int)strlen (stuff);
 char *temp = new char [l1 + l2 + 2];
 *temp++ = 1;
 
@@ -158,7 +158,7 @@ void JString::setString (const char* stuff)
 //release();
 
 if (stuff)
-	setString (stuff, strlen (stuff));
+	setString (stuff, (int)strlen (stuff));
 else
 	release();
 }
@@ -379,7 +379,7 @@ JString JString::before(char c)
 		return *this;
 
 	JString stuff;
-	stuff.setString (string, p - string);
+	stuff.setString (string, (int)(p - string));
 
 	return stuff;
 }
@@ -474,7 +474,7 @@ int JString::findSubstring(const char * string, const char * sub)
 		for (q = p, s = sub; *s && *q == *s; ++s, ++q)
 			;
 		if (!*s)
-			return p - string;
+			return (int)(p - string);
 		}
 
 	return -1;
@@ -483,7 +483,7 @@ int JString::findSubstring(const char * string, const char * sub)
 JString JString::upcase(const char * source)
 {
 	JString string;
-	int len = strlen (source);
+	int len = (int)strlen (source);
 	string.alloc (len);
 	
 	for (int n = 0; n < len; ++n)
@@ -527,7 +527,7 @@ int JString::length()
 	for (p = string; *p; ++p)
 		;
 
-	return p - string;
+	return (int)(p - string);
 }
 
 JString::JString(const char * source, int length)

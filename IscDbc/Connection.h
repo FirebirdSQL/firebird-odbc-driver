@@ -45,7 +45,7 @@
 
 #ifndef QUAD
 
-#ifndef _WIN32
+#ifndef _WINDOWS
 #define __int64			long long
 #define _stdcall
 #endif
@@ -56,18 +56,76 @@ typedef __int64			QUAD;
 typedef unsigned __int64			UQUAD;
 #endif
 
+#ifdef __BORLANDC__
+#define ENTRY_DLL_CREATE_CONNECTION         "_createConnection"
+#define ENTRY_DLL_CREATE_SERVICES           "_createServices"
+#else
+#define ENTRY_DLL_CREATE_CONNECTION         "createConnection"
+#define ENTRY_DLL_CREATE_SERVICES           "createServices"
+#endif
+
+#ifdef _WINDOWS
+
+#define NAME_CLIENT_SHARE_LIBRARY					"gds32.dll"
+#define NAME_DEFAULT_CLIENT_SHARE_LIBRARY			"fbclient.dll"
+
+#define OPEN_SHARE_LIBLARY(sharedLibrary)           LoadLibrary( sharedLibrary )
+#define GET_ENTRY_POINT(libraryHandle,nameProc)     GetProcAddress( libraryHandle, nameProc )
+#define CLOSE_SHARE_LIBLARY(libraryHandle)          FreeLibrary( libraryHandle )
+
+size_t _MbsToWcs( wchar_t *wcstr, const char *mbstr, size_t count );
+size_t _WcsToMbs( char *mbstr,  const wchar_t *wcstr, size_t count );
+
+#else
+
+#define NAME_CLIENT_SHARE_LIBRARY					"libgds.so"
+#define NAME_DEFAULT_CLIENT_SHARE_LIBRARY			"libfbclient.so"
+
+#define OPEN_SHARE_LIBLARY(sharedLibrary)		    dlopen( sharedLibrary, RTLD_NOW )
+#define GET_ENTRY_POINT(libraryHandle,nameProc)     dlsym( libraryHandle, nameProc )
+#define CLOSE_SHARE_LIBLARY(libraryHandle)          dlclose( libraryHandle )
+
+#endif
+
+#ifndef ISC_TIME_SECONDS_PRECISION
+
 #define ISC_TIME_SECONDS_PRECISION          10000L
 #define ISC_TIME_SECONDS_PRECISION_SCALE    (-4)
+
+#endif // ISC_TIME_SECONDS_PRECISION
+
 // Default standart size of fraction it's 9 number  
 // It's 9 = ISC_TIME_SECONDS_PRECISION * STD_TIME_SECONDS_PRECISION
 #define STD_TIME_SECONDS_PRECISION          100000L
 
+// values for databaseAccess
+enum enDatabaseAccess {
+	OPEN_DB				= 0,
+	CREATE_DB			= 1,
+	DROP_DB				= 2
+};
+
 /* values for tra_flags */
-#define TRA_ro			1
-#define TRA_nw			2
+enum tra_flags_vals {
+	TRA_ro				= 1,
+	TRA_nw				= 2,
+	TRA_con				= 4,
+	TRA_rrl 			= 8,
+	TRA_inc 			= 16,
+	TRA_read_committed	= 32,
+	TRA_autocommit		= 64,
+	TRA_rec_version		= 128,
+	TRA_no_auto_undo	= 256
+};
+
+typedef void (*callbackEvent)( void *interfaseUserEvents, short length, char *updated );
+typedef size_t (*WCSTOMBS)( char *mbstr,  const wchar_t *wcstr, size_t count );
+typedef size_t (*MBSTOWCS)( wchar_t *wcstr, const char *mbstr, size_t count );
 
 namespace IscDbcLibrary {
 
+class ServiceManager;
+class Connection;
 class Statement;
 class InternalStatement;
 class PreparedStatement;
@@ -79,8 +137,47 @@ class DateTime;
 class TimeStamp;
 class SqlTime;
 class StatementMetaData;
+class PropertiesEvents;
+class UserEvents;
 
 #define CONNECTION_VERSION	1
+
+typedef ServiceManager* (*ServiceManagerFn)();
+typedef Connection* (*ConnectFn)();
+
+struct UserInfo
+{
+	char        *userName;
+	char        *firstName;
+	char        *middleName;
+	char        *lastName;
+	char        *password;
+	char        *roleName;
+	long        groupId;
+	long        userId;
+	UserInfo    *next;
+};
+
+class ServiceManager
+{
+public:
+	virtual Properties  *allocProperties() = 0;
+	virtual void        startBackupDatabase( Properties *prop, ULONG options ) = 0;
+	virtual void        startRestoreDatabase( Properties *prop, ULONG options ) = 0;
+	virtual void        exitRestoreDatabase() = 0;
+	virtual void        startStaticticsDatabase( Properties *prop, ULONG options ) = 0;
+	virtual void        startShowDatabaseLog( Properties *prop ) = 0;
+	virtual void        startRepairDatabase( Properties *prop, ULONG options, ULONG optionsValidate ) = 0;
+	virtual void        startUsersQuery( Properties *prop ) = 0;
+	virtual bool        nextQuery( char *outBuffer, int length, int &lengthOut, int &countError ) = 0;
+	virtual bool        nextQueryLimboTransactionInfo( char *outBuffer, int length, int &lengthOut ) = 0;
+	virtual bool        nextQueryUserInfo( char *outBuffer, int length, int &lengthOut ) = 0;
+	virtual void        closeService() = 0;
+	virtual int         getDriverBuildKey() = 0;
+
+	virtual void        addRef() = 0;
+	virtual int         release() = 0;
+};
 
 class EnvironmentShare
 {
@@ -124,6 +221,8 @@ public:
 										char * outStatementText, long bufferLength,
 										long * textLength2Ptr) = 0;
 
+	virtual PropertiesEvents* allocPropertiesEvents() = 0;
+	virtual UserEvents* prepareUserEvents( PropertiesEvents *context, callbackEvent astRoutine, void *userAppData = 0 ) = 0;
 	virtual InternalStatement* createInternalStatement() = 0;
 	virtual void		ping() = 0;
 	virtual int			hasRole (const char *schemaName, const char *roleName) = 0;
@@ -141,6 +240,9 @@ public:
 	virtual void		connectionFromEnvShare() = 0;
 	virtual int			getUseAppOdbcVersion () = 0;
 	virtual void		setUseAppOdbcVersion ( int appOdbcVersion ) = 0;
+	virtual int			getConnectionCharsetCode() = 0;
+	virtual WCSTOMBS	getConnectionWcsToMbs() = 0;
+	virtual MBSTOWCS	getConnectionMbsToWcs() = 0;
 
 	virtual void		addRef() = 0;
 	virtual int			release() = 0;
@@ -379,6 +481,11 @@ public:
 	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) = 0;
 	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr) = 0;
 	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr) = 0;
+	virtual bool		isActiveLocalTransaction() = 0;
+	virtual void		setActiveLocalParamTransaction() = 0;
+	virtual void		delActiveLocalParamTransaction() = 0;
+	virtual void		declareLocalParamTransaction() = 0;
+	virtual void		switchTransaction(bool local) = 0;
 };
 
 class HeadSqlVar
@@ -403,6 +510,7 @@ public:
 	virtual void		setSqlScale ( short scale ) = 0;
 	virtual void		setSqlSubType ( short subtype ) = 0;
 	virtual void		setSqlLen ( short len ) = 0;
+	virtual short		getSqlMultiple () = 0;
 
 	virtual char *		getSqlData() = 0;
 	virtual short *		getSqlInd() = 0;
@@ -424,6 +532,7 @@ public:
 	virtual int			getColumnCount() = 0;
 	virtual int			getColumnType (int index, int &realSqlType) = 0;
 	virtual int			getPrecision(int index) = 0;
+	virtual int			getNumPrecRadix(int index) = 0;
 	virtual int			getScale(int index) = 0;
 	virtual bool		isNullable (int index) = 0;
 	virtual int			getColumnDisplaySize(int index) = 0;
@@ -444,9 +553,13 @@ public:
 	virtual const char*	getSchemaName (int index) = 0;
 	virtual const char*	getCatalogName (int index) = 0;
 // end specification jdbc
+	virtual bool		isColumnPrimaryKey(int index) = 0;
+
 public:
 	virtual void		getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar *& ptHeadSqlVar) = 0;
 	virtual void		createBlobDataTransfer(int index, Blob *& ptDataBlob) = 0;
+	virtual WCSTOMBS	getAdressWcsToMbs( int index ) = 0;
+	virtual MBSTOWCS	getAdressMbsToWcs( int index ) = 0;
 
 	virtual int			objectVersion() = 0;
 };
@@ -464,7 +577,7 @@ public:
 //	virtual void		setAsciiStream( int parameterIndex, InputStream x, int length ) = 0;
 //	virtual void		setBigDecimal( int parameterIndex, BigDecimal x ) = 0;
 //	virtual void		setBinaryStream( int parameterIndex, InputStream x, int length ) = 0;
-//	virtual void		setBoolean( int parameterIndex, boolean x ) = 0;
+	virtual void		setBoolean( int parameterIndex, bool x ) = 0;
 	virtual void		setByte (int index, char value) = 0;
 	virtual void		setBytes (int index, const void *bytes) = 0;
 	virtual void		setDate (int index, DateTime value) = 0;
@@ -516,8 +629,8 @@ public:
 //	virtual	BigDecimal	getBigDecimal( const char *columnName, int scale ) = 0;
 //	virtual	InputStream getBinaryStream( int columnIndex ) = 0;
 //	virtual	InputStream getBinaryStream( const char *columnName ) = 0;
-//	virtual	bool		getBoolean( int columnIndex ) = 0;
-//	virtual	bool		getBoolean( const char *columnName ) = 0;
+	virtual	bool		getBoolean( int columnIndex ) = 0;
+	virtual	bool		getBoolean( const char *columnName ) = 0;
 	virtual char		getByte (int columnIndex) = 0;
 	virtual char		getByte (const char *columnName) = 0;
 //	virtual byte[]		getBytes( int columnIndex ) = 0;
@@ -642,6 +755,7 @@ public:
 	virtual const char*	getColumnTypeName (int index) = 0;
 	virtual int			getColumnCount() = 0;
 	virtual int			getPrecision(int index) = 0;
+	virtual int			getNumPrecRadix(int index) = 0;
 	virtual int			getScale(int index) = 0;
 	virtual bool		isNullable (int index) = 0;
 	virtual int			objectVersion() = 0;
@@ -681,7 +795,7 @@ class CallableStatement : public PreparedStatement
 public:
 //{{{ specification jdbc
 //	virtual BigDecimal	getBigDecimal( int parameterIndex, int scale ) = 0;
-//	virtual bool		getBoolean(int parameterIndex) = 0;
+	virtual bool		getBoolean(int parameterIndex) = 0;
 	virtual char		getByte(int parameterIndex) = 0;
 //	virtual byte[]		getBytes(int parameterIndex) = 0;
 	virtual DateTime	getDate(int parameterIndex) = 0;
@@ -713,6 +827,8 @@ public:
 	virtual void		prepareStatement(const char * sqlString) = 0;
 	virtual bool		executeStatement() = 0;
 	virtual bool		executeProcedure() = 0;
+	virtual void		rollbackLocal() = 0;
+	virtual void		commitLocal() = 0;
 	virtual StatementMetaData*	
 						getStatementMetaDataIPD() = 0;
 	virtual StatementMetaData*	
@@ -723,10 +839,41 @@ public:
 	virtual int			objectVersion() = 0;
 };
 
+class PropertiesEvents
+{
+public:
+	virtual void		putNameEvent( const char *name ) = 0;
+	virtual int			getCount() = 0;
+	virtual const char	*getNameEvent( int index ) = 0;
+	virtual int			findIndex( const char *name ) = 0;
+	virtual unsigned long getCountExecutedEvents( int index ) = 0;
+	virtual bool		isChanged( int index ) = 0;
+	virtual void		addRef() = 0;
+	virtual int			release() = 0;
+};
+
+#define USEREVENTS_VERSION		1
+
+class UserEvents
+{
+public:
+	virtual void		queEvents( void *interfase = 0 ) = 0;
+	virtual bool		isChanged( int numEvent = 0 ) = 0;
+	virtual unsigned long getCountEvents( int numEvent = 0 ) = 0;
+	virtual int			getCountRegisteredNameEvents() = 0;
+	virtual void		updateResultEvents( char *result ) = 0;
+	virtual void		*getUserData() = 0;
+	virtual void		addRef() = 0;
+	virtual int			release() = 0;
+	virtual int			objectVersion() = 0;
+};
+
 #ifdef __BORLANDC__
 extern "C" __declspec( dllexport ) Connection*	createConnection();
+extern "C" __declspec( dllexport ) ServiceManager* createServices();
 #else
 extern "C" Connection*	createConnection();
+extern "C" ServiceManager* createServices();
 #endif
 
 }; // end namespace IscDbcLibrary

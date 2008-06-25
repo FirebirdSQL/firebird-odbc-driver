@@ -41,6 +41,7 @@ DescRecord::DescRecord()
 	isDefined = false;
 	isPrepared = false;
 	isIndicatorSqlDa = false;
+	isZeroColumn = false;
 	isLocalDataPtr = false;
 	localDataPtr = NULL;
 	callType = 0;
@@ -62,6 +63,7 @@ DescRecord::DescRecord()
 	datetimeIntervalPrecision =0;
 	displaySize = 0;
 	fixedPrecScale = 0;
+	numPrecRadix = 0;
 	length = 0;
 	nullable = 0;
 	octetLength = 0;
@@ -76,6 +78,13 @@ DescRecord::DescRecord()
 	unNamed = SQL_NAMED;
 	dataPtr = NULL;
 	fnConv = NULL;
+#ifdef _WINDOWS
+	WcsToMbs = _WcsToMbs;
+	MbsToWcs = _MbsToWcs;
+#else
+	WcsToMbs = wcstombs;
+	MbsToWcs = mbstowcs;
+#endif
 }
 
 DescRecord::~DescRecord()
@@ -109,11 +118,15 @@ void DescRecord::setDefault(DescRecord *recTo)
 	recTo->dataPtr = saveDataPtr;
 }
 
-void DescRecord::allocateLocalDataPtr()
+void DescRecord::allocateLocalDataPtr(int length)
 {
 	freeLocalDataPtr();
 	isLocalDataPtr = true;
-	localDataPtr = (char*)malloc ( octetLength );
+
+	if ( !length )
+		length = getBufferLength();
+
+	localDataPtr = (char*)malloc( length );
 }
 
 void DescRecord::freeLocalDataPtr()
@@ -148,6 +161,7 @@ bool DescRecord::operator =(DescRecord *rec)
 	datetimeIntervalPrecision = rec->datetimeIntervalPrecision;
 	displaySize = rec->displaySize;
 	fixedPrecScale = rec->fixedPrecScale;
+	numPrecRadix = rec->numPrecRadix;
 	length = rec->length;
 	nullable = rec->nullable;
 	octetLength = rec->octetLength;
@@ -176,6 +190,7 @@ void DescRecord::initZeroColumn()
 	datetimeIntervalCode = 0;
 	displaySize = 8;
 	fixedPrecScale = SQL_FALSE;
+	numPrecRadix = 0;
 	label = "";
 	literalPrefix = "";
 	literalSuffix = "";

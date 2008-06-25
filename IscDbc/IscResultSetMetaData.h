@@ -50,6 +50,7 @@ public:
 	virtual bool isNullable (int index);
 	virtual int getScale (int index);
 	virtual int getPrecision (int index);
+	virtual int getNumPrecRadix (int index);
 	IscResultSetMetaData(IscResultSet *results, int numberColumns);
 	virtual ~IscResultSetMetaData();
 	virtual const char* getTableName (int index);

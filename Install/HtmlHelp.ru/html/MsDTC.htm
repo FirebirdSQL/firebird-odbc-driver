@@ -1,0 +1,94 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2007 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Пример использования MS DTC</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_services_examples"></A><h2>Пример использования MS DTC</h2></P>
+
+<P>MS DTC(координатор распределенной транзакции) позволяет выполнять
+глобальные транзакции(two/single phase commit) с MSSQL, Sybase
+и др. серверами которые умеют работать с Microsoft DTC. Теперь 
+такая возможность есть и у Firebird сервера.</P>
+
+<P><PRE>
+// Include MS DTC specific header files. 
+//------------------------------------------------------------------------------ 
+#define INITGUID 
+ 
+#include "txdtc.h" 
+#include "xolehlp.h" 
+
+    ITransactionDispenser *pTransactionDispenser; 
+    ITransaction *pTransaction; 
+
+    // Obtain the ITransactionDispenser Interface pointer 
+    // by calling DtcGetTransactionManager() 
+    DtcGetTransactionManager( NULL,// [in] LPTSTR pszHost, 
+			      NULL,// [in] LPTSTR pszTmName, 
+			      IID_ITransactionDispenser,// [in] REFIID rid, 
+			      0,// [in] DWORDdwReserved1,
+			      0, // [in] WORDwcbReserved2, 
+			      NULL,// [in] void FAR * pvReserved2, 
+			      (void **)&pTransactionDispenser // [out] void** ppvObject 
+			      ); 
+
+    // Establish connection to database on server#1 
+    LogonToDB( &gSrv1 ); 
+  
+    // Establish connection to database on server#2 
+    LogonToDB( &gSrv2 ); 
+
+    // Initiate an MS DTC transaction 
+    pTransactionDispenser->BeginTransaction(  
+			      NULL,// [in] IUnknown __RPC_FAR *punkOuter,
+			      ISOLATIONLEVEL_ISOLATED,// [in] ISOLEVEL isoLevel, 
+			      ISOFLAG_RETAIN_DONTCARE,// [in] ULONG isoFlags, 
+			      NULL,// [in] ITransactionOptions *pOptions  
+			      &pTransaction// [out] ITransaction **ppTransaction 
+			      ); 
+ 
+    // Enlist each of the data sources in the transaction
+    SQLSetConnectOption( gSrv1->hdbc, SQL_COPT_SS_ENLIST_IN_DTC, (UDWORD)pTransaction ); 
+    SQLSetConnectOption( gSrv2->hdbc, SQL_COPT_SS_ENLIST_IN_DTC, (UDWORD)pTransaction ); 
+    
+    // Generate the SQL statement to execute on each of the databases 
+    sprintf( SqlStatement, 
+	     "update authors set address = '%s_%d' where au_id = '%s'",
+	      gNewAddress, i, gAuthorID ); 
+    
+    // Perform updates on both of the DBs participating in the transaction 
+    ExecuteStatement( &gSrv1, SqlStatement ); 
+    ExecuteStatement( &gSrv2, SqlStatement );
+    
+    // Commit the transaction  
+    hr = pTransaction->Commit( 0, 0, 0 ); 
+    // or Rolback the transaction  
+    //hr = pTransaction->Abort( 0, 0, 0 );
+
+</P></PRE>
+
+</BODY>
+</HTML>

@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 wsock32.lib /nologo /subsystem:windows /dll /machine:I386 /libpath:"$(INTERBASE)/lib" /EXPORT:createConnection
+# ADD LINK32 wsock32.lib /nologo /subsystem:windows /dll /machine:I386 /libpath:"$(INTERBASE)/lib" /EXPORT:createConnection /EXPORT:createServices
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "IscDbc - Win32 Debug"
@@ -80,7 +80,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 wsock32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /libpath:"$(INTERBASE)\lib" /EXPORT:createConnection
+# ADD LINK32 wsock32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /libpath:"$(INTERBASE)\lib" /EXPORT:createConnection /EXPORT:createServices
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -139,6 +139,10 @@ SOURCE=..\..\IscDbc\IscBlob.h
 # Begin Source File
 
 SOURCE=..\..\IscDbc\IscCallableStatement.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\IscColumnKeyInfo.h
 # End Source File
 # Begin Source File
 
@@ -230,6 +234,10 @@ SOURCE=..\..\IscDbc\IscTablesResultSet.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\IscUserEvents.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\JavaType.h
 # End Source File
 # Begin Source File
@@ -254,6 +262,10 @@ SOURCE=..\..\IscDbc\Mlist.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\MultibyteConvert.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\Mutex.h
 # End Source File
 # Begin Source File
@@ -262,11 +274,23 @@ SOURCE=..\..\IscDbc\Parameter.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\ParameterEvent.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\Parameters.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\ParametersEvents.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\Properties.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\ServiceManager.h
 # End Source File
 # Begin Source File
 
@@ -350,6 +374,10 @@ SOURCE=..\..\IscDbc\IscCallableStatement.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\IscColumnKeyInfo.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\IscColumnPrivilegesResultSet.cpp
 # End Source File
 # Begin Source File
@@ -430,6 +458,10 @@ SOURCE=..\..\IscDbc\IscTablesResultSet.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\IscUserEvents.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\JString.cpp
 # End Source File
 # Begin Source File
@@ -446,6 +478,10 @@ SOURCE=..\..\IscDbc\Lock.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\MultibyteConvert.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\Mutex.cpp
 # End Source File
 # Begin Source File
@@ -454,7 +490,19 @@ SOURCE=..\..\IscDbc\Parameter.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\IscDbc\ParameterEvent.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\IscDbc\Parameters.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\ParametersEvents.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\IscDbc\ServiceManager.cpp
 # End Source File
 # Begin Source File
 

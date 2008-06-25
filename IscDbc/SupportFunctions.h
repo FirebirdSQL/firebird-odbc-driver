@@ -29,9 +29,18 @@
 
 namespace IscDbcLibrary {
 
-#ifdef _WIN32
+#ifdef _WINDOWS
+#ifndef strcasecmp
+
+#if _MSC_VER >= 1400 // VC80 and later
+#define strcasecmp		_stricmp
+#define strncasecmp		_strnicmp
+#else
 #define strcasecmp		stricmp
 #define strncasecmp		strnicmp
+#endif // _MSC_VER >= 1400
+
+#endif // strcasecmp
 #endif
 
 class SupportFunctions;

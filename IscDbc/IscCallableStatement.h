@@ -44,7 +44,7 @@ class IscCallableStatement : public IscPreparedStatement, public CallableStateme
 public:
 //{{{ specification jdbc
 //	virtual BigDecimal	getBigDecimal( int parameterIndex, int scale );
-//	virtual bool		getBoolean(int parameterIndex);
+	virtual bool		getBoolean(int parameterIndex);
 	virtual char		getByte(int parameterIndex);
 //	virtual byte[]		getBytes(int parameterIndex);
 	virtual DateTime	getDate(int parameterIndex);
@@ -70,7 +70,7 @@ public:
 //	virtual void		setAsciiStream( int parameterIndex, InputStream x, int length ) { IscPreparedStatement::setAsciiStream( parameterIndex, x, length ); }
 //	virtual void		setBigDecimal( int parameterIndex, BigDecimal x ) { IscPreparedStatement::setBigDecimal( parameterIndex, x ); }
 //	virtual void		setBinaryStream( int parameterIndex, InputStream x, int length ) { IscPreparedStatement::setBinaryStream( parameterIndex, x, length ); }
-//	virtual void		setBoolean( int parameterIndex, boolean x ) { IscPreparedStatement::setBoolean( parameterIndex, x ); }
+	virtual void		setBoolean( int parameterIndex, bool x ) { IscPreparedStatement::setBoolean( parameterIndex, x ); }
 	virtual void		setByte (int index, char value) { IscPreparedStatement::setByte ( index, value); }
 	virtual void		setBytes (int index, const void *bytes) { IscPreparedStatement::setBytes ( index, bytes); }
 	virtual void		setDate (int index, DateTime value) { IscPreparedStatement::setDate ( index, value); }
@@ -138,6 +138,11 @@ public:
 	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtPlan( value, bufferLength, lengthPtr ); }  
 	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtType( value, bufferLength, lengthPtr ); }  
 	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtInfoCountRecords( value, bufferLength, lengthPtr ); }  
+	virtual bool		isActiveLocalTransaction(){ return IscStatement::isActiveLocalTransaction(); }
+	virtual void		setActiveLocalParamTransaction(){ IscStatement::setActiveLocalParamTransaction(); }
+	virtual void		delActiveLocalParamTransaction(){ IscStatement::delActiveLocalParamTransaction(); }
+	virtual void		declareLocalParamTransaction(){ IscStatement::declareLocalParamTransaction(); }
+	virtual void		switchTransaction(bool local){ IscStatement::switchTransaction( local ); }
 //}}} end class Statement without specification jdbc
 
 public:

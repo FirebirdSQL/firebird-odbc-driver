@@ -29,6 +29,10 @@
 #include <pthread.h>
 #endif
 
+#ifdef _WINDOWS
+#include <windows.h>
+#endif
+
 namespace classMutex {
 
 class Mutex  
@@ -39,8 +43,8 @@ public:
 	Mutex();
 	~Mutex();
 
-#ifdef _WIN32
-	void*	mutex;
+#ifdef _WINDOWS
+	CRITICAL_SECTION mutex;
 #endif
 
 #ifdef _PTHREADS

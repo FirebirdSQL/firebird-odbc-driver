@@ -1,4 +1,3 @@
-LIBRARY "OdbcJdbc"
 DESCRIPTION "OdbcJdbc - IBPhoenix ODBC Driver"
 
 EXPORTS
@@ -79,3 +78,47 @@ EXPORTS
     SQLTablePrivileges = SQLTablePrivileges@28
     SQLTables = SQLTables@36
     SQLTransact = SQLTransact@12
+; Unicode
+    SQLGetDescFieldW = SQLGetDescFieldW@24
+    SQLSetDescFieldW = SQLSetDescFieldW@20
+    SQLBrowseConnectW = SQLBrowseConnectW@24
+    SQLColAttributeW = SQLColAttributeW@28
+    SQLColAttributesW = SQLColAttributesW@28
+    SQLColumnPrivilegesW = SQLColumnPrivilegesW@36
+    SQLColumnsW = SQLColumnsW@36
+    SQLConnectW = SQLConnectW@28
+    SQLDataSourcesW = SQLDataSourcesW@32
+    SQLDescribeColW = SQLDescribeColW@36
+    SQLDriverConnectW = SQLDriverConnectW@32
+    SQLDriversW = SQLDriversW@32
+    SQLErrorW = SQLErrorW@32
+    SQLExecDirectW = SQLExecDirectW@12
+    SQLForeignKeysW = SQLForeignKeysW@52
+    SQLGetConnectAttrW = SQLGetConnectAttrW@20
+    SQLGetConnectOptionW = SQLGetConnectOptionW@12
+    SQLGetCursorNameW = SQLGetCursorNameW@16
+    SQLGetDescRecW = SQLGetDescRecW@44
+    SQLGetDiagFieldW = SQLGetDiagFieldW@28
+    SQLGetDiagRecW = SQLGetDiagRecW@32
+    SQLGetInfoW = SQLGetInfoW@20
+    SQLGetStmtAttrW = SQLGetStmtAttrW@20
+    SQLGetTypeInfoW = SQLGetTypeInfoW@8
+    SQLNativeSqlW = SQLNativeSqlW@24
+    SQLPrepareW = SQLPrepareW@12
+    SQLPrimaryKeysW = SQLPrimaryKeysW@28
+    SQLProcedureColumnsW = SQLProcedureColumnsW@36
+    SQLProceduresW = SQLProceduresW@28
+    SQLSetConnectAttrW = SQLSetConnectAttrW@16
+    SQLSetConnectOptionW = SQLSetConnectOptionW@12
+    SQLSetCursorNameW = SQLSetCursorNameW@12
+    SQLSetStmtAttrW = SQLSetStmtAttrW@16
+    SQLSpecialColumnsW = SQLSpecialColumnsW@40
+    SQLStatisticsW = SQLStatisticsW@36
+    SQLTablePrivilegesW = SQLTablePrivilegesW@28
+    SQLTablesW = SQLTablesW@36
+; Setup
+    ConfigDSN=ConfigDSN@16
+    ConfigDriver=ConfigDriver@28
+    DllRegisterServer=DllRegisterServer@0
+    DllUnregisterServer=DllUnregisterServer@0
+    DllInstall=DllInstall@8

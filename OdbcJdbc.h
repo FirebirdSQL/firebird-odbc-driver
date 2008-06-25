@@ -22,41 +22,74 @@
 #define __ODBCJDBC_H
 
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 #include <windows.h>
+
+#if _MSC_VER >= 1400 // VC80 and later
+#define strcasecmp		_stricmp
+#define strncasecmp		_strnicmp
+#else
 #define strcasecmp		stricmp
 #define strncasecmp		strnicmp
+#endif // _MSC_VER >= 1400
+
 #define snprintf		_snprintf
-#define fcvt			_fcvt
-#define gcvt			_gcvt
+#define swprintf		_snwprintf
 
 #else
 #define OutputDebugString(string)	fputs (string, stdout)
 #endif
 
 #ifdef DEBUG 
+
+#define LOG_MSG(msg)	OutputDebugString( msg )
+
 #ifdef LOGGING
 
-#ifdef _WIN32
-#define LOG_FILE "c:\\odbc.log"
+#ifdef _WINDOWS
+#define LOG_FILE "c:\\odbcjdbc.log"
 #else
-#define LOG_FILE "/tmp/odbc.log"
+#define LOG_FILE "/tmp/odbcjdbc.log"
 #endif
 
-void logMsg (const char *msg);
-#define LOG_MSG(msg)	logMsg (msg)
+#define LOG_PRINT(msg)														\
+		{																	\
+			if ( !logFile )													\
+			{																\
+				logFile = fopen( LOG_FILE, "a+" );							\
+				if ( logFile )												\
+				{															\
+					fprintf( logFile, "*\n*\n*\n* New Session\n*\n*\n*\n" );\
+					fflush( logFile );										\
+				}															\
+			}																\
+																			\
+			if ( !logFile )													\
+				OutputDebugString( "log file create failed\n" );			\
+			else															\
+			{																\
+				fprintf msg;												\
+				fflush( logFile );											\
+			}																\
+		}
 
-#else
-#define LOG_MSG(msg)	OutputDebugString (msg)
+#else // LOGGING
+
+#define LOG_PRINT(msg)
+
 #endif
 
-#else
+#else // DEBUG
+
 #define LOG_MSG(msg)
+#define LOG_PRINT(msg)
+
 #endif
 
 #include <sql.h>
 #include <sqlext.h>
 #include <sqlucode.h>
+#include "SetupAttributes.h"
 #include "IscDbc/JavaType.h"
 
 #ifndef SQLLEN
@@ -65,8 +98,12 @@ void logMsg (const char *msg);
 #define SQLSETPOSIROW	SQLUSMALLINT
 #endif
 
+#ifndef SQL_BOOLEAN
+#define SQL_BOOLEAN		16
+#endif
+
 #ifndef NULL
-#define NULL				0
+#define NULL			0
 #endif
 
 #ifndef _ASSERT
@@ -92,9 +129,13 @@ void logMsg (const char *msg);
 // ext env attribute
 #define SQL_ATTR_HANDLE_DBC_SHARE		4000
 
-#define DRIVER_LOCKED_LEVEL_ENV         4
-#define DRIVER_LOCKED_LEVEL_CONNECT     3
-#define DRIVER_LOCKED_LEVEL				DRIVER_LOCKED_LEVEL_CONNECT
+#define DRIVER_LOCKED_LEVEL_NONE   		0
+#define DRIVER_LOCKED_LEVEL_ENV         1
+#define DRIVER_LOCKED_LEVEL_CONNECT     2
+
+#ifndef DRIVER_LOCKED_LEVEL
+#define DRIVER_LOCKED_LEVEL		DRIVER_LOCKED_LEVEL_CONNECT
+#endif
 
 #define FB_COMPILER_MESSAGE_STR(x) #x
 #define FB_COMPILER_MESSAGE_STR2(x)   FB_COMPILER_MESSAGE_STR(x)

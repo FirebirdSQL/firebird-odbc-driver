@@ -12,7 +12,7 @@ namespace OdbcJdbcLibrary {
 class MutexEnvThread
 {
 public:
-#ifdef _WIN32
+#ifdef _WINDOWS
 	static void * mutexLockedLevelDll;
 #endif
 #ifdef _PTHREADS
@@ -22,7 +22,7 @@ public:
 public:
 	MutexEnvThread()
 	{
-#ifdef _WIN32
+#ifdef _WINDOWS
 		mutexLockedLevelDll = CreateMutex (NULL, false, NULL);
 #endif
 #ifdef _PTHREADS
@@ -32,7 +32,7 @@ public:
 
 	~MutexEnvThread()
 	{
-#ifdef _WIN32
+#ifdef _WINDOWS
 		if(mutexLockedLevelDll)
 			CloseHandle (mutexLockedLevelDll);
 #endif
@@ -47,7 +47,7 @@ class SafeDllThread
 public:
 	SafeDllThread()
 	{
-#ifdef _WIN32
+#ifdef _WINDOWS
 		WaitForSingleObject (MutexEnvThread::mutexLockedLevelDll, INFINITE);
 #endif
 #ifdef _PTHREADS
@@ -56,7 +56,7 @@ public:
 	}
 	~SafeDllThread()
 	{
-#ifdef _WIN32
+#ifdef _WINDOWS
 		ReleaseMutex (MutexEnvThread::mutexLockedLevelDll);
 #endif
 #ifdef _PTHREADS

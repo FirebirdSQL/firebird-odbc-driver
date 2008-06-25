@@ -18,10 +18,13 @@
 // English (U.K.) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
-#ifdef _WIN32
+#ifdef _WINDOWS
 LANGUAGE 0x09, 0x01
 #pragma code_page(1252)
-#endif //_WIN32
+#ifndef __MINGW32__
+2 24 MOVEABLE PURE "OdbcJdbc.dll.manifest"
+#endif
+#endif //_WINDOWS
 
 #ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
@@ -48,14 +51,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "IBPhoenix Inc\0"
-            VALUE "FileDescription", "OdbcJdbc\0"
+            VALUE "FileDescription", FILE_DESCRIPTION_STR
             VALUE "FileVersion", FILE_VERSION_STR
-            VALUE "InternalName", "OdbcJdbc\0"
-            VALUE "LegalCopyright", "Copyright © 2000 - 2004\0"
-            VALUE "OriginalFilename", "OdbcJdbc.dll\0"
-            VALUE "ProductName", "OdbcJdbc Dynamic Link Library\0"
+            VALUE "InternalName", INTERNAL_NAME_STR
+            VALUE "LegalCopyright", "Copyright © 2000 - 2006\0"
+            VALUE "OriginalFilename", ORIGINAL_FILENAME_STR
+            VALUE "ProductName", "Firebird Odbc Dynamic Link Library\0"
             VALUE "ProductVersion", PRODUCT_VERSION_STR
-            VALUE "SpecialBuild", "v1-3-beta\0"
+            VALUE "SpecialBuild", "v2-0-beta\0"
         END
     END
     BLOCK "VarFileInfo"

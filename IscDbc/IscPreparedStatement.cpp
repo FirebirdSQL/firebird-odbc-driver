@@ -216,12 +216,12 @@ void IscPreparedStatement::setBinaryStream( int parameterIndex, InputStream x, i
 {
 	NOT_YET_IMPLEMENTED;
 }
-
-void IscPreparedStatement::setBoolean( int parameterIndex, boolean x );
-{
-	NOT_YET_IMPLEMENTED;
-}
 */
+void IscPreparedStatement::setBoolean(int index, bool value)
+{
+	getParameter (index - 1)->setValue ((short) value);
+}
+
 void IscPreparedStatement::setByte(int index, char value)
 {
 	getParameter (index - 1)->setValue ((short) value);

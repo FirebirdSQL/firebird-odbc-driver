@@ -20,6 +20,10 @@
 #ifndef __ISCJAVATYPE_H_
 #define __ISCJAVATYPE_H_
 
+#ifndef isc_tpb_lock_timeout
+#define isc_tpb_lock_timeout              21
+#endif // isc_tpb_lock_timeout
+
 /*
  *		Sql types (actually from java.sql.types)
  */
@@ -43,9 +47,15 @@
 #define JDBC_VARCHAR 	  12
 #define JDBC_LONGVARCHAR  -1
 
+#define JDBC_WCHAR			-8
+#define JDBC_WVARCHAR		-9
+#define JDBC_WLONGVARCHAR	-10
+
 #define JDBC_SQL_DATE 	  9
 #define JDBC_SQL_TIME 	  10
 #define JDBC_SQL_TIMESTAMP	  11
+
+#define JDBC_BOOLEAN	  16
 
 #define JDBC_DATE 		  91
 #define JDBC_TIME 		  92
@@ -54,5 +64,21 @@
 #define JDBC_BINARY		  -2
 #define JDBC_VARBINARY 	  -3
 #define JDBC_LONGVARBINARY 	  -4
+
+#define TYPE_BOOLEAN	  short
+
+#define JDBC_INTERVAL_YEAR					101
+#define JDBC_INTERVAL_MONTH					102
+#define JDBC_INTERVAL_DAY					103
+#define JDBC_INTERVAL_HOUR					104
+#define JDBC_INTERVAL_MINUTE				105
+#define JDBC_INTERVAL_SECOND				106
+#define JDBC_INTERVAL_YEAR_TO_MONTH			107
+#define JDBC_INTERVAL_DAY_TO_HOUR			108
+#define JDBC_INTERVAL_DAY_TO_MINUTE			109
+#define JDBC_INTERVAL_DAY_TO_SECOND			110
+#define JDBC_INTERVAL_HOUR_TO_MINUTE		111
+#define JDBC_INTERVAL_HOUR_TO_SECOND		112
+#define JDBC_INTERVAL_MINUTE_TO_SECOND		113
 
 #endif

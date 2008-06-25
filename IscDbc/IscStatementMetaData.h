@@ -39,6 +39,7 @@ public:
 	virtual bool isNullable (int index);
 	virtual int getScale (int index);
 	virtual int getPrecision (int index);
+	virtual int getNumPrecRadix (int index);
 	virtual int getColumnType (int index, int &realSqlType);
 	virtual int getColumnCount();
 	virtual int getColumnDisplaySize(int index);
@@ -56,10 +57,13 @@ public:
 	virtual bool isAutoIncrement (int index);
 	virtual bool isSearchable (int index);
 	virtual int	 isBlobOrArray(int index);
+	virtual bool isColumnPrimaryKey(int index);
 	virtual const char*	getSchemaName (int index);
 	virtual const char*	getCatalogName (int index);
 	virtual void getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar *& ptHeadSqlVar);
 	virtual void createBlobDataTransfer(int index, Blob *& ptDataBlob);
+	virtual WCSTOMBS getAdressWcsToMbs( int index );
+	virtual MBSTOWCS getAdressMbsToWcs( int index );
 
 	IscStatementMetaData(IscStatement *stmt, Sqlda *ptSqlda);
 

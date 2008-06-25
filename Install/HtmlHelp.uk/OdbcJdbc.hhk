@@ -26,6 +26,14 @@
 		<param name="Local" value="html/ConnectionExamples.htm">
 		</OBJECT>
 	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Сервiс Firebird ODBC">
+		<param name="Local" value="html/Services.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Приклади використання сервису">
+		<param name="Local" value="html/ServicesExamples.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
 		<param name="Name" value="Авторське право та патент Firebird ODBC драйвера">
 		<param name="Local" value="html/Copyright.htm">
 		</OBJECT>
@@ -44,6 +52,10 @@
 	<LI> <OBJECT type="text/sitemap">
 		<param name="Name" value="Робочі потоки">
 		<param name="Local" value="html/Multithread.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Події Firebird сервера">
+		<param name="Local" value="html/Events.htm">
 		</OBJECT>
 	<LI> <OBJECT type="text/sitemap">
 		<param name="Name" value="Процедури">
@@ -65,6 +77,14 @@
 	<LI> <OBJECT type="text/sitemap">
 		<param name="Name" value="Транзакції">
 		<param name="Local" value="html/Transactions.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Транзакції MS DTC">
+		<param name="Local" value="html/MsDTC.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Створення бази даних">
+		<param name="Local" value="html/CreateDatabase.htm">
 		</OBJECT>
 </UL>
 </BODY></HTML>

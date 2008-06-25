@@ -179,7 +179,9 @@ void IscSpecialColumnsResultSet::adjustResults (IscSqlType &sqlType)
 	switch (sqlType.type)
 	{
 	case JDBC_CHAR:
+	case JDBC_WCHAR:
 	case JDBC_VARCHAR:
+	case JDBC_WVARCHAR:
 	case JDBC_LONGVARCHAR:
 	case JDBC_LONGVARBINARY:
 	case JDBC_DATE:

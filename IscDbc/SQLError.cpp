@@ -25,7 +25,7 @@
 #include "SQLError.h"
 #include "Stream.h"
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 #define vsnprintf	_vsnprintf
 #endif
 
@@ -63,6 +63,7 @@ SQLError::SQLError (SqlCode code, const char *txt, ...)
 
 	text = temp;
 	sqlcode = (int) code;
+	fbcode = 0;
 }
 
 SQLError::SQLError(Stream * trace, SqlCode code, const char * txt, ...)
@@ -93,6 +94,7 @@ SQLError::SQLError(Stream * trace, SqlCode code, const char * txt, ...)
 
 	text = temp;
 	sqlcode = (int) code;
+	fbcode = 0;
 }
 
 SQLError::~SQLError () throw()
@@ -124,6 +126,22 @@ int SQLError::getSqlcode ()
  **************************************/
 
 return sqlcode;
+}
+
+int SQLError::getFbcode ()
+{
+/**************************************
+ *
+ *		g e t F b c o d e
+ *
+ **************************************
+ *
+ * Functional description
+ *		Get server error code.
+ *
+ **************************************/
+
+return fbcode;
 }
 
 const char *SQLError::getText ()
@@ -158,7 +176,7 @@ SQLError::operator const char* ()
 return getText();
 }
 
-SQLError::SQLError(int code, const char * txt, ...)
+SQLError::SQLError( int code, int codefb, const char * txt, ...)
 {
 	va_list		args;
 	va_start	(args, txt);
@@ -172,6 +190,7 @@ SQLError::SQLError(int code, const char * txt, ...)
 
 	text = temp;
 	sqlcode = (int) code;
+	fbcode = codefb;
 }
 
 const char* SQLError::getTrace()

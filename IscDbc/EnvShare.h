@@ -28,6 +28,7 @@
 
 #include <string.h>
 #include "Connection.h"
+#include "ListParamTransaction.h"
 
 namespace IscDbcLibrary {
 
@@ -50,11 +51,16 @@ public:
 	void	commit();
 	void	rollback();
 
+	void	addParamTransactionToList( CNodeParamTransaction &par );
+	bool	findParamTransactionFromList( CNodeParamTransaction &par );
 	JString getDatabaseServerName();
 
+public:
 	IscConnection	*connections[MAX_COUNT_DBC_SHARE];
 	int				countConnection;
 	void			*transactionHandle;
+
+	ListParamTransaction *listTransaction;
 	JString			databaseServerName;
 };
 

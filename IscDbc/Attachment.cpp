@@ -39,10 +39,12 @@
 #include "IscConnection.h"
 
 static char databaseInfoItems [] = { 
+	isc_info_db_id,
 	isc_info_db_sql_dialect,
 	isc_info_base_level,
 	isc_info_user_names,
 	isc_info_ods_version,
+	isc_info_firebird_version,
 	isc_info_version, 
 	isc_info_page_size,
 	isc_info_end 
@@ -60,13 +62,18 @@ Attachment::Attachment()
 	useCount = 1;
 	GDS = NULL;
 	databaseHandle = NULL;
-	databaseAlways = false;
+	databaseAccess = OPEN_DB;
 	transactionHandle = NULL;
 	admin = true;
 	isRoles = false;
 	userType = 8;
+	charsetCode = 0; // NONE
 	useSchemaIdentifier = 0;
-	databaseProductName = "Firebird";
+	useLockTimeoutWaitTransactions = 0;
+	databaseProductName = "Interbase";
+	majorFb = 1;
+	minorFb = 0;
+	versionFb = 0;
 }
 
 Attachment::~Attachment()
@@ -83,10 +90,36 @@ Attachment::~Attachment()
 	}
 }
 
+void Attachment::loadClientLiblary( Properties *properties )
+{
+	const char *clientDefault = NULL;
+	const char *client = properties->findValue ("client", NULL);
+
+	if ( !client || !*client )
+#ifdef _WINDOWS
+		client = "gds32.dll",
+		clientDefault = "fbclient.dll";
+#else
+		client = "libgds.so",
+		clientDefault = "libfbclient.so";
+#endif
+
+	GDS = new CFbDll();
+	if ( !GDS->LoadDll (client, clientDefault) )
+	{
+		JString text;
+		text.Format ("Unable to connect to data source: library '%s' failed to load", client);
+		throw SQLEXCEPTION( -904, 335544375l, text );
+	}
+}
+
 void Attachment::createDatabase(const char *dbName, Properties *properties)
 {
 	char sql[1024];
 	char *p = sql;
+
+	if( !GDS )
+		loadClientLiblary( properties );
 
 	p += sprintf( p, "CREATE DATABASE \'%s\' ", dbName );
 
@@ -113,6 +146,8 @@ void Attachment::createDatabase(const char *dbName, Properties *properties)
 		p += sprintf( p, "PAGE_SIZE %s ", pagesize );
 
 	const char *charset = properties->findValue ("charset", NULL);
+	if ( !charset )
+		charset = properties->findValue ("characterset", NULL);
 
 	if (charset && *charset)
 		p += sprintf( p, "DEFAULT CHARACTER SET %s ", charset );
@@ -125,39 +160,20 @@ void Attachment::createDatabase(const char *dbName, Properties *properties)
 	if ( GDS->_dsql_execute_immediate( statusVector, &databaseHandle, &trans, 0, (char*)sql, databaseDialect, NULL ) )
     {
 		if ( statusVector[1] )
-			throw SQLEXCEPTION ( statusVector [1], getIscStatusText( statusVector ) );
+			throw SQLEXCEPTION ( GDS->_sqlcode( statusVector ), statusVector [1], getIscStatusText( statusVector ) );
 	}
 	
 	if ( trans && GDS->_commit_transaction( statusVector, &trans ) )
     {
 		if ( statusVector[1] )
-			throw SQLEXCEPTION ( statusVector [1], getIscStatusText( statusVector ) );
+			throw SQLEXCEPTION ( GDS->_sqlcode( statusVector ), statusVector [1], getIscStatusText( statusVector ) );
 	}
 }
 
 void Attachment::openDatabase(const char *dbName, Properties *properties)
 {
 	if( !GDS )
-	{
-		const char *clientDefault = NULL;
-		const char *client = properties->findValue ("client", NULL);
-		if ( !client || !*client )
-#ifdef _WIN32
-			client = "gds32.dll",
-			clientDefault = "fbclient.dll";
-#else
-			client = "libgds.so",
-			clientDefault = "libfbclient.so";
-#endif
-
-		GDS = new CFbDll();
-		if ( !GDS->LoadDll (client, clientDefault) )
-		{
-			JString text;
-			text.Format ("Unable to connect to data source: library '%s' failed to load", client);
-			throw SQLEXCEPTION (8001, text);
-		}
-	}
+		loadClientLiblary( properties );
 
 	const char *dialect = properties->findValue ("dialect", NULL);
 
@@ -174,7 +190,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		userAccess = user;
 		userType = 8;
 		*p++ = isc_dpb_user_name,
-		*p++ = strlen (user);
+		*p++ = (char)strlen (user);
 		for (const char *q = user; *q;)
 			*p++ = *q++;
 	}
@@ -189,7 +205,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	if (password && *password)
 	{
 		*p++ = isc_dpb_password,
-		*p++ = strlen (password);
+		*p++ = (char)strlen (password);
 		for (const char *q = password; *q;)
 			*p++ = *q++;
 	}
@@ -226,37 +242,41 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		userType = 13;
 		isRoles = true;
 		*p++ = isc_dpb_sql_role_name;
-		*p++ = strlen (role);
+		*p++ = (char)strlen (role);
 		for (const char *q = role; *q;)
 			*p++ = *q++;
 	}
 
 	const char *charset = properties->findValue ("charset", NULL);
+	if ( !charset )
+		charset = properties->findValue ("characterset", NULL);
 
 	if (charset && *charset)
 	{
 		*p++ = isc_dpb_lc_ctype;
-		*p++ = strlen (charset);
+		*p++ = (char)strlen (charset);
 		for (const char *q = charset; *q;)
 			*p++ = *q++;
+
+		charsetCode = findCharsetsCode( charset );
 	}
 
-	const char *property = properties->findValue ("databaseAlways", NULL);
+	const char *property = properties->findValue ("databaseAccess", NULL);
 
-	if ( property && *property == 'Y')
-		databaseAlways = true;
+	if ( property )
+		databaseAccess = (int)(*property - '0');
 	else
-		databaseAlways = false;
+		databaseAccess = 0;
 
 	int dpbLength = p - dpb;
 	ISC_STATUS statusVector [20];
 
-	if (GDS->_attach_database (statusVector, strlen (dbName), (char*) dbName, &databaseHandle, 
+	if (GDS->_attach_database (statusVector, (short)strlen (dbName), (char*) dbName, &databaseHandle, 
 							 dpbLength, dpb))
 	{
 		if ( statusVector [1] == 335544344l )
 		{
-			if ( databaseAlways )
+			if ( databaseAccess == CREATE_DB )
 				createDatabase( dbName, properties );
 			else
 			{
@@ -277,11 +297,17 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 					break;
 				}
 
-				throw SQLEXCEPTION ( statusVector [1], text );
+				throw SQLEXCEPTION ( GDS->_sqlcode( statusVector ), statusVector [1], text );
 			}
 		}
 		else
-			throw SQLEXCEPTION ( statusVector [1], getIscStatusText( statusVector ) );
+			throw SQLEXCEPTION ( GDS->_sqlcode( statusVector ), statusVector [1], getIscStatusText( statusVector ) );
+	}
+	else if ( databaseAccess == DROP_DB )
+	{
+		if ( GDS->_drop_database ( statusVector, &databaseHandle ) )
+			throw SQLEXCEPTION ( GDS->_sqlcode( statusVector ), statusVector [1], getIscStatusText( statusVector ) );
+		return;
 	}
 
 	char result [2048];
@@ -296,6 +322,15 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 			p += 2;
 			switch (item)
 			{
+			case isc_info_db_id:
+				{
+					char * next = p + 2 + *( p + 1 );
+
+					databaseNameFromServer.Format( "%.*s", *( p + 1 ), p + 2 );
+					databaseServerName.Format( "%.*s", *next, next + 1 );
+				}
+				break;
+
 			case isc_info_db_sql_dialect:
 				databaseDialect = GDS->_vax_integer (p, length);
 				break;
@@ -312,7 +347,45 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 					userType = 8;
 				}
 				break;
-			
+
+			case isc_info_firebird_version:
+				{
+					int level = 0;
+					char * start = p + 2;
+					char * beg = start;
+					char * end = beg + p [1];
+					
+					while ( beg < end )
+					{
+						if ( *beg >= '0' && *beg <= '9' )
+						{
+							switch ( ++level )
+							{
+							case 1:
+								majorFb = atoi(beg);
+								while( *++beg != '.' );
+								break;
+							case 2:
+								minorFb = atoi(beg);
+								while( *++beg != '.' );
+								break;
+							default:
+								versionFb = atoi(beg);
+								while( *beg >= '0' && *beg <= '9' || *beg == ' ')
+									beg++;
+								if ( *beg == '.' )
+									break;
+								beg = end;
+								break;
+							}
+						}
+						else
+							beg++;
+					}
+					databaseProductName = "Firebird";
+				}
+				break;
+
 			case isc_info_version:
 				{
 					JString productName;
@@ -423,23 +496,30 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	else
 		useSchemaIdentifier = 0;
 
+	property = properties->findValue ("useLockTimeout", NULL);
+
+	if (property && *property)
+		useLockTimeoutWaitTransactions = atoi(property);
+
+	property = properties->findValue ("dsn", NULL);
+
+	if (property && *property)
+		dsn = property;
+
 	checkAdmin();
 }
 
 JString Attachment::getIscStatusText(ISC_STATUS * statusVector)
 {
-	char text [4096], *p = text;
-	ISC_STATUS *status = statusVector;
-	bool first = true;
+	char text[4096], *p = text;
 
-	while ( GDS->_interprete (p, &status) )
+	while ( GDS->_interprete( p, &statusVector  ) )
 	{
-		while (*p)
-			++p;
+		while ( *p ) ++p;
 		*p++ = '\n';
 	}
 
-	if (p > text)
+	if ( p > text )
 		--p;
 
 	*p = 0;

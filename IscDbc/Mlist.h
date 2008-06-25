@@ -69,7 +69,7 @@ private:
 	}
 
 public:
-	MList(): diffCache( 50 )
+	MList( int cache = 50 ): diffCache( cache )
 	{
 		numberStartCache = diffCache;
 		OnInitList();

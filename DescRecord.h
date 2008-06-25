@@ -40,7 +40,7 @@ public:
 	void setDefault(DescRecord *recTo);
 	bool operator =(DescRecord *rec);
 	void initZeroColumn();
-	void allocateLocalDataPtr();
+	void allocateLocalDataPtr(int length = 0);
 	void releaseAllocMemory();
 	void freeLocalDataPtr();
     void beginBlobDataTransfer();
@@ -53,10 +53,16 @@ public:
 			*(short*)indicatorPtr = -1; 
 	}
 
+	int getBufferLength()
+	{ 
+		return ( octetLength + 1 ) * headSqlVarPtr->getSqlMultiple();
+	}
+
 public:
 	bool			isDefined;
 	bool			isPrepared;
 	bool			isIndicatorSqlDa;
+	bool			isZeroColumn;
 	bool			isLocalDataPtr;  // use sqlPutData for set data_at_exec
 	char			*localDataPtr;		
 	SQLSMALLINT		callType; // use sqlGetData
@@ -81,6 +87,7 @@ public:
 	SQLINTEGER		datetimeIntervalPrecision;
 	SQLINTEGER		displaySize;
 	SQLSMALLINT		fixedPrecScale;
+	SQLINTEGER		numPrecRadix;
 	JString			label;
 	SQLUINTEGER		length;
 	JString			literalPrefix;
@@ -102,6 +109,8 @@ public:
 	SQLINTEGER		*indicatorPtr;
 	SQLSMALLINT		unNamed;
 	SQLPOINTER		dataPtr;
+	WCSTOMBS		WcsToMbs;
+	MBSTOWCS		MbsToWcs;
 
 public:
 

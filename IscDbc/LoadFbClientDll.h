@@ -1,7 +1,7 @@
 #ifndef __LOAD_FB_CLIENT_DLL__
 #define __LOAD_FB_CLIENT_DLL__
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 #include <windows.h>
 #endif
 
@@ -161,6 +161,12 @@ typedef ISC_STATUS  ISC_EXPORT cancel_events (ISC_STATUS ISC_FAR *,
 					  isc_db_handle ISC_FAR *, 
 					  ISC_LONG ISC_FAR *);
 
+typedef ISC_STATUS ISC_EXPORT wait_for_event(ISC_STATUS ISC_FAR *,
+										 isc_db_handle ISC_FAR *,
+										 short,
+										 char *,
+										 char *);
+
 typedef ISC_STATUS  ISC_EXPORT start_multiple (ISC_STATUS ISC_FAR *, 
 					   isc_tr_handle ISC_FAR *, 
 					   short, 
@@ -178,7 +184,11 @@ typedef ISC_STATUS  ISC_EXPORT rollback_transaction (ISC_STATUS ISC_FAR *,
 typedef ISC_STATUS  ISC_EXPORT rollback_retaining (ISC_STATUS ISC_FAR *, 
 						 isc_tr_handle ISC_FAR *);
 
-///////////
+typedef ISC_STATUS  ISC_EXPORT prepare_transaction2 (ISC_STATUS ISC_FAR *,
+						isc_tr_handle ISC_FAR *,
+						unsigned short,
+						const unsigned char ISC_FAR * );
+
 typedef ISC_STATUS  ISC_EXPORT dsql_allocate_statement (ISC_STATUS ISC_FAR *, 
 						    isc_db_handle ISC_FAR *, 
 						    isc_stmt_handle ISC_FAR *);
@@ -304,7 +314,7 @@ public:
 	bool LoadDll(const char * client, const char * clientDef);
 	void Release(void);
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 	HMODULE		_Handle;
 #else
 	void		*_Handle;
@@ -338,11 +348,13 @@ public:
 	interprete*					_interprete;
 	que_events*					_que_events;
 	cancel_events* 				_cancel_events;
+	wait_for_event*				_wait_for_event;
 	start_multiple*				_start_multiple;
 	commit_transaction*			_commit_transaction;
 	commit_retaining*			_commit_retaining;
 	rollback_transaction*		_rollback_transaction;
 	rollback_retaining*			_rollback_retaining;
+	prepare_transaction2*		_prepare_transaction2;
 	dsql_allocate_statement*	_dsql_allocate_statement;
 	dsql_describe*				_dsql_describe;
 	dsql_describe_bind*			_dsql_describe_bind;

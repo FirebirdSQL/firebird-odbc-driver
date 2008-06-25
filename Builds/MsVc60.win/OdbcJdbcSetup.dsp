@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "../.." /I "../../IscDbc" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /FR /YX /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../.." /I "../../IscDbc" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /D "ISOLATION_AWARE_ENABLED" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG" /d "_AFXDLL"
@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 user32.lib comdlg32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE
+# ADD LINK32 version.lib gdi32.lib shell32.lib advapi32.lib user32.lib comdlg32.lib comctl32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386 /EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "OdbcJdbcSetup - Win32 Debug"
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../.." /I "../../IscDbc" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /FR /YX /FD /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../.." /I "../../IscDbc" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /D "ISOLATION_AWARE_ENABLED" /FR /YX /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG" /d "_AFXDLL"
@@ -80,7 +80,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 user32.lib comdlg32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE
+# ADD LINK32 version.lib gdi32.lib shell32.lib advapi32.lib user32.lib comdlg32.lib comctl32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept /EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -119,7 +119,63 @@ SOURCE=..\..\OdbcJdbcSetup\OdbcJdbcSetup.rc
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\OdbcJdbcSetup\ServiceClient.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\CommonUtil.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabBackup.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabChild.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabCtrl.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabRepair.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabRestore.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabStatistics.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabUsers.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\OdbcJdbcSetup\Setup.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\UserDialog.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\UsersTabChild.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\UsersTabMemberShips.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\UsersTabRoles.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\UsersTabUsers.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -139,7 +195,63 @@ SOURCE=..\..\OdbcJdbcSetup\Resource.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\OdbcJdbcSetup\ServiceClient.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\CommonUtil.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabBackup.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabChild.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabCtrl.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabRepair.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabRestore.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabStatistics.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\ServiceTabUsers.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\OdbcJdbcSetup\Setup.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\UserDialog.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\UsersTabChild.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\UsersTabMemberShips.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\UsersTabRoles.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\OdbcJdbcSetup\UsersTabUsers.h
 # End Source File
 # Begin Source File
 

@@ -21,6 +21,9 @@
 // OdbcConvert.cpp: OdbcConvert class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifndef _WINDOWS
+#include <wchar.h>
+#endif
 #include <memory.h>
 #include <string.h>
 #include <stdio.h>
@@ -36,9 +39,22 @@
 #include "DescRecord.h"
 #include "IscDbc/SQLException.h"
 
+#include "TemplateConvert.h"
+
+#ifndef _WINDOWS
+// for Linux
+extern int swprintf (wchar_t *__restrict __s, size_t __n, wchar_t *__restrict __format, ...);
+#endif
+
+#ifdef _BIG_ENDIAN // Big endian architectures (IBM PowerPC, Sun Sparc, HP PA-RISC, ... )
+#define MAKEQUAD(b, a)      ((QUAD)(((long)(a)) | ((UQUAD)((long)(b))) << 32))
+#define HI_LONG(l)			((long)(l))
+#define LO_LONG(l)          ((long)(((UQUAD)(l) >> 32) & 0xFFFFFFFF))
+#else
 #define MAKEQUAD(a, b)      ((QUAD)(((long)(a)) | ((UQUAD)((long)(b))) << 32))
-#define LO_LONG(l)           ((long)(l))
-#define HI_LONG(l)           ((long)(((UQUAD)(l) >> 32) & 0xFFFFFFFF))
+#define LO_LONG(l)          ((long)(l))
+#define HI_LONG(l)          ((long)(((UQUAD)(l) >> 32) & 0xFFFFFFFF))
+#endif
 
 namespace OdbcJdbcLibrary {
 
@@ -151,6 +167,8 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 			return &OdbcConvert::convTinyIntToBigint;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convTinyIntToString;
+		case SQL_C_WCHAR:
+			return &OdbcConvert::convTinyIntToStringW;
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convTinyIntToTagNumeric;
@@ -202,6 +220,8 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 			return &OdbcConvert::convShortToBigint;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convShortToString;
+		case SQL_C_WCHAR:
+			return &OdbcConvert::convShortToStringW;
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convShortToTagNumeric;
@@ -255,6 +275,8 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 			return &OdbcConvert::convLongToBigint;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convLongToString;
+		case SQL_C_WCHAR:
+			return &OdbcConvert::convLongToStringW;
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convLongToTagNumeric;
@@ -288,6 +310,8 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 			return &OdbcConvert::convFloatToBigint;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convFloatToString;
+		case SQL_C_WCHAR:
+			return &OdbcConvert::convFloatToStringW;
 		default:
 			return &OdbcConvert::notYetImplemented;
 		}
@@ -318,6 +342,8 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 			return &OdbcConvert::convDoubleToBigint;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDoubleToString;
+		case SQL_C_WCHAR:
+			return &OdbcConvert::convDoubleToStringW;
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convDoubleToTagNumeric;
@@ -358,6 +384,8 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 			return &OdbcConvert::convBigintToBinary;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convBigintToString;
+		case SQL_C_WCHAR:
+			return &OdbcConvert::convBigintToStringW;
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convBigintToTagNumeric;
@@ -442,6 +470,8 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 			return &OdbcConvert::convDateToBinary;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateToString;
+		case SQL_C_WCHAR:
+			return &OdbcConvert::convDateToStringW;
 		default:
 			return &OdbcConvert::notYetImplemented;
 		}
@@ -477,6 +507,8 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 			return &OdbcConvert::convTimeToBinary;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convTimeToString;
+		case SQL_C_WCHAR:
+			return &OdbcConvert::convTimeToStringW;
 		default:
 			return &OdbcConvert::notYetImplemented;
 		}
@@ -511,6 +543,8 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 			return &OdbcConvert::convDateTimeToBinary;
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateTimeToString;
+		case SQL_C_WCHAR:
+			return &OdbcConvert::convDateTimeToStringW;
 		default:
 			return &OdbcConvert::notYetImplemented;
 		}
@@ -519,6 +553,24 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 	case SQL_C_BINARY:
 		switch(to->conciseType)
 		{
+		case SQL_C_TINYINT:
+		case SQL_C_UTINYINT:
+		case SQL_C_STINYINT:
+			if ( to->isIndicatorSqlDa )
+			{
+				to->headSqlVarPtr->setTypeText();
+				return &OdbcConvert::transferBinaryStringToAllowedType;
+			}
+			return &OdbcConvert::convBlobToTinyInt;
+		case SQL_C_SHORT:
+		case SQL_C_USHORT:
+		case SQL_C_SSHORT:
+			if ( to->isIndicatorSqlDa )
+			{
+				to->headSqlVarPtr->setTypeText();
+				return &OdbcConvert::transferBinaryStringToAllowedType;
+			}
+			return &OdbcConvert::convBlobToShort;
 		case SQL_C_LONG:
 		case SQL_C_ULONG:
 		case SQL_C_SLONG:
@@ -553,11 +605,15 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_BINARY:
 			if ( to->isIndicatorSqlDa )
 				return &OdbcConvert::convBinaryToBlob;
+			else if ( to->isZeroColumn )
+				return &OdbcConvert::convLongToLong;
 			return &OdbcConvert::convBlobToBlob;
 		case SQL_C_CHAR:
 			if ( to->isIndicatorSqlDa && to->isBlobOrArray )
 				return &OdbcConvert::convBinaryToBlob;
 			return &OdbcConvert::convBlobToString;
+		case SQL_C_WCHAR:
+			return &OdbcConvert::convBlobToStringW;
 		default:
 			return &OdbcConvert::notYetImplemented;
 		}
@@ -595,6 +651,13 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 					return &OdbcConvert::convVarStringSystemToString;
 				else
 					return &OdbcConvert::convVarStringToString;
+			case SQL_C_WCHAR:
+				if ( from->isIndicatorSqlDa && from->dataBlobPtr && from->dataBlobPtr->isArray() )
+					return &OdbcConvert::convBlobToStringW;
+				if ( parentStmt->isResultSetFromSystemCatalog )
+					return &OdbcConvert::convVarStringSystemToStringW;
+				else
+					return &OdbcConvert::convVarStringToStringW;
 			case SQL_C_BINARY:
 				if ( from->isIndicatorSqlDa && from->dataBlobPtr && from->dataBlobPtr->isArray() )
 					return &OdbcConvert::convBlobToBlob;
@@ -681,6 +744,24 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 				}
 				bIdentity = true;
 				return &OdbcConvert::convStringToString;
+			case SQL_C_WCHAR:
+				if ( to->type == SQL_VARCHAR )
+				{
+					if ( to->isIndicatorSqlDa )
+					{
+						if ( to->isBlobOrArray )
+							return &OdbcConvert::convStringToBlob;
+						to->headSqlVarPtr->setTypeText();
+						return &OdbcConvert::transferStringToAllowedType;
+					}
+					return &OdbcConvert::convStringToVarString;
+				}
+				if ( to->isIndicatorSqlDa )
+				{
+					to->headSqlVarPtr->setTypeText();
+					return &OdbcConvert::transferStringToAllowedType;
+				}
+				return &OdbcConvert::convStringToStringW;
 			case SQL_C_BINARY:
 				if ( to->isIndicatorSqlDa )
 					return &OdbcConvert::convStringToBlob;
@@ -701,6 +782,184 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 			}
 		}
 		break;
+
+	case SQL_C_WCHAR:
+		if ( from->type == JDBC_VARCHAR || from->type == JDBC_WVARCHAR )
+		{
+			switch(to->conciseType) // Varying
+			{
+			case SQL_C_TINYINT:
+			case SQL_C_UTINYINT:
+			case SQL_C_STINYINT:
+				return &OdbcConvert::convVarStringWToTinyInt;
+			case SQL_C_LONG:
+			case SQL_C_ULONG:
+			case SQL_C_SLONG:
+				return &OdbcConvert::convVarStringWToLong;
+			case SQL_C_SHORT:
+			case SQL_C_USHORT:
+			case SQL_C_SSHORT:
+				return &OdbcConvert::convVarStringWToShort;
+			case SQL_C_FLOAT:
+				return &OdbcConvert::convVarStringWToFloat;
+			case SQL_C_DOUBLE:
+				return &OdbcConvert::convVarStringWToDouble;
+			case SQL_C_SBIGINT:
+			case SQL_C_UBIGINT:
+				return &OdbcConvert::convVarStringWToBigint;
+			case SQL_C_CHAR:
+				if ( from->isIndicatorSqlDa && from->dataBlobPtr && from->dataBlobPtr->isArray() )
+					return &OdbcConvert::convBlobToString;
+				if ( parentStmt->isResultSetFromSystemCatalog )
+					return &OdbcConvert::convVarStringSystemToString;
+				else
+					return &OdbcConvert::convVarStringToString;
+			case SQL_C_WCHAR:
+				if ( from->isIndicatorSqlDa && from->dataBlobPtr && from->dataBlobPtr->isArray() )
+					return &OdbcConvert::convBlobToStringW;
+				bIdentity = true;
+				if ( parentStmt->isResultSetFromSystemCatalog )
+					return &OdbcConvert::convVarStringSystemToStringW;
+				else
+					return &OdbcConvert::convVarStringToStringW;
+			case SQL_C_BINARY:
+				if ( from->isIndicatorSqlDa && from->dataBlobPtr && from->dataBlobPtr->isArray() )
+					return &OdbcConvert::convBlobToBlob;
+				return &OdbcConvert::convVarStringToString;
+			default:
+				return &OdbcConvert::notYetImplemented;
+			}
+		}
+		else 
+		{
+			if ( to->isIndicatorSqlDa && to->headSqlVarPtr->isReplaceForParamArray() )
+			{
+				to->headSqlVarPtr->setTypeText();
+				return &OdbcConvert::transferArrayStringToAllowedType;
+			}
+
+			switch(to->conciseType) // Text
+			{
+			case SQL_C_LONG:
+			case SQL_C_ULONG:
+			case SQL_C_SLONG:
+				if ( to->isIndicatorSqlDa )
+				{
+					to->headSqlVarPtr->setTypeText();
+					return &OdbcConvert::transferStringWToAllowedType;
+				}
+				return &OdbcConvert::convStringToLong;
+			case SQL_C_TINYINT:
+			case SQL_C_UTINYINT:
+			case SQL_C_STINYINT:
+				if ( to->isIndicatorSqlDa )
+				{
+					to->headSqlVarPtr->setTypeText();
+					return &OdbcConvert::transferStringToTinyInt;
+				}
+				return &OdbcConvert::convStringToTinyInt;
+			case SQL_C_SHORT:
+			case SQL_C_USHORT:
+			case SQL_C_SSHORT:
+				if ( to->isIndicatorSqlDa )
+				{
+					to->headSqlVarPtr->setTypeText();
+					return &OdbcConvert::transferStringWToAllowedType;
+				}
+				return &OdbcConvert::convStringToShort;
+			case SQL_C_FLOAT:
+				if ( to->isIndicatorSqlDa )
+				{
+					to->headSqlVarPtr->setTypeText();
+					return &OdbcConvert::transferStringWToAllowedType;
+				}
+				return &OdbcConvert::convStringToFloat;
+			case SQL_C_DOUBLE:
+				if ( to->isIndicatorSqlDa )
+				{
+					to->headSqlVarPtr->setTypeText();
+					return &OdbcConvert::transferStringWToAllowedType;
+				}
+				return &OdbcConvert::convStringToDouble;
+			case SQL_C_SBIGINT:
+			case SQL_C_UBIGINT:
+				if ( to->isIndicatorSqlDa )
+				{
+					to->headSqlVarPtr->setTypeText();
+					return &OdbcConvert::transferStringWToAllowedType;
+				}
+				return &OdbcConvert::convStringToBigint;
+			case SQL_C_CHAR:
+				if ( to->type == SQL_VARCHAR )
+				{
+					if ( to->isIndicatorSqlDa )
+					{
+						if ( to->isBlobOrArray )
+							return &OdbcConvert::convStringToBlob;
+						to->headSqlVarPtr->setTypeText();
+						return &OdbcConvert::transferStringWToAllowedType;
+					}
+					return &OdbcConvert::convStringToVarString;
+				}
+				if ( to->isIndicatorSqlDa )
+				{
+					to->headSqlVarPtr->setTypeText();
+					return &OdbcConvert::transferStringWToAllowedType;
+				}
+				return &OdbcConvert::convStringToString;
+			case SQL_C_WCHAR:
+				if ( to->type == SQL_VARCHAR )
+				{
+					if ( to->isIndicatorSqlDa )
+					{
+						if ( to->isBlobOrArray )
+							return &OdbcConvert::convStringToBlob;
+						to->headSqlVarPtr->setTypeText();
+						return &OdbcConvert::transferStringWToAllowedType;
+					}
+					return &OdbcConvert::convStringToVarString;
+				}
+				if ( to->isIndicatorSqlDa )
+				{
+					to->headSqlVarPtr->setTypeText();
+					if ( to->type == JDBC_WVARCHAR || to->type == JDBC_WCHAR )
+						return &OdbcConvert::transferStringWToAllowedType;
+					return &OdbcConvert::transferStringToAllowedType;
+				}
+				bIdentity = true;
+				return &OdbcConvert::convStringToStringW;
+			case SQL_C_BINARY:
+				if ( to->isIndicatorSqlDa )
+					return &OdbcConvert::convStringToBlob;
+				return &OdbcConvert::convStringToString;
+			case SQL_C_DATE:
+			case SQL_C_TYPE_DATE:
+			case SQL_C_TIME:
+			case SQL_C_TYPE_TIME:
+			case SQL_C_TYPE_TIMESTAMP:
+			case SQL_C_TIMESTAMP:
+				if ( to->isIndicatorSqlDa )
+				{
+					to->headSqlVarPtr->setTypeText();
+					return &OdbcConvert::transferStringWToDateTime;
+				}
+			default:
+				return &OdbcConvert::notYetImplemented;
+			}
+		}
+		break;
+	case SQL_C_GUID:
+		switch(to->conciseType)
+		{
+		case SQL_C_CHAR:
+			return &OdbcConvert::convGuidToString;
+		case SQL_C_WCHAR:
+			return &OdbcConvert::convGuidToStringW;
+		default:
+			return &OdbcConvert::notYetImplemented;
+		}
+		break;
+
 	default:
 		return &OdbcConvert::notYetImplemented;
 	}
@@ -736,9 +995,12 @@ SQLINTEGER * OdbcConvert::getAdressBindIndTo(char * pointer)
 	{														\
 		if ( indicatorTo )									\
 			*indicatorTo = SQL_NULL_DATA;					\
-		*(char*)pointerTo = 0;                              \
+		if ( pointerTo )									\
+			*(char*)pointerTo = 0;                          \
 		return SQL_SUCCESS;									\
 	}														\
+	if ( !pointerTo )										\
+		return SQL_SUCCESS;
 
 #define ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO)				\
 	if ( from->isIndicatorSqlDa )							\
@@ -747,7 +1009,8 @@ SQLINTEGER * OdbcConvert::getAdressBindIndTo(char * pointer)
 		{													\
 			if ( indicatorTo )								\
 				*indicatorTo = SQL_NULL_DATA;				\
-			*(C_TYPE_TO*)pointer = 0;                       \
+			if ( pointer )									\
+				*(C_TYPE_TO*)pointer = 0;                   \
 			return SQL_SUCCESS;								\
 		}													\
 		else if ( indicatorTo )								\
@@ -763,6 +1026,8 @@ SQLINTEGER * OdbcConvert::getAdressBindIndTo(char * pointer)
 		else												\
 			*indicatorTo = 0;								\
 	}														\
+	if ( !pointer )											\
+		return SQL_SUCCESS;
 
 #define ODBCCONVERT_CHECKNULL_SQLDA							\
 	if( indicatorFrom && *indicatorFrom == SQL_NULL_DATA )	\
@@ -777,12 +1042,23 @@ SQLINTEGER * OdbcConvert::getAdressBindIndTo(char * pointer)
 	if ( octetLengthPtr )					\
 	{										\
 		if ( *octetLengthPtr == SQL_NTS )	\
-			len = strlen ( pointerFrom );	\
+			len = (int)strlen ( pointerFrom );	\
 		else								\
 			len = *octetLengthPtr;			\
 	}										\
 	else									\
-		len = strlen(pointerFrom);			\
+		len = (int)strlen(pointerFrom);		\
+
+#define GET_WLEN_FROM_OCTETLENGTHPTR		\
+	if ( octetLengthPtr )					\
+	{										\
+		if ( *octetLengthPtr == SQL_NTS )	\
+			len = (int)wcslen ( pointerFrom );	\
+		else								\
+			len = *octetLengthPtr / 2;		\
+	}										\
+	else									\
+		len = (int)wcslen( pointerFrom );	\
 
 #define ODBCCONVERT_CONV(TYPE_FROM,C_TYPE_FROM,TYPE_TO,C_TYPE_TO)								\
 int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)				\
@@ -798,7 +1074,7 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 	return SQL_SUCCESS;																			\
 }																								\
 
-#define ODBCCONVERTBIGINT_CONV( TYPE_TO, C_TYPE_TO )											\
+#define ODBCCONVERT_BIGINT_CONV( TYPE_TO, C_TYPE_TO )											\
 int OdbcConvert::convBigintTo##TYPE_TO(DescRecord * from, DescRecord * to)						\
 {																								\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
@@ -877,6 +1153,29 @@ int OdbcConvert::convTagNumericTo##TYPE_TO(DescRecord * from, DescRecord * to)		
 		val = -val;																				\
 																								\
 	*pointer = (C_TYPE_TO)val;																	\
+																								\
+	return SQL_SUCCESS;																			\
+}																								\
+
+#define ODBCCONVERTTAG_NUMERIC_CONV_FLOAT(TYPE_TO,C_TYPE_TO)									\
+int OdbcConvert::convTagNumericTo##TYPE_TO(DescRecord * from, DescRecord * to)					\
+{																								\
+	C_TYPE_TO * pointer = (C_TYPE_TO*)getAdressBindDataTo((char*)to->dataPtr);					\
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+																								\
+	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
+																								\
+	QUAD val;																					\
+	tagSQL_NUMERIC_STRUCT * nm =																\
+					(tagSQL_NUMERIC_STRUCT *)getAdressBindDataFrom((char*)from->dataPtr);		\
+																								\
+	val = *(QUAD*)nm->val;																		\
+																								\
+	if ( !nm->sign )																			\
+		val = -val;																				\
+																								\
+	*pointer = (C_TYPE_TO)val / (QUAD)listScale[nm->scale];										\
 																								\
 	return SQL_SUCCESS;																			\
 }																								\
@@ -1007,6 +1306,91 @@ int OdbcConvert::conv##TYPE_FROM##ToString(DescRecord * from, DescRecord * to)		
 	return SQL_SUCCESS;																			\
 }																								\
 
+#define ODBCCONVERT_CONV_TO_STRINGW(TYPE_FROM,C_TYPE_FROM,DEF_SCALE)							\
+int OdbcConvert::conv##TYPE_FROM##ToStringW(DescRecord * from, DescRecord * to)					\
+{																								\
+	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
+	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+																								\
+	ODBCCONVERT_CHECKNULL( pointer );															\
+																								\
+	int len = to->length;																		\
+																								\
+	if ( !len && to->dataPtr)																	\
+		*(char*)to->dataPtr = 0;																\
+	else																						\
+	{	/* Original source from IscDbc/Value.cpp */												\
+		C_TYPE_FROM number = *(C_TYPE_FROM*)getAdressBindDataFrom((char*)from->dataPtr);		\
+		char *string = (char*)pointer;															\
+		int scale = -from->scale;																\
+																								\
+		if (number == 0)																		\
+		{																						\
+			len = 1;																			\
+			strcpy (string, "0");																\
+		}																						\
+		else if (scale < -DEF_SCALE)															\
+		{																						\
+			len = 3;																			\
+			strcpy (string, "***");																\
+		}																						\
+		else																					\
+		{																						\
+			bool negative = false;																\
+																								\
+			if (number < 0)																		\
+			{																					\
+				number = -number;																\
+				negative = true;																\
+			}																					\
+																								\
+			char temp [100], *p = temp;															\
+			int n;																				\
+			for (n = 0; number; number /= 10, --n)												\
+			{																					\
+				if (scale && scale == n)														\
+					*p++ = '.';																	\
+				*p++ = '0' + (char) (number % 10);												\
+			}																					\
+																								\
+			if (scale <= n)																		\
+			{																					\
+				for (; n > scale; --n)															\
+					*p++ = '0';																	\
+				*p++ = '.';																		\
+			}																					\
+																								\
+			char *q = string;																	\
+			int l=0;																			\
+																								\
+			if (negative)																		\
+				*q++ = '-',++l;																	\
+																								\
+			if ( p - temp > len - l )															\
+				p = temp + len - l;																\
+																								\
+			while (p > temp)																	\
+				*q++ = *--p;																	\
+																								\
+			*q = 0;																				\
+			len = q - string;																	\
+		}																						\
+		{																						\
+			char tempBuf [256];																	\
+			strcpy( tempBuf, string );															\
+			from->MbsToWcs( (wchar_t *)string, tempBuf, len );									\
+			((wchar_t *)string)[len] = L'\0';													\
+			len *=2;																			\
+		}																						\
+	}																							\
+																								\
+	if ( indicatorTo )																			\
+		*indicatorTo = len;																		\
+																								\
+	return SQL_SUCCESS;																			\
+}																								\
+
 #define ODBCCONVERT_CONV_TO_BINARY(TYPE_FROM,C_TYPE_FROM,DEF_SCALE)								\
 int OdbcConvert::conv##TYPE_FROM##ToBinary(DescRecord * from, DescRecord * to)					\
 {																								\
@@ -1086,11 +1470,147 @@ int OdbcConvert::conv##TYPE_FROM##ToBinary(DescRecord * from, DescRecord * to)		
 	return SQL_SUCCESS;																			\
 }																								\
 
+#define ODBCCONVERT_BLOB_CONV(TYPE_TO,C_TYPE_TO)												\
+int OdbcConvert::convBlob##To##TYPE_TO(DescRecord * from, DescRecord * to)						\
+{																								\
+	SQLRETURN ret = SQL_SUCCESS;																\
+	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+																								\
+	ODBCCONVERT_CHECKNULL( pointer );															\
+																								\
+	char * ptBlob = (char*)getAdressBindDataFrom((char*)from->dataPtr);							\
+	Blob *& blob = from->dataBlobPtr;															\
+	int dataRemaining = 0;																		\
+																								\
+	if ( blob )																					\
+	{																							\
+		bool directOpen = false;																\
+		bool fetched = from->currentFetched == parentStmt->getCurrentFetched();					\
+																								\
+		if ( !fetched || !from->dataOffset )													\
+		{																						\
+			from->dataOffset = 0;																\
+			if ( !(fetched && !blob->getOffset()) )												\
+			{																					\
+				if ( parentStmt->isStaticCursor() )												\
+					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );				\
+				else if ( blob->isArray() || !statusReturnData )								\
+					blob->bind ( *parentStmt, ptBlob );											\
+				else																			\
+				{																				\
+					blob->directOpenBlob ( ptBlob );											\
+					directOpen = true;															\
+				}																				\
+			}																					\
+			from->currentFetched = parentStmt->getCurrentFetched();								\
+		}																						\
+																								\
+		dataRemaining = blob->length() - from->dataOffset;										\
+																								\
+		if ( !to->length )																		\
+			;																					\
+		else if (!dataRemaining && ( from->dataOffset || fetched ))								\
+		{																						\
+			from->dataOffset = 0;																\
+			ret = SQL_NO_DATA;																	\
+		}																						\
+		else																					\
+		{																						\
+			int len = MIN(dataRemaining, MAX(0, (long)sizeof(C_TYPE_TO)));						\
+			int lenRead;																		\
+																								\
+			if ( pointer )																		\
+			{																					\
+				if ( len > 0 )																	\
+				{																				\
+					if ( blob->isArray() )														\
+						blob->getBinary (from->dataOffset, len, pointer);						\
+					else if ( directOpen )														\
+						blob->directFetchBlob((char*)pointer, len, lenRead);					\
+					else																		\
+						blob->getBytes (from->dataOffset, len, pointer);						\
+				}																				\
+																								\
+				if ( len && len < dataRemaining )												\
+				{																				\
+					OdbcError *error = parentStmt->postError( new OdbcError( 0, "01004", "Data truncated" ) ); \
+					ret = SQL_SUCCESS_WITH_INFO;												\
+				}																				\
+			}																					\
+		}																						\
+																								\
+		if ( directOpen )																		\
+			blob->directCloseBlob();															\
+	}																							\
+																								\
+	if ( indicatorTo )																			\
+		*indicatorTo = sizeof(C_TYPE_TO);														\
+																								\
+	return ret;																					\
+}																								\
+
 int OdbcConvert::notYetImplemented(DescRecord * from, DescRecord * to)
 { 
 	parentStmt->postError ("07006", "Restricted data type attribute violation");
 	return SQL_ERROR; 
 }
+
+////////////////////////////////////////////////////////////////////////
+// Guid
+////////////////////////////////////////////////////////////////////////
+
+int OdbcConvert::convGuidToString(DescRecord * from, DescRecord * to)
+{
+	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL( pointer );
+
+	SQLGUID *g = (SQLGUID*)getAdressBindDataFrom((char*)from->dataPtr);
+	int len, outlen = to->length;
+
+	len = snprintf(pointer, outlen, "%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+		(unsigned long) g->Data1, g->Data2, g->Data3, g->Data4[0], g->Data4[1], g->Data4[2], g->Data4[3], g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
+
+	if ( indicatorTo )
+	{
+		if ( len == -1 )
+			*indicatorTo = outlen;
+		else
+			*indicatorTo = len;
+	}
+
+	return SQL_SUCCESS;
+}
+
+int OdbcConvert::convGuidToStringW(DescRecord * from, DescRecord * to)
+{
+	wchar_t *pointer = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL( pointer );
+
+	SQLGUID *g = (SQLGUID*)getAdressBindDataFrom((char*)from->dataPtr);
+	int len, outlen = to->length / sizeof( wchar_t );
+
+	len = swprintf(pointer, outlen, L"%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+		(unsigned long) g->Data1, g->Data2, g->Data3, g->Data4[0], g->Data4[1], g->Data4[2], g->Data4[3], g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
+
+	if ( indicatorTo )
+	{
+		if ( len == -1 )
+			*indicatorTo = outlen * sizeof( wchar_t );
+		else
+			*indicatorTo = len * sizeof( wchar_t );
+	}
+
+	return SQL_SUCCESS;
+}
+
 
 ////////////////////////////////////////////////////////////////////////
 // TinyInt
@@ -1103,6 +1623,7 @@ ODBCCONVERT_CONV(TinyInt,unsigned char,Float,float);
 ODBCCONVERT_CONV(TinyInt,unsigned char,Double,double);
 ODBCCONVERT_CONV(TinyInt,unsigned char,Bigint,QUAD);
 ODBCCONVERT_CONV_TO_STRING(TinyInt,char,3);
+ODBCCONVERT_CONV_TO_STRINGW(TinyInt,char,3);
 ODBCCONVERT_CONVTAGNUMERIC(TinyInt,unsigned char);
 
 ////////////////////////////////////////////////////////////////////////
@@ -1122,6 +1643,7 @@ ODBCCONVERT_WITH_SCALE_CONV(Short,short,Double,double);
 ODBCCONVERT_WITH_SCALE_CONV(Short,short,Bigint,QUAD);
 ODBCCONVERT_CONV(Short,short,Bigint,QUAD);
 ODBCCONVERT_CONV_TO_STRING(Short,short,5);
+ODBCCONVERT_CONV_TO_STRINGW(Short,short,5);
 ODBCCONVERT_CONVTAGNUMERIC(Short,short);
 
 ////////////////////////////////////////////////////////////////////////
@@ -1141,6 +1663,7 @@ ODBCCONVERT_WITH_SCALE_CONV(Long,long,Float,float);
 ODBCCONVERT_WITH_SCALE_CONV(Long,long,Double,double);
 ODBCCONVERT_WITH_SCALE_CONV(Long,long,Bigint,QUAD);
 ODBCCONVERT_CONV_TO_STRING(Long,long,10);
+ODBCCONVERT_CONV_TO_STRINGW(Long,long,10);
 ODBCCONVERT_CONVTAGNUMERIC(Long,long);
 
 ////////////////////////////////////////////////////////////////////////
@@ -1165,7 +1688,29 @@ int OdbcConvert::convFloatToString(DescRecord * from, DescRecord * to)
 	int len = to->length;
 
 	if ( len )	// MAX_FLOAT_DIGIT_LENGTH = 7
-		convertFloatToString(*(float*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len, &len, 7);
+		ConvertFloatToString<char>(*(float*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len, &len, 7);
+
+	if ( indicatorTo )
+		*indicatorTo = len;
+
+	return SQL_SUCCESS;
+}
+
+int OdbcConvert::convFloatToStringW(DescRecord * from, DescRecord * to)
+{
+	wchar_t * pointerTo = (wchar_t *)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL( pointerTo );
+
+	int len = to->length;
+
+	if ( len )	// MAX_FLOAT_DIGIT_LENGTH = 7
+	{
+		ConvertFloatToString<wchar_t>(*(float*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len/2, &len, 7);
+		len *= sizeof( wchar_t );
+	}
 
 	if ( indicatorTo )
 		*indicatorTo = len;
@@ -1242,7 +1787,29 @@ int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 	int len = to->length;
 
 	if ( len )	// MAX_DOUBLE_DIGIT_LENGTH = 15
-		convertFloatToString(*(double*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len, &len);
+		ConvertFloatToString<char>(*(double*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len, &len);
+
+	if ( indicatorTo )
+		*indicatorTo = len;
+
+	return SQL_SUCCESS;
+}
+
+int OdbcConvert::convDoubleToStringW(DescRecord * from, DescRecord * to)
+{
+	wchar_t * pointerTo = (wchar_t *)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL( pointerTo );
+
+	int len = to->length;
+
+	if ( len )	// MAX_DOUBLE_DIGIT_LENGTH = 15
+	{
+		ConvertFloatToString<wchar_t>(*(double*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len/2, &len);
+		len *= sizeof( wchar_t );
+	}
 
 	if ( indicatorTo )
 		*indicatorTo = len;
@@ -1254,16 +1821,17 @@ int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 // Bigint
 ////////////////////////////////////////////////////////////////////////
 
-ODBCCONVERTBIGINT_CONV(TinyInt,char);
-ODBCCONVERTBIGINT_CONV(Short,short);
-ODBCCONVERTBIGINT_CONV(Long,long);
-ODBCCONVERTBIGINT_CONV(Float,float);
-ODBCCONVERTBIGINT_CONV(Double,double);
+ODBCCONVERT_BIGINT_CONV(TinyInt,char);
+ODBCCONVERT_BIGINT_CONV(Short,short);
+ODBCCONVERT_BIGINT_CONV(Long,long);
+ODBCCONVERT_BIGINT_CONV(Float,float);
+ODBCCONVERT_BIGINT_CONV(Double,double);
 ODBCCONVERT_WITH_SCALE_CONV(Bigint,QUAD,Float,float);
 ODBCCONVERT_WITH_SCALE_CONV(Bigint,QUAD,Double,double);
-ODBCCONVERTBIGINT_CONV(Bigint,QUAD);
+ODBCCONVERT_BIGINT_CONV(Bigint,QUAD);
 ODBCCONVERT_CONV_TO_BINARY(Bigint,QUAD,18);
 ODBCCONVERT_CONV_TO_STRING(Bigint,QUAD,18);
+ODBCCONVERT_CONV_TO_STRINGW(Bigint,QUAD,18);
 ODBCCONVERT_CONVTAGNUMERIC(Bigint,QUAD);
 
 ////////////////////////////////////////////////////////////////////////
@@ -1284,8 +1852,8 @@ ODBCCONVERT_CONV(Numeric,QUAD,Bigint,QUAD);
 ODBCCONVERTTAG_NUMERIC_CONV(TinyInt,char);
 ODBCCONVERTTAG_NUMERIC_CONV(Short,short);
 ODBCCONVERTTAG_NUMERIC_CONV(Long,long);
-ODBCCONVERTTAG_NUMERIC_CONV(Float,float);
-ODBCCONVERTTAG_NUMERIC_CONV(Double,double);
+ODBCCONVERTTAG_NUMERIC_CONV_FLOAT(Float,float);
+ODBCCONVERTTAG_NUMERIC_CONV_FLOAT(Double,double);
 ODBCCONVERTTAG_NUMERIC_CONV(Bigint,QUAD);
 ODBCCONVERT_CONVTAGNUMERIC(Numeric,QUAD);
 
@@ -1336,6 +1904,33 @@ int OdbcConvert::convDateToString(DescRecord * from, DescRecord * to)
 			*indicatorTo = outlen;
 		else
 			*indicatorTo = len;
+	}
+
+	return SQL_SUCCESS;
+}
+
+int OdbcConvert::convDateToStringW(DescRecord * from, DescRecord * to)
+{
+	wchar_t *pointer = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL( pointer );
+
+	SQLUSMALLINT mday, month;
+	SQLSMALLINT year;
+
+	decode_sql_date(*(long*)getAdressBindDataFrom((char*)from->dataPtr), mday, month, year);
+	int len, outlen = to->length / sizeof( wchar_t );
+
+	len = swprintf(pointer, outlen, L"%04d-%02d-%02d",year,month,mday);
+
+	if ( indicatorTo )
+	{
+		if ( len == -1 )
+			*indicatorTo = outlen * sizeof( wchar_t );
+		else
+			*indicatorTo = len * sizeof( wchar_t );
 	}
 
 	return SQL_SUCCESS;
@@ -1489,6 +2084,38 @@ int OdbcConvert::convTimeToString(DescRecord * from, DescRecord * to)
 			*indicatorTo = outlen;
 		else
 			*indicatorTo = len;
+	}
+
+	return SQL_SUCCESS;
+}
+
+int OdbcConvert::convTimeToStringW(DescRecord * from, DescRecord * to)
+{
+	wchar_t *pointer = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL( pointer );
+
+	SQLUSMALLINT hour, minute, second;
+	long ntime = *(long*)getAdressBindDataFrom((char*)from->dataPtr);
+	long nnano = ntime % ISC_TIME_SECONDS_PRECISION;
+
+	decode_sql_time(ntime, hour, minute, second);
+
+	int len, outlen = to->length / sizeof( wchar_t );
+
+	if ( nnano )
+		len = swprintf(pointer, outlen, L"%02d:%02d:%02d.%lu",hour, minute, second, nnano);
+	else
+		len = swprintf(pointer, outlen, L"%02d:%02d:%02d",hour, minute, second);
+
+	if ( indicatorTo )
+	{
+		if ( len == -1 )
+			*indicatorTo = outlen * sizeof( wchar_t );
+		else
+			*indicatorTo = len * sizeof( wchar_t );
 	}
 
 	return SQL_SUCCESS;
@@ -1655,6 +2282,42 @@ int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 	return SQL_SUCCESS;
 }
 
+int OdbcConvert::convDateTimeToStringW(DescRecord * from, DescRecord * to)
+{
+	wchar_t *pointer = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL( pointer );
+
+	QUAD pointerFrom = *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr);
+	long ndate = LO_LONG(pointerFrom);
+	long ntime = HI_LONG(pointerFrom);
+	long nnano = (ntime % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
+	SQLUSMALLINT mday, month;
+	SQLSMALLINT year;
+	SQLUSMALLINT hour, minute, second;
+
+	decode_sql_date(ndate, mday, month, year);
+	decode_sql_time(ntime, hour, minute, second);
+	int len, outlen = to->length / sizeof( wchar_t );
+
+	if ( nnano )
+		len = swprintf( pointer, outlen, L"%04d-%02d-%02d %02d:%02d:%02d.%lu",year,month,mday,hour, minute, second, nnano );
+	else
+		len = swprintf( pointer, outlen, L"%04d-%02d-%02d %02d:%02d:%02d",year,month,mday,hour, minute, second );
+
+	if ( indicatorTo )
+	{
+		if ( len == -1 )
+			*indicatorTo = outlen * sizeof( wchar_t );
+		else
+			*indicatorTo = len * sizeof( wchar_t );
+	}
+
+	return SQL_SUCCESS;
+}
+
 int OdbcConvert::convDateTimeToTagDate(DescRecord * from, DescRecord * to)
 {
 	tagDATE_STRUCT * tagDt = (tagDATE_STRUCT*)getAdressBindDataTo((char*)to->dataPtr);
@@ -1703,6 +2366,9 @@ int OdbcConvert::convDateTimeToTagDateTime(DescRecord * from, DescRecord * to)
 
 	long nday = LO_LONG(number);
 	long ntime = HI_LONG(number);
+
+	if ( ntime < 0 ) 
+		ntime = 0;
 
 	decode_sql_date(nday, tagTs->day, tagTs->month, tagTs->year);
 	decode_sql_time(ntime, tagTs->hour, tagTs->minute, tagTs->second);
@@ -1831,12 +2497,12 @@ int OdbcConvert::transferTagDateTimeToDateTime(DescRecord * from, DescRecord * t
 // Blob
 ////////////////////////////////////////////////////////////////////////
 
-ODBCCONVERT_TEMP_CONV(Blob,Long,long);
-ODBCCONVERT_TEMP_CONV(Blob,Float,float);
-ODBCCONVERT_TEMP_CONV(Blob,Double,double);
-ODBCCONVERT_TEMP_CONV(Blob,Bigint,QUAD);
-//ODBCCONVERT_TEMP_CONV(Blob,Blob,short);
-//ODBCCONVERT_TEMP_CONV(Blob,String,char);
+ODBCCONVERT_BLOB_CONV(TinyInt,char);
+ODBCCONVERT_BLOB_CONV(Short,short);
+ODBCCONVERT_BLOB_CONV(Long,long);
+ODBCCONVERT_BLOB_CONV(Float,float);
+ODBCCONVERT_BLOB_CONV(Double,double);
+ODBCCONVERT_BLOB_CONV(Bigint,QUAD);
 
 int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 {
@@ -2104,6 +2770,119 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 	return ret;
 }
 
+int OdbcConvert::convBlobToStringW( DescRecord * from, DescRecord * to )
+{
+	SQLRETURN ret = SQL_SUCCESS;
+	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL( pointer );
+
+	char * ptBlob = (char*)getAdressBindDataFrom((char*)from->dataPtr);
+	Blob *& blob = from->dataBlobPtr;
+	int dataRemaining = 0;
+
+	if ( blob )
+	{
+		bool directOpen = false;
+		bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
+
+		if ( !fetched || !from->dataOffset )
+		{ // attach new blob
+			from->dataOffset = 0;
+			if ( !(fetched && !blob->getOffset()) )
+			{
+				if ( parentStmt->isStaticCursor() )
+					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
+				else if ( blob->isArray() || !statusReturnData )
+					blob->bind ( *parentStmt, ptBlob );
+				else
+				{
+					blob->directOpenBlob ( ptBlob );
+					directOpen = true;
+				}
+			}
+			from->currentFetched = parentStmt->getCurrentFetched();
+		}
+
+		int length;
+
+		if ( blob->isArray() )
+			length = ((BinaryBlob*)blob)->getLength();
+		else
+		{
+			length = blob->length();
+			
+			if ( blob->isBlob() )
+				length *= 2;
+		}
+
+		dataRemaining = length - from->dataOffset;
+
+		if ( !to->length )
+			;
+		else if (!dataRemaining && ( from->dataOffset || fetched ))
+		{
+			from->dataOffset = 0;
+			ret = SQL_NO_DATA;
+		}
+		else
+		{
+			int len = MIN(dataRemaining, MAX(0, (long)to->length / 2 - 1));
+			int lenRead;
+			 
+			if ( pointer )
+			{
+				if ( len > 0 ) 
+				{
+					if ( !directOpen )
+					{
+						if ( blob->isBlob() )
+							blob->getHexString (from->dataOffset/2, len/2, pointer);
+						else
+//							blob->getBytesW (from->dataOffset, len, pointer);
+							blob->getBytes (from->dataOffset, len, pointer);
+					}
+					else
+					{
+						if ( blob->isBlob() )
+							blob->directGetSegmentToHexStr((char*)pointer, len/2, lenRead);
+						else
+							blob->directFetchBlob((char*)pointer, len, lenRead);
+					}
+
+					{
+						char * tempBuf = new char[len * 2 + 1];
+						memcpy( tempBuf, (char*)pointer, len );
+						from->MbsToWcs( (wchar_t *)pointer, tempBuf, len );
+						delete[] tempBuf;
+					}
+
+					((wchar_t *) (pointer)) [len] = L'\0';
+				}
+
+				if ( !statusReturnData )
+					from->dataOffset += len;
+
+				if ( len && len < dataRemaining )
+				{
+					OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
+					ret = SQL_SUCCESS_WITH_INFO;
+				}
+			}
+		}
+
+		if ( directOpen )
+			blob->directCloseBlob();
+	}
+
+	if ( indicatorTo )
+		*indicatorTo = dataRemaining * 2;
+
+	return ret;
+}
+
 int OdbcConvert::convBinaryToBlob(DescRecord * from, DescRecord * to)
 {
 	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
@@ -2150,7 +2929,7 @@ int OdbcConvert::convBinaryToBlob(DescRecord * from, DescRecord * to)
 ////////////////////////////////////////////////////////////////////////
 
 #define OFFSET_STRING  0
-#define CALC_LEN_STRING  strlen((char*)p)
+#define CALC_LEN_STRING  (int)strlen((char*)p)
 
 #define ODBCCONVERT_CONV_STRING_TO(TYPE_FROM,TYPE_TO,C_TYPE_TO)									\
 int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)				\
@@ -2208,12 +2987,74 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 	return SQL_SUCCESS;																			\
 }																								\
 
+#define ODBCCONVERT_CONV_STRINGW_TO(TYPE_FROM,TYPE_TO,C_TYPE_TO)								\
+int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)				\
+{																								\
+	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
+	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+																								\
+	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
+																								\
+	/* Original source from IscDbc/Value.cpp */													\
+	QUAD number = 0;																			\
+	double divisor = 1;																			\
+	bool decimal = false;																		\
+	bool negative = false;																		\
+	char	*p = (char*)getAdressBindDataFrom((char*)from->dataPtr + OFFSET_STRING),			\
+			*end = p + CALC_LEN_STRING;															\
+	for (;p < end; ++p )																		\
+	{																							\
+		char c = *p++;																			\
+		if (c >= '0' && c <= '9')																\
+		{																						\
+			number = number * 10 + c - '0';														\
+			if (decimal)																		\
+				divisor *= 10;																	\
+		}																						\
+		else if (c == '-')																		\
+			negative = true;																	\
+																								\
+		else if (c == '.')																		\
+			decimal = true;																		\
+		else if (c == '+' || c == ',' || c == '\'' || c == '`')									\
+			;																					\
+		else if (c != ' ' && c != '\t' && c != '\n')											\
+			break;																				\
+	}																							\
+																								\
+	if( negative )number = -number;																\
+																								\
+	int scale = to->scale;																		\
+																								\
+	if ( scale )																				\
+	{																							\
+		if (scale < 0)																			\
+			divisor /= (QUAD)listScale[-scale];													\
+		else /* if (scale > 0)	*/																\
+			divisor *= (QUAD)listScale[scale];													\
+	}																							\
+																								\
+	if (divisor == 1)																			\
+		*(C_TYPE_TO*)pointer = (C_TYPE_TO)number;												\
+	else																						\
+		*(C_TYPE_TO*)pointer = (C_TYPE_TO)(number / divisor);									\
+																								\
+	return SQL_SUCCESS;																			\
+}																								\
+
 ODBCCONVERT_CONV_STRING_TO(String,TinyInt,char);
 ODBCCONVERT_CONV_STRING_TO(String,Short,short);
 ODBCCONVERT_CONV_STRING_TO(String,Long,long);
 ODBCCONVERT_CONV_STRING_TO(String,Float,float);
 ODBCCONVERT_CONV_STRING_TO(String,Double,double);
 ODBCCONVERT_CONV_STRING_TO(String,Bigint,QUAD);
+ODBCCONVERT_CONV_STRINGW_TO(StringW,TinyInt,char);
+ODBCCONVERT_CONV_STRINGW_TO(StringW,Short,short);
+ODBCCONVERT_CONV_STRINGW_TO(StringW,Long,long);
+ODBCCONVERT_CONV_STRINGW_TO(StringW,Float,float);
+ODBCCONVERT_CONV_STRINGW_TO(StringW,Double,double);
+ODBCCONVERT_CONV_STRINGW_TO(StringW,Bigint,QUAD);
 
 int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
 {
@@ -2271,6 +3112,101 @@ int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
 
 	if ( indicatorTo )
 		*indicatorTo = length;
+
+	return ret;
+}
+
+int OdbcConvert::convStringToStringW(DescRecord * from, DescRecord * to)
+{
+	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
+	wchar_t * pointerTo = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL( pointerTo );
+
+	bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
+
+	if ( !fetched )
+	{ // new row read
+		from->dataOffset = 0;
+		from->currentFetched = parentStmt->getCurrentFetched();
+	}
+
+	SQLRETURN ret = SQL_SUCCESS;
+	int length = from->length;
+	int dataRemaining = length - from->dataOffset;
+
+	if ( !to->length )
+		length = dataRemaining;
+	else if (!dataRemaining && ( from->dataOffset || fetched ))
+	{
+		from->dataOffset = 0;
+		ret = SQL_NO_DATA;
+	}
+	else
+	{
+		int len = MAX(0, (long)(to->length / sizeof( wchar_t )) - 1 );
+		 
+		if ( !pointerTo )
+			length = dataRemaining;
+		else
+		{
+			wchar_t *pointerTemp = pointerTo;
+
+			if ( len < dataRemaining )
+			{
+				if ( !to->isLocalDataPtr )
+					to->allocateLocalDataPtr( from->getBufferLength() * sizeof( wchar_t ) );
+
+				pointerTemp = (wchar_t *)to->localDataPtr;
+			}
+
+			if( len > 0 )
+			{
+				int lenWC = (int)from->MbsToWcs( pointerTemp,
+												 pointerFrom + from->dataOffset,
+												 dataRemaining );
+				if ( lenWC < 0 )
+					lenWC = 0;
+
+				dataRemaining = lenWC;
+
+				lenWC = MIN( dataRemaining, len );
+
+				if ( lenWC && pointerTemp != pointerTo )
+					memcpy( pointerTo, to->localDataPtr, lenWC * sizeof( wchar_t ) );
+
+				pointerTo[ lenWC ] = (wchar_t)'\0';
+			}
+			else
+				*pointerTo = (wchar_t)'\0';
+
+			if ( len && len < dataRemaining )
+			{
+				OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
+				ret = SQL_SUCCESS_WITH_INFO;
+
+				if ( !statusReturnData )
+				{
+					int lenTemp = (int)from->WcsToMbs( to->localDataPtr,
+													   pointerTo,
+													   length - from->dataOffset );
+					from->dataOffset += lenTemp;
+				}
+			}
+			else
+			{
+				if ( !statusReturnData )
+					from->dataOffset += length - from->dataOffset;
+			}
+				
+			length = dataRemaining;
+		}
+	}
+
+	if ( indicatorTo )
+		*indicatorTo = length * sizeof( wchar_t );
 
 	return ret;
 }
@@ -2516,6 +3452,53 @@ int OdbcConvert::transferStringToDateTime(DescRecord * from, DescRecord * to)
 	return SQL_SUCCESS;
 }
 
+int OdbcConvert::transferStringWToDateTime(DescRecord * from, DescRecord * to)
+{
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL_SQLDA;
+
+	SQLINTEGER * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
+	wchar_t * pointerFrom = (wchar_t*)getAdressBindDataFrom((char*)from->dataPtr);
+
+	int len = 0;
+
+	if ( !to->isLocalDataPtr )
+		to->allocateLocalDataPtr();
+
+	GET_WLEN_FROM_OCTETLENGTHPTR
+
+	int n = len;
+	char * beg = (char*)pointerFrom + 1;
+	short * next = (short*)(beg + 1);
+	
+	while ( n-- )
+		*beg++ = (char)*next++;
+
+	convertStringDateTimeToServerStringDateTime ( (char*&)pointerFrom, len );
+
+	if ( !len )
+		return SQL_SUCCESS;
+
+	if ( !from->data_at_exec )
+	{
+		to->headSqlVarPtr->setSqlLen( (short)len );
+		to->headSqlVarPtr->setSqlData( (char*)pointerFrom );
+	}
+	else
+	{
+		if ( !to->isLocalDataPtr )
+			to->allocateLocalDataPtr();
+
+		memcpy(to->localDataPtr, pointerFrom, len);
+		to->headSqlVarPtr->setSqlLen( (short)len );
+		to->headSqlVarPtr->setSqlData( to->localDataPtr );
+	}
+
+	return SQL_SUCCESS;
+}
+
 // for use App to SqlDa
 int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 {
@@ -2527,14 +3510,20 @@ int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 	SQLINTEGER * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 
-	int len;
+	SQLUINTEGER len;
 	SQLRETURN ret = SQL_SUCCESS;
 
 	GET_LEN_FROM_OCTETLENGTHPTR;
 
 	if ( !from->data_at_exec )
 	{
-		len = MIN( len, to->octetLength );
+		if ( len > to->length )
+		{
+			OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
+			ret = SQL_SUCCESS_WITH_INFO;
+		}
+
+		len = MIN( len, to->length );
 		to->headSqlVarPtr->setSqlLen( (short)len );
 		to->headSqlVarPtr->setSqlData( pointerFrom );
 	}
@@ -2546,17 +3535,76 @@ int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 			to->headSqlVarPtr->setSqlData( to->localDataPtr );
 		}
 
-		if ( len + from->dataOffset > to->octetLength )
+		if ( len + from->dataOffset > to->length )
 		{
 			OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
 			ret = SQL_SUCCESS_WITH_INFO;
 		}
 
-		len = MIN( len, MAX( 0, to->octetLength - from->dataOffset) );
+		len = MIN( len, MAX( 0, to->length - from->dataOffset) );
 		memcpy(to->localDataPtr + from->dataOffset, pointerFrom, len);
 		from->dataOffset += len;
 		to->headSqlVarPtr->setSqlLen( (short)from->dataOffset );
 	}
+
+	return ret;
+}
+
+// for use App to SqlDa
+int OdbcConvert::transferStringWToAllowedType(DescRecord * from, DescRecord * to)
+{
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL_SQLDA;
+
+	SQLINTEGER * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
+	wchar_t * pointerFrom = (wchar_t *)getAdressBindDataFrom((char*)from->dataPtr);
+
+	SQLUINTEGER len;
+	SQLUINTEGER lenMbs;
+	SQLRETURN ret = SQL_SUCCESS;
+
+	GET_WLEN_FROM_OCTETLENGTHPTR;
+
+	if ( !to->isLocalDataPtr )
+	{
+		to->allocateLocalDataPtr();
+		to->headSqlVarPtr->setSqlData( to->localDataPtr );
+	}
+
+	if ( len + from->dataOffset > to->length )
+	{
+		OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
+		ret = SQL_SUCCESS_WITH_INFO;
+		len = to->length - from->dataOffset;
+	}
+
+	if ( len < 0 )
+	{
+		len = 0;
+		lenMbs = 0;
+	}
+	else
+	{
+		wchar_t &wcEnd = *(pointerFrom + len);
+		wchar_t saveEnd = wcEnd;
+		wcEnd = L'\0';	// We guarantee the end L'\0'
+		len = to->length - from->dataOffset;
+		lenMbs = (SQLUINTEGER)to->WcsToMbs( to->localDataPtr + from->dataOffset,
+											pointerFrom,
+											len * to->headSqlVarPtr->getSqlMultiple() );
+		wcEnd = saveEnd;
+	}
+
+	if ( from->data_at_exec )
+	{
+		from->dataOffset += len;
+		to->dataOffset += lenMbs;
+		to->headSqlVarPtr->setSqlLen( (short)to->dataOffset );
+	}
+    else
+		to->headSqlVarPtr->setSqlLen( (short)lenMbs );
 
 	return ret;
 }
@@ -2643,6 +3691,12 @@ ODBCCONVERT_CONV_STRING_TO(VarString,Long,long);
 ODBCCONVERT_CONV_STRING_TO(VarString,Float,float);
 ODBCCONVERT_CONV_STRING_TO(VarString,Double,double);
 ODBCCONVERT_CONV_STRING_TO(VarString,Bigint,QUAD);
+ODBCCONVERT_CONV_STRINGW_TO(VarStringW,TinyInt,char);
+ODBCCONVERT_CONV_STRINGW_TO(VarStringW,Short,short);
+ODBCCONVERT_CONV_STRINGW_TO(VarStringW,Long,long);
+ODBCCONVERT_CONV_STRINGW_TO(VarStringW,Float,float);
+ODBCCONVERT_CONV_STRINGW_TO(VarStringW,Double,double);
+ODBCCONVERT_CONV_STRINGW_TO(VarStringW,Bigint,QUAD);
 
 int OdbcConvert::convVarStringToBinary(DescRecord * from, DescRecord * to)
 {
@@ -2764,6 +3818,102 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 	return ret;
 }
 
+int OdbcConvert::convVarStringToStringW(DescRecord * from, DescRecord * to)
+{
+	char *pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
+	wchar_t *pointerTo = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL( pointerTo );
+
+	bool fetched = from->currentFetched == parentStmt->getCurrentFetched();
+
+	if ( !fetched )
+	{ // new row read
+		from->dataOffset = 0;
+		from->currentFetched = parentStmt->getCurrentFetched();
+	}
+
+	SQLRETURN ret = SQL_SUCCESS;
+	int length = *(unsigned short*)pointerFrom;
+	int dataRemaining = length - from->dataOffset;
+
+	if ( !to->length )
+		length = dataRemaining;
+	else if (!dataRemaining && ( from->dataOffset || fetched ))
+	{
+		from->dataOffset = 0;
+		ret = SQL_NO_DATA;
+	}
+	else
+	{
+		int len = MAX(0, (long)(to->length / sizeof( wchar_t )) - 1 );
+		 
+		if ( !pointerTo )
+			length = dataRemaining;
+		else
+		{
+			wchar_t *pointerTemp = pointerTo;
+
+			if ( len < dataRemaining )
+			{
+				if ( !to->isLocalDataPtr )
+					to->allocateLocalDataPtr( from->getBufferLength() * sizeof( wchar_t ) );
+
+				pointerTemp = (wchar_t *)to->localDataPtr;
+			}
+
+			pointerFrom += sizeof( short );
+			if( len > 0 )
+			{
+				int lenWC = (int)from->MbsToWcs( pointerTemp,
+												 pointerFrom + from->dataOffset,
+												 dataRemaining );
+				if ( lenWC < 0 )
+					lenWC = 0;
+
+				dataRemaining = lenWC;
+
+				lenWC = MIN( dataRemaining, len );
+
+				if ( lenWC && pointerTemp != pointerTo )
+					memcpy( pointerTo, (char*)to->localDataPtr, lenWC * sizeof( wchar_t ) );
+
+				pointerTo[ lenWC ] = (wchar_t)'\0';
+			}
+			else
+				*pointerTo = (wchar_t)'\0';
+
+			if ( len && len < dataRemaining )
+			{
+				OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
+				ret = SQL_SUCCESS_WITH_INFO;
+
+				if ( !statusReturnData )
+				{
+					int lenTemp = (int)from->WcsToMbs( to->localDataPtr,
+													   pointerTo,
+													   length - from->dataOffset );
+					from->dataOffset += lenTemp;
+				}
+			}
+			else
+			{
+				if ( !statusReturnData )
+					from->dataOffset += length - from->dataOffset;
+			}
+				
+			length = dataRemaining;
+		}
+	}
+
+	if ( indicatorTo )
+		*indicatorTo = length * sizeof( wchar_t );
+
+	return ret;
+}
+
 int OdbcConvert::convVarStringSystemToString(DescRecord * from, DescRecord * to)
 {
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
@@ -2788,6 +3938,46 @@ int OdbcConvert::convVarStringSystemToString(DescRecord * from, DescRecord * to)
 		memcpy (pointerTo, src, len);
 
 	pointerTo[len] = 0;
+
+	if (len && (long)len > (long)to->length)
+	{
+		OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
+//		if (error)
+//			error->setColumnNumber (column, rowNumber);
+		ret = SQL_SUCCESS_WITH_INFO;
+	}
+
+	if ( indicatorTo )
+		*indicatorTo = len;
+
+	return ret;
+}
+
+int OdbcConvert::convVarStringSystemToStringW(DescRecord * from, DescRecord * to)
+{
+	char *pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
+	wchar_t *pointerTo = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL( pointerTo );
+	
+	SQLRETURN ret = SQL_SUCCESS;
+	unsigned short lenVar = *(unsigned short*)pointerFrom;
+	int len;
+
+	char * src = pointerFrom + 2,
+		 * end = src + lenVar;
+
+	while ( lenVar-- && *(--end) == ' ');
+	len = end - src + 1;
+	len = MIN( len, MAX(0,(int)(to->length / sizeof( wchar_t )) - 1 ));
+
+	if( len > 0 )
+		mbstowcs( pointerTo, src, len );
+	
+	pointerTo[len] = (wchar_t)'\0';
+	len *= sizeof( wchar_t );
 
 	if (len && (long)len > (long)to->length)
 	{
@@ -2907,269 +4097,6 @@ void OdbcConvert::decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMA
 	hour = (SQLUSMALLINT)(minutes / 60);
 	minute = (SQLUSMALLINT)(minutes % 60);
 	second = (SQLUSMALLINT)((ntime / ISC_TIME_SECONDS_PRECISION) % 60);
-}
-
-void OdbcConvert::roundStringNumber ( char *& strNumber, int numDigits, int &realDigits )
-{
-	char * &chBeg = strNumber;
-	char * chEnd = chBeg + numDigits;
-
-	if ( *chEnd >= '5' ) 
-	{
-		++*--chEnd;
-
-		while ( *chEnd > '9' ) 
-		{
-			*chEnd = '0';
-			if ( chEnd > chBeg )
-				++*--chEnd;
-			else
-			{
-				*--chBeg = '1';
-				++realDigits;
-			}
-		}
-	}
-}
-
-void OdbcConvert::convertFloatToString(double value, char *string, int size, int *length, int digit, char POINT_DIV)
-{
-#define MAXDIGITS 512
-	const int maxDecimalExponent = 308;
-	char temp[64];
-	char *dst = temp;
-	int numDigits = digit - 1;
-	int realDigits;
-	double valInt, valFract;
-	char *pt, *pt1;
-	char buf[MAXDIGITS];
-	int sign;
-	bool copy = false;
-	int &len = *length;
-
-	len = 0;
-
-	if ( !size )
-		return;
-
-	if ( size >= 24 )
-		dst = string;
-	else
-		copy = true;
-
-	realDigits = 0;
-	sign = 0;
-
-	if ( value < 0 )
-	{
-		sign = 1;
-		value = -value;
-	}
-
-	value = modf ( value, &valInt );
-
-	if ( valInt != 0 )
-	{
-		pt = pt1 = &buf[MAXDIGITS - numDigits - 1];
-		char * end = buf + 1;
-
-		while ( valInt != 0 )
-		{
-			valFract = modf ( valInt / 10, &valInt );
-			*--pt1 = (int)( ( valFract + 0.03 ) * 10 ) + '0';
-			realDigits++;
-
-			if ( realDigits > maxDecimalExponent )
-			{
-				*pt1 = '1';
-				break;
-			}
-		}
-
-		if ( realDigits > numDigits ) // big number
-		{
-			roundStringNumber ( pt1, numDigits, realDigits );
-
-			int ndig = numDigits;
-
-			pt = dst;
-
-			if ( sign )
-				*pt++ = '-';
-			
-			*pt++ = *pt1++;
-			*pt++ = POINT_DIV;
-
-			while ( --ndig )
-				*pt++ = *pt1++;
-
-			end = pt - 1;
-			while ( *end == '0' ) --end;
-			
-			if ( *end == POINT_DIV )
-				pt = end;
-			else
-				pt = end + 1;
-
-			*pt++ = 'e';
-			*pt = '+';
-
-			ndig = realDigits - 1;
-
-			int n;
-			for ( n = 3, pt += n; ndig; ndig /= 10, --n)
-				*pt-- = '0' + (char) (ndig % 10);
-
-			while ( n-- )
-				*pt-- = '0';
-
-			pt += 4;
-			*pt = '\0';
-
-			len = pt - dst;
-			return;
-		}
-
-		// normal number
-		end = pt1 + numDigits;
-		
-		while ( pt <= end )
-		{
-			value *= 10;
-			value = modf ( value, &valFract );
-			*pt++ = (int)valFract + '0';
-		}
-
-		*pt = '\0';
-
-		roundStringNumber ( pt1, numDigits, realDigits );
-
-		*(pt-1) = '\0';
-		pt = dst;
-
-		if ( sign )
-			*pt++ = '-';
-
-		int n = realDigits;
-
-		while ( n-- )
-			*pt++ = *pt1++;
-
-		n = numDigits - realDigits;
-		end = pt1 + (n - 1);
-
-		while ( n > 0 && *end == '0' ) --end, --n;
-
-		if ( !n )
-			*pt = '\0';
-		else
-		{
-			*(end + 1) = '\0';
-			*pt++ = POINT_DIV;
-			while ( (*pt++ = *pt1++) );
-			--pt;
-		}
-	} 
-	else if ( value > 0 ) 
-	{   // shift to left number 0.0000122 to 0.122
-		while ( ( valFract = value * 10 ) < 1 ) 
-		{
-			value = valFract;
-			realDigits--;
-		}
-
-		char * beg = buf + 1;
-		pt1 = buf + numDigits + 1;
-		pt = buf + 1;
-		
-		while ( pt <= pt1 )
-		{
-			value *= 10;
-			value = modf ( value, &valFract );
-			*pt++ = (int)valFract + '0';
-		}
-
-		*pt = '\0';
-
-		roundStringNumber ( beg, numDigits, realDigits );
-
-		*--pt = '\0';
-		--pt;
-
-		while ( pt > beg && *pt == '0' ) 
-			*pt-- = '\0';
-
-		pt = dst;
-
-		if ( sign )
-			*pt++ = '-';
-
-		if ( realDigits == 1 )
-		{
-			while ( (*pt++ = *beg++) );
-		}
-		else if ( realDigits >= -3 )
-		{
-			*pt++ = '0';
-
-			if ( *beg > '0' )
-			{
-				int n = realDigits;
-
-				*pt++ = POINT_DIV;
-
-				while ( n++ )
-					*pt++ = '0';
-
-				while ( (*pt++ = *beg++) );
-				--pt;
-			}
-			else
-				*pt = '\0';
-		}
-		else
-		{
-			*pt++ = *beg++;
-
-			if ( *beg )
-			{
-				*pt++ = POINT_DIV;
-
-				while ( *beg )
-					*pt++ = *beg++;
-			}
-
-			*pt++ = 'e';
-			*pt = '-';
-
-			int ndig = -realDigits + 1;
-			int n;
-
-			for ( n = 3, pt += n; ndig; ndig /= 10, --n)
-				*pt-- = '0' + (char) (ndig % 10);
-
-			while ( n-- )
-				*pt-- = '0';
-
-			pt += 4;
-			*pt = '\0';
-		}
-	}
-	else
-	{
-		pt = dst;
-		*pt++ = '0';
-		*pt = '\0';
-	}
-
-	len = pt - dst;
-
-	if ( copy )
-	{
-		len = MIN ( len, size - 1 );
-		memcpy ( string, temp, len );
-		string[len] = '\0';
-	}
 }
 
 void OdbcConvert::convertStringDateTimeToServerStringDateTime (char *& string, int &len)
@@ -3322,6 +4249,18 @@ void OdbcConvert::setHeadSqlVar ( DescRecord * to )
 	switch ( to->conciseType )
 	{
 	case SQL_C_CHAR:
+		if ( to->isIndicatorSqlDa && to->dataBlobPtr )
+		{
+			if ( to->dataBlobPtr->isArray() )
+				to->headSqlVarPtr->setTypeArray();
+			else
+				to->headSqlVarPtr->setTypeBlob();
+		}
+		else
+			to->headSqlVarPtr->setTypeText();
+		break;
+
+	case SQL_C_WCHAR:
 		if ( to->isIndicatorSqlDa && to->dataBlobPtr )
 		{
 			if ( to->dataBlobPtr->isArray() )

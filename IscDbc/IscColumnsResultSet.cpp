@@ -37,7 +37,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #ifdef DEBUG
-#ifdef _WIN32
+#ifdef _WINDOWS
 #include <windows.h>
 #endif
 #endif
@@ -147,8 +147,10 @@ bool IscColumnsResultSet::nextFetch()
 	if ( !metaData->getUseSchemaIdentifier() )
 		sqlda->setNull(2);
 
+	int &charLength = sqlType.lengthCharIn;
 	int &len = sqlType.lengthIn;
 	
+	charLength = sqlda->getShort (19);
 	len = sqlda->getShort (24);
 
 	sqlType.collationId = sqlda->getInt (7);		// COLLATION_ID
@@ -203,6 +205,10 @@ bool IscColumnsResultSet::nextFetch()
 		case JDBC_VARCHAR:
 		case JDBC_CHAR:
 			sqlda->updateInt (16, sqlda->getInt (8));
+			break;
+		case JDBC_WVARCHAR:
+		case JDBC_WCHAR:
+			sqlda->updateInt (16, sqlType.bufferLength);
 			break;
 		default:
 			sqlda->setNull (16);
@@ -339,7 +345,9 @@ void IscColumnsResultSet::adjustResults (IscSqlType &sqlType)
 		sqlda->updateShort (10, 2);
 		break;
 	case JDBC_CHAR:
+	case JDBC_WCHAR:
 	case JDBC_VARCHAR:
+	case JDBC_WVARCHAR:
 	case JDBC_LONGVARCHAR:
 	case JDBC_LONGVARBINARY:
 	case JDBC_DATE:

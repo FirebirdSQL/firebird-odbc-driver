@@ -62,18 +62,9 @@
  *	
  */
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 #include <windows.h>
 #endif
-
-#include <odbcinst.h>
-
-extern "C"
-{
-#include <sql.h>
-#include <sqlext.h>
-}
-
 #include <stdio.h>
 #include <locale.h>
 #include "OdbcJdbc.h"
@@ -81,61 +72,14 @@ extern "C"
 #include "OdbcConnection.h"
 #include "OdbcStatement.h"
 #include "SafeEnvThread.h"
-
-#ifdef _WIN32
-#define OUTPUT_MONITOR_EXECUTING(msg)  OutputDebugString(msg"\n");
-#else
-#define OUTPUT_MONITOR_EXECUTING(msg)
-#endif
-
-#ifdef DEBUG
-#define TRACE(msg)		trace (msg"\n")
-#else
-#ifdef __MONITOR_EXECUTING
-#define TRACE(msg)		OUTPUT_MONITOR_EXECUTING(msg)
-#else
-#define TRACE(msg)		
-#endif
-#endif
-
-#if(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_ENV)
-
-#define GUARD					SafeDllThread wt
-#define GUARD_ENV(arg)			GUARD
-#define GUARD_HSTMT(arg)		GUARD
-#define GUARD_HDBC(arg)			GUARD
-#define GUARD_HDESC(arg)		GUARD
-#define GUARD_HTYPE(arg1,arg2)	GUARD
-
-#elif(DRIVER_LOCKED_LEVEL == DRIVER_LOCKED_LEVEL_CONNECT)
-
-#define GUARD					SafeDllThread wt
-#define GUARD_ENV(arg)			SafeEnvThread wt((OdbcEnv*)arg)
-#define GUARD_HSTMT(arg)		SafeConnectThread wt(((OdbcStatement*)arg)->connection)
-#define GUARD_HDBC(arg) 		SafeConnectThread wt((OdbcConnection*)arg)
-#define GUARD_HDESC(arg)		SafeConnectThread wt(((OdbcDesc*)arg)->connection)
-#define GUARD_HTYPE(arg,arg1)	SafeConnectThread wt(												\
-									arg1==SQL_HANDLE_DBC ? (OdbcConnection*)arg:					\
-									arg1==SQL_HANDLE_STMT ? ((OdbcStatement*)arg)->connection:		\
-									arg1==SQL_HANDLE_DESC ? ((OdbcDesc*)arg)->connection : NULL )
-
-#else
-
-#define GUARD
-#define GUARD_ENV(arg)
-#define GUARD_HSTMT(arg)
-#define GUARD_HDBC(arg)
-#define GUARD_HDESC(arg)	
-#define GUARD_HTYPE(arg1,arg2)
-
-#endif
+#include "Main.h"
 
 #ifdef LOGGING
 FILE	*logFile = NULL;
 void logMsg (const char *msg)
 {
 	if (!logFile)
-		logFile = fopen (LOG_FILE, "w");
+		logFile = fopen( LOG_FILE, "a+" );
 	if (!logFile)
 		OutputDebugString ("log file create failed\n");
 	else
@@ -158,17 +102,22 @@ void trace (const char *msg)
 
 using namespace OdbcJdbcLibrary;
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 HINSTANCE m_hInstance = NULL;
 UINT codePage = CP_ACP;
 
 namespace OdbcJdbcLibrary {
 
+#if _MSC_VER > 1000
+void clearAtlResource();
+#endif // _MSC_VER > 1000
 void initCodePageTranslate(  int userLCID );
 
 };
 
-BOOL APIENTRY DllMain(  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID )
+BOOL APIENTRY DllMainSetup(  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID );
+
+BOOL APIENTRY DllMain(  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
 	if ( fdwReason == DLL_PROCESS_ATTACH )
 	{
@@ -177,6 +126,14 @@ BOOL APIENTRY DllMain(  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID )
 		initCodePageTranslate( GetUserDefaultLCID() );
 		setlocale( LC_ALL, ".ACP" );
 	}
+	else if ( fdwReason == DLL_PROCESS_DETACH )
+	{
+#if _MSC_VER > 1000
+		clearAtlResource();
+#endif // _MSC_VER > 1000
+	}
+
+	DllMainSetup( hinstDLL, fdwReason, lpvReserved );
 
     return TRUE;
 }
@@ -282,8 +239,22 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC hDbc,
 	TRACE ("SQLConnect");
 	GUARD_HDBC( hDbc );
 
-	return ((OdbcConnection*) hDbc)->sqlConnect( serverName, nameLength1, userName,
+	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlConnect( serverName, nameLength1, userName,
 												nameLength2, authentication, nameLength3 );
+	LOG_PRINT(( logFile, 
+				"SQLConnect            : Line %d\n"
+				"   +status            : %d\n"
+				"   +hDbc              : %p\n"
+				"   +serverName        : %s\n"
+				"   +userName          : %s\n"
+				"   +authentication    : %s\n\n",
+					__LINE__,
+					ret,
+					hDbc,
+					serverName ? serverName : (SQLCHAR*)"",
+					userName ? userName : (SQLCHAR*)"",
+					authentication ? authentication : (SQLCHAR*)"" ));
+	return ret;
 }
 
 ///// SQLDescribeCol /////	ODBC 1.0	///// ISO 92
@@ -308,14 +279,6 @@ SQLRETURN SQL_API SQLDisconnect( SQLHDBC hDbc )
 {
 	TRACE ("SQLDisconnect");
 	GUARD_ENV( ((OdbcConnection*) hDbc)->env );
-
-#ifdef LOGGING
-	if ( logFile )
-	{
-		fclose (logFile);
-		logFile = NULL;
-	}
-#endif
 
 	return ((OdbcConnection*) hDbc)->sqlDisconnect();
 }
@@ -530,9 +493,22 @@ SQLRETURN SQL_API SQLDriverConnect( SQLHDBC hDbc, SQLHWND hWnd, SQLCHAR *szConnS
 	TRACE ("SQLDriverConnect");
 	GUARD_HDBC( hDbc );
 
-	return ((OdbcConnection*) hDbc)->sqlDriverConnect( hWnd, szConnStrIn, cbConnStrIn,
+	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlDriverConnect( hWnd, szConnStrIn, cbConnStrIn,
 													szConnStrOut, cbConnStrOutMax, pcbConnStrOut,
 													fDriverCompletion );
+	LOG_PRINT(( logFile, 
+				"SQLDriverConnect   : Line %d\n"
+				"   +status         : %d\n"
+				"   +hDbc           : %p\n"
+				"   +szConnStrIn    : %s\n"
+				"   +szConnStrOut   : %s\n\n",
+					__LINE__,
+					ret,
+					hDbc,
+					szConnStrIn ? szConnStrIn : (SQLCHAR*)"",
+					szConnStrOut ? szConnStrOut : (SQLCHAR*)"" ));
+
+	return ret;
 }
 
 ///// SQLGetConnectOption /////  Level 1	///// Deprecated
@@ -1313,8 +1289,8 @@ SQLRETURN SQL_API SQLSetStmtAttr( SQLHSTMT hStmt, SQLINTEGER attribute,
 
 SQLRETURN SQL_API SQLBulkOperations( SQLHSTMT hStmt, SQLSMALLINT operation )
 {
+	TRACE ("SQLBulkOperations");
 	GUARD_HSTMT( hStmt );
-#pragma FB_COMPILER_MESSAGE("SQLBulkOperations - Implemented; FIXME!")
-	notYetImplemented("SQLBulkOperations called\n");
-	return(SQL_SUCCESS);
+
+	return ((OdbcStatement*) hStmt)->sqlBulkOperations( operation );
 }

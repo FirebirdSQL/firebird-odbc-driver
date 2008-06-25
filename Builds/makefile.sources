@@ -7,6 +7,7 @@ ISCDBCSRC = \
 	IscArray.cpp \
 	IscBlob.cpp \
 	IscCallableStatement.cpp \
+	IscColumnKeyInfo.cpp \
 	IscColumnPrivilegesResultSet.cpp \
 	IscColumnsResultSet.cpp \
 	IscConnection.cpp \
@@ -27,13 +28,18 @@ ISCDBCSRC = \
 	IscStatementMetaData.cpp \
 	IscTablePrivilegesResultSet.cpp \
 	IscTablesResultSet.cpp \
+	IscUserEvents.cpp \
 	JString.cpp \
 	LinkedList.cpp \
 	LoadFbClientDll.cpp \
 	Lock.cpp \
+	MultibyteConvert.cpp \
 	Mutex.cpp \
 	Parameter.cpp \
+	ParameterEvent.cpp \
 	Parameters.cpp \
+	ParametersEvents.cpp \
+	ServiceManager.cpp \
 	Sqlda.cpp \
 	SQLError.cpp \
 	SqlTime.cpp \
@@ -47,6 +53,8 @@ ISCDBCSRC = \
 ODBCJDBCSRC = \
 	DescRecord.cpp \
 	Main.cpp \
+	MainUnicode.cpp \
+	MbsAndWcs.cpp \
 	OdbcConnection.cpp \
 	OdbcConvert.cpp \
 	OdbcDateTime.cpp \
@@ -56,12 +64,28 @@ ODBCJDBCSRC = \
 	OdbcObject.cpp \
 	OdbcStatement.cpp \
 	SafeEnvThread.cpp \
-	ConnectDialog.cpp
+	ConnectDialog.cpp \
+	TransactionResourceAsync.cpp \
+	ResourceManagerSink.cpp
 
 ODBCJDBCSETUPSRC_LINUX = \
 	OdbcInstGetProp.cpp
 
 ODBCJDBCSETUPSRC = \
+	CommonUtil.cpp \
 	DsnDialog.cpp \
 	OdbcJdbcSetup.cpp \
-	Setup.cpp
+	ServiceClient.cpp \
+	ServiceTabBackup.cpp \
+	ServiceTabChild.cpp \
+	ServiceTabCtrl.cpp \
+	ServiceTabRepair.cpp \
+	ServiceTabRestore.cpp \
+	ServiceTabStatistics.cpp \
+	ServiceTabUsers.cpp \
+	Setup.cpp \
+	UserDialog.cpp \
+	UsersTabChild.cpp \
+	UsersTabMemberShips.cpp \
+	UsersTabRoles.cpp \
+	UsersTabUsers.cpp

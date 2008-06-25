@@ -64,7 +64,7 @@ int TimeStamp::getTimeString(int length, char * buffer)
 	DateTime::decodeDate (date, time);
 	decodeTime (nanos, time);
 
-	int len = strftime (buffer, length, "%Y-%m-%d %H:%M:%S", time);
+	int len = (int)strftime (buffer, length, "%Y-%m-%d %H:%M:%S", time);
 	long nano = (nanos % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
 	if( nano )
 		len+=sprintf(buffer+len,".%lu",nano);

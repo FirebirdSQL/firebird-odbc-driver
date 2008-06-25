@@ -43,6 +43,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#ifdef _WINDOWS
+#include <windows.h>
+#endif
 #include <memory.h>
 #include "IscDbc/Connection.h"
 #include "IscDbc/SQLException.h"

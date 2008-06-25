@@ -1,4 +1,3 @@
-LIBRARY "OdbcJdbc"
 ;DESCRIPTION "OdbcJdbc -- Jim's ODBC/JDBC Driver"
 
 EXPORTS
@@ -78,4 +77,42 @@ EXPORTS
 	SQLSetDescRec 
 	SQLSetEnvAttr 
 	SQLSetStmtAttr 
-	SQLBulkOperations 
+	SQLBulkOperations
+; Unicode
+	SQLConnectW
+	SQLDriverConnectW
+	SQLBrowseConnectW
+	SQLColAttributeW
+	SQLColAttributesW
+	SQLDescribeColW
+	SQLErrorW
+	SQLExecDirectW
+	SQLGetConnectAttrW
+	SQLGetCursorNameW
+	SQLGetDescFieldW
+	SQLGetDescRecW
+	SQLGetDiagFieldW
+	SQLGetDiagRecW
+	SQLPrepareW
+	SQLSetConnectAttrW
+	SQLSetCursorNameW
+	SQLSetDescFieldW
+	SQLSetStmtAttrW
+	SQLGetStmtAttrW
+	SQLColumnsW
+	SQLGetConnectOptionW
+	SQLGetInfoW
+	SQLGetTypeInfoW
+	SQLSetConnectOptionW
+	SQLSpecialColumnsW
+	SQLStatisticsW
+	SQLTablesW
+	SQLDataSourcesW
+	SQLColumnPrivilegesW
+	SQLForeignKeysW
+	SQLNativeSqlW
+	SQLPrimaryKeysW
+	SQLProcedureColumnsW
+	SQLProceduresW
+	SQLTablePrivilegesW
+	SQLDriversW

@@ -1,0 +1,145 @@
+#
+.PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup
+#.PHONY: all createdirs
+#OdbcFb32
+#
+#DEBUG = 1
+#
+#
+!include ../makefile.environ
+!include ../makefile.sources
+#
+!ifdef DEBUG
+TARGETDIR	= $(FB_TARGET_PLATFORM)\Debug
+!else
+TARGETDIR	= $(FB_TARGET_PLATFORM)\Release
+!endif
+#
+BUILDDIR 	= $(TARGETDIR)\obj
+
+RSC		= $(COMPDIR)\bin\rc.exe
+
+!if "$(FB_TARGET_PLATFORM)" == "win32"
+CL		= $(COMPDIR)\bin\cl.exe
+LD		= $(COMPDIR)\bin\link.exe
+PLATFORMFLAGS = /D "WIN32" /D "_WIN32"
+LINKFLAGS	= /nologo /subsystem:windows /dll /machine:I386 /libpath:$(COMPDIR)\lib /libpath:$(COMPDIR)\ATLMFC\lib
+!elseif "$(FB_TARGET_PLATFORM)" == "x64"
+CL		= $(COMPDIR)\bin\AMD64\cl.exe
+LD		= $(COMPDIR)\bin\AMD64\link.exe
+PLATFORMFLAGS = /D "WIN64" /D "_WIN64"
+LINKFLAGS	= /nologo /subsystem:windows /dll /machine:X64 /libpath:$(COMPDIR)\lib\AMD64 /libpath:$(COMPDIR)\ATLMFC\lib\AMD64 /libpath:$(COMPDIR)\PlatformSDK\Lib\AMD64
+!endif
+
+MSINCDIRS	= /I $(COMPDIR)\Include /I $(COMPDIR)\ATLMFC\Include
+
+RSCFLAGS	= /l 0x409 /fo"$*.res" $(MSINCDIRS) $(PLATFORMFLAGS) /D "_WINDOWS"
+
+COMPFLAGS	= /nologo /Ob1 /W3 /EHsc \
+		  /I $(COMPDIR)\Include\ /I $(COMPDIR)\ATLMFC\Include\ \
+		  /I "$(FBINCDIR)" /I "$(ISCDBCDIR)" /I "$(ODBCJDBCDIR)" \
+		  $(PLATFORMFLAGS) \
+		  /D "ISOLATION_AWARE_ENABLED" /D "_CRT_SECURE_NO_DEPRECATE" \
+		  /D "_WINDOWS" /D "_WINDLL" \
+		  /Fp"$(BUILDDIR)\OdbcFb32.pch" \
+		  /Fo"$(BUILDDIR)\\" \
+		  /Gy \
+		  /Fd"$(BUILDDIR)\\" /c
+#
+ISCDBCDLL       = $(TARGETDIR)\IscDbc.dll
+ODBCJDBCDLL     = $(TARGETDIR)\OdbcFb32.dll
+ODBCJDBCSDLL    = $(TARGETDIR)\OdbcJdbcSetup.dll
+#
+!ifdef DEBUG
+DEBUGFLAGS	= /MTd /Gm /Zi /Od /D "_DEBUG" /D "DEBUG" /D "LOGGING" /FR"$(BUILDDIR)\\"
+LINKFLAGS	= $(LINKFLAGS) /incremental:no /debug
+RSCFLAGS	= $(RSCFLAGS) /d "DEBUG" /d "_DEBUG"
+!else
+DEBUGFLAGS	= /MT /W3 /D "NDEBUG"
+LINKFLAGS	= $(LINKFLAGS) /incremental:no
+RSCFLAGS	= $(RSCFLAGS) /d "NDEBUG"
+!endif
+#
+ISCDBCLIB	= $(ISCDBCDLL:.dll=.lib)
+ODBCJDBCLIB	= $(ODBCJDBCDLL:.dll=.lib)
+ODBCJDBCSLIB	= $(ODBCJDBCSDLL:.dll=.lib)
+ISCDBCDIR	= $(ISCDBCDIR:/=\)
+ODBCJDBCDIR	= $(ODBCJDBCDIR:/=\)
+ODBCJDBCSDIR	= $(ODBCJDBCSETUPDIR:/=\)
+ISCDBCOBJ	= $(ISCDBCSRC:.cpp=.obj)
+ODBCJDBCOBJ	= $(ODBCJDBCSRC:.cpp=.obj)
+ODBCJDBCSOBJ	= $(ODBCJDBCSETUPSRC:.cpp=.obj)
+#
+
+!ifdef DEBUG
+!if "$(FB_TARGET_PLATFORM)" == "win32"
+OBJS_ISCDBC 	= $(BUILDDIR)\$(ISCDBCOBJ:  = win32\Debug\Obj^\)
+OBJS_ODBCJDBC 	= $(BUILDDIR)\$(ODBCJDBCOBJ:  = win32\Debug\Obj^\)
+OBJS_ODBCJDBCS	= $(BUILDDIR)\$(ODBCJDBCSOBJ:  = win32\Debug\Obj^\)
+!else
+OBJS_ISCDBC 	= $(BUILDDIR)\$(ISCDBCOBJ:  = x64\Debug\Obj^\)
+OBJS_ODBCJDBC 	= $(BUILDDIR)\$(ODBCJDBCOBJ:  = x64\Debug\Obj^\)
+OBJS_ODBCJDBCS	= $(BUILDDIR)\$(ODBCJDBCSOBJ:  = x64\Debug\Obj^\)
+!endif
+!else
+!if "$(FB_TARGET_PLATFORM)" == "win32"
+OBJS_ISCDBC 	= $(BUILDDIR)\$(ISCDBCOBJ:  = win32\Release\Obj^\)
+OBJS_ODBCJDBC 	= $(BUILDDIR)\$(ODBCJDBCOBJ:  = win32\Release\Obj^\)
+OBJS_ODBCJDBCS	= $(BUILDDIR)\$(ODBCJDBCSOBJ:  = win32\Release\Obj^\)
+!else
+OBJS_ISCDBC 	= $(BUILDDIR)\$(ISCDBCOBJ:  = x64\Release\Obj^\)
+OBJS_ODBCJDBC 	= $(BUILDDIR)\$(ODBCJDBCOBJ:  = x64\Release\Obj^\)
+OBJS_ODBCJDBCS	= $(BUILDDIR)\$(ODBCJDBCSOBJ:  = x64\Release\Obj^\)
+!endif
+!endif
+#
+{$(ISCDBCDIR)}.cpp{$(BUILDDIR)}.obj ::
+	@call $(CL) $(COMPFLAGS) $(DEBUGFLAGS) -c $<
+#
+{$(ODBCJDBCDIR)}.cpp{$(BUILDDIR)}.obj ::
+	@call $(CL) $(COMPFLAGS) $(DEBUGFLAGS) -c $<
+#
+{$(ODBCJDBCSDIR)}.cpp{$(BUILDDIR)}.obj ::
+	@call $(CL) /D "_USRDLL" /D "_WINDLL" $(COMPFLAGS) $(DEBUGFLAGS) -c $<
+#
+$(BUILDDIR)\IscDbc.res : $(ISCDBCDIR)\IscDbc.rc
+	@call $(RSC) $(RSCFLAGS) $(ISCDBCDIR)\IscDbc.rc
+#
+$(BUILDDIR)\OdbcJdbc.res : $(ODBCJDBCDIR)\OdbcJdbc.rc
+	@$(RSC) $(RSCFLAGS) $(ODBCJDBCDIR)\OdbcJdbc.rc
+#
+$(BUILDDIR)\OdbcJdbcSetup.res : $(ODBCJDBCSDIR)\OdbcJdbcSetup.rc
+	@$(RSC) $(RSCFLAGS) $(ODBCJDBCSDIR)\OdbcJdbcSetup.rc
+#
+ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)\OdbcJdbc.def
+#
+all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSDLL)
+#
+# Silently creates the target and build directories
+createdirs :
+	@-if not exist "$(TARGETDIR)/$(NULL)" mkdir $(TARGETDIR) > nul
+	@-if not exist "$(BUILDDIR)/$(NULL)" mkdir $(BUILDDIR) > nul
+#
+# Silently cleanup and deletes the target and build directories
+clean :
+	@if exist $(BUILDDIR) rmdir /S /Q $(TARGETDIR)
+#
+IscDbc : $(ISCDBCDLL)
+OdbcJdbc : $(ODBCJDBCDLL)
+OdbcJdbcSetup : $(ODBCJDBCSDLL)
+#
+# Build the library from the object modules
+#
+$(ISCDBCDLL) :
+#$(ISCDBCDLL) : $(OBJS_ISCDBC) $(BUILDDIR)\IscDbc.res
+#	@call $(LD) wsock32.lib $(LINKFLAGS) $(**) /pdb:"$(BUILDDIR)\IscDbc.pdb" /out:"$(ISCDBCDLL)" /implib:"$(ISCDBCLIB)" /EXPORT:createConnection /EXPORT:createServices
+#
+$(ODBCJDBCDLL) : $(OBJS_ISCDBC) $(OBJS_ODBCJDBC) $(OBJS_ODBCJDBCS) $(BUILDDIR)\OdbcJdbc.res
+	@$(LD) version.lib wsock32.lib gdi32.lib shell32.lib advapi32.lib user32.lib comdlg32.lib comctl32.lib odbccp32.lib $(LINKFLAGS) $(**) /pdb:"$(BUILDDIR)\OdbcJdbc.pdb" /def:"$(ODBCJDBCDEFFILE)" /out:"$(ODBCJDBCDLL)" /implib:"$(ODBCJDBCLIB)" /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE /EXPORT:ConfigDriver,PRIVATE
+#
+$(ODBCJDBCSDLL) :
+#$(ODBCJDBCSDLL) : $(OBJS_ODBCJDBCS) $(BUILDDIR)\OdbcJdbcSetup.res
+#	@call $(LD) version.lib gdi32.lib shell32.lib advapi32.lib user32.lib comdlg32.lib comctl32.lib odbccp32.lib $(LINKFLAGS) /libpath:"$(COMPDIR)"\MFC\lib $(BUILDDIR)\JString.obj $(**) /pdb:"$(BUILDDIR)\OdbcJdbc.pdb" /out:"$(ODBCJDBCSDLL)" /implib:"$(ODBCJDBCSLIB)" /EXPORT:ConfigDSN /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:ConfigDriver,PRIVATE
+#
+# End
+#

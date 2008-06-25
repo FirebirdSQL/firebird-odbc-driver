@@ -22,7 +22,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <stdio.h>
 #include <string.h>
+#include "OdbcJdbc.h"
+#include "OdbcEnv.h"
+#include "OdbcConnection.h"
+#include "OdbcStatement.h"
 #include "OdbcObject.h"
 #include "OdbcError.h"
 #include "IscDbc/SQLException.h"
@@ -53,7 +58,7 @@ OdbcObject::~OdbcObject()
 
 SQLRETURN OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT* returnLength, const char * value)
 {
-	int count = strlen (value);
+	int count = (int)strlen (value);
 	*returnLength = count;
 
 	if ( ptr && maxLength > 0 )
@@ -75,7 +80,7 @@ SQLRETURN OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQ
 
 SQLRETURN OdbcObject::returnStringInfo(SQLPOINTER ptr, SQLSMALLINT maxLength, SQLINTEGER *returnLength, const char *value)
 {
-	int count = strlen (value);
+	int count = (int)strlen (value);
 	*returnLength = count;
 
 	if ( ptr && maxLength > 0 )
@@ -127,7 +132,7 @@ int OdbcObject::stringLength(const SQLCHAR *string, int givenLength)
 		return 0;
 
 	if (givenLength == SQL_NTS)
-		return strlen ((char*) string);
+		return (int)strlen ((char*) string);
 
 	return givenLength;
 }
@@ -160,7 +165,7 @@ bool OdbcObject::setString(const SQLCHAR * string, int stringLength, SQLCHAR * t
 
 bool OdbcObject::setString(const char * string, SQLCHAR *target, int targetSize, SQLSMALLINT * targetLength)
 {
-	return setString ((SQLCHAR*) string, strlen (string), target, targetSize, targetLength);
+	return setString ((SQLCHAR*) string, (int)strlen (string), target, targetSize, targetLength);
 }
 
 bool OdbcObject::appendString(const char * string, int stringLength, SQLCHAR * target, int targetSize, SQLSMALLINT * targetLength)
@@ -214,8 +219,26 @@ OdbcError* OdbcObject::postError(OdbcError * error)
 
 	error->next = NULL;
 	*ptr = error;
+	error->connection = getConnection();
 
 	return error;
+}
+
+void OdbcObject::operator <<(OdbcObject * obj)
+{
+	for (OdbcError *error = obj->errors; error; error = error->next)
+		postError(error);
+
+	infoPosted = obj->infoPosted;
+	sqlDiagCursorRowCount = obj->sqlDiagCursorRowCount;
+	sqlDiagDynamicFunction = obj->sqlDiagDynamicFunction;
+	sqlDiagDynamicFunctionCode = obj->sqlDiagDynamicFunctionCode;
+	sqlDiagNumber = obj->sqlDiagNumber;
+	sqlDiagReturnCode = obj->sqlDiagReturnCode;
+	sqlDiagRowCount = obj->sqlDiagRowCount;
+
+	obj->errors = NULL;
+	obj->clearErrors();
 }
 
 void OdbcObject::clearErrors()
@@ -235,9 +258,9 @@ void OdbcObject::clearErrors()
 }
 
 
-OdbcError* OdbcObject::postError(const char * sqlState, SQLException& exception)
+OdbcError* OdbcObject::postError(const char * sqlState, SQLException &exception)
 {
-	return postError (new OdbcError (exception.getSqlcode(), sqlState, exception.getText()));
+	return postError( new OdbcError( exception.getSqlcode(), exception.getFbcode(), sqlState, exception.getText() ) );
 }
 
 const char * OdbcObject::getString(char * * temp, const UCHAR * string, int length, const char *defaultValue)
@@ -329,9 +352,15 @@ SQLRETURN OdbcObject::sqlGetDiagField(int recNumber, int diagId, SQLPOINTER ptr,
 		}
 		return SQL_SUCCESS;
 	}
-	for (OdbcError *error = errors; error; error = error->next, ++n)
-		if (n == recNumber)
-			return error->sqlGetDiagField (diagId, ptr, bufferLength, stringLength);
+
+	if ( bufferLength && ptr )
+	{
+		*(char*)ptr = '\0';
+
+		for (OdbcError *error = errors; error; error = error->next, ++n)
+			if (n == recNumber)
+				return error->sqlGetDiagField (diagId, ptr, bufferLength, stringLength);
+	}
 
 	return SQL_NO_DATA_FOUND;
 }

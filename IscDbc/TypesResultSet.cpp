@@ -52,7 +52,7 @@ namespace IscDbcLibrary {
 }															\
 
 #define SET_INDICATOR_VAL(col,type,isNull)  if ( isNull && (*(type*)(var[col].sqldata + sqldataOffsetPtr)) == -1 ) *var[col].sqlind = -1; else *var[col].sqlind = 0;
-#define SET_INDICATOR_STR(col)  if ( ((char*)(var[col].sqldata + sqldataOffsetPtr)) == NULL || !strlen(((char*)(var[col].sqldata + sqldataOffsetPtr))) ) *var[col].sqlind = -1; else *var[col].sqlind = strlen((char*)(var[col].sqldata + sqldataOffsetPtr)) + 1;
+#define SET_INDICATOR_STR(col)  if ( ((char*)(var[col].sqldata + sqldataOffsetPtr)) == NULL || !strlen(((char*)(var[col].sqldata + sqldataOffsetPtr))) ) *var[col].sqlind = -1; else *var[col].sqlind = (short)strlen((char*)(var[col].sqldata + sqldataOffsetPtr)) + 1;
 
 struct Types {
 	char	label;
@@ -108,7 +108,8 @@ struct Types {
 
 static Types types [] = 
 {
-	BLOB ("BLOB SUB_TYPE BLR", JDBC_LONGVARBINARY,"","",CASE_INSENSITIVE),
+	BLOB ("BLOB", JDBC_LONGVARBINARY,"","",CASE_INSENSITIVE),
+	BLOB ("BLOB SUB_TYPE 0", JDBC_VARBINARY,"","",CASE_INSENSITIVE),
 	BLOB ("BLOB SUB_TYPE BLR", JDBC_BINARY,"","",CASE_INSENSITIVE),
 	BLOB ("BLOB SUB_TYPE TEXT", JDBC_LONGVARCHAR,"'","'",CASE_SENSITIVE),
 	ALPHA ("CHAR", JDBC_CHAR,MAX_CHAR_LENGTH),
@@ -119,6 +120,7 @@ static Types types [] =
 	NUMERIC_TINYINT ("TINYINT", JDBC_TINYINT, 3, "", 0, 0, 10),
 #endif
 	NUMERIC ("SMALLINT", JDBC_SMALLINT, MAX_SMALLINT_LENGTH, "", 0, 0, 10),	
+	NUMERIC ("DOUBLE PRECISION", JDBC_FLOAT, MAX_DOUBLE_DIGIT_LENGTH, "", UNSCALED, UNSCALED, 2),
 	NUMERIC ("FLOAT", JDBC_REAL, MAX_FLOAT_DIGIT_LENGTH, "", UNSCALED, UNSCALED, 2),
 	NUMERIC ("DOUBLE PRECISION", JDBC_DOUBLE, MAX_DOUBLE_DIGIT_LENGTH, "", UNSCALED, UNSCALED, 2),
 	NUMERIC ("BIGINT", JDBC_BIGINT, MAX_QUAD_LENGTH,"", 0, MAX_QUAD_LENGTH, 10),

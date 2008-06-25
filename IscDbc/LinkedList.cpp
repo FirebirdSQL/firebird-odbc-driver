@@ -431,7 +431,7 @@ void LinkedList::addressCheck(void * address)
 
 	if ((long) address == 0x00CDE290 ||
 		(long) address == 0x00cdde70)
-		printf ("hit %x\n", address);
+		printf ("hit %p\n", address);
 }
 
 }; // end namespace IscDbcLibrary

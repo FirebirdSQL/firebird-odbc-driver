@@ -33,9 +33,35 @@ namespace IscDbcLibrary {
 
 using namespace classJString;
 
+class CNodeParamTransaction;
+
+class InfoTransaction
+{
+public:
+	InfoTransaction();
+	~InfoTransaction();
+
+	void setParam( const InfoTransaction &src )
+	{ 
+		transactionIsolation = src.transactionIsolation;
+		transactionExtInit = src.transactionExtInit;
+		autoCommit = src.autoCommit;
+	}
+
+public:
+	void			*transactionHandle;
+	int				transactionIsolation;
+	int				transactionExtInit;
+	bool			autoCommit;
+	bool			transactionPending;
+
+	CNodeParamTransaction *nodeParamTransaction;
+};
+
 class IscStatement;
 class IscDatabaseMetaData;
 class Attachment;
+class IscUserEvents;
 
 class IscConnection : public Connection  
 {
@@ -100,28 +126,35 @@ public:
 	virtual void createDatabase (const char * dbName, Properties *properties);
 	virtual void sqlExecuteCreateDatabase(const char * sqlString);
 	virtual void ping();
+	virtual int getConnectionCharsetCode();
+	virtual WCSTOMBS getConnectionWcsToMbs();
+	virtual MBSTOWCS getConnectionMbsToWcs();
 	virtual int hasRole (const char *schemaName, const char *roleName);
+	virtual PropertiesEvents* allocPropertiesEvents();
+	virtual UserEvents* prepareUserEvents( PropertiesEvents *context, callbackEvent astRoutine, void *userAppData = 0 );
 	//virtual void freeHTML (const char *html);
 	virtual Blob* genHTML (Properties *context, long genHeaders);
 	virtual bool isConnected();
 	InternalStatement* createInternalStatement();
 	bool getCountInputParamFromProcedure ( const char* procedureName, int &numIn, int &numOut, bool &canSelect );
 	int buildParamProcedure ( char *& string, int numInputParam );
+	bool paramTransactionModes( char *& string, short &transFlags, bool expectIsolation );
+	void parseReservingTable( char *& string, char *& tpbBuffer, short transFlags );
+	int buildParamTransaction( char *& string, char boolDeclare = false );
+	inline bool isMatchExt( char *& string, const char *keyWord, const int length );
 	virtual void prepareTransaction();
 	virtual bool getTransactionPending();
 	void	*getHandleDb();
 
 public:
+	CNodeParamTransaction *tmpParamTransaction;
 	Attachment		*attachment;
 	CFbDll			*GDS;
-	void			*databaseHandle;
-	void			*transactionHandle;
+	isc_db_handle   databaseHandle;
+	InfoTransaction	transactionInfo;
 	LinkedList		statements;
 	IscDatabaseMetaData	*metaData;
-	int				transactionIsolation;
-	int				transactionExtInit;
-	bool			autoCommit;
-	bool			transactionPending;
+	IscUserEvents	*userEvents;
 	bool			shareConnected;
 	int				useAppOdbcVersion;
 	int				useCount;

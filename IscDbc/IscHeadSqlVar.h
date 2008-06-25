@@ -43,6 +43,7 @@ class IscHeadSqlVar : public HeadSqlVar
 	char		*saveSqldata;
 	short		*saveSqlind;
 	bool		replaceForParamArray;
+	short		sqlMultiple;
 
 public:
 
@@ -52,10 +53,16 @@ public:
 		saveSqldata = sqlvar->sqldata;
 		saveSqlind = sqlvar->sqlind;
 		replaceForParamArray = attrVar->replaceForParamArray;
+
+		if ( !(sqlvar->sqllen % getCharsetSize( sqlvar->sqlsubtype )) )
+			sqlMultiple = getCharsetSize( sqlvar->sqlsubtype );
+		else
+			sqlMultiple = 1;
 	}
 
 	void		setTypeText()		{ MAKEHEAD(SQL_TEXT, 0, 0, 0); }
 	void		setTypeVarying()	{ MAKEHEAD(SQL_VARYING, 0, 0, 0); }
+	void		setTypeBoolean()	{ MAKEHEAD(SQL_BOOLEAN, 0, 0, sizeof(TYPE_BOOLEAN)); }
 	void		setTypeShort()		{ MAKEHEAD(SQL_SHORT, 0, 0, sizeof (short)); }
 	void		setTypeLong()		{ MAKEHEAD(SQL_LONG, 0, 0, sizeof (long)); }
 	void		setTypeFloat()		{ MAKEHEAD(SQL_FLOAT, 0, 0, sizeof (float)); }
@@ -73,6 +80,7 @@ public:
 	void		setSqlScale ( short scale ) { sqlvar->sqlscale = scale; }
 	void		setSqlSubType ( short subtype ) { sqlvar->sqlsubtype = subtype; }
 	void		setSqlLen ( short len ) { sqlvar->sqllen = len; }
+	short		getSqlMultiple () { return sqlMultiple; }
 
 	char *		getSqlData() { return sqlvar->sqldata; }
 	short *		getSqlInd() { return sqlvar->sqlind; }

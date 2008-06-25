@@ -1,5 +1,5 @@
 #include "IscDbc.h"
-#ifndef _WIN32
+#ifndef _WINDOWS
 #include <dlfcn.h>
 #endif
 
@@ -17,7 +17,7 @@ CFbDll::~CFbDll()
 
 bool CFbDll::LoadDll (const char * client, const char * clientDef)
 {
-#ifdef _WIN32
+#ifdef _WINDOWS
 	_Handle = LoadLibraryEx (client, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
 	if ( !_Handle && clientDef )
 		_Handle = LoadLibraryEx (clientDef, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
@@ -31,7 +31,7 @@ bool CFbDll::LoadDll (const char * client, const char * clientDef)
 
 	_CFbDllVersion = 12;
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 #define __ENTRYPOINT(X) _##X = (X*)GetProcAddress(_Handle, "isc_"#X)
 #else
 #define __ENTRYPOINT(X) _##X = (X*)dlsym(_Handle, "isc_"#X)
@@ -62,11 +62,13 @@ bool CFbDll::LoadDll (const char * client, const char * clientDef)
 	__ENTRYPOINT(interprete);
 	__ENTRYPOINT(que_events);
 	__ENTRYPOINT(cancel_events);
+	__ENTRYPOINT(wait_for_event);
 	__ENTRYPOINT(start_multiple);
 	__ENTRYPOINT(commit_transaction);
 	__ENTRYPOINT(commit_retaining);
 	__ENTRYPOINT(rollback_transaction);
 	__ENTRYPOINT(rollback_retaining);
+	__ENTRYPOINT(prepare_transaction2);
 	__ENTRYPOINT(dsql_execute_immediate);
 	__ENTRYPOINT(dsql_allocate_statement);
 	__ENTRYPOINT(dsql_describe);
@@ -102,10 +104,10 @@ bool CFbDll::LoadDll (const char * client, const char * clientDef)
 void CFbDll::Release(void)
 {
 //  Do not remove the comment!!!
-//  OdbcJdbc this intermediate link
+//  OdbcFb this intermediate link
 // 
 // 	if ( _Handle )
-// #ifdef _WIN32
+// #ifdef _WINDOWS
 // 		FreeLibrary(_Handle);
 // #else
 // 		dlclose (_Handle);

@@ -54,7 +54,7 @@ Parameters::~Parameters()
 
 void Parameters::putValue(const char * name, const char * value)
 {
-	putValue (name, strlen (name), value, strlen (value));
+	putValue (name, (int)strlen (name), value, (int)strlen (value));
 }
 
 void Parameters::putValue(const char * name, int nameLength, const char * value, int valueLength)

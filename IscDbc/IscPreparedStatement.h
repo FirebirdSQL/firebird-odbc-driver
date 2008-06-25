@@ -51,7 +51,7 @@ public:
 //	virtual void		setAsciiStream( int parameterIndex, InputStream x, int length );
 //	virtual void		setBigDecimal( int parameterIndex, BigDecimal x );
 //	virtual void		setBinaryStream( int parameterIndex, InputStream x, int length );
-//	virtual void		setBoolean( int parameterIndex, boolean x );
+	virtual void		setBoolean( int parameterIndex, bool x );
 	virtual void		setByte (int index, char value);
 	virtual void		setBytes (int index, const void *bytes);
 	virtual void		setDate (int index, DateTime value);
@@ -102,6 +102,11 @@ public:
 	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtPlan( value, bufferLength, lengthPtr ); }  
 	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtType( value, bufferLength, lengthPtr ); }  
 	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtInfoCountRecords( value, bufferLength, lengthPtr ); }  
+	virtual bool		isActiveLocalTransaction(){ return IscStatement::isActiveLocalTransaction(); }
+	virtual void		setActiveLocalParamTransaction(){ IscStatement::setActiveLocalParamTransaction(); }
+	virtual void		delActiveLocalParamTransaction(){ IscStatement::delActiveLocalParamTransaction(); }
+	virtual void		declareLocalParamTransaction(){ IscStatement::declareLocalParamTransaction(); }
+	virtual void		switchTransaction(bool local){ IscStatement::switchTransaction( local ); }
 
 //}}} end class Statement without specification jdbc
 

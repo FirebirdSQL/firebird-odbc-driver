@@ -210,8 +210,15 @@ SQLRETURN OdbcDesc::operator =(OdbcDesc &sour)
 
 	for ( int n = 0 ; n <= headCount ; n++ )
 	{
+		DescRecord *srcrec = sour.records[n];
 		DescRecord &rec = *getDescRecord ( n );
-		rec = sour.records[n];
+
+		if ( srcrec )
+		{
+			rec = srcrec;
+			rec.sizeColumnExtendedFetch = srcrec->sizeColumnExtendedFetch;
+		}
+
 		rec.isDefined = true;
 	}
 
@@ -237,7 +244,7 @@ void OdbcDesc::defFromMetaDataIn(int recNumber, DescRecord * record)
 	record->displaySize = metaDataIn->getColumnDisplaySize(recNumber);
 	record->fixedPrecScale = SQL_FALSE;
 	record->label = metaDataIn->getColumnLabel(recNumber);
-	record->length = metaDataIn->getColumnDisplaySize(recNumber);
+	record->length = metaDataIn->getPrecision(recNumber);
 	record->literalPrefix = "\"";
 	record->literalSuffix = "\"";
 	record->localTypeName = metaDataIn->getSqlTypeName(recNumber);
@@ -246,6 +253,7 @@ void OdbcDesc::defFromMetaDataIn(int recNumber, DescRecord * record)
 	record->nullable = metaDataIn->isNullable(recNumber);
 	record->octetLength = metaDataIn->getColumnDisplaySize(recNumber);
 	record->precision = metaDataIn->getPrecision(recNumber);
+	record->numPrecRadix = metaDataIn->getNumPrecRadix(recNumber);
 	record->scale = metaDataIn->getScale(recNumber);
 	record->schemaName = "";
 	record->searchable = SQL_PRED_NONE;
@@ -257,6 +265,8 @@ void OdbcDesc::defFromMetaDataIn(int recNumber, DescRecord * record)
 	record->unNamed = !record->name.IsEmpty() ? SQL_NAMED : SQL_UNNAMED;
 	record->unSigned = SQL_FALSE;
 	record->updaTable = SQL_ATTR_WRITE;
+	record->MbsToWcs = metaDataIn->getAdressMbsToWcs( recNumber );
+	record->WcsToMbs = metaDataIn->getAdressWcsToMbs( recNumber );
 	record->isDefined = true;
 
 	record->isBlobOrArray = metaDataIn->isBlobOrArray (recNumber);
@@ -277,7 +287,7 @@ void OdbcDesc::defFromMetaDataOut(int recNumber, DescRecord * record)
 	record->displaySize = metaDataOut->getColumnDisplaySize(recNumber);
 	record->fixedPrecScale = SQL_FALSE;
 	record->label = metaDataOut->getColumnLabel(recNumber);
-	record->length = metaDataOut->getColumnDisplaySize(recNumber);
+	record->length = metaDataOut->getPrecision(recNumber);
 	record->literalPrefix = "\"";
 	record->literalSuffix = "\"";
 	record->localTypeName = metaDataOut->getSqlTypeName(recNumber);
@@ -286,6 +296,7 @@ void OdbcDesc::defFromMetaDataOut(int recNumber, DescRecord * record)
 	record->nullable = metaDataOut->isNullable(recNumber);
 	record->octetLength = metaDataOut->getColumnDisplaySize(recNumber);
 	record->precision = metaDataOut->getPrecision(recNumber);
+	record->numPrecRadix = metaDataOut->getNumPrecRadix(recNumber);
 	record->scale = metaDataOut->getScale(recNumber);
 	record->schemaName = "";
 	record->searchable = SQL_PRED_NONE;
@@ -297,11 +308,18 @@ void OdbcDesc::defFromMetaDataOut(int recNumber, DescRecord * record)
 	record->unNamed = !record->name.IsEmpty() ? SQL_NAMED : SQL_UNNAMED;
 	record->unSigned = SQL_FALSE;
 	record->updaTable = SQL_ATTR_WRITE;
+	record->MbsToWcs = metaDataOut->getAdressMbsToWcs( recNumber );
+	record->WcsToMbs = metaDataOut->getAdressWcsToMbs( recNumber );
 	record->isDefined = true;
 
 	metaDataOut->getSqlData(recNumber, record->dataBlobPtr, record->headSqlVarPtr);
 	record->dataPtr = (SQLPOINTER)record->headSqlVarPtr->getSqlData();
 	record->indicatorPtr = (SQLINTEGER*)record->headSqlVarPtr->getSqlInd();
+}
+
+OdbcConnection* OdbcDesc::getConnection()
+{
+	return connection;
 }
 
 OdbcObjectType OdbcDesc::getType()
@@ -611,6 +629,12 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			}
 			break;
 
+		case SQL_DESC_NUM_PREC_RADIX:
+			if (record && ptr)
+				*(SQLINTEGER*) ptr = record->numPrecRadix,
+				size = sizeof (SQLINTEGER);	
+			break;
+			
 		case SQL_DESC_OCTET_LENGTH:
 			if (record && ptr)
 				*(SQLINTEGER*) ptr = record->octetLength,
@@ -814,6 +838,7 @@ struct infoDebSetDescField
 	__DebSetDescField(SQL_DESC_DATA_PTR),
 	__DebSetDescField(SQL_DESC_NAME),
 	__DebSetDescField(SQL_DESC_UNNAMED),
+	__DebSetDescField(SQL_DESC_NUM_PREC_RADIX),
 	__DebSetDescField(SQL_DESC_OCTET_LENGTH),
 	__DebSetDescField(SQL_DESC_ALLOC_TYPE)
 };
@@ -1003,6 +1028,21 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
+			break;
+
+		case SQL_DESC_NUM_PREC_RADIX:
+			switch(headType)
+			{ // DESC_MOST
+			case odtApplication:
+			case odtApplicationRow:
+			case odtApplicationParameter:
+			case odtImplementationParameter:
+				if (record)
+					record->numPrecRadix = (SQLINTEGER)value;
+				break;
+			default:
+				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
+			}
 			break;
 
 		case SQL_DESC_OCTET_LENGTH:
@@ -1240,11 +1280,16 @@ int OdbcDesc::getConciseType(int type)
 	{
 	case JDBC_LONGVARBINARY:
 	case JDBC_LONGVARCHAR:
+	case JDBC_WLONGVARCHAR:
 		return SQL_C_BINARY;
 
 	case JDBC_CHAR:
 	case JDBC_VARCHAR:
 		return SQL_C_CHAR;
+
+	case JDBC_WCHAR:
+	case JDBC_WVARCHAR:
+		return SQL_C_WCHAR;
 
 	case JDBC_TINYINT:
 		return SQL_C_STINYINT;
@@ -1252,6 +1297,7 @@ int OdbcDesc::getConciseType(int type)
 	case JDBC_SMALLINT:
 		return SQL_C_SSHORT;
 
+	case JDBC_BOOLEAN:
 	case JDBC_INTEGER:
 		return SQL_C_SLONG;
 
@@ -1282,11 +1328,53 @@ int OdbcDesc::getConciseType(int type)
 
 	case JDBC_SQL_TIMESTAMP:
 		return SQL_C_TIMESTAMP;
+
+	case JDBC_INTERVAL_YEAR:
+		return SQL_C_INTERVAL_YEAR;
+
+	case JDBC_INTERVAL_MONTH:
+		return SQL_C_INTERVAL_MONTH;
+
+	case JDBC_INTERVAL_DAY:
+		return SQL_C_INTERVAL_DAY;
+
+	case JDBC_INTERVAL_HOUR:
+		return SQL_C_INTERVAL_HOUR;
+
+	case JDBC_INTERVAL_MINUTE:
+		return SQL_C_INTERVAL_MINUTE;
+
+	case JDBC_INTERVAL_SECOND:
+		return SQL_C_INTERVAL_SECOND;
+
+	case JDBC_INTERVAL_YEAR_TO_MONTH:
+		return SQL_C_INTERVAL_YEAR_TO_MONTH;
+
+	case JDBC_INTERVAL_DAY_TO_HOUR:
+		return SQL_C_INTERVAL_DAY_TO_HOUR;
+
+	case JDBC_INTERVAL_DAY_TO_MINUTE:
+		return SQL_C_INTERVAL_DAY_TO_MINUTE;
+
+	case JDBC_INTERVAL_DAY_TO_SECOND:
+		return SQL_C_INTERVAL_DAY_TO_SECOND;
+
+	case JDBC_INTERVAL_HOUR_TO_MINUTE:
+		return SQL_C_INTERVAL_HOUR_TO_MINUTE;
+
+	case JDBC_INTERVAL_HOUR_TO_SECOND:
+		return SQL_C_INTERVAL_HOUR_TO_SECOND;
+
+	case JDBC_INTERVAL_MINUTE_TO_SECOND:
+		return SQL_C_INTERVAL_MINUTE_TO_SECOND;
 	}
 
 	return type;
 }
 
+//
+// This extremely for set type App from Firebird database
+//
 int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType, int bufferLength)
 {
 	int cType;
@@ -1298,14 +1386,25 @@ int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType, int bufferLength)
 	case JDBC_LONGVARCHAR:
 	case JDBC_DECIMAL:
 	case JDBC_NUMERIC:
+	case JDBC_WCHAR:
+	case JDBC_WVARCHAR:
+	case JDBC_WLONGVARCHAR:
 		cType = SQL_C_CHAR;
 		break;
+/*
+	case JDBC_WCHAR:
+	case JDBC_WVARCHAR:
+	case JDBC_WLONGVARCHAR:
+		cType = SQL_C_WCHAR;
+		break;
+*/
 	case JDBC_TINYINT:
 		cType = SQL_C_STINYINT;
 		break;
 	case JDBC_SMALLINT:
 		cType = SQL_C_SSHORT;
 		break;
+	case JDBC_BOOLEAN:
 	case JDBC_INTEGER:
 		cType = SQL_C_SLONG;
 		break;
@@ -1354,6 +1453,45 @@ int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType, int bufferLength)
 		else
 			cType = SQL_C_TYPE_TIMESTAMP;
 		break;
+	case JDBC_INTERVAL_YEAR:
+		cType = SQL_C_INTERVAL_YEAR;
+		break;
+	case JDBC_INTERVAL_MONTH:
+		cType = SQL_C_INTERVAL_MONTH;
+		break;
+	case JDBC_INTERVAL_DAY:
+		cType = SQL_C_INTERVAL_DAY;
+		break;
+	case JDBC_INTERVAL_HOUR:
+		cType = SQL_C_INTERVAL_HOUR;
+		break;
+	case JDBC_INTERVAL_MINUTE:
+		cType = SQL_C_INTERVAL_MINUTE;
+		break;
+	case JDBC_INTERVAL_SECOND:
+		cType = SQL_C_INTERVAL_SECOND;
+		break;
+	case JDBC_INTERVAL_YEAR_TO_MONTH:
+		cType = SQL_C_INTERVAL_YEAR_TO_MONTH;
+		break;
+	case JDBC_INTERVAL_DAY_TO_HOUR:
+		cType = SQL_C_INTERVAL_DAY_TO_HOUR;
+		break;
+	case JDBC_INTERVAL_DAY_TO_MINUTE:
+		cType = SQL_C_INTERVAL_DAY_TO_MINUTE;
+		break;
+	case JDBC_INTERVAL_DAY_TO_SECOND:
+		cType = SQL_C_INTERVAL_DAY_TO_SECOND;
+		break;
+	case JDBC_INTERVAL_HOUR_TO_MINUTE:
+		cType = SQL_C_INTERVAL_HOUR_TO_MINUTE;
+		break;
+	case JDBC_INTERVAL_HOUR_TO_SECOND:
+		cType = SQL_C_INTERVAL_HOUR_TO_SECOND;
+		break;
+	case JDBC_INTERVAL_MINUTE_TO_SECOND:
+		cType = SQL_C_INTERVAL_MINUTE_TO_SECOND;
+		break;
 	default:
 		cType = SQL_C_DEFAULT;
 		break;
@@ -1368,6 +1506,10 @@ int OdbcDesc::getConciseSize(int type, int length)
 	case SQL_C_CHAR:
 		return length;
 
+	case SQL_C_WCHAR:
+		return length;
+
+	case SQL_C_BIT:
 	case SQL_C_TINYINT:
 	case SQL_C_STINYINT:
 	case SQL_C_UTINYINT:
@@ -1389,7 +1531,6 @@ int OdbcDesc::getConciseSize(int type, int length)
 	case SQL_C_DOUBLE:
 		return sizeof(double);
 
-	case SQL_C_BIT:
 	case SQL_C_BINARY:
 		return length;
 
@@ -1412,6 +1553,11 @@ int OdbcDesc::getConciseSize(int type, int length)
 	case SQL_DECIMAL:
 	case SQL_C_NUMERIC:
 		return sizeof(tagSQL_NUMERIC_STRUCT);
+
+	default:
+		if ( type >= SQL_C_INTERVAL_YEAR &&
+			 type <= SQL_C_INTERVAL_MINUTE_TO_SECOND )
+			return sizeof(SQL_INTERVAL_STRUCT);
 	}
 
 	return type;

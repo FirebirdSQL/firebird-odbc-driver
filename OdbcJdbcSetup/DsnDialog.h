@@ -42,6 +42,7 @@ struct TranslateString
 
 /////////////////////////////////////////////////////////////////////////////
 // CDsnDialog dialog
+class CServiceTabCtrl;
 
 class CDsnDialog
 {
@@ -52,43 +53,47 @@ class CDsnDialog
 	const char** useshemas;
 
 public:
-	CDsnDialog( const char **jdbcDrivers, const char **jdbcCharsets,
+	CDsnDialog( HWND hDlgParent, const char **jdbcDrivers, const char **jdbcCharsets,
 				const char **useShemasIdentifier );
 	~CDsnDialog();
 
 // Dialog Data
 	enum { IDD = IDD_DSN_PROPERTIES };
+	HWND    m_hWndParent;
+	HWND    m_hWndDlg;
 	JString	m_database;
 	JString	m_client;
 	JString	m_name;
+	JString	m_description;
 	JString	m_password;
 	JString	m_user;
 	JString	m_driver;
 	JString	m_role;
 	JString	m_charset;
 	JString	m_useschema;
+	JString	m_locktimeout;
 	BOOL	m_readonly;
 	BOOL	m_nowait;
 	BOOL	m_dialect3;
 	BOOL	m_quoted;
 	BOOL	m_sensitive;
 	BOOL	m_autoQuoted;
+	BOOL	m_safeThread;
 
 public:
 	int DoModal();
 
-	BOOL IsLocalhost(char * fullPathFileName, int &nSme);
-	void CheckRemotehost(char * fullPathFileName);
+	BOOL IsLocalhost( char * fullPathFileName, int &nSme );
+	void CheckRemotehost( char * fullPathFileName );
 	BOOL OnFindFile();
 	BOOL OnFindFileClient();
-	void SetDisabledDlgItem(HWND hDlg, int ID, BOOL bDisabled = TRUE );
-	void UpdateData(HWND hDlg, BOOL bSaveAndValidate = TRUE );
-	BOOL OnInitDialog(HWND hDlg);
-#ifdef _WIN32
+	void SetDisabledDlgItem( HWND hDlg, int ID, BOOL bDisabled = TRUE );
+	void UpdateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
+	BOOL OnInitDialog( HWND hDlg );
+#ifdef _WINDOWS
 	void OnTestConnection( HWND hDlg );
 	void WinHtmlHelp( HWND hDlg );
 #endif
-	int getDriverBuildKey();
 	void removeNameFileDBfromMessage(char * message);
 };
 

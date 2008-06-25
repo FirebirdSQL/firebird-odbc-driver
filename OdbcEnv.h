@@ -45,18 +45,19 @@ public:
 	SQLRETURN sqlEndTran(int operation);
 	SQLRETURN sqlDrivers( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
 	SQLRETURN sqlDataSources( SQLUSMALLINT direction,	SQLCHAR * serverName, SQLSMALLINT	bufferLength1, SQLSMALLINT * nameLength1Ptr, SQLCHAR * description, SQLSMALLINT bufferLength2, SQLSMALLINT * nameLength2Ptr);
-#ifdef _WIN32
+#ifdef _WINDOWS
 	BOOL getDrivers();
 	bool getDataSources( SQLUSMALLINT wConfigMode );
 #endif
 	virtual SQLRETURN allocHandle (int handleType, SQLHANDLE *outputHandle);
 	void LockEnv();
 	void UnLockEnv();
+	virtual OdbcConnection* getConnection();
 	virtual OdbcObjectType getType();
 	OdbcEnv();
 	~OdbcEnv();
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 	HINSTANCE		libraryHandle;
 #else
 	void			*libraryHandle;
@@ -69,7 +70,7 @@ public:
 	const char		*odbcInctFileName;
 	int				useAppOdbcVersion;
 
-#ifdef _WIN32
+#ifdef _WINDOWS
 	char			listDSN[1024];
 	char			*activeDSN;
 	char			*endDSN;

@@ -39,6 +39,7 @@ public:
 public:		// In
 	int		blrType;
 	int		subType;
+	int		lengthCharIn;
 	int		lengthIn;
 	int		dialect;
 	int		precisionIn;
