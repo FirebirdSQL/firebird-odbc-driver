@@ -50,8 +50,10 @@ CServiceTabChild::CServiceTabChild()
 
 CServiceTabChild::~CServiceTabChild()
 {
-	if ( resource )
+	if ( resource ) {
 		LocalFree( LocalHandle( resource ) );
+		resource = NULL;
+	}
 
 	deleteTempLogFile();
 }

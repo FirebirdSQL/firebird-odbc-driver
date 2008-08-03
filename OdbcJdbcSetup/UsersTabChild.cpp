@@ -46,8 +46,10 @@ CUsersTabChild::CUsersTabChild()
 
 CUsersTabChild::~CUsersTabChild()
 {
-	if ( resource )
+	if ( resource ) {
 		LocalFree( LocalHandle( resource ) );
+		resource = NULL;
+	}
 }
 
 CUsersTabChild* CUsersTabChild::getObject()
