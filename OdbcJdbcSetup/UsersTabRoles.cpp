@@ -39,15 +39,10 @@ namespace OdbcJdbcSetupLibrary {
 
 CUsersTabRoles::CUsersTabRoles() : CUsersTabChild()
 {
-	parent = NULL;
-	hDlg = NULL;
-	resource = NULL;
 }
 
 CUsersTabRoles::~CUsersTabRoles()
 {
-	if ( resource )
-		LocalFree( LocalHandle( resource ) );
 }
 
 CUsersTabRoles* CUsersTabRoles::getObject()
