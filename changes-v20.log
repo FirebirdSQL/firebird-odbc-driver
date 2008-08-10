@@ -5,7 +5,8 @@
 145)	- current BUILDNUM_VERSION set 145 ( 10 Sep 2008 )
 	- Fix ODBC driver to work correctly with Microsoft Project 2003. This involves the following changes:
 	  - Implement basic support for SQL_GUID data type
-	  - Implement partial column binding. Previously, if NULL buffer pointer and non-null indicator variable were passed to SQLBindCol the driver crashed.
+	  - Implement partial column binding. Previously, if NULL buffer pointer and non-null 
+	    indicator variable were passed to SQLBindCol the driver crashed.
 	  These changes make Project 2003 save and load projects from Firebird databases correctly
 	  thanks to Nikolay Samofatov
 	- Re-organize cvs tree for ODBC driver
