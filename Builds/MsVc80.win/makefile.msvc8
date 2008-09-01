@@ -47,7 +47,7 @@ COMPFLAGS	= /nologo /Ob1 /W3 /EHsc \
 		  /Fd"$(BUILDDIR)\\" /c
 #
 ISCDBCDLL       = $(TARGETDIR)\IscDbc.dll
-ODBCJDBCDLL     = $(TARGETDIR)\OdbcFb32.dll
+ODBCJDBCDLL     = $(TARGETDIR)\OdbcFb.dll
 ODBCJDBCSDLL    = $(TARGETDIR)\OdbcJdbcSetup.dll
 #
 !ifdef DEBUG

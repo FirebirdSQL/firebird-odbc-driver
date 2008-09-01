@@ -99,8 +99,8 @@ IDS_ERROR_MESSAGE_04, // "Invalid driver name"
 IDS_ERROR_MESSAGE_05, // "Install Driver Failed"
 	"La instalación del controlador ha fallado"
 ,
-IDS_ERROR_MESSAGE_06, // " ERROR!\nPlease, use regsvr32.exe .\\OdbcJdbcSetup.dll"
-	" ¡ERROR!\n Por favor utilice regsvr32.exe .\\OdbcJdbcSetup.dll"
+IDS_ERROR_MESSAGE_06, // " ERROR!\nPlease, use regsvr32.exe .\\OdbcFb.dll"
+	" ¡ERROR!\n Por favor utilice regsvr32.exe .\\OdbcFb.dll"
 ,
 IDS_ERROR_MESSAGE_07, // "Config Install"
 	"Instalar Configuración"
