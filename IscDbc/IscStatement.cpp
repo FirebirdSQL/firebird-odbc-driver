@@ -260,7 +260,7 @@ void IscStatement::switchTransaction( bool local )
 		transactionStatusChangingToLocal = false;
 }
 
-void* IscStatement::startTransaction()
+isc_tr_handle IscStatement::startTransaction()
 {
 	if ( connection->shareConnected )
 		return connection->startTransaction();
@@ -577,7 +577,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 
 	// Make sure we have a transaction started.  Allocate a statement.
 
-	void *transHandle = startTransaction();
+	isc_tr_handle transHandle = startTransaction();
 	ISC_STATUS statusVector [20];
 	GDS->_dsql_allocate_statement (statusVector, &connection->databaseHandle, &statementHandle);
 
@@ -639,7 +639,7 @@ bool IscStatement::execute()
 
 	// Make sure there is a transaction
 	ISC_STATUS statusVector [20];
-	void *transHandle = startTransaction();
+	isc_tr_handle transHandle = startTransaction();
 
 	int dialect = connection->getDatabaseDialect ();
 	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle, 
@@ -701,7 +701,7 @@ bool IscStatement::execute()
 bool IscStatement::executeProcedure()
 {
 	ISC_STATUS statusVector [20];
-	void *transHandle = startTransaction();
+	isc_tr_handle transHandle = startTransaction();
 
 	int dialect = connection->getDatabaseDialect ();
 	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle,

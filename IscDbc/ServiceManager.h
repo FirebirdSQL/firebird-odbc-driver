@@ -80,7 +80,7 @@ public:
 
 	CFbDll		*GDS;
 	Properties	*properties;
-	void        *svcHandle;
+	isc_svc_handle	svcHandle;
 	int			useCount;
 };
 

@@ -70,7 +70,7 @@ bool CServiceTabUsers::OnInitDialog( HWND hDlg )
     tie.iImage = -1; 
 	tabData.tabCtrl = this;
 	tabData.hWndTab = hWndTab;
-    tie.lParam = (ULONG)&tabData;
+    tie.lParam = (UINT_PTR)&tabData;
 
 	tabData.childTab[0] = users.getObject();
 	users.buildDlgChild( hWndTab );
@@ -87,7 +87,7 @@ bool CServiceTabUsers::OnInitDialog( HWND hDlg )
     tie.pszText = " MemberShips "; 
     TabCtrl_InsertItem( hWndTab, 2, &tie );
 */
-    SetWindowLong( hWndTab, GW_USERDATA, (ULONG)&tabData ); 
+    SetWindowLong( hWndTab, GW_USERDATA, (INT_PTR)&tabData ); 
 	users.createDialogIndirect( this );
 
 	return true;

@@ -44,7 +44,7 @@ void CAttrArray::loadAttributes ( IscStatement *stmt, char * nameRelation, char 
 {
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = stmt->connection;
-	void *transactionHandle = stmt->startTransaction();
+	isc_tr_handle transactionHandle = stmt->startTransaction();
 
 	if ( !connection->GDS->_array_lookup_bounds(statusVector,&connection->databaseHandle, &transactionHandle,
 						nameRelation, nameFields, &arrDesc) )
@@ -299,7 +299,7 @@ void IscArray::attach(CAttrArray * arr, bool fetchBinary, bool bClear)
 void IscArray::attach(char * pointBlob, bool fetchBinary, bool bClear)
 {
 	clear();
-	CAttrArray * arr = (CAttrArray *)*(long*)pointBlob;
+	CAttrArray * arr = (CAttrArray *)*(INT_PTR*)pointBlob;
 	attach(arr, fetchBinary, bClear);
 	fetched = false;
 }
@@ -359,7 +359,7 @@ void IscArray::getBytesFromArray()
 {
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
-	void *transactionHandle = statement->startTransaction();
+	isc_tr_handle transactionHandle = statement->startTransaction();
 	long lenbuf = arrBufDataSize;
 
 	int ret = connection->GDS->_array_get_slice(statusVector, &connection->databaseHandle, &transactionHandle,
@@ -487,7 +487,7 @@ void IscArray::writeBlob(char * sqldata)
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
-	void *transactionHandle = statement->startTransaction();
+	isc_tr_handle transactionHandle = statement->startTransaction();
 
 	arrayId = (ISC_QUAD*)sqldata;
 	memset( arrayId, 0, sizeof ( ISC_QUAD ) );
@@ -504,7 +504,7 @@ void IscArray::writeBlob(char * sqldata, char *data, long length)
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
-	void *transactionHandle = statement->startTransaction();
+	isc_tr_handle transactionHandle = statement->startTransaction();
 
 	arrayId = (ISC_QUAD*)sqldata;
 	memset( arrayId, 0, sizeof ( ISC_QUAD ) );
@@ -673,7 +673,7 @@ void IscArray::writeStringHexToBlob(char * sqldata, char *data, long length)
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
-	void *transactionHandle = statement->startTransaction();
+	isc_tr_handle transactionHandle = statement->startTransaction();
 	ISC_QUAD *arrayId = (ISC_QUAD*)sqldata;
 
 	memset( arrayId, 0, sizeof ( ISC_QUAD ) );
@@ -713,7 +713,7 @@ void IscArray::writeArray(Value * value)
 
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
-	void *transactionHandle = statement->startTransaction();
+	isc_tr_handle transactionHandle = statement->startTransaction();
 	long lenbuf = arrBufDataSize;
 
 	memset( arrayId, 0, sizeof ( ISC_QUAD ));

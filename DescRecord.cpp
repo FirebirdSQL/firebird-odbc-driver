@@ -67,7 +67,7 @@ DescRecord::DescRecord()
 	length = 0;
 	nullable = 0;
 	octetLength = 0;
-	octetLengthPtr = (SQLINTEGER*)NULL;
+	octetLengthPtr = (SQLLEN*)NULL;
 	parameterType = SQL_PARAM_INPUT;
 	precision = 0;
 	scale = 0;
@@ -111,7 +111,7 @@ void DescRecord::releaseAllocMemory()
 
 void DescRecord::setDefault(DescRecord *recTo)
 {
-	SQLINTEGER		*saveIndicatorPtr = recTo->indicatorPtr;
+	SQLLEN			*saveIndicatorPtr = recTo->indicatorPtr;
 	SQLPOINTER		saveDataPtr = recTo->dataPtr;
 	*recTo = this;
 	recTo->indicatorPtr = saveIndicatorPtr;

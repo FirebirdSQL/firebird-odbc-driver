@@ -56,7 +56,7 @@ public:
 
 	CFbDll		*GDS;
 	isc_db_handle databaseHandle;
-	void		*transactionHandle; // for two phase
+	isc_tr_handle transactionHandle; // for two phase
 	JString		dsn;
 	JString		databaseName;
 	JString		databaseServerName;

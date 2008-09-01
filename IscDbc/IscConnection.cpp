@@ -248,12 +248,12 @@ bool IscConnection::getTransactionPending()
 	return 	transactionInfo.transactionPending;
 }
 
-void* IscConnection::getHandleDb()
+isc_db_handle IscConnection::getHandleDb()
 {	
 	return attachment->databaseHandle;
 }
 
-void* IscConnection::startTransaction()
+isc_tr_handle IscConnection::startTransaction()
 {
 	InfoTransaction	&tr = transactionInfo;
 

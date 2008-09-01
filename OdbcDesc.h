@@ -90,11 +90,11 @@ public:
 	SQLRETURN sqlGetDescField(int recNumber, int fieldId, SQLPOINTER value, int length, SQLINTEGER *lengthPtr);
 	SQLRETURN sqlSetDescField (int recNumber, int fieldId, SQLPOINTER value, int length);
 	SQLRETURN sqlGetDescRec(SQLSMALLINT recNumber, SQLCHAR *Name, SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, 
-							SQLSMALLINT *TypePtr, SQLSMALLINT *SubTypePtr, SQLINTEGER *LengthPtr, SQLSMALLINT *PrecisionPtr, 
+							SQLSMALLINT *TypePtr, SQLSMALLINT *SubTypePtr, SQLLEN *LengthPtr, SQLSMALLINT *PrecisionPtr, 
 							SQLSMALLINT *ScalePtr, SQLSMALLINT *NullablePtr);
 	SQLRETURN sqlSetDescRec( SQLSMALLINT recNumber, SQLSMALLINT type, SQLSMALLINT subType, SQLINTEGER length,
 							SQLSMALLINT	precision, SQLSMALLINT scale, SQLPOINTER dataPtr, 
-							SQLINTEGER *stringLengthPtr, SQLINTEGER *indicatorPtr);
+							SQLLEN *stringLengthPtr, SQLLEN *indicatorPtr);
 
 	virtual OdbcConnection* getConnection();
 	virtual OdbcObjectType getType();
@@ -125,7 +125,7 @@ public:
 	SQLINTEGER			*headBindOffsetPtr;
 	SQLINTEGER			headBindType; 
 	SQLSMALLINT			headCount;
-	SQLUINTEGER			*headRowsProcessedPtr;
+	SQLULEN				*headRowsProcessedPtr;
 //
 
 	OdbcConnection		*connection;

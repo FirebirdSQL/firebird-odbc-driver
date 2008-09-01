@@ -403,14 +403,14 @@ SQLRETURN OdbcConnection::sqlSetConnectAttr( SQLINTEGER attribute, SQLPOINTER va
 #endif
 
 	case SQL_ATTR_ANSI_APP:
-		if ( (int) value == SQL_AA_FALSE )
+		if ( (INT_PTR) value == SQL_AA_FALSE )
 			return sqlReturn (SQL_ERROR, "IM001", "Driver does not support this function");
 		break;
 
 	case SQL_ATTR_HANDLE_DBC_SHARE: // 4000
 		if (connection)
 		{
-			if ( (int) value )
+			if ( (INT_PTR) value )
 				connection->connectionToEnvShare();
 			else
 				connection->connectionFromEnvShare();
@@ -418,33 +418,33 @@ SQLRETURN OdbcConnection::sqlSetConnectAttr( SQLINTEGER attribute, SQLPOINTER va
 		break;
 
 	case SQL_ATTR_LOGIN_TIMEOUT:
-		connectionTimeout = (int) value;
+		connectionTimeout = (INT_PTR) value;
 		break;
 
 	case SQL_ATTR_AUTOCOMMIT:
-		autoCommit = (int) value == SQL_AUTOCOMMIT_ON;
+		autoCommit = (INT_PTR) value == SQL_AUTOCOMMIT_ON;
 		if (connection)
 			connection->setAutoCommit (autoCommit);
 		break;
 
 	case SQL_ATTR_ODBC_CURSORS:
-		cursors = (int) value;
+		cursors = (INT_PTR) value;
 		break;
 
 		//Added by CA
 	case SQL_ATTR_TXN_ISOLATION:
-		transactionIsolation = (int)value;
-		if( connection )
-			connection->setTransactionIsolation( (int) value );
+		transactionIsolation = (INT_PTR)value;
+		if ( connection )
+			connection->setTransactionIsolation( (INT_PTR) value );
 		break;
 
 		//Added by CA
 	case SQL_ATTR_ASYNC_ENABLE:
-		asyncEnabled = (int) value;
+		asyncEnabled = (INT_PTR) value;
 		break;
 
 	case SQL_ATTR_ACCESS_MODE:
-		accessMode = (int)value;
+		accessMode = (INT_PTR)value;
 		break;
 
 	case SQL_FB_INIT_EVENTS:
@@ -1123,7 +1123,7 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 		return sqlReturn (SQL_ERROR, "HY096", "Information type out of range");
 
 	const char *string = item->value;
-	SQLUINTEGER value = (SQLUINTEGER) item->value;
+	UINT_PTR value = (UINT_PTR) item->value;
 	DatabaseMetaData *metaData = NULL;
 
 	if (connection)
@@ -1262,11 +1262,11 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 		break;
 
 	case SQL_DRIVER_HDBC:
-		value = (SQLUINTEGER) this;
+		value = (UINT_PTR) this;
 		break;
 
 	case SQL_DRIVER_HENV:
-		value = (SQLUINTEGER) env;
+		value = (UINT_PTR) env;
 		break;
 
 	case SQL_USER_NAME:

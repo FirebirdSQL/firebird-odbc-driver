@@ -151,7 +151,7 @@ namespace OdbcJdbcLibrary {
 
 using namespace IscDbcLibrary;
 
-void TraceOutput(char * msg,long val)
+void TraceOutput(char * msg, INT_PTR val)
 {
 	char buf[80];
 	sprintf( buf, "\t%s = %ld : %p\n", msg, val, val );
@@ -160,7 +160,7 @@ void TraceOutput(char * msg,long val)
 
 //	Bound Address + Binding Offset + ((Row Number – 1) x Element Size)
 //	*ptr = binding->pointer + bindOffsetPtr + ((1 – 1) * rowBindType); // <-- for single row
-#define GETBOUNDADDRESS(binding)	( (unsigned long)binding->dataPtr + ( applicationParamDescriptor->headBindType ? (unsigned long)bindOffsetPtr : 0 ) );
+#define GETBOUNDADDRESS(binding)	( (UINT_PTR)binding->dataPtr + ( applicationParamDescriptor->headBindType ? (UINT_PTR)bindOffsetPtr : 0 ) );
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -612,7 +612,7 @@ void OdbcStatement::delBindColumn(int column)
 {
 }
 
-SQLRETURN OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER * indPtr)
+SQLRETURN OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targetValuePtr, SQLLEN bufferLength, SQLLEN * indPtr)
 {
 	clearErrors();
 
@@ -732,8 +732,8 @@ void OdbcStatement::setZeroColumn(int column)
 inline
 SQLRETURN OdbcStatement::fetchData()
 {
-	SQLUINTEGER rowCount = 0;
-	SQLUINTEGER *rowCountPt = implementationRowDescriptor->headRowsProcessedPtr ? implementationRowDescriptor->headRowsProcessedPtr
+	SQLULEN rowCount = 0;
+	SQLULEN *rowCountPt = implementationRowDescriptor->headRowsProcessedPtr ? implementationRowDescriptor->headRowsProcessedPtr
 								: &rowCount;
 	SQLUSMALLINT *statusPtr = implementationRowDescriptor->headArrayStatusPtr ? implementationRowDescriptor->headArrayStatusPtr
 								: NULL;
@@ -877,9 +877,9 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 	SQLINTEGER *&bindOffsetPtr = applicationRowDescriptor->headBindOffsetPtr;
 	int rowsetSize = applicationRowDescriptor->headArraySize;
 	bool bFetchAbsolute;
-	SQLUINTEGER rowCount;
-	SQLUINTEGER *rowCountPt =	implementationRowDescriptor->headRowsProcessedPtr ? implementationRowDescriptor->headRowsProcessedPtr
-								: &rowCount;
+	SQLULEN rowCount;
+	SQLULEN *rowCountPt =	implementationRowDescriptor->headRowsProcessedPtr ? implementationRowDescriptor->headRowsProcessedPtr
+							: &rowCount;
 
 	rowNumber = resultSet->getPosRowInSet();
 
@@ -1210,7 +1210,7 @@ SQLRETURN OdbcStatement::sqlFetchScroll(int orientation, int offset)
 	return fetchData();
 }
 
-SQLRETURN OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray)
+SQLRETURN OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLULEN *rowCountPointer, SQLUSMALLINT *rowStatusArray)
 {
 	clearErrors();
 
@@ -1418,7 +1418,7 @@ SQLRETURN OdbcStatement::sqlBulkOperations( int operation )
 	return sqlSuccess();
 }
 
-SQLRETURN OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGER crowKeyset, SQLUSMALLINT crowRowset)
+SQLRETURN OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLLEN crowKeyset, SQLUSMALLINT crowRowset)
 {
 	bool bOk;
     SQLUSMALLINT InfoType, InfoValuePtr;
@@ -1483,12 +1483,12 @@ SQLRETURN OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTE
 	else
 		sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, crowKeyset < 0 ? (SQLPOINTER)-crowKeyset : (SQLPOINTER)crowKeyset, 0);
 
-	sqlSetStmtAttr(SQL_ATTR_CONCURRENCY, (SQLPOINTER)(int)fConcurrency, 0);
+	sqlSetStmtAttr(SQL_ATTR_CONCURRENCY, (SQLPOINTER)(INT_PTR)fConcurrency, 0);
 
 	if ( crowKeyset > 0 )
 		sqlSetStmtAttr(SQL_ATTR_KEYSET_SIZE, (SQLPOINTER)crowKeyset, 0);
 	else
-		sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)(SQLINTEGER)crowRowset, 0);
+		sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)(INT_PTR)crowRowset, 0);
 
 	return sqlSuccess();
 }
@@ -1717,7 +1717,7 @@ SQLRETURN OdbcStatement::sqlNumParams(SWORD * params)
 SQLRETURN OdbcStatement::sqlDescribeCol(int col, 
 									  SQLCHAR * colName, int nameSize, SWORD * nameLength, 
 									  SWORD * sqlType, 
-									  UDWORD * precision, 
+									  SQLULEN * precision, 
 									  SWORD * scale, 
 									  SWORD * nullable)
 {
@@ -1788,7 +1788,7 @@ SQLRETURN OdbcStatement::prepareGetData(int column, DescRecord *recordARD)
 	return SQL_SUCCESS;
 }
 
-SQLRETURN OdbcStatement::sqlGetData(int column, int cType, PTR pointer, int bufferLength, SDWORD * indicatorPointer)
+SQLRETURN OdbcStatement::sqlGetData(int column, int cType, PTR pointer, SQLLEN bufferLength, SQLLEN * indicatorPointer)
 {
 	clearErrors();
 
@@ -1930,12 +1930,12 @@ void OdbcStatement::rebindParam ( bool initAttrDataAtExec )
 
 		if ( initAttrDataAtExec )
 		{
-			long * length;
+			SQLLEN * length;
 
 			if ( !applicationParamDescriptor->headBindOffsetPtr )
 				length = recordApp->indicatorPtr;
 			else
-				length = (long*)((char*)recordApp->indicatorPtr + *applicationParamDescriptor->headBindOffsetPtr);
+				length = (SQLLEN*)((char*)recordApp->indicatorPtr + *applicationParamDescriptor->headBindOffsetPtr);
 	
 			recordApp->data_at_exec = length && 
 				(*length == SQL_DATA_AT_EXEC || *length <= SQL_LEN_DATA_AT_EXEC_OFFSET);
@@ -1959,7 +1959,7 @@ void OdbcStatement::delBindParam(int param)
 
 }
 
-SQLRETURN OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, UDWORD * precision, SWORD * scale, SWORD * nullable)
+SQLRETURN OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, SQLULEN * precision, SWORD * scale, SWORD * nullable)
 {
 	clearErrors();
 
@@ -2007,14 +2007,14 @@ SQLRETURN OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, UDWORD
 	return sqlSuccess();
 }
 
-SQLRETURN OdbcStatement::sqlSetParam (int parameter, int cType, int sqlType, int precision, int scale, PTR ptr, SDWORD * length)
+SQLRETURN OdbcStatement::sqlSetParam (int parameter, int cType, int sqlType, int precision, int scale, PTR ptr, SQLLEN * length)
 {	
 	return sqlBindParameter (parameter, SQL_PARAM_INPUT_OUTPUT, cType, sqlType, precision, scale, ptr, SQL_SETPARAM_VALUE_MAX, length);
 }
 
 SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType, 
 										int sqlType, int precision, int scale, 
-										PTR ptr, int bufferLength, SDWORD * length)
+										PTR ptr, int bufferLength, SQLLEN * length)
 {
 	clearErrors();
 
@@ -2368,7 +2368,7 @@ SQLRETURN OdbcStatement::sqlCloseCursor()
 SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER * lengthPtr)
 {
 	clearErrors();
-	long value;
+	INT_PTR value;
 	char *string = NULL;
 
 	try
@@ -2385,22 +2385,22 @@ SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int buffe
 			return statement->getStmtInfoCountRecords(ptr,bufferLength,lengthPtr);
 
 		case SQL_ATTR_APP_ROW_DESC:
-			value = (long) applicationRowDescriptor;
+			value = (INT_PTR) applicationRowDescriptor;
 			TRACE02(SQL_ATTR_APP_ROW_DESC,value);
 			break;
 
 		case SQL_ATTR_APP_PARAM_DESC:
-			value = (long) applicationParamDescriptor;
+			value = (INT_PTR) applicationParamDescriptor;
 			TRACE02(SQL_ATTR_APP_PARAM_DESC,value);
 			break;
 
 		case SQL_ATTR_IMP_ROW_DESC:
-			value = (long) implementationRowDescriptor;
+			value = (INT_PTR) implementationRowDescriptor;
 			TRACE02(SQL_ATTR_IMP_ROW_DESC,value);
 			break;
 
 		case SQL_ATTR_IMP_PARAM_DESC:
-			value = (long) implementationParamDescriptor;
+			value = (INT_PTR) implementationParamDescriptor;
 			TRACE02(SQL_ATTR_IMP_PARAM_DESC,value);
 			break;
 
@@ -2465,7 +2465,7 @@ SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int buffe
 			break;
 
 		case SQL_ATTR_ROW_STATUS_PTR:
-			value = (long) implementationRowDescriptor->headArrayStatusPtr;
+			value = (INT_PTR) implementationRowDescriptor->headArrayStatusPtr;
 			TRACE02(SQL_ATTR_ROW_STATUS_PTR,value);
 			break;
 
@@ -2490,7 +2490,7 @@ SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int buffe
 			break;
 
 		case SQL_ATTR_FETCH_BOOKMARK_PTR:		//	16
-			value = (long)fetchBookmarkPtr;
+			value = (INT_PTR)fetchBookmarkPtr;
 			TRACE02(SQL_ATTR_FETCH_BOOKMARK_PTR,value);
 		    break;
 
@@ -2507,7 +2507,7 @@ SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int buffe
 			return returnStringInfo (ptr, bufferLength, lengthPtr, string);
 
 		if (ptr)
-			*(long*) ptr = value;
+			*(INT_PTR*) ptr = value;
 
 		if (lengthPtr)
 			*lengthPtr = sizeof (long);
@@ -2821,9 +2821,9 @@ SQLRETURN OdbcStatement::executeStatement()
 SQLRETURN OdbcStatement::executeStatementParamArray()
 {
 	SQLRETURN ret = SQL_SUCCESS;
-	SQLUINTEGER rowCount = 0;
-	SQLUINTEGER *rowCountPt = implementationParamDescriptor->headRowsProcessedPtr ? implementationParamDescriptor->headRowsProcessedPtr
-								: &rowCount;
+	SQLULEN rowCount = 0;
+	SQLULEN *rowCountPt = implementationParamDescriptor->headRowsProcessedPtr ? implementationParamDescriptor->headRowsProcessedPtr
+							: &rowCount;
 	SQLUSMALLINT *statusPtr = implementationParamDescriptor->headArrayStatusPtr ? implementationParamDescriptor->headArrayStatusPtr
 								: NULL;
 	int rowSize = applicationParamDescriptor->headBindType;
@@ -3010,7 +3010,7 @@ SQLRETURN OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 	DescRecord *binding = applicationParamDescriptor->getDescRecord ( parameterNeedData );
 	SQLINTEGER *bindOffsetPtr = applicationParamDescriptor->headBindOffsetPtr;
 
-	*(unsigned long*)ptr = GETBOUNDADDRESS(binding);
+	*(UINT_PTR*)ptr = GETBOUNDADDRESS(binding);
 
 	if( binding->indicatorPtr && binding->data_at_exec )
 	{
@@ -3057,7 +3057,7 @@ SQLRETURN OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 		if ( retcode == SQL_NEED_DATA && saveParameter != parameterNeedData )
 		{
 			binding = applicationParamDescriptor->getDescRecord ( parameterNeedData );
-			*(unsigned long*)ptr = GETBOUNDADDRESS(binding);
+			*(UINT_PTR*)ptr = GETBOUNDADDRESS(binding);
 		}
 	}
 	catch ( std::exception &ex )
@@ -3073,7 +3073,7 @@ SQLRETURN OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 	return sqlSuccess();
 }
 
-SQLRETURN OdbcStatement::sqlPutData (SQLPOINTER value, SQLINTEGER valueSize)
+SQLRETURN OdbcStatement::sqlPutData (SQLPOINTER value, SQLLEN valueSize)
 {
 	if (parameterNeedData == 0)
 		return sqlReturn (SQL_ERROR, "HY010", "Function sequence error :: OdbcStatement::sqlPutData");
@@ -3202,74 +3202,74 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 			break;
 
 		case SQL_ATTR_RETRIEVE_DATA:
-			fetchRetData = (int) ptr;
-			TRACE02(SQL_ATTR_RETRIEVE_DATA,(int) ptr);
+			fetchRetData = (INT_PTR) ptr;
+			TRACE02(SQL_ATTR_RETRIEVE_DATA,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_PARAM_BIND_TYPE:		// 18
-			applicationParamDescriptor->headBindType = (SQLINTEGER) ptr;
-			TRACE02(SQL_ATTR_PARAM_BIND_TYPE,(int) ptr);
+			applicationParamDescriptor->headBindType = (INT_PTR) ptr;
+			TRACE02(SQL_ATTR_PARAM_BIND_TYPE,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_PARAM_BIND_OFFSET_PTR:// 17
 			applicationParamDescriptor->headBindOffsetPtr = (SQLINTEGER*)ptr;
-			TRACE02(SQL_ATTR_PARAM_BIND_OFFSET_PTR,(int) ptr);
+			TRACE02(SQL_ATTR_PARAM_BIND_OFFSET_PTR,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_PARAMS_PROCESSED_PTR:	// 21
-			implementationParamDescriptor->headRowsProcessedPtr = (SQLUINTEGER*) ptr;
-			TRACE02(SQL_ATTR_PARAMS_PROCESSED_PTR,(int) ptr);
+			implementationParamDescriptor->headRowsProcessedPtr = (SQLULEN*) ptr;
+			TRACE02(SQL_ATTR_PARAMS_PROCESSED_PTR,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_PARAMSET_SIZE:		// 22
-			applicationParamDescriptor->headArraySize = (SQLUINTEGER)ptr;
-			TRACE02(SQL_ATTR_PARAMSET_SIZE,(int) ptr);
+			applicationParamDescriptor->headArraySize = (UINT_PTR)ptr;
+			TRACE02(SQL_ATTR_PARAMSET_SIZE,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_ROW_BIND_TYPE:		// SQL_BIND_TYPE 5
-			applicationRowDescriptor->headBindType = (SQLINTEGER)ptr;
-			TRACE02(SQL_ATTR_ROW_BIND_TYPE,(int) ptr);
+			applicationRowDescriptor->headBindType = (INT_PTR)ptr;
+			TRACE02(SQL_ATTR_ROW_BIND_TYPE,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_ROW_ARRAY_SIZE:		// 27
-			applicationRowDescriptor->headArraySize = (int) ptr;
-			TRACE02(SQL_ATTR_ROW_ARRAY_SIZE,(int) ptr);
+			applicationRowDescriptor->headArraySize = (INT_PTR) ptr;
+			TRACE02(SQL_ATTR_ROW_ARRAY_SIZE,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_KEYSET_SIZE:           // 8
 		case SQL_ROWSET_SIZE:                // 9
-			applicationRowDescriptor->headArraySize = (int) ptr;
-			TRACE02(SQL_ROWSET_SIZE,(int) ptr);
+			applicationRowDescriptor->headArraySize = (INT_PTR) ptr;
+			TRACE02(SQL_ROWSET_SIZE,(INT_PTR) ptr);
 			break;
 				
 		case SQL_ATTR_ROWS_FETCHED_PTR:		// 26
-			implementationRowDescriptor->headRowsProcessedPtr = (SQLUINTEGER*) ptr;
-			TRACE02(SQL_ATTR_ROWS_FETCHED_PTR,(int) ptr);
+			implementationRowDescriptor->headRowsProcessedPtr = (SQLULEN*) ptr;
+			TRACE02(SQL_ATTR_ROWS_FETCHED_PTR,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_ROW_BIND_OFFSET_PTR:	// 23
 			applicationRowDescriptor->headBindOffsetPtr = (SQLINTEGER*)ptr;
-			TRACE02(SQL_ATTR_ROW_BIND_OFFSET_PTR,(int) ptr);
+			TRACE02(SQL_ATTR_ROW_BIND_OFFSET_PTR,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_ROW_STATUS_PTR:		// 25
 			implementationRowDescriptor->headArrayStatusPtr = (SQLUSMALLINT*)ptr;
-			TRACE02(SQL_ATTR_ROW_STATUS_PTR,(int) ptr);
+			TRACE02(SQL_ATTR_ROW_STATUS_PTR,(INT_PTR) ptr);
 			break;
 
  		case SQL_ATTR_CONCURRENCY:			// SQL_CONCURRENCY	7
-			currency = (int) ptr;
+			currency = (INT_PTR) ptr;
 
 			if(currency == SQL_CONCUR_READ_ONLY)
 				cursorSensitivity = SQL_INSENSITIVE;
 			else
 				cursorSensitivity = SQL_UNSPECIFIED;
 
-			TRACE02(SQL_ATTR_CONCURRENCY,(int) ptr);
+			TRACE02(SQL_ATTR_CONCURRENCY,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_CURSOR_TYPE:			// SQL_CURSOR_TYPE 6
-			cursorType = (int) ptr;
+			cursorType = (INT_PTR) ptr;
 			if ( cursorType == SQL_CURSOR_DYNAMIC )
 			{
 				cursorScrollable = SQL_SCROLLABLE;
@@ -3294,46 +3294,46 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 				else
 					cursorSensitivity = SQL_INSENSITIVE;
 			}
-			TRACE02(SQL_ATTR_CURSOR_TYPE,(int) ptr);
+			TRACE02(SQL_ATTR_CURSOR_TYPE,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_CURSOR_SCROLLABLE:
-			cursorScrollable = (int) ptr;
+			cursorScrollable = (INT_PTR) ptr;
 
 			if( cursorScrollable == SQL_NONSCROLLABLE )
 				cursorType = SQL_CURSOR_FORWARD_ONLY;
 			else
 				cursorType = SQL_CURSOR_STATIC;
 
-			TRACE02(SQL_ATTR_CURSOR_SCROLLABLE,(int) ptr);
+			TRACE02(SQL_ATTR_CURSOR_SCROLLABLE,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_ASYNC_ENABLE:			// 4
-			asyncEnable = (int) ptr == SQL_ASYNC_ENABLE_ON;
-			TRACE02(SQL_ATTR_ASYNC_ENABLE,(int) ptr);
+			asyncEnable = (INT_PTR) ptr == SQL_ASYNC_ENABLE_ON;
+			TRACE02(SQL_ATTR_ASYNC_ENABLE,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_MAX_ROWS:					// SQL_MAX_ROWS 1
-			maxRows = (int) ptr;
-			TRACE02(SQL_ATTR_MAX_ROWS,(int) ptr);
+			maxRows = (INT_PTR) ptr;
+			TRACE02(SQL_ATTR_MAX_ROWS,(INT_PTR) ptr);
 			break;
 		
 		case SQL_ATTR_MAX_LENGTH:
 			if ( length == SQL_IS_POINTER )
-				maxLength = *(int*) ptr;
+				maxLength = *(INT_PTR*) ptr;
 			else
-				maxLength = (int) ptr;
+				maxLength = (INT_PTR) ptr;
 			TRACE02(SQL_ATTR_MAX_LENGTH, maxLength);
 			break;
 
 		case SQL_ATTR_USE_BOOKMARKS:        //    SQL_USE_BOOKMARKS 12
 			applicationRowDescriptor->allocBookmarkField();
-			useBookmarks = (SQLINTEGER)ptr;
-			TRACE02(SQL_ATTR_USE_BOOKMARKS,(int) ptr);
+			useBookmarks = (INT_PTR)ptr;
+			TRACE02(SQL_ATTR_USE_BOOKMARKS,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_CURSOR_SENSITIVITY:    // (-2)
-			cursorSensitivity = (SQLINTEGER)ptr;
+			cursorSensitivity = (INT_PTR)ptr;
 			if ( cursorSensitivity == SQL_INSENSITIVE )
 			{
 				currency = SQL_CONCUR_READ_ONLY;
@@ -3350,37 +3350,37 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 				cursorType = SQL_CURSOR_FORWARD_ONLY;
 			}
 
-			TRACE02(SQL_ATTR_CURSOR_SENSITIVITY,(int) ptr);
+			TRACE02(SQL_ATTR_CURSOR_SENSITIVITY,(INT_PTR) ptr);
 		    break;
 
 		case SQL_ATTR_PARAM_OPERATION_PTR:		// 19
 			applicationParamDescriptor->headArrayStatusPtr = (SQLUSMALLINT*)ptr;
-			TRACE02(SQL_ATTR_PARAM_OPERATION_PTR,(int) ptr);
+			TRACE02(SQL_ATTR_PARAM_OPERATION_PTR,(INT_PTR) ptr);
 		    break;
 
 		case SQL_ATTR_PARAM_STATUS_PTR:			// 20
 			implementationParamDescriptor->headArrayStatusPtr = (SQLUSMALLINT*)ptr;
-			TRACE02(SQL_ATTR_PARAM_STATUS_PTR,(int) ptr);
+			TRACE02(SQL_ATTR_PARAM_STATUS_PTR,(INT_PTR) ptr);
 		    break;
 
 		case SQL_ATTR_ROW_OPERATION_PTR:		//	24
 			applicationRowDescriptor->headArrayStatusPtr = (SQLUSMALLINT*)ptr;
-			TRACE02(SQL_ATTR_ROW_OPERATION_PTR,(int) ptr);
+			TRACE02(SQL_ATTR_ROW_OPERATION_PTR,(INT_PTR) ptr);
 			break;
 
 		case SQL_ATTR_ENABLE_AUTO_IPD:			// 15 
-			enableAutoIPD = (int) ptr;
-			TRACE02(SQL_ATTR_ENABLE_AUTO_IPD,(int) ptr);
+			enableAutoIPD = (INT_PTR) ptr;
+			TRACE02(SQL_ATTR_ENABLE_AUTO_IPD,(INT_PTR) ptr);
 		    break;
 
 		case SQL_ATTR_FETCH_BOOKMARK_PTR:		//	16
 			fetchBookmarkPtr = ptr;
-			TRACE02(SQL_ATTR_FETCH_BOOKMARK_PTR,(int) ptr);
+			TRACE02(SQL_ATTR_FETCH_BOOKMARK_PTR,(INT_PTR) ptr);
 		    break;
 
 		case SQL_ATTR_NOSCAN:					// 2
-			noscanSQL = (int) ptr;
-			TRACE02(SQL_ATTR_NOSCAN,(int) ptr);
+			noscanSQL = (INT_PTR) ptr;
+			TRACE02(SQL_ATTR_NOSCAN,(INT_PTR) ptr);
 		    break;
 
 		case SQL_ATTR_APP_ROW_DESC:
@@ -3392,7 +3392,7 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 				applicationRowDescriptor = saveApplicationRowDescriptor;
 				return sqlReturn (SQL_ERROR, "HY017", "Invalid use of an automatically allocated descriptor handle");
 			}
-			TRACE02(SQL_ATTR_APP_ROW_DESC,(int) applicationRowDescriptor);
+			TRACE02(SQL_ATTR_APP_ROW_DESC,(INT_PTR) applicationRowDescriptor);
 			break;
 
 		case SQL_ATTR_APP_PARAM_DESC:
@@ -3404,7 +3404,7 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 				applicationParamDescriptor = saveApplicationParamDescriptor;
 				return sqlReturn (SQL_ERROR, "HY017", "Invalid use of an automatically allocated descriptor handle");
 			}
-			TRACE02(SQL_ATTR_APP_PARAM_DESC,(int) applicationParamDescriptor);
+			TRACE02(SQL_ATTR_APP_PARAM_DESC,(INT_PTR) applicationParamDescriptor);
 			break;
 
 		default:
@@ -3421,7 +3421,7 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 	return sqlSuccess();
 }
 
-SQLRETURN OdbcStatement::sqlRowCount(SQLINTEGER *rowCount)
+SQLRETURN OdbcStatement::sqlRowCount(SQLLEN *rowCount)
 {
 	clearErrors();
 

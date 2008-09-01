@@ -227,7 +227,7 @@ void CServiceManager::startRestoreDatabase( Properties *prop, ULONG options )
 void CServiceManager::exitRestoreDatabase()
 {
 	ISC_STATUS status[20];
-	void *databaseHandle = NULL;
+	isc_db_handle databaseHandle = NULL;
 	char dpbBuffer[RESPONSE_BUFFER/2];
 	int dpbLength;
 	const char *pt;

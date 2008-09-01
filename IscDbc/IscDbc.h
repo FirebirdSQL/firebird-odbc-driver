@@ -46,7 +46,7 @@
 #define NOT_YET_IMPLEMENTED	throw SQLEXCEPTION (FEATURE_NOT_YET_IMPLEMENTED, "not yet implemented")
 #define NOT_SUPPORTED(type,rellen,rel,collen,col) throw SQLEXCEPTION (UNSUPPORTED_DATATYPE, "datatype is not supported in ODBC: %s column %*s.%*s", type,rellen,rel,collen,col)
 #define THROW_ISC_EXCEPTION(connection, statusVector) throw SQLEXCEPTION ( connection->GDS->_sqlcode( statusVector ), statusVector [1], connection->getIscStatusText (statusVector))
-#define OFFSET(type,fld)	(int)&(((type*)0)->fld)
+#define OFFSET(type,fld)	(size_t)&(((type*)0)->fld)
 #define MAX(a,b)			((a > b) ? a : b)
 #define MIN(a,b)			((a < b) ? a : b)
 #define ABS(n)				(((n) >= 0) ? (n) : -(n))

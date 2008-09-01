@@ -81,7 +81,7 @@ public:
 	BOOL	m_safeThread;
 
 public:
-	int DoModal();
+	INT_PTR DoModal();
 
 	BOOL IsLocalhost( char * fullPathFileName, int &nSme );
 	void CheckRemotehost( char * fullPathFileName );

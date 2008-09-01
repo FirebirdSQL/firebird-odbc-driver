@@ -92,12 +92,6 @@
 #include "SetupAttributes.h"
 #include "IscDbc/JavaType.h"
 
-#ifndef SQLLEN
-#define SQLLEN			SQLINTEGER
-#define SQLULEN			SQLUINTEGER
-#define SQLSETPOSIROW	SQLUSMALLINT
-#endif
-
 #ifndef SQL_BOOLEAN
 #define SQL_BOOLEAN		16
 #endif
@@ -144,4 +138,5 @@
 
 
 #endif
+
 

@@ -58,7 +58,7 @@ OdbcDesc::OdbcDesc(OdbcDescType type, OdbcConnection *connect)
 	headArraySize = 1;
 	headArrayStatusPtr = (SQLUSMALLINT*)NULL;
 	headBindOffsetPtr = (SQLINTEGER*)NULL;
-	headRowsProcessedPtr = (SQLUINTEGER*)NULL;
+	headRowsProcessedPtr = (SQLULEN*)NULL;
 	headCount = 0;
 	headBindType = SQL_BIND_BY_COLUMN;
 
@@ -87,7 +87,7 @@ void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaDataOut, StatementM
 		headArraySize = 1;
 		headArrayStatusPtr = (SQLUSMALLINT*)NULL;
 		headBindOffsetPtr = (SQLINTEGER*)NULL;
-		headRowsProcessedPtr = (SQLUINTEGER*)NULL;
+		headRowsProcessedPtr = (SQLULEN*)NULL;
 		headCount = 0;
 
 		if(	metaDataOut == NULL )
@@ -273,7 +273,7 @@ void OdbcDesc::defFromMetaDataIn(int recNumber, DescRecord * record)
 
 	metaDataIn->getSqlData(recNumber, record->dataBlobPtr, record->headSqlVarPtr);
 	record->dataPtr = (SQLPOINTER)record->headSqlVarPtr->getSqlData();
-	record->indicatorPtr = (SQLINTEGER*)record->headSqlVarPtr->getSqlInd();
+	record->indicatorPtr = (SQLLEN*)record->headSqlVarPtr->getSqlInd();
 }
 
 void OdbcDesc::defFromMetaDataOut(int recNumber, DescRecord * record)
@@ -314,7 +314,7 @@ void OdbcDesc::defFromMetaDataOut(int recNumber, DescRecord * record)
 
 	metaDataOut->getSqlData(recNumber, record->dataBlobPtr, record->headSqlVarPtr);
 	record->dataPtr = (SQLPOINTER)record->headSqlVarPtr->getSqlData();
-	record->indicatorPtr = (SQLINTEGER*)record->headSqlVarPtr->getSqlInd();
+	record->indicatorPtr = (SQLLEN*)record->headSqlVarPtr->getSqlInd();
 }
 
 OdbcConnection* OdbcDesc::getConnection()
@@ -444,7 +444,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			case odtImplementationRow:
 			case odtImplementationParameter:
 				if (ptr)
-					*(SQLUINTEGER**)ptr = headRowsProcessedPtr,
+					*(SQLULEN**)ptr = headRowsProcessedPtr,
 					size = sizeof (SQLUINTEGER*);
 				break;
 			default:
@@ -648,7 +648,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			case odtApplicationParameter:
 			case odtApplicationRow:
 				if (record && ptr)
-					*(SQLINTEGER **)ptr = record->octetLengthPtr,
+					*(SQLLEN **)ptr = record->octetLengthPtr,
 					size = sizeof (SQLINTEGER*);
 				break;
 			default:
@@ -755,7 +755,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			case odtApplicationParameter:
 			case odtApplicationRow:
 				if (record && ptr)
-					*(SQLINTEGER **)ptr = record->indicatorPtr,
+					*(SQLLEN **)ptr = record->indicatorPtr,
 					size = sizeof (SQLINTEGER*);
 				break;
 			default:
@@ -855,7 +855,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 	if(i==sizeof(debSetDescField)/sizeof(*debSetDescField))
 		i=0;
 	sprintf(strTmp,"\tid %4i - %s : recNumber %i : value %i\n",fieldId,debSetDescField[i].name,
-								recNumber, value ? (int)value : 0);
+								recNumber, value ? (INT_PTR)value : 0);
 	OutputDebugString(strTmp); 
 #endif
 	clearErrors();
@@ -875,7 +875,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 #pragma FB_COMPILER_MESSAGE("If modify value realized ReAlloc FIXME!")
-				headCount = (SQLSMALLINT)(int)value;
+				headCount = (SQLSMALLINT)(INT_PTR)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -888,7 +888,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplication:
 			case odtApplicationParameter:
 			case odtApplicationRow:
-				headArraySize = (SQLUINTEGER)value;
+				headArraySize = (UINT_PTR)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -918,7 +918,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplication:
 			case odtApplicationParameter:
 			case odtApplicationRow:
-				headBindType = (SQLINTEGER)value;
+				headBindType = (INT_PTR)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -930,7 +930,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			{
 			case odtImplementationRow:
 			case odtImplementationParameter:
-				headRowsProcessedPtr = (SQLUINTEGER*)value;
+				headRowsProcessedPtr = (SQLULEN*)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -947,8 +947,8 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 				if (record)
 				{
 #pragma FB_COMPILER_MESSAGE("This temporary decision. FIXME!")
-					record->type = (SQLSMALLINT)(int)value;
-					record->conciseType = (SQLSMALLINT)(int)value;
+					record->type = (SQLSMALLINT)(INT_PTR)value;
+					record->conciseType = (SQLSMALLINT)(INT_PTR)value;
 				}
 				break;
 			default:
@@ -964,7 +964,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->datetimeIntervalCode = (SQLSMALLINT)(int)value;
+					record->datetimeIntervalCode = (SQLSMALLINT)(INT_PTR)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -981,8 +981,8 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 				if (record)
 				{
 #pragma FB_COMPILER_MESSAGE("This temporary decision. FIXME!")
-					record->conciseType = (SQLSMALLINT)(int)value;
-					record->type = (SQLSMALLINT)(int)value;
+					record->conciseType = (SQLSMALLINT)(INT_PTR)value;
+					record->type = (SQLSMALLINT)(INT_PTR)value;
 				}
 				break;
 			default:
@@ -998,7 +998,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->datetimeIntervalPrecision = (SQLINTEGER)value;
+					record->datetimeIntervalPrecision = (INT_PTR)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1013,7 +1013,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->length = (SQLUINTEGER)value;
+					record->length = (UINT_PTR)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1038,7 +1038,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->numPrecRadix = (SQLINTEGER)value;
+					record->numPrecRadix = (INT_PTR)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1054,10 +1054,10 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtImplementationParameter:
 				if (record)
 				{
-					record->octetLength = (SQLINTEGER)value;
-					record->sizeColumnExtendedFetch = (SQLINTEGER)value;
+					record->octetLength = (INT_PTR)value;
+					record->sizeColumnExtendedFetch = (INT_PTR)value;
 					if ( !record->length ) 
-						record->length = (SQLINTEGER)value;
+						record->length = (INT_PTR)value;
 				}
 				break;
 			default:
@@ -1072,7 +1072,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationRow:
 			case odtApplicationParameter:
 				if (record)
-					record->octetLengthPtr = (SQLINTEGER*)value;
+					record->octetLengthPtr = (SQLLEN*)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1083,7 +1083,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			if(headType == odtImplementationParameter)
 			{
 				if (record)
-					record->parameterType = (SQLSMALLINT)(int)value;
+					record->parameterType = (SQLSMALLINT)(INT_PTR)value;
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1097,7 +1097,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->precision = (SQLSMALLINT)(int)value;
+					record->precision = (SQLSMALLINT)(INT_PTR)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1112,7 +1112,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->scale = (SQLSMALLINT)(int)value;
+					record->scale = (SQLSMALLINT)(INT_PTR)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1126,7 +1126,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationRow:
 			case odtApplicationParameter:
 				if (record)
-					record->indicatorPtr = (SQLINTEGER*)value;
+					record->indicatorPtr = (SQLLEN*)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1137,7 +1137,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			if(headType == odtImplementationParameter)
 			{
 				if (record)
-					record->unNamed = (SQLSMALLINT)(int)value;
+					record->unNamed = (SQLSMALLINT)(INT_PTR)value;
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1183,7 +1183,7 @@ SQLRETURN OdbcDesc::sqlGetDescRec(	SQLSMALLINT recNumber,
 									SQLSMALLINT *stringLengthPtr, 
 									SQLSMALLINT *typePtr, 
 									SQLSMALLINT *subTypePtr, 
-									SQLINTEGER  *lengthPtr, 
+									SQLLEN  *lengthPtr, 
 									SQLSMALLINT *precisionPtr, 
 									SQLSMALLINT *scalePtr, 
 									SQLSMALLINT *nullablePtr)
@@ -1233,8 +1233,8 @@ SQLRETURN OdbcDesc::sqlSetDescRec(	SQLSMALLINT	recNumber,
 									SQLSMALLINT	precision,
 									SQLSMALLINT	scale,
 									SQLPOINTER	dataPtr,
-									SQLINTEGER *stringLengthPtr,
-									SQLINTEGER *indicatorPtr)
+									SQLLEN *stringLengthPtr,
+									SQLLEN *indicatorPtr)
 {
     clearErrors();
 	DescRecord *record = NULL;

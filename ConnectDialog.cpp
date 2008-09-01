@@ -107,7 +107,7 @@ void initCodePageTranslate( int userLCID )
 
 CConnectDialog * m_ptConnectDialog = NULL;
 
-int DialogBoxDynamicConnect();
+INT_PTR DialogBoxDynamicConnect();
 BOOL CALLBACK wndprocConnectDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam);
 
 CConnectDialog::CConnectDialog()
@@ -145,7 +145,7 @@ void CConnectDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 
 int DialogBoxDynamic();
 
-int CConnectDialog::DoModal()
+INT_PTR CConnectDialog::DoModal()
 {
 	return DialogBoxDynamicConnect();
 }
@@ -193,9 +193,9 @@ int nCopyAnsiToWideChar (LPWORD lpWCStr, LPCSTR lpAnsiIn)
 
 LPWORD lpwAlign ( LPWORD lpIn)
 {
-  ULONG ul;
+  UINT_PTR ul;
 
-  ul = (ULONG) lpIn;
+  ul = (UINT_PTR) lpIn;
   ul +=3;
   ul >>=2;
   ul <<=2;
@@ -259,7 +259,7 @@ LPWORD lpwAlign ( LPWORD lpIn)
 //CAPTION "FireBird ODBC Setup"
 //FONT 8, "MS Sans Serif"
 
-int DialogBoxDynamicConnect()
+INT_PTR DialogBoxDynamicConnect()
 {
 	HWND hwnd = NULL;
 	WORD  *p, *pdlgtemplate;
@@ -300,7 +300,7 @@ int DialogBoxDynamicConnect()
     TMP_LTEXT         ( _TR( IDS_STATIC_PASSWORD, "Password" ), IDC_STATIC,5,26,54,8 )
     TMP_LTEXT         ( _TR( IDS_STATIC_ROLE, "Role" ), IDC_STATIC,5,41,54,8 )
 
-	int nRet = DialogBoxIndirect(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hwnd, (DLGPROC)wndprocConnectDialog);
+	INT_PTR nRet = DialogBoxIndirect(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hwnd, (DLGPROC)wndprocConnectDialog);
 	LocalFree (LocalHandle (pdlgtemplate));
 
 	return nRet;
