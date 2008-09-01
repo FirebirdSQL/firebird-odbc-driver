@@ -223,7 +223,7 @@ bool CServiceTabCtrl::setExecutorForViewLogFile()
 	LONG ret;
 
 	ret = RegOpenKeyEx( HKEY_CLASSES_ROOT,
-                        "htmlfile\\shell\\opennew\\command",
+                        "http\\shell\\open\\command",
                         0,
                         KEY_EXECUTE,
                         &hKey );
