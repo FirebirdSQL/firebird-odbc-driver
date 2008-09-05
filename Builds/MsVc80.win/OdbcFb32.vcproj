@@ -44,7 +44,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\Debug/OdbcFb32.tlb"
+				TypeLibraryName=".\Debug/OdbcFb.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -78,7 +78,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE"
 				AdditionalDependencies="version.lib wsock32.lib comctl32.lib"
-				OutputFile="$(PlatformName)/$(ConfigurationName)/OdbcFb32.dll"
+				OutputFile="$(PlatformName)/$(ConfigurationName)/OdbcFb.dll"
 				AdditionalLibraryDirectories="debug"
 				ModuleDefinitionFile="..\..\OdbcJdbc.def"
 				GenerateDebugInformation="true"
@@ -139,7 +139,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/OdbcFb32.tlb"
+				TypeLibraryName=".\Debug/OdbcFb.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -174,7 +174,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE"
 				AdditionalDependencies="version.lib wsock32.lib comctl32.lib"
-				OutputFile="$(PlatformName)/$(ConfigurationName)/OdbcFb32.dll"
+				OutputFile="$(PlatformName)/$(ConfigurationName)/OdbcFb.dll"
 				AdditionalLibraryDirectories="debug"
 				ModuleDefinitionFile="..\..\OdbcJdbc.def"
 				GenerateDebugInformation="true"
@@ -236,7 +236,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\Release/OdbcFb32.tlb"
+				TypeLibraryName=".\Release/OdbcFb.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -270,7 +270,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE"
 				AdditionalDependencies="version.lib wsock32.lib comctl32.lib"
-				OutputFile="$(PlatformName)/$(ConfigurationName)/OdbcFb32.dll"
+				OutputFile="$(PlatformName)/$(ConfigurationName)/OdbcFb.dll"
 				ModuleDefinitionFile="..\..\OdbcJdbc.def"
 				SubSystem="2"
 				ImportLibrary=""
@@ -327,7 +327,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/OdbcFb32.tlb"
+				TypeLibraryName=".\Release/OdbcFb.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -362,7 +362,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE"
 				AdditionalDependencies="version.lib wsock32.lib comctl32.lib"
-				OutputFile="$(PlatformName)/$(ConfigurationName)/OdbcFb32.dll"
+				OutputFile="$(PlatformName)/$(ConfigurationName)/OdbcFb.dll"
 				ModuleDefinitionFile="..\..\OdbcJdbc.def"
 				ProgramDatabaseFile=""
 				SubSystem="2"

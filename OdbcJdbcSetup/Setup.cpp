@@ -213,8 +213,7 @@ HRESULT INSTAPI DllInstall( BOOL install, LPCWSTR commandLine )
 
 	if ( !strncasecmp( fileName, pathOut, strlen( pathOut ) ) )
 	{
-		MessageBox( NULL, _TR( IDS_ERROR_MESSAGE_06, " ERROR!\nPlease, use regsvr32.exe .\\OdbcJdbcSetup.dll" ), DRIVER_NAME, MB_ICONSTOP|MB_OK );
-        return S_FALSE;
+        return S_OK;
 	}
 
  	char *path = pathOut + strlen( pathOut );
@@ -224,18 +223,18 @@ HRESULT INSTAPI DllInstall( BOOL install, LPCWSTR commandLine )
 	bool ret = copyFilesDriver( pathOut, path, fileName, tail );
 
 	return ret ? S_OK : S_FALSE;
-}    
+}
 
 /*
  *	Registration can be performed with the following command:
  *
- *		regsvr32 .\odbcjdbcsetup.dll
+ *		regsvr32 .\OdbcFb.dll
  *
  *	To debug registration the project settings to call regsvr32.exe
  *  with the full path.
  *
  *  Use 
- *		..\debug\odbcjdbcsetup.dll
+ *		..\debug\OdbcFb.dll
  *
  *  as the program argument
  *
@@ -243,12 +242,9 @@ HRESULT INSTAPI DllInstall( BOOL install, LPCWSTR commandLine )
 
 extern "C" STDAPI DllRegisterServer (void)
 {
-	char fileName [MAX_PATH];
 	char pathOut [MAX_PATH];
 	WORD length = sizeof (pathOut) - 1;
 	DWORD useCount;
-
-	GetModuleFileName( m_hInstance, fileName, sizeof ( fileName ) );
 
 	if ( !SQLInstallDriverEx( 
 			DRIVER_FULL_NAME"\0" INSTALL_DRIVER "=" DRIVER_NAME ".DLL\0\0",
@@ -270,6 +266,7 @@ bool installDriver( void )
 {
 	char temp [80];
 	char *fullDriverName = temp;
+	char pathIn[MAX_PATH];
 	char pathOut [MAX_PATH];
 	WORD length = sizeof (pathOut) - 1;
 	DWORD useCount;
@@ -280,9 +277,16 @@ bool installDriver( void )
 
 	initVersionDriver( strDriverInfo );
 
+	if (!setInstallKey)
+	{
+		GetModuleFileName( m_hInstance, pathIn, sizeof ( pathIn ) );
+		char *tail = strrchr( pathIn, '\\' ) + 1;
+		*tail = '\0';
+	}
+
 	if ( !SQLInstallDriverEx(
 			strDriverInfo,
-			NULL,
+			setInstallKey ? NULL : pathIn,
 			pathOut,
 			sizeof (pathOut),
 			&length,
@@ -401,17 +405,14 @@ bool copyFilesDriver( char *pathDestination, char *endPathDestination,
 			CopyFile( pathSource, pathDestination );
 		}
 	}
-	else if ( !setInstallKey )
+	else
 	{
 		DelayRegisterOdbcJdbc( pathDestination, endPathDestination,
 							   pathSource, endPathSource );
-		if ( !silentDisplay )
-		{
-			MessageBox( NULL, 
-						(const char*)"Please, reboot for use",
-						DRIVER_NAME,
-						MB_ICONINFORMATION|MB_OK );
-		}
+		MessageBox( NULL, 
+					(const char*)"Please, reboot for use",
+					DRIVER_NAME,
+					MB_ICONINFORMATION|MB_OK );
 
 		return false;
 	}
@@ -598,7 +599,7 @@ bool DelayRegisterOdbcJdbc( char *pathDestination, char *endPathDestination,
     char commandLine[ 2 * MAX_PATH + 2 ];
     DWORD   dwDisposition;
 
-	strcpy( endPathSource, "OdbcJdbcSetup.dll" );
+	strcpy( endPathSource, DRIVER_NAME".DLL" );
 	strcpy( endPathDestination, "regsvr32.exe" );
 
 	do
@@ -616,7 +617,7 @@ bool DelayRegisterOdbcJdbc( char *pathDestination, char *endPathDestination,
 		if ( res != ERROR_SUCCESS )
 			break;
 
-		wsprintf( commandLine, "%s /s \"%s\"", pathDestination, pathSource );
+		wsprintf( commandLine, "%s /s /i \"%s\"", pathDestination, pathSource );
 
 		res = RegSetValueEx( hKey,
 							 "OdbcJdbcSetupDelay",
