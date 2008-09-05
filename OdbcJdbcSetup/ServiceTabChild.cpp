@@ -68,6 +68,8 @@ bool CServiceTabChild::createTempLogFile()
 
 	GetTempPath( MAX_PATH, bufferTmpDir );
 	GetTempFileName( bufferTmpDir, "OFB", 0, bufferTmpFileName );
+	DeleteFile( bufferTmpFileName );
+	strcpy( strrchr( bufferTmpFileName, '.' ) + 1, "htm");
 
 	hTmpFile = CreateFile( bufferTmpFileName,
                            GENERIC_READ | GENERIC_WRITE,
