@@ -49,7 +49,7 @@ public:
 	}
 
 public:
-	void			*transactionHandle;
+	isc_tr_handle	transactionHandle;
 	int				transactionIsolation;
 	int				transactionExtInit;
 	bool			autoCommit;
@@ -118,7 +118,7 @@ public:
 	virtual int getNativeSql (const char * inStatementText, long textLength1,
 								char * outStatementText, long bufferLength,
 								long * textLength2Ptr);
-	void* startTransaction();
+	isc_tr_handle startTransaction();
 	void deleteStatement (IscStatement *statement);
 	IscConnection();
 	~IscConnection();
@@ -144,7 +144,7 @@ public:
 	inline bool isMatchExt( char *& string, const char *keyWord, const int length );
 	virtual void prepareTransaction();
 	virtual bool getTransactionPending();
-	void	*getHandleDb();
+	isc_db_handle getHandleDb();
 
 public:
 	CNodeParamTransaction *tmpParamTransaction;

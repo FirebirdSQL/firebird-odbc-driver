@@ -29,7 +29,7 @@ static char THIS_FILE[]=__FILE__;
 
 namespace IscDbcLibrary {
 
-
+
 LinkedList::LinkedList ()
 {
 /**************************************
@@ -43,11 +43,10 @@ LinkedList::LinkedList ()
  *
  **************************************/
 
-//addressCheck (this);
 
 next = prior = NULL;
 }
-
+
 LinkedList::~LinkedList ()
 {
 /**************************************
@@ -62,8 +61,6 @@ LinkedList::~LinkedList ()
  **************************************/
 LinkedNode *node;
 
-//addressCheck (this);
-
 while (node = next)
     {
 	next = node->next;
@@ -71,7 +68,7 @@ while (node = next)
 	}
 
 }
-
+
 LinkedNode::LinkedNode (void *obj)
 {
 /**************************************
@@ -87,7 +84,7 @@ LinkedNode::LinkedNode (void *obj)
 
 object = obj;
 }
-
+
 LinkedNode::~LinkedNode ()
 {
 /**************************************
@@ -103,7 +100,7 @@ LinkedNode::~LinkedNode ()
 
 next = prior = NULL;
 }
-
+
 void LinkedList::append (void *object)
 {
 /**************************************
@@ -118,7 +115,6 @@ void LinkedList::append (void *object)
  **************************************/
 
 LinkedNode *node = new LinkedNode (object);
-//addressCheck (node);
 
 if (prior)
     {
@@ -130,7 +126,7 @@ else
 
 prior = node;
 }
-
+
 int LinkedList::appendUnique (void *object)
 {
 /**************************************
@@ -154,7 +150,7 @@ append (object);
 
 return n;
 }
-
+
 void LinkedList::clear ()
 {
 /**************************************
@@ -177,7 +173,7 @@ while (node = next)
 
 prior = NULL;
 }
-
+
 int LinkedList::count ()
 {
 /**************************************
@@ -197,7 +193,7 @@ for (LinkedList *node = next; node; node = node->next)
 
 return n;
 }
-
+
 bool LinkedList::deleteItem (void *object)
 {
 /**************************************
@@ -229,7 +225,7 @@ for (LinkedNode *node = next; node; node = node->next)
 
 return false;
 }
-
+
 void *LinkedList::getElement (int position)
 {
 /**************************************
@@ -251,7 +247,7 @@ for (node = next, n = 0; node; node = node->next, ++n)
 
 return NULL;
 }
-
+
 #ifdef UNDEF
 LinkedList *LinkedList::getHead ()
 {
@@ -268,7 +264,7 @@ LinkedList *LinkedList::getHead ()
 
 return next;
 }
-
+
 void *LinkedList::getNext (LinkedList **node)
 {
 /**************************************
@@ -288,7 +284,7 @@ void *object = ((LinkedNode*)(*node))->object;
 return object;
 }
 #endif
-
+
 void *LinkedList::getPrior (LinkedList **node)
 {
 /**************************************
@@ -326,7 +322,7 @@ LinkedList *LinkedList::getTail ()
 
 return this;
 }
-
+
 bool LinkedList::isEmpty ()
 {
 /**************************************
@@ -342,7 +338,7 @@ bool LinkedList::isEmpty ()
 
 return next == NULL;
 }
-
+
 bool LinkedList::isMember (void *object)
 {
 /**************************************
@@ -362,7 +358,7 @@ for (LinkedNode *node = next; node; node = node->next)
 
 return 0;
 }
-
+
 #ifdef UNDEF
 bool LinkedList::more (LinkedList *node)
 {
@@ -380,7 +376,7 @@ bool LinkedList::more (LinkedList *node)
 return (node != NULL);
 }
 #endif
-
+
 bool LinkedList::moreBackwards (LinkedList *node)
 {
 /**************************************
@@ -424,14 +420,6 @@ for (LinkedNode *node = next; node; node = node->next)
 		}
 
 return false;
-}
-
-void LinkedList::addressCheck(void * address)
-{
-
-	if ((long) address == 0x00CDE290 ||
-		(long) address == 0x00cdde70)
-		printf ("hit %p\n", address);
 }
 
 }; // end namespace IscDbcLibrary

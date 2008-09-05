@@ -53,7 +53,7 @@ public:
 	void rollbackLocal();
 	void commitLocal();
 	void setReadOnlyTransaction();
-	void* startTransaction();
+	isc_tr_handle startTransaction();
 	static ISC_TIME getIscTime (SqlTime value);
 	static ISC_TIMESTAMP getIscTimeStamp (TimeStamp value);
 	static ISC_DATE getIscDate (DateTime date);

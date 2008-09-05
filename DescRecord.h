@@ -96,7 +96,7 @@ public:
 	JString			name;
 	SQLSMALLINT		nullable;
 	SQLINTEGER		octetLength;
-	SQLINTEGER		*octetLengthPtr;
+	SQLLEN			*octetLengthPtr;
 	SQLSMALLINT		parameterType;
 	SQLSMALLINT		precision;
 	SQLSMALLINT		scale;
@@ -106,7 +106,7 @@ public:
 	JString			typeName;
 	SQLSMALLINT		unSigned;
 	SQLSMALLINT		updaTable;
-	SQLINTEGER		*indicatorPtr;
+	SQLLEN			*indicatorPtr;
 	SQLSMALLINT		unNamed;
 	SQLPOINTER		dataPtr;
 	WCSTOMBS		WcsToMbs;

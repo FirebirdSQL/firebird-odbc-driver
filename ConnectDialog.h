@@ -46,7 +46,7 @@ public:
 	JString	m_role;
 
 public:
-	int DoModal();
+	INT_PTR DoModal();
 
 	void UpdateData(HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	BOOL OnInitDialog(HWND hDlg);

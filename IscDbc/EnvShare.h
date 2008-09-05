@@ -58,7 +58,7 @@ public:
 public:
 	IscConnection	*connections[MAX_COUNT_DBC_SHARE];
 	int				countConnection;
-	void			*transactionHandle;
+	isc_tr_handle	transactionHandle;
 
 	ListParamTransaction *listTransaction;
 	JString			databaseServerName;

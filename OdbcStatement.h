@@ -71,12 +71,12 @@ public:
 	SQLRETURN sqlFetchScrollCursorStatic(int orientation, int offset);
 	SQLRETURN sqlSetPos (SQLUSMALLINT rowNumber, SQLUSMALLINT operation, SQLUSMALLINT lockType);
 	SQLRETURN sqlBulkOperations( int operation );
-	SQLRETURN sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLINTEGER crowKeyset, SQLUSMALLINT crowRowset);
-	SQLRETURN sqlExtendedFetch (int orientation, int offset, SQLUINTEGER *rowCountPointer, SQLUSMALLINT *rowStatusArray);
-	SQLRETURN sqlRowCount (SQLINTEGER *rowCount);
+	SQLRETURN sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLLEN crowKeyset, SQLUSMALLINT crowRowset);
+	SQLRETURN sqlExtendedFetch (int orientation, int offset, SQLULEN *rowCountPointer, SQLUSMALLINT *rowStatusArray);
+	SQLRETURN sqlRowCount (SQLLEN *rowCount);
 	SQLRETURN sqlSetStmtAttr (int attribute, SQLPOINTER ptr, int length);
 	SQLRETURN sqlParamData(SQLPOINTER *ptr);	// Carlos Guzmán Álvarez
-	SQLRETURN	sqlPutData (SQLPOINTER value, SQLINTEGER valueSize);
+	SQLRETURN	sqlPutData (SQLPOINTER value, SQLLEN valueSize);
 	SQLRETURN sqlGetTypeInfo (int dataType);
 	bool 	registerOutParameter();
 	SQLRETURN inputParam( bool arrayColumnWiseBinding = false );
@@ -94,13 +94,13 @@ public:
 	SQLRETURN sqlProcedureColumns(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength, SQLCHAR*col,int colLength);
 	SQLRETURN sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * proc, int procLength);
 	SQLRETURN sqlCancel();
-	SQLRETURN sqlBindParameter (int parameter, int type, int cType, int sqlType, int precision, int scale, PTR ptr, int bufferLength, SDWORD *length);
-	SQLRETURN sqlDescribeParam (int parameter, SWORD* sqlType, UDWORD*precision, SWORD*scale,SWORD*nullable);
+	SQLRETURN sqlBindParameter (int parameter, int type, int cType, int sqlType, int precision, int scale, PTR ptr, int bufferLength, SQLLEN *length);
+	SQLRETURN sqlDescribeParam (int parameter, SWORD* sqlType, SQLULEN*precision, SWORD*scale,SWORD*nullable);
 	SQLRETURN formatParameter( int parameter );
 	SQLRETURN sqlExecDirect (SQLCHAR * sql, int sqlLength);
 	SQLRETURN sqlExecute();
-	SQLRETURN sqlGetData (int column, int cType, PTR value, int bufferLength, SDWORD *length);
-	SQLRETURN sqlDescribeCol (int col, SQLCHAR *colName, int nameSize, SWORD *nameLength,SWORD*sqlType,UDWORD*precision,SWORD*scale,SWORD *nullable);
+	SQLRETURN sqlGetData (int column, int cType, PTR value, SQLLEN bufferLength, SQLLEN *length);
+	SQLRETURN sqlDescribeCol (int col, SQLCHAR *colName, int nameSize, SWORD *nameLength,SWORD*sqlType,SQLULEN*precision,SWORD*scale,SWORD *nullable);
 	SQLRETURN sqlNumResultCols (SWORD *columns);
 	SQLRETURN sqlNumParams (SWORD *params);
 	SQLRETURN sqlForeignKeys (SQLCHAR *pkCatalog, int pkCatLength, SQLCHAR*pkSchema, int pkSchemaLength,SQLCHAR*pkTable,int pkTableLength, SQLCHAR* fkCatalog,int fkCatalogLength, SQLCHAR*fkSchema, int fkSchemaLength,SQLCHAR*fkTable,int fkTableLength);
@@ -110,7 +110,7 @@ public:
 	void releaseBindings();
 	SQLRETURN sqlFreeStmt (int option);
 	SQLRETURN sqlFetch();
-	SQLRETURN sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLINTEGER bufferLength, SQLINTEGER *indPtr);
+	SQLRETURN sqlBindCol (int columnNumber, int targetType, SQLPOINTER targetValuePtr, SQLLEN bufferLength, SQLLEN *indPtr);
 	void rebindColumn();
 	void rebindParam(bool initAttrDataAtExec = false);
 	void setResultSet (ResultSet *results, bool fromSystemCatalog = true);
@@ -123,7 +123,7 @@ public:
 	SQLRETURN sqlTablePrivileges (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength);
 	SQLRETURN sqlColumnPrivileges (SQLCHAR* catalog, int catLength, SQLCHAR* schema, int schemaLength, SQLCHAR*table, int tableLength, SQLCHAR * column, int columnLength);
 	SQLRETURN sqlSpecialColumns(unsigned short rowId, SQLCHAR * catalog, int catLength, SQLCHAR * schema, int schemaLength, SQLCHAR * table, int tableLength, unsigned short scope, unsigned short nullable);
-	SQLRETURN sqlSetParam (int parameter, int cType, int sqlType, int precision, int scale, PTR ptr, SDWORD * length);
+	SQLRETURN sqlSetParam (int parameter, int cType, int sqlType, int precision, int scale, PTR ptr, SQLLEN * length);
 	void addBindColumn(int column, DescRecord * recordFrom, DescRecord * recordTo);
 	void delBindColumn(int column);
 	void addBindParam(int param, DescRecord * recordFrom, DescRecord * recordTo);
@@ -177,7 +177,7 @@ public:
 	bool				isFetchStaticCursor;
 	bool				schemaFetchData;
 
-	int					fetchRetData;
+	SQLLEN				fetchRetData;
 	SQLINTEGER			*sqldataOutOffsetPtr;
 	SQLUINTEGER			enableAutoIPD;
 	SQLINTEGER			useBookmarks;
@@ -193,7 +193,7 @@ public:
 	int					rowNumber;
 	int					rowNumberParamArray;
 	int					lastRowsetSize;
-	long				indicatorRowNumber;
+	SQLLEN				indicatorRowNumber;
 	int					maxRows;
 	int					maxLength;
 };

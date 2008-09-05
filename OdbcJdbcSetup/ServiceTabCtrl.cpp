@@ -76,7 +76,7 @@ bool CServiceTabCtrl::OnInitDialog( HWND hDlg )
     tie.iImage = -1; 
 	tabData.tabCtrl = this;
 	tabData.hWndTab = hWndTab;
-    tie.lParam = (ULONG)&tabData;
+    tie.lParam = (UINT_PTR)&tabData;
 
 	tabData.childTab[0] = backup.getObject();
 	backup.buildDlgChild( hWndTab );
@@ -105,7 +105,7 @@ bool CServiceTabCtrl::OnInitDialog( HWND hDlg )
 
 	setExecutorForViewLogFile();
 
-    SetWindowLong( hWndTab, GW_USERDATA, (ULONG)&tabData ); 
+    SetWindowLong( hWndTab, GW_USERDATA, (INT_PTR)&tabData ); 
 	backup.createDialogIndirect( this );
 
 	return true;
@@ -174,7 +174,7 @@ BOOL CALLBACK wndproCServiceTabCtrl( HWND hDlg, UINT message, WORD wParam, LONG 
     return FALSE ;
 }
 
-int CServiceTabCtrl::DoModal()
+INT_PTR CServiceTabCtrl::DoModal()
 {
 	WORD *p, *pdlgtemplate;
 	int nchar;
@@ -208,7 +208,7 @@ int CServiceTabCtrl::DoModal()
     TMP_DEFPUSHBUTTON ( _TR( IDS_BUTTON_CLOSE, "Close" ), IDOK,144,216,60,14 )
     TMP_NAMECONTROL   ( "TabControl", IDC_SERVICE_TABCTRL, "SysTabControl32",0x0,7,7,328,204 )
 
-	int nRet = DialogBoxIndirectParam( m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hWndParent, (DLGPROC)wndproCServiceTabCtrl, (ULONG)this );
+	INT_PTR nRet = DialogBoxIndirectParam( m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hWndParent, (DLGPROC)wndproCServiceTabCtrl, (UINT_PTR)this );
 	LocalFree( LocalHandle( pdlgtemplate ) );
 
 	return nRet;

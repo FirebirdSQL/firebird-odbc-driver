@@ -95,7 +95,7 @@ bool IscCallableStatement::execute()
 	ISC_STATUS statusVector [20];
 	values.alloc (numberColumns);
 	int numberParameters = inputSqlda.getColumnCount();
-	void *transHandle = startTransaction();
+	isc_tr_handle transHandle = startTransaction();
 	int n;
 
 	for (n = 0; n < numberParameters; ++n)

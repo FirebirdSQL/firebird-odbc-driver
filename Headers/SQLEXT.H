@@ -435,6 +435,7 @@ extern "C" {                         /* Assume C declarations for C++ */
 /* The previous definitions for SQL_UNICODE_ are historical and obsolete */
 
 #define	SQL_UNICODE				SQL_WCHAR
+
 #define	SQL_UNICODE_VARCHAR		SQL_WVARCHAR
 #define SQL_UNICODE_LONGVARCHAR	SQL_WLONGVARCHAR
 #define SQL_UNICODE_CHAR		SQL_WCHAR
@@ -495,7 +496,12 @@ extern "C" {                         /* Assume C declarations for C++ */
 #define SQL_C_ULONG      (SQL_C_LONG+SQL_UNSIGNED_OFFSET)  /* UNSIGNED INTEGER*/
 #define SQL_C_USHORT     (SQL_C_SHORT+SQL_UNSIGNED_OFFSET) /* UNSIGNED SMALLINT*/
 #define SQL_C_UTINYINT   (SQL_TINYINT+SQL_UNSIGNED_OFFSET) /* UNSIGNED TINYINT*/
+
+#ifdef _WIN64
+#define SQL_C_BOOKMARK   SQL_C_UBIGINT                     /* BOOKMARK        */
+#else
 #define SQL_C_BOOKMARK   SQL_C_ULONG                       /* BOOKMARK        */
+#endif
 
 #if (ODBCVER >= 0x0350)
 #define SQL_C_GUID	SQL_GUID
@@ -852,6 +858,7 @@ extern "C" {                         /* Assume C declarations for C++ */
 #define SQL_DDL_INDEX							170
 #define SQL_DM_VER								171
 #define SQL_INSERT_STATEMENT					172
+#define	SQL_CONVERT_GUID						173		
 #define SQL_UNION_STATEMENT						SQL_UNION
 #endif  /* ODBCVER >= 0x0300 */
 
@@ -908,6 +915,7 @@ extern "C" {                         /* Assume C declarations for C++ */
 #define	SQL_CVT_WCHAR						0x00200000L
 #define	SQL_CVT_WLONGVARCHAR				0x00400000L
 #define	SQL_CVT_WVARCHAR					0x00800000L
+#define SQL_CVT_GUID						0x01000000L
 
 #endif  /* ODBCVER >= 0x0300 */
 
@@ -1805,7 +1813,7 @@ SQLRETURN SQL_API SQLColAttributes(
     SQLPOINTER         rgbDesc,
     SQLSMALLINT        cbDescMax,
     SQLSMALLINT 	  *pcbDesc,
-    SQLINTEGER 		  *pfDesc);
+    SQLLEN 		      * pfDesc);
 
 SQLRETURN SQL_API SQLColumnPrivileges(
     SQLHSTMT           hstmt,
@@ -1822,15 +1830,15 @@ SQLRETURN SQL_API SQLDescribeParam(
     SQLHSTMT           hstmt,
     SQLUSMALLINT       ipar,
     SQLSMALLINT 	  *pfSqlType,
-    SQLUINTEGER 	  *pcbParamDef,
+    SQLULEN      	  *pcbParamDef,
     SQLSMALLINT 	  *pibScale,
     SQLSMALLINT 	  *pfNullable);
 
 SQLRETURN SQL_API SQLExtendedFetch(
     SQLHSTMT           hstmt,
     SQLUSMALLINT       fFetchType,
-    SQLINTEGER         irow,
-    SQLUINTEGER 	  *pcrow,
+    SQLLEN             irow,
+    SQLULEN			  *pcrow,
     SQLUSMALLINT 	  *rgfRowStatus);
 
 SQLRETURN SQL_API SQLForeignKeys(
@@ -1865,8 +1873,8 @@ SQLRETURN SQL_API SQLNumParams(
 
 SQLRETURN SQL_API SQLParamOptions(
     SQLHSTMT           hstmt,
-    SQLUINTEGER        crow,
-    SQLUINTEGER 	  *pirow);
+    SQLULEN            crow,
+    SQLULEN			   *pirow);
 
 SQLRETURN SQL_API SQLPrimaryKeys(
     SQLHSTMT           hstmt,
@@ -1897,9 +1905,11 @@ SQLRETURN SQL_API SQLProcedures(
     SQLCHAR 		  *szProcName,
     SQLSMALLINT        cbProcName);
 
+
+
 SQLRETURN SQL_API SQLSetPos(
     SQLHSTMT           hstmt,
-    SQLUSMALLINT       irow,
+    SQLSETPOSIROW      irow,
     SQLUSMALLINT       fOption,
     SQLUSMALLINT       fLock);
 
@@ -1928,11 +1938,11 @@ SQLRETURN SQL_API SQLBindParameter(
     SQLSMALLINT        fParamType,
     SQLSMALLINT        fCType,
     SQLSMALLINT        fSqlType,
-    SQLUINTEGER        cbColDef,
+    SQLULEN            cbColDef,
     SQLSMALLINT        ibScale,
     SQLPOINTER         rgbValue,
-    SQLINTEGER         cbValueMax,
-    SQLINTEGER 		  *pcbValue);
+    SQLLEN             cbValueMax,
+    SQLLEN     		   *pcbValue);
 
 
 #endif /* RC_INVOKED */
@@ -1997,7 +2007,7 @@ SQLRETURN SQL_API SQLAllocHandleStd(
 SQLRETURN SQL_API SQLSetScrollOptions(    /*      Use SQLSetStmtOptions */
     SQLHSTMT           hstmt,
     SQLUSMALLINT       fConcurrency,
-    SQLINTEGER         crowKeyset,
+    SQLLEN             crowKeyset,
     SQLUSMALLINT       crowRowset);
 
 /* Tracing section */
@@ -2015,6 +2025,18 @@ DWORD	SQL_API TraceVersion();					// Returns trace API version
 #define TRACE_VS_EVENT_ON	0x00000002L	
 
 RETCODE	SQL_API	TraceVSControl(DWORD);			
+
+/* Functions for setting the connection pooling failure detection code */
+/* The "TryWait" value is the time (in seconds) that the DM will wait  */
+/* between detecting that a connection is dead (using                  */
+/* SQL_ATTR_CONNECTION_DEAD) and retrying the connection.  During that */
+/* interval, connection requests will get "The server appears to be    */
+/* dead" error returns.                                                */ 
+
+
+BOOL SQL_API    ODBCSetTryWaitValue(DWORD dwValue);	/* In seconds */
+DWORD SQL_API	ODBCGetTryWaitValue();			/* In Milliseconds(!) */
+
 
 /* the flags in ODBC_VS_ARGS */
 #define ODBC_VS_FLAG_UNICODE_ARG	0x00000001L	/* the argument is unicode */
@@ -2044,7 +2066,7 @@ VOID	SQL_API	FireVSDebugEvent(PODBC_VS_ARGS);
 }                                     /* End of extern "C" { */
 #endif  /* __cplusplus */
 
-#if defined(WIN32) 
+#if defined(WIN32) || defined(_WIN64) 
 #include "sqlucode.h"
 #endif
 

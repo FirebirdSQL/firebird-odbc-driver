@@ -1541,7 +1541,7 @@ bool Setup::configureDialog()
 
 	do
 	{
-		int ret = dialog.DoModal();
+		INT_PTR ret = dialog.DoModal();
 		if ( ret != IDOK )
 			return false;
 
