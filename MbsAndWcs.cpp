@@ -47,11 +47,13 @@ size_t _WcsToMbs( char *mbstr,  const wchar_t *wcstr, size_t count )
 									  wcstr,
 									  -1,
 									  (LPSTR)mbstr,
-									  !mbstr ? 0 : (int)count+1,
+									  !mbstr ? 0 : (int)count,
 									  NULL,
 									  NULL );
 	if ( len > 0 )
 		len--;
+	else if ( mbstr )
+		len = count;
 
 	return len;
 }
