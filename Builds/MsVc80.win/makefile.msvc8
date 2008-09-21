@@ -1,7 +1,7 @@
 #
 .PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup
 #.PHONY: all createdirs
-#OdbcFb32
+#OdbcFb
 #
 #DEBUG = 1
 #
@@ -41,7 +41,7 @@ COMPFLAGS	= /nologo /Ob1 /W3 /EHsc \
 		  $(PLATFORMFLAGS) \
 		  /D "ISOLATION_AWARE_ENABLED" /D "_CRT_SECURE_NO_DEPRECATE" \
 		  /D "_WINDOWS" /D "_WINDLL" \
-		  /Fp"$(BUILDDIR)\OdbcFb32.pch" \
+		  /Fp"$(BUILDDIR)\OdbcFb.pch" \
 		  /Fo"$(BUILDDIR)\\" \
 		  /Gy \
 		  /Fd"$(BUILDDIR)\\" /c
