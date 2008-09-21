@@ -31,7 +31,7 @@ LINKFLAGS = -rdynamic -export-dynamic -shared
 EXTLIBS = -lcrypt -lgds -lcompat
 #
 ISCDBCDLL       = $(TARGETDIR)/IscDbc.so
-ODBCJDBCDLL     = $(TARGETDIR)/OdbcFb32.so
+ODBCJDBCDLL     = $(TARGETDIR)/OdbcFb.so
 ODBCJDBCSETUPDLL= $(TARGETDIR)/OdbcJdbcS.so
 #
 ifdef DEBUG

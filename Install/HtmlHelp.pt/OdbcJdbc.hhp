@@ -1,6 +1,6 @@
 [OPTIONS]
 Compatibility=1.1 or later
-Compiled file=OdbcJdbc.chm
+Compiled file=OdbcFb.chm
 Contents file=odbcjdbc.hhc
 Title=Firebird ODBC
 Default topic=html\FirebirdODBC.htm

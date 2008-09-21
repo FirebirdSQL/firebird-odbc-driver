@@ -36,7 +36,7 @@ LINKFLAGS	= -q -Gn -Gi -Tpd -ad -L$(COMPDIR)\lib -L$(COMPDIR)\lib\PSDK -x
 STARTUP		= c0d32.obj
 LIBRARIES	= import32.lib cw32mt.lib wsock32.lib
 ISCDBCDLL       = $(TARGETDIR)\IscDbc.dll
-ODBCJDBCDLL     = $(TARGETDIR)\OdbcFb32.dll
+ODBCJDBCDLL     = $(TARGETDIR)\OdbcFb.dll
 ODBCJDBCSDLL    = $(TARGETDIR)\OdbcJdbcSetup.dll
 #
 !ifdef DEBUG

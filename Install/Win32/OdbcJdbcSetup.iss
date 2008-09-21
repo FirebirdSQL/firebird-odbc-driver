@@ -63,8 +63,8 @@ AppUpdatesURL={#FIREBIRD_URL}
 
 DefaultDirName={pf}\Firebird\Firebird_ODBC
 DefaultGroupName=Firebird\Firebird ODBC Driver
-UninstallDisplayIcon={sys}\OdbcFb32.dll
-UninstallFilesDir={localappdata}\OdbcFb32
+UninstallDisplayIcon={sys}\OdbcFb.dll
+UninstallFilesDir={localappdata}\OdbcFb
 
 PrivilegesRequired=admin
 
@@ -102,11 +102,11 @@ Name: DocumentationComponent; Description: {cm:DocumentationComponent}; Types: D
 
 
 [Files]
-Source: {#SOURCE_LIBS}OdbcFb32.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb32.chm; DestDir: {app}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb32.chm; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb32.chm; DestDir: {app}; Components: DocumentationComponent; Flags: ignoreversion
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb32.chm; DestDir: {sys}; Components: DocumentationComponent; Flags: ignoreversion
+Source: {#SOURCE_LIBS}OdbcFb.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile
+Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
+Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
+Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DocumentationComponent; Flags: ignoreversion
+Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {sys}; Components: DocumentationComponent; Flags: ignoreversion
 Source: {#SOURCE_DOCS}\HtmlHelp\html\*.*; DestDir: {app}\html; Components: DocumentationComponent
 Source: {#SOURCE_DOCS}\HtmlHelp\images\*.*; DestDir: {app}\images; Components: DocumentationComponent
 Source: {#SOURCE_DOCS}\Win32\Readme.txt; DestDir: {app}; Components: DocumentationComponent; Flags: isreadme
@@ -117,24 +117,24 @@ Source: {#SOURCE_DOCS}\IDPLicense.txt; DestDir: {app}; Components: Documentation
 [Icons]
 Name: {group}\Uninstall Firebird ODBC driver; Filename: {uninstallexe}; Components: DocumentationComponent; Comment: Remove Firebird ODBC Driver Documentation
 Name: {group}\Uninstall Firebird ODBC driver; Filename: {uninstallexe}; Components: DeveloperComponent; Comment: Remove Firebird ODBC Driver Library and Documentation
-Name: {group}\Firebird ODBC Help; Filename: {app}\OdbcFb32.chm; Components: DocumentationComponent
-Name: {group}\Firebird ODBC Help; Filename: {sys}\OdbcFb32.chm; Components: DeveloperComponent
-Name: {app}\Firebird ODBC Help; Filename: {sys}\OdbcFb32.chm; Components: DeveloperComponent
+Name: {group}\Firebird ODBC Help; Filename: {app}\OdbcFb.chm; Components: DocumentationComponent
+Name: {group}\Firebird ODBC Help; Filename: {sys}\OdbcFb.chm; Components: DeveloperComponent
+Name: {app}\Firebird ODBC Help; Filename: {sys}\OdbcFb.chm; Components: DeveloperComponent
 ;Name: {group}\Firebird ODBC v1.2 Release Notes; Filename: {app}\ReleaseNotes_v1.2.html; Components: DocumentationComponent
 Name: {group}\Firebird ODBC readme.txt; Filename: {app}\Readme.txt; Components: DocumentationComponent
 Name: {group}\Firebird ODBC license.txt; Filename: {app}\IDPLicense.txt; Components: DocumentationComponent
 
 
 [Run]
-;Filename: {sys}\regsvr32.exe; Parameters: "/s ""{app}""\OdbcFb32.dll"; Components: DeveloperComponent DeploymentComponent
+;Filename: {sys}\regsvr32.exe; Parameters: "/s ""{app}""\OdbcFb.dll"; Components: DeveloperComponent DeploymentComponent
 
 
 [UninstallRun]
-;Filename: {sys}\regsvr32.exe; Parameters: "/u /s ""{app}""\OdbcFb32.dll"; Components: DeveloperComponent DeploymentComponent
+;Filename: {sys}\regsvr32.exe; Parameters: "/u /s ""{app}""\OdbcFb.dll"; Components: DeveloperComponent DeploymentComponent
 
 
 [UninstallDelete]
-Type: Files; Name: {sys}\OdbcFb32.dll; Components: DeveloperComponent DeploymentComponent
+Type: Files; Name: {sys}\OdbcFb.dll; Components: DeveloperComponent DeploymentComponent
 
 
 [CustomMessages]

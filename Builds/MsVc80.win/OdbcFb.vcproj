@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
-	Name="Firebird Odbc"
+	Version="8.00"
+	Name="OdbcFb"
 	ProjectGUID="{C6127398-654D-4196-B8C1-5BB32D75D7FD}"
+	RootNamespace="Firebird OdbcFb"
 	>
 	<Platforms>
 		<Platform
 			Name="Win32"
+		/>
+		<Platform
+			Name="x64"
 		/>
 	</Platforms>
 	<ToolFiles>
@@ -15,8 +19,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug\Obj"
+			OutputDirectory="$(PlatformName)/$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)/$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
@@ -40,19 +44,19 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\Debug/OdbcFb32.tlb"
+				TypeLibraryName=".\Debug/OdbcFb.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../IscDbc;D:\Firebird\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;DEBUG;LOGGING;_CRT_SECURE_NO_DEPRECATE"
+				AdditionalIncludeDirectories="../../IscDbc;C:\firebird\include"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;DEBUG;LOGGING"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\Debug\Obj/OdbcFb32.pch"
-				AssemblerListingLocation=".\Debug\Obj/"
-				ObjectFile=".\Debug\Obj/"
-				ProgramDataBaseFileName=".\Debug\Obj/"
+				PrecompiledHeaderFile=""
+				AssemblerListingLocation="$(PlatformName)/$(ConfigurationName)/Obj/"
+				ObjectFile="$(PlatformName)/$(ConfigurationName)/Obj/"
+				ProgramDataBaseFileName="$(PlatformName)/$(ConfigurationName)/Obj/"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -72,17 +76,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386&#x0D;&#x0A;/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE"
+				AdditionalOptions="/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE"
 				AdditionalDependencies="version.lib wsock32.lib comctl32.lib"
-				OutputFile=".\Debug/OdbcFb32.dll"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
+				OutputFile="$(PlatformName)/$(ConfigurationName)/OdbcFb.dll"
 				AdditionalLibraryDirectories="debug"
 				ModuleDefinitionFile="..\..\OdbcJdbc.def"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/OdbcFb32.pdb"
+				ProgramDatabaseFile=""
 				SubSystem="2"
-				ImportLibrary=".\Debug/OdbcFb32.lib"
+				ImportLibrary=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -107,14 +109,110 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Registering Server"
-				CommandLine="regsvr32 /s $(TargetDir)&#1040;&#1080;Odbc.dll&#x0D;&#x0A;copy debug\OdbcFb32.dll c:\windows\system32\OdbcFb32.dll&#x0D;&#x0A;&#x0D;&#x0A;"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="$(PlatformName)/$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)/$(ConfigurationName)"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="3"
+				TypeLibraryName=".\Debug/OdbcFb.tlb"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="../../IscDbc;C:\firebird\include"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;DEBUG;LOGGING"
+				RuntimeLibrary="1"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile=" "
+				AssemblerListingLocation="$(PlatformName)/$(ConfigurationName)/Obj/"
+				ObjectFile="$(PlatformName)/$(ConfigurationName)/Obj/"
+				ProgramDataBaseFileName="$(PlatformName)/$(ConfigurationName)/Obj/"
+				BrowseInformation="1"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+				CompileAs="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE"
+				AdditionalDependencies="version.lib wsock32.lib comctl32.lib"
+				OutputFile="$(PlatformName)/$(ConfigurationName)/OdbcFb.dll"
+				AdditionalLibraryDirectories="debug"
+				ModuleDefinitionFile="..\..\OdbcJdbc.def"
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile=""
+				SubSystem="2"
+				ImportLibrary=""
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release\Obj"
+			OutputDirectory="$(PlatformName)/$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)/$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
@@ -138,21 +236,21 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\Release/OdbcFb32.tlb"
+				TypeLibraryName=".\Release/OdbcFb.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../IscDbc;D:\Firebird\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE"
+				AdditionalIncludeDirectories="../../IscDbc;C:\firebird\include"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\Release\Obj/OdbcFb32.pch"
-				AssemblerListingLocation=".\Release\Obj/"
-				ObjectFile=".\Release\Obj/"
-				ProgramDataBaseFileName=".\Release\Obj/"
+				PrecompiledHeaderFile=""
+				AssemblerListingLocation="$(PlatformName)/$(ConfigurationName)/Obj/"
+				ObjectFile="$(PlatformName)/$(ConfigurationName)/Obj/"
+				ProgramDataBaseFileName="$(PlatformName)/$(ConfigurationName)/Obj/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CompileAs="0"
@@ -170,15 +268,106 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386&#x0D;&#x0A;/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE"
+				AdditionalOptions="/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE"
 				AdditionalDependencies="version.lib wsock32.lib comctl32.lib"
-				OutputFile=".\Release/OdbcFb32.dll"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
+				OutputFile="$(PlatformName)/$(ConfigurationName)/OdbcFb.dll"
 				ModuleDefinitionFile="..\..\OdbcJdbc.def"
-				ProgramDatabaseFile=".\Release/OdbcFb32.pdb"
 				SubSystem="2"
-				ImportLibrary=".\Release/OdbcFb32.lib"
+				ImportLibrary=""
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|x64"
+			OutputDirectory="$(PlatformName)/$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)/$(ConfigurationName)"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="3"
+				TypeLibraryName=".\Release/OdbcFb.tlb"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				InlineFunctionExpansion="1"
+				AdditionalIncludeDirectories="../../IscDbc;C:\firebird\include"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				StringPooling="true"
+				RuntimeLibrary="0"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile=" "
+				AssemblerListingLocation="$(PlatformName)/$(ConfigurationName)/Obj/"
+				ObjectFile="$(PlatformName)/$(ConfigurationName)/Obj/"
+				ProgramDataBaseFileName="$(PlatformName)/$(ConfigurationName)/Obj/"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
+				CompileAs="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE"
+				AdditionalDependencies="version.lib wsock32.lib comctl32.lib"
+				OutputFile="$(PlatformName)/$(ConfigurationName)/OdbcFb.dll"
+				ModuleDefinitionFile="..\..\OdbcJdbc.def"
+				ProgramDatabaseFile=""
+				SubSystem="2"
+				ImportLibrary=""
+				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -822,7 +1011,23 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
+						Name="Debug|x64"
+						>
+						<Tool
+							Name="VCResourceCompilerTool"
+							AdditionalIncludeDirectories="..\..;$(NoInherit)"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCResourceCompilerTool"
+							AdditionalIncludeDirectories="..\..;$(NoInherit)"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
 						>
 						<Tool
 							Name="VCResourceCompilerTool"

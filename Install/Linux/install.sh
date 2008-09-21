@@ -234,7 +234,7 @@ UninstallLibraries()
         echo $FUNCNAME
     fi
 
-    for afile in libIscDbc.so libOdbcJdbc.so libOdbcJdbcS.so libIscDbc
+    for afile in libOdbcFb.so
     do
         if [ "TEST" = "1" ]; then
             echo "In Test Mode. Would remove $(fbODBCLIBS)/$afile"

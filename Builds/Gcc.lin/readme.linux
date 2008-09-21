@@ -2,7 +2,7 @@
   For connect from unixODBC :
 
     Into share folder :
-    libOdbcFb32.so
+    libOdbcFb.so
 
 2)==================================================================
 Conrtributed by On Tuesday 28 October 2003 19:23, Yves Glodt wrote:
@@ -21,7 +21,7 @@ takes to set it up manually (thanks to Vladimir Tsvigun):
 first, untar the OdbcJdbc_Snapshot.tar.gz into /usr/lib
 
 Then you should have this in /usr/lib:
-libOdbcFb32.so*
+libOdbcFb.so*
 
 
 The odbc-config-files in /etc shoud look like this:
@@ -30,8 +30,8 @@ odbcinst.ini:
 --------------------
 [Firebird]
 Description     = InterBase/Firebird ODBC Driver
-Driver          = /usr/lib/libOdbcFb32.so
-Setup           = /usr/lib/libOdbcFb32.so
+Driver          = /usr/lib/libOdbcFb.so
+Setup           = /usr/lib/libOdbcFb.so
 Threading 	= 1
 FileUsage       = 1
 CPTimeout       =
