@@ -855,7 +855,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 	if(i==sizeof(debSetDescField)/sizeof(*debSetDescField))
 		i=0;
 	sprintf(strTmp,"\tid %4i - %s : recNumber %i : value %i\n",fieldId,debSetDescField[i].name,
-								recNumber, value ? (INT_PTR)value : 0);
+								recNumber, value ? (intptr_t)value : 0);
 	OutputDebugString(strTmp); 
 #endif
 	clearErrors();
@@ -875,7 +875,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 #pragma FB_COMPILER_MESSAGE("If modify value realized ReAlloc FIXME!")
-				headCount = (SQLSMALLINT)(INT_PTR)value;
+				headCount = (SQLSMALLINT)(intptr_t)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -888,7 +888,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplication:
 			case odtApplicationParameter:
 			case odtApplicationRow:
-				headArraySize = (UINT_PTR)value;
+				headArraySize = (uintptr_t)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -918,7 +918,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplication:
 			case odtApplicationParameter:
 			case odtApplicationRow:
-				headBindType = (INT_PTR)value;
+				headBindType = (intptr_t)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -947,8 +947,8 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 				if (record)
 				{
 #pragma FB_COMPILER_MESSAGE("This temporary decision. FIXME!")
-					record->type = (SQLSMALLINT)(INT_PTR)value;
-					record->conciseType = (SQLSMALLINT)(INT_PTR)value;
+					record->type = (SQLSMALLINT)(intptr_t)value;
+					record->conciseType = (SQLSMALLINT)(intptr_t)value;
 				}
 				break;
 			default:
@@ -964,7 +964,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->datetimeIntervalCode = (SQLSMALLINT)(INT_PTR)value;
+					record->datetimeIntervalCode = (SQLSMALLINT)(intptr_t)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -981,8 +981,8 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 				if (record)
 				{
 #pragma FB_COMPILER_MESSAGE("This temporary decision. FIXME!")
-					record->conciseType = (SQLSMALLINT)(INT_PTR)value;
-					record->type = (SQLSMALLINT)(INT_PTR)value;
+					record->conciseType = (SQLSMALLINT)(intptr_t)value;
+					record->type = (SQLSMALLINT)(intptr_t)value;
 				}
 				break;
 			default:
@@ -998,7 +998,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->datetimeIntervalPrecision = (INT_PTR)value;
+					record->datetimeIntervalPrecision = (intptr_t)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1013,7 +1013,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->length = (UINT_PTR)value;
+					record->length = (uintptr_t)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1038,7 +1038,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->numPrecRadix = (INT_PTR)value;
+					record->numPrecRadix = (intptr_t)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1054,10 +1054,10 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtImplementationParameter:
 				if (record)
 				{
-					record->octetLength = (INT_PTR)value;
-					record->sizeColumnExtendedFetch = (INT_PTR)value;
+					record->octetLength = (intptr_t)value;
+					record->sizeColumnExtendedFetch = (intptr_t)value;
 					if ( !record->length ) 
-						record->length = (INT_PTR)value;
+						record->length = (intptr_t)value;
 				}
 				break;
 			default:
@@ -1083,7 +1083,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			if(headType == odtImplementationParameter)
 			{
 				if (record)
-					record->parameterType = (SQLSMALLINT)(INT_PTR)value;
+					record->parameterType = (SQLSMALLINT)(intptr_t)value;
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1097,7 +1097,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->precision = (SQLSMALLINT)(INT_PTR)value;
+					record->precision = (SQLSMALLINT)(intptr_t)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1112,7 +1112,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationParameter:
 			case odtImplementationParameter:
 				if (record)
-					record->scale = (SQLSMALLINT)(INT_PTR)value;
+					record->scale = (SQLSMALLINT)(intptr_t)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1137,7 +1137,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			if(headType == odtImplementationParameter)
 			{
 				if (record)
-					record->unNamed = (SQLSMALLINT)(INT_PTR)value;
+					record->unNamed = (SQLSMALLINT)(intptr_t)value;
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");

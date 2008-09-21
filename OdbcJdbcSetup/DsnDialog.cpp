@@ -184,7 +184,7 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 
 		hWnd = GetDlgItem(hDlg, IDC_COMBOBOX_USE_SCHEMA);
 		
-		INT_PTR selectUse = SendMessage( hWnd, CB_GETCURSEL, (WPARAM)0, (LPARAM)0 );
+		intptr_t selectUse = SendMessage( hWnd, CB_GETCURSEL, (WPARAM)0, (LPARAM)0 );
 
 		if ( selectUse == CB_ERR )
 			selectUse = 0;
@@ -814,7 +814,7 @@ void ProcessCDError(DWORD dwErrorCode, HWND hWnd)
 	MessageBox( hWnd, stringID, TEXT( _TR( IDS_DLG_TITLE_SETUP, "FireBird ODBC Setup" ) ), MB_OK );
 }
 
-INT_PTR CDsnDialog::DoModal()
+intptr_t CDsnDialog::DoModal()
 {
 	WORD  *p, *pdlgtemplate;
 	int   nchar;
@@ -888,7 +888,7 @@ INT_PTR CDsnDialog::DoModal()
     TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_SERVICES, "Services" ), IDC_BUTTON_SERVICE,118,130,87,18 )
     TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_HELP_ODBC, "Help" ), IDC_HELP_ODBC,243,233,60,14 )
 
-	INT_PTR nRet = DialogBoxIndirectParam(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, m_hWndParent, (DLGPROC)wndprocDsnDialog, (UINT_PTR)this );
+	intptr_t nRet = DialogBoxIndirectParam(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, m_hWndParent, (DLGPROC)wndprocDsnDialog, (uintptr_t)this );
 	LocalFree (LocalHandle (pdlgtemplate));
 
 	return nRet;

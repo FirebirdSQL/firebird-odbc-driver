@@ -403,14 +403,14 @@ SQLRETURN OdbcConnection::sqlSetConnectAttr( SQLINTEGER attribute, SQLPOINTER va
 #endif
 
 	case SQL_ATTR_ANSI_APP:
-		if ( (INT_PTR) value == SQL_AA_FALSE )
+		if ( (intptr_t) value == SQL_AA_FALSE )
 			return sqlReturn (SQL_ERROR, "IM001", "Driver does not support this function");
 		break;
 
 	case SQL_ATTR_HANDLE_DBC_SHARE: // 4000
 		if (connection)
 		{
-			if ( (INT_PTR) value )
+			if ( (intptr_t) value )
 				connection->connectionToEnvShare();
 			else
 				connection->connectionFromEnvShare();
@@ -418,33 +418,33 @@ SQLRETURN OdbcConnection::sqlSetConnectAttr( SQLINTEGER attribute, SQLPOINTER va
 		break;
 
 	case SQL_ATTR_LOGIN_TIMEOUT:
-		connectionTimeout = (INT_PTR) value;
+		connectionTimeout = (intptr_t) value;
 		break;
 
 	case SQL_ATTR_AUTOCOMMIT:
-		autoCommit = (INT_PTR) value == SQL_AUTOCOMMIT_ON;
+		autoCommit = (intptr_t) value == SQL_AUTOCOMMIT_ON;
 		if (connection)
 			connection->setAutoCommit (autoCommit);
 		break;
 
 	case SQL_ATTR_ODBC_CURSORS:
-		cursors = (INT_PTR) value;
+		cursors = (intptr_t) value;
 		break;
 
 		//Added by CA
 	case SQL_ATTR_TXN_ISOLATION:
-		transactionIsolation = (INT_PTR)value;
+		transactionIsolation = (intptr_t)value;
 		if ( connection )
-			connection->setTransactionIsolation( (INT_PTR) value );
+			connection->setTransactionIsolation( (intptr_t) value );
 		break;
 
 		//Added by CA
 	case SQL_ATTR_ASYNC_ENABLE:
-		asyncEnabled = (INT_PTR) value;
+		asyncEnabled = (intptr_t) value;
 		break;
 
 	case SQL_ATTR_ACCESS_MODE:
-		accessMode = (INT_PTR)value;
+		accessMode = (intptr_t)value;
 		break;
 
 	case SQL_FB_INIT_EVENTS:
@@ -1123,7 +1123,7 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 		return sqlReturn (SQL_ERROR, "HY096", "Information type out of range");
 
 	const char *string = item->value;
-	UINT_PTR value = (UINT_PTR) item->value;
+	uintptr_t value = (uintptr_t) item->value;
 	DatabaseMetaData *metaData = NULL;
 
 	if (connection)
@@ -1262,11 +1262,11 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 		break;
 
 	case SQL_DRIVER_HDBC:
-		value = (UINT_PTR) this;
+		value = (uintptr_t) this;
 		break;
 
 	case SQL_DRIVER_HENV:
-		value = (UINT_PTR) env;
+		value = (uintptr_t) env;
 		break;
 
 	case SQL_USER_NAME:

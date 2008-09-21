@@ -113,7 +113,9 @@ public:
 	}
 
 	operator SQLCHAR*()	{ return byteString; }
+#if (SIZEOF_LONG != 8) || defined(BUILD_REAL_64_BIT_MODE)
 	operator int() { return lengthString; }
+#endif
 	operator SQLSMALLINT() { return lengthString; }
 	operator SQLINTEGER() { return lengthString; }
 

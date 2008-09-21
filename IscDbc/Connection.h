@@ -478,9 +478,9 @@ public:
 	virtual bool		isActiveModify() = 0;
 	virtual bool		isActiveNone() = 0;
 	virtual int			objectVersion() = 0;
-	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) = 0;
-	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr) = 0;
-	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr) = 0;
+	virtual int			getStmtPlan(const void * value, int bufferLength,int *lengthPtr) = 0;
+	virtual int			getStmtType(const void * value, int bufferLength,int *lengthPtr) = 0;
+	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,int *lengthPtr) = 0;
 	virtual bool		isActiveLocalTransaction() = 0;
 	virtual void		setActiveLocalParamTransaction() = 0;
 	virtual void		delActiveLocalParamTransaction() = 0;
@@ -670,7 +670,7 @@ public:
 
 	virtual void		setPosRowInSet(int posRow) = 0;
 	virtual int			getPosRowInSet() = 0;
-	virtual long*		getSqlDataOffsetPtr() = 0;
+	virtual int*		getSqlDataOffsetPtr() = 0;
 	virtual bool		readStaticCursor() = 0;
 	virtual bool		nextFetch() = 0;
 	virtual bool		setCurrentRowInBufferStaticCursor(int nRow) = 0;

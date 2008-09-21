@@ -33,12 +33,12 @@
 
 namespace IscDbcLibrary {
 
-int getTypeStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr)
+int getTypeStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,int *lengthPtr)
 {
 	ISC_STATUS	statusVector[20];
 	char type_info[] = { isc_info_sql_stmt_type };
 	char * info_buffer=(char*)buffer;
-	long &l=*lengthPtr;
+	int &l=*lengthPtr;
 	CFbDll * GDS = connection->GDS;
 
 	if(GDS->_dsql_sql_info(statusVector,&Stmt,sizeof(type_info),type_info,bufferLength,info_buffer))
@@ -47,12 +47,12 @@ int getTypeStatement(IscConnection * connection, isc_stmt_handle Stmt,const void
 	return 0;
 }
 
-int getInfoCountRecordsStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr)
+int getInfoCountRecordsStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,int *lengthPtr)
 {
 	ISC_STATUS	statusVector[20];
 	char records_info[] = { isc_info_sql_records,isc_info_end };
 	char * info_buffer=(char*)buffer;
-	long &l=*lengthPtr;
+	int &l=*lengthPtr;
 	CFbDll * GDS = connection->GDS;
 
 	if(GDS->_dsql_sql_info(statusVector,&Stmt,sizeof(records_info),records_info,bufferLength,info_buffer))
@@ -61,12 +61,12 @@ int getInfoCountRecordsStatement(IscConnection * connection, isc_stmt_handle Stm
 	return 0;
 }
 
-int getPlanStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr)
+int getPlanStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,int *lengthPtr)
 {
 	ISC_STATUS	statusVector[20];
 	char plan_info[] = { isc_info_sql_get_plan };
 	char * plan_buffer=(char*)buffer;
-	long &l=*lengthPtr;
+	int &l=*lengthPtr;
 	CFbDll * GDS = connection->GDS;
 
 	if(GDS->_dsql_sql_info(statusVector,&Stmt,sizeof(plan_info),plan_info,bufferLength,plan_buffer))

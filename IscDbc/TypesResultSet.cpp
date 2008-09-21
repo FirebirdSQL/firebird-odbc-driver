@@ -191,7 +191,7 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion) : IscResultSet 
 	indicators = (long*)calloc( 1, sizeof(long) * numberColumns );
 	sqlda = &outputSqlda;
 	((XSQLDA*)*sqlda)->sqld = numberColumns;
-	sqldataOffsetPtr = (UINT_PTR)types - sizeof (*types);
+	sqldataOffsetPtr = (uintptr_t)types - sizeof (*types);
 	sqlda->orgsqlvar = new CAttrSqlVar [numberColumns];
 	CAttrSqlVar * orgvar = sqlda->orgsqlvar;
 
@@ -244,7 +244,7 @@ bool TypesResultSet::nextFetch()
 			recordNumber = 1;
 			return false;
 		}
-		sqldataOffsetPtr = (UINT_PTR)types + (recordNumber - 1) * sizeof (*types);
+		sqldataOffsetPtr = (uintptr_t)types + (recordNumber - 1) * sizeof (*types);
 	}
 
 	if (++recordNumber > sizeof (types) / sizeof (types [0]))

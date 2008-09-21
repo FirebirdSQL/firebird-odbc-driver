@@ -48,7 +48,7 @@ public:
 	~CServiceTabCtrl();
 
 public:
-	INT_PTR DoModal();
+	intptr_t DoModal();
 
 	void SetDisabledDlgItem( HWND hDlg, int ID, BOOL bDisabled = TRUE );
 	void UpdateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );

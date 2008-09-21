@@ -299,7 +299,7 @@ void IscArray::attach(CAttrArray * arr, bool fetchBinary, bool bClear)
 void IscArray::attach(char * pointBlob, bool fetchBinary, bool bClear)
 {
 	clear();
-	CAttrArray * arr = (CAttrArray *)*(INT_PTR*)pointBlob;
+	CAttrArray * arr = (CAttrArray *)*(intptr_t*)pointBlob;
 	attach(arr, fetchBinary, bClear);
 	fetched = false;
 }
@@ -360,7 +360,7 @@ void IscArray::getBytesFromArray()
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
 	isc_tr_handle transactionHandle = statement->startTransaction();
-	long lenbuf = arrBufDataSize;
+	ISC_LONG lenbuf = arrBufDataSize;
 
 	int ret = connection->GDS->_array_get_slice(statusVector, &connection->databaseHandle, &transactionHandle,
 		arrayId, &arrDesc, arrBufData, &lenbuf);
@@ -492,14 +492,14 @@ void IscArray::writeBlob(char * sqldata)
 	arrayId = (ISC_QUAD*)sqldata;
 	memset( arrayId, 0, sizeof ( ISC_QUAD ) );
 
-	long len = getSegmentLength(0);
+	ISC_LONG len = getSegmentLength(0);
 	GDS->_array_put_slice ( statusVector, &connection->databaseHandle, &transactionHandle,
 			arrayId, &arrDesc, (char*) Stream::getSegment(0), &len );
 	if ( statusVector [1] )
 		THROW_ISC_EXCEPTION (connection, statusVector);
 }
 
-void IscArray::writeBlob(char * sqldata, char *data, long length)
+void IscArray::writeBlob(char * sqldata, char *data, ISC_LONG length)
 {
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
@@ -680,7 +680,7 @@ void IscArray::writeStringHexToBlob(char * sqldata, char *data, long length)
 
 	convStringToArray ( data, length );
 
-	long lenbuf = arrBufDataSize;
+	ISC_LONG lenbuf = arrBufDataSize;
 
 	GDS->_array_put_slice ( statusVector, &connection->databaseHandle, &transactionHandle,
 		arrayId, &arrDesc, arrBufData, &lenbuf );
@@ -714,7 +714,7 @@ void IscArray::writeArray(Value * value)
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
 	isc_tr_handle transactionHandle = statement->startTransaction();
-	long lenbuf = arrBufDataSize;
+	ISC_LONG lenbuf = arrBufDataSize;
 
 	memset( arrayId, 0, sizeof ( ISC_QUAD ));
 

@@ -435,7 +435,7 @@ bool CServiceTabChild::viewLogFile()
 		sh.lpDirectory = NULL;
 		sh.nShow = SW_SHOWNORMAL;
 
-		if ( !(ShellExecuteEx( &sh ) && ((UINT_PTR)sh.hInstApp > 32)) )
+		if ( !(ShellExecuteEx( &sh ) && ((uintptr_t)sh.hInstApp > 32)) )
 			return false;
 	}
 	return true;
