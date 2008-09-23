@@ -2,6 +2,21 @@
   OdbcJdbc 2.0
 ==================================
 
+147) - current BUILDNUM_VERSION set 145 ( 21 Sep 2008 )
+	- added Linux x64 support, thanks to Dmitry Starodubov.
+
+146) - current BUILDNUM_VERSION set 145 ( 14 Sep 2008 )
+	- added Windows x64 support, thanks to Alexander Potapchenko.
+	- replaced OdbcFb32 to OdbcFb. 
+	- fixed usage of old hard coded "OdbcJdbcSetup" in the driver code.
+	- installation corrections. Now if you install driver DLL by hand using regsvr32.exe with key "/i" 
+	  then it will be installed into system directory. If key "/i" is not used then driver will be registered in the
+	  directory where it is located.
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-23, 
+	  "Log file not rendered correctly by Internet Explorer", thanks to Alexander Potapchenko.
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-32,
+	  "Access-related multi DB problem", thanks to Alexander Potapchenko.
+
 145)	- current BUILDNUM_VERSION set 145 ( 10 Sep 2008 )
 	- Fix ODBC driver to work correctly with Microsoft Project 2003. This involves the following changes:
 	  - Implement basic support for SQL_GUID data type
