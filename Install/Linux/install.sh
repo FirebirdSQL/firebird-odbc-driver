@@ -173,21 +173,21 @@ CheckEnvironment()
     DISTRO=""
     for afile in `ls /etc/*release`
     do
-        if [ -n "$DISTRO" ]; then
-                ErrorHelp 4
-        else
-            DISTRO=`head -1 $afile | cut -d" " -f1 -s`
-        fi
-    done
-
-    case "$DISTRO" in
+        DISTRO=`head -1 $afile | cut -d" " -f1 -s`
+    	case "$DISTRO" in
         S[Uu]SE )
             fbODBCDOCS="/usr/share/doc/packages"
+            break
             ;;
         *)
             fbODBCDOCS="/usr/share/doc"
             ;;
-    esac
+    	esac
+    done
+
+    if [ -z "$fbODBCDOCS" ]; then
+        fbODBCDOCS="/usr/share/doc"
+    fi
 
     if [ ! -d $fbODBCDOCS ]; then
         ErrorHelp 6
@@ -217,8 +217,8 @@ InstallLibraries()
     else
         echo "Untarring OdbcJdbcLibs.tar"
         tar --directory $fbODBCLIBS -xvf OdbcJdbcLibs.tar
-        ln -f -s $fbODBCLIBS/libIscDbc.so $fbODBCLIBS/libIscDbc
-        ln -f -s $fbODBCLIBS/libIscDbc.so $fbODBCLIBS/IscDbc
+#        ln -f -s $fbODBCLIBS/libIscDbc.so $fbODBCLIBS/libIscDbc
+#        ln -f -s $fbODBCLIBS/libIscDbc.so $fbODBCLIBS/IscDbc
     fi
 
     if [ $? -ne 0 ]; then

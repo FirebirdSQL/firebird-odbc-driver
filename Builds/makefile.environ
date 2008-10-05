@@ -3,13 +3,21 @@
 #FBINCDIR	= /mnt/third_party/interbase/sun5-2003-3-10/include
 #FBLIBDIR	= /mnt/third_party/interbase/sun5-2003-3-10/lib
 #
-!ifdef FIREBIRD
+
+ARCH=$(shell uname -m)
+ifeq ($(ARCH),x86_64)
+	UNIXODBCDIR = $(shell if [ -d /usr/lib64/unixODBC ]; then echo /usr/lib64/unixODBC; else echo /usr/lib64; fi)
+else
+	UNIXODBCDIR = $(shell if [ -d /usr/lib/unixODBC ]; then echo /usr/lib/unixODBC; else echo /usr/lib; fi)
+endif
+
+ifdef FIREBIRD
 FBINCDIR	= $(FIREBIRD)/include
 FBLIBDIR	= $(FIREBIRD)/lib
-!else
+else
 FBINCDIR	= d:/Firebird/include
 FBLIBDIR	= d:/Firebird/lib
-!endif
+endif
 #
 ISCDBCDIR 		= ../../IscDbc
 ODBCJDBCDIR 		= ../..

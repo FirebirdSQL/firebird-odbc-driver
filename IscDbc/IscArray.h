@@ -70,7 +70,7 @@ public:
 	void fetchArrayToString();
 	void writeBlob(char * sqldata);
 	void writeStreamHexToBlob(char * sqldata) {};
-	void writeBlob(char * sqldata, char *data, long length);
+	void writeBlob(char * sqldata, char *data, ISC_LONG length);
 	void writeStringHexToBlob(char * sqldata, char *data, long length);
 	void writeArray(Value * value);
 

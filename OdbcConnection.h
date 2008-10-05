@@ -25,6 +25,10 @@
 #if !defined(_ODBCCONNECTION_H_)
 #define _ODBCCONNECTION_H_
 
+#if defined(__GNUC__)
+#include <inttypes.h>
+#endif
+
 #include "OdbcDesc.h"
 #include "IscDbc/JString.h"
 #include "Headers/OdbcUserEvents.h"

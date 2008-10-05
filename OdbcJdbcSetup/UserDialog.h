@@ -39,7 +39,7 @@ public:
 	~CUserDialog();
 
 public:
-	INT_PTR  DoModal();
+	intptr_t  DoModal();
 	bool OnInitDialog( HWND hWndDlg );
 	void updateData( HWND hDlg, BOOL bSaveAndValidate = TRUE );
 	bool onCommand( HWND hWnd, int nCommand );

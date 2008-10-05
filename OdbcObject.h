@@ -25,6 +25,10 @@
 #if !defined(_ODBCOBJECT_H_)
 #define _ODBCOBJECT_H_
 
+#if defined(__GNUC__)
+#include <inttypes.h>
+#endif
+
 #include "OdbcJdbc.h"
 #include "IscDbc/JString.h"
 #include "IscDbc/SQLException.h"

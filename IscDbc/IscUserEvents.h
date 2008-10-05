@@ -56,7 +56,7 @@ private:
 	int					useCount;
 	IscConnection		*connection;
 	char				*eventBuffer;
-	long				eventId;
+	ISC_LONG			eventId;
 	short				lengthEventBlock;
 
 public:

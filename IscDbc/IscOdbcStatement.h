@@ -82,9 +82,9 @@ public:
 	virtual bool		isActiveProcedure(){ return IscStatement::isActiveProcedure(); }
 	virtual bool		isActiveModify(){ return IscStatement::isActiveModify(); }
 	virtual bool		isActiveNone(){ return IscStatement::isActiveNone(); }
-	virtual int			getStmtPlan(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtPlan( value, bufferLength, lengthPtr ); }  
-	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtType( value, bufferLength, lengthPtr ); }  
-	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr) { return IscStatement::getStmtInfoCountRecords( value, bufferLength, lengthPtr ); }  
+	virtual int			getStmtPlan(const void * value, int bufferLength, int *lengthPtr) { return IscStatement::getStmtPlan( value, bufferLength, lengthPtr ); }  
+	virtual int			getStmtType(const void * value, int bufferLength, int *lengthPtr) { return IscStatement::getStmtType( value, bufferLength, lengthPtr ); }  
+	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,int *lengthPtr) { return IscStatement::getStmtInfoCountRecords( value, bufferLength, lengthPtr ); }  
 	virtual void		rollbackLocal(){ IscStatement::rollbackLocal(); }
 	virtual void		commitLocal(){ IscStatement::commitLocal(); }
 	virtual bool		isActiveLocalTransaction(){ return IscStatement::isActiveLocalTransaction(); }

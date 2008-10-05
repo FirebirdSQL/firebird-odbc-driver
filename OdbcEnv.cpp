@@ -215,7 +215,7 @@ SQLRETURN OdbcEnv::sqlSetEnvAttr(int attribute, SQLPOINTER value, int length)
 			break;
 
 		case SQL_ATTR_ODBC_VERSION:
-			useAppOdbcVersion = (INT_PTR)value;
+			useAppOdbcVersion = (intptr_t)value;
 			break;
 
 		default:

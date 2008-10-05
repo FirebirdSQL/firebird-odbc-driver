@@ -36,9 +36,9 @@ int nCopyAnsiToWideChar( LPWORD lpWCStr, LPCSTR lpAnsiIn )
 
 LPWORD lpwAlign( LPWORD lpIn )
 {
-	UINT_PTR ul;
+	uintptr_t ul;
 
-	ul = (UINT_PTR)lpIn;
+	ul = (uintptr_t)lpIn;
 	ul += 3;
 	ul >>= 2;
 	ul <<= 2;

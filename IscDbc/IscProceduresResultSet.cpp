@@ -118,7 +118,7 @@ bool IscProceduresResultSet::canSelectFromProcedure()
 {
 	int countSUSPEND = 0;
 	XSQLVAR *var = sqlda->Var(10);
-	IscBlob * blob = (IscBlob *)*(INT_PTR*)var->sqldata;
+	IscBlob * blob = (IscBlob *)*(intptr_t*)var->sqldata;
 	int length = blob->length();
 	
 	char * buffer = (char*)malloc (length);

@@ -39,24 +39,30 @@ endif
 include ../makefile.sources
 include ../makefile.environ
 #
+ifeq ($(ARCH),x86_64)
+LIB = lib64
+else
+LIB = lib
+endif
+
 ifeq (iODBC,$(ODBCMANAGER))
 LIBODBCINST 	= -liodbcinst
 INCLUDEDIR      = -I/usr/local/include \
                   -I/usr/include
-EXTLIBDIR       = -L/usr/local/lib \
-                  -L/usr/lib
+EXTLIBDIR       = -L/usr/local/$(LIB) \
+                  -L/usr/$(LIB)
 else
 LIBODBCINST	    = -lodbcinst
 INCLUDEDIR      = -I/usr/include
-EXTLIBDIR       = -L/usr/lib
+EXTLIBDIR       = -L/usr/$(LIB)
 endif
 
 ifdef INTERBASE
 INCLUDEDIR      := -I/opt/interbase/include -I/usr/include/odbc $(INCLUDEDIR)
-EXTLIBDIR       := -L/opt/interbase/lib -L/usr/lib/unixODBC $(EXTLIBDIR)
+EXTLIBDIR       := -L/opt/interbase/lib -L$(UNIXODBCDIR) $(EXTLIBDIR)
 else
 INCLUDEDIR      = -I/opt/firebird/include -I/usr/include/odbc
-EXTLIBDIR       := -L/opt/firebird/lib -L/usr/lib/unixODBC $(EXTLIBDIR)
+EXTLIBDIR       := -L/opt/firebird/lib -L$(UNIXODBCDIR) $(EXTLIBDIR)
 endif
 #
 
@@ -68,6 +74,8 @@ endif
 #
 BUILDDIR 	    = $(TARGETDIR)/obj
 #
+DRVTMPL			= ../../Install/Linux/DriverTemplate.ini
+
 LIST_ISCDBCSRC 		= $(addprefix $(ISCDBCDIR)/, $(ISCDBCSRC))
 LIST_ISCDBCOBJ 		= $(addprefix $(BUILDDIR)/, $(ISCDBCSRC:.cpp=.o))
 LIST_ODBCJDBCSRC	= $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSRC))
@@ -76,16 +84,20 @@ LIST_ODBCJDBCSETUPSRC	= $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSETUPSRC_LINUX))
 LIST_ODBCJDBCSETUPOBJ	= $(addprefix $(BUILDDIR)/, $(ODBCJDBCSETUPSRC_LINUX:.cpp=.o))
 #
 COMPFLAGS	= -g -w -D_REENTRANT -D_PTHREADS -DEXTERNAL -D$(ODBCMANAGER) $(INCLUDEDIR) -I$(FBINCDIR)
+
+ifeq ($(ARCH),x86_64)
+COMPFLAGS	:= -fPIC
+endif
 #
 #LINKFLAGS	= -rdynamic -export-dynamic -shared 
 LINKFLAGS	= -shared
 EXTLIBS		= $(EXTLIBDIR) -lcrypt -ldl
 #
-ISCDBC		= libIscDbc.so
+#ISCDBC		= libIscDbc.so
 ISCDBCDLL       = $(TARGETDIR)/$(ISCDBC)
 ODBCJDBC	= libOdbcFb.so
 ODBCJDBCDLL     = $(TARGETDIR)/$(ODBCJDBC)
-ODBCJDBCSETUP	= libOdbcJdbcS.so
+#ODBCJDBCSETUP	= libOdbcJdbcS.so
 ODBCJDBCSETUPDLL= $(TARGETDIR)/$(ODBCJDBCSETUP)
 ISCDBCDEFFILE	= $(ISCDBCDIR)/IscDbc.def
 ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)/OdbcJdbc.def
@@ -149,11 +161,10 @@ postbuild : $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
 	@-gzip -9 -S .gz OdbcJdbc_Snapshot.tar
 #
 install : 
-	for afile in $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL); do cp $$afile /usr/lib/unixODBC; done
-	ln -s /usr/lib/unixODBC/$(ISCDBC) /usr/lib/unixODBC/libIscDbc
+	for afile in $(ODBCJDBCDLL);  do cp $$afile $(UNIXODBCDIR); done
 #
 uninstall : 
-	rm /usr/lib/unixODBC/$(ISCDBC) /usr/lib/unixODBC/$(ODBCJDBC) /usr/lib/unixODBC/$(ODBCJDBCSETUP) /usr/lib/unixODBC/libIscDbc
+	rm $(UNIXODBCDIR)/$(ODBCJDBC) 
 #
 package :
 	-strip -s $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
@@ -162,6 +173,7 @@ package :
 	tar -C $(TARGETDIR) -cvf OdbcJdbcLibs.tar $(ISCDBC) $(ODBCJDBC) $(ODBCJDBCSETUP)
 	tar -C ../../Install/HtmlHelp --exclude=CVS -cvf OdbcJdbcDocs.tar html/ 
 	tar -C ../../Install -uf OdbcJdbcDocs.tar ReleaseNotes_v2.0.html
+	cat $(DRVTMPL) | grep -v "^Driver.*=.*" >$(DRVTMPL).tmp && echo "Driver = $(UNIXODBCDIR)/$(ODBCJDBC)" >>$(DRVTMPL).tmp && mv $(DRVTMPL).tmp $(DRVTMPL)
 	tar -C ../../Install/Linux -cf $(PACKAGE_NAME) install.sh readme.txt DriverTemplate.ini FirebirdDSNTemplate.ini InterBaseDSNTemplate.ini
 	tar -uf $(PACKAGE_NAME) OdbcJdbcLibs.tar OdbcJdbcDocs.tar
 	rm OdbcJdbcLibs.tar  OdbcJdbcDocs.tar

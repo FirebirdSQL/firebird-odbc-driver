@@ -180,7 +180,7 @@ BOOL CALLBACK wndproCUserDialog( HWND hDlg, UINT message, UINT wParam, LONG lPar
     return FALSE;
 }
 
-INT_PTR CUserDialog::DoModal()
+intptr_t CUserDialog::DoModal()
 {
 	char bufHeader[128];
 	WORD *p, *pdlgtemplate;
@@ -233,7 +233,7 @@ INT_PTR CUserDialog::DoModal()
     TMP_LTEXT         ( "User ID",IDC_STATIC,5,135,75,8 )
     TMP_LTEXT         ( "Group ID",IDC_STATIC,5,155,75,8 )
 
-	INT_PTR nRet = DialogBoxIndirectParam( m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, parent->hDlg, (DLGPROC)wndproCUserDialog, (UINT_PTR)this );
+	intptr_t nRet = DialogBoxIndirectParam( m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, parent->hDlg, (DLGPROC)wndproCUserDialog, (uintptr_t)this );
 	LocalFree( LocalHandle( pdlgtemplate ) );
 
 	return nRet;

@@ -1,6 +1,7 @@
 #include "IscDbc.h"
 #ifndef _WINDOWS
 #include <dlfcn.h>
+#include <stdio.h>
 #endif
 
 namespace IscDbcLibrary {
@@ -23,8 +24,11 @@ bool CFbDll::LoadDll (const char * client, const char * clientDef)
 		_Handle = LoadLibraryEx (clientDef, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
 #else
 	_Handle = dlopen (client, RTLD_NOW);
-	if ( !_Handle && clientDef )
+	if ( !_Handle && clientDef ) {
 		_Handle = dlopen (clientDef, RTLD_NOW);
+		if ( !_Handle )
+			fputs (dlerror(), stderr);
+	}
 #endif
 	if ( !_Handle )
 		return false;

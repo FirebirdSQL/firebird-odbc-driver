@@ -94,11 +94,11 @@ public:
 	virtual bool isActiveNone(){ return typeStmt == stmtNone; }
 	virtual ~IscStatement();
 
-	virtual int getStmtPlan(const void * value, int bufferLength,long *lengthPtr)
+	virtual int getStmtPlan(const void * value, int bufferLength,int *lengthPtr)
 	{ return getPlanStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  
-	virtual int			getStmtType(const void * value, int bufferLength,long *lengthPtr)
+	virtual int			getStmtType(const void * value, int bufferLength,int *lengthPtr)
 	{ return getTypeStatement(connection, statementHandle,value,bufferLength,lengthPtr); }  
-	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,long *lengthPtr)
+	virtual int			getStmtInfoCountRecords(const void * value, int bufferLength,int *lengthPtr)
 	{ return getInfoCountRecordsStatement(connection, statementHandle, value,bufferLength,lengthPtr); }  
 	virtual bool		isActiveLocalTransaction(){ return transactionLocal; }
 	virtual void		setActiveLocalParamTransaction();

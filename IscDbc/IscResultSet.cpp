@@ -504,7 +504,7 @@ int IscResultSet::getPosRowInSet()
 	return activePosRowInSet;
 }	
 
-long* IscResultSet::getSqlDataOffsetPtr()
+int* IscResultSet::getSqlDataOffsetPtr()
 {
 	return &sqldataOffsetPtr;
 }	

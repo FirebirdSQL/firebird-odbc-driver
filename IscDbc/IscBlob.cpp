@@ -86,7 +86,7 @@ void IscBlob::bind(Statement *stmt, char * sqldata)
 
 void IscBlob::attach(char * pointBlob, bool bFetched, bool clear)
 {
-	IscBlob * ptBlob = (IscBlob *)*(INT_PTR*)pointBlob;
+	IscBlob * ptBlob = (IscBlob *)*(intptr_t*)pointBlob;
 
 	statement = ptBlob->statement;
 	memcpy(&blobId,&ptBlob->blobId, sizeof(blobId));

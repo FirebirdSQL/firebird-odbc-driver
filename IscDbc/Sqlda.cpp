@@ -170,8 +170,8 @@ public:
 							{
 								if ( pt && *(long*)pt )
 								{
-									free ( ((CAttrArray *)*(INT_PTR*)pt)->arrBufData );
-									delete (CAttrArray *)*(INT_PTR*)pt;
+									free ( ((CAttrArray *)*(intptr_t*)pt)->arrBufData );
+									delete (CAttrArray *)*(intptr_t*)pt;
 								}
 							}
 						}
@@ -183,8 +183,8 @@ public:
 						{
 							char * pt = listBlocks[n] + (var->sqldata - sqlvar[0].sqldata);
 							for (int l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
-								if ( pt && *(INT_PTR*)pt )
-									delete (IscBlob *)*(INT_PTR*)pt;
+								if ( pt && *(intptr_t*)pt )
+									delete (IscBlob *)*(intptr_t*)pt;
 						}
 				}
 			}
@@ -218,13 +218,13 @@ public:
 					IscArray iscArr(statement,var);
 					iscArr.getBytesFromArray();
 					iscArr.detach(ptArr);
-					*(INT_PTR*)var->sqldata = (INT_PTR)ptArr;
+					*(intptr_t*)var->sqldata = (intptr_t)ptArr;
 				}
 				else if ( (var->sqltype & ~1) == SQL_BLOB )
 				{
 					IscBlob * ptBlob = new IscBlob (statement, var);
 					ptBlob->fetchBlob();
-					*(INT_PTR*)var->sqldata = (INT_PTR)ptBlob;
+					*(intptr_t*)var->sqldata = (intptr_t)ptBlob;
 				}
 			}
 		}
@@ -513,7 +513,7 @@ void Sqlda::allocBuffer ( IscStatement *stmt )
 
 	for ( n = 0; n < numberColumns; ++n )
 	{
-		var->sqldata = buffer + (INT_PTR) var->sqldata;
+		var->sqldata = buffer + (intptr_t) var->sqldata;
 		(var++)->sqlind = (short*)indicators;
 		*indicators++ = 0;
 	}

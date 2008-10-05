@@ -150,9 +150,9 @@ typedef unsigned __int64			UQUAD;
 
 namespace IscDbcLibrary 
 {
-int getTypeStatement(IscConnection *connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);
-int getInfoCountRecordsStatement(IscConnection *connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,long *lengthPtr);
-int getPlanStatement(IscConnection *connection, isc_stmt_handle statementHandle,const void * value, int bufferLength,long *lengthPtr);
+int getTypeStatement(IscConnection *connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength, int *lengthPtr);
+int getInfoCountRecordsStatement(IscConnection *connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength, int *lengthPtr);
+int getPlanStatement(IscConnection *connection, isc_stmt_handle statementHandle,const void * value, int bufferLength, int *lengthPtr);
 int getPageDatabase(IscConnection *connection, const void * info_buffer, int bufferLength,short *lengthPtr);
 int getWalDatabase(IscConnection *connection, const void * info_buffer, int bufferLength,short *lengthPtr);
 int strBuildStatInformations(const void * info_buffer, int bufferLength,short *lengthPtr);
