@@ -2,10 +2,10 @@
   OdbcJdbc 2.0
 ==================================
 
-147) - current BUILDNUM_VERSION set 145 ( 21 Sep 2008 )
+147) - current BUILDNUM_VERSION set 147 ( 21 Sep 2008 )
 	- added Linux x64 support, thanks to Dmitry Starodubov.
 
-146) - current BUILDNUM_VERSION set 145 ( 14 Sep 2008 )
+146) - current BUILDNUM_VERSION set 146 ( 14 Sep 2008 )
 	- added Windows x64 support, thanks to Alexander Potapchenko.
 	- replaced OdbcFb32 to OdbcFb. 
 	- fixed usage of old hard coded "OdbcJdbcSetup" in the driver code.
