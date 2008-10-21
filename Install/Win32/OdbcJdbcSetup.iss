@@ -23,17 +23,17 @@
 ;
 ;  OdbcJdbcSetup.iss
 ;
-;  Currently compiled against InnoSetup v4.2.0 from http://www.innosetup.com/
+;  Currently compiled against InnoSetup v5.2.1 from http://www.innosetup.com/
 ;
 ;
 
-#define MSVC_VERSION 6
+#define MSVC_VERSION 8
 #define BUILD_TYPE "Release"
 
-#if MSVC_VERSION==6
-#define BUILD_ENV "MsVc60.win"
-#elif MSVC_VERSION==7
+#if MSVC_VERSION==7
 #define BUILD_ENV "MsVc70.win"
+#elif MSVC_VERSION==8
+#define BUILD_ENV "MsVc80.win"
 #else
 BUILD_ENV undefined
 #endif
@@ -46,10 +46,21 @@ BUILD_ENV undefined
 
 #define FIREBIRD_URL "http://www.firebirdsql.org"
 
+;---- If we haven't already set PlatformTarget then pick it up from the environment.
+#ifndef PlatformTarget
+#define PlatformTarget GetEnv("TARGET_PLATFORM")
+#endif
+#if PlatformTarget == ""
+#define PlatformTarget "win32"
+#endif
+
 #define BUILD_ROOT="..\..\"
-#define SOURCE_LIBS "Builds\"+AddBackslash(BUILD_ENV)+AddBackslash(BUILD_TYPE)
+#define SOURCE_LIBS "Builds\"+AddBackslash(BUILD_ENV)+AddBackslash(PlatformTarget)+AddBackslash(BUILD_TYPE)
 #define SOURCE_DOCS="Install\"
 
+#if PlatformTarget == "x64"
+#define SOURCE_LIBS32="Builds\"+AddBackslash(BUILD_ENV)+AddBackslash("Win32")+AddBackslash(BUILD_TYPE)
+#endif
 
 [Setup]
 AppName=Firebird ODBC Driver
@@ -70,7 +81,7 @@ PrivilegesRequired=admin
 
 SourceDir={#BUILD_ROOT}
 OutputDir={#SOURCE_DOCS}\Win32\install_image
-OutputBaseFilename=Firebird_ODBC_2.0.0-Win32{#debug_str}
+OutputBaseFilename=Firebird_ODBC_2.0.0_{#PlatformTarget}{#debug_str}
 DiskSpanning=no
 
 LicenseFile={#SOURCE_DOCS}\IDPLicense.txt
@@ -83,6 +94,10 @@ WizardImageFile={#SOURCE_DOCS}\Win32\firebird-logo1.bmp
 WizardImageBackColor=clWhite
 WizardSmallImageFile={#SOURCE_DOCS}\Win32\firebird-logo2.bmp
 
+#if PlatformTarget == "x64"
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
+#endif
 
 [Languages]
 Name: en; MessagesFile: compiler:Default.isl
@@ -111,8 +126,13 @@ Source: {#SOURCE_DOCS}\HtmlHelp\html\*.*; DestDir: {app}\html; Components: Docum
 Source: {#SOURCE_DOCS}\HtmlHelp\images\*.*; DestDir: {app}\images; Components: DocumentationComponent
 Source: {#SOURCE_DOCS}\Win32\Readme.txt; DestDir: {app}; Components: DocumentationComponent; Flags: isreadme
 Source: {#SOURCE_DOCS}\IDPLicense.txt; DestDir: {app}; Components: DocumentationComponent
-;Source: {#SOURCE_DOCS}\ReleaseNotes_v1.2.html; DestDir: {app}; Components: DocumentationComponent
+;Source: {#SOURCE_DOCS}\ReleaseNotes_v2.0.html; DestDir: {app}; Components: DocumentationComponent
 
+#if PlatformTarget == "x64"
+Source: {#SOURCE_LIBS32}OdbcFb.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile 32bit
+Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
+Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DocumentationComponent; Flags: ignoreversion
+#endif
 
 [Icons]
 Name: {group}\Uninstall Firebird ODBC driver; Filename: {uninstallexe}; Components: DocumentationComponent; Comment: Remove Firebird ODBC Driver Documentation
@@ -120,7 +140,7 @@ Name: {group}\Uninstall Firebird ODBC driver; Filename: {uninstallexe}; Componen
 Name: {group}\Firebird ODBC Help; Filename: {app}\OdbcFb.chm; Components: DocumentationComponent
 Name: {group}\Firebird ODBC Help; Filename: {sys}\OdbcFb.chm; Components: DeveloperComponent
 Name: {app}\Firebird ODBC Help; Filename: {sys}\OdbcFb.chm; Components: DeveloperComponent
-;Name: {group}\Firebird ODBC v1.2 Release Notes; Filename: {app}\ReleaseNotes_v1.2.html; Components: DocumentationComponent
+;Name: {group}\Firebird ODBC v2.0 Release Notes; Filename: {app}\ReleaseNotes_v2.0.html; Components: DocumentationComponent
 Name: {group}\Firebird ODBC readme.txt; Filename: {app}\Readme.txt; Components: DocumentationComponent
 Name: {group}\Firebird ODBC license.txt; Filename: {app}\IDPLicense.txt; Components: DocumentationComponent
 

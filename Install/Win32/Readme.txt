@@ -1,4 +1,4 @@
-Firebird ODBC Driver v1.2.0 Readme (Win32)
+Firebird ODBC Driver v2.0 Readme
 ==========================================
 
 o What's new
