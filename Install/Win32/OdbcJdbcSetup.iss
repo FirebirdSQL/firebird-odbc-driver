@@ -129,7 +129,7 @@ Source: {#SOURCE_DOCS}\IDPLicense.txt; DestDir: {app}; Components: Documentation
 ;Source: {#SOURCE_DOCS}\ReleaseNotes_v2.0.html; DestDir: {app}; Components: DocumentationComponent
 
 #if PlatformTarget == "x64"
-Source: {#SOURCE_LIBS32}OdbcFb.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile 32bit
+Source: {#SOURCE_LIBS32}OdbcFb.dll; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DocumentationComponent; Flags: ignoreversion
 #endif
