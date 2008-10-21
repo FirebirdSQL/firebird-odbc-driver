@@ -47,11 +47,9 @@ for %%v in ( %* )  do (
 @for /f "delims=" %%a in ('@cd') do (set ROOT_PATH=%%a)
 @cd %~dp0
 
-@msdev /? >nul 2>nul
-@if not errorlevel 9009 ((set MSVC_VERSION=6) & (goto :EOF))
-
-@devenv /? >nul 2>nul
-@if not errorlevel 9009 ((set MSVC_VERSION=7) & (goto :EOF))
+@set TARGET_PLATFORM=Win32
+@if "%PROCESSOR_ARCHITECTURE%"=="x86" (set TARGET_PLATFORM=Win32)
+@if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (set TARGET_PLATFORM=x64)
 
 @goto :EOF
 
@@ -77,10 +75,8 @@ del %temp%.\b$?.bat
 
 :BUILD_HELP
 ::=========
-::If HTMLHELP has not been set we will have to guess.
-if "%HTMLHELP%"=="" ( set HTMLHELP=C:\Program Files\HTML Help Workshop)
-
-"%HTMLHELP%\hhc.exe" %ROOT_PATH%\Install\HtmlHelp\OdbcJdbc.hhp
+set HTMLHELP="%PROGRAMFILES%\HTML Help Workshop\hhc.exe"
+%HTMLHELP% %ROOT_PATH%\Install\HtmlHelp\OdbcJdbc.hhp
 ::echo ERRORLEVEL is %ERRORLEVEL%
 
 goto :EOF
@@ -88,7 +84,7 @@ goto :EOF
 
 :ISX
 ::========
-if NOT DEFINED INNO_SETUP_PATH (set INNO_SETUP_PATH="C:\Program Files\Inno Setup 4")
+if NOT DEFINED INNO_SETUP_PATH (set INNO_SETUP_PATH="%PROGRAMFILES%\Inno Setup")
 @Echo Now let's compile the InnoSetup scripts
 @Echo.
 %INNO_SETUP_PATH%\iscc "%ROOT_PATH%\Install\Win32\OdbcJdbcSetup_%PRODUCT_VER_STRING%.iss"
