@@ -132,7 +132,7 @@ SupportFunctions::SupportFunctions()
 //  System functions
 
     ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_DBNAME, 			"DBNAME", 			"DBNAME",			defaultTranslator);
-    ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_IFNULL, 			"IFNULL", 			"IFNULL",			defaultTranslator);
+    ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_IFNULL, 			"IFNULL", 			"COALESCE",			defaultTranslator);
     ADD_SUPPORT_FN( SYS_FN, SQL_FN_SYS_USERNAME, 		"USER", 			"CURRENT_USER",		fullreplaceTranslator);
 
 //  Convert functions
