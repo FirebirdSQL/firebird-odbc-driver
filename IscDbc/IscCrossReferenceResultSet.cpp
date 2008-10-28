@@ -125,6 +125,9 @@ bool IscCrossReferenceResultSet::nextFetch()
 	if ( !metaData->getUseSchemaIdentifier() )
 		sqlda->setNull(2);
 
+	if ( !metaData->getUseSchemaIdentifier() )
+		sqlda->setNull(6);
+
 	int len;
 	sqlda->updateShort ( 10, getRule ( sqlda->getText(15, len)) );
 	sqlda->updateShort ( 11, getRule ( sqlda->getText(16, len)) );
