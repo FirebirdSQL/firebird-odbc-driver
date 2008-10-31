@@ -427,6 +427,7 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 			else
 				execute = &OdbcStatement::executeStatement;
 
+			registrationOutParameter = false;
 			listBindIn->removeAll();
 			listBindOut->removeAll();
 			implementationRowDescriptor->setDefaultImplDesc (statement->getStatementMetaDataIRD());
@@ -2588,8 +2589,7 @@ void OdbcStatement::bindInputOutputParam(int param, DescRecord * recordApp)
 	}
 	else if ( param -= metaDataIn->getColumnCount(), param <= metaDataOut->getColumnCount() )
 	{
-		if ( !record->isDefined )
-			ipd->defFromMetaDataOut( param, record );
+		ipd->defFromMetaDataOut( param, record );
 
 		if( recordApp->conciseType == SQL_C_DEFAULT )
 		{
