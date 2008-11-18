@@ -1687,8 +1687,8 @@ int OdbcConvert::convFloatToString(DescRecord * from, DescRecord * to)
 
 	int len = to->length;
 
-	if ( len )	// MAX_FLOAT_DIGIT_LENGTH = 7
-		ConvertFloatToString<char>(*(float*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len, &len, 7);
+	if ( len )
+		ConvertFloatToString<char>(*(float*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len, &len);
 
 	if ( indicatorTo )
 		*indicatorTo = len;
@@ -1706,9 +1706,9 @@ int OdbcConvert::convFloatToStringW(DescRecord * from, DescRecord * to)
 
 	int len = to->length;
 
-	if ( len )	// MAX_FLOAT_DIGIT_LENGTH = 7
+	if ( len )
 	{
-		ConvertFloatToString<wchar_t>(*(float*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len/2, &len, 7);
+		ConvertFloatToString<wchar_t>(*(float*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len/2, &len);
 		len *= sizeof( wchar_t );
 	}
 
@@ -3517,13 +3517,13 @@ int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 
 	if ( !from->data_at_exec )
 	{
-		if ( len > to->length )
+		if ( len > to->octetLength )
 		{
 			OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
 			ret = SQL_SUCCESS_WITH_INFO;
 		}
 
-		len = MIN( len, to->length );
+		len = MIN( len, to->octetLength );
 		to->headSqlVarPtr->setSqlLen( (short)len );
 		to->headSqlVarPtr->setSqlData( pointerFrom );
 	}
@@ -3541,7 +3541,7 @@ int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 			ret = SQL_SUCCESS_WITH_INFO;
 		}
 
-		len = MIN( len, MAX( 0, to->length - from->dataOffset) );
+		len = MIN( len, MAX( 0, to->octetLength - from->dataOffset) );
 		memcpy(to->localDataPtr + from->dataOffset, pointerFrom, len);
 		from->dataOffset += len;
 		to->headSqlVarPtr->setSqlLen( (short)from->dataOffset );
@@ -3573,11 +3573,11 @@ int OdbcConvert::transferStringWToAllowedType(DescRecord * from, DescRecord * to
 		to->headSqlVarPtr->setSqlData( to->localDataPtr );
 	}
 
-	if ( len + from->dataOffset > to->length )
+	if ( len + from->dataOffset > to->octetLength )
 	{
 		OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
 		ret = SQL_SUCCESS_WITH_INFO;
-		len = to->length - from->dataOffset;
+		len = to->octetLength - from->dataOffset;
 	}
 
 	if ( len < 0 )
@@ -3590,7 +3590,7 @@ int OdbcConvert::transferStringWToAllowedType(DescRecord * from, DescRecord * to
 		wchar_t &wcEnd = *(pointerFrom + len);
 		wchar_t saveEnd = wcEnd;
 		wcEnd = L'\0';	// We guarantee the end L'\0'
-		len = to->length - from->dataOffset;
+		len = to->octetLength - from->dataOffset;
 		lenMbs = (SQLUINTEGER)to->WcsToMbs( to->localDataPtr + from->dataOffset,
 											pointerFrom,
 											len * to->headSqlVarPtr->getSqlMultiple() );
