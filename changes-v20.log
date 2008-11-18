@@ -2,14 +2,16 @@
   OdbcJdbc 2.0
 ==================================
 
-148)	- current BUILDNUM_VERSION set 148 RC1 ( 17 Nov 2008 )
+148)	- current BUILDNUM_VERSION set 148 RC1 ( 18 Nov 2008 )
 	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-41,
 	  "Reimplement ODBC {fn IFNULL} function using Firebird's COALESCE function" 
 	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-49,
 	  "Output parameter stops work after first commit"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-38,
+	  "Parameters data truncation from SQL_C_CHAR to SQL_INTEGER or SQL_DECIMAL"
 	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-39,
 	  "SQLForeignKey inconsistent schema use: FKTABLE_SCHEM should return NULL not SYSDBA" 
-	  
+
 147)	- current BUILDNUM_VERSION set 147 ( 21 Sep 2008 )
 	- added Linux x64 support, thanks to Dmitry Starodubov
 
