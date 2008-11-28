@@ -3865,7 +3865,7 @@ int OdbcConvert::convVarStringToStringW(DescRecord * from, DescRecord * to)
 			}
 
 			pointerFrom += sizeof( short );
-			if( len > 0 )
+			if( (len > 0) && (dataRemaining > 0) )
 			{
 				int lenWC = (int)from->MbsToWcs( pointerTemp,
 												 pointerFrom + from->dataOffset,
