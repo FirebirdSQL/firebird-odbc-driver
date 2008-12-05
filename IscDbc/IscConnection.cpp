@@ -458,7 +458,7 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 			delimiter = *ptCh;
 			++ptCh; // '\''
 			ptSrc = ptCh;
-			while ( *ptCh && *ptCh != ',' && *ptCh != ')' )
+			while ( *ptCh && *ptCh != ')' )
 			{
 				if ( *ptCh == delimiter )
 				{
