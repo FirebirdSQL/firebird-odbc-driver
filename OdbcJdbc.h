@@ -92,6 +92,16 @@
 #include "SetupAttributes.h"
 #include "IscDbc/JavaType.h"
 
+#ifndef _WINDOWS
+#if (SIZEOF_LONG == 4)
+#define	SDWORD		long int
+#define	UDWORD		unsigned long int
+#else
+#define	SDWORD		int
+#define	UDWORD		unsigned int
+#endif
+#endif
+
 #ifndef SQL_BOOLEAN
 #define SQL_BOOLEAN		16
 #endif

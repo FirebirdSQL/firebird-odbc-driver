@@ -11,6 +11,10 @@ else
 	UNIXODBCDIR = $(shell if [ -d /usr/lib/unixODBC ]; then echo /usr/lib/unixODBC; else echo /usr/lib; fi)
 endif
 
+ifndef ODBCMANAGER
+	ODBCMANAGER = $(shell if [ -f $(UNIXODBCDIR)/libodbc.so ]; then echo unixODBC; else echo iODBC; fi)
+endif
+
 ifdef FIREBIRD
 FBINCDIR	= $(FIREBIRD)/include
 FBLIBDIR	= $(FIREBIRD)/lib

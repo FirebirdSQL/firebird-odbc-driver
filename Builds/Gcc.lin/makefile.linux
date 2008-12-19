@@ -27,18 +27,18 @@ DEBUG = No
 #
 GCC		= g++
 
-ifndef $(ODBCMANAGER)
-ODBCMANAGER	= unixODBC
-#ODBCMANAGER	= iODBC
-endif
-
-
 #
 # Start build
 #
 include ../makefile.sources
 include ../makefile.environ
 #
+
+ifndef ODBCMANAGER
+ODBCMANAGER	= unixODBC
+#ODBCMANAGER	= iODBC
+endif
+
 ifeq ($(ARCH),x86_64)
 LIB = lib64
 else
@@ -61,8 +61,8 @@ ifdef INTERBASE
 INCLUDEDIR      := -I/opt/interbase/include -I/usr/include/odbc $(INCLUDEDIR)
 EXTLIBDIR       := -L/opt/interbase/lib -L$(UNIXODBCDIR) $(EXTLIBDIR)
 else
-INCLUDEDIR      = -I/opt/firebird/include -I/usr/include/odbc
-EXTLIBDIR       := -L/opt/firebird/lib -L$(UNIXODBCDIR) $(EXTLIBDIR)
+INCLUDEDIR      = -I/opt/RedDatabase/include -I/usr/include/odbc
+EXTLIBDIR       := -L/opt/RedDatabase/lib -L$(UNIXODBCDIR) $(EXTLIBDIR)
 endif
 #
 
@@ -95,7 +95,7 @@ EXTLIBS		= $(EXTLIBDIR) -lcrypt -ldl
 #
 #ISCDBC		= libIscDbc.so
 ISCDBCDLL       = $(TARGETDIR)/$(ISCDBC)
-ODBCJDBC	= libOdbcFb.so
+ODBCJDBC	= libOdbcRdb.so
 ODBCJDBCDLL     = $(TARGETDIR)/$(ODBCJDBC)
 #ODBCJDBCSETUP	= libOdbcJdbcS.so
 ODBCJDBCSETUPDLL= $(TARGETDIR)/$(ODBCJDBCSETUP)
@@ -171,8 +171,8 @@ package :
 	-rm $(PACKAGE_NAME).gz
 	chmod 740 ../../Install/Linux/install.sh
 	tar -C $(TARGETDIR) -cvf OdbcJdbcLibs.tar $(ISCDBC) $(ODBCJDBC) $(ODBCJDBCSETUP)
-	tar -C ../../Install/HtmlHelp --exclude=CVS -cvf OdbcJdbcDocs.tar html/ 
-	tar -C ../../Install -uf OdbcJdbcDocs.tar ReleaseNotes_v2.0.html
+	tar -C ../../Install/HtmlHelp --exclude=CVS --exclude=.svn -cvf OdbcJdbcDocs.tar html/ 
+	tar -C ../../Install -uf OdbcJdbcDocs.tar ReleaseNotes_v1.2.html
 	cat $(DRVTMPL) | grep -v "^Driver.*=.*" >$(DRVTMPL).tmp && echo "Driver = $(UNIXODBCDIR)/$(ODBCJDBC)" >>$(DRVTMPL).tmp && mv $(DRVTMPL).tmp $(DRVTMPL)
 	tar -C ../../Install/Linux -cf $(PACKAGE_NAME) install.sh readme.txt DriverTemplate.ini FirebirdDSNTemplate.ini InterBaseDSNTemplate.ini
 	tar -uf $(PACKAGE_NAME) OdbcJdbcLibs.tar OdbcJdbcDocs.tar
