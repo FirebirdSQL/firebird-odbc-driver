@@ -1,6 +1,14 @@
 ==================================
   OdbcJdbc 2.0
 ==================================
+149)	- current BUILDNUM_VERSION set 149 ( 05 Mar 2008 )
+	- added *.pdb and *.lib files into Windows distribution  
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-50, http://tracker.firebirdsql.org/browse/ODBC-53
+	  "Data appears sometimes wrong in Access/Excel, garbage symbols in varchars"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-51,
+	  "build problems with gcc-4.3.2", thanks to Dmitry Starodubov
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-52,
+	  "Cannot include a comma inside a delimited string as a SP parameter"
 
 148)	- current BUILDNUM_VERSION set 148 RC1 ( 18 Nov 2008 )
 	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-41,
