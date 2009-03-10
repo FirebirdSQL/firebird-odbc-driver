@@ -95,16 +95,18 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 				"\tcast(idx.rdb$index_name as varchar(31)) as index_name,\n"	// 6
 				"\tcast(3 as smallint) as index_type,\n"						// 7 (SQL_INDEX_OTHER)
 				"\tcast(seg.rdb$field_position as smallint) as ordinal_position,\n"	// 8
-				"\tcast(seg.rdb$field_name as varchar(31)) as column_name,\n"	// 9
+				"\tcast(coalesce(seg.rdb$field_name,\n" 
+				"substring(idx.rdb$expression_source from 1 for 31)) as varchar(31)) as column_name,\n"	// 9
 				"\tcast(NULL as char) as asc_or_desc,\n"						// 10
-				"\tcast(NULL as integer) as cardinality,\n"						// 11
+				"\tcast((case when idx.rdb$statistics = 0 then 0 else\n" 
+				"1/idx.rdb$statistics end) as integer) as cardinality,\n"		// 11
 				"\tcast(NULL as integer) as index_pages,\n"						// 12
 				"\tcast(NULL as varchar(31)) as filter_condition,\n"			// 13
 				"\tcast(idx.rdb$index_type as smallint) as index_type,\n"		// 14
 				"\tcast(relc.rdb$constraint_type as varchar(31)) as constraint_type\n"	// 15
 		"from rdb$indices idx\n"
 			"\tleft join rdb$relations tbl on tbl.rdb$relation_name = idx.rdb$relation_name\n"
-			"\tjoin rdb$index_segments seg on idx.rdb$index_name = seg.rdb$index_name\n"
+			"\tleft join rdb$index_segments seg on idx.rdb$index_name = seg.rdb$index_name\n"
 			"\tleft join rdb$relation_constraints relc on ( relc.rdb$index_name = idx.rdb$index_name\n";
 
 	char * ptFirst = sqlQuery + strlen(sqlQuery);
