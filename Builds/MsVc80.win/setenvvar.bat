@@ -2,7 +2,6 @@
 goto :MAIN %*
 goto :EOF
 
-
 :MSVC8_VARS
 if not defined VCINSTALLDIR (
  if not defined VS80COMNTOOLS (

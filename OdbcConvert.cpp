@@ -92,7 +92,7 @@ OdbcConvert::OdbcConvert(OdbcStatement * parent)
 void OdbcConvert::setZeroColumn(DescRecord * to, long rowNumber)
 {
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	*(long*)pointer = rowNumber + 1;
 	if ( indicatorTo )
@@ -973,9 +973,9 @@ SQLPOINTER OdbcConvert::getAdressBindDataFrom(char * pointer)
 }
 
 inline
-SQLINTEGER * OdbcConvert::getAdressBindIndFrom(char * pointer)
+SQLLEN * OdbcConvert::getAdressBindIndFrom(char * pointer)
 {
-	return (SQLINTEGER *)(pointer + *bindOffsetPtrIndFrom);
+	return (SQLLEN *)(pointer + *bindOffsetPtrIndFrom);
 }
 
 inline 
@@ -985,9 +985,9 @@ SQLPOINTER OdbcConvert::getAdressBindDataTo(char * pointer)
 }
 
 inline
-SQLINTEGER * OdbcConvert::getAdressBindIndTo(char * pointer)
+SQLLEN * OdbcConvert::getAdressBindIndTo(char * pointer)
 {
-	return (SQLINTEGER *)(pointer + *bindOffsetPtrIndTo);
+	return (SQLLEN *)(pointer + *bindOffsetPtrIndTo);
 }
 
 #define ODBCCONVERT_CHECKNULL(pointerTo)					\
@@ -1064,8 +1064,8 @@ SQLINTEGER * OdbcConvert::getAdressBindIndTo(char * pointer)
 int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)				\
 {																								\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
 																								\
@@ -1078,8 +1078,8 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 int OdbcConvert::convBigintTo##TYPE_TO(DescRecord * from, DescRecord * to)						\
 {																								\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
 																								\
@@ -1113,8 +1113,8 @@ int OdbcConvert::convBigintTo##TYPE_TO(DescRecord * from, DescRecord * to)						
 int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO##WithScale(DescRecord * from, DescRecord * to)	\
 {																								\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
 																								\
@@ -1135,8 +1135,8 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO##WithScale(DescRecord * from, Desc
 int OdbcConvert::convTagNumericTo##TYPE_TO(DescRecord * from, DescRecord * to)					\
 {																								\
 	C_TYPE_TO * pointer = (C_TYPE_TO*)getAdressBindDataTo((char*)to->dataPtr);					\
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
 																								\
@@ -1161,8 +1161,8 @@ int OdbcConvert::convTagNumericTo##TYPE_TO(DescRecord * from, DescRecord * to)		
 int OdbcConvert::convTagNumericTo##TYPE_TO(DescRecord * from, DescRecord * to)					\
 {																								\
 	C_TYPE_TO * pointer = (C_TYPE_TO*)getAdressBindDataTo((char*)to->dataPtr);					\
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
 																								\
@@ -1184,8 +1184,8 @@ int OdbcConvert::convTagNumericTo##TYPE_TO(DescRecord * from, DescRecord * to)		
 int OdbcConvert::conv##TYPE_FROM##ToTagNumeric(DescRecord * from, DescRecord * to)				\
 {																								\
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);								\
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL( pointer );															\
 																								\
@@ -1212,8 +1212,8 @@ int OdbcConvert::conv##TYPE_FROM##ToTagNumeric(DescRecord * from, DescRecord * t
 int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)				\
 {																								\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
 																								\
@@ -1232,8 +1232,8 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 int OdbcConvert::conv##TYPE_FROM##ToString(DescRecord * from, DescRecord * to)					\
 {																								\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL( pointer );															\
 																								\
@@ -1310,8 +1310,8 @@ int OdbcConvert::conv##TYPE_FROM##ToString(DescRecord * from, DescRecord * to)		
 int OdbcConvert::conv##TYPE_FROM##ToStringW(DescRecord * from, DescRecord * to)					\
 {																								\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL( pointer );															\
 																								\
@@ -1395,8 +1395,8 @@ int OdbcConvert::conv##TYPE_FROM##ToStringW(DescRecord * from, DescRecord * to)	
 int OdbcConvert::conv##TYPE_FROM##ToBinary(DescRecord * from, DescRecord * to)					\
 {																								\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL( pointer );															\
 																								\
@@ -1475,8 +1475,8 @@ int OdbcConvert::convBlob##To##TYPE_TO(DescRecord * from, DescRecord * to)						
 {																								\
 	SQLRETURN ret = SQL_SUCCESS;																\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL( pointer );															\
 																								\
@@ -1564,8 +1564,8 @@ int OdbcConvert::notYetImplemented(DescRecord * from, DescRecord * to)
 int OdbcConvert::convGuidToString(DescRecord * from, DescRecord * to)
 {
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -1589,8 +1589,8 @@ int OdbcConvert::convGuidToString(DescRecord * from, DescRecord * to)
 int OdbcConvert::convGuidToStringW(DescRecord * from, DescRecord * to)
 {
 	wchar_t *pointer = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -1680,8 +1680,8 @@ ODBCCONVERT_CONVROUND(Float,float,Bigint,QUAD);
 int OdbcConvert::convFloatToString(DescRecord * from, DescRecord * to)
 {
 	char * pointerTo = (char *)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
@@ -1699,8 +1699,8 @@ int OdbcConvert::convFloatToString(DescRecord * from, DescRecord * to)
 int OdbcConvert::convFloatToStringW(DescRecord * from, DescRecord * to)
 {
 	wchar_t * pointerTo = (wchar_t *)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
@@ -1732,8 +1732,8 @@ ODBCCONVERT_CONVROUND(Double,double,Bigint,QUAD);
 int OdbcConvert::convDoubleToTagNumeric(DescRecord * from, DescRecord * to)
 {
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -1779,8 +1779,8 @@ int OdbcConvert::convDoubleToTagNumeric(DescRecord * from, DescRecord * to)
 int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 {
 	char * pointerTo = (char *)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
@@ -1798,8 +1798,8 @@ int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 int OdbcConvert::convDoubleToStringW(DescRecord * from, DescRecord * to)
 {
 	wchar_t * pointerTo = (wchar_t *)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
@@ -1862,8 +1862,8 @@ ODBCCONVERT_CONVTAGNUMERIC(Numeric,QUAD);
 int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)				\
 {																								\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL( pointer );															\
 																								\
@@ -1885,8 +1885,8 @@ ODBCCONVERT_CONV(Date,long,Bigint,QUAD);
 int OdbcConvert::convDateToString(DescRecord * from, DescRecord * to)
 {
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -1912,8 +1912,8 @@ int OdbcConvert::convDateToString(DescRecord * from, DescRecord * to)
 int OdbcConvert::convDateToStringW(DescRecord * from, DescRecord * to)
 {
 	wchar_t *pointer = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -1939,8 +1939,8 @@ int OdbcConvert::convDateToStringW(DescRecord * from, DescRecord * to)
 int OdbcConvert::convDateToTagDate(DescRecord * from, DescRecord * to)
 {
 	tagDATE_STRUCT * tagDt = (tagDATE_STRUCT*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( tagDt );
 
@@ -1955,8 +1955,8 @@ int OdbcConvert::convDateToTagDate(DescRecord * from, DescRecord * to)
 int OdbcConvert::convDateToBinary(DescRecord * from, DescRecord * to)
 {
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -1998,8 +1998,8 @@ int OdbcConvert::convDateToBinary(DescRecord * from, DescRecord * to)
 // for use App to SqlDa
 int OdbcConvert::transferTagDateToDate(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
@@ -2014,8 +2014,8 @@ int OdbcConvert::transferTagDateToDate(DescRecord * from, DescRecord * to)
 // for use App to SqlDa
 int OdbcConvert::transferTagDateToDateTime(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
@@ -2033,8 +2033,8 @@ int OdbcConvert::transferTagDateToDateTime(DescRecord * from, DescRecord * to)
 int OdbcConvert::convDateToTagTimestamp(DescRecord * from, DescRecord * to)
 {
 	tagTIMESTAMP_STRUCT * tagTs = (tagTIMESTAMP_STRUCT*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( tagTs );
 
@@ -2060,8 +2060,8 @@ ODBCCONVERT_CONV(Time,long,Bigint,QUAD);
 int OdbcConvert::convTimeToString(DescRecord * from, DescRecord * to)
 {
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -2092,8 +2092,8 @@ int OdbcConvert::convTimeToString(DescRecord * from, DescRecord * to)
 int OdbcConvert::convTimeToStringW(DescRecord * from, DescRecord * to)
 {
 	wchar_t *pointer = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -2124,8 +2124,8 @@ int OdbcConvert::convTimeToStringW(DescRecord * from, DescRecord * to)
 int OdbcConvert::convTimeToTagTime(DescRecord * from, DescRecord * to)
 {
 	tagTIME_STRUCT * tagTm = (tagTIME_STRUCT*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( tagTm );
 
@@ -2140,8 +2140,8 @@ int OdbcConvert::convTimeToTagTime(DescRecord * from, DescRecord * to)
 int OdbcConvert::convTimeToBinary(DescRecord * from, DescRecord * to)
 {
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -2187,8 +2187,8 @@ int OdbcConvert::convTimeToBinary(DescRecord * from, DescRecord * to)
 // for use App to SqlDa
 int OdbcConvert::transferTagTimeToTime(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
@@ -2203,8 +2203,8 @@ int OdbcConvert::transferTagTimeToTime(DescRecord * from, DescRecord * to)
 // for use App to SqlDa
 int OdbcConvert::transferTagTimeToDateTime(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
@@ -2222,8 +2222,8 @@ int OdbcConvert::transferTagTimeToDateTime(DescRecord * from, DescRecord * to)
 int OdbcConvert::convTimeToTagTimestamp(DescRecord * from, DescRecord * to)
 {
 	tagTIMESTAMP_STRUCT * tagTs = (tagTIMESTAMP_STRUCT*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( tagTs );
 
@@ -2249,8 +2249,8 @@ ODBCCONVERT_CONV(DateTime,QUAD,Bigint,QUAD);
 int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 {
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -2285,8 +2285,8 @@ int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 int OdbcConvert::convDateTimeToStringW(DescRecord * from, DescRecord * to)
 {
 	wchar_t *pointer = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -2321,8 +2321,8 @@ int OdbcConvert::convDateTimeToStringW(DescRecord * from, DescRecord * to)
 int OdbcConvert::convDateTimeToTagDate(DescRecord * from, DescRecord * to)
 {
 	tagDATE_STRUCT * tagDt = (tagDATE_STRUCT*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( tagDt );
 
@@ -2339,8 +2339,8 @@ int OdbcConvert::convDateTimeToTagDate(DescRecord * from, DescRecord * to)
 int OdbcConvert::convDateTimeToTagTime(DescRecord * from, DescRecord * to)
 {
 	tagTIME_STRUCT * tagTm = (tagTIME_STRUCT*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( tagTm );
 
@@ -2357,8 +2357,8 @@ int OdbcConvert::convDateTimeToTagTime(DescRecord * from, DescRecord * to)
 int OdbcConvert::convDateTimeToTagDateTime(DescRecord * from, DescRecord * to)
 {
 	tagTIMESTAMP_STRUCT * tagTs = (tagTIMESTAMP_STRUCT*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( tagTs );
 
@@ -2383,8 +2383,8 @@ int OdbcConvert::convDateTimeToTagDateTime(DescRecord * from, DescRecord * to)
 int OdbcConvert::convDateTimeToBinary(DescRecord * from, DescRecord * to)
 {
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -2442,8 +2442,8 @@ int OdbcConvert::convDateTimeToBinary(DescRecord * from, DescRecord * to)
 // for use App to SqlDa
 int OdbcConvert::transferTagDateTimeToDate(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
@@ -2458,8 +2458,8 @@ int OdbcConvert::transferTagDateTimeToDate(DescRecord * from, DescRecord * to)
 // for use App to SqlDa
 int OdbcConvert::transferTagDateTimeToTime(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
@@ -2475,8 +2475,8 @@ int OdbcConvert::transferTagDateTimeToTime(DescRecord * from, DescRecord * to)
 // for use App to SqlDa
 int OdbcConvert::transferTagDateTimeToDateTime(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
@@ -2508,8 +2508,8 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 {
 	SQLRETURN ret = SQL_SUCCESS;
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -2591,8 +2591,8 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 {
 	SQLRETURN ret = SQL_SUCCESS;
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -2669,8 +2669,8 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 {
 	SQLRETURN ret = SQL_SUCCESS;
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -2774,8 +2774,8 @@ int OdbcConvert::convBlobToStringW( DescRecord * from, DescRecord * to )
 {
 	SQLRETURN ret = SQL_SUCCESS;
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
@@ -2885,12 +2885,12 @@ int OdbcConvert::convBlobToStringW( DescRecord * from, DescRecord * to )
 
 int OdbcConvert::convBinaryToBlob(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
-	SQLINTEGER * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
+	SQLLEN * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
@@ -2935,8 +2935,8 @@ int OdbcConvert::convBinaryToBlob(DescRecord * from, DescRecord * to)
 int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)				\
 {																								\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
 																								\
@@ -2991,8 +2991,8 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to)				\
 {																								\
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);								\
-	SQLINTEGER *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
+	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);						\
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
 																								\
@@ -3060,8 +3060,8 @@ int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
 {
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
@@ -3120,8 +3120,8 @@ int OdbcConvert::convStringToStringW(DescRecord * from, DescRecord * to)
 {
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	wchar_t * pointerTo = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
@@ -3214,12 +3214,12 @@ int OdbcConvert::convStringToStringW(DescRecord * from, DescRecord * to)
 // for use App to SqlDa
 int OdbcConvert::convStringToVarString(DescRecord * from, DescRecord * to)
 {	
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
-	SQLINTEGER * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
+	SQLLEN * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
@@ -3251,12 +3251,12 @@ int OdbcConvert::convStringToVarString(DescRecord * from, DescRecord * to)
 // for use App to SqlDa
 int OdbcConvert::convStringToBlob(DescRecord * from, DescRecord * to)
 {	
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
-	SQLINTEGER * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
+	SQLLEN * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
@@ -3279,8 +3279,8 @@ int OdbcConvert::convStringToBlob(DescRecord * from, DescRecord * to)
 int OdbcConvert::convStreamHexStringToBlob(DescRecord * from, DescRecord * to)
 {	
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
@@ -3298,8 +3298,8 @@ int OdbcConvert::convStreamHexStringToBlob(DescRecord * from, DescRecord * to)
 int OdbcConvert::convStreamToBlob(DescRecord * from, DescRecord * to)
 {	
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
@@ -3312,8 +3312,8 @@ int OdbcConvert::convStringToBinary(DescRecord * from, DescRecord * to)
 {
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
@@ -3370,8 +3370,8 @@ int OdbcConvert::convStringToBinary(DescRecord * from, DescRecord * to)
 int OdbcConvert::transferStringToTinyInt(DescRecord * from, DescRecord * to)
 {
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
@@ -3417,12 +3417,12 @@ int OdbcConvert::transferStringToTinyInt(DescRecord * from, DescRecord * to)
 // for use App to SqlDa
 int OdbcConvert::transferStringToDateTime(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
-	SQLINTEGER * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
+	SQLLEN * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 
 	int len = 0;
@@ -3454,12 +3454,12 @@ int OdbcConvert::transferStringToDateTime(DescRecord * from, DescRecord * to)
 
 int OdbcConvert::transferStringWToDateTime(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
-	SQLINTEGER * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
+	SQLLEN * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
 	wchar_t * pointerFrom = (wchar_t*)getAdressBindDataFrom((char*)from->dataPtr);
 
 	int len = 0;
@@ -3502,12 +3502,12 @@ int OdbcConvert::transferStringWToDateTime(DescRecord * from, DescRecord * to)
 // for use App to SqlDa
 int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
-	SQLINTEGER * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
+	SQLLEN * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 
 	SQLUINTEGER len;
@@ -3553,12 +3553,12 @@ int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 // for use App to SqlDa
 int OdbcConvert::transferStringWToAllowedType(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
-	SQLINTEGER * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
+	SQLLEN * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
 	wchar_t * pointerFrom = (wchar_t *)getAdressBindDataFrom((char*)from->dataPtr);
 
 	SQLUINTEGER len;
@@ -3612,10 +3612,10 @@ int OdbcConvert::transferStringWToAllowedType(DescRecord * from, DescRecord * to
 // for use App to SqlDa
 int OdbcConvert::transferArrayStringToAllowedType(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
+	SQLLEN * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
@@ -3645,12 +3645,12 @@ int OdbcConvert::transferArrayStringToAllowedType(DescRecord * from, DescRecord 
 // for use App to SqlDa
 int OdbcConvert::transferBinaryStringToAllowedType(DescRecord * from, DescRecord * to)
 {
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
-	SQLINTEGER * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
+	SQLLEN * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	int len;
 
@@ -3702,8 +3702,8 @@ int OdbcConvert::convVarStringToBinary(DescRecord * from, DescRecord * to)
 {
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
@@ -3761,8 +3761,8 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 {
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
@@ -3822,8 +3822,8 @@ int OdbcConvert::convVarStringToStringW(DescRecord * from, DescRecord * to)
 {
 	char *pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	wchar_t *pointerTo = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
@@ -3918,8 +3918,8 @@ int OdbcConvert::convVarStringSystemToString(DescRecord * from, DescRecord * to)
 {
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 	
@@ -3957,8 +3957,8 @@ int OdbcConvert::convVarStringSystemToStringW(DescRecord * from, DescRecord * to
 {
 	char *pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 	wchar_t *pointerTo = (wchar_t*)getAdressBindDataTo((char*)to->dataPtr);
-	SQLINTEGER * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
-	SQLINTEGER * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 	

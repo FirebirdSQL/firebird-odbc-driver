@@ -188,7 +188,7 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion) : IscResultSet 
 	values.alloc (numberColumns);
 	allocConversions();
 
-	indicators = (long*)calloc( 1, sizeof(long) * numberColumns );
+	indicators = (SQLLEN*)calloc( 1, sizeof(SQLLEN) * numberColumns );
 	sqlda = &outputSqlda;
 	((XSQLDA*)*sqlda)->sqld = numberColumns;
 	sqldataOffsetPtr = (uintptr_t)types - sizeof (*types);
@@ -217,7 +217,7 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion) : IscResultSet 
 
 	int i = numberColumns;
 	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar;
-	long *ind = indicators;
+	SQLLEN *ind = indicators;
 
 	while ( i-- )
 	{

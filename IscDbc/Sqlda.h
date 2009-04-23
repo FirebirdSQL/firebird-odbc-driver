@@ -26,6 +26,7 @@
 #define _SQLDA_H_INCLUDED_
 
 #include "IscArray.h"
+#include <sqltypes.h>
 
 namespace IscDbcLibrary {
 

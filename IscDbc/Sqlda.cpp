@@ -102,7 +102,7 @@ public:
 		ptSqlda = sqlda;
 		offsetSqldata = ptOffsetSqldata;
 		lenRow = lnRow;
-		indicatorsOffset = lenRow - ptSqlda->sqld * sizeof(long);
+		indicatorsOffset = lenRow - ptSqlda->sqld * sizeof(SQLLEN);
 		nMAXROWBLOCK = 65535l/lnRow;
 		
 		if ( nMAXROWBLOCK < 40 )
@@ -286,7 +286,7 @@ public:
 	{
 		char * ptRow = ptRowBlock + lenRow;
 		sqldata = ptRow + offsetSqldata[--column];
-		sqlind = (short*)( ptRow + indicatorsOffset + column * sizeof(long) );
+		sqlind = (short*)( ptRow + indicatorsOffset + column * sizeof(SQLLEN) );
 	}
 
 	char * nextPosition()
@@ -505,10 +505,10 @@ void Sqlda::allocBuffer ( IscStatement *stmt )
 
 	offset = ROUNDUP (offset, sizeof (int));
 	indicatorsOffset = offset;
-	offset += sizeof(long) * numberColumns;
+	offset += sizeof(SQLLEN) * numberColumns;
 	buffer = new char [offset];
 	lengthBufferRows = offset;
-	long *indicators = (long*)( buffer + indicatorsOffset );
+	SQLLEN *indicators = (SQLLEN*)( buffer + indicatorsOffset );
 	var = sqlda->sqlvar;
 
 	for ( n = 0; n < numberColumns; ++n )
