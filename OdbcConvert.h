@@ -82,9 +82,9 @@ public:
 	void setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd);
 	ADRESS_FUNCTION getAdressFunction(DescRecord * from, DescRecord * to);
 	inline SQLPOINTER getAdressBindDataFrom(char * pointer);
-	inline SQLINTEGER *getAdressBindIndFrom(char * pointer);
+	inline SQLLEN *getAdressBindIndFrom(char * pointer);
 	inline SQLPOINTER getAdressBindDataTo(char * pointer);
-	inline SQLINTEGER *getAdressBindIndTo(char * pointer);
+	inline SQLLEN *getAdressBindIndTo(char * pointer);
 
 public:
 	bool isIdentity(){ return bIdentity; }
