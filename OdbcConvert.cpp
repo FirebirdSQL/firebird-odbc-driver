@@ -1492,7 +1492,8 @@ int OdbcConvert::convBlob##To##TYPE_TO(DescRecord * from, DescRecord * to)						
 		if ( !fetched || !from->dataOffset )													\
 		{																						\
 			from->dataOffset = 0;																\
-			if ( !(fetched && !blob->getOffset()) )												\
+			from->startedReturnSQLData = false;													\
+			if ( !fetched || blob->getOffset() )												\
 			{																					\
 				if ( parentStmt->isStaticCursor() )												\
 					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );				\
@@ -1511,13 +1512,14 @@ int OdbcConvert::convBlob##To##TYPE_TO(DescRecord * from, DescRecord * to)						
 																								\
 		if ( !to->length )																		\
 			;																					\
-		else if (!dataRemaining && ( from->dataOffset || fetched ))								\
+		else if (!dataRemaining && ( from->dataOffset || fetched ) && from->startedReturnSQLData)	\
 		{																						\
 			from->dataOffset = 0;																\
 			ret = SQL_NO_DATA;																	\
 		}																						\
 		else																					\
 		{																						\
+			from->startedReturnSQLData = true;													\
 			int len = MIN(dataRemaining, MAX(0, (long)sizeof(C_TYPE_TO)));						\
 			int lenRead;																		\
 																								\
@@ -2525,7 +2527,8 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 		if ( !fetched || !from->dataOffset )
 		{ // attach new blob
 			from->dataOffset = 0;
-			if ( !(fetched && !blob->getOffset()) )
+			from->startedReturnSQLData = false;
+			if ( !fetched || blob->getOffset() )
 			{
 				if ( parentStmt->isStaticCursor() )
 					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
@@ -2544,13 +2547,14 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 
 		if ( !to->length )
 			;
-		else if (!dataRemaining && ( from->dataOffset || fetched ))
+		else if (!dataRemaining && ( from->dataOffset || fetched ) && from->startedReturnSQLData)
 		{
 			from->dataOffset = 0;
 			ret = SQL_NO_DATA;
 		}
 		else
 		{
+			from->startedReturnSQLData = true;
 			int len = MIN(dataRemaining, MAX(0, (long)to->length));
 			int lenRead;
 			 
@@ -2608,7 +2612,8 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 		if ( !fetched || !from->dataOffset )
 		{ // attach new blob
 			from->dataOffset = 0;
-			if ( !(fetched && !blob->getOffset()) )
+			from->startedReturnSQLData = false;
+			if ( !fetched || blob->getOffset() )
 			{
 				if ( parentStmt->isStaticCursor() )
 					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
@@ -2627,13 +2632,14 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 
 		if ( !to->length )
 			;
-		else if (!dataRemaining && ( from->dataOffset || fetched ))
+		else if (!dataRemaining && ( from->dataOffset || fetched ) && from->startedReturnSQLData)
 		{
 			from->dataOffset = 0;
 			ret = SQL_NO_DATA;
 		}
 		else if ( pointer )
 		{
+			from->startedReturnSQLData = true;
 			int len = MIN(dataRemaining, MAX(0, (long)to->length-1)>>1);
 			int lenRead;
 		 
@@ -2686,7 +2692,8 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 		if ( !fetched || !from->dataOffset )
 		{ // attach new blob
 			from->dataOffset = 0;
-			if ( !(fetched && !blob->getOffset()) )
+			from->startedReturnSQLData = false;
+			if ( !fetched || blob->getOffset() )
 			{
 				if ( parentStmt->isStaticCursor() )
 					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
@@ -2717,13 +2724,14 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 
 		if ( !to->length )
 			;
-		else if (!dataRemaining && ( from->dataOffset || fetched ))
+		else if (!dataRemaining && ( from->dataOffset || fetched ) && from->startedReturnSQLData)
 		{
 			from->dataOffset = 0;
 			ret = SQL_NO_DATA;
 		}
 		else
 		{
+			from->startedReturnSQLData = true;
 			int len = MIN(dataRemaining, MAX(0, (long)to->length-1));
 			int lenRead;
 			 
@@ -2745,9 +2753,8 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 						else
 							blob->directFetchBlob((char*)pointer, len, lenRead);
 					}
-
-					((char*) (pointer)) [len] = 0;
 				}
+				((char*) (pointer)) [len] = 0;
 
 				if ( !statusReturnData )
 					from->dataOffset += len;
@@ -2791,7 +2798,8 @@ int OdbcConvert::convBlobToStringW( DescRecord * from, DescRecord * to )
 		if ( !fetched || !from->dataOffset )
 		{ // attach new blob
 			from->dataOffset = 0;
-			if ( !(fetched && !blob->getOffset()) )
+			from->startedReturnSQLData = false;
+			if ( !fetched || blob->getOffset() )
 			{
 				if ( parentStmt->isStaticCursor() )
 					blob->attach ( ptBlob, parentStmt->isStaticCursor(), false );
@@ -2822,13 +2830,14 @@ int OdbcConvert::convBlobToStringW( DescRecord * from, DescRecord * to )
 
 		if ( !to->length )
 			;
-		else if (!dataRemaining && ( from->dataOffset || fetched ))
+		else if (!dataRemaining && ( from->dataOffset || fetched ) && from->startedReturnSQLData)
 		{
 			from->dataOffset = 0;
 			ret = SQL_NO_DATA;
 		}
 		else
 		{
+			from->startedReturnSQLData = true;
 			int len = MIN(dataRemaining, MAX(0, (long)to->length / 2 - 1));
 			int lenRead;
 			 
@@ -2858,9 +2867,8 @@ int OdbcConvert::convBlobToStringW( DescRecord * from, DescRecord * to )
 						from->MbsToWcs( (wchar_t *)pointer, tempBuf, len );
 						delete[] tempBuf;
 					}
-
-					((wchar_t *) (pointer)) [len] = L'\0';
 				}
+				((wchar_t *) (pointer)) [len] = L'\0';
 
 				if ( !statusReturnData )
 					from->dataOffset += len;
@@ -3070,6 +3078,7 @@ int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
 	if ( !fetched )
 	{ // new row read
 		from->dataOffset = 0;
+		from->startedReturnSQLData = false;
 		from->currentFetched = parentStmt->getCurrentFetched();
 	}
 
@@ -3079,13 +3088,14 @@ int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
 
 	if ( !to->length )
 		length = dataRemaining;
-	else if (!dataRemaining && ( from->dataOffset || fetched ))
+	else if (!dataRemaining && ( from->dataOffset || fetched ) && from->startedReturnSQLData)
 	{
 		from->dataOffset = 0;
 		ret = SQL_NO_DATA;
 	}
 	else
 	{
+		from->startedReturnSQLData = true;
 		int len = MIN(dataRemaining, MAX(0, (long)to->length-1));
 		 
 		if ( !pointerTo )
@@ -3130,6 +3140,7 @@ int OdbcConvert::convStringToStringW(DescRecord * from, DescRecord * to)
 	if ( !fetched )
 	{ // new row read
 		from->dataOffset = 0;
+		from->startedReturnSQLData = false;
 		from->currentFetched = parentStmt->getCurrentFetched();
 	}
 
@@ -3139,13 +3150,14 @@ int OdbcConvert::convStringToStringW(DescRecord * from, DescRecord * to)
 
 	if ( !to->length )
 		length = dataRemaining;
-	else if (!dataRemaining && ( from->dataOffset || fetched ))
+	else if (!dataRemaining && ( from->dataOffset || fetched ) && from->startedReturnSQLData)
 	{
 		from->dataOffset = 0;
 		ret = SQL_NO_DATA;
 	}
 	else
 	{
+		from->startedReturnSQLData = true;
 		int len = MAX(0, (long)(to->length / sizeof( wchar_t )) - 1 );
 		 
 		if ( !pointerTo )
@@ -3322,6 +3334,7 @@ int OdbcConvert::convStringToBinary(DescRecord * from, DescRecord * to)
 	if ( !fetched )
 	{ // new row read
 		from->dataOffset = 0;
+		from->startedReturnSQLData = false;
 		from->currentFetched = parentStmt->getCurrentFetched();
 	}
 
@@ -3331,13 +3344,14 @@ int OdbcConvert::convStringToBinary(DescRecord * from, DescRecord * to)
 
 	if ( !to->length )
 		length = dataRemaining;
-	else if (!dataRemaining && ( from->dataOffset || fetched ))
+	else if (!dataRemaining && ( from->dataOffset || fetched ) && from->startedReturnSQLData)
 	{
 		from->dataOffset = 0;
 		ret = SQL_NO_DATA;
 	}
 	else
 	{
+		from->startedReturnSQLData = true;
 		int len = MIN(dataRemaining, MAX(0, (long)to->length));
 		 
 		if ( !pointerTo )
@@ -3712,6 +3726,7 @@ int OdbcConvert::convVarStringToBinary(DescRecord * from, DescRecord * to)
 	if ( !fetched )
 	{ // new row read
 		from->dataOffset = 0;
+		from->startedReturnSQLData = false;
 		from->currentFetched = parentStmt->getCurrentFetched();
 	}
 
@@ -3721,13 +3736,14 @@ int OdbcConvert::convVarStringToBinary(DescRecord * from, DescRecord * to)
 
 	if ( !to->length )
 		length = dataRemaining;
-	else if (!dataRemaining && ( from->dataOffset || fetched ))
+	else if (!dataRemaining && ( from->dataOffset || fetched ) && from->startedReturnSQLData)
 	{
 		from->dataOffset = 0;
 		ret = SQL_NO_DATA;
 	}
 	else
 	{
+		from->startedReturnSQLData = true;
 		int len = MIN(dataRemaining, MAX(0, (long)to->length));
 		 
 		if ( !pointerTo )
@@ -3771,6 +3787,7 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 	if ( !fetched )
 	{ // new row read
 		from->dataOffset = 0;
+		from->startedReturnSQLData = false;
 		from->currentFetched = parentStmt->getCurrentFetched();
 	}
 
@@ -3780,13 +3797,14 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 
 	if ( !to->length )
 		length = dataRemaining;
-	else if (!dataRemaining && ( from->dataOffset || fetched ))
+	else if (!dataRemaining && ( from->dataOffset || fetched ) && from->startedReturnSQLData)
 	{
 		from->dataOffset = 0;
 		ret = SQL_NO_DATA;
 	}
 	else
 	{
+		from->startedReturnSQLData = true;
 		int len = MIN(dataRemaining, MAX(0, (long)to->length-1));
 		 
 		if ( !pointerTo )
@@ -3832,6 +3850,7 @@ int OdbcConvert::convVarStringToStringW(DescRecord * from, DescRecord * to)
 	if ( !fetched )
 	{ // new row read
 		from->dataOffset = 0;
+		from->startedReturnSQLData = false;
 		from->currentFetched = parentStmt->getCurrentFetched();
 	}
 
@@ -3841,13 +3860,14 @@ int OdbcConvert::convVarStringToStringW(DescRecord * from, DescRecord * to)
 
 	if ( !to->length )
 		length = dataRemaining;
-	else if (!dataRemaining && ( from->dataOffset || fetched ))
+	else if (!dataRemaining && ( from->dataOffset || fetched ) && from->startedReturnSQLData)
 	{
 		from->dataOffset = 0;
 		ret = SQL_NO_DATA;
 	}
 	else
 	{
+		from->startedReturnSQLData = true;
 		int len = MAX(0, (long)(to->length / sizeof( wchar_t )) - 1 );
 		 
 		if ( !pointerTo )

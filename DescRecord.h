@@ -73,6 +73,7 @@ public:
 	int				sizeColumnExtendedFetch;
 	SQLINTEGER		dataOffset;
 	long			currentFetched;
+	bool			startedReturnSQLData;
 	HeadSqlVar		*headSqlVarPtr;
 	Blob			*dataBlobPtr; // for blob or array 
 
