@@ -1,0 +1,7 @@
+==================================
+  OdbcJdbc 2.1
+==================================
+
+1)  - fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-71                           
+
+    Started v2-1 ( 20 Jul 2009 )
