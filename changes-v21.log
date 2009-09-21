@@ -2,6 +2,10 @@
   OdbcJdbc 2.1
 ==================================
 
-1)  - fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-71                           
+1)  - fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-71
+	ODBC driver is not compatible with .NET 2.0 SP2 and .NET 3.5 SP1
+
+2)  - fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-75                           
+    Parameter conversions broken
 
     Started v2-1 ( 20 Jul 2009 )
