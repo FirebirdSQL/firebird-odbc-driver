@@ -18,7 +18,6 @@
 #
 #
 #
-PACKAGE_NAME=OdbcJdbc_1.2.0.100.tar
 #
 #
 DEBUG = No
@@ -27,6 +26,21 @@ DEBUG = No
 #
 GCC		= g++
 
+
+#Override default variables for this build
+#ARCH = x86
+#FIREBIRD=/usr/lib64/firebird
+
+# Get version info
+MAJOR_VERSION = $(shell cat ../../SetupAttributes.h | grep "define MAJOR_VERSION" | cut -f 3)
+MINOR_VERSION = $(shell cat ../../SetupAttributes.h | grep "define MINOR_VERSION" | cut -f 3)
+REVISION = $(shell cat ../../SetupAttributes.h | grep "define REVNO_VERSION" | cut -f 3)
+BUILD_NUMBER = $(shell cat ../../WriteBuildNo.h | grep "define BUILDNUM_VERSION" | cut -f 3)
+#and use it
+LIB_ROOT_NAME = OdbcFb
+PACKAGE_VERSION = $(MAJOR_VERSION).$(MINOR_VERSION).$(REVISION).$(BUILD_NUMBER)
+LIB_VERSION = $(MAJOR_VERSION).$(MINOR_VERSION).$(REVISION)
+PACKAGE_NAME = $(LIB_ROOT_NAME)-$(PACKAGE_VERSION).tar
 #
 # Start build
 #
@@ -57,19 +71,13 @@ INCLUDEDIR      = -I/usr/include
 EXTLIBDIR       = -L/usr/$(LIB)
 endif
 
-ifdef INTERBASE
-INCLUDEDIR      := -I/opt/interbase/include -I/usr/include/odbc $(INCLUDEDIR)
-EXTLIBDIR       := -L/opt/interbase/lib -L$(UNIXODBCDIR) $(EXTLIBDIR)
-else
-INCLUDEDIR      = -I/opt/firebird/include -I/usr/include/odbc
-EXTLIBDIR       := -L/opt/firebird/lib -L$(UNIXODBCDIR) $(EXTLIBDIR)
-endif
-#
+INCLUDEDIR      = -I$(FBINCDIR) -I/usr/include/odbc $(INCLUDEDIR)
+EXTLIBDIR       := -L$(FBLIBDIR -L$(UNIXODBCDIR) $(EXTLIBDIR)
 
 ifeq (Yes,$(DEBUG))
-TARGETDIR	    = Debug
+TARGETDIR	    = Debug_$(ARCH)
 else
-TARGETDIR	    = Release
+TARGETDIR	    = Release_$(ARCH)
 endif
 #
 BUILDDIR 	    = $(TARGETDIR)/obj
@@ -86,18 +94,23 @@ LIST_ODBCJDBCSETUPOBJ	= $(addprefix $(BUILDDIR)/, $(ODBCJDBCSETUPSRC_LINUX:.cpp=
 COMPFLAGS	= -g -w -D_REENTRANT -D_PTHREADS -DEXTERNAL -D$(ODBCMANAGER) $(INCLUDEDIR) -I$(FBINCDIR)
 
 ifeq ($(ARCH),x86_64)
-COMPFLAGS	:= -fPIC
+COMPFLAGS	:= -fPIC -m64
+LINKFLAGS	= -shared -m64
+else
+COMPFLAGS	:= -m32
+LINKFLAGS	= -shared -m32
 endif
 #
 #LINKFLAGS	= -rdynamic -export-dynamic -shared 
-LINKFLAGS	= -shared
+
 EXTLIBS		= $(EXTLIBDIR) -lcrypt -ldl
+
 #
 #ISCDBC		= libIscDbc.so
 ISCDBCDLL       = $(TARGETDIR)/$(ISCDBC)
-ODBCJDBC	= libOdbcFb.so
+ODBCJDBC	= lib$(LIB_ROOT_NAME).so
 ODBCJDBCDLL     = $(TARGETDIR)/$(ODBCJDBC)
-#ODBCJDBCSETUP	= libOdbcJdbcS.so
+#ODBCJDBCSETUP	= libOdbcFbS.so
 ODBCJDBCSETUPDLL= $(TARGETDIR)/$(ODBCJDBCSETUP)
 ISCDBCDEFFILE	= $(ISCDBCDIR)/IscDbc.def
 ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)/OdbcJdbc.def
@@ -119,8 +132,18 @@ $(BUILDDIR)/%.o: $(ODBCJDBCDIR)/%.cpp
 ISCDBCLIB       = $(ISCDBCDLL:.so=.a)
 ODBCJDBCLIB     = $(ODBCJDBCDLL:.so=.a)
 ODBCJDBCSETUPLIB= $(ODBCJDBCSETUPDLL:.so=.a)
+
+
+
 #
-all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL) 
+#
+# If required, print out the version info
+getVersion : 
+	$(warning MAJOR_VERSION is $(MAJOR_VERSION) )
+	$(warning MINOR_VERSION is $(MINOR_VERSION) )
+	$(warning REVISION is $(REVISION) )
+	$(warning BUILD_NUMBER is $(BUILD_NUMBER) )
 #
 # Silently creates the target and build directories
 createdirs :
@@ -161,10 +184,12 @@ postbuild : $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
 	@-gzip -9 -S .gz OdbcJdbc_Snapshot.tar
 #
 install : 
-	for afile in $(ODBCJDBCDLL);  do cp $$afile $(UNIXODBCDIR); done
+	cp $(ODBCJDBCDLL) $(UNIXODBCDIR)/$(ODBCJDBC).$(LIB_VERSION)
+	ln -s $(UNIXODBCDIR)/$(ODBCJDBC).$(LIB_VERSION) $(UNIXODBCDIR)/$(ODBCJDBC)
+	ln -s $(UNIXODBCDIR)/$(ODBCJDBC).$(LIB_VERSION) $(UNIXODBCDIR)/$(ODBCJDBC).$(MAJOR_VERSION)
 #
 uninstall : 
-	rm $(UNIXODBCDIR)/$(ODBCJDBC) 
+	@-rm -f $(UNIXODBCDIR)/$(ODBCJDBC)*.* 
 #
 package :
 	-strip -s $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
