@@ -4,7 +4,13 @@
 #FBLIBDIR	= /mnt/third_party/interbase/sun5-2003-3-10/lib
 #
 
+# Define ARCH in the calling makefile if you want to target a different architecture
+ifndef ARCH
 ARCH=$(shell uname -m)
+endif
+
+$(warning ARCH is $(ARCH))
+
 ifeq ($(ARCH),x86_64)
 	UNIXODBCDIR = $(shell if [ -d /usr/lib64/unixODBC ]; then echo /usr/lib64/unixODBC; else echo /usr/lib64; fi)
 else
@@ -12,18 +18,42 @@ else
 endif
 
 ifndef ODBCMANAGER
-	ODBCMANAGER = $(shell if [ -f $(UNIXODBCDIR)/libodbc.so ]; then echo unixODBC; else echo iODBC; fi)
+# This test is a mess. iodbc isn't even shipped with most distros
+# and libodbc.so is not in the UNIXODBCDIR on openSUSE. In fact, only Debian
+# and ubuntu still seem to ship iodbc, so lets turn the test around.
+#	ODBCMANAGER = $(shell if [ -f $(UNIXODBCDIR)/libodbc.so ]; then echo unixODBC; else echo iODBC; fi)
+	ODBCMANAGER = $(shell if [ -f $(UNIXODBCDIR)/libiodbc.so ]; then echo iODBC; else echo unixODBC; fi)
 endif
+$(warning ODBCMANAGER is $(ODBCMANAGER) in $(UNIXODBCDIR))
 
 ifdef FIREBIRD
 FBINCDIR	= $(FIREBIRD)/include
 FBLIBDIR	= $(FIREBIRD)/lib
 else
-FBINCDIR	= d:/Firebird/include
-FBLIBDIR	= d:/Firebird/lib
+ifdef INTERBASE
+FBINCDIR	= $(INTERBASE)/include
+FBLIBDIR	= $(INTERBASE)/lib
+else
+FBINCDIR	= $(shell if [ -d /opt/firebird/include ]; then echo /opt/firebird/include; else echo nul; fi)
+FBLIBDIR	= $(shell if [ -d /opt/firebird/lib ]; then echo /opt/firebird/lib; else echo nul; fi)
 endif
+endif
+
+ifeq (nul,$(FBINCDIR))
+$(error FBINCDIR is undefined)
+else
+$(warning FBINCDIR is $(FBINCDIR))
+endif
+
+ifeq (nul,$(FBLIBDIR))
+$(error FBLIBDIR is undefined)
+else
+$(warning FBLIBDIR is $(FBLIBDIR))
+endif
+
 #
 ISCDBCDIR 		= ../../IscDbc
 ODBCJDBCDIR 		= ../..
 ODBCJDBCSETUPDIR 	= ../../OdbcJdbcSetup
 #
+
