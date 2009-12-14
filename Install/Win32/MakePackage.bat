@@ -36,20 +36,21 @@
 
 :SET_ENVIRONMENT
 ::Assume we are preparing a production build
-set BUILDTYPE=Release
+if not defined BUILDCONFIG (set BUILDCONFIG=release)
 
 :: See what we have on the command line
 for %%v in ( %* )  do (
-  ( if /I "%%v"=="DEBUG" (set BUILDTYPE=Debug) )
+  ( if /I "%%v"=="DEBUG" (set BUILDCONFIG=debug) )
 )
 
 @cd ..\..
 @for /f "delims=" %%a in ('@cd') do (set ROOT_PATH=%%a)
 @cd %~dp0
 
-@set TARGET_PLATFORM=Win32
-@if "%PROCESSOR_ARCHITECTURE%"=="x86" (set TARGET_PLATFORM=Win32)
-@if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (set TARGET_PLATFORM=x64)
+if not defined FB_TARGET_PLATFORM (
+  @if "%PROCESSOR_ARCHITECTURE%"=="x86" (set FB_TARGET_PLATFORM=Win32)
+  @if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (set FB_TARGET_PLATFORM=x64)
+)
 
 @goto :EOF
 
@@ -63,10 +64,10 @@ for %%v in ( %* )  do (
 ::========================================================
 sed /"#define BUILDNUM_VERSION"/!d %ROOT_PATH%\WriteBuildNo.h > %temp%.\b$1.bat
 sed -n -e s/\"//g -e s/"#define BUILDNUM_VERSION"//w%temp%.\b$2.bat %temp%.\b$1.bat
-for /f "tokens=*" %%a in ('type %temp%.\b$2.bat') do set PRODUCT_VER_STRING=1.2.0.%%a
+for /f "tokens=*" %%a in ('type %temp%.\b$2.bat') do set PRODUCT_VER_STRING=2.1.0.%%a
 @echo s/1.2.0/%PRODUCT_VER_STRING%/ > %temp%.\b$3.bat
 @echo s/define MSVC_VERSION 6/define MSVC_VERSION %MSVC_VERSION%/ >> %temp%.\b$3.bat
-@echo s/define BUILD_TYPE Release/define BUILD_TYPE %BUILDTYPE%/ >> %temp%.\b$3.bat
+@echo s/define BUILDCONFIG release/define BUILDCONFIG %BUILDCONFIG%/ >> %temp%.\b$3.bat
 @echo s/PRODUCT_VER_STRING/%PRODUCT_VER_STRING%/ >> %temp%.\b$3.bat
 sed -f  %temp%.\b$3.bat %~dp0\OdbcJdbcSetup.iss > %~dp0\OdbcJdbcSetup_%PRODUCT_VER_STRING%.iss
 del %temp%.\b$?.bat
@@ -75,7 +76,16 @@ del %temp%.\b$?.bat
 
 :BUILD_HELP
 ::=========
-set HTMLHELP="%PROGRAMFILES%\HTML Help Workshop\hhc.exe"
+if exist "%ProgramFiles%\HTML Help Workshop\hhc.exe" (
+set HTMLHELP="%ProgramFiles%\HTML Help Workshop\hhc.exe"
+) else (
+  if exist "%ProgramFiles(x86)%\HTML Help Workshop\hhc.exe" (
+	set HTMLHELP="%ProgramFiles(x86)%\HTML Help Workshop\hhc.exe"
+  ) else (
+  echo HTML Help Workshop is not available
+  goto :EOF
+  )
+)
 %HTMLHELP% %ROOT_PATH%\Install\HtmlHelp\OdbcJdbc.hhp
 ::echo ERRORLEVEL is %ERRORLEVEL%
 
@@ -84,10 +94,10 @@ goto :EOF
 
 :ISX
 ::========
-if NOT DEFINED INNO_SETUP_PATH (set INNO_SETUP_PATH="%PROGRAMFILES%\Inno Setup")
+if NOT DEFINED INNO5_SETUP_PATH (set INNO5_SETUP_PATH="%PROGRAMFILES%\Inno Setup")
 @Echo Now let's compile the InnoSetup scripts
 @Echo.
-%INNO_SETUP_PATH%\iscc "%ROOT_PATH%\Install\Win32\OdbcJdbcSetup_%PRODUCT_VER_STRING%.iss"
+%INNO5_SETUP_PATH%\iscc "%ROOT_PATH%\Install\Win32\OdbcJdbcSetup_%PRODUCT_VER_STRING%.iss"
 goto :EOF
 
 
@@ -107,7 +117,7 @@ goto :EOF
 goto :EOF
 
 
-:MAIN
+:MAKE_PACKAGE
 ::============
 @Echo.
 @Echo Setting environment...
@@ -125,6 +135,12 @@ goto :EOF
 @(@call :ISX ) || (@echo Error calling Inno Setup Extensions & @goto :EOF)
 @Echo.
 
+goto :EOF
+
+
+:MAIN
+::====
+call :MAKE_PACKAGE %*
 goto :EOF
 
 
