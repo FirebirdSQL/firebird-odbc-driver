@@ -1,6 +1,7 @@
 ISCDBCSRC = \
 	Attachment.cpp \
 	BinaryBlob.cpp \
+	Blob.cpp \
 	DateTime.cpp \
 	EnvShare.cpp \
 	extodbc.cpp \
@@ -51,6 +52,7 @@ ISCDBCSRC = \
 	Values.cpp
 
 ODBCJDBCSRC = \
+	ConnectDialog.cpp \
 	DescRecord.cpp \
 	Main.cpp \
 	MainUnicode.cpp \
@@ -63,10 +65,9 @@ ODBCJDBCSRC = \
 	OdbcError.cpp \
 	OdbcObject.cpp \
 	OdbcStatement.cpp \
+	ResourceManagerSink.cpp \
 	SafeEnvThread.cpp \
-	ConnectDialog.cpp \
-	TransactionResourceAsync.cpp \
-	ResourceManagerSink.cpp
+	TransactionResourceAsync.cpp
 
 ODBCJDBCSETUPSRC_LINUX = \
 	OdbcInstGetProp.cpp

@@ -1,0 +1,13 @@
+
+!ifdef FIREBIRD
+FBINCDIR	= $(FIREBIRD)/include
+FBLIBDIR	= $(FIREBIRD)/lib
+!else
+FBINCDIR	= d:/Firebird/include
+FBLIBDIR	= d:/Firebird/lib
+!endif
+#
+ISCDBCDIR 		= ../../IscDbc
+ODBCJDBCDIR 		= ../..
+ODBCJDBCSETUPDIR 	= ../../OdbcJdbcSetup
+#
