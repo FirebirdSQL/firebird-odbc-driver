@@ -28,7 +28,7 @@
 ;
 
 #define MSVC_VERSION 8
-#define BUILD_TYPE "Release"
+#define BUILDCONFIG "release"
 
 #if MSVC_VERSION==7
 #define BUILD_ENV "MsVc70.win"
@@ -38,7 +38,7 @@
 BUILD_ENV undefined
 #endif
 
-#if BUILD_TYPE=="Debug"
+#if BUILDCONFIG=="debug"
 #define debug_str "_debug"
 #else
 #define debug_str ""
@@ -48,18 +48,26 @@ BUILD_ENV undefined
 
 ;---- If we haven't already set PlatformTarget then pick it up from the environment.
 #ifndef PlatformTarget
-#define PlatformTarget GetEnv("TARGET_PLATFORM")
+#define PlatformTarget GetEnv("FB_TARGET_PLATFORM")
 #endif
 #if PlatformTarget == ""
 #define PlatformTarget "win32"
 #endif
 
 #define BUILD_ROOT="..\..\"
-#define SOURCE_LIBS "Builds\"+AddBackslash(BUILD_ENV)+AddBackslash(PlatformTarget)+AddBackslash(BUILD_TYPE)
+#define SOURCE_LIBS "Builds\"+AddBackslash(BUILD_ENV)+AddBackslash(PlatformTarget)+AddBackslash(BUILDCONFIG)
 #define SOURCE_DOCS="Install\"
 
 #if PlatformTarget == "x64"
-#define SOURCE_LIBS32="Builds\"+AddBackslash(BUILD_ENV)+AddBackslash("Win32")+AddBackslash(BUILD_TYPE)
+#define SOURCE_LIBS32="Builds\"+AddBackslash(BUILD_ENV)+AddBackslash("Win32")+AddBackslash(BUILDCONFIG)
+#endif
+
+; Check if HTML help is available
+#ifndef HtmlHelp
+#define HtmlHelp GetEnv("HTMLHELP")
+#endif
+#if HtmlHelp == ""
+#undef HtmlHelp
 #endif
 
 [Setup]
@@ -120,12 +128,14 @@ Name: DocumentationComponent; Description: {cm:DocumentationComponent}; Types: D
 Source: {#SOURCE_LIBS}OdbcFb.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile
 Source: {#SOURCE_LIBS}\OdbcFb.lib; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
 Source: {#SOURCE_LIBS}\OdbcFb.pdb; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
+#ifdef HtmHelp
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DocumentationComponent; Flags: ignoreversion
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {sys}; Components: DocumentationComponent; Flags: ignoreversion
 Source: {#SOURCE_DOCS}\HtmlHelp\html\*.*; DestDir: {app}\html; Components: DocumentationComponent
 Source: {#SOURCE_DOCS}\HtmlHelp\images\*.*; DestDir: {app}\images; Components: DocumentationComponent
+#endif
 Source: {#SOURCE_DOCS}\Win32\Readme.txt; DestDir: {app}; Components: DocumentationComponent; Flags: isreadme
 Source: {#SOURCE_DOCS}\IDPLicense.txt; DestDir: {app}; Components: DocumentationComponent
 ;Source: {#SOURCE_DOCS}\ReleaseNotes_v2.0.html; DestDir: {app}; Components: DocumentationComponent
@@ -134,16 +144,20 @@ Source: {#SOURCE_DOCS}\IDPLicense.txt; DestDir: {app}; Components: Documentation
 Source: {#SOURCE_LIBS32}OdbcFb.dll; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile
 Source: {#SOURCE_LIBS32}\OdbcFb.lib; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
 Source: {#SOURCE_LIBS32}\OdbcFb.pdb; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
+#ifdef HtmlHelp
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DocumentationComponent; Flags: ignoreversion
+#endif
 #endif
 
 [Icons]
 Name: {group}\Uninstall Firebird ODBC driver; Filename: {uninstallexe}; Components: DocumentationComponent; Comment: Remove Firebird ODBC Driver Documentation
 Name: {group}\Uninstall Firebird ODBC driver; Filename: {uninstallexe}; Components: DeveloperComponent; Comment: Remove Firebird ODBC Driver Library and Documentation
+#ifdef HtmlHelp
 Name: {group}\Firebird ODBC Help; Filename: {app}\OdbcFb.chm; Components: DocumentationComponent
 Name: {group}\Firebird ODBC Help; Filename: {sys}\OdbcFb.chm; Components: DeveloperComponent
 Name: {app}\Firebird ODBC Help; Filename: {sys}\OdbcFb.chm; Components: DeveloperComponent
+#endif
 ;Name: {group}\Firebird ODBC v2.0 Release Notes; Filename: {app}\ReleaseNotes_v2.0.html; Components: DocumentationComponent
 Name: {group}\Firebird ODBC readme.txt; Filename: {app}\Readme.txt; Components: DocumentationComponent
 Name: {group}\Firebird ODBC license.txt; Filename: {app}\IDPLicense.txt; Components: DocumentationComponent
