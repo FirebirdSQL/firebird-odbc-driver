@@ -136,7 +136,7 @@ ODBCJDBCSETUPLIB= $(ODBCJDBCSETUPDLL:.so=.a)
 
 
 #
-all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL) 
+all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
 #
 # If required, print out the version info
 getVersion : 
