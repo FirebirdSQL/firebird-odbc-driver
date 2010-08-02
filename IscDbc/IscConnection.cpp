@@ -298,14 +298,14 @@ isc_tr_handle IscConnection::startTransaction()
         case 0x00000001L:
             // SQL_TXN_READ_UNCOMMITTED:
 			iscTpb[3] = isc_tpb_read_committed;
-			iscTpb[4] = isc_tpb_rec_version;
+			iscTpb[4] = isc_tpb_no_rec_version;
             break;
 
         case 0x00000002L:
         default:
             // SQL_TXN_READ_COMMITTED:
 			iscTpb[3] = isc_tpb_read_committed;
-			iscTpb[4] = isc_tpb_no_rec_version;
+			iscTpb[4] = isc_tpb_rec_version;
             break;
     }
 
