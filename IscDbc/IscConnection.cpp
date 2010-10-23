@@ -642,15 +642,17 @@ bool IscConnection::paramTransactionModes( char *& string, short &transFlags, bo
 void IscConnection::parseReservingTable( char *& string, char *& tpbBuffer, short transFlags )
 {
 	char *saveLockMode[256];
+	char *saveLockLevel[256];
 	int countTable = 0;
 	char lockMode = 0;
+	char lockLevel = 0;
 	char *& ptOut = string;
 	char *beg = tpbBuffer + 2;
 	char *end;
 
 	while ( true )
-    {
-		saveLockMode[countTable++] = beg - 2;
+	{
+		saveLockMode[countTable] = beg - 2;
 		char &lengthTableName = *(beg - 1);
 		end = beg;
 
@@ -662,47 +664,54 @@ void IscConnection::parseReservingTable( char *& string, char *& tpbBuffer, shor
 		SKIP_WHITE ( ptOut );
     	//		SYNTAX_ERROR ("relation name");
 
-		char &lockLevel = *end++;
+		saveLockLevel[countTable++] = end++;
 
-		IS_MATCH_EXT( "FOR" );
-		lockLevel = (transFlags & TRA_con) ? isc_tpb_protected : isc_tpb_shared;
-		lockMode = isc_tpb_lock_read;
-
-		if ( IS_MATCH_EXT( "PROTECTED" ) )
-			lockLevel = isc_tpb_protected;
-		else if ( IS_MATCH_EXT( "EXCLUSIVE" ) )
-			lockLevel = isc_tpb_exclusive;
-		else if ( IS_MATCH_EXT( "SHARED" ) )
-			lockLevel = isc_tpb_shared;
-
-		if ( IS_MATCH_EXT( "WRITE" ) )
-		{
-			if ( transFlags & TRA_ro )
-				throw SQLEXCEPTION( SYNTAX_ERROR, "write lock requested for a read_only transaction" );
-
-			lockMode = isc_tpb_lock_write;
-		}
-		else 
-			IS_MATCH_EXT( "READ" );
 
 		if ( !( IS_MATCH_EXT( "," ) ) )
-			break;
+		{
+			IS_MATCH_EXT( "FOR" );
+			lockLevel = (transFlags & TRA_con) ? isc_tpb_protected : isc_tpb_shared;
+			lockMode = isc_tpb_lock_read;
+
+			if ( IS_MATCH_EXT( "PROTECTED" ) )
+				lockLevel = isc_tpb_protected;
+			else if ( IS_MATCH_EXT( "EXCLUSIVE" ) )
+				lockLevel = isc_tpb_exclusive;
+			else if ( IS_MATCH_EXT( "SHARED" ) )
+				lockLevel = isc_tpb_shared;
+
+			if ( IS_MATCH_EXT( "WRITE" ) )
+			{
+				if ( transFlags & TRA_ro )
+					throw SQLEXCEPTION( SYNTAX_ERROR, "write lock requested for a read_only transaction" );
+
+				lockMode = isc_tpb_lock_write;
+			}
+			else 
+				IS_MATCH_EXT( "READ" );
+
+			if ( countTable )
+			{
+		    	//
+		    	// get the lock level and mode and apply them to all the
+		    	// relations in the list
+		    	//
+				do {
+			    	*saveLockLevel[--countTable] = lockLevel;
+			    	*saveLockMode[countTable] = lockMode;
+        		} while ( countTable );
+			}
+
+			if ( !( IS_MATCH_EXT( "," ) ) )
+				break;
+    	}
+
 
 		beg = end + 2;
-	}
+  	}
 
 	tpbBuffer = end;
 
-	if ( countTable )
-	{
-		//
-		// get the lock level and mode and apply them to all the
-		// relations in the list
-		//
-		do
-			*saveLockMode[--countTable] = lockMode;
-		while ( countTable );
-	}
 }
 
 int IscConnection::buildParamTransaction( char *& string, char boolDeclare )
