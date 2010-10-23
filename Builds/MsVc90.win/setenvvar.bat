@@ -47,10 +47,10 @@ set BUILDCONFIG=release
 ::
 :SETUP_COMPILER
 @echo Guessing which compiler to use...
-if DEFINED VS80COMNTOOLS (
-	@"%VS80COMNTOOLS%\..\IDE\devenv" /? >nul 2>nul
+if DEFINED VS90COMNTOOLS (
+	@"%VS90COMNTOOLS%\..\IDE\devenv" /? >nul 2>nul
 	@if not errorlevel 9009 (
-		call "%VS80COMNTOOLS%\..\..\VC\vcvarsall.bat" %FB_COMPILER_TYPE%
+		call "%VS90COMNTOOLS%\..\..\VC\vcvarsall.bat" %FB_COMPILER_TYPE%
 	)
 )
 @echo.
@@ -86,11 +86,11 @@ goto :END
 @echo    A working version of Visual Studio cannot be found
 @echo    on your current path.
 @echo.
-@echo    You need MS Visual Studio 8 to build Firebird
+@echo    You need MS Visual Studio 9 to build Firebird
 @echo    from these batch files.
 @echo.
 @echo    A properly installed version of Visual Studio will set
-@echo    the environment variable %%VS80COMNTOOLS%%. We use that
+@echo    the environment variable %%VS90COMNTOOLS%%. We use that
 @echo    variable to run the appropriate batch file to set up
 @echo    the build environment.
 @echo.

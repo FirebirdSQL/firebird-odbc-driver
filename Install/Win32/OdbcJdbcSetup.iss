@@ -23,17 +23,19 @@
 ;
 ;  OdbcJdbcSetup.iss
 ;
-;  Currently compiled against InnoSetup v5.2.1 from http://www.innosetup.com/
+;  Currently compiled against InnoSetup v5.3 from http://www.innosetup.com/
 ;
 ;
 
-#define MSVC_VERSION 8
+#define MSVC_VERSION 9
 #define BUILDCONFIG "release"
 
 #if MSVC_VERSION==7
 #define BUILD_ENV "MsVc70.win"
 #elif MSVC_VERSION==8
 #define BUILD_ENV "MsVc80.win"
+#elif MSVC_VERSION==9
+#define BUILD_ENV "MsVc90.win"
 #else
 BUILD_ENV undefined
 #endif
