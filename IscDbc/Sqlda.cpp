@@ -466,7 +466,7 @@ void Sqlda::allocBuffer ( IscStatement *stmt )
 		case SQL_LONG:
 		case SQL_TYPE_TIME:
 		case SQL_TYPE_DATE:
-			length = sizeof (long);
+			length = sizeof (int);
 			break;
 
 		case SQL_FLOAT:
@@ -1037,7 +1037,7 @@ void Sqlda::setValue(int slot, Value * value, IscStatement	*stmt)
 
 		case Long:
 			var->sqltype = SQL_LONG;
-			var->sqllen = sizeof (long);
+			var->sqllen = sizeof (int);
 			break;
 
 		case Quad:
@@ -1119,7 +1119,7 @@ void Sqlda::setBlob(XSQLVAR * var, Value * value, IscStatement *stmt)
 		break;
 
 	case Long:
-		length = sizeof (long);
+		length = sizeof (int);
 		break;
 
 	case Quad:

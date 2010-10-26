@@ -1523,7 +1523,7 @@ int OdbcDesc::getConciseSize(int type, int length)
 	case SQL_C_LONG:
 	case SQL_C_SLONG:
 	case SQL_C_ULONG:
-		return sizeof(long);
+		return sizeof(int);
 
 	case SQL_C_FLOAT:
 		return sizeof(float);

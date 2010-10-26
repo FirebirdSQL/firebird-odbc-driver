@@ -222,7 +222,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		connectionTimeout = atoi(timeout);
 
 		*p++ = isc_dpb_connect_timeout;
-		*p++ = sizeof (long);
+		*p++ = sizeof (int);
 		*p++ = (char)connectionTimeout;
 		*p++ = (char)(connectionTimeout >> 8);
 		*p++ = (char)(connectionTimeout >> 16);
