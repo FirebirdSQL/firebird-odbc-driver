@@ -102,7 +102,7 @@ void IscSqlType::buildType ()
 			type = JDBC_INTEGER;
 			typeName = "INTEGER";
 			length = MAX_INT_LENGTH;
-			bufferLength = sizeof(long);
+			bufferLength = sizeof(int);
 			if ( !precision ) // for calculate fields
 				precision = length;
 			}
