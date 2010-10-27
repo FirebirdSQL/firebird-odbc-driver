@@ -3215,7 +3215,7 @@ int OdbcConvert::convStringToStringW(DescRecord * from, DescRecord * to)
 				pointerTemp = (wchar_t *)to->localDataPtr;
 			}
 
-			if( len > 0 )
+			if( (len > 0) && (dataRemaining > 0) )
 			{
 				int lenWC = (int)from->MbsToWcs( pointerTemp,
 												 pointerFrom + from->dataOffset,

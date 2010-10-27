@@ -3100,7 +3100,18 @@ SQLRETURN OdbcStatement::sqlPutData (SQLPOINTER value, SQLLEN valueSize)
 				valueSize = (SQLINTEGER)wcslen( (wchar_t*)value );
 
 		if( valueSize )
-			binding->putBlobSegmentData (valueSize, value);
+		{
+			if ( binding->conciseType == SQL_C_WCHAR )
+			{
+				int lenMbs = valueSize / sizeof( wchar_t );
+				char* tempValue = new char[lenMbs];
+				binding->WcsToMbs(tempValue, (const wchar_t*)value, lenMbs );
+				binding->putBlobSegmentData (lenMbs, tempValue);
+				delete [] tempValue;
+			}
+			else
+				binding->putBlobSegmentData (valueSize, value);
+		}
 	}
 	else
 	{
