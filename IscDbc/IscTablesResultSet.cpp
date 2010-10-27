@@ -79,7 +79,7 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 			pt = ptSql;
 			addString(pt, "select cast( '");
 			addString(pt, metaData->getDSN());
-			addString(pt, "' as varchar(7)) as table_cat,\n"	        // 1
+			addString(pt, "' as varchar(31)) as table_cat,\n"	        // 1
 				    "cast (NULL as varchar(31)) as table_schem,\n"		// 2
 					"cast (NULL as varchar(31)) as table_name,\n"		// 3
 					"cast (NULL as varchar(13)) as table_type,\n"		// 4
