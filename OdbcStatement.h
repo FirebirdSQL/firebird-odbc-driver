@@ -178,14 +178,14 @@ public:
 	bool				schemaFetchData;
 
 	SQLLEN				fetchRetData;
-	SQLINTEGER			*sqldataOutOffsetPtr;
+	SQLLEN				*sqldataOutOffsetPtr;
 	SQLUINTEGER			enableAutoIPD;
 	SQLINTEGER			useBookmarks;
 	SQLINTEGER			cursorSensitivity;
 	SQLPOINTER			fetchBookmarkPtr;
 	SQLUINTEGER			noscanSQL;
-	SQLINTEGER			bindOffsetColumnWiseBinding;
-	SQLINTEGER			bindOffsetIndColumnWiseBinding;
+	SQLLEN				bindOffsetColumnWiseBinding;
+	SQLLEN				bindOffsetIndColumnWiseBinding;
 	int					currency;
 	int					cursorType;
 	int					cursorScrollable;

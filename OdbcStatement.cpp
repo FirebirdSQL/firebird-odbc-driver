@@ -538,7 +538,7 @@ void OdbcStatement::setResultSet(ResultSet * results, bool fromSystemCatalog)
 	resultSet = results;
 	isResultSetFromSystemCatalog = fromSystemCatalog;
 	metaData = resultSet->getMetaData();
-	sqldataOutOffsetPtr = (SQLINTEGER*) resultSet->getSqlDataOffsetPtr();
+	sqldataOutOffsetPtr = (SQLLEN*) resultSet->getSqlDataOffsetPtr();
 
 	if ( !statement->isActive() )
 	{
@@ -739,8 +739,8 @@ SQLRETURN OdbcStatement::fetchData()
 	SQLUSMALLINT *statusPtr = implementationRowDescriptor->headArrayStatusPtr ? implementationRowDescriptor->headArrayStatusPtr
 								: NULL;
 	int nCountRow = applicationRowDescriptor->headArraySize;
-	SQLINTEGER *&bindOffsetPtr = applicationRowDescriptor->headBindOffsetPtr;
-	SQLINTEGER *bindOffsetPtrSave = bindOffsetPtr;
+	SQLLEN *&bindOffsetPtr = applicationRowDescriptor->headBindOffsetPtr;
+	SQLLEN *bindOffsetPtrSave = bindOffsetPtr;
 
 	try
 	{
@@ -749,7 +749,7 @@ SQLRETURN OdbcStatement::fetchData()
 		if ( !eof )
 		{
 			int rowBindType = applicationRowDescriptor->headBindType;
-			SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
+			SQLLEN	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
 			bindOffsetPtr = &bindOffsetPtrTmp;
 
 			if ( schemaFetchData )
@@ -771,8 +771,8 @@ SQLRETURN OdbcStatement::fetchData()
 			}
 			else // if ( schemaExtendedFetchData )
 			{
-				SQLINTEGER	bindOffsetPtrData = 0;
-				SQLINTEGER	bindOffsetPtrInd = 0;
+				SQLLEN	bindOffsetPtrData = 0;
+				SQLLEN	bindOffsetPtrInd = 0;
 				convert->setBindOffsetPtrTo(&bindOffsetPtrData, &bindOffsetPtrInd);
 				while ( nRow < nCountRow && (resultSet->*fetchNext)() )
 				{
@@ -875,7 +875,7 @@ char *strDebOrientFetch[]=
 
 SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 {
-	SQLINTEGER *&bindOffsetPtr = applicationRowDescriptor->headBindOffsetPtr;
+	SQLLEN *&bindOffsetPtr = applicationRowDescriptor->headBindOffsetPtr;
 	int rowsetSize = applicationRowDescriptor->headArraySize;
 	bool bFetchAbsolute;
 	SQLULEN rowCount;
@@ -1074,10 +1074,10 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 		}
 		else // if ( !eof )
 		{
-			SQLINTEGER	*bindOffsetPtrSave = bindOffsetPtr;
+			SQLLEN	*bindOffsetPtrSave = bindOffsetPtr;
 			SQLUSMALLINT *statusPtr = implementationRowDescriptor->headArrayStatusPtr ? implementationRowDescriptor->headArrayStatusPtr
 										: NULL;
-			SQLINTEGER	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
+			SQLLEN	bindOffsetPtrTmp = bindOffsetPtr ? *bindOffsetPtr : 0;
 			int rowBindType = applicationRowDescriptor->headBindType;
 
 			bindOffsetPtr = &bindOffsetPtrTmp;
@@ -1102,8 +1102,8 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 			}
 			else
 			{
-				SQLINTEGER	bindOffsetPtrData = 0;
-				SQLINTEGER	bindOffsetPtrInd = 0;
+				SQLLEN	bindOffsetPtrData = 0;
+				SQLLEN	bindOffsetPtrInd = 0;
 				convert->setBindOffsetPtrTo(&bindOffsetPtrData, &bindOffsetPtrInd);
 				while ( nRow < rowsetSize && rowNumber < sqlDiagCursorRowCount )
 				{
@@ -2828,9 +2828,9 @@ SQLRETURN OdbcStatement::executeStatementParamArray()
 								: NULL;
 	int rowSize = applicationParamDescriptor->headBindType;
 	int nCountRow = applicationParamDescriptor->headArraySize;
-	SQLINTEGER	*&headBindOffsetPtr = applicationParamDescriptor->headBindOffsetPtr;
-	SQLINTEGER	*bindOffsetPtrSave = headBindOffsetPtr;
-	SQLINTEGER	bindOffsetPtrTmp = headBindOffsetPtr ? *headBindOffsetPtr : 0;
+	SQLLEN	*&headBindOffsetPtr = applicationParamDescriptor->headBindOffsetPtr;
+	SQLLEN	*bindOffsetPtrSave = headBindOffsetPtr;
+	SQLLEN	bindOffsetPtrTmp = headBindOffsetPtr ? *headBindOffsetPtr : 0;
 	bool arrayColumnWiseBinding = rowSize == SQL_PARAM_BIND_BY_COLUMN;
 
 	headBindOffsetPtr = &bindOffsetPtrTmp;
@@ -3008,7 +3008,7 @@ SQLRETURN OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 		return sqlReturn (SQL_ERROR, "HY000", "General error :: OdbcStatement::sqlParamData");
 
 	DescRecord *binding = applicationParamDescriptor->getDescRecord ( parameterNeedData );
-	SQLINTEGER *bindOffsetPtr = applicationParamDescriptor->headBindOffsetPtr;
+	SQLLEN *bindOffsetPtr = applicationParamDescriptor->headBindOffsetPtr;
 
 	*(uintptr_t*)ptr = GETBOUNDADDRESS(binding);
 
@@ -3169,8 +3169,8 @@ inline
 SQLRETURN OdbcStatement::returnDataFromExtendedFetch()
 {
 	SQLRETURN retCode, ret = SQL_SUCCESS;
-	SQLINTEGER	&bindOffsetPtrTo = convert->getBindOffsetPtrTo();
-	SQLINTEGER	&currentRow = *applicationRowDescriptor->headBindOffsetPtr;
+	SQLLEN	&bindOffsetPtrTo = convert->getBindOffsetPtrTo();
+	SQLLEN	&currentRow = *applicationRowDescriptor->headBindOffsetPtr;
 	int count = listBindOut->GetCount();
 	convert->statusReturnData = true;
 
@@ -3223,7 +3223,7 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 			break;
 
 		case SQL_ATTR_PARAM_BIND_OFFSET_PTR:// 17
-			applicationParamDescriptor->headBindOffsetPtr = (SQLINTEGER*)ptr;
+			applicationParamDescriptor->headBindOffsetPtr = (SQLLEN*)ptr;
 			TRACE02(SQL_ATTR_PARAM_BIND_OFFSET_PTR,(intptr_t) ptr);
 			break;
 
@@ -3259,7 +3259,7 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 			break;
 
 		case SQL_ATTR_ROW_BIND_OFFSET_PTR:	// 23
-			applicationRowDescriptor->headBindOffsetPtr = (SQLINTEGER*)ptr;
+			applicationRowDescriptor->headBindOffsetPtr = (SQLLEN*)ptr;
 			TRACE02(SQL_ATTR_ROW_BIND_OFFSET_PTR,(intptr_t) ptr);
 			break;
 

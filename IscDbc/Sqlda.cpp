@@ -168,7 +168,7 @@ public:
 							char * pt = listBlocks[n] + (var->sqldata - sqlvar[0].sqldata);
 							for (int l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
 							{
-								if ( pt && *(long*)pt )
+								if ( pt && *(intptr_t*)pt )
 								{
 									free ( ((CAttrArray *)*(intptr_t*)pt)->arrBufData );
 									delete (CAttrArray *)*(intptr_t*)pt;
@@ -211,7 +211,7 @@ public:
 			{
 				XSQLVAR * var = sqlvar + numColumnBlob[n];
 				if ( *var->sqlind == -1 )
-					*(long*)var->sqldata = (long)0;
+					*(intptr_t*)var->sqldata = 0;
 				else if ( (var->sqltype & ~1) == SQL_ARRAY )
 				{
 					CAttrArray * ptArr = new CAttrArray;

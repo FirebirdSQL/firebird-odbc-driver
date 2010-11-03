@@ -54,11 +54,11 @@ class OdbcConvert
 {
 	OdbcStatement	*parentStmt;
 	bool			bIdentity;
-	SQLINTEGER		tempBindOffsetPtr;
-	SQLINTEGER		*bindOffsetPtrTo;
-	SQLINTEGER		*bindOffsetPtrIndTo;
-	SQLINTEGER		*bindOffsetPtrFrom;
-	SQLINTEGER		*bindOffsetPtrIndFrom;
+	SQLLEN			tempBindOffsetPtr;
+	SQLLEN			*bindOffsetPtrTo;
+	SQLLEN			*bindOffsetPtrIndTo;
+	SQLLEN			*bindOffsetPtrFrom;
+	SQLLEN			*bindOffsetPtrIndFrom;
 
 public:
 	bool			statusReturnData;
@@ -78,8 +78,8 @@ public:
 	OdbcConvert(OdbcStatement * parent);
 
 	void setZeroColumn(DescRecord * to, long rowNumber);
-	void setBindOffsetPtrTo(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd);
-	void setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd);
+	void setBindOffsetPtrTo(SQLLEN *bindOffsetPtr, SQLLEN *bindOffsetPtrInd);
+	void setBindOffsetPtrFrom(SQLLEN *bindOffsetPtr, SQLLEN *bindOffsetPtrInd);
 	ADRESS_FUNCTION getAdressFunction(DescRecord * from, DescRecord * to);
 	inline SQLPOINTER getAdressBindDataFrom(char * pointer);
 	inline SQLLEN *getAdressBindIndFrom(char * pointer);
@@ -88,7 +88,7 @@ public:
 
 public:
 	bool isIdentity(){ return bIdentity; }
-	SQLINTEGER &getBindOffsetPtrTo() { return *bindOffsetPtrTo; }
+	SQLLEN &getBindOffsetPtrTo() { return *bindOffsetPtrTo; }
 	int notYetImplemented(DescRecord * from, DescRecord * to);
 
 // Guid
