@@ -22,29 +22,23 @@ goto :MAIN & goto :EOF
 :MAIN
 ::===========
 
-for %%p in ( x86 AMD64 ) do (
-  if "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
-    if "%%p" == "AMD64" (
-      call %windir%\system32\cmd.exe /c build_platform.bat AMD64 %1 
-    ) else (
-      call %windir%\SYSWOW64\cmd.exe /c  build_platform.bat x86 %1
-    )
-  )
-  if "%PROCESSOR_ARCHITECTURE%" == "x86" (
-    if "%%p" == "x86" (
-      call %windir%\system32\cmd.exe /c build_platform.bat x86 %1
-    )
-  )
+if "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
+	@set PLATFORM=x64
+) else (
+	if "%PROCESSOR_ARCHITEW6432%" == "AMD64" (
+		@set PLATFORM=x64
+	) else (
+		@set PLATFORM=win32
+	)
 )
+
+if "%PLATFORM%" == "x64" (
+	call build_platform.bat x86 %1
+	call build_platform.bat AMD64 %1
+) else (
+	call build_platform.bat x86 %1
+)
+
 @title Build complete
 goto :EOF
-
-if /I "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
-  echo now building %2 %1 in 32-bit env.
-  call %windir%\SYSWOW64\cmd.exe /c %0 %1
-)
-
-
-goto :EOF
 ::=======
-

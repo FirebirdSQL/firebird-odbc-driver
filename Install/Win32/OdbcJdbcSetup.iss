@@ -56,6 +56,11 @@ BUILD_ENV undefined
 #define PlatformTarget "win32"
 #endif
 
+;---- If we haven't already set ProductVersion then pick it up from the environment.
+#ifndef ProductVersion
+#define ProductVersion GetEnv("PRODUCT_VERSION")
+#endif
+
 #define BUILD_ROOT="..\..\"
 #define SOURCE_LIBS "Builds\"+AddBackslash(BUILD_ENV)+AddBackslash(PlatformTarget)+AddBackslash(BUILDCONFIG)
 #define SOURCE_DOCS="Install\"
@@ -74,8 +79,8 @@ BUILD_ENV undefined
 
 [Setup]
 AppName=Firebird ODBC Driver
-AppVerName=Firebird/InterBase(r) ODBC driver 2.0
-AppVersion=2.0
+AppVerName=Firebird/InterBase(r) ODBC driver {#ProductVersion}
+AppVersion={#ProductVersion}
 AppMutex=InnoSetupExtensionsCompilerAppMutex
 AppPublisher=Firebird Project
 AppPublisherURL={#FIREBIRD_URL}
@@ -91,7 +96,7 @@ PrivilegesRequired=admin
 
 SourceDir={#BUILD_ROOT}
 OutputDir={#SOURCE_DOCS}\Win32\install_image
-OutputBaseFilename=Firebird_ODBC_2.0.0_{#PlatformTarget}{#debug_str}
+OutputBaseFilename=Firebird_ODBC_{#ProductVersion}_{#PlatformTarget}{#debug_str}
 DiskSpanning=no
 
 LicenseFile={#SOURCE_DOCS}\IDPLicense.txt
@@ -128,8 +133,8 @@ Name: DocumentationComponent; Description: {cm:DocumentationComponent}; Types: D
 
 [Files]
 Source: {#SOURCE_LIBS}OdbcFb.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile
-Source: {#SOURCE_LIBS}\OdbcFb.lib; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
-Source: {#SOURCE_LIBS}\OdbcFb.pdb; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
+Source: {#SOURCE_LIBS}\OdbcFb.lib; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
+Source: {#SOURCE_LIBS}\OdbcFb.pdb; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
 #ifdef HtmHelp
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
@@ -144,8 +149,8 @@ Source: {#SOURCE_DOCS}\IDPLicense.txt; DestDir: {app}; Components: Documentation
 
 #if PlatformTarget == "x64"
 Source: {#SOURCE_LIBS32}OdbcFb.dll; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile
-Source: {#SOURCE_LIBS32}\OdbcFb.lib; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
-Source: {#SOURCE_LIBS32}\OdbcFb.pdb; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
+Source: {#SOURCE_LIBS32}\OdbcFb.lib; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent
+Source: {#SOURCE_LIBS32}\OdbcFb.pdb; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent
 #ifdef HtmlHelp
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DocumentationComponent; Flags: ignoreversion

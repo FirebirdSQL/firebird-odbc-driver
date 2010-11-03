@@ -69,6 +69,7 @@ for /f "tokens=*" %%a in ('type %temp%.\b$2.bat') do set PRODUCT_VER_STRING=2.0.
 @echo s/define MSVC_VERSION 6/define MSVC_VERSION %MSVC_VERSION%/ >> %temp%.\b$3.bat
 @echo s/define BUILDCONFIG release/define BUILDCONFIG %BUILDCONFIG%/ >> %temp%.\b$3.bat
 @echo s/PRODUCT_VER_STRING/%PRODUCT_VER_STRING%/ >> %temp%.\b$3.bat
+@set PRODUCT_VERSION=%PRODUCT_VER_STRING%
 sed -f  %temp%.\b$3.bat %~dp0\OdbcJdbcSetup.iss > %~dp0\OdbcJdbcSetup_%PRODUCT_VER_STRING%.iss
 del %temp%.\b$?.bat
 @goto :EOF
