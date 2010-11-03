@@ -670,7 +670,7 @@ public:
 
 	virtual void		setPosRowInSet(int posRow) = 0;
 	virtual int			getPosRowInSet() = 0;
-	virtual int*		getSqlDataOffsetPtr() = 0;
+	virtual size_t*		getSqlDataOffsetPtr() = 0;
 	virtual bool		readStaticCursor() = 0;
 	virtual bool		nextFetch() = 0;
 	virtual bool		setCurrentRowInBufferStaticCursor(int nRow) = 0;

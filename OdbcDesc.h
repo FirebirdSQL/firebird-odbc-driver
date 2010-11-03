@@ -122,7 +122,7 @@ public:
 	SQLSMALLINT			headAllocType;
 	SQLUINTEGER			headArraySize;
 	SQLUSMALLINT		*headArrayStatusPtr;	
-	SQLINTEGER			*headBindOffsetPtr;
+	SQLLEN				*headBindOffsetPtr;
 	SQLINTEGER			headBindType; 
 	SQLSMALLINT			headCount;
 	SQLULEN				*headRowsProcessedPtr;

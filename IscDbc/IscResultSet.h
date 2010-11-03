@@ -172,7 +172,7 @@ public:
 	virtual Statement	*getStatement();
 	virtual void		setPosRowInSet(int posRow);
 	virtual int			getPosRowInSet();
-	virtual int			*getSqlDataOffsetPtr();
+	virtual size_t		*getSqlDataOffsetPtr();
 	virtual bool		readStaticCursor();
 	virtual bool		readFromSystemCatalog();
 	virtual bool		nextFetch();
@@ -197,7 +197,7 @@ public:
 	LinkedList		blobs;
 	LinkedList		clobs;
 	int				activePosRowInSet;
-	int				sqldataOffsetPtr;
+	size_t			sqldataOffsetPtr;
 	enStatysActivePositionRow statysPositionRow;
 };
 

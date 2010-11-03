@@ -57,7 +57,7 @@ OdbcDesc::OdbcDesc(OdbcDescType type, OdbcConnection *connect)
 	headAllocType = SQL_DESC_ALLOC_AUTO;
 	headArraySize = 1;
 	headArrayStatusPtr = (SQLUSMALLINT*)NULL;
-	headBindOffsetPtr = (SQLINTEGER*)NULL;
+	headBindOffsetPtr = (SQLLEN*)NULL;
 	headRowsProcessedPtr = (SQLULEN*)NULL;
 	headCount = 0;
 	headBindType = SQL_BIND_BY_COLUMN;
@@ -86,7 +86,7 @@ void OdbcDesc::setDefaultImplDesc (StatementMetaData * ptMetaDataOut, StatementM
 		headAllocType = SQL_DESC_ALLOC_AUTO;
 		headArraySize = 1;
 		headArrayStatusPtr = (SQLUSMALLINT*)NULL;
-		headBindOffsetPtr = (SQLINTEGER*)NULL;
+		headBindOffsetPtr = (SQLLEN*)NULL;
 		headRowsProcessedPtr = (SQLULEN*)NULL;
 		headCount = 0;
 
@@ -415,7 +415,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			case odtApplicationParameter:
 			case odtApplicationRow:
 				if (ptr)
-					*(SQLINTEGER **)ptr = headBindOffsetPtr,
+					*(SQLLEN **)ptr = headBindOffsetPtr,
 					size = sizeof (SQLINTEGER *);
 				break;
 			default:
@@ -905,7 +905,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplication:
 			case odtApplicationParameter:
 			case odtApplicationRow:
-				headBindOffsetPtr = (SQLINTEGER*)value;
+				headBindOffsetPtr = (SQLLEN*)value;
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");

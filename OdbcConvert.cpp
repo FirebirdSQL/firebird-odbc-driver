@@ -99,7 +99,7 @@ void OdbcConvert::setZeroColumn(DescRecord * to, long rowNumber)
 		*indicatorTo = sizeof(long);
 }
 
-void OdbcConvert::setBindOffsetPtrTo(SQLINTEGER	*bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd)
+void OdbcConvert::setBindOffsetPtrTo(SQLLEN	*bindOffsetPtr, SQLLEN *bindOffsetPtrInd)
 {
 	if( bindOffsetPtr )
 		bindOffsetPtrTo = bindOffsetPtr;
@@ -112,7 +112,7 @@ void OdbcConvert::setBindOffsetPtrTo(SQLINTEGER	*bindOffsetPtr, SQLINTEGER *bind
 		bindOffsetPtrIndTo = &tempBindOffsetPtr;
 }
 
-void OdbcConvert::setBindOffsetPtrFrom(SQLINTEGER *bindOffsetPtr, SQLINTEGER *bindOffsetPtrInd)
+void OdbcConvert::setBindOffsetPtrFrom(SQLLEN *bindOffsetPtr, SQLLEN *bindOffsetPtrInd)
 {
 	if( bindOffsetPtr )
 		bindOffsetPtrFrom = bindOffsetPtr;
