@@ -1,6 +1,23 @@
 ==================================
   OdbcJdbc 2.0
 ==================================
+150)	- current BUILDNUM_VERSION set 150 RC2 ( 12 Nov 2010 )
+	- added build support in Visual Studio 2008 
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-80, http://tracker.firebirdsql.org/browse/ODBC-64
+	 "Connecting from MS-Access to Firebird database via ODBC driver delievers faulty results in MEMO fields"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-85,
+	 "64-bit ODBC driver - null values in database throws arithemtic overflow exception"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-87,
+	 "64-bit ODBC driver crashes accessing Excel 64bit 2010"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-71,
+	 "ODBC driver is not compatible with .NET 2.0 SP2 and .NET 3.5 SP1"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-78,
+	 "Error in parsing transaction settings"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-57,
+	 "Report cardinality for indexes through SQLStatistics"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-58,
+	 "SQLStatistics function does not provide information about expression indexes" 
+
 149)	- current BUILDNUM_VERSION set 149 ( 05 Mar 2008 )
 	- added *.pdb and *.lib files into Windows distribution  
 	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-50, http://tracker.firebirdsql.org/browse/ODBC-53
