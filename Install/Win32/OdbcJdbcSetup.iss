@@ -135,7 +135,7 @@ Name: DocumentationComponent; Description: {cm:DocumentationComponent}; Types: D
 Source: {#SOURCE_LIBS}OdbcFb.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile
 Source: {#SOURCE_LIBS}\OdbcFb.lib; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
 Source: {#SOURCE_LIBS}\OdbcFb.pdb; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
-#ifdef HtmHelp
+#ifdef HtmlHelp
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
 Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DocumentationComponent; Flags: ignoreversion
