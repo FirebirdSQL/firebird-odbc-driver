@@ -1,7 +1,7 @@
 ==================================
   OdbcJdbc 2.0
 ==================================
-150)	- current BUILDNUM_VERSION set 150 RC2 ( 12 Nov 2010 )
+150)	- current BUILDNUM_VERSION set 150 RC2 ( 08 Nov 2010 )
 	- added build support in Visual Studio 2008 
 	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-80, http://tracker.firebirdsql.org/browse/ODBC-64
 	 "Connecting from MS-Access to Firebird database via ODBC driver delievers faulty results in MEMO fields"
