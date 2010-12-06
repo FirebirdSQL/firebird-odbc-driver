@@ -2259,7 +2259,7 @@ int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 	QUAD pointerFrom = *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr);
 	long ndate = LO_LONG(pointerFrom);
 	long ntime = HI_LONG(pointerFrom);
-	long nnano = (ntime % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
+	long nnano = ntime % ISC_TIME_SECONDS_PRECISION;
 	SQLUSMALLINT mday, month;
 	SQLSMALLINT year;
 	SQLUSMALLINT hour, minute, second;
@@ -2295,7 +2295,7 @@ int OdbcConvert::convDateTimeToStringW(DescRecord * from, DescRecord * to)
 	QUAD pointerFrom = *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr);
 	long ndate = LO_LONG(pointerFrom);
 	long ntime = HI_LONG(pointerFrom);
-	long nnano = (ntime % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
+	long nnano = ntime % ISC_TIME_SECONDS_PRECISION;
 	SQLUSMALLINT mday, month;
 	SQLSMALLINT year;
 	SQLUSMALLINT hour, minute, second;
