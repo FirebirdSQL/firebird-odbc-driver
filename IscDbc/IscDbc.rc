@@ -54,7 +54,7 @@ BEGIN
             VALUE "OriginalFilename", "IscDbc.dll\0"
             VALUE "ProductName", "IscDbc Dynamic Link Library\0"
             VALUE "ProductVersion", PRODUCT_VERSION_STR
-            VALUE "SpecialBuild", "v2-0-beta\0"
+            VALUE "SpecialBuild", "v2-1-beta\0"
         END
     END
     BLOCK "VarFileInfo"
