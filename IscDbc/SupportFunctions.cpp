@@ -114,7 +114,7 @@ SupportFunctions::SupportFunctions()
     ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_CURTIME, 			"CURTIME", 			" cast('now' as time)",		fullreplaceTranslator);
     ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYNAME, 			"DAYNAME", 			"DAYNAME",				defaultTranslator);
     ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFMONTH, 		"DAYOFMONTH", 		" extract(day from ",		bracketfromTranslator);
-    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFWEEK, 		"DAYOFWEEK", 		" extract(weekday from ",	bracketfromTranslator);
+    ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFWEEK, 		"DAYOFWEEK", 		" 1 + extract(weekday from ",	bracketfromTranslator);
     ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_DAYOFYEAR, 		"DAYOFYEAR", 		" extract(yearday from ",	bracketfromTranslator);
 //  ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_EXTRACT, 			"EXTRACT", 			"EXTRACT",				defaultTranslator);
     ADD_SUPPORT_FN( TD_FN, SQL_FN_TD_HOUR, 				"HOUR", 			" extract(hour from ",		bracketfromTranslator);
