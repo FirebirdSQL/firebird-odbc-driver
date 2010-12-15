@@ -123,7 +123,7 @@ void IscSqlType::buildType ()
 		case blr_float:
 			{
 			type = JDBC_REAL;
-			typeName = "REAL";
+			typeName = "FLOAT";
 			length = MAX_FLOAT_LENGTH;
 			bufferLength = sizeof(float);
 			}
