@@ -57,7 +57,7 @@ namespace IscDbcLibrary {
 struct Types {
 	char	label;
     short   lenTypeName;
-    char    typeName[31];
+    char    typeName[50];
 	short	typeType;
     long    typePrecision;
     short   lenTypePrefix;
@@ -73,7 +73,7 @@ struct Types {
 	short	typeMoney;
 	short	typeAutoIncrement;
     short   lenTypeLocalName;
-    char    typeLocalName[31];
+    char    typeLocalName[50];
 	short	typeMinScale;
 	short	typeMaxScale;
 	short	typeSqlDataType;
@@ -100,7 +100,7 @@ struct Types {
 #define TYPE_SQL_DATETIME	9
 
 #define ALPHA(type,code,prec) 0,sizeof(type)-1,type,code,prec,1,"'",1,"'",6,"length",NULLABLE,CASE_SENSITIVE,SEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
-#define BLOB(type,code,prefix,suffix,casesensitive) 0,sizeof(type)-1,type,code,MAX_BLOB_LENGTH,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",NULLABLE,casesensitive,UNSEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
+#define BLOB(type,code,prec,prefix,suffix,casesensitive) 0,sizeof(type)-1,type,code,prec,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",NULLABLE,casesensitive,UNSEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
 #define NUMERIC_TINYINT(type,code,prec,attr,min,max,numprecradix) 0,sizeof(type)-1,type,code,prec,0,"",0,"",sizeof(attr)-1,attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,IS_SIGNED,NOT_MONEY,NOT_AUTO_INCR,25,"CHAR CHARACTER SET OCTETS",min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
 #define NUMERIC(type,code,prec,attr,min,max,numprecradix) 0,sizeof(type)-1,type,code,prec,0,"",0,"",sizeof(attr)-1,attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_SIGNED,NOT_MONEY,NOT_AUTO_INCR,sizeof(type)-1,type,min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
 #define DATE(type,code,prec,prefix,suffix,datetimesub) 0,sizeof(type)-1,type,code,prec,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,UNSCALED,UNSCALED,TYPE_SQL_DATETIME,datetimesub,NOT_NUMERIC,NOT_NUMERIC
@@ -108,23 +108,24 @@ struct Types {
 
 static Types types [] = 
 {
-	BLOB ("BLOB", JDBC_LONGVARBINARY,"","",CASE_INSENSITIVE),
-	BLOB ("BLOB SUB_TYPE 0", JDBC_VARBINARY,"","",CASE_INSENSITIVE),
-	BLOB ("BLOB SUB_TYPE BLR", JDBC_BINARY,"","",CASE_INSENSITIVE),
-	BLOB ("BLOB SUB_TYPE TEXT", JDBC_LONGVARCHAR,"'","'",CASE_SENSITIVE),
+	BLOB ("BLOB", JDBC_LONGVARBINARY, MAX_BLOB_LENGTH, "","",CASE_INSENSITIVE),
+	BLOB ("BLOB SUB_TYPE 0", JDBC_VARBINARY, MAX_BLOB_LENGTH, "","",CASE_INSENSITIVE),
+	BLOB ("BLOB SUB_TYPE BLR", JDBC_BINARY, MAX_BLOB_LENGTH, "","",CASE_INSENSITIVE),
+	BLOB ("BLOB SUB_TYPE TEXT", JDBC_LONGVARCHAR, MAX_BLOB_LENGTH, "'","'",CASE_SENSITIVE),
+	BLOB ("BLOB SUB_TYPE TEXT", JDBC_WLONGVARCHAR, MAX_WLONGVARCHAR_LENGTH, "'","'",CASE_SENSITIVE),
 	ALPHA ("CHAR", JDBC_CHAR,MAX_CHAR_LENGTH),
+	ALPHA ("CHAR(x) CHARACTER SET UNICODE_FSS", JDBC_WCHAR,MAX_WCHAR_LENGTH),
 	NUMERIC ("NUMERIC", JDBC_NUMERIC, MAX_NUMERIC_LENGTH, "precision,scale", 0, MAX_NUMERIC_LENGTH, 10),
 	NUMERIC ("DECIMAL", JDBC_DECIMAL, MAX_DECIMAL_LENGTH, "precision,scale", 0, MAX_DECIMAL_LENGTH, 10),
 	NUMERIC ("INTEGER", JDBC_INTEGER, MAX_INT_LENGTH, "", 0, 0, 10),	
-#ifdef DEF_USE_TINYINT
-	NUMERIC_TINYINT ("TINYINT", JDBC_TINYINT, 3, "", 0, 0, 10),
-#endif
+	NUMERIC ("SMALLINT", JDBC_TINYINT, MAX_SMALLINT_LENGTH, "", 0, 0, 10),
 	NUMERIC ("SMALLINT", JDBC_SMALLINT, MAX_SMALLINT_LENGTH, "", 0, 0, 10),	
 	NUMERIC ("DOUBLE PRECISION", JDBC_FLOAT, MAX_DOUBLE_DIGIT_LENGTH, "", UNSCALED, UNSCALED, 2),
 	NUMERIC ("FLOAT", JDBC_REAL, MAX_FLOAT_DIGIT_LENGTH, "", UNSCALED, UNSCALED, 2),
 	NUMERIC ("DOUBLE PRECISION", JDBC_DOUBLE, MAX_DOUBLE_DIGIT_LENGTH, "", UNSCALED, UNSCALED, 2),
 	NUMERIC ("BIGINT", JDBC_BIGINT, MAX_QUAD_LENGTH,"", 0, MAX_QUAD_LENGTH, 10),
 	ALPHA ("VARCHAR", JDBC_VARCHAR,MAX_VARCHAR_LENGTH),
+	ALPHA ("VARCHAR(x) CHARACTER SET UNICODE_FSS", JDBC_WVARCHAR,MAX_WVARCHAR_LENGTH),
 	DATE("DATE",JDBC_DATE,MAX_DATE_LENGTH,"{d'","'}",1),
 	DATETIME("TIME",JDBC_TIME,MAX_TIME_LENGTH,"{t'","'}",2),
 	DATETIME("TIMESTAMP",JDBC_TIMESTAMP,MAX_TIMESTAMP_LENGTH,"{ts'","'}",3)
