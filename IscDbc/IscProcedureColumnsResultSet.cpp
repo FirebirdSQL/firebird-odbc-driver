@@ -116,9 +116,6 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 	if (procedureNamePattern && *procedureNamePattern)
 		expandPattern (ptFirst, " and ","pp.rdb$procedure_name", procedureNamePattern);
 
-	if ( !metaData->allTablesAreSelectable() )
-		metaData->existsAccess(ptFirst, " and ", "pp", 5, "\n");
-
 	if (columnNamePattern && *columnNamePattern)
 		expandPattern (ptFirst, " and ","pp.rdb$parameter_name", columnNamePattern);
 

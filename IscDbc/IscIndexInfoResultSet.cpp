@@ -136,12 +136,6 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 		expandPattern (ptSecond, SetWhereOrAnd( secondWhere ),"idx.rdb$relation_name", tableNamePattern);
 	}
 
-	if ( !metaData->allTablesAreSelectable() )
-	{
-		metaData->existsAccess(ptFirst, SetWhereOrAnd( firstWhere ), "rl", 0, "\n");
-		metaData->existsAccess(ptSecond, SetWhereOrAnd( secondWhere ), "idx", 0, "\n");
-	}
-
 	addString(ptSecond, " order by 4, 7, 15, 5, 6, 8\n");
 	addString(ptFirst, sql);
 

@@ -90,9 +90,6 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 
 	char * ptFirst = sql + strlen(sql);
 
-	if ( !metaData->allTablesAreSelectable() )
-		metaData->existsAccess(ptFirst, "\t\tand ", "rfr", 0, "\n");
-
 	if(schema && *schema)
 		expandPattern (ptFirst, "\t\tand ","tbl.rdb$owner_name", schema);
 

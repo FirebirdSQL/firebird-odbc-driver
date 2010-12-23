@@ -135,12 +135,6 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 			sep = " and (";
 		}
 
-		if ( !metaData->allTablesAreSelectable() )
-		{
-			metaData->existsAccess(ptFirst, sep, "tbl", 0, ")\n");
-			sep = " and (";
-		}
-
 		pt = ptFirst;
 			
 		for (int n = 0; n < typeCount; ++n)

@@ -1778,7 +1778,6 @@ bool IscConnection::getCountInputParamFromProcedure ( const char* procedureName,
 
 	IscProceduresResultSet resultSet ( (IscDatabaseMetaData *)getMetaData() );
 	resultSet.addBlr = true;
-	resultSet.allTablesAreSelectable = true;
 	resultSet.getProcedures ( NULL, NULL, procedureName );
 
 	if ( resultSet.getCountRowsStaticCursor() )
