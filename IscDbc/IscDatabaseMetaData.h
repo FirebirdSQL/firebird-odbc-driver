@@ -48,7 +48,6 @@ public:
 	virtual const char* getDSN();
 	virtual const char* getUserName();
 	virtual const int getUserType();
-	virtual void existsAccess(char *& stringOut, const char *prefix, const char * relobject, int typeobject, const char *suffix);
 	virtual bool isReadOnly();
 	virtual bool nullsAreSortedHigh();
 	virtual bool nullsAreSortedLow();

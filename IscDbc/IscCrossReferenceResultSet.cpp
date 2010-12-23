@@ -87,12 +87,6 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 
 	char * ptFirst = sql + strlen(sql);
 
-	if ( !metaData->allTablesAreSelectable() )
-	{
-		metaData->existsAccess(ptFirst, "  and ", "pidx", 0, "\n");
-		metaData->existsAccess(ptFirst, "  and ", "fidx", 0, "\n");
-	}
-
 	addString(ptFirst, "  and fkey.rdb$index_name = fidx.rdb$index_name\n"
 		"  and fidx.rdb$foreign_key = pidx.rdb$index_name\n"
 		"  and fidx.rdb$index_name = fseg.rdb$index_name\n"

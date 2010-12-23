@@ -111,9 +111,6 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 
 	char * ptFirst = sql + strlen(sql);
 
-	if ( !metaData->allTablesAreSelectable() )
-		metaData->existsAccess(ptFirst, " and ", "rfr", 0, "\n");
-
 	if (schemaPattern && *schemaPattern)
 		expandPattern (ptFirst, " and ","tbl.rdb$owner_name", schemaPattern);
 

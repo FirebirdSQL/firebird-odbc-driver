@@ -285,11 +285,6 @@ const int IscDatabaseMetaData::getUserType()
 	return connection->attachment->getUserType();
 	}
 
-void IscDatabaseMetaData::existsAccess(char *& stringOut, const char *prefix, const char * relobject, int typeobject, const char *suffix)
-	{
-	connection->attachment->existsAccess(stringOut, prefix, relobject, typeobject, suffix);
-	}
-
 bool IscDatabaseMetaData::isReadOnly()
 	{
 	return false;

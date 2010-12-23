@@ -40,7 +40,6 @@ public:
 	void checkAdmin();
 	JString& getUserAccess();
 	int getUserType();
-	void existsAccess(char *& stringOut, const char *prefix, const char * relobject, int typeobject, const char *suffix);
 	int getDatabaseDialect();
 	inline int getUseSchemaIdentifier();
 	inline int getUseLockTimeoutWaitTransactions();

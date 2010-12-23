@@ -579,18 +579,4 @@ int Attachment::getUserType()
 	return userType;
 }
 
-void Attachment::existsAccess(char *& stringOut, const char *prefix, const char * relobject, int typeobject, const char *suffix)
-{
-	int len = sprintf (stringOut,	" %s exists( select cast(1 as integer) from rdb$user_privileges priv\n"
-					"\t\twhere %s.rdb$%s = priv.rdb$relation_name\n"
-					"\t\t\tand priv.rdb$privilege = '%c' and priv.rdb$object_type = %d\n"
-					"\t\t\tand ( (priv.rdb$user = '%s' and priv.rdb$user_type = %d)\n"
-					"\t\t\t\tor (priv.rdb$user = 'PUBLIC' and priv.rdb$user_type = 8) ) ) %s \n",
-						prefix, relobject, 
-						!typeobject ? "relation_name" : "procedure_name",
-						!typeobject ? 'S' : 'X',
-						typeobject, (const char *)userAccess, userType, suffix);
-	stringOut += len;
-}
-
 }; // end namespace IscDbcLibrary

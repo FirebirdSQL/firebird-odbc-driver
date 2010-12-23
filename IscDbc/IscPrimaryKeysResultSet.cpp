@@ -57,9 +57,6 @@ void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * 
 
 	char * ptFirst = sql + strlen(sql);
 
-	if ( !metaData->allTablesAreSelectable() )
-		metaData->existsAccess(ptFirst, " and ", "rel", 0, "\n");
-
 	if (schemaPattern && *schemaPattern)
 		expandPattern (ptFirst, " and ","tbl.rdb$owner_name", schemaPattern);
 
