@@ -84,6 +84,7 @@ public:
 	void initUserEvents( PODBC_EVENTS_BLOCK_INFO infoEvents );
 	void updateResultEvents( char *updated );
 	void requeueEvents();
+	void releaseObjects();
 
 	OdbcConnection(OdbcEnv *parent);
 	~OdbcConnection();
