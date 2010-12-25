@@ -338,14 +338,16 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 
 OdbcConnection::~OdbcConnection()
 {
+	releaseObjects();	
+}
+
+void OdbcConnection::releaseObjects()
+{
 	if ( userEvents )
 		userEvents->release();
 
 	if ( userEventsInterfase )
 		delete userEventsInterfase;
-
-	if ( connection )
-		connection->close();
 
 	while ( statements )
 	{
@@ -360,6 +362,9 @@ OdbcConnection::~OdbcConnection()
 		descriptors = (OdbcDesc*)descriptor->next;
 		delete descriptor;
 	}
+
+	if ( connection )
+		connection->close();
 
 	if ( env )
 		env->connectionClosed (this);
@@ -1092,7 +1097,7 @@ SQLRETURN OdbcConnection::sqlDisconnect()
 	try
 	{
 		connection->commit();
-		connection->close();
+		releaseObjects();
 		connection = NULL;
 		connected = false;
 	}
