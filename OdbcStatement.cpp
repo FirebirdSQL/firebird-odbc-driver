@@ -782,7 +782,7 @@ SQLRETURN OdbcStatement::fetchData()
 					if ( fetchRetData == SQL_RD_ON )
 						returnDataFromExtendedFetch();
 					
-					bindOffsetPtrInd += sizeof(SQLINTEGER);
+					bindOffsetPtrInd += sizeof(SQLLEN);
 					++bindOffsetPtrTmp;
 					++nRow;
 					
@@ -1113,7 +1113,7 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 
 					returnDataFromExtendedFetch();
 
-					bindOffsetPtrInd += sizeof(SQLINTEGER);
+					bindOffsetPtrInd += sizeof(SQLLEN);
 					++bindOffsetPtrTmp;
 					++nRow;
 					
