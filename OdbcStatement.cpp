@@ -221,7 +221,11 @@ OdbcStatement::~OdbcStatement()
 {
 	releaseBindings();
 	releaseParameters();
-	releaseStatement();
+	try
+	{
+		releaseStatement();
+	}
+	catch ( std::exception ) { }
 	statement->release();
 	delete applicationRowDescriptor;
 	delete applicationParamDescriptor;
