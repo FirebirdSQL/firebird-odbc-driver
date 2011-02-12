@@ -1766,17 +1766,40 @@ SQLRETURN OdbcStatement::sqlDescribeCol(int col,
 
 SQLRETURN OdbcStatement::prepareGetData(int column, DescRecord *recordARD)
 {
+	if ( implementationRowDescriptor->isDefined() )
+	{
+		if ( column > implementationRowDescriptor->headCount )
+			return sqlReturn (SQL_ERROR, "07009", "Invalid descriptor index");
+
+		if ( !column )
+		{
+			DescRecord *imprec = implementationRowDescriptor->getDescRecord (column);
+			imprec->dataPtr = &rowNumber;
+			imprec->indicatorPtr = &indicatorRowNumber;
+			recordARD->initZeroColumn();
+		}
+	}
+	
 	DescRecord *recordIRD = implementationRowDescriptor->getDescRecord(column);
 
-	if ( !recordIRD->isDefined )
-		implementationRowDescriptor->defFromMetaDataOut(column,recordIRD);
-
-	if( recordARD->conciseType == SQL_C_DEFAULT )
+	if( !column )
 	{
-		int length = recordARD->length;
-		recordIRD->setDefault(recordARD);
-		recordARD->length = length;
-		recordARD->conciseType = implementationRowDescriptor->getDefaultFromSQLToConciseType(recordIRD->type, recordARD->length);
+		recordARD->setDefault ( recordIRD );
+		recordARD->isZeroColumn = true;
+		recordIRD->isZeroColumn = true;
+	}
+	else
+	{
+		if ( !recordIRD->isDefined )
+			implementationRowDescriptor->defFromMetaDataOut(column,recordIRD);
+
+		if( recordARD->conciseType == SQL_C_DEFAULT )
+		{
+			int length = recordARD->length;
+			recordIRD->setDefault(recordARD);
+			recordARD->length = length;
+			recordARD->conciseType = implementationRowDescriptor->getDefaultFromSQLToConciseType(recordIRD->type, recordARD->length);
+		}
 	}
 
 	recordARD->fnConv = convert->getAdressFunction(recordIRD,recordARD);
