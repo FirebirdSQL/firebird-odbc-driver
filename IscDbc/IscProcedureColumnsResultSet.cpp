@@ -80,8 +80,12 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 													   const char * procedureNamePattern, 
 													   const char * columnNamePattern)
 {
-	char sql[4096] =
-		"select cast (NULL as varchar(7)) as procedure_cat,\n"		// 1
+	char sql[4096] = "";
+	char * pt = sql;
+	addString(pt, "select cast( '");
+	if (catalog && *catalog)
+		addString(pt, catalog);
+	addString(pt, "' as varchar(255)) as procedure_cat,\n"									// 1
 				"\tcast (p.rdb$owner_name as varchar(31)) as procedure_schem,\n"		// 2
 				"\tcast (pp.rdb$procedure_name as varchar(31)) as procedure_name,\n"	// 3
 				"\tcast (pp.rdb$parameter_name as varchar(31)) as column_name,\n"		// 4
@@ -103,7 +107,7 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 				"\tf.rdb$field_precision as column_precision,\n"	// 20
 				"\tf.rdb$description as remarks_blob\n"				// 21
 		"from rdb$procedure_parameters pp, rdb$fields f, rdb$procedures p\n"
-		"where pp.rdb$field_source = f.rdb$field_name and p.rdb$procedure_name = pp.rdb$procedure_name\n";
+		"where pp.rdb$field_source = f.rdb$field_name and p.rdb$procedure_name = pp.rdb$procedure_name\n");
 
 	char * ptFirst = sql + strlen(sql);
 

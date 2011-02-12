@@ -45,8 +45,12 @@ IscProceduresResultSet::IscProceduresResultSet(IscDatabaseMetaData *metaData)
 
 void IscProceduresResultSet::getProcedures(const char * catalog, const char * schemaPattern, const char * procedureNamePattern)
 {
-	char sql[2048] =
-		"select cast (NULL as varchar(7)) as procedure_cat,\n"				// 1
+	char sql[2048] = "";
+	char * pt = sql;
+	addString(pt, "select cast( '");
+	if (catalog && *catalog)
+		addString(pt, catalog);
+	addString(pt, "' as varchar(255)) as procedure_cat,\n"									// 1
 				"\tcast (proc.rdb$owner_name as varchar(31)) as procedure_schem,\n"		// 2
 				"\tcast (proc.rdb$procedure_name as varchar(31)) as procedure_name,\n"	// 3
 				"\tproc.rdb$procedure_inputs as num_input_params,\n"		// 4
@@ -54,7 +58,7 @@ void IscProceduresResultSet::getProcedures(const char * catalog, const char * sc
 				"\t1 as num_result_sets,\n"									// 6
 				"\tcast (NULL as varchar(255)) as remarks,\n"				// 7
 				"\t1 as procedure_type,\n"									// 8 SQL_PT_PROCEDURE
-				"\tproc.rdb$description as remarks_blob\n";					// 9
+				"\tproc.rdb$description as remarks_blob\n");				// 9
 
 	char * ptFirst = sql + strlen(sql);
 	const char *sep = " where ";

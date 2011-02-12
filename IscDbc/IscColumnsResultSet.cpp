@@ -78,8 +78,12 @@ void IscColumnsResultSet::initResultSet(IscStatement *stmt)
 
 void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern)
 {
-	char sql[4096] =
-		"select cast (NULL as varchar(7)) as table_cat,\n"			// 1 - VARCHAR
+	char sql[4096] = "";
+	char * pt = sql;
+	addString(pt, "select cast( '");
+	if (catalog && *catalog)
+		addString(pt, catalog);
+	addString(pt, "' as varchar(255)) as table_cat,\n"								// 1 - VARCHAR
 				"\tcast (tbl.rdb$owner_name as varchar(31)) as table_schem,\n"		// 2 - VARCHAR
 				"\tcast (rfr.rdb$relation_name as varchar(31)) as table_name,\n"	// 3 - VARCHAR NOT NULL
 				"\tcast (rfr.rdb$field_name as varchar(31)) as column_name,\n"		// 4 - VARCHAR NOT NULL
@@ -107,7 +111,7 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 				"\trfr.rdb$default_source as column_def\n"			// 26
 		"from rdb$relation_fields rfr, rdb$fields fld, rdb$relations tbl\n"
 		"where rfr.rdb$field_source = fld.rdb$field_name\n"
-		"	and rfr.rdb$relation_name = tbl.rdb$relation_name\n";
+		"	and rfr.rdb$relation_name = tbl.rdb$relation_name\n");
 
 	char * ptFirst = sql + strlen(sql);
 

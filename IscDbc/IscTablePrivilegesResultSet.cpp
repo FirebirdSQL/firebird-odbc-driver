@@ -50,7 +50,7 @@ IscTablePrivilegesResultSet::IscTablePrivilegesResultSet(IscDatabaseMetaData *me
 
 void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
-	char sql[2048] =  "select cast (NULL as varchar(7)) as table_cat,"					//1
+	char sql[2048] =  "select cast ('' as varchar(7)) as table_cat,"					//1
 				          "cast (tbl.rdb$owner_name as varchar(31)) as table_schem,"	//2
 						  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,"	//3
 						  "cast (priv.rdb$grantor as varchar(31)) as grantor,"			//4

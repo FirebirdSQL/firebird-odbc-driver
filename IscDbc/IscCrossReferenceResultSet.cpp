@@ -56,11 +56,11 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 													const char * foreignTable)
 {
 	char sql[4096] =
-		"select cast (NULL as varchar(7)) as pktable_cat,\n"	// 1
+		"select cast ('' as varchar(7)) as pktable_cat,\n"	// 1
 				" cast (ptbl.rdb$owner_name as varchar(31)) as pktable_schem,\n"	// 2
 				" cast (pidx.rdb$relation_name as varchar(31)) as pktable_name,\n"	// 3
 				" cast (pseg.rdb$field_name as varchar(31)) as pkcolumn_name,\n"	// 4
-				" cast (NULL as varchar(7)) as fktable_cat,\n"	// 5
+				" cast ('' as varchar(7)) as fktable_cat,\n"	// 5
 				" cast (ftbl.rdb$owner_name as varchar(31)) as fktable_schem,\n"// 6
 				" cast (fidx.rdb$relation_name as varchar(31)) as fktable_name,\n"	// 7
 				" cast (fseg.rdb$field_name as varchar(31)) as fkcolumn_name,\n"	// 8
