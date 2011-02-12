@@ -132,6 +132,7 @@ public:
 	virtual int			release() { return IscStatement::release (); }
 	virtual void		addRef() { IscStatement::addRef (); }
 	virtual bool		isActiveSelect(){ return IscStatement::isActiveSelect(); }
+	virtual bool		isActiveSelectForUpdate(){ return IscStatement::isActiveSelectForUpdate(); }
 	virtual bool		isActiveProcedure(){ return IscStatement::isActiveProcedure(); }
 	virtual bool		isActiveModify(){ return IscStatement::isActiveModify(); }
 	virtual bool		isActiveNone(){ return IscStatement::isActiveNone(); }

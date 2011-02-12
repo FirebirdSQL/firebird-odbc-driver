@@ -474,6 +474,7 @@ public:
 	virtual int			release() = 0;
 	virtual void		addRef() = 0;
 	virtual bool		isActiveSelect() = 0;
+	virtual bool		isActiveSelectForUpdate() = 0;
 	virtual bool		isActiveProcedure() = 0;
 	virtual bool		isActiveModify() = 0;
 	virtual bool		isActiveNone() = 0;

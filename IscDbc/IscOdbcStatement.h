@@ -79,6 +79,7 @@ public:
 	virtual void		addRef() { IscStatement::addRef (); }
 	virtual bool		isActiveDDL(){ return IscStatement::isActiveDDL(); }
 	virtual bool		isActiveSelect(){ return IscStatement::isActiveSelect(); }
+	virtual bool		isActiveSelectForUpdate(){ return IscStatement::isActiveSelectForUpdate(); }
 	virtual bool		isActiveProcedure(){ return IscStatement::isActiveProcedure(); }
 	virtual bool		isActiveModify(){ return IscStatement::isActiveModify(); }
 	virtual bool		isActiveNone(){ return IscStatement::isActiveNone(); }
