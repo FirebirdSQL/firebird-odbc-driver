@@ -444,12 +444,6 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 			
 			if ( enableAutoIPD == SQL_TRUE )
 				rebindParam();
-
-			if ( setPreCursorName )
-			{
-				statement->setCursorName (cursorName);
-				setPreCursorName = false;
-			}
 		}
 		else 
 		{
@@ -2822,6 +2816,9 @@ SQLRETURN OdbcStatement::executeStatement()
 		return ret;
 
 	statement->executeStatement();
+
+	if ( statement->isActiveSelectForUpdate() || setPreCursorName )
+		statement->setCursorName(cursorName);
 
 	if ( statement->getMoreResults() )
 		setResultSet (statement->getResultSet(), false);

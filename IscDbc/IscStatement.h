@@ -39,11 +39,12 @@ class IscStatement : public Statement
 public:
 	enum TypeStatement {	stmtNone		= 0, 
 							stmtDDL			= 1, 
-							stmtSelect		= 2, 
-							stmtInsert		= 4, 
-							stmtUpdate		= 8, 
-							stmtDelete		= 16, 
-							stmtProcedure	= 32,
+							stmtSelect		= 2,
+							stmtSelectForUpdate = 4,
+							stmtInsert		= 8, 
+							stmtUpdate		= 16, 
+							stmtDelete		= 32, 
+							stmtProcedure	= 64,
 							stmtModify		= 128,
 							stmtPrepare		= 256
 						};
@@ -87,8 +88,9 @@ public:
 	virtual int release();
 	virtual void addRef();
 	virtual bool isActiveDDL(){ return typeStmt == stmtDDL; }
-	virtual bool isActiveSelect(){ return typeStmt == stmtSelect; }
-	virtual bool isActiveCursor(){ return typeStmt == stmtSelect && openCursor; }
+	virtual bool isActiveSelect(){ return typeStmt == stmtSelect || typeStmt == stmtSelectForUpdate; }
+	virtual bool isActiveSelectForUpdate(){ return typeStmt == stmtSelectForUpdate; }
+	virtual bool isActiveCursor(){ return isActiveSelect() && openCursor; }
 	virtual bool isActiveProcedure(){ return typeStmt == stmtProcedure; }
 	virtual bool isActiveModify(){ return !!(typeStmt & stmtModify); }
 	virtual bool isActiveNone(){ return typeStmt == stmtNone; }

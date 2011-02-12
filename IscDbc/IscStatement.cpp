@@ -394,7 +394,7 @@ void IscStatement::close()
 		resultSet->close();
 	END_FOR;
 
-	if ( typeStmt == stmtSelect )
+	if ( isActiveSelect() )
 	{
 		openCursor = false;
 		if ( transactionLocal )
@@ -474,7 +474,7 @@ ResultSet* IscStatement::getResultSet()
 	if (!statementHandle)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "no active statement");
 
-    if ( typeStmt != stmtSelect && outputSqlda.sqlda->sqld < 1)
+    if ( !isActiveSelect() && outputSqlda.sqlda->sqld < 1)
 		throw SQLEXCEPTION (NO_RECORDS_FOR_FETCH, "current statement doesn't return results");
 	
 	return createResultSet();
@@ -634,7 +634,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 
 bool IscStatement::execute()
 {
-	if ( typeStmt == stmtSelect && connection->transactionInfo.autoCommit && resultSets.isEmpty() )
+	if ( isActiveSelect() && connection->transactionInfo.autoCommit && resultSets.isEmpty() )
 		clearSelect();
 
 	// Make sure there is a transaction
@@ -655,7 +655,7 @@ bool IscStatement::execute()
 	resultsSequence		= 0;
 	int statementType	= getUpdateCounts();
 
-	if ( typeStmt == stmtSelect )
+	if ( isActiveSelect() )
 		typeStmt = stmtNone;
 
 	openCursor = false;
@@ -677,8 +677,12 @@ bool IscStatement::execute()
 		break;
 
 	case isc_info_sql_stmt_select:
-	case isc_info_sql_stmt_select_for_upd:
 		typeStmt = stmtSelect;
+		openCursor = true;
+		break;
+
+	case isc_info_sql_stmt_select_for_upd:
+		typeStmt = stmtSelectForUpdate;
 		openCursor = true;
 		break;
 
@@ -915,7 +919,7 @@ ISC_TIME IscStatement::getIscTime(SqlTime value)
 
 void IscStatement::clearSelect()
 {
-	if ( typeStmt == stmtSelect )
+	if ( isActiveSelect() )
 	{
 		resultsCount = 0;
 		resultsSequence	= 0;
