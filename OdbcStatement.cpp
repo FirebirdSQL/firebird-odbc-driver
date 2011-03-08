@@ -1023,6 +1023,7 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 		{
 			resultSet->beforeFirst();
 			resultSet->setPosRowInSet(0);
+			lastRowsetSize = 0;
 			return SQL_NO_DATA;
 		}
 		break;
