@@ -3377,7 +3377,7 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 			else if ( cursorSensitivity == SQL_SENSITIVE )
 			{
 				currency = SQL_CONCUR_ROWVER;
-				cursorType = SQL_CURSOR_FORWARD_ONLY;
+				cursorType = SQL_CURSOR_STATIC;
 			}
 			else // if ( cursorSensitivity == SQL_UNSPECIFIED )
 			{
