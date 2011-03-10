@@ -1126,9 +1126,27 @@ ResultSet* IscDatabaseMetaData::getCrossReference(
 	}
 
 ResultSet* IscDatabaseMetaData::getTypeInfo(int dataType)
+{
+	IscMetaDataResultSet resultSet(this);
+	int bytesPerCharacter = 1;
+
+	try
 	{
-	return new TypesResultSet( dataType, connection->getUseAppOdbcVersion() );
+		char sql[2048] = "select charset.rdb$bytes_per_character from rdb$database db \n"
+			"join RDB$CHARACTER_SETS charset on charset.RDB$CHARACTER_SET_NAME = db.rdb$character_set_name";
+		resultSet.prepareStatement(sql);
+
+		if ( resultSet.getCountRowsStaticCursor() )
+		{
+			bytesPerCharacter = resultSet.sqlda->getShort(1);	
+		} 
+		return new TypesResultSet( dataType, connection->getUseAppOdbcVersion(), bytesPerCharacter );
 	}
+	catch (...)
+	{
+		throw;
+	}
+}
 
 StatementMetaData* IscDatabaseMetaData::getMetaDataTypeInfo(ResultSet* setTypeInfo)
 	{
