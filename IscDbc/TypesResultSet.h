@@ -37,7 +37,7 @@ public: // StatementMetaData
 	virtual int objectVersion(){ return STATEMENTMETADATA_VERSION; }
 
 public:
-	TypesResultSet( int dataType, int appOdbcVersion );
+	TypesResultSet( int dataType, int appOdbcVersion, int bytesPerCharacter );
 	~TypesResultSet();
 
 	virtual bool nextFetch();
