@@ -184,9 +184,9 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCha
 		types[--endRow].typeType = JDBC_SQL_DATE;
 	}
 
-	types[0].typePrecision /= bytesPerCharacter;
-	types[1].typePrecision /= bytesPerCharacter;
-	types[2].typePrecision /= bytesPerCharacter;
+	types[0].typePrecision = MAX_CHAR_LENGTH / bytesPerCharacter;
+	types[1].typePrecision = MAX_VARCHAR_LENGTH / bytesPerCharacter;
+	types[2].typePrecision = MAX_BLOB_LENGTH / bytesPerCharacter;
 
 	recordNumber = 0;
 	numberColumns = 19;
