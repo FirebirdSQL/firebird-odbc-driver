@@ -1677,6 +1677,8 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 					ptIn += 2; // 'oj'
 				else if ( IS_MATCH( ptOut, "INTERVAL" ) )
 					ptIn += 8; // 'INTERVAL'
+				else if ( !strncasecmp ( ptOut, "{TS", 3 ) )
+					ptIn += 2; // 'ts'
 				else if ( !strncasecmp ( ptOut, "{D", 2 ) || !strncasecmp ( ptOut, "{T", 2 ) )
 					ptIn += 1; // 'd', 't'
 				else
