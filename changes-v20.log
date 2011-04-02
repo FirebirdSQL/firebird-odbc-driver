@@ -1,6 +1,40 @@
 ==================================
-  OdbcJdbc 2.0
+  OdbcFb 2.0
 ==================================
+151)	- current BUILDNUM_VERSION set 151 Release ( 04 Apr 2011 )
+	- improved, URL: http://tracker.firebirdsql.org/browse/ODBC-82,
+	 "Help outdated"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-26,
+	 "SQLGetTypeInfo missing rows for unicode data types"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-33,
+	 "{t } and {d } escape secuences and space"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-34,
+	 "Wrong result of function {fn DAYOFWEEK()}"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-83, http://tracker.firebirdsql.org/browse/ODBC-112
+	 "SQLGetData is not consistent with SQL_DESC_DISPLAY_SIZE for timestamp column"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-86,
+	 "SQLGetTypeInfo return TypeName "FLOAT" but SQLColumns return TypeName "REAL" for column with this type"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-90, http://tracker.firebirdsql.org/browse/ODBC-92
+	 "Firebird ODBC DRIVER don't work properly when build database connection in server explorer of Visual Studio 2008 and 2010"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-94,
+	 "Incorrect sqlbindparameter and sqlbindcol SQLLEN* parameter"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-95,
+	 "SQLFreeHandle - exception instead of returning value"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-99,
+	 "ODBC driver 2.0 RC2 crashes in SQLFreeHandle"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-101,
+	 "Trusted Authentication does not work consistently"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-106,
+	 "Crash in SQLGetData with bookmarks"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-107,
+	 "Dynamic SQL Error -504 Cursor Unknown"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-111,
+	 "SQLGetTypeInfo for VARCHAR returns a maximum size of 32765 regardless of charset encoding"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-115,
+	 "Fetch type out of range errors when using OpenOffice"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-116,
+	 "OpenOffice does not fetch first record after query execution"
+
 150)	- current BUILDNUM_VERSION set 150 RC2 ( 08 Nov 2010 )
 	- added build support in Visual Studio 2008 
 	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-80, http://tracker.firebirdsql.org/browse/ODBC-64
