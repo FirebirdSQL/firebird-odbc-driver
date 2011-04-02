@@ -54,11 +54,11 @@ BEGIN
             VALUE "FileDescription", FILE_DESCRIPTION_STR
             VALUE "FileVersion", FILE_VERSION_STR
             VALUE "InternalName", INTERNAL_NAME_STR
-            VALUE "LegalCopyright", "Copyright © 2000 - 2010\0"
+            VALUE "LegalCopyright", "Copyright © 2000 - 2011\0"
             VALUE "OriginalFilename", ORIGINAL_FILENAME_STR
             VALUE "ProductName", "Firebird Odbc Dynamic Link Library\0"
             VALUE "ProductVersion", PRODUCT_VERSION_STR
-            VALUE "SpecialBuild", "v2-0-RC2\0"
+            VALUE "SpecialBuild", "v2-0\0"
         END
     END
     BLOCK "VarFileInfo"
