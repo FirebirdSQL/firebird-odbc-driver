@@ -114,7 +114,7 @@ enum tra_flags_vals {
 	TRA_inc 			= 16,
 	TRA_read_committed	= 32,
 	TRA_autocommit		= 64,
-	TRA_rec_version		= 128,
+	TRA_no_rec_version	= 128,
 	TRA_no_auto_undo	= 256
 };
 
