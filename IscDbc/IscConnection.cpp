@@ -597,7 +597,10 @@ bool IscConnection::paramTransactionModes( char *& string, short &transFlags, bo
 		if ( IS_MATCH_EXT( "NO" ) ) 
 		{
 			if ( IS_MATCH_EXT( "RECORD_VERSION" ) )
+			{
+				transFlags |= TRA_no_rec_version;
 				return true;
+			}
 			else if ( IS_MATCH_EXT( "WAIT" ) ) 
 			{
 				transFlags |= TRA_nw;
@@ -607,9 +610,7 @@ bool IscConnection::paramTransactionModes( char *& string, short &transFlags, bo
 			throw SQLEXCEPTION( SYNTAX_ERROR, "should be keyword WAIT or VERSION" );
 		}
 
-		if ( IS_MATCH_EXT( "RECORD_VERSION" ) )
-			transFlags |= TRA_rec_version;
-
+		IS_MATCH_EXT( "RECORD_VERSION" );
 		return true;
 	}
 	else if ( IS_MATCH_EXT( "SNAPSHOT" ) ) 
@@ -883,8 +884,8 @@ int IscConnection::buildParamTransaction( char *& string, char boolDeclare )
 
 	if ( transFlags & TRA_read_committed )
 	{
-		*text++ = (transFlags & TRA_rec_version) ?
-			isc_tpb_rec_version : isc_tpb_no_rec_version;
+		*text++ = (transFlags & TRA_no_rec_version) ?
+			isc_tpb_no_rec_version : isc_tpb_rec_version;
 	}
 
 	if (transFlags & TRA_no_auto_undo)
