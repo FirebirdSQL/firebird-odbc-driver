@@ -1,0 +1,307 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  This editing was done by Paul Beach of IBPhoenix
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Атрибути З'єднання</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_connection_parameters"></A><h2>Атрибути З'єднання</h2></P>
+
+<P>
+Атрибути З'єднання - підстроки(параметри), використовуються, щоб визначитись як виконувати
+З'єднання з двигуном бази даних або сітьовим сервером. Строка з'єднання
+містить список встановлених параметрів в формі:<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;КЛЮЧОВЕ СЛОВО = значення<BR>
+обмежене крапкою з комою. 
+</P>
+
+<P>Ключові слова визначені в слідуючій таблиці.</P>
+
+<table width="60%" cellspacing=0 cellpadding=2 border=1 cols=2>
+  <tr>
+    <td width="40%" bgcolor="#d5d5d5" align="center">
+      	<B>Ключове слово</B>
+    </td>
+    <td width="60%" bgcolor="#d5d5d5" align="center">
+	<B>Скорочена форма</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Database Account
+      </td>
+    <td>&nbsp;
+		<B>UID</B> or <B>USER</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Password
+      </td>
+    <td>&nbsp;
+		<B>PWD</B> or <B>PASSWORD</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Role
+      </td>
+    <td>&nbsp;
+		<B>ROLE</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Data Source Name
+      </td>
+    <td>&nbsp;
+		<B>DSN</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Driver
+      </td>
+    <td>&nbsp;
+		<B>DRIVER</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Database
+      </td>
+    <td>&nbsp;
+		<B>DBNAME</B> or <B>DATABASE</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Client
+      </td>
+    <td>&nbsp;
+		<B>CLIENT</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Character Set
+      </td>
+    <td>&nbsp;
+		<B>CHARSET</B> or <B>CHARACTERSET</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Set read only
+      </td>
+    <td>&nbsp;
+		<B>READONLY</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Set nowait
+      </td>
+    <td>&nbsp;
+		<B>NOWAIT</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Dialect
+      </td>
+    <td>&nbsp;
+		<B>DIALECT</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Set quoted identifier
+      </td>
+    <td>&nbsp;
+		<B>QUOTED</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Set sensitive identifier
+      </td>
+    <td>&nbsp;
+		<B>SENSITIVE</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Set auto quoted identifier
+      </td>
+    <td>&nbsp;
+		<B>AUTOQUOTED</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Select Use Schema
+      </td>
+    <td>&nbsp;
+		<B>USESCHEMA</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Lock Timeout on wait transaction
+      </td>
+    <td>&nbsp;
+		<B>LOCKTIMEOUT</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Safe Thread
+      </td>
+    <td>&nbsp;
+		<B>SAFETHREAD</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+File DSN
+      </td>
+    <td>&nbsp;
+		<B>FILEDSN</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Save DSN
+      </td>
+    <td>&nbsp;
+		<B>SAVEDSN</B>
+      </td>
+  </tr>
+</table>
+
+<P>&nbsp;&nbsp;
+Функція ODBC API <B>SQLDriverConnect</B> використовує ці атрибути в слідуючій
+послідовності, спочатку приймаються атрибути, вказані в стрічці
+з'єднання, потім при наявності відсутньої обовязкової інформації
+беремо дані з визначеного <B>FILEDSN</B> або <B> DSN.</B>
+</P>
+<P>
+Якщо в стрічці з'єднання вказано атрибут <B>SAVEDSN</B>, то при вдалому
+з'єднанні всі атрибути будуть збережені в вказаний <B>SAVEDSN.</B>
+<BR><B>Примітка:</B><BR>
+Пароль буде збережено в <B>зашифрованому</B> форматі. 
+</P>
+
+<P>Також дивись <A HREF="ConnectionExamples.htm">приклади з'єднання</A></P>
+
+<P>Допоміжні ключові слова визначені в слідуючій таблиці.</P>
+
+<table width="60%" cellspacing=0 cellpadding=2 border=1 cols=2>
+  <tr>
+    <td width="40%" bgcolor="#d5d5d5" align="center">
+      	<B>Ключове слово</B>
+    </td>
+    <td width="60%" bgcolor="#d5d5d5" align="center">
+	<B>Скорочена форма</B>
+    </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Backup File
+      </td>
+    <td>&nbsp;
+		<B>BACKUPFILE</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Log File Services
+      </td>
+    <td>&nbsp;
+		<B>LOGFILE</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Create Database
+      </td>
+    <td>&nbsp;
+		<B>CREATE_DB</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Backup Database
+      </td>
+    <td>&nbsp;
+		<B>BACKUP_DB</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Restore Database
+      </td>
+    <td>&nbsp;
+		<B>RESTORE_DB</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Repair Database
+      </td>
+    <td>&nbsp;
+		<B>REPAIR_DB</B>
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Compact Database
+      </td>
+    <td>&nbsp;
+		<B>COMPACT_DB</B>, for future use
+      </td>
+  </tr>
+  <tr>
+    <td>&nbsp;
+Drop Database
+      </td>
+    <td>&nbsp;
+		<B>DROP_DB</B>, for future use
+      </td>
+  </tr>
+</table>
+
+<P>&nbsp;&nbsp;
+Функція ODBC API <B>SQLConfigDataSource</B> використовує ці атрибути
+для надання послуг базі даних програмним шляхом, без допоміжних
+програм.
+</P>
+
+<P>Також дивись <A HREF="ServicesExamples.htm">приклади використання послуг</A></P>
+
+</BODY>
+</HTML>

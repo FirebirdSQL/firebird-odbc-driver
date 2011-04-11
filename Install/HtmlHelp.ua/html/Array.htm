@@ -1,0 +1,81 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  This editing was done by Paul Beach of IBPhoenix
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Тип даних Array</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_data_type_array"></A><h2>Тип даних Array</h2></P>
+
+<P>По замовчуванню драйвер показує поле типа масив у вигляді varchar строки.
+ Це дає можливість працювати з цим типом з програм Excel(MsQry32),
+ OpenOffice, MsAccess і т.п. Для модифікації поля типа array, необхідно
+ дотримуватися деяких правил:</P>
+
+<P>- Прості типы (integer) відображати у вигляді {1, 2, 3}<BR>
+- Строкові типи (char) відображати у вигляді {'1’, ‘2’, ‘3’}<BR>
+<BR>Однак допускається не вказувати фігурні скобки і кавички.<BR>
+&nbsp;&nbsp;
+При внесенні в нове поле значень, допускається пропускати елементи через кому,
+в цьому випадку пропущені поля прийматимуть значення 0 або ''.</P>
+
+<P><A NAME="editFieldArray"></A><B><IMG SRC="../images/modArrayField.jpg" ALT="" BORDER=0></B></P>
+
+<P>&nbsp;&nbsp;
+Тепер розглянемо деякі обмеження. Є програми, які формують SQL запит на модифікацію
+по всім полям в частині WHERE. Ми не забуваємо, що в нашому випадку тип поля Array 
+представлено в вигляді varchar! Но, не все так погано,
+в цьому випадку достатньо будь-яким способом повідомити програмі, что поле Array
+змінювалось. Як правильно обходити цю проблему дивись нижче.
+</P>
+
+<P><A NAME="ruleModArrayField"></A><B><IMG SRC="../images/ruleModArrayField.jpg" ALT="" BORDER=0></B></P>
+
+<P>&nbsp;&nbsp;
+Будьте обережні, цей запит спаплюжить вашу таблицю:<BR>
+<BR>
+ update "PROJ_DEPT_BUDGET"<BR>
+ set    "QUART_HEAD_CNT" = {1,2,3,4,5}<BR>
+ where  "year" = '2003' AND "PROJ_ID" = 'MAPDB' AND "DEPT_NO" = '110'<BR>
+<BR>
+&nbsp;&nbsp;Можливо в майбутньому буде виконано слідуючий формат<BR>
+	{ar 1,2,3,4,5}<BR>
+	або<BR>
+	{ar 'текст1','текст2','текст3','текст4','текст5'}<BR>
+<BR>
+&nbsp;&nbsp;Цей формат потребує переформування запита в вигляд прийнятний
+для сервера:
+<BR>
+ update "PROJ_DEPT_BUDGET"<BR>
+ set    "QUART_HEAD_CNT" = ?<BR>
+ where  "year" = '2003' AND "PROJ_ID" = 'MAPDB' AND "DEPT_NO" = '110'<BR>
+<BR>
+ и самодіяльності OdbcJdbc драйвера, тобто внутрішнє перетворення
+запита, збереження параметра, і виконання по більш складній схемі.
+</P>
+
+</BODY>
+</HTML>

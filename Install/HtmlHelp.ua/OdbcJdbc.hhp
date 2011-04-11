@@ -1,0 +1,32 @@
+[OPTIONS]
+Compatibility=1.1
+Compiled file=OdbcFb.chm
+Contents file=odbcjdbc.hhc
+Default topic=html\FirebirdODBC.htm
+Display compile progress=No
+Index file=OdbcJdbc.hhk
+Language=0x422 Украинский
+Title=Firebird ODBC
+
+
+[FILES]
+html\FirebirdODBC.htm
+html\ConfigurationParameters.htm
+html\ConnectionAttributes.htm
+html\ConnectionExamples.htm
+html\CreateDatabase.htm
+html\Services.htm
+html\ServicesExamples.htm
+html\Usage.htm
+html\Environment.htm
+html\Events.htm
+html\MsDTC.htm
+html\Multithread.htm
+html\SecurityPassword.htm
+html\Cursors.htm
+html\Procedures.htm
+html\Array.htm
+html\About.htm
+html\Copyright.htm
+html\Transactions.htm
+html\Clarion.htm

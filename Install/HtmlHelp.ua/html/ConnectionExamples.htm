@@ -1,0 +1,233 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  This editing was done by Paul Beach of IBPhoenix
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Приклади З'єднання</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_connection_examples"></A><h2>Приклади З'єднання</h2></P>
+
+<P>Приклади строк з'єднання для Прикладної задачі яка використовує ODBC API функцію <B>SQLDriverConnect</B>:</P>
+
+<P>1. Open("<B>DSN</B>=myDb;")</P>
+
+<P>2. Open("<B>DSN</B>=myDb; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite;")</P>
+
+<P>3. Open("<B>DSN</B>=myDb; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=172.17.2.10:/usr/local/db/myDb.fdb;")</P>
+
+<P>4. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>DBNAME</B>=172.17.2.10:/usr/local/db/myDb.fdb;")</P>
+
+<P>5. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=172.17.2.10:/usr/local/db/myDb.fdb;")</P>
+
+<P>також </P>
+
+<P>6. Open("<B>DRIVER</B>=Firebird/InterBase(r) driver; <B>UID</B>=MCSSITE; <B>PWD</B>=mcssite; <B>DBNAME</B>=dummy;")</P>
+
+<P>dummy – є псевдонімом, отриманим з Firebird <B>aliases.conf</B> файла.
+Якщо змінні середовища <B>ISC_PASSWORD</B> і <B>ISC_USER</B> встановлені, то їх
+значення також використовуються. </P>
+
+<A name=IND_DBNAME></A>
+
+<table width="100%" cellspacing=0 cellpadding=6 border=1 cols=2>
+  <tr>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+      	<B>DBNAME</B> строка для віддаленного з'єднання
+    </td>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+	<B>Коментарі</B>
+    </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	використання IP адреси сервера, з іменем файла в стилі Unix запису  
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	використання імені сервера, з іменем файла в стилі Unix запису
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10/3051:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	використання IP адреси сервера і альтернативний порт, з іменем файла в стилі Unix запису
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver/3051:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	використання імені сервера і альтернативний порт, з іменем файла в стилі Unix запису
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	використання IP адреси сервера, з іменем файла в стилі Windows запису  
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	використання імені сервера, з іменем файла в стилі Windows запису  
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10/3051:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	використання IP адреси сервера і альтернативний порт, з іменем файла в стилі Windows запису
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver/3051:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	використання IP адреси сервера і альтернативний порт, з іменем файла в стилі Windows запису
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>127.0.0.1:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	використання петльового інтерфейса, з іменем файла в стилі Unix запису
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>localhost:/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	використання петльового інтерфейса, з іменем файла в стилі Unix запису
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>127.0.0.1:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	використання петльового інтерфейса, з іменем файла в стилі Windows запису
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>localhost:c:\db\myDb.fdb</B>
+      </td>
+    <td>
+	використання петльового інтерфейса, з іменем файла в стилі Windows запису
+      </td>
+  </tr>
+</table>
+
+<P> </P>
+
+<table width="100%" cellspacing=0 cellpadding=6 border=1 cols=2>
+  <tr>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+      	<B>DBNAME</B> строка для місцевого з'єднання
+    </td>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+	<B>Коментарі</B>
+    </td>
+  </tr>
+  <tr>
+    <td>
+	<B>C:\db\myDb.fdb</B>
+      </td>
+    <td>
+	місцеве з'єднання, з іменем файла в стилі Windows запису
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>/usr/local/db/myDb.fdb</B>
+      </td>
+    <td>
+	місцеве з'єднання, з іменем файла в стилі Unix запису
+      </td>
+  </tr>
+</table>
+
+<P>Приклад з використанням псевдоніма: Використання Firebird aliases.conf - файл псевдонімів.
+	<UL><B>
+	dummy = c:\data\myDb.fdb</B><BR>
+	або<BR><B>
+	dummy = /usr/local/db/myDb.fdb
+	</B></UL></P>
+
+<P> </P>
+
+<table width="100%" cellspacing=0 cellpadding=6 border=1 cols=2>
+  <tr>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+      	<B>DBNAME</B> строка з використанням псевдонімів
+    </td>
+    <td width="50%" bgcolor="#d5d5d5" align="center">
+	<B>Коментарі</B>
+    </td>
+  </tr>
+  <tr>
+    <td>
+	<B>172.17.2.10:dummy</B>
+      </td>
+    <td>
+	віддалене з'єднання з використанням IP адреси сервера і псевдоніма
+      </td>
+  </tr>
+  <tr>
+    <td>
+	<B>myserver:dummy</B>
+      </td>
+    <td>
+	віддалене з'єднання з використанням імені адреси сервера і псевдоніма
+      </td>
+  </tr>
+</table>
+
+<P><B>Примітка.</B> При використанні псевдонімів для клиєнта не має значення
+який використовується сервер - Unix чи Windows, Ви вказуєте тільки ім'я
+псевдоніма. Фактичне місцезнаходження бази визначено в файлі псевдонімів 
+aliases.conf.</P>
+
+</BODY>
+</HTML>

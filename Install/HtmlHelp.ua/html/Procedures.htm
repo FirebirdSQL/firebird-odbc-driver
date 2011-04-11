@@ -1,0 +1,105 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  This editing was done by Paul Beach of IBPhoenix
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Процедури</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_procedures"></A><h2>Процедури</h2></P>
+
+<P>Firebird підтримує два механізми, для визову збережених процедур.</P>
+
+<P><B>execute procedure MyProc(?,?) </B></P>
+
+<P>В цьому прикладі процедура очікує отримати дані, через вхідні параметри і
+якщо є вихідні параметри, повернути їх після виконання в змінні, які
+визначені як один набір даних.</P>
+
+<P><B>select * from MyProc(?,?) </B></P>
+
+<P>В цьому прикладі процедура буде формувати стільки результатів,
+скільки може забезпечити процедура.</P>
+
+<P>Програми типу Microsoft Excel і т.п, при виклику процедури використовують
+слідуючий формат:</P>
+
+<P> <B>{[? =] Call MyProc (?,?)}</B>.<BR></P>
+
+<P>Firebird ODBC драйвер самостійно визначає, який виклик використовувати,
+для виконання процедури, в залежності від того, как була створена
+процедура. Ключове слово SUSPEND в тілі процедури виконує дію
+перемикача.<BR>
+&nbsp;&nbsp;Розглянемо більш детально на прикладах.</P>
+
+<P>Приклад 1<br>
+</P>
+<P>create procedure TEST<BR>
+&nbsp;&nbsp;as<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;begin<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;end
+</P>
+
+<P>Ця процедура немає ключового слова SUSPEND. Firebird ODBC драйвер 
+буде виконувати процедуру як <BR>
+<B>execute procedure TEST</B></P>
+	
+<P>Приклад 2<br>
+</P>
+<P>create procedure "ALL_LANGS"				<BR>&nbsp;&nbsp;
+	returns ("CODE"  varchar(5),			<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		"GRADE"  varchar(5),			<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		"COUNTRY"  varchar(15),			<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		"LANG"  varchar(15))			<BR>&nbsp;&nbsp;
+	as						<BR>&nbsp;&nbsp;
+	BEGIN						<BR>&nbsp;&nbsp;&nbsp;&nbsp;
+	    "LANG" = null;				<BR>&nbsp;&nbsp;&nbsp;&nbsp;
+	    FOR SELECT job_code, job_grade, job_country FROM job 	<BR>&nbsp;&nbsp;&nbsp;&nbsp;
+	    INTO :code, :grade, :country 				<BR>&nbsp;&nbsp;&nbsp;&nbsp;
+	    DO								<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		BEGIN							<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		    FOR SELECT languages FROM show_langs(:code, :grade, :country) 		<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		    INTO :lang						<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			DO						<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			    <B>SUSPEND;</B>				<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			    /* Put nice separators between rows */	<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			    code = '=====';				<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			    grade = '=====';				<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			    country = '===============';		<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			    lang = '==============';			<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			    <B>SUSPEND; </B>				<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		END					<BR>&nbsp;&nbsp;&nbsp;&nbsp;
+	END</P>
+
+<P>Ця процедура має ключові слова SUSPEND. Firebird ODBC драйвер 
+буде виконувати процедуру як <BR>
+<B>select * from ALL_LANGS</B></P>
+
+<P>Для більш детального знайомства з цими і іншими можливостями будьласка, 
+розгляньте приклади.
+</P>
+
+</BODY>
+</HTML>

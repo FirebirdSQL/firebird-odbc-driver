@@ -1,0 +1,95 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  This editing was done by Paul Beach of IBPhoenix
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Коротко про Firebird ODBC драйвер</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_about_firebird_odbc"></A><h2>Коротко про Firebird ODBC драйвер</h2></P>
+
+<P>Firebird ODBC драйвер підтримує Firebird для Windows, FreeBSD, Solaris,
+і Linux.</P>
+
+<P>Firebird ODBC драйвер складається з слідуючих файлів:</P>
+
+<P><B>OdbcFb.dll</B> </P>
+
+<P>Забеспечує ODBC API інтерфейс, є провайдером для ODBC Менеджера. 
+В прикладних задачах може використовуватися без ODBC Менеджера. Має 
+додатково інтерфейс JDBC, забезпечує доступ до Firebird через Firebird API.
+Також виконує роль інсталятора (деінсталятора) Firebird ODBC драйвера і конфігуровача DSN.</P>
+
+<P><B>OdbcJdbc.chm</B></P>
+
+<P>Допомога по використанню Firebird ODBC драйвера.</P>
+
+<P>Firebird ODBC driver:</P>
+	<UL>
+	<P>- на основі Ms SDK можливо зібрати Win64.</P>
+
+	<P>- підтримка Unicode.</P>
+
+	<P>- <A HREF="Multithread.htm">потоко-безпечна</A>
+	     обробка запитів.</P>
+
+	<P>- можливе <A HREF="CreateDatabase.htm">створення бази даних</A> 
+	     за допомогою функцій
+             <B>SQLConfigDataSource</B>, <B>SQLDriverConnect</B>,
+	     <B>SQLExecDirect</B>.</P>
+
+	<P>- на одному з'єднанні можливо виконувати одночасно
+	     <A HREF="Transactions.htm#IND_MANY_TRANSACTIONS">більше однієї транзакції</A>.
+	     Транзакції по суті можуть бути різними. Одна "читаюча", інша "пишуча", і т.д.</P>
+
+	<P>- дозволяється створення пула підготовлених
+	     <A HREF="Transactions.htm#IND_DECLARE_TRANSACTION">описів транзакцій</A>,
+	     з присвоєнням їм імен і робочого простору. Для подальшого використання
+             без виконання підготовки(prepare).</P>
+
+	<P>- підтримується використання 
+	     <A HREF="Events.htm">механізму подій</A>
+	     Firebird сервера.</P>
+
+	<P>- підтримується <A HREF="Cursors.htm#IND_MS_CURSORS">використання Microsoft ODBC cursors</A>(
+	     odbccr32.dll, odbccu32.dll ).</P>
+
+	<P>- можливе використання <A HREF="Services.htm">сервісу</A>
+	     (backup, restore, statistics, repair) бази даних за допомогою
+	     функції <B>SQLConfigDataSource</B>.</P>
+
+	<P>- для сумісності SQL-запитів підтримується використання
+	     <A HREF="ConfigurationParameters.htm#IND_SCHEMA">схем</A>(SCHEMA
+	     or OWNER).<BR></P>
+
+	<P>- підтримується повно-функціональний SQL синтаксис менеджера
+	     <A HREF="Transactions.htm#IND_SQL_TRANSACTION">транзакцій</A>(Firebird GPRE).</P>
+
+	<P>- підтримується використання COM 
+	     <A HREF="MsDTC.htm">технології</A> Microsoft DTC.</P>
+
+	</UL>
+</BODY>
+</HTML>

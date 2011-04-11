@@ -1,0 +1,210 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2004 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+ *  This editing was done by Paul Beach of IBPhoenix
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Транзакції</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_transactions"></A><h2>Транзакції</h2></P>
+
+<P>Firebird підтримує слідуючі рівні ізоляції транзакції:</P>
+
+<P><UL>	1 (read committed, the default),<BR>
+	2 (serializable)<BR>
+	3 (versioning). </UL></P>
+
+<P>Firebird виконує блокування рівня строки завжди в будь-якому випадку.</P>
+
+<P>Firebird виконує оптимістичне блокування. Ваша транзакція не пробує
+блокувати запис, поки Ви не запрошуєте операцію модифікації, котра
+змінює цей запис. Це означає, що це можливо, хоча вкрай рідко, 
+для вашої модифікації, щоб терпіти невдачу, тому що другий клиєнт 
+блокував запис, навіть якщо Ви розпочали Вашу транзакцію раніше ніж
+інший клиєнт.</P>
+
+<P>Firebird використовує версіоний двигун, щоб забезпечити ступінь
+деталювання більш точніше ніж забезпечення традиційного блокування
+рівня строки. Версійний двигун дозволяє будь-якій кількості клієнтів читати
+непротирічну копію будь-якого записа, навіть якщо в той самий час інший
+клиєнт змінює той самий запис. Читаючі і пишучі транзакції один той самий
+запис николи не блокують один одного.</P>
+
+
+<P>Починаючи з версії v2.0, Firebird ODBC підтримує всі без винятку
+транзакції, які тільки може забезпечити сервер, включаючи блокування таблиць.
+Для цього було добавлено SQL синтаксис(GPRE), який виконується
+ODBC API функцією SQLExecDirect.</P>
+
+<A name=IND_SQL_TRANSACTION></A>
+<P>Повна форма запиту:</P>
+<P><B>
+SET|DECLARE TRANSACTION [LOCAL] [NAME transaction [USING nameUniqueWorkspase]]<BR>
+[READ WRITE | READ ONLY]<BR>
+[WAIT | NO WAIT]<BR>
+[AUTOCOMMIT]<BR>
+[NO_AUTO_UNDO]<BR>
+[[ISOLATION LEVEL] {SNAPSHOT [TABLE STABILITY] or REPEATABLE READ<BR>
+| SERIALIZABLE<BR>
+| READ COMMITTED [[NO] RECORD_VERSION]}]<BR>
+[RESERVING 'reserving_clause'];</B></P>
+
+<P><B>'reserving_clause' = table [, table :]<BR>
+[FOR [SHARED | PROTECTED] {READ | WRITE}] [, <reserving_clause>]</B></P>
+
+<P>Призначення і опис.</P>
+
+<A name=IND_DECLARE_TRANSACTION></A>
+<P><B>DECLARE TRANSACTION...</B> - декларування транзакції, без її виконання.</P>
+
+<P><B>SET TRANSACTION...</B> - ставимо транзакцію на виконання, вимикаючи
+установку <B>SQL_ATTR_AUTOCOMMIT</B> в позицію <B>SQL_AUTOCOMMIT_OFF</B>. Після
+завершення активної буде працювати вказана.<BR>
+<B>LOCAL</B> - визначає виконання транзакції в межах активного оператора(запита).<BR>
+<B>NAME transaction</B> - виняткове ім'я транзакції, по якому формується
+в середовищі з'єднань таблиця транзакцій підготовлених до виконання.<BR>
+<B>USING nameUniqueWorkspase</B> - виняткове ім'я робочого простору транзакцій, 
+по якому в середовищі з'єднань формуються таблиці транзакцій підготовлених 
+до виконання.<BR> Ми, маючи два робочі простори, можемо в них мати транзакції
+з однаковими іменами, але з різними описами самих транзакцій по суті.
+</P>
+
+<P>
+<B>DECLARE TRANSACTION ... [NAME transaction [USING nameUniqueWorkspase]]</B>
+<BR> 
+  Ця форма запису передбачена для попередньої підготовки описа транзакцій,
+які зберігаються в середовищі з'єднань. Це економить час і дозволяє
+багаторазово використовувати для будь якого активного з'єднання. Виклик
+такої транзакції на виконання виконується командою:
+<P>
+ - для з'єднання<UL>
+
+	<B>SET TRANSACTION NAME MyReadTransaction</B><BR>
+    або<BR>
+	<B>SET TRANSACTION NAME MyReadTransaction USING MyDsnDb1</B></UL>
+</P>
+
+<P>
+ - для окремого запита в межах одного з'єднання<UL>
+
+	<B>SET TRANSACTION LOCAL NAME MyReadTransaction</B><BR>
+    або<BR>
+	<B>SET TRANSACTION LOCAL NAME MyReadTransaction USING MyDsnDb1</B><BR>
+
+    і в цьому ж з'єднанні, для іншого запита<BR>
+
+	<B>SET TRANSACTION LOCAL NAME MyWriteTransaction</B><BR>
+    або<BR>
+	<B>SET TRANSACTION LOCAL NAME MyWriteTransaction USING MyDsnDb1</B></UL><BR>
+</P>
+<P>
+<B>SET TRANSACTION ... [NAME transaction [USING nameUniqueWorkspase]]</B><BR>
+
+  Ця форма запису відрізняється від попереднього тим, що ставить
+транзакцію на виконання, після завершення активної, якщо така існує. Але
+якщо вказано ключове слово <B>NAME</B> або <B>USING</B>, то
+ця транзакція може також багаторазово визиватися вже тільки з вказівкою її імені.
+
+Примітка. Для повернення в звичайний ритм роботи потрібно виконати повторне з'єднання.</P>
+  
+<P>
+  Також, добавлено обслуговування SQL запитів <B>COMMIT</B> і <B>ROLBACK</B>, ці
+виклики виконують ту саму роботу що і основний виклик <B>SQLEndTran</B>.
+
+  Є програми, які вміють викликати SQLExecDirect і не 
+вміють  викликати SQLEndTran. Для цих програм потрібно виконати виклик<BR>
+       <UL><B>SQLExecDirect( hStmt, "COMMIT" )</UL></B>
+що гарантовано забезпечить виклик:
+       <UL><B>SQLEndTran( SQL_HANDLE_DBC, hConnection, SQL_COMMIT );</UL></B>
+Але якщо транзакція була ініціювали як локальна, то 
+драйвер виконає <B>SQLEndTran</B> для локального <B>hStmt</B>.</P>
+
+	<P><h2>Two Phase Commit Transactions</h2></P>
+
+<P>Ця можливість дозволяє максимально на 16 різних Firebird базах даних виконувати
+commit(завершення) транзакції. Наприклад, використовуючи інструкцію<BR></P>
+
+<UL><B>SQLSetConnectAttr (connection, 4000, (void*) TRUE, 0);</B></UL>
+
+<P>Ви повідомляєте Firebird ODBC, що це з'єднання повинно бути присутнім в
+схемі "two  phase  commit  transactions". Піключив цією командой декілька
+з'єднаннь і виконуючи на будь-якому з'єднання Commit або Rollback, Ви отримаєте
+схему "two  phase  commit  transactions". Для виключення з'єднання з схеми
+використовуйте інструкцію:</P>
+
+<UL><B>SQLSetConnectAttr (connection, 4000, (void*) FALSE, 0); </B></UL>
+
+
+<A name=IND_MANY_TRANSACTIONS></A>
+<P><h2>Приклад використання різних транзакцій в одному з'єднанні</h2></P>
+
+
+<P><PRE>
+    HSTMT stmtRd;
+    HSTMT stmtWr;
+
+    SQLAllocHandle( SQL_HANDLE_STMT, connection, &stmtRd );
+    SQLAllocHandle( SQL_HANDLE_STMT, connection, &stmtWr );
+
+    SQLExecDirect( stmtRd, (UCHAR*)
+		   "SET TRANSACTION LOCAL\n"
+		   "READ ONLY\n"
+		   "ISOLATION LEVEL\n"
+		   "READ COMMITTED NO RECORD_VERSION WAIT\n",
+		   SQL_NTS );
+
+    SQLExecDirect( stmtWr, (UCHAR*)
+		   "SET TRANSACTION LOCAL\n"
+		   "READ WRITE\n"
+		   "ISOLATION LEVEL\n"
+		   "READ COMMITTED NO RECORD_VERSION WAIT\n",
+		   SQL_NTS );
+
+    SQLExecDirect( stmtRd,(UCHAR*)
+		   "SELECT CURRENCY FROM COUNTRY"
+		   "   WHERE country = 'Canada'"
+		   "   FOR UPDATE OF CURRENCY",
+		   SQL_NTS );
+
+    SQLFetch( stmtRd );
+
+    SQLPrepare( stmtWr, (UCHAR*)
+		"update COUNTRY\n"
+		"set    CURRENCY = 'CndDlr'\n"
+		"where  COUNTRY = 'Canada'\n",
+		SQL_NTS );
+
+    SQLExecute( stmtWr );
+
+    SQLExecDirect( stmtWr, (UCHAR*)"COMMIT", SQL_NTS );
+
+</P></PRE>
+
+<P>Для більш детального знайомства з цими і іншими можливостями будьласка, 
+розгляньте приклади.
+</P>
+
+</BODY>
+</HTML>

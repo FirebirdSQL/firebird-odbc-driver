@@ -1,0 +1,78 @@
+<!--  
+ *     The contents of this file are subject to the Initial 
+ *     Developer's Public License Version 1.0 (the "License"); 
+ *     you may not use this file except in compliance with the 
+ *     License. You may obtain a copy of the License at 
+ *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl
+ *
+ *     Software distributed under the License is distributed on 
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ *     express or implied.  See the License for the specific 
+ *     language governing rights and limitations under the License.
+ *
+ *
+ *  The Original Code was created by Vladimir Tsvigun for IBPhoenix.
+ *
+ *  Copyright (c) 2007 Vladimir Tsvigun
+ *  All Rights Reserved.
+ *
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1251">
+<TITLE>Приклад використання сервісу</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<P><A NAME="hid_services_examples"></A><h2>Приклад використання сервісу</h2></P>
+
+<P>Приклад надання сервісу використовуючи ODBC API функцію <B>SQLConfigDataSource</B>:</P>
+
+<P>Створення бази даних
+<PRE> SQLConfigDataSource( NULL,
+                      ODBC_ADD_DSN,
+                      "Firebird/InterBase(r) driver",
+                      "ODBC\0"
+                      "CREATE_DB = D:\\TestService\\test.fdb\0"
+                      "DESCRIPTION = My Firebird database\0"
+                      "UID         = SYSDBA\0"
+                      "PWD         = masterkey\0"
+                      "CHARSET     = NONE\0"
+                      "PAGESIZE    = 8192\0"
+                      "DIALECT     = 3\0" );</PRE></P>
+
+<P>Резервування(копіювання) бази даних
+<PRE> SQLConfigDataSource( NULL,
+                      ODBC_ADD_DSN,
+                      "Firebird/InterBase(r) driver",
+                      "ODBC\0"
+                      "BACKUP_DB = D:\\TestService\\test.fdb\0"
+                      "BACKUPFILE = D:\\TestService\\test.fbk\0"
+                      "UID         = SYSDBA\0"
+                      "PWD         = masterkey\0" );</PRE></P>
+
+<P>Відновлення бази даних
+<PRE> SQLConfigDataSource( NULL,
+                      ODBC_ADD_DSN,
+                      "Firebird/InterBase(r) driver",
+                      "ODBC\0"
+                      "RESTORE_DB = D:\\TestService\\testNew.fdb\0"
+                      "BACKUPFILE = D:\\TestService\\test.fbk\0"
+                      "LOGFILE = D:\\TestService\\test.log\0"
+                      "UID         = SYSDBA\0"
+                      "PWD         = masterkey\0" );</PRE></P>
+
+<P>Ремонт бази даних
+<PRE> SQLConfigDataSource( NULL,
+                      ODBC_ADD_DSN,
+                      "Firebird/InterBase(r) driver",
+                      "ODBC\0"
+                      "REPAIR_DB = D:\\TestService\\test.fdb\0"
+                      "UID         = SYSDBA\0"
+                      "PWD         = masterkey\0" );</PRE></P>
+
+
+</BODY>
+</HTML>

@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<!-- Sitemap 1.0 -->
+</HEAD><BODY>
+<UL>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Firebird ODBC">
+		<param name="Local" value="html/FirebirdODBC.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Конфігурація Firebird ODBC">
+		<param name="Local" value="html/ConfigurationParameters.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Коротко про Firebird ODBC драйвер">
+		<param name="Local" value="html/About.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Атрибути з'єднання">
+		<param name="Local" value="html/ConnectionAttributes.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Приклади з'єднання">
+		<param name="Local" value="html/ConnectionExamples.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Сервiс Firebird ODBC">
+		<param name="Local" value="html/Services.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Приклади використання сервису">
+		<param name="Local" value="html/ServicesExamples.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Авторське право та патент Firebird ODBC драйвера">
+		<param name="Local" value="html/Copyright.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Курсори">
+		<param name="Local" value="html/Cursors.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Тип даних Array">
+		<param name="Local" value="html/Array.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Середовище">
+		<param name="Local" value="html/Environment.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Робочі потоки">
+		<param name="Local" value="html/Multithread.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Події Firebird сервера">
+		<param name="Local" value="html/Events.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Процедури">
+		<param name="Local" value="html/Procedures.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Використання">
+		<param name="Local" value="html/Usage.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Clarion">
+		<param name="Name" value="Використання з Clarion">
+		<param name="Local" value="html\Clarion.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Захист пароля">
+		<param name="Local" value="html/SecurityPassword.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Транзакції">
+		<param name="Local" value="html/Transactions.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Транзакції MS DTC">
+		<param name="Local" value="html/MsDTC.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Створення бази даних">
+		<param name="Local" value="html/CreateDatabase.htm">
+		</OBJECT>
+</UL>
+</BODY></HTML>
