@@ -1,7 +1,7 @@
  0x0009 , 
 {
-IDS_DLG_TITLE_SETUP, // "FireBird ODBC Setup"
-	"FireBird ODBC Setup"
+IDS_DLG_TITLE_SETUP, // "Firebird ODBC Setup"
+	"Firebird ODBC Setup"
 ,
 IDS_BUTTON_FIND_FILE, // "Browse"
 	"Browse"
@@ -160,5 +160,5 @@ IDS_STATIC_LOCKTIMEOUT, // "lock timeout"
 	"lock timeout"
 ,
 IDS_CHECK_SFTHREAD, // "safe thread"
-	"safe thread"
+	"Thread-Safe"
 }

@@ -1,7 +1,7 @@
  0x040a , 
 {
-IDS_DLG_TITLE_CONNECT, // "FireBird ODBC Connect"
-	"Conexión FireBird ODBC"
+IDS_DLG_TITLE_CONNECT, // "Firebird ODBC Connect"
+	"Conexión Firebird ODBC"
 ,
 IDS_BUTTON_OK, // "OK"
 	"Aceptar"

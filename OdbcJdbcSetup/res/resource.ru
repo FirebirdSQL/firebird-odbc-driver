@@ -1,7 +1,7 @@
  0x0419 , 
 {
-IDS_DLG_TITLE_SETUP, // "FireBird ODBC Setup"
-	"FireBird ODBC Конфигуратор"
+IDS_DLG_TITLE_SETUP, // "Firebird ODBC Setup"
+	"Firebird ODBC Конфигуратор"
 ,
 IDS_BUTTON_FIND_FILE, // "Browse"
 	"Открыть"

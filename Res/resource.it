@@ -1,7 +1,7 @@
  0x0410 , 
 {
-IDS_DLG_TITLE_CONNECT, // "FireBird ODBC Connect"
-	"Connessione ODBC a FireBird"
+IDS_DLG_TITLE_CONNECT, // "Firebird ODBC Connect"
+	"Connessione ODBC a Firebird"
 ,
 IDS_BUTTON_OK, // "OK"
 	"Conferma"
