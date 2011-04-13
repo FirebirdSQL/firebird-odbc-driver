@@ -1,7 +1,7 @@
  0x0419 ,
 {
-IDS_DLG_TITLE_CONNECT, // "FireBird ODBC Connect"
-	"FireBird ODBC Соединение"
+IDS_DLG_TITLE_CONNECT, // "Firebird ODBC Connect"
+	"Firebird ODBC Соединение"
 ,
 IDS_BUTTON_OK, // "OK"
 	"OK"

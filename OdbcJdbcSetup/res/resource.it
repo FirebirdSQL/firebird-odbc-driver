@@ -1,7 +1,7 @@
  0x0410 , 
 {
-IDS_DLG_TITLE_SETUP, // "FireBird ODBC Setup"
-	"Impostazioni per ODBC FireBird"
+IDS_DLG_TITLE_SETUP, // "Firebird ODBC Setup"
+	"Impostazioni per ODBC Firebird"
 ,
 IDS_BUTTON_FIND_FILE, // "Browse"
 	"Scegli / Cerca"
@@ -73,10 +73,10 @@ IDS_BUTTON_HELP_ODBC, // "Help"
 	"Aiuto"
 ,
 IDS_DLG_TITLE_FINDFILE_DATABASE, // "Select Firebird database"
-	"Selezionare il database FireBird"
+	"Selezionare il database Firebird"
 ,
 IDS_DLG_TITLE_FINDFILE_CLIENT, // "Select Firebird client"
-	"Selezionare la libreria client per FireBird"
+	"Selezionare la libreria client per Firebird"
 ,
 IDS_MESSAGE_01, // "Connection successful!"
 	"La connessione ha avuto successo!"
