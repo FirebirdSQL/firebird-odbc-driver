@@ -206,7 +206,7 @@ intptr_t CUserDialog::DoModal()
 	*p++ = 0;          // Class
 
 	/* copy the title of the dialog */
-	sprintf( bufHeader, "%s(%s)", TEXT( _TR( IDS_DLG_TITLE_SETUP, "FireBird ODBC Service" ) ), headerDlg );
+	sprintf( bufHeader, "%s(%s)", TEXT( _TR( IDS_DLG_TITLE_SETUP, "Firebird ODBC Service" ) ), headerDlg );
 	nchar = nCopyAnsiToWideChar( p, bufHeader );
 	p += nchar;
 

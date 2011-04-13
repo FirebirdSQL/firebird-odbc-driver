@@ -452,7 +452,7 @@ bool CUsersTabUsers::buildDlgChild( HWND hWndParent )
 	*p++ = 0;          // Class
 
 	/* copy the title of the dialog */
-	nchar = nCopyAnsiToWideChar( p, TEXT( _TR( IDS_DLG_TITLE_SETUP, "FireBird ODBC Service" ) ) );
+	nchar = nCopyAnsiToWideChar( p, TEXT( _TR( IDS_DLG_TITLE_SETUP, "Firebird ODBC Service" ) ) );
 	p += nchar;
 
 	*p++ = 8;          // FontSize

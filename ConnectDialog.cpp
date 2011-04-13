@@ -256,7 +256,7 @@ LPWORD lpwAlign ( LPWORD lpIn)
 
 //IDD_DSN_PROPERTIES DIALOG DISCARDABLE  0, 0, 237, 186
 //STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-//CAPTION "FireBird ODBC Setup"
+//CAPTION "Firebird ODBC Setup"
 //FONT 8, "MS Sans Serif"
 
 intptr_t DialogBoxDynamicConnect()
@@ -284,7 +284,7 @@ intptr_t DialogBoxDynamicConnect()
 	*p++ = 0;          // Class
 
 	/* copy the title of the dialog */
-	nchar = nCopyAnsiToWideChar ( p, TEXT( _TR( IDS_DLG_TITLE_CONNECT, "FireBird ODBC Connect" ) ) );
+	nchar = nCopyAnsiToWideChar ( p, TEXT( _TR( IDS_DLG_TITLE_CONNECT, "Firebird ODBC Connect" ) ) );
 	p += nchar;
 
 	*p++ = 8;          // FontSize
