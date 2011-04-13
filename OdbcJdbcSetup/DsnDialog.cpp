@@ -811,7 +811,7 @@ void ProcessCDError(DWORD dwErrorCode, HWND hWnd)
 		stringID="Unknown error.";
 	}
 
-	MessageBox( hWnd, stringID, TEXT( _TR( IDS_DLG_TITLE_SETUP, "FireBird ODBC Setup" ) ), MB_OK );
+	MessageBox( hWnd, stringID, TEXT( _TR( IDS_DLG_TITLE_SETUP, "Firebird ODBC Setup" ) ), MB_OK );
 }
 
 intptr_t CDsnDialog::DoModal()
@@ -838,7 +838,7 @@ intptr_t CDsnDialog::DoModal()
 	*p++ = 0;          // Class
 
 	// copy the title of the dialog
-	nchar = nCopyAnsiToWideChar (p, TEXT( _TR( IDS_DLG_TITLE_SETUP, "FireBird ODBC Setup" ) ) );
+	nchar = nCopyAnsiToWideChar (p, TEXT( _TR( IDS_DLG_TITLE_SETUP, "Firebird ODBC Setup" ) ) );
 	p += nchar;
 
 	*p++ = 8;          // FontSize
