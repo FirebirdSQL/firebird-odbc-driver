@@ -45,7 +45,7 @@ IscColumnPrivilegesResultSet::IscColumnPrivilegesResultSet(IscDatabaseMetaData *
 
 void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * columnNamePattern)
 {
-	char sql[4096] = "select cast (NULL as varchar(7)) as table_cat,"
+	char sql[4096] = "select cast ('' as varchar(7)) as table_cat,"
 				          "cast (tbl.rdb$owner_name as varchar(31)) as table_schem,"
 						  "cast (rfr.rdb$relation_name as varchar(31)) as table_name,"
 						  "cast (rfr.rdb$field_name as varchar(31)) as column_name,"

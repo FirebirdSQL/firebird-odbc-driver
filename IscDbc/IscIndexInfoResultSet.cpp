@@ -68,7 +68,7 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 	const char *szWhere = " where ";
 	const char *szAnd = " and ";
 	char sqlQuery[4096] =
-		"select cast(NULL as varchar(7)) as table_cat,\n"						// 1
+		"select cast('' as varchar(7)) as table_cat,\n"						// 1
 				"\tcast(rl.rdb$owner_name as varchar(31)) as table_schem,\n"	// 2
 				"\tcast(rl.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
 				"\tcast(0 as smallint) as non_unique,\n"						// 4
@@ -87,7 +87,7 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 
 	char sql[2048] =
 		"\tunion\n" 
-		"select cast(NULL as varchar(7)) as table_cat,\n"						// 1
+		"select cast('' as varchar(7)) as table_cat,\n"						// 1
 				"\tcast(tbl.rdb$owner_name as varchar(31)) as table_schem,\n"	// 2
 				"\tcast(idx.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
 				"\tcast((1-idx.rdb$unique_flag) as smallint) as non_unique,\n"	// 4

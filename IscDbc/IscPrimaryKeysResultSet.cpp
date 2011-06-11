@@ -42,7 +42,7 @@ IscPrimaryKeysResultSet::IscPrimaryKeysResultSet(IscDatabaseMetaData *metaData)
 void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
 	char sql[2048] =
-		"select cast (NULL as varchar(7)) as table_cat,\n"							// 1
+		"select cast ('' as varchar(7)) as table_cat,\n"							// 1
 				"\tcast (tbl.rdb$owner_name as varchar(31)) as table_schem,\n"		// 2
 				"\tcast (rel.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
 				"\tcast (seg.rdb$field_name as varchar(31)) as column_name,\n"		// 4
