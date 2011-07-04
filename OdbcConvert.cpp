@@ -895,7 +895,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 					if ( to->isIndicatorSqlDa )
 					{
 						if ( to->isBlobOrArray )
-							return &OdbcConvert::convStringToBlob;
+							return &OdbcConvert::convStringWToBlob;
 						to->headSqlVarPtr->setTypeText();
 						return &OdbcConvert::transferStringWToAllowedType;
 					}
@@ -913,7 +913,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 					if ( to->isIndicatorSqlDa )
 					{
 						if ( to->isBlobOrArray )
-							return &OdbcConvert::convStringToBlob;
+							return &OdbcConvert::convStringWToBlob;
 						to->headSqlVarPtr->setTypeText();
 						return &OdbcConvert::transferStringWToAllowedType;
 					}
@@ -930,7 +930,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 				return &OdbcConvert::convStringToStringW;
 			case SQL_C_BINARY:
 				if ( to->isIndicatorSqlDa )
-					return &OdbcConvert::convStringToBlob;
+					return &OdbcConvert::convStringWToBlob;
 				return &OdbcConvert::convStringToString;
 			case SQL_C_DATE:
 			case SQL_C_TYPE_DATE:
@@ -3328,6 +3328,39 @@ int OdbcConvert::convStringToBlob(DescRecord * from, DescRecord * to)
 
 	if( len > 0 )
 		to->dataBlobPtr->writeStringHexToBlob(pointerTo, pointerFrom, len);
+	else		
+		*(short*)indicatorTo = SQL_NULL_DATA;
+
+	return ret;
+}
+
+// for use App to SqlDa
+int OdbcConvert::convStringWToBlob(DescRecord * from, DescRecord * to)
+{	
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL_SQLDA;
+
+	SQLLEN * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
+	wchar_t * pointerFrom = (wchar_t*)getAdressBindDataFrom((char*)from->dataPtr);
+	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
+
+	SQLUINTEGER len;
+	SQLUINTEGER lenMbs;
+	SQLRETURN ret = SQL_SUCCESS;
+
+	GET_WLEN_FROM_OCTETLENGTHPTR;
+
+	len = MIN( len, (int)MAX(0, (int)to->length));
+
+	if ( len > 0 )
+	{
+		char* tempValue = new char[len];
+		lenMbs = (SQLUINTEGER)to->WcsToMbs( tempValue, pointerFrom, len );
+		to->dataBlobPtr->writeStringHexToBlob(pointerTo, tempValue, lenMbs);
+		delete [] tempValue;
+	}
 	else		
 		*(short*)indicatorTo = SQL_NULL_DATA;
 

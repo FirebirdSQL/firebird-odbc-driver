@@ -265,6 +265,7 @@ public:
 	int convStringToStringW(DescRecord * from, DescRecord * to);
 	int convStringToVarString(DescRecord * from, DescRecord * to);
 	int convStringToBlob(DescRecord * from, DescRecord * to);
+	int convStringWToBlob(DescRecord * from, DescRecord * to);
 	int convStringToBinary(DescRecord * from, DescRecord * to);
 
 	int transferStringToTinyInt(DescRecord * from, DescRecord * to);
