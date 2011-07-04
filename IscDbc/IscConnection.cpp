@@ -1616,11 +1616,9 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 					throw SQLEXCEPTION( SYNTAX_ERROR, text );
 				}
 
-				int ret = buildParamProcedure ( ptIn, numIn );
-				
-				if ( ret == -1 ) 
-					return statysModify;
-				else if ( canSelect )
+				int ret = 0; //buildParamProcedure ( ptIn, numIn );
+
+				if ( canSelect )
 					memcpy(savePtOut, "select * from ", 14);
 				else
 					memcpy(savePtOut, "execute procedure ", 18);
