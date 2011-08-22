@@ -200,7 +200,7 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCha
 	sqlda->orgsqlvar = new CAttrSqlVar [numberColumns];
 	CAttrSqlVar * orgvar = sqlda->orgsqlvar;
 
-	SET_SQLVAR( 1, "TYPE_NAME"			, SQL_VARYING	,	33  , OFFSET(Types,lenTypeName)				)
+	SET_SQLVAR( 1, "TYPE_NAME"			, SQL_VARYING	,	52  , OFFSET(Types,lenTypeName)				)
 	SET_SQLVAR( 2, "DATA_TYPE"			, SQL_SHORT		,	 5	, OFFSET(Types,typeType)				)
 	SET_SQLVAR( 3, "COLUMN_SIZE"		, SQL_LONG		,	10	, OFFSET(Types,typePrecision)			)
 	SET_SQLVAR( 4, "LITERAL_PREFIX"		, SQL_VARYING	,	 8	, OFFSET(Types,lenTypePrefix)			)
@@ -212,7 +212,7 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCha
 	SET_SQLVAR(10, "UNSIGNED_ATTRIBUTE"	, SQL_SHORT		,	 5	, OFFSET(Types,typeUnsigned)			)
 	SET_SQLVAR(11, "FIXED_PREC_SCALE"	, SQL_SHORT		,	 5	, OFFSET(Types,typeMoney)				)
 	SET_SQLVAR(12, "AUTO_UNIQUE_VALUE"	, SQL_SHORT		,	 5	, OFFSET(Types,typeAutoIncrement)		)
-	SET_SQLVAR(13, "LOCAL_TYPE_NAME"	, SQL_VARYING	,	33	, OFFSET(Types,lenTypeLocalName)		)
+	SET_SQLVAR(13, "LOCAL_TYPE_NAME"	, SQL_VARYING	,	52	, OFFSET(Types,lenTypeLocalName)		)
 	SET_SQLVAR(14, "MINIMUM_SCALE"		, SQL_SHORT		,	 5	, OFFSET(Types,typeMinScale)			)
 	SET_SQLVAR(15, "MAXIMUM_SCALE"		, SQL_SHORT		,	 5	, OFFSET(Types,typeMaxScale)			)
 	SET_SQLVAR(16, "SQL_DATA_TYPE"		, SQL_SHORT		,	 5	, OFFSET(Types,typeSqlDataType)			)
