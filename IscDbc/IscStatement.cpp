@@ -543,6 +543,10 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 	resultSets.deleteItem (resultSet);
 	if (resultSets.isEmpty())
 	{
+		bool isActiveCursor = this->isActiveCursor();
+		openCursor = false;
+		typeStmt = stmtNone;
+
 		if ( connection )
 		{
 			if ( transactionLocal )
@@ -553,7 +557,7 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 			else if ( connection->transactionInfo.autoCommit )
 				connection->commitAuto();
 
-			if ( isActiveCursor() )
+			if ( isActiveCursor )
 			{
 				// Close cursors too.
 				ISC_STATUS statusVector[20];
@@ -563,9 +567,6 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 					THROW_ISC_EXCEPTION (connection, statusVector);
 			}
 		}
-
-		openCursor = false;
-		typeStmt = stmtNone;
 	}
 }
 
