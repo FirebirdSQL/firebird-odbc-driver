@@ -113,11 +113,7 @@ public:
 	}
 
 	operator SQLCHAR*()	{ return byteString; }
-#if (SIZEOF_LONG != 8) || defined(BUILD_REAL_64_BIT_MODE)
-	operator int() { return lengthString; }
-#endif
-	operator SQLSMALLINT() { return lengthString; }
-	operator SQLINTEGER() { return lengthString; }
+	int getLength() { return lengthString; }
 
 	~ConvertingString() 
 	{
@@ -265,7 +261,7 @@ SQLRETURN SQL_API SQLColAttributesW( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
 			CharacterAttribute.setConnection( GETCONNECT_STMT( hStmt ) );
 
 			return ((OdbcStatement*) hStmt)->sqlColAttribute( columnNumber, fieldIdentifier,
-											(SQLPOINTER)(SQLCHAR*)CharacterAttribute, CharacterAttribute,
+											(SQLPOINTER)(SQLCHAR*)CharacterAttribute, CharacterAttribute.getLength(),
 											stringLength, numericAttribute );
 		}
 	}
@@ -289,8 +285,8 @@ SQLRETURN SQL_API SQLConnectW( SQLHDBC hDbc,
 	ConvertingString<> UserName( (OdbcConnection*)hDbc, userName, nameLength2 );
 	ConvertingString<> Authentication( (OdbcConnection*)hDbc, authentication, nameLength3 );
 
-	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlConnect( ServerName, ServerName, UserName,
-												UserName, Authentication, Authentication );
+	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlConnect( ServerName, ServerName.getLength(), UserName,
+												UserName.getLength(), Authentication, Authentication.getLength() );
 	LOG_PRINT(( logFile, 
 				"SQLConnectW           : Line %d\n"
 				"   +status            : %d\n"
@@ -323,7 +319,7 @@ SQLRETURN SQL_API SQLDescribeColW( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
 	ColumnName.setConnection( GETCONNECT_STMT( hStmt ) );
 
 	return ((OdbcStatement*) hStmt)->sqlDescribeCol( columnNumber,
-													ColumnName, ColumnName,
+													ColumnName, ColumnName.getLength(),
 													nameLength, dataType, columnSize,
 													decimalDigits, nullable );
 }
@@ -346,18 +342,18 @@ SQLRETURN SQL_API SQLErrorW( SQLHENV hEnv,
 		GUARD_HSTMT( hStmt );
 		Buffer.setConnection( GETCONNECT_STMT( hStmt ) );
 		return ((OdbcStatement*)hStmt)->sqlError( State, nativeErrorCode, Buffer,
-												 Buffer, msgLength );
+												 Buffer.getLength(), msgLength );
 	}
 	if ( hDbc )
 	{
 		GUARD_HDBC( hDbc );
 		Buffer.setConnection( (OdbcConnection*)hDbc );
 		return ((OdbcConnection*)hDbc)->sqlError( State, nativeErrorCode, Buffer,
-												 Buffer, msgLength );
+												 Buffer.getLength(), msgLength );
 	}
 	if ( hEnv )
 		return ((OdbcEnv*)hEnv)->sqlError( State, nativeErrorCode, Buffer,
-										  Buffer, msgLength );
+										  Buffer.getLength(), msgLength );
 
 	return SQL_ERROR;
 }
@@ -371,7 +367,7 @@ SQLRETURN SQL_API SQLExecDirectW( SQLHSTMT hStmt, SQLWCHAR *statementText, SQLIN
 
 	ConvertingString<> StatementText( GETCONNECT_STMT( hStmt ), statementText, textLength );
 
-	return ((OdbcStatement*) hStmt)->sqlExecDirect( StatementText, StatementText );
+	return ((OdbcStatement*) hStmt)->sqlExecDirect( StatementText, StatementText.getLength() );
 }
 
 ///// SQLGetCursorNameW /////	ODBC 1.0	///// ISO 92
@@ -386,7 +382,7 @@ SQLRETURN SQL_API SQLGetCursorNameW( SQLHSTMT hStmt, SQLWCHAR *cursorName,
 	ConvertingString<> CursorName( bufferLength, cursorName, nameLength, isByte );
 	CursorName.setConnection( GETCONNECT_STMT( hStmt ) );
 
-	return ((OdbcStatement*) hStmt)->sqlGetCursorName( CursorName, CursorName, nameLength );
+	return ((OdbcStatement*) hStmt)->sqlGetCursorName( CursorName, CursorName.getLength(), nameLength );
 }
 
 ///// SQLPrepareW /////	ODBC 1.0	///// ISO 92
@@ -399,7 +395,7 @@ SQLRETURN SQL_API SQLPrepareW( SQLHSTMT hStmt,
 
 	ConvertingString<> StatementText( GETCONNECT_STMT( hStmt ), statementText, textLength );
 	
-	return ((OdbcStatement*) hStmt)->sqlPrepare( StatementText, StatementText );
+	return ((OdbcStatement*) hStmt)->sqlPrepare( StatementText, StatementText.getLength() );
 }
 
 ///// SQLSetCursorNameW /////	ODBC 1.0	///// ISO 92
@@ -412,7 +408,7 @@ SQLRETURN SQL_API SQLSetCursorNameW( SQLHSTMT hStmt, SQLWCHAR *cursorName,
 
 	ConvertingString<> CursorName( GETCONNECT_STMT( hStmt ), cursorName, nameLength );
 
-	return ((OdbcStatement*) hStmt)->sqlSetCursorName( CursorName, CursorName );
+	return ((OdbcStatement*) hStmt)->sqlSetCursorName( CursorName, CursorName.getLength() );
 }
 
 ///// SQLColumnsW /////
@@ -431,10 +427,10 @@ SQLRETURN SQL_API SQLColumnsW( SQLHSTMT hStmt,
 	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), tableName, nameLength3 );
 	ConvertingString<> ColumnName( GETCONNECT_STMT( hStmt ), columnName, nameLength4 );
 
-	return ((OdbcStatement*) hStmt)->sqlColumns( CatalogName, CatalogName,
-												SchemaName, SchemaName,
-												TableName, TableName,
-												ColumnName, ColumnName );
+	return ((OdbcStatement*) hStmt)->sqlColumns( CatalogName, CatalogName.getLength(),
+												SchemaName, SchemaName.getLength(),
+												TableName, TableName.getLength(),
+												ColumnName, ColumnName.getLength() );
 }
 
 ///// SQLDriverConnectW /////
@@ -451,8 +447,8 @@ SQLRETURN SQL_API SQLDriverConnectW( SQLHDBC hDbc, SQLHWND hWnd, SQLWCHAR *szCon
 	ConvertingString<> ConnStrOut( cbConnStrOutMax, szConnStrOut, pcbConnStrOut, false );
 	ConnStrOut.setConnection( (OdbcConnection*)hDbc );
 
-	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlDriverConnect( hWnd, ConnStrIn, ConnStrIn,
-													ConnStrOut, ConnStrOut, pcbConnStrOut,
+	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlDriverConnect( hWnd, ConnStrIn, ConnStrIn.getLength(),
+													ConnStrOut, ConnStrOut.getLength(), pcbConnStrOut,
 													fDriverCompletion );
 	LOG_PRINT(( logFile, 
 				"SQLDriverConnectW     : Line %d\n"
@@ -490,7 +486,7 @@ SQLRETURN SQL_API SQLGetConnectOptionW( SQLHDBC hDbc, SQLUSMALLINT option, SQLPO
 			ConnStrOut.setConnection( (OdbcConnection*)hDbc );
 
 			return ((OdbcConnection*) hDbc)->sqlGetConnectAttr( option,
-													ConnStrOut, ConnStrOut, NULL );
+													ConnStrOut, ConnStrOut.getLength(), NULL );
 		}
 	default:
 		bufferLength = 0;
@@ -555,7 +551,7 @@ SQLRETURN SQL_API SQLGetInfoW( SQLHDBC hDbc, SQLUSMALLINT infoType, SQLPOINTER i
 			InfoValue.setConnection( (OdbcConnection*)hDbc );
 
 			return ((OdbcConnection*) hDbc)->sqlGetInfo( infoType, (SQLPOINTER)(SQLCHAR*)InfoValue,
-														InfoValue, stringLength );
+														InfoValue.getLength(), stringLength );
 		}
 		else
 		{
@@ -598,7 +594,7 @@ SQLRETURN SQL_API SQLSetConnectOptionW( SQLHDBC hDbc, SQLUSMALLINT option, SQLUL
 			ConvertingString<> Value( (OdbcConnection*)hDbc, (SQLWCHAR *)value, bufferLength );
 
 			return ((OdbcConnection*) hDbc)->sqlSetConnectAttr( option, 
-												(SQLPOINTER)(SQLCHAR*)Value, Value );
+												(SQLPOINTER)(SQLCHAR*)Value, Value.getLength() );
 		}
 	}
 
@@ -622,9 +618,9 @@ SQLRETURN SQL_API SQLSpecialColumnsW( SQLHSTMT hStmt, SQLUSMALLINT identifierTyp
 	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), tableName, nameLength3 );
 
 	return ((OdbcStatement*) hStmt)->sqlSpecialColumns( identifierType,
-														CatalogName, CatalogName,
-														SchemaName, SchemaName,
-														TableName, TableName,
+														CatalogName, CatalogName.getLength(),
+														SchemaName, SchemaName.getLength(),
+														TableName, TableName.getLength(),
 														scope, nullable);
 }
 
@@ -643,9 +639,9 @@ SQLRETURN SQL_API SQLStatisticsW( SQLHSTMT hStmt,
 	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), schemaName, nameLength2 );
 	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), tableName, nameLength3 );
 
-	return ((OdbcStatement*) hStmt)->sqlStatistics( CatalogName, CatalogName,
-													SchemaName, SchemaName,
-													TableName, TableName,
+	return ((OdbcStatement*) hStmt)->sqlStatistics( CatalogName, CatalogName.getLength(),
+													SchemaName, SchemaName.getLength(),
+													TableName, TableName.getLength(),
 													unique, reserved );
 }
 
@@ -665,10 +661,10 @@ SQLRETURN SQL_API SQLTablesW( SQLHSTMT hStmt,
 	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), tableName, nameLength3 );
 	ConvertingString<> TableType( GETCONNECT_STMT( hStmt ), tableType, nameLength4 );
 
-	return ((OdbcStatement*) hStmt)->sqlTables( CatalogName, CatalogName,
-												SchemaName, SchemaName,
-												TableName, TableName,
-												TableType, TableType );
+	return ((OdbcStatement*) hStmt)->sqlTables( CatalogName, CatalogName.getLength(),
+												SchemaName, SchemaName.getLength(),
+												TableName, TableName.getLength(),
+												TableType, TableType.getLength() );
 }
 
 ///// SQLBrowseConnectW /////
@@ -687,8 +683,8 @@ SQLRETURN SQL_API SQLBrowseConnectW( SQLHDBC hDbc,
 	ConvertingString<> ConnStrOut( cbConnStrOutMax, szConnStrOut, pcbConnStrOut );
 	ConnStrOut.setConnection( (OdbcConnection*)hDbc );
 
-	return ((OdbcConnection*) hDbc)->sqlBrowseConnect( ConnStrIn, ConnStrIn,
-													  ConnStrOut, ConnStrOut,
+	return ((OdbcConnection*) hDbc)->sqlBrowseConnect( ConnStrIn, ConnStrIn.getLength(),
+													  ConnStrOut, ConnStrOut.getLength(),
 													  pcbConnStrOut );
 }
 
@@ -707,8 +703,8 @@ SQLRETURN SQL_API SQLDataSourcesW( SQLHENV hEnv,
 	ConvertingString<> Description( bufferLength2, description, nameLength2 );
 
 	return ((OdbcEnv*)hEnv)->sqlDataSources( direction, ServerName,
-											ServerName, nameLength1, Description,
-											Description, nameLength2 );
+											ServerName.getLength(), nameLength1, Description,
+											Description.getLength(), nameLength2 );
 }
 
 ///// SQLForeignKeysW /////
@@ -731,12 +727,12 @@ SQLRETURN SQL_API SQLForeignKeysW( SQLHSTMT hStmt,
 	ConvertingString<> FkSchemaName( GETCONNECT_STMT( hStmt ), szFkSchemaName, cbFkSchemaName );
 	ConvertingString<> FkTableName( GETCONNECT_STMT( hStmt ), szFkTableName, cbFkTableName );
 
-	return ((OdbcStatement*) hStmt)->sqlForeignKeys( PkCatalogName, PkCatalogName,
-													PkSchemaName, PkSchemaName,
-													PkTableName, PkTableName,
-													FkCatalogName, FkCatalogName,
-													FkSchemaName, FkSchemaName,
-													FkTableName, FkTableName );
+	return ((OdbcStatement*) hStmt)->sqlForeignKeys( PkCatalogName, PkCatalogName.getLength(),
+													PkSchemaName, PkSchemaName.getLength(),
+													PkTableName, PkTableName.getLength(),
+													FkCatalogName, FkCatalogName.getLength(),
+													FkSchemaName, FkSchemaName.getLength(),
+													FkTableName, FkTableName.getLength() );
 }
 
 ///// SQLNativeSqlW /////
@@ -759,8 +755,8 @@ SQLRETURN SQL_API SQLNativeSqlW( SQLHDBC hDbc,
 															isByte ? true : false );
 	SqlStr.setConnection( (OdbcConnection*)hDbc );
 
-	return ((OdbcConnection*) hDbc)->sqlNativeSql( SqlStrIn, SqlStrIn,
-												  SqlStr, SqlStr, pcbSqlStr );
+	return ((OdbcConnection*) hDbc)->sqlNativeSql( SqlStrIn, SqlStrIn.getLength(),
+												  SqlStr, SqlStr.getLength(), pcbSqlStr );
 }
 
 ///// SQLPrimaryKeysW /////
@@ -777,9 +773,9 @@ SQLRETURN SQL_API SQLPrimaryKeysW( SQLHSTMT hStmt,
 	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), szSchemaName, cbSchemaName );
 	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), szTableName, cbTableName );
 
-	return ((OdbcStatement*) hStmt)->sqlPrimaryKeys( CatalogName, CatalogName,
-													SchemaName, SchemaName,
-													TableName, TableName );
+	return ((OdbcStatement*) hStmt)->sqlPrimaryKeys( CatalogName, CatalogName.getLength(),
+													SchemaName, SchemaName.getLength(),
+													TableName, TableName.getLength() );
 }
 
 ///// SQLProcedureColumnsW /////
@@ -798,10 +794,10 @@ SQLRETURN SQL_API SQLProcedureColumnsW( SQLHSTMT hStmt,
 	ConvertingString<> ProcName( GETCONNECT_STMT( hStmt ), szProcName, cbProcName );
 	ConvertingString<> ColumnName( GETCONNECT_STMT( hStmt ), szColumnName, cbColumnName );
 
-	return ((OdbcStatement*) hStmt)->sqlProcedureColumns( CatalogName, CatalogName,
-														 SchemaName, SchemaName,
-														 ProcName, ProcName,
-														 ColumnName, ColumnName );
+	return ((OdbcStatement*) hStmt)->sqlProcedureColumns( CatalogName, CatalogName.getLength(),
+														 SchemaName, SchemaName.getLength(),
+														 ProcName, ProcName.getLength(),
+														 ColumnName, ColumnName.getLength() );
 }
 
 ///// SQLProceduresW /////
@@ -818,9 +814,9 @@ SQLRETURN SQL_API SQLProceduresW( SQLHSTMT hStmt,
 	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), szSchemaName, cbSchemaName );
 	ConvertingString<> ProcName( GETCONNECT_STMT( hStmt ), szProcName, cbProcName );
 
-	return ((OdbcStatement*) hStmt)->sqlProcedures( CatalogName, CatalogName,
-												   SchemaName, SchemaName,
-												   ProcName, ProcName );
+	return ((OdbcStatement*) hStmt)->sqlProcedures( CatalogName, CatalogName.getLength(),
+												   SchemaName, SchemaName.getLength(),
+												   ProcName, ProcName.getLength() );
 }
 
 ///// SQLTablePrivilegesW /////
@@ -837,9 +833,9 @@ SQLRETURN SQL_API SQLTablePrivilegesW( SQLHSTMT hStmt,
 	ConvertingString<> SchemaName( GETCONNECT_STMT( hStmt ), szSchemaName, cbSchemaName );
 	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), szTableName, cbTableName );
 
-	return ((OdbcStatement*) hStmt)->sqlTablePrivileges( CatalogName, CatalogName,
-														SchemaName, SchemaName,
-														TableName, TableName );
+	return ((OdbcStatement*) hStmt)->sqlTablePrivileges( CatalogName, CatalogName.getLength(),
+														SchemaName, SchemaName.getLength(),
+														TableName, TableName.getLength() );
 }
 
 ///// SQLColumnPrivilegesW /////
@@ -858,10 +854,10 @@ SQLRETURN SQL_API SQLColumnPrivilegesW( SQLHSTMT hStmt,
 	ConvertingString<> TableName( GETCONNECT_STMT( hStmt ), szTableName, cbTableName );
 	ConvertingString<> ColumnName( GETCONNECT_STMT( hStmt ), szColumnName, cbColumnName );
 
-	return ((OdbcStatement*) hStmt)->sqlColumnPrivileges( CatalogName, CatalogName,
-														 SchemaName, SchemaName,
-														 TableName, TableName,
-														 ColumnName, ColumnName );
+	return ((OdbcStatement*) hStmt)->sqlColumnPrivileges( CatalogName, CatalogName.getLength(),
+														 SchemaName, SchemaName.getLength(),
+														 TableName, TableName.getLength(),
+														 ColumnName, ColumnName.getLength() );
 }
 
 ///// SQLDriversW /////
@@ -878,8 +874,8 @@ SQLRETURN SQL_API SQLDriversW( SQLHENV hEnv, SQLUSMALLINT fDirection,
 	ConvertingString<> DriverDesc( cbDriverDescMax, szDriverDesc, pcbDriverDesc );
 	ConvertingString<> DriverAttributes( cbDrvrAttrMax, szDriverAttributes, pcbDrvrAttr );
 
-	return ((OdbcEnv*) hEnv)->sqlDrivers( fDirection, DriverDesc, DriverDesc,
-										pcbDriverDesc, DriverAttributes, DriverAttributes,
+	return ((OdbcEnv*) hEnv)->sqlDrivers( fDirection, DriverDesc, DriverDesc.getLength(),
+										pcbDriverDesc, DriverAttributes, DriverAttributes.getLength(),
 										pcbDrvrAttr );
 }
 
@@ -916,7 +912,7 @@ SQLRETURN SQL_API SQLColAttributeW( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
 			CharacterAttribute.setConnection( GETCONNECT_STMT( hStmt ) );
 
 			return ((OdbcStatement*)hStmt)->sqlColAttribute( columnNumber, fieldIdentifier,
-								(SQLPOINTER)(SQLCHAR*)CharacterAttribute, CharacterAttribute,
+								(SQLPOINTER)(SQLCHAR*)CharacterAttribute, CharacterAttribute.getLength(),
 								stringLength, numericAttribute );
 		}
 	}
@@ -946,7 +942,7 @@ SQLRETURN SQL_API SQLGetConnectAttrW( SQLHDBC hDbc,
 			Value.setConnection( (OdbcConnection*)hDbc );
 
 			return ((OdbcConnection*) hDbc)->sqlGetConnectAttr( attribute, 
-											(SQLPOINTER)(SQLCHAR*)Value, Value, stringLength );
+											(SQLPOINTER)(SQLCHAR*)Value, Value.getLength(), stringLength );
 		}
 	}
 
@@ -985,7 +981,7 @@ SQLRETURN SQL_API SQLGetDescFieldW( SQLHDESC hDesc, SQLSMALLINT recNumber,
 			Value.setConnection( GETCONNECT_DESC( hDesc ) );
 
 			return ((OdbcDesc*) hDesc)->sqlGetDescField( recNumber, fieldIdentifier,
-											(SQLPOINTER)(SQLCHAR*)Value, Value, stringLength );
+											(SQLPOINTER)(SQLCHAR*)Value, Value.getLength(), stringLength );
 		}
 	}
 
@@ -1008,7 +1004,7 @@ SQLRETURN SQL_API SQLGetDescRecW( SQLHDESC hDesc,
 	ConvertingString<> Name( bufferLength, name, stringLength );
 	Name.setConnection( GETCONNECT_DESC( hDesc ) );
 
-	return ((OdbcDesc*) hDesc)->sqlGetDescRec( recNumber, Name, Name,
+	return ((OdbcDesc*) hDesc)->sqlGetDescRec( recNumber, Name, Name.getLength(),
 											  stringLength, type, subType, 
 											  length, precision, scale, nullable );
 }
@@ -1039,7 +1035,7 @@ SQLRETURN SQL_API SQLGetDiagFieldW( SQLSMALLINT handleType, SQLHANDLE handle,
 			DiagInfo.setConnection( GETCONNECT_HNDL( handle ) );
 
 			return ((OdbcObject*) handle)->sqlGetDiagField( recNumber, diagIdentifier,
-											(SQLPOINTER)(SQLCHAR*)DiagInfo, DiagInfo, stringLength );
+											(SQLPOINTER)(SQLCHAR*)DiagInfo, DiagInfo.getLength(), stringLength );
 		}
 	}
 
@@ -1071,7 +1067,7 @@ SQLRETURN SQL_API SQLGetDiagRecW( SQLSMALLINT handleType, SQLHANDLE handle,
 
 	return ((OdbcObject*) handle)->sqlGetDiagRec( handleType, recNumber, State,
 												 nativeError, MessageText,
-												 MessageText, textLength );
+												 MessageText.getLength(), textLength );
 }
 
 ///// SQLGetStmtAttrW /////
@@ -1097,7 +1093,7 @@ SQLRETURN SQL_API SQLGetStmtAttrW( SQLHSTMT hStmt,
 			Value.setConnection( GETCONNECT_STMT( hStmt ) );
 
 			return ((OdbcStatement*) hStmt)->sqlGetStmtAttr( attribute,
-											(SQLPOINTER)(SQLCHAR*)Value, Value, stringLength );
+											(SQLPOINTER)(SQLCHAR*)Value, Value.getLength(), stringLength );
 		}
 	}
 
@@ -1124,7 +1120,7 @@ SQLRETURN SQL_API SQLSetConnectAttrW( SQLHDBC hDbc, SQLINTEGER attribute,
 			ConvertingString<> Value( (OdbcConnection*)hDbc, (SQLWCHAR *)value, stringLength );
 
 			return ((OdbcConnection*) hDbc)->sqlSetConnectAttr( attribute,
-														(SQLPOINTER)(SQLCHAR*)Value, Value );
+														(SQLPOINTER)(SQLCHAR*)Value, Value.getLength() );
 		}
 	}
 
@@ -1169,7 +1165,7 @@ SQLRETURN SQL_API SQLSetDescFieldW( SQLHDESC hDesc,
 			ConvertingString<> Value( GETCONNECT_DESC( hDesc ), (SQLWCHAR *)value, len );
 
 			return ((OdbcDesc*) hDesc)->sqlSetDescField( recNumber, fieldIdentifier,
-													(SQLPOINTER)(SQLCHAR*)Value, Value );
+													(SQLPOINTER)(SQLCHAR*)Value, Value.getLength() );
 		}
 	}
 
