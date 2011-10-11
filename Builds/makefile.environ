@@ -40,6 +40,13 @@ endif
 endif
 
 ifeq (nul,$(FBINCDIR))
+FBINCDIR	= $(shell if [ -f /usr/include/ibase.h ]; then echo /usr/include; else echo nul; fi)
+endif
+ifeq (nul,$(FBLIBDIR))
+FBLIBDIR	= $(shell if [ -f /usr/lib/libfbclient.so ]; then echo /usr/lib; else echo nul; fi)
+endif
+
+ifeq (nul,$(FBINCDIR))
 $(error FBINCDIR is undefined)
 else
 $(warning FBINCDIR is $(FBINCDIR))
