@@ -373,20 +373,6 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 
 	if ( *ptSrc == '}' )
 	{
-		if ( numInputParam )
-		{
-			int i = 0, offset = numInputParam * 2 - 1 + 2;
-			memmove(ptSrc + offset, ptSrc, strlen(ptSrc) + 1 );
-
-			*ptSrc++ = '(';
-			while( i++ < numInputParam )
-			{
-				if ( i > 1 )
-					*ptSrc++ = ',';
-				*ptSrc++ = '?';
-			}
-			*ptSrc++ = ')';
-		}
 		return 0;
 	}
 
@@ -420,15 +406,6 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 
 		if ( *ptSrc == ')' )
 		{
-			int offset = (numInputParam - i) * 2 - ( !i ? 1 : 0 );
-			memmove(ptSrc + offset, ptSrc, strlen(ptSrc) + 1 );
-
-			while( i++ < numInputParam )
-			{
-				if ( i > 1 )
-					*ptSrc++ = ',';
-				*ptSrc++ = '?';
-			}
 			return 0;
 		}
 
@@ -534,17 +511,6 @@ int IscConnection::buildParamProcedure ( char *& string, int numInputParam )
 
 	if ( *ptSrc == ')' )
 	{
-		if ( i < numInputParam )
-		{
-			int offset = (numInputParam - i) * 2;
-			memmove(ptSrc + offset, ptSrc, strlen(ptSrc) + 1 );
-
-			while( i++ < numInputParam )
-			{
-				*ptSrc++ = ',';
-				*ptSrc++ = '?';
-			}
-		}
 		return 0;
 	}
 
@@ -1616,9 +1582,11 @@ int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
 					throw SQLEXCEPTION( SYNTAX_ERROR, text );
 				}
 
-				int ret = 0; //buildParamProcedure ( ptIn, numIn );
+				int ret = buildParamProcedure ( ptIn, numIn );
 
-				if ( canSelect )
+				if ( ret == -1 )
+					return statysModify;
+				else if ( canSelect )
 					memcpy(savePtOut, "select * from ", 14);
 				else
 					memcpy(savePtOut, "execute procedure ", 18);
