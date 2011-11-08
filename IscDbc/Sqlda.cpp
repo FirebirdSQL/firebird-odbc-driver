@@ -962,8 +962,8 @@ const char* Sqlda::getSqlTypeName ( CAttrSqlVar *var )
 
 	case SQL_BLOB:
 		if ( var->sqlsubtype == 1 )
-			return "LONG VARCHAR";
-		return "LONG VARBINARY";
+			return "BLOB SUB_TYPE TEXT";
+		return "BLOB SUB_TYPE 0";
 
 	case SQL_TIMESTAMP:
 		return "TIMESTAMP";
