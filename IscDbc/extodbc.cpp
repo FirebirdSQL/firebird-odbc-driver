@@ -413,7 +413,7 @@ int getStatInformations(IscConnection * connection, const void * info_buffer, in
 		}
 }
 
-char * strFormatReport = 
+const char * strFormatReport = 
 		"\nCurrent memory = !c"
 		"\nDelta memory   = !d"
 		"\nMax memory     = !x"
@@ -429,7 +429,7 @@ int strBuildStatInformations(const void * info_buffer, int bufferLength,short *l
 {
 	signed long delta, length;
 	char *p, c;
-	char * string = strFormatReport;
+	const char * string = strFormatReport;
 
 	p = (char *)info_buffer;
 

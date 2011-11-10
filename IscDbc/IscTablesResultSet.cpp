@@ -50,7 +50,7 @@ IscTablesResultSet::IscTablesResultSet(IscDatabaseMetaData *metaData)
 
 void IscTablesResultSet::getTables(const char * catalog, const char * schemaPattern, const char * tableNamePattern, int typeCount, const char * * types)
 {
-	char *sqlAll =  "%";
+	const char *sqlAll =  "%";
 	char sql[2048] = "";
 	char * ptSql = sql;
 	char * pt = ptSql;

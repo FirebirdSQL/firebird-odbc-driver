@@ -44,7 +44,7 @@ class Value
 public:
 	void setValue (Blob *blb);
 	Blob* getBlob();
-	char* getString (char **tempPtr);
+	const char* getString (char **tempPtr);
 	Value (const char *string);
 	int compare (Value *value);
 
@@ -54,7 +54,7 @@ public:
 	QUAD	getQuad(int scale = 0);
 	float	getFloat();
 	double	getDouble();
-	char	*getString();
+	const char	*getString();
 	int		getString (int bufferSize, char *buffer);
 
 	void	setValue (float value);

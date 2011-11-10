@@ -223,7 +223,7 @@ void Value::convertStringData()
 	// validate end string check Server
 }
 
-char* Value::getString()
+const char* Value::getString()
 {
 	switch (type)
 		{
@@ -572,7 +572,7 @@ short Value::getShort(int scale)
 	return 0;
 }
 
-char* Value::getString(char **tempPtr)
+const char* Value::getString(char **tempPtr)
 {
 	char	temp [64];
 	int		length;

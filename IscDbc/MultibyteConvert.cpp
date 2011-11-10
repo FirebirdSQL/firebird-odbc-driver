@@ -44,7 +44,7 @@ struct IntlCharsets
 	short	code;
 	short	size;
 
-} listCharsets[] = {
+} const listCharsets[] = {
 
 	CODE_CHARSETS( NONE			,  0, 1 )
 	CODE_CHARSETS( OCTETS		,  1, 1 )
@@ -113,8 +113,8 @@ struct IntlCharsets
 
 int findCharsetsCode( const char *charset )
 {
-	IntlCharsets *p = listCharsets;
-	IntlCharsets *end = listCharsets + SIZE_OF_LISTCHARSETS;
+	const IntlCharsets *p = listCharsets;
+	const IntlCharsets *end = listCharsets + SIZE_OF_LISTCHARSETS;
 
 	while ( p < end )
 	{

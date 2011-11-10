@@ -39,8 +39,8 @@ namespace IscDbcLibrary {
 #define SET_SQLVAR(index, name, type, prec, offset)			\
 {															\
 	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar + index - 1;	\
-	char	*src = var->sqlname,							\
-			*dst = name;									\
+	char *src = var->sqlname;							\
+	const char *dst = name;									\
 	do														\
 		*src++=*dst;										\
 	while(*dst++);											\

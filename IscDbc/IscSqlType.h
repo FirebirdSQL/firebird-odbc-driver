@@ -50,7 +50,7 @@ public:		// In
 
 public:		// Out
 	int		type;
-	char	*typeName;
+	const char	*typeName;
 	int		length;
 	int		bufferLength;
 	int		precision;
