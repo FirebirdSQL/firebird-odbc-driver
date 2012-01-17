@@ -3582,6 +3582,7 @@ SQLRETURN OdbcStatement::sqlColAttribute( int column, int fieldId, SQLPOINTER at
 			break;
 
 		case SQL_DESC_TYPE_NAME:
+		case SQL_DESC_LOCAL_TYPE_NAME:
 			string = metaData->getColumnTypeName (column);               
 			break; 
 
