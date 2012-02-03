@@ -163,6 +163,8 @@ bool CServiceTabStatistics::onCommand( HWND hWnd, int nCommand )
 void CServiceTabStatistics::addParameters( CServiceClient &services )
 {
 	CServiceTabChild::addParameters( services );
+
+	services.putParameterValue( "serverName", server );
 }
 
 void CServiceTabStatistics::onStartStatistics()
