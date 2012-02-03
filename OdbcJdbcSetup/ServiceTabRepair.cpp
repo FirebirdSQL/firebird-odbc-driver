@@ -186,6 +186,8 @@ void CServiceTabRepair::hideValidateOptions( bool hide )
 void CServiceTabRepair::addParameters( CServiceClient &services )
 {
 	CServiceTabChild::addParameters( services );
+
+	services.putParameterValue( "serverName", server );
 }
 
 void CServiceTabRepair::startRepairDatabase()
