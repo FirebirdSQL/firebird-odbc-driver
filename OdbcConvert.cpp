@@ -991,7 +991,7 @@ SQLLEN * OdbcConvert::getAdressBindIndTo(char * pointer)
 }
 
 #define ODBCCONVERT_CHECKNULL(pointerTo)					\
-	if( *(short*)indicatorFrom == SQL_NULL_DATA )			\
+	if( indicatorFrom && *(short*)indicatorFrom == SQL_NULL_DATA )			\
 	{														\
 		if ( indicatorTo )									\
 			*indicatorTo = SQL_NULL_DATA;					\
