@@ -834,7 +834,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				break;
 
 			case SQL_LONG:
-				value->setValue (*(long*) var->sqldata, var->sqlscale);
+				value->setValue (*(int*) var->sqldata, var->sqlscale);
 				break;
 
 			case SQL_FLOAT:

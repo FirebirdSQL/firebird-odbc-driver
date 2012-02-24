@@ -115,7 +115,7 @@ public:
 
 	bool getBoolean (int index);
 	short getShort (int index);
-	long getInt (int index);
+	int getInt (int index);
 	char * getText (int index, int &len);
 	char * getVarying (int index, int &len);
 

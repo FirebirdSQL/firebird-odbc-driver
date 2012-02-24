@@ -50,7 +50,7 @@ public:
 
 	bool	getBoolean();
 	short	getShort(int scale = 0);
-	long	getLong(int scale = 0);
+	int		getLong(int scale = 0);
 	QUAD	getQuad(int scale = 0);
 	float	getFloat();
 	double	getDouble();
@@ -59,7 +59,7 @@ public:
 
 	void	setValue (float value);
 	void	setValue (double value);
-	void	setValue (long value, int scale = 0);
+	void	setValue (int value, int scale = 0);
 	void	setValue (Value *value);
 
 //protected:
@@ -80,7 +80,7 @@ public:
 	void add (int value);
 	void add (Value *value);
 	bool isNull (Type type);
-	void setDate (long value);
+	void setDate (int value);
 	void setNull();
 	bool isNull();
 	void setValue (QUAD value, int scale = 0);
@@ -119,7 +119,7 @@ public:
 			int		length;
 			}	string;
 		short		smallInt;
-		long		integer;
+		int			integer;
 		float		flt;
 		double		dbl;
 		QUAD		quad;

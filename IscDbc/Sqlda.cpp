@@ -125,7 +125,7 @@ public:
 		countColumnBlob = 0;
 		char * ptRow = ptRowBlock;
 		int	*offset = offsetSqldata;
-		long *indicators = (long*)( ptRow + indicatorsOffset );
+		SQLLEN *indicators = (SQLLEN*)( ptRow + indicatorsOffset );
 
 		for (n = 0; n < numberColumns; ++n)
 		{
@@ -234,7 +234,7 @@ public:
 		XSQLVAR * var = ptSqlda->sqlvar;
 		char * ptRow = ptRowBlock;
 		int	*offset = offsetSqldata;
-		long *indicators = (long*)( ptRow + indicatorsOffset );
+		SQLLEN *indicators = (SQLLEN*)( ptRow + indicatorsOffset );
 		int n = ptSqlda->sqld;
 
 		while ( n-- )
@@ -252,7 +252,7 @@ public:
 		XSQLVAR * var = ptSqlda->sqlvar;
 		char * ptRow = ptOrgRowBlock;
 		int	*offset = offsetSqldata;
-		long *indicators = (long*)( ptRow + indicatorsOffset );
+		SQLLEN *indicators = (SQLLEN*)( ptRow + indicatorsOffset );
 		int n = ptSqlda->sqld;
 
 		while ( n-- )
@@ -608,7 +608,7 @@ void Sqlda::print()
 					break;
 
 				case SQL_LONG:
-					printf ("%ld", *(long*) p);
+					printf ("%ld", *(int*) p);
 					break;
 
 				case SQL_FLOAT:
@@ -1257,13 +1257,13 @@ short Sqlda::getShort (int index)
 	return *(short*)var->sqldata;
 }
 
-long Sqlda::getInt (int index)
+int Sqlda::getInt (int index)
 {
 	XSQLVAR *var = Var(index);
 	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype & ~1) == SQL_LONG);
 	if ( isNull ( index) )
 		return 0;
-	return *(long*)var->sqldata;
+	return *(int*)var->sqldata;
 }
 
 char * Sqlda::getText (int index, int &len)

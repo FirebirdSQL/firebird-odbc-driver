@@ -1033,7 +1033,7 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 			return sqlReturn( SQL_ERROR, "HY111", "Invalid bookmark value" );
 
 		if ( fetchBookmarkPtr )
-			rowNumber = *(long*)fetchBookmarkPtr + offset - 1;
+			rowNumber = *(int*)fetchBookmarkPtr + offset - 1;
 		else
 			rowNumber = offset - 1;
 
@@ -1179,7 +1179,7 @@ SQLRETURN OdbcStatement::sqlFetchScroll(int orientation, int offset)
 #ifdef DEBUG
 	char strTmp[128];
 	sprintf(strTmp,"\t%s : bookmark %i : offset %i\n",strDebOrientFetch[orientation],
-								fetchBookmarkPtr ? *(long*)fetchBookmarkPtr : 0, offset);
+								fetchBookmarkPtr ? *(int*)fetchBookmarkPtr : 0, offset);
 	OutputDebugString(strTmp); 
 #endif
 	clearErrors();
@@ -1258,7 +1258,7 @@ SQLRETURN OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQ
 #ifdef DEBUG
 	char strTmp[128];
 	sprintf(strTmp,"\t%s : current bookmark %i : row %i\n",strDebOrientSetPos[operation],
-								fetchBookmarkPtr ? *(long*)fetchBookmarkPtr : 0, row );
+								fetchBookmarkPtr ? *(int*)fetchBookmarkPtr : 0, row );
 	OutputDebugString(strTmp); 
 #endif
 
@@ -1266,7 +1266,7 @@ SQLRETURN OdbcStatement::sqlSetPos (SQLUSMALLINT row, SQLUSMALLINT operation, SQ
 	{
 	case SQL_POSITION:
 		if( fetchBookmarkPtr )
-			rowNumber = (*(long*)fetchBookmarkPtr - 1) + row - 1;
+			rowNumber = (*(int*)fetchBookmarkPtr - 1) + row - 1;
 		else
 			rowNumber = row - 1;
 		if( resultSet )
