@@ -83,7 +83,7 @@ Value::~Value()
 }
 
 
-void Value::setValue (long number, int scl)
+void Value::setValue (int number, int scl)
 {
 	clear();
 	type = Long;
@@ -466,15 +466,15 @@ QUAD Value::getQuad(int scale)
 				for (; scale; --scale)
 					divisor *= 10;
 			if (divisor == 1)
-				return (long) quad;
-			return (long) (quad / divisor);
+				return (int) quad;
+			return (int) (quad / divisor);
 			}
 		}
 
 	return 0;
 }
 
-long Value::getLong(int scale)
+int Value::getLong(int scale)
 {
 	switch (type)
 		{
@@ -488,7 +488,7 @@ long Value::getLong(int scale)
 			return data.integer;
 
 		case Quad:
-			return (long) getQuad();
+			return (int) getQuad();
 
 		case Char:
 		case Varchar:
@@ -497,8 +497,8 @@ long Value::getLong(int scale)
 			double divisor;
 			QUAD quad = convertToQuad (divisor);
 			if (divisor == 1)
-				return (long) quad;
-			return (long) (quad / divisor);
+				return (int) quad;
+			return (int) (quad / divisor);
 			}
 
 		default:
@@ -764,7 +764,7 @@ DateTime Value::getDate()
 		case Null:
 			{
 			DateTime date;
-			date.date = (long) 0;
+			date.date = (int) 0;
 			return date;
 			}
 
@@ -846,7 +846,7 @@ void Value::setValue(DateTime value)
 	data.date = value;
 }
 
-void Value::setDate(long value)
+void Value::setDate(int value)
 {
 	clear();
 	type = Date;
@@ -937,7 +937,7 @@ void Value::add(Value * value)
 
 void Value::add(int value)
 {
-	setValue ((long) (getLong() + value));
+	setValue ((int) (getLong() + value));
 }
 
 void Value::divide(Value * value)
@@ -954,7 +954,7 @@ void Value::divide(Value * value)
 		case Short:
 		case Long:
 			{
-			long divisor = value->getLong();
+			int divisor = value->getLong();
 			if (divisor == 0)
 				throw SQLEXCEPTION (RUNTIME_ERROR, "integer divide by zero");
 			setValue (getLong() / divisor);

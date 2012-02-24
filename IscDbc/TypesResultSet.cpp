@@ -56,29 +56,29 @@ namespace IscDbcLibrary {
 
 struct Types {
 	char	label;
-    short   lenTypeName;
-    char    typeName[50];
+	short	lenTypeName;
+	char    typeName[50];
 	short	typeType;
-    long    typePrecision;
-    short   lenTypePrefix;
-    char    typePrefix[6];
-    short   lenTypeSuffix;
-    char    typeSuffix[6];
-    short   lenTypeParams;
-    char    typeParams[20];
+	int     typePrecision;
+	short   lenTypePrefix;
+	char    typePrefix[6];
+	short   lenTypeSuffix;
+	char    typeSuffix[6];
+	short   lenTypeParams;
+	char    typeParams[20];
 	short	typeNullable;
 	short	typeCaseSensitive;
 	short	typeSearchable;
 	short	typeUnsigned;
 	short	typeMoney;
 	short	typeAutoIncrement;
-    short   lenTypeLocalName;
-    char    typeLocalName[50];
+	short   lenTypeLocalName;
+	char    typeLocalName[50];
 	short	typeMinScale;
 	short	typeMaxScale;
 	short	typeSqlDataType;
 	short	typeDateTimeSub;
-	long	typeNumPrecRadix;
+	int     typeNumPrecRadix;
 	short	typeIntervalPrecision;
     };
 
@@ -260,7 +260,7 @@ bool TypesResultSet::nextFetch()
 
 	SET_INDICATOR_STR(0);						// TYPE_NAME
 	SET_INDICATOR_VAL(1,short,false);			// DATA_TYPE
-	SET_INDICATOR_VAL(2,long,true);				// PRECISION
+	SET_INDICATOR_VAL(2,int,true);				// PRECISION
 	SET_INDICATOR_STR(3);						// LITERAL_PREFIX
 	SET_INDICATOR_STR(4);						// LITERAL_SUFFIX
 	SET_INDICATOR_STR(5);						// CREATE_PARAMS
@@ -275,7 +275,7 @@ bool TypesResultSet::nextFetch()
 	SET_INDICATOR_VAL(14,short,true);			// MAXIMUM_SCALE
 	SET_INDICATOR_VAL(15,short,false);			// SQL_DATA_TYPE
 	SET_INDICATOR_VAL(16,short,true);			// SQL_DATETIME_SUB
-	SET_INDICATOR_VAL(17,long,true);			// NUM_PREC_RADIX
+	SET_INDICATOR_VAL(17,int,true);				// NUM_PREC_RADIX
 	SET_INDICATOR_VAL(18,short,true);			// INTERVAL_PRECISION	
 
 	return true;
