@@ -140,7 +140,7 @@ char IscCallableStatement::getByte(int id)
 	return getValue (id)->getByte();
 }
 
-long IscCallableStatement::getInt(int id)
+int IscCallableStatement::getInt(int id)
 {
 	return getValue (id)->getLong();
 }

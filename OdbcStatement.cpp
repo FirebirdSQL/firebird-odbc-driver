@@ -2478,7 +2478,7 @@ SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int buffe
 			break;
 
 		case SQL_ATTR_ROW_NUMBER:
-			value = (long) rowNumber;
+			value = rowNumber;
 			TRACE02(SQL_ATTR_ROW_NUMBER,value);
 			break;
 
@@ -2533,7 +2533,7 @@ SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int buffe
 			*(intptr_t*) ptr = value;
 
 		if (lengthPtr)
-			*lengthPtr = sizeof (long);
+			*lengthPtr = sizeof (intptr_t);
 	}
 	catch ( std::exception &ex )
 	{

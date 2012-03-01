@@ -348,7 +348,7 @@ void IscResultSet::setValue(int index, const char * value)
 	values.values [index - 1].setString (value, true);
 }
 
-void IscResultSet::setValue(int index, long value)
+void IscResultSet::setValue(int index, int value)
 {
 	if (index < 1 || index > values.count)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "invalid column index for result set");
@@ -403,12 +403,12 @@ DateTime IscResultSet::getDate(const char * columnName)
 	return getValue (columnName)->getDate();
 }
 
-long IscResultSet::getInt(int id)
+int IscResultSet::getInt(int id)
 {
 	return getValue (id)->getLong();
 }
 
-long IscResultSet::getInt(const char * columnName)
+int IscResultSet::getInt(const char * columnName)
 {
 	return getValue (columnName)->getLong();
 }

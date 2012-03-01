@@ -50,7 +50,7 @@ public:
 	virtual DateTime	getDate(int parameterIndex);
 	virtual double		getDouble(int parameterIndex);
 	virtual float		getFloat(int parameterIndex);
-	virtual long		getInt(int parameterIndex);
+	virtual int			getInt(int parameterIndex);
 	virtual QUAD		getLong(int parameterIndex);
 //	virtual Object		getObject( int parameterIndex );
 	virtual short		getShort(int parameterIndex);
@@ -76,7 +76,7 @@ public:
 	virtual void		setDate (int index, DateTime value) { IscPreparedStatement::setDate ( index, value); }
 	virtual void		setDouble (int index, double value) { IscPreparedStatement::setDouble ( index, value); }
 	virtual void		setFloat (int index, float value) { IscPreparedStatement::setFloat ( index, value); }
-	virtual void		setInt (int index, long value) { IscPreparedStatement::setInt ( index, value); }
+	virtual void		setInt (int index, int value) { IscPreparedStatement::setInt ( index, value); }
 	virtual void		setLong (int index, QUAD value) { IscPreparedStatement::setLong ( index, value); }
 	virtual void		setNull (int index, int type) { IscPreparedStatement::setNull ( index, type); }
 //	virtual void		setObject( int parameterIndex, Object x ) { IscPreparedStatement::setObject( parameterIndex, x ); }

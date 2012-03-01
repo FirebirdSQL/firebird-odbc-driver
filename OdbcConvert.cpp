@@ -89,14 +89,14 @@ OdbcConvert::OdbcConvert(OdbcStatement * parent)
 	bindOffsetPtrIndFrom = &tempBindOffsetPtr;
 }
 
-void OdbcConvert::setZeroColumn(DescRecord * to, long rowNumber)
+void OdbcConvert::setZeroColumn(DescRecord * to, int rowNumber)
 {
 	SQLPOINTER pointer = getAdressBindDataTo((char*)to->dataPtr);
 	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
-	*(long*)pointer = rowNumber + 1;
+	*(int*)pointer = rowNumber + 1;
 	if ( indicatorTo )
-		*indicatorTo = sizeof(long);
+		*indicatorTo = sizeof(int);
 }
 
 void OdbcConvert::setBindOffsetPtrTo(SQLLEN	*bindOffsetPtr, SQLLEN *bindOffsetPtrInd)
