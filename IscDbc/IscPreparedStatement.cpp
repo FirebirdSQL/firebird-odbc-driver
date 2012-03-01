@@ -262,7 +262,7 @@ void IscPreparedStatement::setFloat(int index, float value)
 	getParameter (index - 1)->setValue (value);
 }
 
-void IscPreparedStatement::setInt(int index, long value)
+void IscPreparedStatement::setInt(int index, int value)
 {
 	getParameter (index - 1)->setValue (value);
 }

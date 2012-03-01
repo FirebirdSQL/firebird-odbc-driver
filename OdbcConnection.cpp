@@ -2010,7 +2010,7 @@ void OdbcConnection::descriptorDeleted(OdbcDesc * descriptor)
 SQLRETURN OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
 {
 	clearErrors();
-	long value;
+	int value;
 	const char *string = NULL;
 
 	switch (attribute)
@@ -2068,10 +2068,10 @@ SQLRETURN OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int b
 		return returnStringInfo (ptr, bufferLength, lengthPtr, string);
 
 	if (ptr)
-		*(long*) ptr = value;
+		*(int*) ptr = value;
 
 	if (lengthPtr)
-		*lengthPtr = sizeof (long);
+		*lengthPtr = sizeof (int);
 
 	return sqlSuccess();
 }

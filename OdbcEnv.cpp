@@ -160,7 +160,7 @@ void OdbcEnv::connectionClosed(OdbcConnection * connection)
 SQLRETURN OdbcEnv::sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
 {
 	clearErrors();
-	long value;
+	int value;
 	char *string = NULL;
 
 	try
@@ -187,10 +187,10 @@ SQLRETURN OdbcEnv::sqlGetEnvAttr(int attribute, SQLPOINTER ptr, int bufferLength
 			return returnStringInfo (ptr, bufferLength, lengthPtr, string);
 
 		if (ptr)
-			*(long*) ptr = value;
+			*(int*) ptr = value;
 
 		if (lengthPtr)
-			*lengthPtr = sizeof (long);
+			*lengthPtr = sizeof (int);
 	}
 	catch ( std::exception &ex )
 	{

@@ -584,7 +584,7 @@ public:
 	virtual void		setDate (int index, DateTime value) = 0;
 	virtual void		setDouble (int index, double value) = 0;
 	virtual void		setFloat (int index, float value) = 0;
-	virtual void		setInt (int index, long value) = 0;
+	virtual void		setInt (int index, int value) = 0;
 	virtual void		setLong (int index, QUAD value) = 0;
 	virtual void		setNull (int index, int type) = 0;
 //	virtual void		setObject( int parameterIndex, Object x ) = 0;
@@ -607,10 +607,8 @@ public:
     virtual void        beginBlobDataTransfer(int index) = 0;
     virtual void        putBlobSegmentData (int length, const void *bytes) = 0;
     virtual void        endBlobDataTransfer() = 0;
-	virtual StatementMetaData*
-						getStatementMetaDataIPD() = 0;
-	virtual StatementMetaData*
-						getStatementMetaDataIRD() = 0;
+	virtual StatementMetaData*	getStatementMetaDataIPD() = 0;
+	virtual StatementMetaData*	getStatementMetaDataIRD() = 0;
 	virtual	int			getNumParams() = 0;
 	virtual int			objectVersion() = 0;
 };
@@ -644,8 +642,8 @@ public:
 	virtual double		getDouble (const char *columnName) = 0;
 	virtual float		getFloat (int columnIndex) = 0;
 	virtual float		getFloat (const char *columnName) = 0;
-	virtual long		getInt (int columnIndex) = 0;
-	virtual long		getInt (const char *columnName) = 0;
+	virtual int			getInt (int columnIndex) = 0;
+	virtual int			getInt (const char *columnName) = 0;
 	virtual QUAD		getLong (int columnIndex) = 0;
 	virtual QUAD		getLong (const char *columnName) = 0;
 	virtual StatementMetaData* getMetaData() = 0;
@@ -802,7 +800,7 @@ public:
 	virtual DateTime	getDate(int parameterIndex) = 0;
 	virtual double		getDouble(int parameterIndex) = 0;
 	virtual float		getFloat(int parameterIndex) = 0;
-	virtual long		getInt(int parameterIndex) = 0;
+	virtual int			getInt(int parameterIndex) = 0;
 	virtual QUAD		getLong(int parameterIndex) = 0;
 //	virtual Object		getObject( int parameterIndex ) = 0;
 	virtual short		getShort(int parameterIndex) = 0;

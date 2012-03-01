@@ -68,8 +68,8 @@ public:
 	virtual double		getDouble (const char *columnName);
 	virtual float		getFloat (int columnIndex);
 	virtual float		getFloat (const char *columnName);
-	virtual long		getInt (int columnIndex);
-	virtual long		getInt (const char *columnName);
+	virtual int			getInt (int columnIndex);
+	virtual int			getInt (const char *columnName);
 	virtual QUAD		getLong (int columnIndex);
 	virtual QUAD		getLong (const char *columnName);
 	virtual StatementMetaData* getMetaData();
@@ -183,7 +183,7 @@ public:
 	virtual bool		getDataFromStaticCursor (int column);
 	virtual bool		nextFromProcedure();
 
-	void				setValue (int index, long value);
+	void				setValue (int index, int value);
 	void				setValue (int index, const char *value);
 
 	int				numberColumns;

@@ -57,7 +57,7 @@ public:
 	virtual void		setDate (int index, DateTime value);
 	virtual void		setDouble (int index, double value);
 	virtual void		setFloat (int index, float value);
-	virtual void		setInt (int index, long value);
+	virtual void		setInt (int index, int value);
 	virtual void		setLong (int index, QUAD value);
 	virtual void		setNull (int index, int type);
 //	virtual void		setObject( int parameterIndex, Object x );

@@ -77,7 +77,7 @@ public:
 
 	OdbcConvert(OdbcStatement * parent);
 
-	void setZeroColumn(DescRecord * to, long rowNumber);
+	void setZeroColumn(DescRecord * to, int rowNumber);
 	void setBindOffsetPtrTo(SQLLEN *bindOffsetPtr, SQLLEN *bindOffsetPtrInd);
 	void setBindOffsetPtrFrom(SQLLEN *bindOffsetPtr, SQLLEN *bindOffsetPtrInd);
 	ADRESS_FUNCTION getAdressFunction(DescRecord * from, DescRecord * to);
