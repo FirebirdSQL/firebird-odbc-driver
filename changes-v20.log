@@ -1,6 +1,30 @@
 ==================================
   OdbcFb 2.0
 ==================================
+152)	- current BUILDNUM_VERSION set 152 Release 2.0.1 ( 15 Mar 2012 )
+	- fixed Linux x64 build
+	- updated Spanish interface of Firebird ODBC driver
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-75, http://tracker.firebirdsql.org/browse/ODBC-140
+	 "Parameter conversions broken (nulls are coming into driver)"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-109,
+	 "Transaction stay in active status (retaining) after select (update) statement"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-119,
+	 "When saving data type text in a field of type blob subtype 1, the information is being saved in binary form"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-120,
+	 "Wrong file names and information at Install\HtmlHelp.*"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-121,
+	 "Incorrect link to the Initial Developer's Public License in a help file"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-125,
+	 "Default parameters in stored procedures are not supported"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-129,
+	 "CLONE -SQLGetTypeInfo missing rows for unicode data types"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-132,
+	 "Incorrect SQL_DESC_TYPE_NAME for 'BLOB' data types"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-135,
+	 "Alpha Five v11 does not work with Firebird ODBC driver"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-139,
+	 "Crash when inserting values via prepared statements, bound integer value to char column"
+ 
 151)	- current BUILDNUM_VERSION set 151 Release ( 04 Apr 2011 )
 	- improved, URL: http://tracker.firebirdsql.org/browse/ODBC-82,
 	 "Help outdated"
