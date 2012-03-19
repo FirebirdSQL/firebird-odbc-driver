@@ -1,7 +1,7 @@
 ==================================
   OdbcFb 2.0
 ==================================
-152)	- current BUILDNUM_VERSION set 152 Release 2.0.1 ( 15 Mar 2012 )
+152)	- current BUILDNUM_VERSION set 152 Release 2.0.1 ( 19 Mar 2012 )
 	- fixed Linux x64 build
 	- updated Spanish interface of Firebird ODBC driver
 	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-75, http://tracker.firebirdsql.org/browse/ODBC-140
