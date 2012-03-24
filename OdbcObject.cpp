@@ -190,7 +190,7 @@ bool OdbcObject::appendString(const char * string, int stringLength, SQLCHAR * t
 	return true;
 }
 
-SQLRETURN OdbcObject::sqlError(UCHAR * stateBuffer, SDWORD * nativeCode, UCHAR * msgBuffer, int msgBufferLength, SWORD * msgLength)
+SQLRETURN OdbcObject::sqlError(UCHAR * stateBuffer, SQLINTEGER * nativeCode, UCHAR * msgBuffer, int msgBufferLength, SWORD * msgLength)
 {
 	OdbcError *error = errors;
 
