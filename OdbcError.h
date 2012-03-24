@@ -39,7 +39,7 @@ public:
 	void setColumnNumber (int column, int row);
 	void setRowNumber (int number);
 	SQLRETURN sqlGetDiagField (int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
-	SQLRETURN sqlGetDiagRec (UCHAR *stateBuffer, SDWORD *nativeCode, UCHAR *msgBuffer, int msgBufferLength, SWORD *msgLength);
+	SQLRETURN sqlGetDiagRec (UCHAR *stateBuffer, SQLINTEGER *nativeCode, UCHAR *msgBuffer, int msgBufferLength, SWORD *msgLength);
 	OdbcError(int code, const char *state, JString errorMsg);
 	OdbcError(int code, int fbcode, const char *state, JString errorMsg);
 	~OdbcError();

@@ -545,7 +545,7 @@ OdbcError::~OdbcError()
 
 }
 
-SQLRETURN OdbcError::sqlGetDiagRec(UCHAR * stateBuffer, SDWORD * nativeCodePtr, UCHAR * msgBuffer, int msgBufferLength, SWORD * msgLength)
+SQLRETURN OdbcError::sqlGetDiagRec(UCHAR * stateBuffer, SQLINTEGER * nativeCodePtr, UCHAR * msgBuffer, int msgBufferLength, SWORD * msgLength)
 {
 	if (stateBuffer)
 		strcpy ((char*) stateBuffer, sqlState);

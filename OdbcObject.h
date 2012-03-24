@@ -61,7 +61,7 @@ public:
 	void operator <<(OdbcObject * obj);
 	void clearErrors();
 	OdbcError* postError (OdbcError *error);
-	virtual SQLRETURN sqlError (UCHAR *stateBuffer, SDWORD *nativeCode, UCHAR *msgBuffer, int msgBufferLength, SWORD *msgLength);
+	virtual SQLRETURN sqlError (UCHAR *stateBuffer, SQLINTEGER *nativeCode, UCHAR *msgBuffer, int msgBufferLength, SWORD *msgLength);
 	bool appendString(const char * string, int stringLength, SQLCHAR * target, int targetSize, SQLSMALLINT * targetLength);
 	bool setString(const char * string, SQLCHAR * target, int targetSize, SQLSMALLINT * targetLength);
 	bool setString (const SQLCHAR *string, int stringLength, SQLCHAR *target, int targetSize, SQLSMALLINT *targetLength);
