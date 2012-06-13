@@ -96,9 +96,12 @@ void Attachment::loadClientLiblary( Properties *properties )
 	const char *client = properties->findValue ("client", NULL);
 
 	if ( !client || !*client )
-#ifdef _WINDOWS
+#if defined (_WINDOWS)
 		client = "gds32.dll",
 		clientDefault = "fbclient.dll";
+#elif defined (__APPLE__)
+		client = "libgds.dylib",
+		clientDefault = "libfbclient.dylib";
 #else
 		client = "libgds.so",
 		clientDefault = "libfbclient.so";
