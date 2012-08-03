@@ -64,7 +64,7 @@ typedef unsigned __int64			UQUAD;
 #define ENTRY_DLL_CREATE_SERVICES           "createServices"
 #endif
 
-#ifdef _WINDOWS
+#if defined ( _WINDOWS)
 
 #define NAME_CLIENT_SHARE_LIBRARY					"gds32.dll"
 #define NAME_DEFAULT_CLIENT_SHARE_LIBRARY			"fbclient.dll"
@@ -75,6 +75,15 @@ typedef unsigned __int64			UQUAD;
 
 size_t _MbsToWcs( wchar_t *wcstr, const char *mbstr, size_t count );
 size_t _WcsToMbs( char *mbstr,  const wchar_t *wcstr, size_t count );
+
+#elif defined (__APPLE__)
+
+#define NAME_CLIENT_SHARE_LIBRARY					"libgds.dylib"
+#define NAME_DEFAULT_CLIENT_SHARE_LIBRARY			"libfbclient.dylib"
+
+#define OPEN_SHARE_LIBLARY(sharedLibrary)		    dlopen( sharedLibrary, RTLD_NOW )
+#define GET_ENTRY_POINT(libraryHandle,nameProc)     dlsym( libraryHandle, nameProc )
+#define CLOSE_SHARE_LIBLARY(libraryHandle)          dlclose( libraryHandle )
 
 #else
 

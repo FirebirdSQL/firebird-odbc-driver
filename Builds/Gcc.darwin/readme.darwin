@@ -1,0 +1,75 @@
+These instructions should allow a user to get a working user DSN for ODBC to connect 
+to Firebird on MacOS. Comments please to Paul Beach (pbeach at ibphoenix.com.
+
+To build the library, edit makefile.darwin, and select the ARCH (i386 or X86_64).
+then make -B -f makefile.darwin all
+
+The Firebird ODBC library can be built in both 64bit or 32bit format. 
+lipo.sh creates a fat libary that can be used on either version of Firebird.
+
+1. Download the MacOSX ODBC Administrator from support.apple.com
+http://support.apple.com/downloads/ODBC_Administrator_Tool_for_Mac_OS_X
+and install.
+
+2. Once installed it can be accessed via Applications/Utilities/ODBC Administrator
+
+3. Place the libOdbcFB.dylib in $HOME/odbc for example then add the Firebird driver 
+(dylib) name and location to the Drivers tab in the Administrator.
+e.g 
+Description: Firebird ODBC Driver
+Driver file: /Users/username/odbc/libOdbcFB.dylib
+Define as: User
+This will create an odbcinst.ini file in $HOME/Library/ODBC
+
+4. Now you need to create a User DSN via an odbc.ini file.
+Use the text below as an example, copy and paste into an odbc.ini
+file placed in $HOME/Library/ODBC
+Make sure that you modify the text so it points to your database 
+and uses your username and password.
+
+
+[ODBC Data Sources]
+Test = Firebird
+
+[Test]
+Driver               = /Users/username/odbc/libOdbcFb.dylib
+Description          = Test Firebird ODBC
+Dbname               = localhost:/Users/databases/test.fdb
+Client               = 
+User                 = SYSDBA
+Password             = masterkey
+Role                 = 
+CharacterSet         = NONE
+ReadOnly             = No
+NoWait               = No
+Dialect              = 3
+QuotedIdentifier     = Yes
+SensitiveIdentifier  = No
+AutoQuotedIdentifier = No
+
+[ODBC]
+Trace         = 0
+TraceAutoStop = 0
+TraceFile     = 
+TraceLibrary  = 
+
+This User DSN should appear in the User DSN tab the next time you load the 
+ODBC Administrator.
+
+5. You can test whether it works using iodbctest and then using the dsn
+dsn=Test, if all is well it should connect and you can issue SQL statements.
+
+To create a System wide version of the ODBC driver, copy the libOdbcFB.dylib
+to /usr/lib make sure the Administrators Drivers tab now points to this file.
+
+Copy the DSN above to /Library/ODBC and modify.
+
+Note: (13th June 2012)
+The ODBC library is linked to libfbclient.dylib found in the Firebird framework
+Libraries directory. Not all SuperServer builds of Firebird have this library installed
+by default. If this is the case get a copy of the Firebird Classic build and extract
+the libfbclient library and place it in 
+/Library/Frameworks/Firebird.framework/Versions/A/Libraries
+
+Newer versions of SuperServer will already have the library available.
+
