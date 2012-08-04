@@ -47,12 +47,6 @@ public:
     void putBlobSegmentData (int length, const void *bytes);
     void endBlobDataTransfer();	
 
-	void setNull() 
-	{ 
-		if ( indicatorPtr ) 
-			*(short*)indicatorPtr = -1; 
-	}
-
 	int getBufferLength()
 	{ 
 		return ( octetLength + 1 ) * headSqlVarPtr->getSqlMultiple();

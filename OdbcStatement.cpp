@@ -3108,12 +3108,7 @@ SQLRETURN OdbcStatement::sqlPutData (SQLPOINTER value, SQLLEN valueSize)
 
 	DescRecord *binding = applicationParamDescriptor->getDescRecord (parameterNeedData);
 
-	if (valueSize == SQL_NULL_DATA)
-	{
-		binding->setNull();
-		*binding->indicatorPtr = SQL_NULL_DATA;
-	}
-	else if ( binding->isBlobOrArray )
+	if ( valueSize != SQL_NULL_DATA && binding->isBlobOrArray )
 	{
 		if ( !binding->startedTransfer )
 			binding->beginBlobDataTransfer();
