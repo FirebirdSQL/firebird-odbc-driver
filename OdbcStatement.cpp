@@ -2730,10 +2730,9 @@ SQLRETURN OdbcStatement::inputParam( bool arrayColumnWiseBinding )
 		if(parameterNeedData == 0)
 		{
 			if ( !implementationParamDescriptor->isDefined() )
-			{
 				implementationParamDescriptor->setDefined(true);
-				rebindParam( true );
-			}
+
+			rebindParam( true );
 
 			if ( listBindIn->GetCount() < nInputParam )
 			{
