@@ -1217,7 +1217,7 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 																								\
 	ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO);													\
 																								\
-	C_TYPE_FROM &valFrom = *(C_TYPE_FROM*)getAdressBindDataFrom((char*)from->dataPtr);			\
+	C_TYPE_FROM valFrom = *(C_TYPE_FROM*)getAdressBindDataFrom((char*)from->dataPtr);			\
 	if ( to->scale )																			\
 		valFrom *= (C_TYPE_FROM)(QUAD)listScale[to->scale];										\
 	if ( valFrom < 0 )valFrom -= 0.5;															\
