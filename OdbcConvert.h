@@ -65,10 +65,10 @@ public:
 
 private:
 
-	signed long encode_sql_date(SQLUSMALLINT day, SQLUSMALLINT month, SQLSMALLINT year);
-	void decode_sql_date(signed long nday, SQLUSMALLINT &mday, SQLUSMALLINT &month, SQLSMALLINT &year);
-	signed long encode_sql_time(SQLUSMALLINT hour, SQLUSMALLINT minute, SQLUSMALLINT second);
-	void decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMALLINT &minute, SQLUSMALLINT &second);
+	signed int encode_sql_date(SQLUSMALLINT day, SQLUSMALLINT month, SQLSMALLINT year);
+	void decode_sql_date(signed int nday, SQLUSMALLINT &mday, SQLUSMALLINT &month, SQLSMALLINT &year);
+	signed int encode_sql_time(SQLUSMALLINT hour, SQLUSMALLINT minute, SQLUSMALLINT second);
+	void decode_sql_time(signed int ntime, SQLUSMALLINT &hour, SQLUSMALLINT &minute, SQLUSMALLINT &second);
 	void convertStringDateTimeToServerStringDateTime (char *& string, int &len);
 	void getFirstElementFromArrayString(char * string, char *& firstChar, int &len);
 	void setHeadSqlVar ( DescRecord * to );

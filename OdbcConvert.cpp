@@ -47,13 +47,13 @@ extern int swprintf (wchar_t *__restrict __s, size_t __n, wchar_t *__restrict __
 #endif
 
 #ifdef _BIG_ENDIAN // Big endian architectures (IBM PowerPC, Sun Sparc, HP PA-RISC, ... )
-#define MAKEQUAD(b, a)      ((QUAD)(((long)(a)) | ((UQUAD)((long)(b))) << 32))
-#define HI_LONG(l)			((long)(l))
-#define LO_LONG(l)          ((long)(((UQUAD)(l) >> 32) & 0xFFFFFFFF))
+#define MAKEQUAD(b, a)      ((QUAD)(((int)(a)) | ((UQUAD)((int)(b))) << 32))
+#define HI_LONG(l)			((int)(l))
+#define LO_LONG(l)          ((int)(((UQUAD)(l) >> 32) & 0xFFFFFFFF))
 #else
-#define MAKEQUAD(a, b)      ((QUAD)(((long)(a)) | ((UQUAD)((long)(b))) << 32))
-#define LO_LONG(l)          ((long)(l))
-#define HI_LONG(l)          ((long)(((UQUAD)(l) >> 32) & 0xFFFFFFFF))
+#define MAKEQUAD(a, b)      ((QUAD)(((int)(a)) | ((UQUAD)((int)(b))) << 32))
+#define LO_LONG(l)          ((int)(l))
+#define HI_LONG(l)          ((int)(((UQUAD)(l) >> 32) & 0xFFFFFFFF))
 #endif
 
 namespace OdbcJdbcLibrary {
@@ -1529,7 +1529,7 @@ int OdbcConvert::convBlob##To##TYPE_TO(DescRecord * from, DescRecord * to)						
 		else																					\
 		{																						\
 			from->startedReturnSQLData = true;													\
-			int len = MIN(dataRemaining, MAX(0, (long)sizeof(C_TYPE_TO)));						\
+			int len = MIN(dataRemaining, MAX(0, (int)sizeof(C_TYPE_TO)));						\
 			int lenRead;																		\
 																								\
 			if ( pointer )																		\
@@ -1584,7 +1584,7 @@ int OdbcConvert::convGuidToString(DescRecord * from, DescRecord * to)
 	int len, outlen = to->length;
 
 	len = snprintf(pointer, outlen, "%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X",
-		(unsigned long) g->Data1, g->Data2, g->Data3, g->Data4[0], g->Data4[1], g->Data4[2], g->Data4[3], g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
+		(unsigned int) g->Data1, g->Data2, g->Data3, g->Data4[0], g->Data4[1], g->Data4[2], g->Data4[3], g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
 
 	if ( len == -1 ) len = outlen;
 
@@ -1609,7 +1609,7 @@ int OdbcConvert::convGuidToStringW(DescRecord * from, DescRecord * to)
 	int len, outlen = to->length / sizeof( wchar_t );
 
 	len = swprintf(pointer, outlen, L"%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X",
-		(unsigned long) g->Data1, g->Data2, g->Data3, g->Data4[0], g->Data4[1], g->Data4[2], g->Data4[3], g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
+		(unsigned int) g->Data1, g->Data2, g->Data3, g->Data4[0], g->Data4[1], g->Data4[2], g->Data4[3], g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
 
 	len = len == -1 ? outlen * sizeof( wchar_t ) : len * sizeof( wchar_t );
 
@@ -1916,7 +1916,7 @@ int OdbcConvert::convDateToString(DescRecord * from, DescRecord * to)
 	SQLUSMALLINT mday, month;
 	SQLSMALLINT year;
 
-	decode_sql_date(*(long*)getAdressBindDataFrom((char*)from->dataPtr), mday, month, year);
+	decode_sql_date(*(int*)getAdressBindDataFrom((char*)from->dataPtr), mday, month, year);
 	int len, outlen = to->length;
 
 	len = snprintf(pointer, outlen, "%04d-%02d-%02d",year,month,mday);
@@ -1943,7 +1943,7 @@ int OdbcConvert::convDateToStringW(DescRecord * from, DescRecord * to)
 	SQLUSMALLINT mday, month;
 	SQLSMALLINT year;
 
-	decode_sql_date(*(long*)getAdressBindDataFrom((char*)from->dataPtr), mday, month, year);
+	decode_sql_date(*(int*)getAdressBindDataFrom((char*)from->dataPtr), mday, month, year);
 	int len, outlen = to->length / sizeof( wchar_t );
 
 	len = swprintf(pointer, outlen, L"%04d-%02d-%02d",year,month,mday);
@@ -1966,7 +1966,7 @@ int OdbcConvert::convDateToTagDate(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( tagDt );
 
-	decode_sql_date(*(long*)getAdressBindDataFrom((char*)from->dataPtr), tagDt->day, tagDt->month, tagDt->year);
+	decode_sql_date(*(int*)getAdressBindDataFrom((char*)from->dataPtr), tagDt->day, tagDt->month, tagDt->year);
 
 	if ( indicatorTo && !to->isIndicatorSqlDa )
 		*indicatorTo = sizeof(tagDATE_STRUCT);
@@ -1985,7 +1985,7 @@ int OdbcConvert::convDateToBinary(DescRecord * from, DescRecord * to)
 	SQLUSMALLINT mday, month;
 	SQLSMALLINT year;
 
-	decode_sql_date(*(long*)getAdressBindDataFrom((char*)from->dataPtr), mday, month, year);
+	decode_sql_date(*(int*)getAdressBindDataFrom((char*)from->dataPtr), mday, month, year);
 	int outlen = to->length;
 
 	if ( outlen == sizeof(tagDATE_STRUCT) ) // tagDate
@@ -2031,7 +2031,7 @@ int OdbcConvert::transferTagDateToDate(DescRecord * from, DescRecord * to)
 	tagDATE_STRUCT * tagDt = (tagDATE_STRUCT*)getAdressBindDataFrom((char*)from->dataPtr);
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
-	*(long*)pointer = encode_sql_date ( tagDt->day, tagDt->month, tagDt->year );
+	*(int*)pointer = encode_sql_date ( tagDt->day, tagDt->month, tagDt->year );
 
 	return SQL_SUCCESS;
 }
@@ -2047,7 +2047,7 @@ int OdbcConvert::transferTagDateToDateTime(DescRecord * from, DescRecord * to)
 	tagDATE_STRUCT * tagDt = (tagDATE_STRUCT*)getAdressBindDataFrom((char*)from->dataPtr);
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
-	long nday = encode_sql_date ( tagDt->day, tagDt->month, tagDt->year );
+	int nday = encode_sql_date ( tagDt->day, tagDt->month, tagDt->year );
 
 	*(QUAD*)pointer = MAKEQUAD( nday, 0 );
 
@@ -2063,7 +2063,7 @@ int OdbcConvert::convDateToTagTimestamp(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( tagTs );
 
-	decode_sql_date(*(long*)getAdressBindDataFrom((char*)from->dataPtr), tagTs->day, tagTs->month, tagTs->year);
+	decode_sql_date(*(int*)getAdressBindDataFrom((char*)from->dataPtr), tagTs->day, tagTs->month, tagTs->year);
 	tagTs->hour = tagTs->minute = tagTs->second = 0;
 	tagTs->fraction = 0;
 
@@ -2091,8 +2091,8 @@ int OdbcConvert::convTimeToString(DescRecord * from, DescRecord * to)
 	ODBCCONVERT_CHECKNULL( pointer );
 
 	SQLUSMALLINT hour, minute, second;
-	long ntime = *(long*)getAdressBindDataFrom((char*)from->dataPtr);
-	long nnano = ntime % ISC_TIME_SECONDS_PRECISION;
+	int ntime = *(int*)getAdressBindDataFrom((char*)from->dataPtr);
+	int nnano = ntime % ISC_TIME_SECONDS_PRECISION;
 
 	decode_sql_time(ntime, hour, minute, second);
 
@@ -2123,8 +2123,8 @@ int OdbcConvert::convTimeToStringW(DescRecord * from, DescRecord * to)
 	ODBCCONVERT_CHECKNULL( pointer );
 
 	SQLUSMALLINT hour, minute, second;
-	long ntime = *(long*)getAdressBindDataFrom((char*)from->dataPtr);
-	long nnano = ntime % ISC_TIME_SECONDS_PRECISION;
+	int ntime = *(int*)getAdressBindDataFrom((char*)from->dataPtr);
+	int nnano = ntime % ISC_TIME_SECONDS_PRECISION;
 
 	decode_sql_time(ntime, hour, minute, second);
 
@@ -2154,7 +2154,7 @@ int OdbcConvert::convTimeToTagTime(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( tagTm );
 
-	decode_sql_time(*(long*)getAdressBindDataFrom((char*)from->dataPtr), tagTm->hour, tagTm->minute, tagTm->second);
+	decode_sql_time(*(int*)getAdressBindDataFrom((char*)from->dataPtr), tagTm->hour, tagTm->minute, tagTm->second);
 
 	if ( indicatorTo && !to->isIndicatorSqlDa )
 		*indicatorTo = sizeof(tagTIME_STRUCT);
@@ -2171,8 +2171,8 @@ int OdbcConvert::convTimeToBinary(DescRecord * from, DescRecord * to)
 	ODBCCONVERT_CHECKNULL( pointer );
 
 	SQLUSMALLINT hour, minute, second;
-	long ntime = *(long*)getAdressBindDataFrom((char*)from->dataPtr);
-	long nnano = ntime % ISC_TIME_SECONDS_PRECISION;
+	int ntime = *(int*)getAdressBindDataFrom((char*)from->dataPtr);
+	int nnano = ntime % ISC_TIME_SECONDS_PRECISION;
 
 	decode_sql_time(ntime, hour, minute, second);
 
@@ -2223,7 +2223,7 @@ int OdbcConvert::transferTagTimeToTime(DescRecord * from, DescRecord * to)
 	tagTIME_STRUCT * tagTm = (tagTIME_STRUCT*)getAdressBindDataFrom((char*)from->dataPtr);
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
-	*(long*)pointer = encode_sql_time ( tagTm->hour, tagTm->minute, tagTm->second );
+	*(int*)pointer = encode_sql_time ( tagTm->hour, tagTm->minute, tagTm->second );
 
 	return SQL_SUCCESS;
 }
@@ -2239,8 +2239,8 @@ int OdbcConvert::transferTagTimeToDateTime(DescRecord * from, DescRecord * to)
 	tagTIME_STRUCT * tagTm = (tagTIME_STRUCT*)getAdressBindDataFrom((char*)from->dataPtr);
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
-	long ntime = encode_sql_time ( tagTm->hour, tagTm->minute, tagTm->second );
-	long nday = encode_sql_date ( 1, 1, 100 ); // min validate date for server
+	int ntime = encode_sql_time ( tagTm->hour, tagTm->minute, tagTm->second );
+	int nday = encode_sql_date ( 1, 1, 100 ); // min validate date for server
 
 	*(QUAD*)pointer = MAKEQUAD( nday, ntime );
 
@@ -2255,7 +2255,7 @@ int OdbcConvert::convTimeToTagTimestamp(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( tagTs );
 
-	long ntime = *(long*)getAdressBindDataFrom((char*)from->dataPtr);
+	int ntime = *(int*)getAdressBindDataFrom((char*)from->dataPtr);
 	decode_sql_time(ntime, tagTs->hour, tagTs->minute, tagTs->second);
 	tagTs->day = tagTs->month = tagTs->year = 0;
 	tagTs->fraction = (ntime % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
@@ -2283,9 +2283,9 @@ int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 	ODBCCONVERT_CHECKNULL( pointer );
 
 	QUAD pointerFrom = *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr);
-	long ndate = LO_LONG(pointerFrom);
-	long ntime = HI_LONG(pointerFrom);
-	long nnano = ntime % ISC_TIME_SECONDS_PRECISION;
+	int ndate = LO_LONG(pointerFrom);
+	int ntime = HI_LONG(pointerFrom);
+	int nnano = ntime % ISC_TIME_SECONDS_PRECISION;
 	SQLUSMALLINT mday, month;
 	SQLSMALLINT year;
 	SQLUSMALLINT hour, minute, second;
@@ -2319,9 +2319,9 @@ int OdbcConvert::convDateTimeToStringW(DescRecord * from, DescRecord * to)
 	ODBCCONVERT_CHECKNULL( pointer );
 
 	QUAD pointerFrom = *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr);
-	long ndate = LO_LONG(pointerFrom);
-	long ntime = HI_LONG(pointerFrom);
-	long nnano = ntime % ISC_TIME_SECONDS_PRECISION;
+	int ndate = LO_LONG(pointerFrom);
+	int ntime = HI_LONG(pointerFrom);
+	int nnano = ntime % ISC_TIME_SECONDS_PRECISION;
 	SQLUSMALLINT mday, month;
 	SQLSMALLINT year;
 	SQLUSMALLINT hour, minute, second;
@@ -2354,7 +2354,7 @@ int OdbcConvert::convDateTimeToTagDate(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( tagDt );
 
-	long nday = LO_LONG ( *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr) );
+	int nday = LO_LONG ( *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr) );
 
 	decode_sql_date(nday, tagDt->day, tagDt->month, tagDt->year);
 
@@ -2372,7 +2372,7 @@ int OdbcConvert::convDateTimeToTagTime(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( tagTm );
 
-	long ntime = HI_LONG ( *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr) );
+	int ntime = HI_LONG ( *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr) );
 
 	decode_sql_time(ntime, tagTm->hour, tagTm->minute, tagTm->second);
 
@@ -2392,8 +2392,8 @@ int OdbcConvert::convDateTimeToTagDateTime(DescRecord * from, DescRecord * to)
 
 	QUAD &number = *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr);
 
-	long nday = LO_LONG(number);
-	long ntime = HI_LONG(number);
+	int nday = LO_LONG(number);
+	int ntime = HI_LONG(number);
 
 	if ( ntime < 0 ) 
 		ntime = 0;
@@ -2418,8 +2418,8 @@ int OdbcConvert::convDateTimeToBinary(DescRecord * from, DescRecord * to)
 
 	QUAD &number = *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr);
 
-	long nday = LO_LONG(number);
-	long ntime = HI_LONG(number);
+	int nday = LO_LONG(number);
+	int ntime = HI_LONG(number);
 	int outlen = to->length;
 
 	if ( outlen == sizeof(tagTIMESTAMP_STRUCT) ) // tagTimestamp
@@ -2478,7 +2478,7 @@ int OdbcConvert::transferTagDateTimeToDate(DescRecord * from, DescRecord * to)
 	tagTIMESTAMP_STRUCT * tagTs = (tagTIMESTAMP_STRUCT*)getAdressBindDataFrom((char*)from->dataPtr);
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
-	*(long*)pointer = encode_sql_date ( tagTs->day, tagTs->month, tagTs->year );
+	*(int*)pointer = encode_sql_date ( tagTs->day, tagTs->month, tagTs->year );
 
 	return SQL_SUCCESS;
 }
@@ -2492,7 +2492,7 @@ int OdbcConvert::transferTagDateTimeToTime(DescRecord * from, DescRecord * to)
 	ODBCCONVERT_CHECKNULL_SQLDA;
 
 	tagTIMESTAMP_STRUCT * tagTs = (tagTIMESTAMP_STRUCT*)getAdressBindDataFrom((char*)from->dataPtr);
-	long &ntime = *(long*)getAdressBindDataTo((char*)to->dataPtr);
+	int &ntime = *(int*)getAdressBindDataTo((char*)to->dataPtr);
 
 	ntime = encode_sql_time ( tagTs->hour, tagTs->minute, tagTs->second );
 	ntime += tagTs->fraction / STD_TIME_SECONDS_PRECISION;
@@ -2511,8 +2511,8 @@ int OdbcConvert::transferTagDateTimeToDateTime(DescRecord * from, DescRecord * t
 	tagTIMESTAMP_STRUCT * tagTs = (tagTIMESTAMP_STRUCT*)getAdressBindDataFrom((char*)from->dataPtr);
 	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
-	long nday = encode_sql_date ( tagTs->day, tagTs->month, tagTs->year );
-	long ntime = encode_sql_time ( tagTs->hour, tagTs->minute, tagTs->second );
+	int nday = encode_sql_date ( tagTs->day, tagTs->month, tagTs->year );
+	int ntime = encode_sql_time ( tagTs->hour, tagTs->minute, tagTs->second );
 
 	ntime += tagTs->fraction / STD_TIME_SECONDS_PRECISION;
 
@@ -2581,7 +2581,7 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 		else
 		{
 			from->startedReturnSQLData = true;
-			int len = MIN(dataRemaining, MAX(0, (long)to->length));
+			int len = MIN(dataRemaining, MAX(0, (int)to->length));
 			int lenRead;
 			 
 			if ( pointer )
@@ -2669,7 +2669,7 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 		else if ( pointer )
 		{
 			from->startedReturnSQLData = true;
-			int len = MIN(dataRemaining, MAX(0, (long)to->length-1)>>1);
+			int len = MIN(dataRemaining, MAX(0, (int)to->length-1)>>1);
 			int lenRead;
 		 
 			if ( len > 0 ) 
@@ -2764,7 +2764,7 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 		else
 		{
 			from->startedReturnSQLData = true;
-			int len = MIN(dataRemaining, MAX(0, (long)to->length-1));
+			int len = MIN(dataRemaining, MAX(0, (int)to->length-1));
 			int lenRead;
 			 
 			if ( pointer )
@@ -2873,7 +2873,7 @@ int OdbcConvert::convBlobToStringW( DescRecord * from, DescRecord * to )
 		else
 		{
 			from->startedReturnSQLData = true;
-			int len = MIN(dataRemaining, MAX(0, (long)to->length / 2 - 1));
+			int len = MIN(dataRemaining, MAX(0, (int)to->length / 2 - 1));
 			int lenRead;
 			 
 			if ( pointer )
@@ -3134,7 +3134,7 @@ int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
 	else
 	{
 		from->startedReturnSQLData = true;
-		int len = MIN(dataRemaining, MAX(0, (long)to->length-1));
+		int len = MIN(dataRemaining, MAX(0, (int)to->length-1));
 		 
 		if ( !pointerTo )
 			length = dataRemaining;
@@ -3199,7 +3199,7 @@ int OdbcConvert::convStringToStringW(DescRecord * from, DescRecord * to)
 	else
 	{
 		from->startedReturnSQLData = true;
-		int len = MAX(0, (long)(to->length / sizeof( wchar_t )) - 1 );
+		int len = MAX(0, (int)(to->length / sizeof( wchar_t )) - 1 );
 		 
 		if ( !pointerTo )
 			length = dataRemaining;
@@ -3290,7 +3290,7 @@ int OdbcConvert::convStringToVarString(DescRecord * from, DescRecord * to)
 	if( lenVar > 0 )
 		memcpy ( pointerTo+2, pointerFrom, lenVar);
 
-	if (lenVar && (long)lenVar > (long)to->length)
+	if (lenVar && (int)lenVar > (int)to->length)
 	{
 		OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
 //		if (error)
@@ -3432,7 +3432,7 @@ int OdbcConvert::convStringToBinary(DescRecord * from, DescRecord * to)
 	else
 	{
 		from->startedReturnSQLData = true;
-		int len = MIN(dataRemaining, MAX(0, (long)to->length));
+		int len = MIN(dataRemaining, MAX(0, (int)to->length));
 		 
 		if ( !pointerTo )
 			length = dataRemaining;
@@ -3827,7 +3827,7 @@ int OdbcConvert::convVarStringToBinary(DescRecord * from, DescRecord * to)
 	else
 	{
 		from->startedReturnSQLData = true;
-		int len = MIN(dataRemaining, MAX(0, (long)to->length));
+		int len = MIN(dataRemaining, MAX(0, (int)to->length));
 		 
 		if ( !pointerTo )
 			length = dataRemaining;
@@ -3891,7 +3891,7 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 	else
 	{
 		from->startedReturnSQLData = true;
-		int len = MIN(dataRemaining, MAX(0, (long)to->length-1));
+		int len = MIN(dataRemaining, MAX(0, (int)to->length-1));
 		 
 		if ( !pointerTo )
 			length = dataRemaining;
@@ -3957,7 +3957,7 @@ int OdbcConvert::convVarStringToStringW(DescRecord * from, DescRecord * to)
 	else
 	{
 		from->startedReturnSQLData = true;
-		int len = MAX(0, (long)(to->length / sizeof( wchar_t )) - 1 );
+		int len = MAX(0, (int)(to->length / sizeof( wchar_t )) - 1 );
 		 
 		if ( !pointerTo )
 			length = dataRemaining;
@@ -4051,7 +4051,7 @@ int OdbcConvert::convVarStringSystemToString(DescRecord * from, DescRecord * to)
 
 	pointerTo[len] = 0;
 
-	if (len && (long)len > (long)to->length)
+	if (len && (int)len > (int)to->length)
 	{
 		OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
 //		if (error)
@@ -4094,7 +4094,7 @@ int OdbcConvert::convVarStringSystemToStringW(DescRecord * from, DescRecord * to
 	pointerTo[len] = (wchar_t)'\0';
 	len *= sizeof( wchar_t );
 
-	if (len && (long)len > (long)to->length)
+	if (len && (int)len > (int)to->length)
 	{
 		OdbcError *error = parentStmt->postError (new OdbcError (0, "01004", "Data truncated"));
 //		if (error)
@@ -4111,7 +4111,7 @@ int OdbcConvert::convVarStringSystemToStringW(DescRecord * from, DescRecord * to
 	return ret;
 }
 
-signed long OdbcConvert::encode_sql_date(SQLUSMALLINT day, SQLUSMALLINT month, SQLSMALLINT year)
+signed int OdbcConvert::encode_sql_date(SQLUSMALLINT day, SQLUSMALLINT month, SQLSMALLINT year)
 {
 /**************************************
  *
@@ -4124,7 +4124,7 @@ signed long OdbcConvert::encode_sql_date(SQLUSMALLINT day, SQLUSMALLINT month, S
  *	(the number of days since the base date).
  *
  **************************************/
-	signed long	c, ya;
+	signed int	c, ya;
 
 	if (month > 2)
 		month -= 3;
@@ -4137,13 +4137,13 @@ signed long OdbcConvert::encode_sql_date(SQLUSMALLINT day, SQLUSMALLINT month, S
 	c = year / 100;
 	ya = year - 100 * c;
 
-	return (signed long) (((QUAD) 146097 * c) / 4 + 
+	return (signed int) (((QUAD) 146097 * c) / 4 + 
 		(1461 * ya) / 4 + 
 		(153 * month + 2) / 5 + 
 		day - 678882); //	day + 1721119 - 2400001);
 }
 
-void OdbcConvert::decode_sql_date(signed long nday, SQLUSMALLINT &mday, SQLUSMALLINT &month, SQLSMALLINT &year)
+void OdbcConvert::decode_sql_date(signed int nday, SQLUSMALLINT &mday, SQLUSMALLINT &month, SQLSMALLINT &year)
 {
 /**************************************
  *
@@ -4172,8 +4172,8 @@ void OdbcConvert::decode_sql_date(signed long nday, SQLUSMALLINT &mday, SQLUSMAL
  * less than -678882 (Approx 2/1/0000).
  *
  **************************************/
-	signed long	day;
-	signed long	century;
+	signed int	day;
+	signed int	century;
 
 //	nday -= 1721119 - 2400001;
 	nday += 678882;
@@ -4201,15 +4201,15 @@ void OdbcConvert::decode_sql_date(signed long nday, SQLUSMALLINT &mday, SQLUSMAL
 	}
 }
 
-signed long OdbcConvert::encode_sql_time(SQLUSMALLINT hour, SQLUSMALLINT minute, SQLUSMALLINT second)
+signed int OdbcConvert::encode_sql_time(SQLUSMALLINT hour, SQLUSMALLINT minute, SQLUSMALLINT second)
 {
 	return ((hour * 60 + minute) * 60 +
 				 second) * ISC_TIME_SECONDS_PRECISION;
 }
 
-void OdbcConvert::decode_sql_time(signed long ntime, SQLUSMALLINT &hour, SQLUSMALLINT &minute, SQLUSMALLINT &second)
+void OdbcConvert::decode_sql_time(signed int ntime, SQLUSMALLINT &hour, SQLUSMALLINT &minute, SQLUSMALLINT &second)
 {
-	long minutes;
+	int minutes;
 
 	minutes = ntime / (ISC_TIME_SECONDS_PRECISION * 60);
 	hour = (SQLUSMALLINT)(minutes / 60);
