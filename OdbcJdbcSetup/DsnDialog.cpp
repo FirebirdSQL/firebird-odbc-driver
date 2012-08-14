@@ -99,7 +99,7 @@ using namespace IscDbcLibrary;
 
 HINSTANCE instanceHtmlHelp = NULL;
 
-BOOL CALLBACK wndprocDsnDialog( HWND hDlg, UINT message, WORD wParam, LONG lParam);
+BOOL CALLBACK wndprocDsnDialog( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 void ProcessCDError(DWORD dwErrorCode, HWND hWnd);
 
 CDsnDialog::CDsnDialog( HWND hDlgParent, 
@@ -568,15 +568,15 @@ void CDsnDialog::WinHtmlHelp( HWND hDlg )
 
 #endif
 
-BOOL CALLBACK wndprocDsnDialog( HWND hDlg, UINT message, WORD wParam, LONG lParam )
+BOOL CALLBACK wndprocDsnDialog( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
-	CDsnDialog *dsnDialog = (CDsnDialog *)GetWindowLong( hDlg, GW_USERDATA );
+	CDsnDialog *dsnDialog = (CDsnDialog *)GetWindowLongPtr( hDlg, GW_USERDATA );
 
 	switch ( message )
 	{
     case WM_INITDIALOG:
 
-	    SetWindowLong( hDlg, GW_USERDATA, (ULONG)lParam ); 
+	    SetWindowLongPtr( hDlg, GW_USERDATA, lParam ); 
 		if ( !((CDsnDialog*)lParam)->OnInitDialog( hDlg ) )
 			return FALSE;
 		((CDsnDialog*)lParam)->UpdateData( hDlg, FALSE );
@@ -888,7 +888,7 @@ intptr_t CDsnDialog::DoModal()
     TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_SERVICES, "Services" ), IDC_BUTTON_SERVICE,118,130,87,18 )
     TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_HELP_ODBC, "Help" ), IDC_HELP_ODBC,243,233,60,14 )
 
-	intptr_t nRet = DialogBoxIndirectParam(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, m_hWndParent, (DLGPROC)wndprocDsnDialog, (uintptr_t)this );
+	intptr_t nRet = DialogBoxIndirectParam(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, m_hWndParent, (DLGPROC)wndprocDsnDialog, (LPARAM)this );
 	LocalFree (LocalHandle (pdlgtemplate));
 
 	return nRet;

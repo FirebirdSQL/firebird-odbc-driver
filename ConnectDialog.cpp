@@ -108,7 +108,7 @@ void initCodePageTranslate( int userLCID )
 CConnectDialog * m_ptConnectDialog = NULL;
 
 intptr_t DialogBoxDynamicConnect();
-BOOL CALLBACK wndprocConnectDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam);
+BOOL CALLBACK wndprocConnectDialog(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
 CConnectDialog::CConnectDialog()
 {
@@ -155,7 +155,7 @@ BOOL CConnectDialog::OnInitDialog(HWND hDlg)
 	return TRUE;
 }
 
-BOOL CALLBACK wndprocConnectDialog(HWND hDlg, UINT message, WORD wParam, LONG lParam)
+BOOL CALLBACK wndprocConnectDialog(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message) 
 	{

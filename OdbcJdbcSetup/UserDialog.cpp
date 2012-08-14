@@ -142,13 +142,13 @@ bool CUserDialog::onCommand( HWND hWnd, int nCommand )
 	return false;
 }
 
-BOOL CALLBACK wndproCUserDialog( HWND hDlg, UINT message, UINT wParam, LONG lParam )
+BOOL CALLBACK wndproCUserDialog( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
 	switch ( message )
 	{
     case WM_INITDIALOG:
 
-	    SetWindowLong( hDlg, GW_USERDATA, (ULONG)lParam ); 
+	    SetWindowLongPtr( hDlg, GW_USERDATA, lParam ); 
 
 		if ( !((CUserDialog*)lParam)->OnInitDialog( hDlg ) )
 			return FALSE;
@@ -165,7 +165,7 @@ BOOL CALLBACK wndproCUserDialog( HWND hDlg, UINT message, UINT wParam, LONG lPar
 
         case IDOK:
 			{
-				CUserDialog *dlg = (CUserDialog*)GetWindowLong( hDlg, GW_USERDATA );
+				CUserDialog *dlg = (CUserDialog*)GetWindowLongPtr( hDlg, GW_USERDATA );
 				dlg->updateData( hDlg );
 
 				if ( !dlg->validateFields() )
@@ -233,7 +233,7 @@ intptr_t CUserDialog::DoModal()
     TMP_LTEXT         ( "User ID",IDC_STATIC,5,135,75,8 )
     TMP_LTEXT         ( "Group ID",IDC_STATIC,5,155,75,8 )
 
-	intptr_t nRet = DialogBoxIndirectParam( m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, parent->hDlg, (DLGPROC)wndproCUserDialog, (uintptr_t)this );
+	intptr_t nRet = DialogBoxIndirectParam( m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, parent->hDlg, (DLGPROC)wndproCUserDialog, (LPARAM)this );
 	LocalFree( LocalHandle( pdlgtemplate ) );
 
 	return nRet;

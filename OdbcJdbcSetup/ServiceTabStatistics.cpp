@@ -88,10 +88,10 @@ void CServiceTabStatistics::updateData( HWND hDlg, BOOL bSaveAndValidate )
 	}
 }
 
-BOOL CALLBACK wndproCServiceTabStatisticChild( HWND hWndChildTab, UINT message, UINT wParam, LONG lParam )
+BOOL CALLBACK wndproCServiceTabStatisticChild( HWND hWndChildTab, UINT message, WPARAM wParam, LPARAM lParam )
 {
 	HWND hWndParent = GetParent( hWndChildTab );
-	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndParent, GW_USERDATA );
+	PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLongPtr( hWndParent, GW_USERDATA );
 	int iPage = TabCtrl_GetCurSel( hWndParent );
 	CServiceTabChild *child = tabData->childTab[iPage];
 
