@@ -144,6 +144,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 	case SQL_C_STINYINT:
 		switch(to->conciseType)
 		{
+		case SQL_C_BIT:
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -188,6 +189,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 	case SQL_C_SSHORT:
 		switch(to->conciseType)
 		{
+		case SQL_C_BIT:
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -241,6 +243,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 	case SQL_C_SLONG:
 		switch(to->conciseType)
 		{
+		case SQL_C_BIT:
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -288,6 +291,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 	case SQL_C_FLOAT:
 		switch(to->conciseType)
 		{
+		case SQL_C_BIT:
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -320,6 +324,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 	case SQL_C_DOUBLE:
 		switch(to->conciseType)
 		{
+		case SQL_C_BIT:
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -356,6 +361,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 	case SQL_C_UBIGINT:
 		switch(to->conciseType)
 		{
+		case SQL_C_BIT:
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -398,6 +404,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 	case SQL_C_NUMERIC:
 		switch(to->conciseType)
 		{
+		case SQL_C_BIT:
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
