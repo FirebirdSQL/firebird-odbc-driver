@@ -1294,10 +1294,10 @@ int OdbcDesc::getConciseType(int type)
 	case JDBC_TINYINT:
 		return SQL_C_STINYINT;
 
+	case JDBC_BOOLEAN:
 	case JDBC_SMALLINT:
 		return SQL_C_SSHORT;
 
-	case JDBC_BOOLEAN:
 	case JDBC_INTEGER:
 		return SQL_C_SLONG;
 
@@ -1401,10 +1401,10 @@ int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType, int bufferLength)
 	case JDBC_TINYINT:
 		cType = SQL_C_STINYINT;
 		break;
+	case JDBC_BOOLEAN:
 	case JDBC_SMALLINT:
 		cType = SQL_C_SSHORT;
 		break;
-	case JDBC_BOOLEAN:
 	case JDBC_INTEGER:
 		cType = SQL_C_SLONG;
 		break;
