@@ -105,19 +105,19 @@ bool CServiceTabCtrl::OnInitDialog( HWND hDlg )
 
 	setExecutorForViewLogFile();
 
-    SetWindowLong( hWndTab, GW_USERDATA, (intptr_t)&tabData ); 
+    SetWindowLongPtr( hWndTab, GW_USERDATA, (intptr_t)&tabData ); 
 	backup.createDialogIndirect( this );
 
 	return true;
 }
 
-BOOL CALLBACK wndproCServiceTabCtrl( HWND hDlg, UINT message, WORD wParam, LONG lParam )
+BOOL CALLBACK wndproCServiceTabCtrl( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
 	switch ( message )
 	{
     case WM_INITDIALOG:
 
-	    SetWindowLong( hDlg, GW_USERDATA, (ULONG)lParam ); 
+	    SetWindowLongPtr( hDlg, GW_USERDATA, lParam ); 
 
 		if ( !((CServiceTabCtrl*)lParam)->OnInitDialog( hDlg ) )
 			return FALSE;
@@ -134,7 +134,7 @@ BOOL CALLBACK wndproCServiceTabCtrl( HWND hDlg, UINT message, WORD wParam, LONG 
 
         case IDOK:
 			{
-				CServiceTabCtrl *serviceTabCtrl = (CServiceTabCtrl*)GetWindowLong( hDlg, GW_USERDATA );
+				CServiceTabCtrl *serviceTabCtrl = (CServiceTabCtrl*)GetWindowLongPtr( hDlg, GW_USERDATA );
 				serviceTabCtrl->UpdateData( hDlg );
 				EndDialog( hDlg, TRUE );
 			}
@@ -148,7 +148,7 @@ BOOL CALLBACK wndproCServiceTabCtrl( HWND hDlg, UINT message, WORD wParam, LONG 
 			{
 				NMHDR * hdr = (NMHDR*)lParam;
 				HWND hWndTab = GetDlgItem( hDlg, IDC_SERVICE_TABCTRL );
-				PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLong( hWndTab, GW_USERDATA );
+				PTAG_DIALOG_HEADER tabData = (PTAG_DIALOG_HEADER)GetWindowLongPtr( hWndTab, GW_USERDATA );
 				int iPage = TabCtrl_GetCurSel( hWndTab );
 				int focus = TabCtrl_GetCurFocus( hWndTab );
 
@@ -208,7 +208,7 @@ intptr_t CServiceTabCtrl::DoModal()
     TMP_DEFPUSHBUTTON ( _TR( IDS_BUTTON_CLOSE, "Close" ), IDOK,144,216,60,14 )
     TMP_NAMECONTROL   ( "TabControl", IDC_SERVICE_TABCTRL, "SysTabControl32",0x0,7,7,328,204 )
 
-	intptr_t nRet = DialogBoxIndirectParam( m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hWndParent, (DLGPROC)wndproCServiceTabCtrl, (uintptr_t)this );
+	intptr_t nRet = DialogBoxIndirectParam( m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, hWndParent, (DLGPROC)wndproCServiceTabCtrl, (LPARAM)this );
 	LocalFree( LocalHandle( pdlgtemplate ) );
 
 	return nRet;

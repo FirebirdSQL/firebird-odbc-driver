@@ -78,10 +78,10 @@ bool CUsersTabRoles::addRowToListView()
 	return true;
 }
 
-BOOL CALLBACK wndproCUsersTabRoles( HWND hWndChildTab, UINT message, UINT wParam, LONG lParam )
+BOOL CALLBACK wndproCUsersTabRoles( HWND hWndChildTab, UINT message, WPARAM wParam, LPARAM lParam )
 {
 	HWND hWndParent = GetParent( hWndChildTab );
-	PUSERS_DIALOG_HEADER tabData = (PUSERS_DIALOG_HEADER)GetWindowLong( hWndParent, GW_USERDATA );
+	PUSERS_DIALOG_HEADER tabData = (PUSERS_DIALOG_HEADER)GetWindowLongPtr( hWndParent, GW_USERDATA );
 	int iPage = TabCtrl_GetCurSel( hWndParent );
 	CUsersTabChild *child = tabData->childTab[iPage];
 
