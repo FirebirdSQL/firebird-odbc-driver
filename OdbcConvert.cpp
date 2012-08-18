@@ -1636,7 +1636,7 @@ int OdbcConvert::convGuidToStringW(DescRecord * from, DescRecord * to)
 
 ODBCCONVERT_CONV(TinyInt,char,TinyInt,char);
 ODBCCONVERT_CONV(TinyInt,unsigned char,Short,short);
-ODBCCONVERT_CONV(TinyInt,unsigned char,Long,long);
+ODBCCONVERT_CONV(TinyInt,unsigned char,Long,int);
 ODBCCONVERT_CONV(TinyInt,unsigned char,Float,float);
 ODBCCONVERT_CONV(TinyInt,unsigned char,Double,double);
 ODBCCONVERT_CONV(TinyInt,unsigned char,Bigint,QUAD);
@@ -1650,12 +1650,12 @@ ODBCCONVERT_CONVTAGNUMERIC(TinyInt,unsigned char);
 
 ODBCCONVERT_CONV(Short,short,TinyInt,char);
 ODBCCONVERT_CONV(Short,short,Short,short);
-ODBCCONVERT_CONV(Short,short,Long,long);
+ODBCCONVERT_CONV(Short,short,Long,int);
 ODBCCONVERT_CONV(Short,short,Float,float);
 ODBCCONVERT_CONV(Short,short,Double,double);
 ODBCCONVERT_WITH_SCALE_CONV(Short,short,TinyInt,char);
 ODBCCONVERT_WITH_SCALE_CONV(Short,short,Short,short);
-ODBCCONVERT_WITH_SCALE_CONV(Short,short,Long,long);
+ODBCCONVERT_WITH_SCALE_CONV(Short,short,Long,int);
 ODBCCONVERT_WITH_SCALE_CONV(Short,short,Float,float);
 ODBCCONVERT_WITH_SCALE_CONV(Short,short,Double,double);
 ODBCCONVERT_WITH_SCALE_CONV(Short,short,Bigint,QUAD);
@@ -1668,21 +1668,21 @@ ODBCCONVERT_CONVTAGNUMERIC(Short,short);
 // Long
 ////////////////////////////////////////////////////////////////////////
 
-ODBCCONVERT_CONV(Long,long,TinyInt,char);
-ODBCCONVERT_CONV(Long,long,Short,short);
-ODBCCONVERT_CONV(Long,long,Long,long);
-ODBCCONVERT_CONV(Long,long,Float,float);
-ODBCCONVERT_CONV(Long,long,Double,double);
-ODBCCONVERT_CONV(Long,long,Bigint,QUAD);
-ODBCCONVERT_WITH_SCALE_CONV(Long,long,TinyInt,char);
-ODBCCONVERT_WITH_SCALE_CONV(Long,long,Short,short);
-ODBCCONVERT_WITH_SCALE_CONV(Long,long,Long,long);
-ODBCCONVERT_WITH_SCALE_CONV(Long,long,Float,float);
-ODBCCONVERT_WITH_SCALE_CONV(Long,long,Double,double);
-ODBCCONVERT_WITH_SCALE_CONV(Long,long,Bigint,QUAD);
-ODBCCONVERT_CONV_TO_STRING(Long,long,10);
-ODBCCONVERT_CONV_TO_STRINGW(Long,long,10);
-ODBCCONVERT_CONVTAGNUMERIC(Long,long);
+ODBCCONVERT_CONV(Long,int,TinyInt,char);
+ODBCCONVERT_CONV(Long,int,Short,short);
+ODBCCONVERT_CONV(Long,int,Long,int);
+ODBCCONVERT_CONV(Long,int,Float,float);
+ODBCCONVERT_CONV(Long,int,Double,double);
+ODBCCONVERT_CONV(Long,int,Bigint,QUAD);
+ODBCCONVERT_WITH_SCALE_CONV(Long,int,TinyInt,char);
+ODBCCONVERT_WITH_SCALE_CONV(Long,int,Short,short);
+ODBCCONVERT_WITH_SCALE_CONV(Long,int,Long,int);
+ODBCCONVERT_WITH_SCALE_CONV(Long,int,Float,float);
+ODBCCONVERT_WITH_SCALE_CONV(Long,int,Double,double);
+ODBCCONVERT_WITH_SCALE_CONV(Long,int,Bigint,QUAD);
+ODBCCONVERT_CONV_TO_STRING(Long,int,10);
+ODBCCONVERT_CONV_TO_STRINGW(Long,int,10);
+ODBCCONVERT_CONVTAGNUMERIC(Long,int);
 
 ////////////////////////////////////////////////////////////////////////
 // Float
@@ -1690,7 +1690,7 @@ ODBCCONVERT_CONVTAGNUMERIC(Long,long);
 
 ODBCCONVERT_CONVROUND(Float,float,TinyInt,char);
 ODBCCONVERT_CONVROUND(Float,float,Short,short);
-ODBCCONVERT_CONVROUND(Float,float,Long,long);
+ODBCCONVERT_CONVROUND(Float,float,Long,int);
 ODBCCONVERT_CONV(Float,float,Float,float);
 ODBCCONVERT_CONV(Float,float,Double,double);
 ODBCCONVERT_CONVROUND(Float,float,Bigint,QUAD);
@@ -1748,7 +1748,7 @@ int OdbcConvert::convFloatToStringW(DescRecord * from, DescRecord * to)
 
 ODBCCONVERT_CONVROUND(Double,double,TinyInt,char);
 ODBCCONVERT_CONVROUND(Double,double,Short,short);
-ODBCCONVERT_CONVROUND(Double,double,Long,long);
+ODBCCONVERT_CONVROUND(Double,double,Long,int);
 ODBCCONVERT_CONV(Double,double,Float,float);
 ODBCCONVERT_CONV(Double,double,Double,double);
 ODBCCONVERT_CONVROUND(Double,double,Bigint,QUAD);
@@ -1853,7 +1853,7 @@ int OdbcConvert::convDoubleToStringW(DescRecord * from, DescRecord * to)
 
 ODBCCONVERT_BIGINT_CONV(TinyInt,char);
 ODBCCONVERT_BIGINT_CONV(Short,short);
-ODBCCONVERT_BIGINT_CONV(Long,long);
+ODBCCONVERT_BIGINT_CONV(Long,int);
 ODBCCONVERT_BIGINT_CONV(Float,float);
 ODBCCONVERT_BIGINT_CONV(Double,double);
 ODBCCONVERT_WITH_SCALE_CONV(Bigint,QUAD,Float,float);
@@ -1870,7 +1870,7 @@ ODBCCONVERT_CONVTAGNUMERIC(Bigint,QUAD);
 
 ODBCCONVERT_CONV(Numeric,QUAD,TinyInt,char);
 ODBCCONVERT_CONV(Numeric,QUAD,Short,short);
-ODBCCONVERT_CONV(Numeric,QUAD,Long,long);
+ODBCCONVERT_CONV(Numeric,QUAD,Long,int);
 ODBCCONVERT_CONV(Numeric,QUAD,Float,float);
 ODBCCONVERT_CONV(Numeric,QUAD,Double,double);
 ODBCCONVERT_CONV(Numeric,QUAD,Bigint,QUAD);
@@ -1881,7 +1881,7 @@ ODBCCONVERT_CONV(Numeric,QUAD,Bigint,QUAD);
 
 ODBCCONVERTTAG_NUMERIC_CONV(TinyInt,char);
 ODBCCONVERTTAG_NUMERIC_CONV(Short,short);
-ODBCCONVERTTAG_NUMERIC_CONV(Long,long);
+ODBCCONVERTTAG_NUMERIC_CONV(Long,int);
 ODBCCONVERTTAG_NUMERIC_CONV_FLOAT(Float,float);
 ODBCCONVERTTAG_NUMERIC_CONV_FLOAT(Double,double);
 ODBCCONVERTTAG_NUMERIC_CONV(Bigint,QUAD);
@@ -1907,10 +1907,10 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 // Date
 ////////////////////////////////////////////////////////////////////////
 
-ODBCCONVERT_CONV(Date,long,Long,long);
-ODBCCONVERT_CONV(Date,long,Float,float);
-ODBCCONVERT_CONV(Date,long,Double,double);
-ODBCCONVERT_CONV(Date,long,Bigint,QUAD);
+ODBCCONVERT_CONV(Date,int,Long,int);
+ODBCCONVERT_CONV(Date,int,Float,float);
+ODBCCONVERT_CONV(Date,int,Double,double);
+ODBCCONVERT_CONV(Date,int,Bigint,QUAD);
 
 int OdbcConvert::convDateToString(DescRecord * from, DescRecord * to)
 {
@@ -2084,10 +2084,10 @@ int OdbcConvert::convDateToTagTimestamp(DescRecord * from, DescRecord * to)
 // Time
 ////////////////////////////////////////////////////////////////////////
 
-ODBCCONVERT_CONV(Time,long,Long,long);
-ODBCCONVERT_CONV(Time,long,Float,float);
-ODBCCONVERT_CONV(Time,long,Double,double);
-ODBCCONVERT_CONV(Time,long,Bigint,QUAD);
+ODBCCONVERT_CONV(Time,int,Long,int);
+ODBCCONVERT_CONV(Time,int,Float,float);
+ODBCCONVERT_CONV(Time,int,Double,double);
+ODBCCONVERT_CONV(Time,int,Bigint,QUAD);
 
 int OdbcConvert::convTimeToString(DescRecord * from, DescRecord * to)
 {
@@ -2534,7 +2534,7 @@ int OdbcConvert::transferTagDateTimeToDateTime(DescRecord * from, DescRecord * t
 
 ODBCCONVERT_BLOB_CONV(TinyInt,char);
 ODBCCONVERT_BLOB_CONV(Short,short);
-ODBCCONVERT_BLOB_CONV(Long,long);
+ODBCCONVERT_BLOB_CONV(Long,int);
 ODBCCONVERT_BLOB_CONV(Float,float);
 ODBCCONVERT_BLOB_CONV(Double,double);
 ODBCCONVERT_BLOB_CONV(Bigint,QUAD);
@@ -3098,13 +3098,13 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 
 ODBCCONVERT_CONV_STRING_TO(String,TinyInt,char);
 ODBCCONVERT_CONV_STRING_TO(String,Short,short);
-ODBCCONVERT_CONV_STRING_TO(String,Long,long);
+ODBCCONVERT_CONV_STRING_TO(String,Long,int);
 ODBCCONVERT_CONV_STRING_TO(String,Float,float);
 ODBCCONVERT_CONV_STRING_TO(String,Double,double);
 ODBCCONVERT_CONV_STRING_TO(String,Bigint,QUAD);
 ODBCCONVERT_CONV_STRINGW_TO(StringW,TinyInt,char);
 ODBCCONVERT_CONV_STRINGW_TO(StringW,Short,short);
-ODBCCONVERT_CONV_STRINGW_TO(StringW,Long,long);
+ODBCCONVERT_CONV_STRINGW_TO(StringW,Long,int);
 ODBCCONVERT_CONV_STRINGW_TO(StringW,Float,float);
 ODBCCONVERT_CONV_STRINGW_TO(StringW,Double,double);
 ODBCCONVERT_CONV_STRINGW_TO(StringW,Bigint,QUAD);
@@ -3791,13 +3791,13 @@ int OdbcConvert::transferBinaryStringToAllowedType(DescRecord * from, DescRecord
 
 ODBCCONVERT_CONV_STRING_TO(VarString,TinyInt,char);
 ODBCCONVERT_CONV_STRING_TO(VarString,Short,short);
-ODBCCONVERT_CONV_STRING_TO(VarString,Long,long);
+ODBCCONVERT_CONV_STRING_TO(VarString,Long,int);
 ODBCCONVERT_CONV_STRING_TO(VarString,Float,float);
 ODBCCONVERT_CONV_STRING_TO(VarString,Double,double);
 ODBCCONVERT_CONV_STRING_TO(VarString,Bigint,QUAD);
 ODBCCONVERT_CONV_STRINGW_TO(VarStringW,TinyInt,char);
 ODBCCONVERT_CONV_STRINGW_TO(VarStringW,Short,short);
-ODBCCONVERT_CONV_STRINGW_TO(VarStringW,Long,long);
+ODBCCONVERT_CONV_STRINGW_TO(VarStringW,Long,int);
 ODBCCONVERT_CONV_STRINGW_TO(VarStringW,Float,float);
 ODBCCONVERT_CONV_STRINGW_TO(VarStringW,Double,double);
 ODBCCONVERT_CONV_STRINGW_TO(VarStringW,Bigint,QUAD);
