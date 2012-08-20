@@ -79,7 +79,7 @@ BUILD_ENV undefined
 
 [Setup]
 AppName=Firebird ODBC Driver
-AppVerName=Firebird/InterBase(r) ODBC driver {#ProductVersion}
+AppVerName=Firebird ODBC driver {#ProductVersion}
 AppVersion={#ProductVersion}
 AppMutex=InnoSetupExtensionsCompilerAppMutex
 AppPublisher=Firebird Project
