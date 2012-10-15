@@ -51,7 +51,7 @@ extern int swprintf (wchar_t *__restrict __s, size_t __n, wchar_t *__restrict __
 #define HI_LONG(l)			((int)(l))
 #define LO_LONG(l)          ((int)(((UQUAD)(l) >> 32) & 0xFFFFFFFF))
 #else
-#define MAKEQUAD(a, b)      ((QUAD)(((int)(a)) | ((UQUAD)((int)(b))) << 32))
+#define MAKEQUAD(a, b)      ((QUAD)(((unsigned int)(a)) | ((UQUAD)((int)(b))) << 32))
 #define LO_LONG(l)          ((int)(l))
 #define HI_LONG(l)          ((int)(((UQUAD)(l) >> 32) & 0xFFFFFFFF))
 #endif
