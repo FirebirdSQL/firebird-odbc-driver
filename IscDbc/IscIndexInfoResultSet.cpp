@@ -77,7 +77,7 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 				"\tcast(0 as smallint) as index_type,\n"						// 7  SQL_TABLE_STAT
 				"\tcast(NULL as smallint) as ordinal_position,\n"				// 8
 				"\tcast(NULL as varchar(31)) as column_name,\n"					// 9
-				"\tcast(NULL as char) as asc_or_desc,\n"						// 10
+				"\tcast(NULL as char CHARACTER SET NONE) as asc_or_desc,\n"						// 10
 				"\tcast(NULL as integer) as cardinality,\n"						// 11
 				"\tcast(NULL as integer) as index_pages,\n"						// 12
 				"\tcast(NULL as varchar(31)) as filter_condition,\n"			// 13
@@ -97,7 +97,7 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 				"\tcast(seg.rdb$field_position as smallint) as ordinal_position,\n"	// 8
 				"\tcast(coalesce(seg.rdb$field_name,\n" 
 				"substring(idx.rdb$expression_source from 1 for 31)) as varchar(31)) as column_name,\n"	// 9
-				"\tcast(NULL as char) as asc_or_desc,\n"						// 10
+				"\tcast(NULL as char CHARACTER SET NONE) as asc_or_desc,\n"						// 10
 				"\tcast((case when idx.rdb$statistics = 0 then 0 else\n" 
 				"1/idx.rdb$statistics end) as integer) as cardinality,\n"		// 11
 				"\tcast(NULL as integer) as index_pages,\n"						// 12
