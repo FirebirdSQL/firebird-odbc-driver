@@ -218,7 +218,10 @@ protected:
 		{
 		case BYTESCHARS:
 			if ( lengthString )
+			{
 				byteString = new SQLCHAR[ lengthString + 2 ];
+				memset(byteString, 0, lengthString + 2); 
+			}
 			else
 				byteString = NULL;
 			break;
