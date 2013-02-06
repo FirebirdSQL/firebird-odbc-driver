@@ -594,10 +594,10 @@ unsigned int utf8_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthFo
 				UChar32 c2;
 
 				if ( U_IS_SURROGATE_LEAD( c ) 
-					&& wcsOrg < wcsEnd
-					&& U16_IS_TRAIL( c2 = *wcsOrg ) )
+					&& wcsOrg + i < wcsEnd
+					&& U16_IS_TRAIL( c2 = wcsOrg[i] ) )
 				{
-					++wcsOrg;
+					++i;
 					c = U16_GET_SUPPLEMENTARY( c, c2 );
 				}
 				else
