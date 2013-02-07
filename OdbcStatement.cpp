@@ -1480,15 +1480,22 @@ SQLRETURN OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLLEN 
 
 	if ( crowKeyset > crowRowset )
 		sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN, 0);
-	else
-		sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, crowKeyset < 0 ? (SQLPOINTER)-crowKeyset : (SQLPOINTER)crowKeyset, 0);
+	else 
+	{
+		SQLPOINTER ptr;
+		if (crowKeyset < 0)
+			ptr = (SQLPOINTER)-crowKeyset;
+		else
+			ptr = (SQLPOINTER)crowKeyset;
+		sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, ptr, 0);
+	}
 
-	sqlSetStmtAttr(SQL_ATTR_CONCURRENCY, (SQLPOINTER)(intptr_t)fConcurrency, 0);
+	sqlSetStmtAttr(SQL_ATTR_CONCURRENCY, (SQLPOINTER)fConcurrency, 0);
 
 	if ( crowKeyset > 0 )
 		sqlSetStmtAttr(SQL_ATTR_KEYSET_SIZE, (SQLPOINTER)crowKeyset, 0);
 	else
-		sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)(intptr_t)crowRowset, 0);
+		sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)crowRowset, 0);
 
 	return sqlSuccess();
 }
