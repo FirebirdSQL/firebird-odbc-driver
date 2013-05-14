@@ -44,7 +44,10 @@ public:
 
 	void operator = ( XSQLVAR *var )
 	{
-		*(QUAD*)this = *(QUAD*)var;
+		sqltype = var->sqltype;
+		sqlscale = var->sqlscale;
+		sqlsubtype = var->sqlsubtype;
+		sqllen = var->sqllen; 
 		varOrg = var;
 	}
 

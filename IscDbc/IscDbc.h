@@ -35,7 +35,7 @@
 #include "LoadFbClientDll.h"
 
 #ifndef SQL_BOOLEAN
-#define SQL_BOOLEAN		590
+#define SQL_BOOLEAN		32764
 #endif
 
 #ifndef NULL

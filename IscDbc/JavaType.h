@@ -55,7 +55,7 @@
 #define JDBC_SQL_TIME 	  10
 #define JDBC_SQL_TIMESTAMP	  11
 
-#define JDBC_BOOLEAN	  16
+#define JDBC_BOOLEAN	  -7
 
 #define JDBC_DATE 		  91
 #define JDBC_TIME 		  92
