@@ -330,7 +330,7 @@ OdbcObjectType OdbcDesc::getType()
 SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, int bufferLength, SQLINTEGER *lengthPtr)
 {
     clearErrors();
-	long size = 0;
+	SQLINTEGER size = 0;
 	SQLCHAR *string = NULL;
 	DescRecord *record = NULL;
 

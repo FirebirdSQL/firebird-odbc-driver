@@ -59,7 +59,7 @@ public:
 class IscArray : public BinaryBlob, public CAttrArray
 {
 protected:
-	void convStringToArray( char *data, long length );
+	void convStringToArray( char *data, int length );
 
 public:
 	void attach(char * pointBlob, bool fetched, bool clear);
@@ -71,13 +71,13 @@ public:
 	void writeBlob(char * sqldata);
 	void writeStreamHexToBlob(char * sqldata) {};
 	void writeBlob(char * sqldata, char *data, ISC_LONG length);
-	void writeStringHexToBlob(char * sqldata, char *data, long length);
+	void writeStringHexToBlob(char * sqldata, char *data, int length);
 	void writeArray(Value * value);
 
 	void init();
 	void bind(IscStatement *stmt, XSQLVAR *var);
 	void bind(Statement *stmt, char * sqldata);
-	void getBinary(long pos, long length, void * address);
+	void getBinary(int pos, int length, void * address);
 	int length();
 	int getSegment (int offset, int length, void *address);
 	int	getLength();

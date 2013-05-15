@@ -66,7 +66,7 @@ public:
 	bool			startedTransfer;
 	int				sizeColumnExtendedFetch;
 	SQLINTEGER		dataOffset;
-	long			currentFetched;
+	int				currentFetched;
 	bool			startedReturnSQLData;
 	HeadSqlVar		*headSqlVarPtr;
 	Blob			*dataBlobPtr; // for blob or array 

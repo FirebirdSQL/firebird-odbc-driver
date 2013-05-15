@@ -872,7 +872,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 			case SQL_TYPE_DATE:
 				{
 				ISC_DATE date = *(ISC_DATE*) var->sqldata;
-				long days = date;
+				int days = date;
 				DateTime dateTime;
 				dateTime.date = days; //NOMEY +
 				value->setValue (dateTime);

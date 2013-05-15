@@ -133,7 +133,7 @@ public:
 	OdbcStatement(OdbcConnection *connect, int statementNumber);
 	~OdbcStatement();
 	bool isStaticCursor(){ return cursorType != SQL_CURSOR_FORWARD_ONLY && cursorScrollable == SQL_SCROLLABLE || isResultSetFromSystemCatalog; }
-	long getCurrentFetched(){ return countFetched; }
+	int getCurrentFetched(){ return countFetched; }
 	bool getSchemaFetchData(){ return applicationRowDescriptor->headBindType || applicationRowDescriptor->headBindOffsetPtr; }
 	inline StatementMetaData	*getStatementMetaDataIRD();
 	inline void clearErrors();
@@ -168,7 +168,7 @@ public:
     int                 parameterNeedData;
 	bool				eof;
 	bool				cancel;
-	long				countFetched;
+	int					countFetched;
 	enFetchType			enFetch;
 	JString				cursorName;
 	JString				sqlPrepareString;

@@ -176,7 +176,7 @@ int OdbcDateTime::convert (TimeStamp *timeStampIn, tagTIMESTAMP_STRUCT * tagTime
 //signed long OdbcDateTime::ndate (signed long nday, tm	*times)
 //From B. Schulte
 // this function got a new parameter (nsec) .. because the days won't fit otherweise
-signed long OdbcDateTime::ndate (signed long nday, signed long nsec, tm *times)
+signed int OdbcDateTime::ndate (signed int nday, signed int nsec, tm *times)
 
 {
 /**************************************
@@ -250,7 +250,7 @@ signed long OdbcDateTime::ndate (signed long nday, signed long nsec, tm *times)
 }
 
 
-signed long OdbcDateTime::nday (struct tm	*times)
+signed int OdbcDateTime::nday (struct tm	*times)
 {
 /**************************************
  *
@@ -264,7 +264,7 @@ signed long OdbcDateTime::nday (struct tm	*times)
  *
  **************************************/
 	signed short	day, month, year;
-	signed long	c, ya;
+	signed int	c, ya;
 
 	day = times->tm_mday;
 	month = times->tm_mon + 1;
@@ -281,7 +281,7 @@ signed long OdbcDateTime::nday (struct tm	*times)
 	c = year / 100;
 	ya = year - 100 * c;
 
-	return (signed long) (((QUAD) 146097 * c) / 4 + 
+	return (signed int) (((QUAD) 146097 * c) / 4 + 
 		(1461 * ya) / 4 + 
 		(153 * month + 2) / 5 + 
 		day + 1721119 - 2400001);
@@ -289,7 +289,7 @@ signed long OdbcDateTime::nday (struct tm	*times)
 
 
 
-signed long OdbcDateTime::yday (struct tm	*times)
+signed int OdbcDateTime::yday (struct tm	*times)
 
 {
 /**************************************

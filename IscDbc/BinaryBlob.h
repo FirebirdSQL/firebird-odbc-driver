@@ -46,22 +46,22 @@ public:
 	virtual int	  getSegmentLength (int pos);
 	virtual void  writeBlob(char * sqldata) {};
 	virtual void  writeStreamHexToBlob(char * sqldata) {};
-	virtual void  writeBlob(char * sqldata, char *data, long length) {};
-	virtual void  writeStringHexToBlob(char * sqldata, char *data, long length) {};
+	virtual void  writeBlob(char * sqldata, char *data, int length) {};
+	virtual void  writeStringHexToBlob(char * sqldata, char *data, int length) {};
 	virtual void  directCreateBlob( char * sqldata ) {};
 	virtual void  directOpenBlob(char * sqldata ) {};
 	virtual bool  directFetchBlob(char *data, int length, int &lengthRead) { return false; }
 	virtual bool  directGetSegmentToHexStr( char * bufData, int lenData, int &lenRead ) { return false; }
-	virtual void  directWriteBlob( char *data, long length ) {};
+	virtual void  directWriteBlob( char *data, int length ) {};
 	virtual void  directCloseBlob() {};
 	virtual int	  getOffset() { return offset; }
 	void putSegment (int length, const char *data, bool copyFlag);
 	void putLongSegment(int length, const char * data);
 	int length();
-	void getHexString(long pos, long length, void * address);
-	void getBytes (long pos, long length, void *address);
-	void getBytesW (long pos, long length, void *address);
-	void getBinary (long pos, long length, void * address);
+	void getHexString(int pos, int length, void * address);
+	void getBytes (int pos, int length, void *address);
+	void getBytesW (int pos, int length, void *address);
+	void getBinary (int pos, int length, void * address);
 	BinaryBlob (int minSegmentSize);
 	BinaryBlob();
 	virtual ~BinaryBlob();
@@ -78,8 +78,8 @@ public:
 	int			useCount;
 	int			offset;
 	Database	*database;
-	long		sectionId;
-	long		recordNumber;
+	int			sectionId;
+	int			recordNumber;
 	bool		populated;
 	int			directLength;
 };

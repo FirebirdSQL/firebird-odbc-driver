@@ -46,7 +46,7 @@ int SqlTime::getString(const char * format, int length, char * buffer)
 	struct tm *time = &tmTemp;
 	memset (time, 0, sizeof (tmTemp));
 		
-	long minutes;
+	int minutes;
 	
 	minutes = timeValue / (ISC_TIME_SECONDS_PRECISION * 60);
 	time->tm_hour = minutes / 60;

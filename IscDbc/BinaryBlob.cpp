@@ -145,7 +145,7 @@ bool BinaryBlob::loadFile(const char * fileName)
 	return true;
 }
 ***/
-void BinaryBlob::getBinary(long pos, long length, void * address)
+void BinaryBlob::getBinary(int pos, int length, void * address)
 {
 	if (!populated)
 		populate();
@@ -153,7 +153,7 @@ void BinaryBlob::getBinary(long pos, long length, void * address)
 	offset += Stream::getSegmentToBinary (pos, length, address);
 }
 
-void BinaryBlob::getHexString(long pos, long length, void * address)
+void BinaryBlob::getHexString(int pos, int length, void * address)
 {
 	if (!populated)
 		populate();
@@ -161,7 +161,7 @@ void BinaryBlob::getHexString(long pos, long length, void * address)
 	offset += Stream::getSegmentToHexStr (pos, length, address);
 }
 
-void BinaryBlob::getBytes(long pos, long length, void * address)
+void BinaryBlob::getBytes(int pos, int length, void * address)
 {
 	if (!populated)
 		populate();
@@ -169,7 +169,7 @@ void BinaryBlob::getBytes(long pos, long length, void * address)
 	offset += Stream::getSegment (pos, length, address);
 }
 
-void BinaryBlob::getBytesW(long pos, long length, void * address)
+void BinaryBlob::getBytesW(int pos, int length, void * address)
 {
 	if (!populated)
 		populate();

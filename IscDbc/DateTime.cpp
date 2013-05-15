@@ -124,7 +124,7 @@ DateTime DateTime::convert(const char *dateString, int length)
 
 	if (match (TODAY, dateString))
 		{
-		date.date = (long) time (NULL);
+		date.date = (int) time (NULL);
 		return date;
 		}
 
@@ -301,7 +301,7 @@ int DateTime::getString (const char * format, int length, char *buffer)
 	
 }
 
-long DateTime::getToday()
+int DateTime::getToday()
 {
 	time_t	t;
 	time (&t);
@@ -310,15 +310,15 @@ long DateTime::getToday()
 	time->tm_min = 0;
 	time->tm_sec = 0;
 
-	return (long) mktime (time);
+	return (int) mktime (time);
 }
 
-long DateTime::getNow()
+int DateTime::getNow()
 {
 	time_t t;
 	time (&t);
 
-	return (long) t;
+	return (int) t;
 }
 
 double DateTime::getDouble()
@@ -328,7 +328,7 @@ double DateTime::getDouble()
 
 
 
-signed long DateTime::decodeDate (signed long nday, tm	*times)
+signed int DateTime::decodeDate (signed int nday, tm	*times)
 {
 /**************************************
  *
@@ -359,8 +359,8 @@ signed long DateTime::decodeDate (signed long nday, tm	*times)
  * less than -678882 (Approx 2/1/0000).
  *
  **************************************/
-	signed long	year, month, day;
-	signed long	century;
+	signed int	year, month, day;
+	signed int	century;
 
 //	nday -= 1721119 - 2400001;
 	nday += 678882;
@@ -394,7 +394,7 @@ signed long DateTime::decodeDate (signed long nday, tm	*times)
 }
 
 
-signed long DateTime::encodeDate (struct tm	*times)
+signed int DateTime::encodeDate (struct tm	*times)
 {
 /**************************************
  *
@@ -408,7 +408,7 @@ signed long DateTime::encodeDate (struct tm	*times)
  *
  **************************************/
 	signed short	day, month, year;
-	signed long	c, ya;
+	signed int	c, ya;
 
 	day = times->tm_mday;
 	month = times->tm_mon + 1;
@@ -425,7 +425,7 @@ signed long DateTime::encodeDate (struct tm	*times)
 	c = year / 100;
 	ya = year - 100 * c;
 
-	return (unsigned long) (((QUAD) 146097 * c) / 4 + 
+	return (unsigned int) (((QUAD) 146097 * c) / 4 + 
 		(1461 * ya) / 4 + 
 		(153 * month + 2) / 5 + 
 		day + 1721119 - 2400001);
@@ -433,7 +433,7 @@ signed long DateTime::encodeDate (struct tm	*times)
 
 
 
-signed long DateTime::yday (struct tm	*times)
+signed int DateTime::yday (struct tm	*times)
 {
 /**************************************
  *

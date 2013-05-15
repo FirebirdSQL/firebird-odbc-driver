@@ -162,8 +162,8 @@ struct UserInfo
 	char        *lastName;
 	char        *password;
 	char        *roleName;
-	long        groupId;
-	long        userId;
+	int	        groupId;
+	int	        userId;
 	UserInfo    *next;
 };
 
@@ -225,10 +225,10 @@ public:
 	virtual void		commitAuto() = 0;
 	virtual void		rollbackAuto() = 0;
 
-	virtual Blob*		genHTML (Properties *context, long genHeaders) = 0;
-	virtual int			getNativeSql (const char * inStatementText, long textLength1,
-										char * outStatementText, long bufferLength,
-										long * textLength2Ptr) = 0;
+	virtual Blob*		genHTML (Properties *context, int genHeaders) = 0;
+	virtual int			getNativeSql (const char * inStatementText, int textLength1,
+										char * outStatementText, int bufferLength,
+										int * textLength2Ptr) = 0;
 
 	virtual PropertiesEvents* allocPropertiesEvents() = 0;
 	virtual UserEvents* prepareUserEvents( PropertiesEvents *context, callbackEvent astRoutine, void *userAppData = 0 ) = 0;

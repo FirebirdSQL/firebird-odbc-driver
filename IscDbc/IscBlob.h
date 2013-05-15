@@ -48,8 +48,8 @@ public:
 	int getSegment (int offset, int length, void *address);
 	void writeBlob(char * sqldata);
 	void writeStreamHexToBlob(char * sqldata);
-	void writeBlob(char * sqldata, char *data, long length);
-	void  writeStringHexToBlob(char * sqldata, char *data, long length);
+	void writeBlob(char * sqldata, char *data, int length);
+	void writeStringHexToBlob(char * sqldata, char *data, int length);
 	int length();
 	IscBlob();
 	IscBlob(IscStatement *stmt, XSQLVAR *var);
@@ -59,7 +59,7 @@ public:
 	void directOpenBlob(char * sqldata);
 	bool directFetchBlob(char *data, int length, int &lengthRead);
 	bool directGetSegmentToHexStr( char * bufData, int lenData, int &lenRead );
-	void directWriteBlob( char *data, long length );
+	void directWriteBlob( char *data, int length );
 	void directCloseBlob();
 
 	IscStatement	*statement;

@@ -12,7 +12,7 @@
  *     language governing rights and limitations under the License.
  *
  *
- *  The Original Code was created by James A. Starkey for IBPhoenix.
+ *  The Original Code was created by Jame6s A. Starkey for IBPhoenix.
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
@@ -34,17 +34,17 @@ public:
 	int getString (int length, char *buffer);
 	int getString (const char * format, int length, char * buffer);
 	double getDouble();
-	static long getNow();
-	static long getToday();
+	static int getNow();
+	static int getToday();
 	static DateTime conversionError();
 	static bool match (const char *str1, const char *str2);
 	static int lookup (const char *string, const char **table);
 	static DateTime convert (const char *string, int length);
-	static signed long decodeDate (signed long nday, struct tm *times);
-	static signed long encodeDate (struct tm *times);
-	static signed long yday (struct tm	*times);
+	static signed int decodeDate (signed int nday, struct tm *times);
+	static signed int encodeDate (struct tm *times);
+	static signed int yday (struct tm	*times);
 
-	signed long date;
+	signed int date;
 };
 
 }; // end namespace IscDbcLibrary

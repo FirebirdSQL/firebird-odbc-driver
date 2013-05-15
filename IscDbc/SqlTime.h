@@ -34,7 +34,7 @@ public:
 	int getString (int length, char *buffer);
 	int getString (const char * format, int length, char *buffer);
 
-	unsigned long	timeValue;
+	unsigned int timeValue;
 
 };
 

@@ -36,9 +36,9 @@ class TimeStamp : public DateTime
 public:
 	static TimeStamp convert (const char *string, int length);
 	int getTimeString(int length, char * buffer);
-	int decodeTime (long nanos, struct tm * times);
+	int decodeTime (int nanos, struct tm * times);
 
-	long	nanos;					// nano seconds
+	int	nanos;					// nano seconds
 };
 
 }; // end namespace IscDbcLibrary

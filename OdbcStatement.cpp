@@ -394,8 +394,8 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 	{
 		if ( noscanSQL == SQL_NOSCAN_OFF )
 		{
-			long lenstrSQL = (long)strlen(string);
-			long lennewstrSQL = lenstrSQL + 4096;
+			int lenstrSQL = (int)strlen(string);
+			int lennewstrSQL = lenstrSQL + 4096;
 			
 			retNativeSQL = connection->connection->getNativeSql( string, lenstrSQL, tempNative. getBuffer( lennewstrSQL ), lennewstrSQL, &lenstrSQL );
 
