@@ -371,7 +371,7 @@ void IscArray::getBytesFromArray()
 	fetchedBinary = true;
 }
 
-void IscArray::getBinary(long pos, long length, void * address)
+void IscArray::getBinary(int pos, int length, void * address)
 {
 	if(!fetchedBinary)
 		getBytesFromArray();
@@ -456,7 +456,7 @@ void IscArray::fetchArrayToString()
 				len=sprintf(ptDst,"%i",*(short*)ptSrc);
 				break;
 			case blr_long :
-				len=sprintf(ptDst,"%ld",*(long*)ptSrc);
+				len=sprintf(ptDst,"%ld",*(int*)ptSrc);
 				break;
 			case blr_int64 :
 				len=sprintf(ptDst,"%lld",*(__int64*)ptSrc);
@@ -515,7 +515,7 @@ void IscArray::writeBlob(char * sqldata, char *data, ISC_LONG length)
 		THROW_ISC_EXCEPTION (connection, statusVector);
 }
 
-void IscArray::convStringToArray( char *data, long length )
+void IscArray::convStringToArray( char *data, int length )
 {
 	char *ptCh, *ptSrc = data, *ptEnd = data + length;
 	char * ptDst = (char*)arrBufData;
@@ -641,7 +641,7 @@ void IscArray::convStringToArray( char *data, long length )
 				break;
 
 			case blr_long :
-				*(long*)ptDst = atol(ptSrc);
+				*(int*)ptDst = atol(ptSrc);
 				break;
 
 			case blr_quad :
@@ -668,7 +668,7 @@ void IscArray::convStringToArray( char *data, long length )
 		memset ( ptDst, ' ', arrSizeElement * ( arrCountElement - i) );
 }
 
-void IscArray::writeStringHexToBlob(char * sqldata, char *data, long length)
+void IscArray::writeStringHexToBlob(char * sqldata, char *data, int length)
 {
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
@@ -707,7 +707,7 @@ void IscArray::writeArray(Value * value)
 		break;
 
 	case String:
-		convStringToArray ( value->data.string.string , (long)strlen( value->data.string.string ) );
+		convStringToArray ( value->data.string.string , (int)strlen( value->data.string.string ) );
 		break;
 	} // End switch (value->type)
 

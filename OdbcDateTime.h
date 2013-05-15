@@ -58,9 +58,9 @@ private:
 //Orig.
 //	static signed long OdbcDateTime::ndate (signed long nday, tm *times);
 //From B. Schulte
-	signed long ndate (signed long nday,signed long nsec, tm *times);
-	signed long nday (tm *times);
-	signed long yday (tm *times);
+	signed int ndate (signed int nday,signed int nsec, tm *times);
+	signed int nday (tm *times);
+	signed int yday (tm *times);
 
 };
 

@@ -351,7 +351,7 @@ InternalStatement* IscConnection::createInternalStatement()
 	return statement;
 }
 
-Blob* IscConnection::genHTML(Properties * parameters, long genHeaders)
+Blob* IscConnection::genHTML(Properties * parameters, int genHeaders)
 {
 	NOT_YET_IMPLEMENTED;
 
@@ -964,7 +964,7 @@ public:
 
 typedef MList<CSchemaIdentifier> ListSchemaIdentifier;
 
-bool IscConnection::removeSchemaFromSQL( char *strSql, int lenSql, char *strSqlOut, long &lenSqlOut )
+bool IscConnection::removeSchemaFromSQL( char *strSql, int lenSql, char *strSqlOut, int &lenSqlOut )
 {
 	ListSchemaIdentifier listSchemaIdentifierAll;
 	ListSchemaIdentifier listSchemaIdentifierTbl;
@@ -1220,9 +1220,9 @@ bool IscConnection::removeSchemaFromSQL( char *strSql, int lenSql, char *strSqlO
 	return success;
 }
 
-int IscConnection::getNativeSql (const char * inStatementText, long textLength1,
-								char * outStatementText, long bufferLength,
-								long * textLength2Ptr)
+int IscConnection::getNativeSql (const char * inStatementText, int textLength1,
+								char * outStatementText, int bufferLength,
+								int * textLength2Ptr)
 {
 	int statysModify = 0;
 	char * ptIn = (char*)inStatementText;

@@ -489,7 +489,7 @@ int Stream::getSegment(int offset, int len, void * ptr, char delimiter)
 }
 
 
-char* Stream::alloc(long length)
+char* Stream::alloc(int length)
 {
 	Segment *segment = allocSegment (length);
 	segment->length = length;

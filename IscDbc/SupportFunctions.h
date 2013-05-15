@@ -61,7 +61,7 @@ public:
 	{
 		remove();
 	}
-	void set( int type, long key, const char * SqlName, int lenSqlName, const char * FbName, int lenFbName, ADRESS_FUNCTION transl )
+	void set( int type, int key, const char * SqlName, int lenSqlName, const char * FbName, int lenFbName, ADRESS_FUNCTION transl )
 	{
 		typeFn = type;
 		keySqlFn = key;

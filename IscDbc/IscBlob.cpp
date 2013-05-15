@@ -228,7 +228,7 @@ void IscBlob::writeStreamHexToBlob(char * sqldata)
 		THROW_ISC_EXCEPTION (connection, statusVector);
 }
 
-void IscBlob::writeBlob(char * sqldata, char *data, long length)
+void IscBlob::writeBlob(char * sqldata, char *data, int length)
 {
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
@@ -271,7 +271,7 @@ void IscBlob::writeBlob(char * sqldata, char *data, long length)
 		THROW_ISC_EXCEPTION ( connection, statusVector);
 }
 
-void  IscBlob::writeStringHexToBlob(char * sqldata, char *data, long length)
+void  IscBlob::writeStringHexToBlob(char * sqldata, char *data, int length)
 {
 	if ( isBlob() )
 	{
@@ -285,7 +285,7 @@ void  IscBlob::writeStringHexToBlob(char * sqldata, char *data, long length)
 //
 // Block direct operations reading SQLGetData
 //
-extern signed long getVaxInteger(const unsigned char * ptr, signed short length);
+extern signed int getVaxInteger(const unsigned char * ptr, signed short length);
 
 void IscBlob::directOpenBlob( char * sqldata )
 {
@@ -441,7 +441,7 @@ void IscBlob::directCreateBlob( char * sqldata )
 		THROW_ISC_EXCEPTION (connection, statusVector);
 }
 
-void IscBlob::directWriteBlob( char *data, long length )
+void IscBlob::directWriteBlob( char *data, int length )
 {
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;

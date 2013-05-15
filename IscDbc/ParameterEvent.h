@@ -35,7 +35,7 @@ public:
 
 	char			*nameEvent;
 	int				lengthNameEvent;
-	unsigned long	countEvents;
+	unsigned int	countEvents;
 	bool			changed;
 
 	ParameterEvent	*nextParameter;

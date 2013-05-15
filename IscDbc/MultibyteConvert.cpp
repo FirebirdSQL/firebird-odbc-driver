@@ -183,8 +183,8 @@ typedef struct
 	int		cmask; 
 	int		cval; 
 	int		shift; 
-	long	lmask; 
-	long	lval; 
+	int		lmask; 
+	int		lval; 
 
 } Tab; 
 
@@ -318,7 +318,7 @@ unsigned int fss_mbstowcs( wchar_t *wcs, const char *mbs, unsigned int lengthFor
 
 unsigned int fss_wcstombs( char *mbs, const wchar_t *wcs, unsigned int lengthForMBS )
 { 
-	long l; 
+	int l; 
 	int c;
 	Tab *t; 
 	unsigned int length = 0;

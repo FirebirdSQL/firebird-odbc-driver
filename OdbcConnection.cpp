@@ -980,7 +980,7 @@ SQLRETURN OdbcConnection::sqlNativeSql( SQLCHAR * inStatementText, SQLINTEGER te
 		return sqlReturn( SQL_ERROR, "HY090", "Invalid string or buffer length" );
 
 	JString tempNative;
-	long textLength = textLength1 + 4096;
+	int textLength = textLength1 + 4096;
 	const char * outText;
 	SQLRETURN ret = SQL_SUCCESS;
 
@@ -1494,7 +1494,7 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 
 	case infoLong:
 #ifdef DEBUG
-		sprintf (temp, "  %s (long) %d\n", item->name, value);
+		sprintf (temp, "  %s (int) %d\n", item->name, value);
 		OutputDebugString (temp);
 #endif
 		if ( maxLength == sizeof (SQLUSMALLINT) )

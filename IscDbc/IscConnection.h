@@ -114,10 +114,10 @@ public:
 	JString getInfoString (char *buffer, int item, const char *defaultString);
 	int getInfoItem (char *buffer, int item, int defaultValue);
 	JString getIscStatusText (ISC_STATUS *statusVector);
-	bool removeSchemaFromSQL( char *strSql, int lenSql, char *strSqlOut, long &lenSqlOut );
-	virtual int getNativeSql (const char * inStatementText, long textLength1,
-								char * outStatementText, long bufferLength,
-								long * textLength2Ptr);
+	bool removeSchemaFromSQL( char *strSql, int lenSql, char *strSqlOut, int &lenSqlOut );
+	virtual int getNativeSql (const char * inStatementText, int textLength1,
+								char * outStatementText, int bufferLength,
+								int * textLength2Ptr);
 	isc_tr_handle startTransaction();
 	void deleteStatement (IscStatement *statement);
 	IscConnection();
@@ -133,7 +133,7 @@ public:
 	virtual PropertiesEvents* allocPropertiesEvents();
 	virtual UserEvents* prepareUserEvents( PropertiesEvents *context, callbackEvent astRoutine, void *userAppData = 0 );
 	//virtual void freeHTML (const char *html);
-	virtual Blob* genHTML (Properties *context, long genHeaders);
+	virtual Blob* genHTML (Properties *context, int genHeaders);
 	virtual bool isConnected();
 	InternalStatement* createInternalStatement();
 	bool getCountInputParamFromProcedure ( const char* procedureName, int &numIn, int &numOut, bool &canSelect );

@@ -62,7 +62,7 @@ public:
 	virtual void	putSegment (int length, const char *address, bool copy);
 	virtual int		getLength();
 
-	char*			alloc (long length);
+	char*			alloc (int length);
 	Segment*		allocSegment (int tail);
 	char*			transferRecord();
 	void			setMinSegment (int length);

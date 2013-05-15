@@ -179,15 +179,15 @@ int getInfoDatabase(IscConnection * connection, const void * info_buffer, int bu
 	return 0;
 }
 
-signed long getVaxInteger(const unsigned char * ptr, signed short length)
+signed int getVaxInteger(const unsigned char * ptr, signed short length)
 { // FIREBIRD
-	signed long value;
+	signed int value;
 	signed short shift;
 
 	value = shift = 0;
 
 	while (--length >= 0) {
-		value += ((signed long) * ptr++) << shift;
+		value += ((signed int) * ptr++) << shift;
 		shift += 8;
 	}
 	return value;
@@ -425,9 +425,9 @@ const char * strFormatReport =
 		"\nPage size      = !p$";
 
 
-int strBuildStatInformations(const void * info_buffer, int bufferLength,short *lengthPtr)
+int strBuildStatInformations(const void * info_buffer, int bufferLength, short *lengthPtr)
 {
-	signed long delta, length;
+	signed int delta, length;
 	char *p, c;
 	const char * string = strFormatReport;
 
