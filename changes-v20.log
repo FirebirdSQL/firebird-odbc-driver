@@ -1,6 +1,35 @@
 ==================================
   OdbcFb 2.0
 ==================================
+153)	- current BUILDNUM_VERSION set 153 Release 2.0.2 ( 5 Jul 2013 )
+	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-61,
+	 "SQL_C_BIT selection support"
+	- added build support of ODBC driver for MacOSX
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-76,
+	 "64 bit ODBC driver does not work in Kubuntu"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-134,
+	 "When inserting null data into multipl blob columns into a table the return value of SQLParamData return SQL_NEED_DATA when is should have return SQL_SUCCESS"		 
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-142,
+	 "Needs type casts to compile on Linux"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-145,
+	 "SQLPutData does not advance param counter when SQL_NULL_DATA is passed - SQLParamData always returns SQL_NEED_DATA"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-146,
+	 "Paramter length value SQL_DATA_AT_EXEC is ignored when statement was first used with length value set to SQL_NULL_DATA"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-149,
+	 "Input double parameters are modified when saving them as NUMERIC values"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-151,
+	 "64-bit ODBC driver crashes in Windows 8 x64"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-154,
+	 "DATETIME value 1800-01-01 as parameter for SQL statement produces "value out of range" error"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-155,
+	 "Internal error for a release build using the MSVC 2010 (or 2012) compiler"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-156,
+	 ""Reserved error (-7748); there is no message for this error" with MS Access on UTF8 DBs"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-157,
+	 "Internal Buffer of ConvertingString not initialised"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-159,
+	 "String conversion from wide char to utf8 does not handle surrogate pairs correctly"
+
 152)	- current BUILDNUM_VERSION set 152 Release 2.0.1 ( 19 Mar 2012 )
 	- fixed Linux x64 build
 	- updated Spanish interface of Firebird ODBC driver
