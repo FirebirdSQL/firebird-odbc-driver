@@ -1,7 +1,7 @@
 ==================================
   OdbcFb 2.0
 ==================================
-153)	- current BUILDNUM_VERSION set 153 Release 2.0.2 ( 5 Jul 2013 )
+153)	- current BUILDNUM_VERSION set 153 Release 2.0.2 ( 8 Jul 2013 )
 	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-61,
 	 "SQL_C_BIT selection support"
 	- added build support of ODBC driver for MacOSX
