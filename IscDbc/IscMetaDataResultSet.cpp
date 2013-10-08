@@ -56,7 +56,7 @@ void IscMetaDataResultSet::prepareStatement(const char * sql)
 {
 	close();
 	statement = new IscStatement ( metaData->connection );
-	//statement->setReadOnlyTransaction();
+	statement->setReadOnlyTransaction();
 	statement->prepareStatement (sql);
 	statement->execute();
 	initResultSet ( statement );
