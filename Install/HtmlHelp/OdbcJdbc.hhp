@@ -4,6 +4,7 @@ Compiled file=OdbcFb.chm
 Contents file=odbcjdbc.hhc
 Default topic=html\FirebirdODBC.htm
 Display compile progress=No
+Full-text search=Yes
 Index file=OdbcJdbc.hhk
 Language=0x809 English (United Kingdom)
 Title=Firebird ODBC
