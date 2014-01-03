@@ -55,7 +55,7 @@
 #define JDBC_SQL_TIME 	  10
 #define JDBC_SQL_TIMESTAMP	  11
 
-#define JDBC_BOOLEAN	  16
+#define JDBC_BOOLEAN	  -7
 
 #define JDBC_DATE 		  91
 #define JDBC_TIME 		  92
@@ -65,7 +65,7 @@
 #define JDBC_VARBINARY 	  -3
 #define JDBC_LONGVARBINARY 	  -4
 
-#define TYPE_BOOLEAN	  short
+#define TYPE_BOOLEAN	  bool
 
 #define JDBC_INTERVAL_YEAR					101
 #define JDBC_INTERVAL_MONTH					102

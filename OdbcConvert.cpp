@@ -135,10 +135,6 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 	switch(from->conciseType)
 	{
 	case SQL_C_BIT:
-		if ( to->isIndicatorSqlDa )
-			return &OdbcConvert::transferStringToAllowedType;
-		break;
-
 	case SQL_C_TINYINT:
 	case SQL_C_UTINYINT:
 	case SQL_C_STINYINT:
@@ -4434,8 +4430,7 @@ void OdbcConvert::setHeadSqlVar ( DescRecord * to )
 		break;
 
 	case SQL_C_BIT:
-		to->headSqlVarPtr->setTypeText();
-		to->headSqlVarPtr->setSqlLen( 1 );
+		to->headSqlVarPtr->setTypeBoolean();
 		break;
 
 	case SQL_C_BINARY:

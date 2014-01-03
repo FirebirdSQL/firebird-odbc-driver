@@ -1290,11 +1290,13 @@ int OdbcDesc::getConciseType(int type)
 	case JDBC_WCHAR:
 	case JDBC_WVARCHAR:
 		return SQL_C_WCHAR;
-
+		
+	case JDBC_BOOLEAN:
+		return SQL_C_BIT;
+		
 	case JDBC_TINYINT:
 		return SQL_C_STINYINT;
 
-	case JDBC_BOOLEAN:
 	case JDBC_SMALLINT:
 		return SQL_C_SSHORT;
 
@@ -1398,10 +1400,12 @@ int OdbcDesc::getDefaultFromSQLToConciseType(int sqlType, int bufferLength)
 		cType = SQL_C_WCHAR;
 		break;
 */
+	case JDBC_BOOLEAN:
+		cType = SQL_C_BIT;
+		break;
 	case JDBC_TINYINT:
 		cType = SQL_C_STINYINT;
 		break;
-	case JDBC_BOOLEAN:
 	case JDBC_SMALLINT:
 		cType = SQL_C_SSHORT;
 		break;

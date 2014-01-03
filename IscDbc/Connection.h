@@ -503,6 +503,7 @@ class HeadSqlVar
 public:
 	virtual void		setTypeText() = 0;
 	virtual void		setTypeVarying() = 0;
+	virtual void		setTypeBoolean() = 0;
 	virtual void		setTypeShort() = 0;
 	virtual void		setTypeLong() = 0;
 	virtual void		setTypeFloat() = 0;
