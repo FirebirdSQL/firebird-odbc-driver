@@ -4430,8 +4430,7 @@ void OdbcConvert::setHeadSqlVar ( DescRecord * to )
 		break;
 
 	case SQL_C_BIT:
-		to->headSqlVarPtr->setTypeText();
-		to->headSqlVarPtr->setSqlLen( 1 );
+		to->headSqlVarPtr->setTypeBoolean();
 		break;
 
 	case SQL_C_BINARY:

@@ -65,7 +65,7 @@
 #define JDBC_VARBINARY 	  -3
 #define JDBC_LONGVARBINARY 	  -4
 
-#define TYPE_BOOLEAN	  short
+#define TYPE_BOOLEAN	  bool
 
 #define JDBC_INTERVAL_YEAR					101
 #define JDBC_INTERVAL_MONTH					102
