@@ -3349,8 +3349,8 @@ int OdbcConvert::convStringWToBlob(DescRecord * from, DescRecord * to)
 	wchar_t * pointerFrom = (wchar_t*)getAdressBindDataFrom((char*)from->dataPtr);
 	char * pointerTo = (char*)getAdressBindDataTo((char*)to->dataPtr);
 
-	SQLUINTEGER len;
-	SQLUINTEGER lenMbs;
+	SQLINTEGER len;
+	SQLINTEGER lenMbs;
 	SQLRETURN ret = SQL_SUCCESS;
 
 	GET_WLEN_FROM_OCTETLENGTHPTR;
@@ -3610,7 +3610,7 @@ int OdbcConvert::transferStringToAllowedType(DescRecord * from, DescRecord * to)
 	SQLLEN * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
 	char * pointerFrom = (char*)getAdressBindDataFrom((char*)from->dataPtr);
 
-	SQLUINTEGER len;
+	SQLINTEGER len;
 	SQLRETURN ret = SQL_SUCCESS;
 
 	GET_LEN_FROM_OCTETLENGTHPTR;
@@ -3661,8 +3661,8 @@ int OdbcConvert::transferStringWToAllowedType(DescRecord * from, DescRecord * to
 	SQLLEN * octetLengthPtr = getAdressBindIndFrom((char*)from->octetLengthPtr);
 	wchar_t * pointerFrom = (wchar_t *)getAdressBindDataFrom((char*)from->dataPtr);
 
-	SQLUINTEGER len;
-	SQLUINTEGER lenMbs;
+	SQLINTEGER len;
+	SQLINTEGER lenMbs;
 	SQLRETURN ret = SQL_SUCCESS;
 
 	GET_WLEN_FROM_OCTETLENGTHPTR;
