@@ -84,7 +84,7 @@ public:
 	SQLSMALLINT		fixedPrecScale;
 	SQLINTEGER		numPrecRadix;
 	JString			label;
-	SQLUINTEGER		length;
+	SQLINTEGER		length;
 	JString			literalPrefix;
 	JString			literalSuffix;
 	JString			localTypeName;
