@@ -549,14 +549,6 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 
 		if ( connection )
 		{
-			if ( transactionLocal )
-			{
-				if ( transactionInfo.autoCommit )
-					commitLocal();
-			}
-			else if ( connection->transactionInfo.autoCommit )
-				connection->commitAuto();
-
 			if ( isActiveCursor )
 			{
 				// Close cursors too.
@@ -565,7 +557,15 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 				// Cursor already closed or not assigned
 				if ( statusVector[1] && statusVector[1] != 335544569)
 					THROW_ISC_EXCEPTION (connection, statusVector);
+			}			
+			
+			if ( transactionLocal )
+			{
+				if ( transactionInfo.autoCommit )
+					commitLocal();
 			}
+			else if ( connection->transactionInfo.autoCommit )
+				connection->commitAuto();
 		}
 	}
 }
