@@ -247,11 +247,11 @@ void IscResultSet::close()
 	reset();
 
 	if (statement)
-		{
+	{
 		statement->deleteResultSet (this);
 		statement->release();
 		statement = NULL;
-		}
+	}
 }
 
 void IscResultSet::deleteBlobs()
