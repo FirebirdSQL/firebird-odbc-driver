@@ -96,6 +96,7 @@ public:
 	int convGuidToStringW(DescRecord * from, DescRecord * to);
 
 // TinyInt
+	int convTinyIntToBoolean(DescRecord * from, DescRecord * to);
 	int convTinyIntToTinyInt(DescRecord * from, DescRecord * to);
 	int convTinyIntToShort(DescRecord * from, DescRecord * to);
 	int convTinyIntToLong(DescRecord * from, DescRecord * to);
@@ -107,6 +108,7 @@ public:
 	int convTinyIntToTagNumeric(DescRecord * from, DescRecord * to);
 
 // Short
+	int convShortToBoolean(DescRecord * from, DescRecord * to);
 	int convShortToTinyInt(DescRecord * from, DescRecord * to);
 	int convShortToShort(DescRecord * from, DescRecord * to);
 	int convShortToLong(DescRecord * from, DescRecord * to);
@@ -124,9 +126,10 @@ public:
 	int convShortToTagNumeric(DescRecord * from, DescRecord * to);
 
 // Long
-	int convLongToLong(DescRecord * from, DescRecord * to);
+	int convLongToBoolean(DescRecord * from, DescRecord * to);
 	int convLongToTinyInt(DescRecord * from, DescRecord * to);
 	int convLongToShort(DescRecord * from, DescRecord * to);
+	int convLongToLong(DescRecord * from, DescRecord * to);
 	int convLongToFloat(DescRecord * from, DescRecord * to);
 	int convLongToDouble(DescRecord * from, DescRecord * to);
 	int convLongToBigint(DescRecord * from, DescRecord * to);
@@ -141,9 +144,10 @@ public:
 	int convLongToTagNumeric(DescRecord * from, DescRecord * to);
 
 // Float
-	int convFloatToLong(DescRecord * from, DescRecord * to);
+	int convFloatToBoolean(DescRecord * from, DescRecord * to);
 	int convFloatToTinyInt(DescRecord * from, DescRecord * to);
 	int convFloatToShort(DescRecord * from, DescRecord * to);
+	int convFloatToLong(DescRecord * from, DescRecord * to);
 	int convFloatToFloat(DescRecord * from, DescRecord * to);
 	int convFloatToDouble(DescRecord * from, DescRecord * to);
 	int convFloatToBigint(DescRecord * from, DescRecord * to);
@@ -151,9 +155,10 @@ public:
 	int convFloatToStringW(DescRecord * from, DescRecord * to);
 
 // Double
-	int convDoubleToLong(DescRecord * from, DescRecord * to);
+	int convDoubleToBoolean(DescRecord * from, DescRecord * to);
 	int convDoubleToTinyInt(DescRecord * from, DescRecord * to);
 	int convDoubleToShort(DescRecord * from, DescRecord * to);
+	int convDoubleToLong(DescRecord * from, DescRecord * to);
 	int convDoubleToFloat(DescRecord * from, DescRecord * to);
 	int convDoubleToDouble(DescRecord * from, DescRecord * to);
 	int convDoubleToBigint(DescRecord * from, DescRecord * to);
@@ -162,9 +167,10 @@ public:
 	int convDoubleToTagNumeric(DescRecord * from, DescRecord * to);
 
 // Bigint
-	int convBigintToLong(DescRecord * from, DescRecord * to);
+	int convBigintToBoolean(DescRecord * from, DescRecord * to);
 	int convBigintToTinyInt(DescRecord * from, DescRecord * to);
 	int convBigintToShort(DescRecord * from, DescRecord * to);
+	int convBigintToLong(DescRecord * from, DescRecord * to);
 	int convBigintToFloat(DescRecord * from, DescRecord * to);
 	int convBigintToDouble(DescRecord * from, DescRecord * to);
 	int convBigintToFloatWithScale(DescRecord * from, DescRecord * to);
@@ -176,18 +182,19 @@ public:
 	int convBigintToTagNumeric(DescRecord * from, DescRecord * to);
 
 // Numeric, Decimal
-	int convNumericToLong(DescRecord * from, DescRecord * to);
+	int convNumericToBoolean(DescRecord * from, DescRecord * to);
 	int convNumericToTinyInt(DescRecord * from, DescRecord * to);
 	int convNumericToShort(DescRecord * from, DescRecord * to);
+	int convNumericToLong(DescRecord * from, DescRecord * to);
 	int convNumericToFloat(DescRecord * from, DescRecord * to);
 	int convNumericToDouble(DescRecord * from, DescRecord * to);
 	int convNumericToBigint(DescRecord * from, DescRecord * to);
 	int convNumericToTagNumeric(DescRecord * from, DescRecord * to);
 
 // TagNumeric
-	int convTagNumericToLong(DescRecord * from, DescRecord * to);
 	int convTagNumericToTinyInt(DescRecord * from, DescRecord * to);
 	int convTagNumericToShort(DescRecord * from, DescRecord * to);
+	int convTagNumericToLong(DescRecord * from, DescRecord * to);
 	int convTagNumericToFloat(DescRecord * from, DescRecord * to);
 	int convTagNumericToDouble(DescRecord * from, DescRecord * to);
 	int convTagNumericToBigint(DescRecord * from, DescRecord * to);

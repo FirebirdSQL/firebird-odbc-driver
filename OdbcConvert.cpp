@@ -141,6 +141,8 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		switch(to->conciseType)
 		{
 		case SQL_C_BIT:
+			bIdentity = true;
+			return &OdbcConvert::convTinyIntToBoolean;
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -186,6 +188,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		switch(to->conciseType)
 		{
 		case SQL_C_BIT:
+			return &OdbcConvert::convShortToBoolean;
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -240,6 +243,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		switch(to->conciseType)
 		{
 		case SQL_C_BIT:
+			return &OdbcConvert::convLongToBoolean;
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -288,6 +292,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		switch(to->conciseType)
 		{
 		case SQL_C_BIT:
+			return &OdbcConvert::convFloatToBoolean;
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -321,6 +326,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		switch(to->conciseType)
 		{
 		case SQL_C_BIT:
+			return &OdbcConvert::convDoubleToBoolean;
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -358,6 +364,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		switch(to->conciseType)
 		{
 		case SQL_C_BIT:
+			return &OdbcConvert::convBigintToBoolean;
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -401,6 +408,7 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		switch(to->conciseType)
 		{
 		case SQL_C_BIT:
+			return &OdbcConvert::convNumericToBoolean;
 		case SQL_C_TINYINT:
 		case SQL_C_UTINYINT:
 		case SQL_C_STINYINT:
@@ -1630,6 +1638,7 @@ int OdbcConvert::convGuidToStringW(DescRecord * from, DescRecord * to)
 // TinyInt
 ////////////////////////////////////////////////////////////////////////
 
+ODBCCONVERT_CONV(TinyInt,char,Boolean,bool);
 ODBCCONVERT_CONV(TinyInt,char,TinyInt,char);
 ODBCCONVERT_CONV(TinyInt,unsigned char,Short,short);
 ODBCCONVERT_CONV(TinyInt,unsigned char,Long,int);
@@ -1644,6 +1653,7 @@ ODBCCONVERT_CONVTAGNUMERIC(TinyInt,unsigned char);
 // Short
 ////////////////////////////////////////////////////////////////////////
 
+ODBCCONVERT_CONV(Short,short,Boolean,bool);
 ODBCCONVERT_CONV(Short,short,TinyInt,char);
 ODBCCONVERT_CONV(Short,short,Short,short);
 ODBCCONVERT_CONV(Short,short,Long,int);
@@ -1664,6 +1674,7 @@ ODBCCONVERT_CONVTAGNUMERIC(Short,short);
 // Long
 ////////////////////////////////////////////////////////////////////////
 
+ODBCCONVERT_CONV(Long,int,Boolean,bool);
 ODBCCONVERT_CONV(Long,int,TinyInt,char);
 ODBCCONVERT_CONV(Long,int,Short,short);
 ODBCCONVERT_CONV(Long,int,Long,int);
@@ -1687,6 +1698,7 @@ ODBCCONVERT_CONVTAGNUMERIC(Long,int);
 ODBCCONVERT_CONVROUND(Float,float,TinyInt,char);
 ODBCCONVERT_CONVROUND(Float,float,Short,short);
 ODBCCONVERT_CONVROUND(Float,float,Long,int);
+ODBCCONVERT_CONV(Float,float,Boolean,bool);
 ODBCCONVERT_CONV(Float,float,Float,float);
 ODBCCONVERT_CONV(Float,float,Double,double);
 ODBCCONVERT_CONVROUND(Float,float,Bigint,QUAD);
@@ -1745,6 +1757,7 @@ int OdbcConvert::convFloatToStringW(DescRecord * from, DescRecord * to)
 ODBCCONVERT_CONVROUND(Double,double,TinyInt,char);
 ODBCCONVERT_CONVROUND(Double,double,Short,short);
 ODBCCONVERT_CONVROUND(Double,double,Long,int);
+ODBCCONVERT_CONV(Double,double,Boolean,bool);
 ODBCCONVERT_CONV(Double,double,Float,float);
 ODBCCONVERT_CONV(Double,double,Double,double);
 ODBCCONVERT_CONVROUND(Double,double,Bigint,QUAD);
@@ -1847,6 +1860,7 @@ int OdbcConvert::convDoubleToStringW(DescRecord * from, DescRecord * to)
 // Bigint
 ////////////////////////////////////////////////////////////////////////
 
+ODBCCONVERT_BIGINT_CONV(Boolean,bool);
 ODBCCONVERT_BIGINT_CONV(TinyInt,char);
 ODBCCONVERT_BIGINT_CONV(Short,short);
 ODBCCONVERT_BIGINT_CONV(Long,int);
@@ -1864,6 +1878,7 @@ ODBCCONVERT_CONVTAGNUMERIC(Bigint,QUAD);
 // Numeric,Decimal
 ////////////////////////////////////////////////////////////////////////
 
+ODBCCONVERT_CONV(Numeric,QUAD,Boolean,bool);
 ODBCCONVERT_CONV(Numeric,QUAD,TinyInt,char);
 ODBCCONVERT_CONV(Numeric,QUAD,Short,short);
 ODBCCONVERT_CONV(Numeric,QUAD,Long,int);
