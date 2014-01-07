@@ -671,7 +671,7 @@ int Sqlda::getColumnDisplaySize(int index)
 		return var->sqllen;
 
 	case SQL_BOOLEAN:
-		return sizeof(TYPE_BOOLEAN) + 2;
+		return MAX_BOOLEAN_LENGTH;
 
 	case SQL_SHORT:
 		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_SHORT_LENGTH + 2,
@@ -752,7 +752,7 @@ int Sqlda::getPrecision(int index)
 		return var->sqllen;
 
 	case SQL_BOOLEAN:
-		return sizeof(TYPE_BOOLEAN);
+		return MAX_BOOLEAN_LENGTH;
 
 	case SQL_SHORT:
 		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_SHORT_LENGTH,

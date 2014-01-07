@@ -2071,6 +2071,7 @@ SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 				cType = SQL_C_WCHAR;
 				break;
 			 case SQL_BIT:
+			 case SQL_BOOLEAN:
 				cType = SQL_C_BIT;
 				break;
 			 case SQL_TINYINT:
@@ -2079,7 +2080,6 @@ SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 			 case SQL_SMALLINT:
 				cType = SQL_C_SSHORT;
 				break;
-			 case SQL_BOOLEAN:
 			 case SQL_INTEGER:
 				cType = SQL_C_SLONG;
 				break;
