@@ -38,6 +38,10 @@
 #define SQL_BOOLEAN		32764
 #endif
 
+#ifndef blr_bool
+#define blr_bool		(unsigned char)23
+#endif
+
 #ifndef NULL
 #define NULL			0
 #endif
@@ -139,6 +143,7 @@ typedef unsigned __int64			UQUAD;
 #define MAX_DECIMAL_LONG_LENGTH		9
 #define MAX_DECIMAL_DOUBLE_LENGTH	15
 #define MAX_DECIMAL_LENGTH			18
+#define MAX_BOOLEAN_LENGTH			1
 #define MAX_TINYINT_LENGTH			3
 #define MAX_SMALLINT_LENGTH			5
 #define MAX_INT_LENGTH				10

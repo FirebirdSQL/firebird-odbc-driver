@@ -150,6 +150,10 @@ JString CAttrArray::getFbSqlType()
 
 	switch ( arrTypeElement )
 	{
+	case blr_bool:
+		ch = "BOOLEAN";
+		break;
+
 	case blr_short:
 		if ( arrSubTypeElement == 1 )
 			sprintf (temp, "NUMERIC(%d,%d)", MAX_NUMERIC_SHORT_LENGTH, -sqlscale);

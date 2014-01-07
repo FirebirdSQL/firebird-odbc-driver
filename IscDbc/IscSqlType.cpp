@@ -74,18 +74,18 @@ void IscSqlType::buildType ()
 				}
 			}
 			break;
-/*
-		case blr_boolean:
+
+		case blr_bool:
 			{
 			type = JDBC_BOOLEAN;
 			typeName = "BOOLEAN";
 			length = MAX_BOOLEAN_LENGTH;
-			bufferLength = sizeof(short);
+			bufferLength = sizeof(bool);
 			if ( !precision ) // for calculate fields
 				precision = length;
 			}
 			break;
-*/
+
 		case blr_short:
 			{
 			type = JDBC_SMALLINT;
