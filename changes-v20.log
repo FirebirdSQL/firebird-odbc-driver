@@ -1,6 +1,18 @@
 ==================================
   OdbcFb 2.0
 ==================================
+154)	- current BUILDNUM_VERSION set 154 Release 2.0.3 ( 7 Nov 2014 )
+	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-152
+	 "Boolean type support for Firebird 3"
+	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-166,
+	 "Help improvements"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-168,
+	 "Catalog functions start connection-wide transaction instead of local one"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-169,
+	 "Unknown token errors when attempting to access Firebird from Excel 2007"		 
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-170,
+	 "Error "Attempt to reopen an open cursor" may be raised in Microsoft Access with Firebird 3"
+
 153)	- current BUILDNUM_VERSION set 153 Release 2.0.2 ( 8 Jul 2013 )
 	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-61,
 	 "SQL_C_BIT selection support"
