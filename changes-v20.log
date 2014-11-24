@@ -1,7 +1,7 @@
 ==================================
   OdbcFb 2.0
 ==================================
-154)	- current BUILDNUM_VERSION set 154 Release 2.0.3 ( 7 Nov 2014 )
+154)	- current BUILDNUM_VERSION set 154 Release 2.0.3 ( 28 Nov 2014 )
 	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-152
 	 "Boolean type support for Firebird 3"
 	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-166,
