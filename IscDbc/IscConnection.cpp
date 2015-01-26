@@ -616,15 +616,63 @@ void IscConnection::parseReservingTable( char *& string, char *& tpbBuffer, shor
 	char *& ptOut = string;
 	char *beg = tpbBuffer + 2;
 	char *end;
+	char quote;
+	char delimiter = *metaData->getIdentifierQuoteString();
+	delimiter = delimiter == ' ' || attachment->databaseDialect < 3 ? 0 : delimiter;
+	bool autoQuoted = delimiter && attachment->autoQuotedIdentifier;
 
 	while ( true )
 	{
 		saveLockMode[countTable] = beg - 2;
 		char &lengthTableName = *(beg - 1);
+
 		end = beg;
 
-		while ( !IS_END_TOKEN( *ptOut ) )
-			*end++ = *ptOut++;
+		if ( IS_QUOTE( *ptOut ) )
+		{
+			quote = *ptOut++;
+			while ( *ptOut != '\0' && *ptOut != quote )
+				*end++ = *ptOut++;
+
+			if ( *ptOut == '\0' )
+				throw SQLEXCEPTION( SYNTAX_ERROR, "missing closing quote for identifier" );
+			else
+				ptOut++;
+		}
+		else
+		{
+			bool mixed = false;
+
+			if (autoQuoted)
+			{
+				const char* pt = ptOut;
+				bool hasUpper = false;
+				bool hasLower = false;
+
+				while ( IS_IDENT( *pt ) && !mixed )
+				{
+					hasUpper |= ISUPPER( *pt );
+					hasLower |= ISLOWER( *pt );
+					mixed = hasUpper && hasLower;
+					pt++;
+				}
+			}
+
+			if (mixed)
+			{
+				while ( IS_IDENT( *ptOut ) )
+					*end++ = *ptOut++;
+			}
+			else
+			{
+				while ( IS_IDENT( *ptOut ) )
+				{
+					// UPPER uses the argument two times - therefore the pointer inc is in a separate line
+					*end++ = UPPER( *ptOut );
+					ptOut++;
+				}
+			}
+		}
 
 		lengthTableName = end - beg;
 
