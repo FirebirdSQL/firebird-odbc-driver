@@ -1673,6 +1673,7 @@ JString Setup::readAttribute (const char * attribute)
 	char buffer [256];
 
 	int ret = SQLGetPrivateProfileString (dsn, attribute, "", buffer, sizeof (buffer), "ODBC.INI");
+	if (ret < 0) ret = 0;
 
 	return JString (buffer, ret);
 }
