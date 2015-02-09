@@ -64,7 +64,7 @@ if not defined FB_TARGET_PLATFORM (
 ::========================================================
 sed /"#define BUILDNUM_VERSION"/!d %ROOT_PATH%\WriteBuildNo.h > %temp%.\b$1.bat
 sed -n -e s/\"//g -e s/"#define BUILDNUM_VERSION"//w%temp%.\b$2.bat %temp%.\b$1.bat
-for /f "tokens=*" %%a in ('type %temp%.\b$2.bat') do set PRODUCT_VER_STRING=2.0.3.%%a
+for /f "tokens=*" %%a in ('type %temp%.\b$2.bat') do set PRODUCT_VER_STRING=2.0.4.%%a
 @echo s/1.2.0/%PRODUCT_VER_STRING%/ > %temp%.\b$3.bat
 @echo s/define MSVC_VERSION 6/define MSVC_VERSION %MSVC_VERSION%/ >> %temp%.\b$3.bat
 @echo s/define BUILDCONFIG release/define BUILDCONFIG %BUILDCONFIG%/ >> %temp%.\b$3.bat
