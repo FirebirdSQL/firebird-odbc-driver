@@ -22,22 +22,8 @@ goto :MAIN & goto :EOF
 :MAIN
 ::===========
 
-if "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
-	@set PLATFORM=x64
-) else (
-	if "%PROCESSOR_ARCHITEW6432%" == "AMD64" (
-		@set PLATFORM=x64
-	) else (
-		@set PLATFORM=win32
-	)
-)
-
-if "%PLATFORM%" == "x64" (
-	call build_platform.bat x86 %1
-	call build_platform.bat AMD64 %1
-) else (
-	call build_platform.bat x86 %1
-)
+call build_platform.bat x86 %1
+call build_platform.bat AMD64 %1
 
 @title Build complete
 goto :EOF
