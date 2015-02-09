@@ -167,7 +167,7 @@ int strBuildStatInformations(const void * info_buffer, int bufferLength,short *l
 void getStatInformations(IscConnection *connection, char bVanCall);
 int getStatInformations(IscConnection *connection, const void * info_buffer, int bufferLength,short *lengthPtr);
 int findCharsetsCode( const char *charset );
-int getCharsetSize( const int charsetCode );
+int getCharsetSize( int charsetCode );
 }; // end namespace IscDbcLibrary
 
 #endif

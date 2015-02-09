@@ -128,8 +128,9 @@ int findCharsetsCode( const char *charset )
 	return 0;
 }
 
-int getCharsetSize( const int charsetCode )
+int getCharsetSize( int charsetCode )
 {
+	if ( charsetCode > 0 ) charsetCode &= 0xff;
 	if ( charsetCode < 0 || charsetCode > SIZE_OF_LISTCHARSETS )
 		return 1;
 	return listCharsets[ charsetCode ].size;
