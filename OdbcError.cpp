@@ -38,7 +38,12 @@
 #define HASH_SIZE_ERROR			21
 #define CODE_ERR(linkOdbc,code)	{linkOdbc, code, NULL},
 
-#define CALC_HASH(pt)			( *((unsigned int*)(pt+1)) % ( HASH_SIZE ) )
+static inline unsigned CALC_HASH(const char* pt)
+{
+	unsigned x;
+	memcpy(&x, pt + 1, sizeof(x));
+	return x % HASH_SIZE;
+}
 
 namespace OdbcJdbcLibrary {
 
