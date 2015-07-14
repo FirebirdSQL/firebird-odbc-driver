@@ -40,7 +40,7 @@
 
 static inline unsigned CALC_HASH(const char* pt)
 {
-	unsigned x;
+	unsigned int x;
 	memcpy(&x, pt + 1, sizeof(x));
 	return x % HASH_SIZE;
 }
