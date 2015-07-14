@@ -742,17 +742,9 @@ void CDsnDialog::OnTestConnection( HWND hDlg )
 			services.putParameterValue( SETUP_CLIENT, m_client );
 		
 		services.putParameterValue( SETUP_DIALECT, m_dialect3 ? "3" : "1" );
+		services.putParameterValue( SETUP_DBNAME, m_database );
 
-		if ( !m_database.IsEmpty() )
-			services.putParameterValue( SETUP_DBNAME, m_database );
-
-		if ( m_database.IsEmpty() || !services.openDatabase() )
-		{
-			JString text;
-			text.Format ( _TR( IDS_ERROR_MESSAGE_20, "Open database '%s' failed" ), (const char *)m_database );
-			MessageBox( hDlg, text, TEXT( strHeadDlg ), MB_ICONERROR | MB_OK );
-			return;
-		}
+		services.openDatabase();
 
 		MessageBox( hDlg, _TR( IDS_MESSAGE_01, "Connection successful!" ), TEXT( strHeadDlg ), MB_ICONINFORMATION | MB_OK );
 	}
@@ -828,7 +820,7 @@ intptr_t CDsnDialog::DoModal()
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 42;         // NumberOfItems
+	*p++ = 40;         // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
@@ -845,18 +837,17 @@ intptr_t CDsnDialog::DoModal()
 	nchar = nCopyAnsiToWideChar (p, TEXT("MS Sans Serif"));
 	p += nchar;
 
-    TMP_EDITTEXT      ( IDC_NAME,7,12,184,12,ES_AUTOHSCROLL )
-    TMP_COMBOBOX      ( IDC_DRIVER,196,12,107,47,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
+    TMP_EDITTEXT      ( IDC_NAME,7,12,296,12,ES_AUTOHSCROLL )
     TMP_LTEXT         ( _TR( IDS_STATIC_DESCRIPTION, "Description" ), IDC_STATIC,7,26,218,8 )
     TMP_EDITTEXT      ( IDC_DESCRIPTION,7,36,296,12,ES_AUTOHSCROLL )
     TMP_EDITTEXT      ( IDC_DATABASE,7,61,231,12,ES_AUTOHSCROLL )
     TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_FIND_FILE, "Browse" ), IDC_FIND_FILE,243,60,60,14 )
     TMP_EDITTEXT      ( IDC_CLIENT,7,86,231,12,ES_AUTOHSCROLL )
     TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_FIND_FILE, "Browse" ), IDC_FIND_FILE_CLIENT,243,85,60,14 )
-    TMP_EDITTEXT      ( IDC_USER,7,111,107,12,ES_UPPERCASE | ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_PASSWORD,118,111,74,12,ES_PASSWORD | ES_AUTOHSCROLL )
-    TMP_EDITTEXT      ( IDC_ROLE,196,111,107,12,ES_AUTOHSCROLL )
-    TMP_COMBOBOX      ( IDC_CHARSET,7,136,100,120,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
+    TMP_EDITTEXT      ( IDC_USER,7,111,105,12,ES_UPPERCASE | ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_PASSWORD,118,111,90,12,ES_PASSWORD | ES_AUTOHSCROLL )
+    TMP_EDITTEXT      ( IDC_ROLE,213,111,90,12,ES_AUTOHSCROLL )
+    TMP_COMBOBOX      ( IDC_CHARSET,7,135,106,120,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
     TMP_BUTTONCONTROL ( _TR( IDS_CHECK_READ, "read (default write)" ), IDC_CHECK_READ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,168,136,10 )
     TMP_BUTTONCONTROL ( _TR( IDS_CHECK_NOWAIT, "nowait (default wait)" ), IDC_CHECK_NOWAIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,178,136,10 )
     TMP_EDITTEXT      ( IDC_LOCKTIMEOUT,24,188,23,10,ES_AUTOHSCROLL )
@@ -866,10 +857,9 @@ intptr_t CDsnDialog::DoModal()
     TMP_LTEXT         ( _TR( IDS_STATIC_DSN, "Data Source Name (DSN)" ), IDC_STATIC,7,2,167,8 )
     TMP_LTEXT         ( _TR( IDS_STATIC_DATABASE, "Database" ), IDC_STATIC,7,51,218,8 )
     TMP_LTEXT         ( _TR( IDS_STATIC_ACCOUNT, "Database Account" ), IDC_STATIC,7,101,107,8 )
-    TMP_LTEXT         ( _TR( IDS_STATIC_PASSWORD, "Password" ), IDC_STATIC,119,101,72,8 )
-    TMP_LTEXT         ( _TR( IDS_STATIC_DRIVER, "Driver" ), IDC_STATIC,197,2,103,8 )
-    TMP_LTEXT         ( _TR( IDS_STATIC_ROLE, "Role" ), IDC_STATIC,197,101,105,8 )
-    TMP_LTEXT         ( _TR( IDS_STATIC_CHARSET, "Character Set" ), IDC_STATIC,7,126,98,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_PASSWORD, "Password" ), IDC_STATIC,118,101,72,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_ROLE, "Role" ), IDC_STATIC,213,101,105,8 )
+    TMP_LTEXT         ( _TR( IDS_STATIC_CHARSET, "Character Set" ), IDC_STATIC,7,125,98,8 )
     TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_OPTIONS, "Options" ), IDC_STATIC,7,151,296,77 )
     TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_INIT_TRANSACTION, "Transaction" ), IDC_STATIC,10,159,142,42 )
     TMP_LTEXT         ( _TR( IDS_STATIC_CLIENT, "Client" ), IDC_STATIC,7,76,218,8 )
@@ -884,8 +874,8 @@ intptr_t CDsnDialog::DoModal()
     TMP_BUTTONCONTROL ( _TR( IDS_CHECK_SENSITIVE, "sensitive identifier" ), IDC_CHECK_SENSITIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,181,139,9 )
     TMP_BUTTONCONTROL ( _TR( IDS_CHECK_AUTOQUOTED, "autoquoted identifier" ), IDC_CHECK_AUTOQUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,193,139,9 )
     TMP_COMBOBOX      ( IDC_COMBOBOX_USE_SCHEMA,159,207,136,60,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
-    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_TEST_CONNECTION, "Test connection" ), IDC_TEST_CONNECTION,216,130,87,18 )
-    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_SERVICES, "Services" ), IDC_BUTTON_SERVICE,118,130,87,18 )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_TEST_CONNECTION, "Test connection" ), IDC_TEST_CONNECTION,213,130,90,18 )
+    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_SERVICES, "Services" ), IDC_BUTTON_SERVICE,118,130,90,18 )
     TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_HELP_ODBC, "Help" ), IDC_HELP_ODBC,243,233,60,14 )
 
 	intptr_t nRet = DialogBoxIndirectParam(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, m_hWndParent, (DLGPROC)wndprocDsnDialog, (LPARAM)this );
