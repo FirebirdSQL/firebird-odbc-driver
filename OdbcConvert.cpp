@@ -41,11 +41,6 @@
 
 #include "TemplateConvert.h"
 
-#ifndef _WINDOWS
-// for Linux
-extern int swprintf (wchar_t *__restrict __s, size_t __n, wchar_t *__restrict __format, ...);
-#endif
-
 #ifdef _BIG_ENDIAN // Big endian architectures (IBM PowerPC, Sun Sparc, HP PA-RISC, ... )
 #define MAKEQUAD(b, a)      ((QUAD)(((int)(a)) | ((UQUAD)((int)(b))) << 32))
 #define HI_LONG(l)			((int)(l))
