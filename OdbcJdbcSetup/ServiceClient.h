@@ -52,7 +52,7 @@ public:
 	bool initServices( const char *sharedLibrary = NULL );
 	bool checkVersion( void );
 	bool createDatabase( void );
-	bool openDatabase( void );
+	void openDatabase( void );
 	bool dropDatabase( void );
 	void startBackupDatabase( ULONG options );
 	void startRestoreDatabase( ULONG options );

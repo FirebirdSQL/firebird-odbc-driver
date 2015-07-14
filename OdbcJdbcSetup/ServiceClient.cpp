@@ -157,7 +157,7 @@ bool CServiceClient::createDatabase()
 	return true;
 }
 
-bool CServiceClient::openDatabase()
+void CServiceClient::openDatabase()
 {
 	Connection *connection;
 
@@ -170,16 +170,10 @@ bool CServiceClient::openDatabase()
 	}
 	catch ( std::exception &ex )
 	{
-		SQLException &exception = (SQLException&)ex;
-		JString text = exception.getText();
-
 		if ( connection )
 			connection->close();
-
-		return false;
+		throw;
 	}
-
-	return true;
 }
 
 bool CServiceClient::dropDatabase()
