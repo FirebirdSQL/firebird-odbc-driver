@@ -85,7 +85,7 @@ public:
 			if ( length == SQL_NTS )
 				lengthString = 0;
 			else if ( retCountOfBytes )
-				lengthString = length / 2;
+				lengthString = length / sizeof(wchar_t);
 			else
 				lengthString = length;
 		}
@@ -1163,7 +1163,7 @@ SQLRETURN SQL_API SQLSetDescFieldW( SQLHDESC hDesc,
 			if ( bufferLength == SQL_NTS )
 				len = (int)wcslen( (const wchar_t*)value );
 			else
-				len = bufferLength / 2;
+				len = bufferLength / sizeof(wchar_t);
 
 			ConvertingString<> Value( GETCONNECT_DESC( hDesc ), (SQLWCHAR *)value, len );
 
