@@ -486,14 +486,14 @@ void Sqlda::allocBuffer ( IscStatement *stmt )
 
 		case SQL_BLOB:
 			length = sizeof (ISC_QUAD);
-			boundary = 4;
+			boundary = sizeof(void*);
 			break;
 
 		case SQL_ARRAY:
 			orgvar->array = new CAttrArray;
 			orgvar->array->loadAttributes ( stmt, var->relname, var->sqlname, var->sqlsubtype );
 			length = sizeof (ISC_QUAD);
-			boundary = 4;
+			boundary = sizeof(void*);
 			break;
 		}
 		if (length == 0)
@@ -503,7 +503,7 @@ void Sqlda::allocBuffer ( IscStatement *stmt )
 		offset += length;
 	}
 
-	offset = ROUNDUP (offset, sizeof (int));
+	offset = ROUNDUP (offset, sizeof (SQLLEN));
 	indicatorsOffset = offset;
 	offset += sizeof(SQLLEN) * numberColumns;
 	buffer = new char [offset];
