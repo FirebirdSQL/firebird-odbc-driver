@@ -1,0 +1,114 @@
+#
+# To build set the following environment variables
+# ODBCMANAGER (either iODBC or unixODBC)
+# ODBCMANAGERDIR (set to installation folder of required ODBC driver, as per above)
+#
+
+#
+#DEBUG=1
+#
+.PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean postbuild
+#
+CC            = aCC
+#
+# Start build
+#
+include ../makefile.sources
+include ../makefile.environ
+#
+INCLUDEDIR      = -I$(FBINCDIR)                   -I$(ODBCMANAGERDIR)/include
+EXTLIBDIR       = -L$(FBLIBDIR)                   -L$(ODBCMANAGERDIR)/lib
+
+ifeq (iODBC,$(ODBCMANAGER))
+LIBODBCINST    = -liodbcinst
+else
+LIBODBCINST    = -lodbcinst
+endif
+
+#
+ifdef DEBUG
+TARGETDIR     = Debug
+else
+TARGETDIR     = Release
+endif
+#
+BUILDDIR      = $(TARGETDIR)/obj
+#
+LIST_ISCDBCSRC                = $(addprefix $(ISCDBCDIR)/, $(ISCDBCSRC))
+LIST_ISCDBCOBJ                = $(addprefix $(BUILDDIR)/, $(ISCDBCSRC:.cpp=.o))
+LIST_ODBCJDBCSRC      = $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSRC))
+LIST_ODBCJDBCOBJ      = $(addprefix $(BUILDDIR)/, $(ODBCJDBCSRC:.cpp=.o))
+LIST_ODBCJDBCSETUPSRC = $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSETUPSRC_LINUX))
+LIST_ODBCJDBCSETUPOBJ = $(addprefix $(BUILDDIR)/, $(ODBCJDBCSETUPSRC_LINUX:.cpp=.o))
+#
+
+COMPFLAGS     = +Z +DD64 -mt -D_REENTRANT -DEXTERNAL  $(INCLUDEDIR)
+LINKFLAGS     =  -mt -b -L/usr/lib/hpux64
+#
+EXTLIBS               = $(EXTLIBDIR) -ldl -lCsup -lpthread
+#
+ISCDBCDLL       = $(TARGETDIR)/IscDbc.so
+ODBCJDBCDLL     = $(TARGETDIR)/libOdbcFb.so
+ODBCJDBCSETUPDLL= $(TARGETDIR)/OdbcJdbcS.so
+ISCDBCDEFFILE = $(ISCDBCDIR)/IscDbc.def
+ODBCJDBCDEFFILE       = $(ODBCJDBCDIR)/OdbcJdbc.def
+ODBCJDBCSDEFFILE= $(ODBCJDBCSETUPDIR)/OdbcJdbcSetup.def
+#
+ifdef DEBUG
+DEBUGFLAGS    = -g0 +noobjdebug  +d -D_DEBUG -DDEBUG -DLOGGING -fexceptions
+else
+DEBUGFLAGS    = -DNDEBUG
+endif
+#
+$(BUILDDIR)/%.o: $(ISCDBCDIR)/%.cpp
+      $(CC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
+#
+$(BUILDDIR)/%.o: $(ODBCJDBCDIR)/%.cpp
+      $(CC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
+#
+ISCDBCLIB       = $(ISCDBCDLL:.so=.a)
+ODBCJDBCLIB     = $(ODBCJDBCDLL:.so=.a)
+ODBCJDBCSETUPLIB= $(ODBCJDBCSETUPDLL:.so=.a)
+#
+all : createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+#
+# Silently creates the target and build directories
+createdirs :
+      @-mkdir $(TARGETDIR)
+      @-mkdir $(BUILDDIR)
+#
+# Silently cleanup and deletes the target and build directories
+clean :
+      @-rm -fr $(TARGETDIR)
+#
+IscDbc : $(ISCDBCDLL)
+OdbcJdbc : $(ODBCJDBCDLL)
+OdbcJdbcSetup : $(ODBCJDBCSETUPDLL)
+#
+# Build the library from the object modules
+#
+$(ISCDBCDLL) : $(LIST_ISCDBCOBJ)
+#     ar crs $(ISCDBCLIB) $(LIST_ISCDBCOBJ)
+#     $(CC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(EXTLIBS) -o $(ISCDBCDLL)
+#
+#$(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ)
+#     ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCOBJ)
+#     $(CC) $(LINKFLAGS) $(BUILDDIR)/JString.o $(BUILDDIR)/Mutex.o $(LIST_ODBCJDBCOBJ) $(EXTLIBS) $(LIBODBCINST) -o $(ODBCJDBCDLL)
+#
+$(ODBCJDBCSETUPDLL) : $(LIST_ODBCJDBCSETUPOBJ)
+#     ar crs $(ODBCJDBCSETUPLIB) $(LIST_ODBCJDBCSETUPOBJ)
+#     $(CC) $(LINKFLAGS) $(LIST_ODBCJDBCSETUPOBJ) $(EXTLIBS) -o $(ODBCJDBCSETUPDLL)
+#
+$(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ) $(LIST_ODBCJDBCOBJ) $(LIST_ODBCJDBCSETUPOBJ)
+      ar crs $(ODBCJDBCLIB) $(LIST_ISCDBCOBJ)
+      ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCOBJ)
+      ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCSETUPOBJ)
+      $(CC) $(LINKFLAGS)  $(LIST_ISCDBCOBJ) $(LIST_ODBCJDBCOBJ) $(LIST_ODBCJDBCSETUPOBJ) $(EXTLIBS) $(LIBODBCINST) -o $(ODBCJDBCDLL)
+#
+postbuild : $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+      @-strip -s $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+      @-tar -cf OdbcJdbc_Snapshot.tar $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+      @-gzip -9 -S .gz OdbcJdbc_Snapshot.tar
+#
+# End
+#
