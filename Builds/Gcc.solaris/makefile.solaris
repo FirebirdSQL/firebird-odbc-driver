@@ -1,0 +1,199 @@
+#
+# To build set the following environment variables
+# ODBCMANAGER (either iODBC or unixODBC)
+# ODBCMANAGERDIR (set to installation folder of required ODBC driver, as per above)
+#
+
+ifndef DEBUG
+DEBUG = No
+endif
+#
+.PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean postbuild install uninstall package
+#
+GCC          = g++
+
+
+#Override default variables for this build
+#ARCH = x86
+#FIREBIRD=/usr/lib64/firebird
+
+# Get version info
+#MAJOR_VERSION = $(shell cat ../../SetupAttributes.h | grep "define MAJOR_VERSION" | cut -f 3)
+#MINOR_VERSION = $(shell cat ../../SetupAttributes.h | grep "define MINOR_VERSION" | cut -f 3)
+#REVISION = $(shell cat ../../SetupAttributes.h | grep "define REVNO_VERSION" | cut -f 3)
+#BUILD_NUMBER = $(shell cat ../../WriteBuildNo.h | grep "define BUILDNUM_VERSION" | cut -f 3)
+#and use it
+LIB_ROOT_NAME = OdbcFb
+#PACKAGE_VERSION = $(MAJOR_VERSION).$(MINOR_VERSION).$(REVISION).$(BUILD_NUMBER)
+#LIB_VERSION = $(MAJOR_VERSION).$(MINOR_VERSION).$(REVISION)
+#PACKAGE_NAME = $(LIB_ROOT_NAME)-$(PACKAGE_VERSION).tar
+#
+# Start build
+#
+include ../makefile.sources
+include ../makefile.environ
+#
+
+ifndef ODBCMANAGER
+ODBCMANAGER  = unixODBC
+#ODBCMANAGER = iODBC
+endif
+
+ifndef ODBCMANAGERDIR
+INCLUDEDIR      = -I/usr/include -I$(FBINCDIR)
+EXTLIBDIR       = -L/usr/$(LIB) -L$(FBLIBDIR)
+endif
+
+#ifeq ($(ARCH),x86_64)
+LIB = /usr/sfw/lib/sparcv9
+#LIB = lib64
+#LIB = /usr/ccs/lib/sparcv9
+#else
+#LIB = lib
+#endif
+
+ifeq (iODBC,$(ODBCMANAGER))
+LIBODBCINST    = -liodbcinst
+else
+LIBODBCINST    = -lodbcinst
+endif
+
+INCLUDEDIR      = -I$(FBINCDIR) -I$(ODBCMANAGERDIR)/include
+EXTLIBDIR       = -L$(FBLIBDIR) -L$(ODBCMANAGERDIR)/lib
+
+
+ifeq (Yes,$(DEBUG))
+TARGETDIR        = Debug_$(ARCH)
+else
+TARGETDIR        = Release_$(ARCH)
+endif
+#
+BUILDDIR         = $(TARGETDIR)/obj
+#
+DRVTMPL                      = ../../Install/Linux/DriverTemplate.ini
+
+LIST_ISCDBCSRC               = $(addprefix $(ISCDBCDIR)/, $(ISCDBCSRC))
+LIST_ISCDBCOBJ               = $(addprefix $(BUILDDIR)/, $(ISCDBCSRC:.cpp=.o))
+LIST_ODBCJDBCSRC     = $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSRC))
+LIST_ODBCJDBCOBJ     = $(addprefix $(BUILDDIR)/, $(ODBCJDBCSRC:.cpp=.o))
+LIST_ODBCJDBCSETUPSRC        = $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSETUPSRC_LINUX))
+LIST_ODBCJDBCSETUPOBJ        = $(addprefix $(BUILDDIR)/, $(ODBCJDBCSETUPSRC_LINUX:.cpp=.o))
+#
+COMPFLAGS1   = -w -D_REENTRANT -D_PTHREADS -DEXTERNAL -D$(ODBCMANAGER) $(INCLUDEDIR) -I$(FBINCDIR)
+
+#ifeq ($(ARCH),x86_64)
+COMPFLAGS    = -fPIC -m64 $(COMPFLAGS1)
+LINKFLAGS    = -shared -m64
+#LINKFLAGS   = --warn-section-align -shared -m64
+#else
+#COMPFLAGS   := -m32
+#LINKFLAGS   = -shared -m32 $(COMPFLAGS1)
+#endif
+#
+#LINKFLAGS   = -rdynamic -export-dynamic -shared
+
+EXTLIBS              = $(EXTLIBDIR) -lcrypt -ldl
+#EXTLIBS             = $(EXTLIBDIR) -lcrypt -ldl -lgds
+#
+#ISCDBC              = libIscDbc.so
+ISCDBCDLL       = $(TARGETDIR)/$(ISCDBC)
+ODBCJDBC     = lib$(LIB_ROOT_NAME).so
+ODBCJDBCDLL     = $(TARGETDIR)/$(ODBCJDBC)
+#ODBCJDBCSETUP       = libOdbcFbS.so
+ODBCJDBCSETUPDLL= $(TARGETDIR)/$(ODBCJDBCSETUP)
+ISCDBCDEFFILE        = $(ISCDBCDIR)/IscDbc.def
+ODBCJDBCDEFFILE      = $(ODBCJDBCDIR)/OdbcJdbc.def
+ODBCJDBCSDEFFILE= $(ODBCJDBCSETUPDIR)/OdbcJdbcSetup.def
+#
+ifeq (Yes,$(DEBUG))
+DEBUGFLAGS   = -g3 -O0 -D_DEBUG -DDEBUG -DLOGGING -fexceptions
+else
+DEBUGFLAGS   = -O3 -DNDEBUG
+endif
+
+#
+$(BUILDDIR)/%.o: $(ISCDBCDIR)/%.cpp
+     $(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
+#
+$(BUILDDIR)/%.o: $(ODBCJDBCDIR)/%.cpp
+     $(GCC) $(COMPFLAGS) $(DEBUGFLAGS) -c $(firstword $<) -o $@
+#
+ISCDBCLIB       = $(ISCDBCDLL:.so=.a)
+ODBCJDBCLIB     = $(ODBCJDBCDLL:.so=.a)
+ODBCJDBCSETUPLIB= $(ODBCJDBCSETUPDLL:.so=.a)
+
+
+
+#
+all :        createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+#
+# If required, print out the version info
+getVersion :
+     $(warning MAJOR_VERSION is $(MAJOR_VERSION) )
+     $(warning MINOR_VERSION is $(MINOR_VERSION) )
+     $(warning REVISION is $(REVISION) )
+     $(warning BUILD_NUMBER is $(BUILD_NUMBER) )
+#
+# Silently creates the target and build directories
+createdirs :
+     @-mkdir $(TARGETDIR)
+     @-mkdir $(BUILDDIR)
+#
+# Silently cleanup and deletes the target and build directories
+clean :
+     @-rm -fr $(TARGETDIR)
+#
+IscDbc : $(ISCDBCDLL)
+OdbcJdbc : $(ODBCJDBCDLL)
+OdbcJdbcSetup : $(ODBCJDBCSETUPDLL)
+#
+# Build the library from the object modules
+#
+$(ISCDBCDLL) : $(LIST_ISCDBCOBJ)
+#    ar crs $(ISCDBCLIB) $(LIST_ISCDBCOBJ)
+#    $(GCC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(EXTLIBS) --def $(ISCDBCDEFFILE) -o $(ISCDBCDLL)
+#
+#$(ODBCJDBCDLL) : $(LIST_ODBCJDBCOBJ)
+#    ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCOBJ)
+#    $(GCC) $(LINKFLAGS) $(BUILDDIR)/JString.o $(BUILDDIR)/Mutex.o $(LIST_ODBCJDBCOBJ) $(EXTLIBS) $(LIBODBCINST) --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
+#
+$(ODBCJDBCSETUPDLL) : $(LIST_ODBCJDBCSETUPOBJ)
+#    ar crs $(ODBCJDBCSETUPLIB) $(LIST_ODBCJDBCSETUPOBJ)
+#    $(GCC) $(LINKFLAGS) $(LIST_ODBCJDBCSETUPOBJ) $(EXTLIBS) -o $(ODBCJDBCSETUPDLL)
+#
+$(ODBCJDBCDLL) : $(ISCDBCDLL) $(ODBCJDBCSETUPDLL) $(LIST_ODBCJDBCOBJ)
+     ar crs $(ODBCJDBCLIB) $(LIST_ISCDBCOBJ)
+     ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCOBJ)
+     ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCSETUPOBJ)
+     $(GCC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(LIST_ODBCJDBCOBJ) $(LIST_ODBCJDBCSETUPOBJ) $(EXTLIBS) $(LIBODBCINST) --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
+#
+postbuild : $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+     @-strip -s $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+     @-tar -cf OdbcJdbc_Snapshot.tar $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+     @-gzip -9 -S .gz OdbcJdbc_Snapshot.tar
+#
+install :
+     cp $(ODBCJDBCDLL) $(UNIXODBCDIR)/$(ODBCJDBC).$(LIB_VERSION)
+     ln -s $(UNIXODBCDIR)/$(ODBCJDBC).$(LIB_VERSION) $(UNIXODBCDIR)/$(ODBCJDBC)
+     ln -s $(UNIXODBCDIR)/$(ODBCJDBC).$(LIB_VERSION) $(UNIXODBCDIR)/$(ODBCJDBC).$(MAJOR_VERSION)
+#
+uninstall :
+     @-rm -f $(UNIXODBCDIR)/$(ODBCJDBC)*.*
+#
+package :
+     -strip -s $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
+     -rm $(PACKAGE_NAME).gz
+     chmod 740 ../../Install/Linux/install.sh
+     tar -C $(TARGETDIR) -cvf OdbcJdbcLibs.tar $(ISCDBC) $(ODBCJDBC) $(ODBCJDBCSETUP)
+     tar -C ../../Install/HtmlHelp --exclude=CVS -cvf OdbcJdbcDocs.tar html/
+     tar -C ../../Install -uf OdbcJdbcDocs.tar ReleaseNotes_v2.0.html
+     cat $(DRVTMPL) | grep -v "^Driver.*=.*" >$(DRVTMPL).tmp && echo "Driver = $(UNIXODBCDIR)/$(ODBCJDBC)" >>$(DRVTMPL).tmp && mv $(DRVTMPL).tmp $(DRVTMPL)
+     tar -C ../../Install/Linux -cf $(PACKAGE_NAME) install.sh readme.txt DriverTemplate.ini FirebirdDSNTemplate.ini InterBaseDSNTemplate.ini
+     tar -uf $(PACKAGE_NAME) OdbcJdbcLibs.tar OdbcJdbcDocs.tar
+     rm OdbcJdbcLibs.tar  OdbcJdbcDocs.tar
+     gzip -9 -S .gz $(PACKAGE_NAME)
+#
+
+#
+# End
+#
