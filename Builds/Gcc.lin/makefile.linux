@@ -20,12 +20,13 @@
 #
 #
 #
+ifndef DEBUG
 DEBUG = No
+endif
 #
 .PHONY: all createdirs IscDbc OdbcJdbc OdbcJdbcSetup clean postbuild install uninstall package
 #
 GCC		= g++
-
 
 #Override default variables for this build
 #ARCH = x86
@@ -53,6 +54,11 @@ ODBCMANAGER	= unixODBC
 #ODBCMANAGER	= iODBC
 endif
 
+ifndef ODBCMANAGERDIR
+INCLUDEDIR      = -I/usr/include -I$(FBINCDIR)
+EXTLIBDIR       = -L/usr/$(LIB) -L$(FBLIBDIR)
+endif
+
 ifeq ($(ARCH),x86_64)
 LIB = lib64
 else
@@ -61,18 +67,12 @@ endif
 
 ifeq (iODBC,$(ODBCMANAGER))
 LIBODBCINST 	= -liodbcinst
-INCLUDEDIR      = -I/usr/local/include \
-                  -I/usr/include
-EXTLIBDIR       = -L/usr/local/$(LIB) \
-                  -L/usr/$(LIB)
 else
 LIBODBCINST	    = -lodbcinst
-INCLUDEDIR      = -I/usr/include
-EXTLIBDIR       = -L/usr/$(LIB)
 endif
 
-INCLUDEDIR      = -I$(FBINCDIR) -I/usr/include/odbc $(INCLUDEDIR)
-EXTLIBDIR       := -L$(FBLIBDIR -L$(UNIXODBCDIR) $(EXTLIBDIR)
+INCLUDEDIR      = -I/usr/include -I$(FBINCDIR) -I$(ODBCMANAGERDIR)/include
+EXTLIBDIR       = -L/usr/$(LIB) -L$(FBLIBDIR) -L$(ODBCMANAGERDIR)/lib
 
 ifeq (Yes,$(DEBUG))
 TARGETDIR	    = Debug_$(ARCH)
@@ -91,13 +91,13 @@ LIST_ODBCJDBCOBJ	= $(addprefix $(BUILDDIR)/, $(ODBCJDBCSRC:.cpp=.o))
 LIST_ODBCJDBCSETUPSRC	= $(addprefix $(ODBCJDBCDIR)/, $(ODBCJDBCSETUPSRC_LINUX))
 LIST_ODBCJDBCSETUPOBJ	= $(addprefix $(BUILDDIR)/, $(ODBCJDBCSETUPSRC_LINUX:.cpp=.o))
 #
-COMPFLAGS	= -g -w -D_REENTRANT -D_PTHREADS -DEXTERNAL -D$(ODBCMANAGER) $(INCLUDEDIR) -I$(FBINCDIR)
+COMPFLAGS  = -w -D_REENTRANT -D_PTHREADS -DEXTERNAL -D$(ODBCMANAGER) $(INCLUDEDIR) -I$(FBINCDIR)
 
 ifeq ($(ARCH),x86_64)
-COMPFLAGS	:= -fPIC -m64
+COMPFLAGS   += -fPIC -m64
 LINKFLAGS	= -shared -m64
 else
-COMPFLAGS	:= -m32
+COMPFLAGS   += -m32
 LINKFLAGS	= -shared -m32
 endif
 #
@@ -117,7 +117,7 @@ ODBCJDBCDEFFILE	= $(ODBCJDBCDIR)/OdbcJdbc.def
 ODBCJDBCSDEFFILE= $(ODBCJDBCSETUPDIR)/OdbcJdbcSetup.def
 #
 ifeq (Yes,$(DEBUG))
-DEBUGFLAGS	= -D_DEBUG -DDEBUG -DLOGGING -fexceptions 
+DEBUGFLAGS   = -g3 -O0 -D_DEBUG -DDEBUG -DLOGGING -fexceptions
 else
 DEBUGFLAGS	= -DNDEBUG
 endif
@@ -132,8 +132,6 @@ $(BUILDDIR)/%.o: $(ODBCJDBCDIR)/%.cpp
 ISCDBCLIB       = $(ISCDBCDLL:.so=.a)
 ODBCJDBCLIB     = $(ODBCJDBCDLL:.so=.a)
 ODBCJDBCSETUPLIB= $(ODBCJDBCSETUPDLL:.so=.a)
-
-
 
 #
 all :	createdirs $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
@@ -176,7 +174,7 @@ $(ODBCJDBCDLL) : $(ISCDBCDLL) $(ODBCJDBCSETUPDLL) $(LIST_ODBCJDBCOBJ)
 	ar crs $(ODBCJDBCLIB) $(LIST_ISCDBCOBJ)
 	ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCOBJ)
 	ar crs $(ODBCJDBCLIB) $(LIST_ODBCJDBCSETUPOBJ)
-	$(GCC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(LIST_ODBCJDBCOBJ) $(LIST_ODBCJDBCSETUPOBJ) $(EXTLIBS) $(LIBODBCINST) --def $(ODBCJDBCDEFFILE) -o $(ODBCJDBCDLL)
+	$(GCC) $(LINKFLAGS) $(LIST_ISCDBCOBJ) $(LIST_ODBCJDBCOBJ) $(LIST_ODBCJDBCSETUPOBJ) $(EXTLIBS) $(LIBODBCINST) -o $(ODBCJDBCDLL)
 #
 postbuild : $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
 	@-strip -s $(ISCDBCDLL) $(ODBCJDBCDLL) $(ODBCJDBCSETUPDLL)
