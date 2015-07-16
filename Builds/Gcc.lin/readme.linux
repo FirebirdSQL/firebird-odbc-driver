@@ -54,3 +54,8 @@ regards,
 Yves
 
 3)==================================================================
+
+To build the Firebird ODBC driver, the following environment variables should also be set:
+ODBCMANAGER      (should be set to either "iODBC" or "unixODBC")
+ODBCMANAGERDIR   (should be set according to the installation folder of the required ODBC driver manager specified above)
+
