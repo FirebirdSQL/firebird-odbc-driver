@@ -2112,7 +2112,7 @@ int OdbcConvert::convTimeToString(DescRecord * from, DescRecord * to)
 	int len, outlen = to->length;
 
 	if ( nnano )
-		len = snprintf(pointer, outlen, "%02d:%02d:%02d.%lu",hour, minute, second, nnano);
+		len = snprintf(pointer, outlen, "%02d:%02d:%02d.%04lu",hour, minute, second, nnano);
 	else
 		len = snprintf(pointer, outlen, "%02d:%02d:%02d",hour, minute, second);
 
@@ -2144,7 +2144,7 @@ int OdbcConvert::convTimeToStringW(DescRecord * from, DescRecord * to)
 	int len, outlen = to->length / sizeof( wchar_t );
 
 	if ( nnano )
-		len = swprintf(pointer, outlen, L"%02d:%02d:%02d.%lu",hour, minute, second, nnano);
+		len = swprintf(pointer, outlen, L"%02d:%02d:%02d.%04lu",hour, minute, second, nnano);
 	else
 		len = swprintf(pointer, outlen, L"%02d:%02d:%02d",hour, minute, second);
 
@@ -2308,7 +2308,7 @@ int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 	int len, outlen = to->length;
 
 	if ( nnano )
-		len = snprintf(pointer, outlen, "%04d-%02d-%02d %02d:%02d:%02d.%lu",year,month,mday,hour, minute, second, nnano);
+		len = snprintf(pointer, outlen, "%04d-%02d-%02d %02d:%02d:%02d.%04lu",year,month,mday,hour, minute, second, nnano);
 	else
 		len = snprintf(pointer, outlen, "%04d-%02d-%02d %02d:%02d:%02d",year,month,mday,hour, minute, second);
 
@@ -2344,7 +2344,7 @@ int OdbcConvert::convDateTimeToStringW(DescRecord * from, DescRecord * to)
 	int len, outlen = to->length / sizeof( wchar_t );
 
 	if ( nnano )
-		len = swprintf( pointer, outlen, L"%04d-%02d-%02d %02d:%02d:%02d.%lu",year,month,mday,hour, minute, second, nnano );
+		len = swprintf( pointer, outlen, L"%04d-%02d-%02d %02d:%02d:%02d.%04lu",year,month,mday,hour, minute, second, nnano );
 	else
 		len = swprintf( pointer, outlen, L"%04d-%02d-%02d %02d:%02d:%02d",year,month,mday,hour, minute, second );
 
