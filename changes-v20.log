@@ -1,6 +1,22 @@
 ==================================
   OdbcFb 2.0
 ==================================
+155)	- current BUILDNUM_VERSION set 155 Release 2.0.4 ( 3 Mar 2016 )
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-79,
+	 "Problem with case sensitivity for table/relations name in SET TRANSACTION RESERVING clause"	
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-174,
+	 "SIGSEGV received in libOdbcFb.so: memcpy in JString constructor incorrect input parameter"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-184,
+	 "CHAR(X) fields have invalid length if using UTF8 charset and collations"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-190,
+	 "ODBC function SQLGetInfo fails if SQL_KEYWORDS InfoType is requested"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-191,
+	 "ODBC driver doesn't show error message for Test connection button in DSN dialog. Improvements in Windows DSN dialog interface"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-192,
+	 "Incorrect conversion of time values when retrieved as string"
+	- correct alignment issues for Sun Solaris and HPUX
+	- updated Linux makefile to support both iODBC and unixODBC, thanks to Paul Beach
+
 154)	- current BUILDNUM_VERSION set 154 Release 2.0.3 ( 28 Nov 2014 )
 	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-152
 	 "Boolean type support for Firebird 3"
