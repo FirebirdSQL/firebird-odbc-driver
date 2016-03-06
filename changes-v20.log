@@ -1,7 +1,7 @@
 ==================================
   OdbcFb 2.0
 ==================================
-155)	- current BUILDNUM_VERSION set 155 Release 2.0.4 ( 3 Mar 2016 )
+155)	- current BUILDNUM_VERSION set 155 Release 2.0.4 ( 11 Mar 2016 )
 	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-79,
 	 "Problem with case sensitivity for table/relations name in SET TRANSACTION RESERVING clause"	
 	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-174,
