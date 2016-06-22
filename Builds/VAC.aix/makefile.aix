@@ -50,7 +50,7 @@ EXTLIBS		= $(EXTLIBDIR) -lcrypt -ldl -lpthread
 LINKFLAGS	= -G
 #
 ISCDBCDLL       = $(TARGETDIR)/IscDbc.so
-ODBCJDBCDLL     = $(TARGETDIR)/libOdbcJdbc.so
+ODBCJDBCDLL     = $(TARGETDIR)/libOdbcFb.so
 ODBCJDBCSETUPDLL= $(TARGETDIR)/OdbcJdbcS.so
 ISCDBCEXP	 	= $(ISCDBCDIR)/IscDbc.exp
 ODBCJDBCEXP		= $(ODBCJDBCDIR)/OdbcJdbc.exp
