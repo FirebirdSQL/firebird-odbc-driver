@@ -528,10 +528,21 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 		q = value;
 		if (c == '=')
 		{
+			char term = ';';
+
 			while (p < end && *p == ' ') p++;
 
-			while (p < end && (c = *p++) != ';')
+			if (*p == '{')
+			{
+				term = '}';
+				p++;
+			}
+
+			while (p < end && (c = *p++) != term)
 				*q++ = c;
+
+			if (term != ';')
+				while (p < end && (c = *p++) != ';');
 		}
 		*q = 0;
 
