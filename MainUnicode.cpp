@@ -192,13 +192,13 @@ public:
 		byteString = new SQLCHAR[ bytesNeeded + 2 ];
 
 		if ( connection )
-			connection->WcsToMbs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
+			bytesNeeded = connection->WcsToMbs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
 		else
 		{
 #ifdef _WINDOWS
-			WideCharToMultiByte( codePage, 0, wcString, length, (LPSTR)byteString, (int)bytesNeeded, NULL, NULL );
+			bytesNeeded = WideCharToMultiByte( codePage, 0, wcString, length, (LPSTR)byteString, (int)bytesNeeded, NULL, NULL );
 #else
-			wcstombs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
+			bytesNeeded = wcstombs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
 #endif
 		}
 
