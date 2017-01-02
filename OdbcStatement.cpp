@@ -1480,7 +1480,7 @@ SQLRETURN OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLLEN 
 
 	if ( crowKeyset > crowRowset )
 		sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN, 0);
-	else 
+	else
 	{
 		SQLPOINTER ptr;
 		if (crowKeyset < 0)
@@ -3120,20 +3120,33 @@ SQLRETURN OdbcStatement::sqlPutData (SQLPOINTER value, SQLLEN valueSize)
 			binding->beginBlobDataTransfer();
 
 		if ( valueSize == SQL_NTS )
-			if ( binding->conciseType == SQL_C_CHAR )
+			if ( binding->conciseType == SQL_C_WCHAR )
+				valueSize = (SQLINTEGER)wcslen( (wchar_t*)value ) * sizeof(wchar_t);
+			else // if ( binding->conciseType == SQL_C_CHAR )
 				valueSize = (SQLINTEGER)strlen( (char*)value );
-			else // if ( binding->conciseType == SQL_C_WCHAR )
-				valueSize = (SQLINTEGER)wcslen( (wchar_t*)value );
 
 		if( valueSize )
 		{
 			if ( binding->conciseType == SQL_C_WCHAR )
 			{
-				int lenMbs = valueSize / sizeof( wchar_t );
-				char* tempValue = new char[lenMbs];
-				binding->WcsToMbs(tempValue, (const wchar_t*)value, lenMbs );
+				CBindColumn &bindParam = (*listBindIn)[ parameterNeedData - 1 ];
+
+				// for WcsToMbs we need to assure a L'\0' terminated source buffer
+				wchar_t* wcEnd = ((wchar_t*) value) + valueSize / sizeof(wchar_t);
+				wchar_t wcSave = *wcEnd;
+				*wcEnd = L'\0';
+
+				// ipd->headSqlVarPtr->getSqlMultiple() cannot be used to calculate the conversion
+				// buffer size, because for blobs it seems to return always 1
+				// so we call the conversion function to calculate the required buffer size
+				// size_t lenMbs = valueSize / sizeof(wchar_t) * ipd->headSqlVarPtr->getSqlMultiple();
+				size_t lenMbs = bindParam.impRecord->WcsToMbs(NULL, (const wchar_t*)value, 0 );
+				char* tempValue = new char[lenMbs+1];
+				lenMbs = bindParam.impRecord->WcsToMbs(tempValue, (const wchar_t*)value, lenMbs );
 				binding->putBlobSegmentData (lenMbs, tempValue);
 				delete [] tempValue;
+
+				*wcEnd = wcSave;
 			}
 			else
 				binding->putBlobSegmentData (valueSize, value);
@@ -3145,10 +3158,10 @@ SQLRETURN OdbcStatement::sqlPutData (SQLPOINTER value, SQLLEN valueSize)
 			binding->startedTransfer = true;
 
 		if ( valueSize == SQL_NTS )
-			if ( binding->conciseType == SQL_C_CHAR )
+			if ( binding->conciseType == SQL_C_WCHAR )
+				valueSize = (SQLINTEGER)wcslen( (wchar_t*)value ) * sizeof(wchar_t);
+			else // if ( binding->conciseType == SQL_C_CHAR )
 				valueSize = (SQLINTEGER)strlen( (char*)value );
-			else // if ( binding->conciseType == SQL_C_WCHAR )
-				valueSize = (SQLINTEGER)wcslen( (wchar_t*)value );
 
 		CBindColumn &bindParam = (*listBindIn)[ parameterNeedData - 1 ];
 		SQLPOINTER valueSave = binding->dataPtr;

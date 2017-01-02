@@ -1279,18 +1279,20 @@ int OdbcDesc::getConciseType(int type)
 	switch ( type )
 	{
 	case JDBC_LONGVARBINARY:
-	case JDBC_LONGVARCHAR:
-	case JDBC_WLONGVARCHAR:
+	case JDBC_BINARY:
+	case JDBC_VARBINARY:
 		return SQL_C_BINARY;
 
+	case JDBC_LONGVARCHAR:
 	case JDBC_CHAR:
 	case JDBC_VARCHAR:
 		return SQL_C_CHAR;
 
+	case JDBC_WLONGVARCHAR:
 	case JDBC_WCHAR:
 	case JDBC_WVARCHAR:
 		return SQL_C_WCHAR;
-		
+
 	case JDBC_BOOLEAN:
 		return SQL_C_BIT;
 		

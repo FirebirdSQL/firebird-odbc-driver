@@ -211,12 +211,14 @@ void IscStatementMetaData::getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar 
 
 WCSTOMBS IscStatementMetaData::getAdressWcsToMbs( int index )
 {
-	return adressWcsToMbs( sqlda->getSubType( index ) & 0xff );
+	int charsetCode = isBlobOrArray( index ) ? statement->connection->getConnectionCharsetCode() : sqlda->getSubType( index ) & 0xff;
+	return adressWcsToMbs( charsetCode );
 }
 
 MBSTOWCS IscStatementMetaData::getAdressMbsToWcs( int index )
 {
-	return adressMbsToWcs( sqlda->getSubType( index ) & 0xff );
+	int charsetCode = isBlobOrArray( index ) ? statement->connection->getConnectionCharsetCode() : sqlda->getSubType( index ) & 0xff;
+	return adressMbsToWcs( charsetCode );
 }
 
 int IscStatementMetaData::objectVersion()
