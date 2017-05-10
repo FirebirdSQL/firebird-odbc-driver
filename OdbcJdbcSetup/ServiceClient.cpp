@@ -168,7 +168,7 @@ void CServiceClient::openDatabase()
 								  properties );
 		connection->close();
 	}
-	catch ( std::exception &ex )
+	catch ( std::exception )
 	{
 		if ( connection )
 			connection->close();

@@ -1,6 +1,24 @@
 ==================================
   OdbcFb 2.0
 ==================================
+156)	- current BUILDNUM_VERSION set 156 Release 2.0.5 ( 19 May 2017 )
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-147,
+	 "SQLDriverConnect does not accept values embedded in braces: DATABASE={c:\this directory}"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-160,
+	 "Bound Input Parameter of type SQL_C_WCHAR containing surrogate pairs may be truncated"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-161,
+	 "SQLPutData for text BLOBs doesn't do correct codepage translation for SQL_C_WCHAR source data"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-162,
+	 "SQLPutData truncates input data of type SQL_C_WCHAR when length is SQL_NTS"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-179,
+	 "For the SQLxxxW family of functions the Wide To Mbs conversion forwards the maximum required buffer size instead of the actual length/needed bytes of the converted input string"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-180,
+	 "Character set conversion errors in SQLGetData when reading BLOB SUB_TYPE 1"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-181,
+	 "Character set conversion error for sql (VAR)CHAR to SQL_C_WCHAR conversion"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-182,
+	 "Wrong set-up of empty-string in case of SQL_C_WCHAR and NULL value"
+
 155)	- current BUILDNUM_VERSION set 155 Release 2.0.4 ( 11 Mar 2016 )
 	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-79,
 	 "Problem with case sensitivity for table/relations name in SET TRANSACTION RESERVING clause"	
