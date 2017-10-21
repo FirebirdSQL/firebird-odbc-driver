@@ -1,0 +1,15 @@
+* text=auto
+*.bat           text    eol=crlf
+*.sln           text    eol=crlf
+*.dsp           text    eol=crlf
+*.dsw           text    eol=crlf
+*.sh            text
+
+*.lib           binary
+*.dll           binary
+*.bmp           binary
+*.gif           binary
+*.ico           binary
+*.jpg           binary
+*.jpeg          binary
+*.png           binary
