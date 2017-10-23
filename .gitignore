@@ -1,0 +1,9 @@
+Builds/*/Win32/
+Builds/*/x64/
+Install/Win32/install_image/
+*.suo
+*.ncb
+*.user
+*.chm
+build_*.log
+OdbcJdbcSetup_*.iss
