@@ -8,7 +8,7 @@ extern BOOL INSTAPI ConfigDSN(HWND		hWnd,
 
 int main (int argc, char **argv)
 {
-	ConfigDSN (NULL, ODBC_CONFIG_DSN, "Firebird/InterBase(r) driver", "");
+	ConfigDSN (NULL, ODBC_CONFIG_DSN, "Firebird ODBC driver", "");
 	
 	return 0;
 }

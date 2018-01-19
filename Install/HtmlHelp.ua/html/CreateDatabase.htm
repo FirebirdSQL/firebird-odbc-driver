@@ -34,7 +34,7 @@
 
 <PRE> SQLConfigDataSource( NULL,
                       ODBC_ADD_DSN,
-                      "Firebird/InterBase(r) driver",
+                      "Firebird ODBC driver",
                       "ODBC\0"
                       "CREATE_DB = D:\\TestService\\test.fdb\0"
                       "DESCRIPTION = My Firebird database\0"
@@ -61,7 +61,7 @@
     SWORD bufferLength;
 
     SQLDriverConnect( connection, hWnd, 
-                      (UCHAR*)"DRIVER=Firebird/InterBase(r) driver;"
+                      (UCHAR*)"DRIVER=Firebird ODBC driver;"
                       "UID=SYSDBA;"
                       "PWD=masterkey;"
                       "PAGESIZE=8192;"
@@ -72,7 +72,7 @@
 <P>3) Створення бази даних з використання ODBC API функції
 <B>SQLExecDirect</B>. Цей випадок цікавий тим, що база
 створюється на базі вже існуючого з'єднання. Тобто нам не потрібно
-вказувати "DRIVER=Firebird/InterBase(r) driver;", це і інші необхідні
+вказувати "DRIVER=Firebird ODBC driver;", це і інші необхідні
 значення будуть взяті з активного з'єднання. І знову ж таки, після 
 виконання команди ми не отримаємо доступу до бази, для цього
 потрібно використати <B>SQLDriverConnect</B> або <B>SQLConnect</B>.

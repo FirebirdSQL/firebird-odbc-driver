@@ -1,6 +1,139 @@
 ==================================
-  OdbcJdbc 2.0
+  OdbcFb 2.0
 ==================================
+156)	- current BUILDNUM_VERSION set 156 Release 2.0.5 ( 19 May 2017 )
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-147,
+	 "SQLDriverConnect does not accept values embedded in braces: DATABASE={c:\this directory}"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-160,
+	 "Bound Input Parameter of type SQL_C_WCHAR containing surrogate pairs may be truncated"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-161,
+	 "SQLPutData for text BLOBs doesn't do correct codepage translation for SQL_C_WCHAR source data"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-162,
+	 "SQLPutData truncates input data of type SQL_C_WCHAR when length is SQL_NTS"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-179,
+	 "For the SQLxxxW family of functions the Wide To Mbs conversion forwards the maximum required buffer size instead of the actual length/needed bytes of the converted input string"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-180,
+	 "Character set conversion errors in SQLGetData when reading BLOB SUB_TYPE 1"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-181,
+	 "Character set conversion error for sql (VAR)CHAR to SQL_C_WCHAR conversion"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-182,
+	 "Wrong set-up of empty-string in case of SQL_C_WCHAR and NULL value"
+
+155)	- current BUILDNUM_VERSION set 155 Release 2.0.4 ( 11 Mar 2016 )
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-79,
+	 "Problem with case sensitivity for table/relations name in SET TRANSACTION RESERVING clause"	
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-174,
+	 "SIGSEGV received in libOdbcFb.so: memcpy in JString constructor incorrect input parameter"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-184,
+	 "CHAR(X) fields have invalid length if using UTF8 charset and collations"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-190,
+	 "ODBC function SQLGetInfo fails if SQL_KEYWORDS InfoType is requested"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-191,
+	 "ODBC driver doesn't show error message for Test connection button in DSN dialog. Improvements in Windows DSN dialog interface"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-192,
+	 "Incorrect conversion of time values when retrieved as string"
+	- correct alignment issues for Sun Solaris and HPUX
+	- updated Linux makefile to support both iODBC and unixODBC, thanks to Paul Beach
+
+154)	- current BUILDNUM_VERSION set 154 Release 2.0.3 ( 28 Nov 2014 )
+	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-152
+	 "Boolean type support for Firebird 3"
+	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-166,
+	 "Help improvements"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-168,
+	 "Catalog functions start connection-wide transaction instead of local one"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-169,
+	 "Unknown token errors when attempting to access Firebird from Excel 2007"		 
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-170,
+	 "Error "Attempt to reopen an open cursor" may be raised in Microsoft Access with Firebird 3"
+
+153)	- current BUILDNUM_VERSION set 153 Release 2.0.2 ( 8 Jul 2013 )
+	- implemented URL: http://tracker.firebirdsql.org/browse/ODBC-61,
+	 "SQL_C_BIT selection support"
+	- added build support of ODBC driver for MacOSX
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-76,
+	 "64 bit ODBC driver does not work in Kubuntu"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-134,
+	 "When inserting null data into multipl blob columns into a table the return value of SQLParamData return SQL_NEED_DATA when is should have return SQL_SUCCESS"		 
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-142,
+	 "Needs type casts to compile on Linux"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-145,
+	 "SQLPutData does not advance param counter when SQL_NULL_DATA is passed - SQLParamData always returns SQL_NEED_DATA"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-146,
+	 "Paramter length value SQL_DATA_AT_EXEC is ignored when statement was first used with length value set to SQL_NULL_DATA"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-149,
+	 "Input double parameters are modified when saving them as NUMERIC values"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-151,
+	 "64-bit ODBC driver crashes in Windows 8 x64"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-154,
+	 "DATETIME value 1800-01-01 as parameter for SQL statement produces "value out of range" error"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-155,
+	 "Internal error for a release build using the MSVC 2010 (or 2012) compiler"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-156,
+	 ""Reserved error (-7748); there is no message for this error" with MS Access on UTF8 DBs"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-157,
+	 "Internal Buffer of ConvertingString not initialised"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-159,
+	 "String conversion from wide char to utf8 does not handle surrogate pairs correctly"
+
+152)	- current BUILDNUM_VERSION set 152 Release 2.0.1 ( 19 Mar 2012 )
+	- fixed Linux x64 build
+	- updated Spanish interface of Firebird ODBC driver
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-75, http://tracker.firebirdsql.org/browse/ODBC-140
+	 "Parameter conversions broken (nulls are coming into driver)"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-109,
+	 "Transaction stay in active status (retaining) after select (update) statement"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-119,
+	 "When saving data type text in a field of type blob subtype 1, the information is being saved in binary form"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-120,
+	 "Wrong file names and information at Install\HtmlHelp.*"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-121,
+	 "Incorrect link to the Initial Developer's Public License in a help file"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-125,
+	 "Default parameters in stored procedures are not supported"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-129,
+	 "CLONE -SQLGetTypeInfo missing rows for unicode data types"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-132,
+	 "Incorrect SQL_DESC_TYPE_NAME for 'BLOB' data types"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-135,
+	 "Alpha Five v11 does not work with Firebird ODBC driver"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-139,
+	 "Crash when inserting values via prepared statements, bound integer value to char column"
+ 
+151)	- current BUILDNUM_VERSION set 151 Release ( 04 Apr 2011 )
+	- improved, URL: http://tracker.firebirdsql.org/browse/ODBC-82,
+	 "Help outdated"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-26,
+	 "SQLGetTypeInfo missing rows for unicode data types"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-33,
+	 "{t } and {d } escape secuences and space"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-34,
+	 "Wrong result of function {fn DAYOFWEEK()}"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-83, http://tracker.firebirdsql.org/browse/ODBC-112
+	 "SQLGetData is not consistent with SQL_DESC_DISPLAY_SIZE for timestamp column"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-86,
+	 "SQLGetTypeInfo return TypeName "FLOAT" but SQLColumns return TypeName "REAL" for column with this type"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-90, http://tracker.firebirdsql.org/browse/ODBC-92
+	 "Firebird ODBC DRIVER don't work properly when build database connection in server explorer of Visual Studio 2008 and 2010"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-94,
+	 "Incorrect sqlbindparameter and sqlbindcol SQLLEN* parameter"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-95,
+	 "SQLFreeHandle - exception instead of returning value"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-99,
+	 "ODBC driver 2.0 RC2 crashes in SQLFreeHandle"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-101,
+	 "Trusted Authentication does not work consistently"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-106,
+	 "Crash in SQLGetData with bookmarks"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-107,
+	 "Dynamic SQL Error -504 Cursor Unknown"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-111,
+	 "SQLGetTypeInfo for VARCHAR returns a maximum size of 32765 regardless of charset encoding"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-115,
+	 "Fetch type out of range errors when using OpenOffice"
+	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-116,
+	 "OpenOffice does not fetch first record after query execution"
+
 150)	- current BUILDNUM_VERSION set 150 RC2 ( 08 Nov 2010 )
 	- added build support in Visual Studio 2008 
 	- fixed bug, URL: http://tracker.firebirdsql.org/browse/ODBC-80, http://tracker.firebirdsql.org/browse/ODBC-64

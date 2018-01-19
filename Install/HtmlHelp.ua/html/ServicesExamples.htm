@@ -33,7 +33,7 @@
 <P>Створення бази даних
 <PRE> SQLConfigDataSource( NULL,
                       ODBC_ADD_DSN,
-                      "Firebird/InterBase(r) driver",
+                      "Firebird ODBC driver",
                       "ODBC\0"
                       "CREATE_DB = D:\\TestService\\test.fdb\0"
                       "DESCRIPTION = My Firebird database\0"
@@ -46,7 +46,7 @@
 <P>Резервування(копіювання) бази даних
 <PRE> SQLConfigDataSource( NULL,
                       ODBC_ADD_DSN,
-                      "Firebird/InterBase(r) driver",
+                      "Firebird ODBC driver",
                       "ODBC\0"
                       "BACKUP_DB = D:\\TestService\\test.fdb\0"
                       "BACKUPFILE = D:\\TestService\\test.fbk\0"
@@ -56,7 +56,7 @@
 <P>Відновлення бази даних
 <PRE> SQLConfigDataSource( NULL,
                       ODBC_ADD_DSN,
-                      "Firebird/InterBase(r) driver",
+                      "Firebird ODBC driver",
                       "ODBC\0"
                       "RESTORE_DB = D:\\TestService\\testNew.fdb\0"
                       "BACKUPFILE = D:\\TestService\\test.fbk\0"
@@ -67,7 +67,7 @@
 <P>Ремонт бази даних
 <PRE> SQLConfigDataSource( NULL,
                       ODBC_ADD_DSN,
-                      "Firebird/InterBase(r) driver",
+                      "Firebird ODBC driver",
                       "ODBC\0"
                       "REPAIR_DB = D:\\TestService\\test.fdb\0"
                       "UID         = SYSDBA\0"

@@ -54,7 +54,14 @@ IscResultSet::IscResultSet( IscStatement *iscStatement ) : IscStatementMetaData(
 
 IscResultSet::~IscResultSet()
 {
-	close();
+	try
+	{
+		close();
+	}
+	catch ( std::exception &ex )
+	{
+		fprintf (stdout, "Failed while deleting IscResultSet (exception: \"%s\")\n", ex.what()); 
+	}
 }
 
 StatementMetaData* IscResultSet::getMetaData()

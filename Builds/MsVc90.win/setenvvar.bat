@@ -17,7 +17,7 @@
 :SET_FB_TARGET_PLATFORM
 
 @if not defined FIREBIRD (
-  set FIREBIRD=C:\Program Files\Firebird\Firebird_2_1
+  set FIREBIRD=C:\Program Files\Firebird\Firebird_2_5
 )
 
 :: can be x86 or x64

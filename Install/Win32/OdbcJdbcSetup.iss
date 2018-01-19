@@ -136,10 +136,10 @@ Source: {#SOURCE_LIBS}OdbcFb.dll; DestDir: {sys}; Components: DeveloperComponent
 Source: {#SOURCE_LIBS}\OdbcFb.lib; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
 Source: {#SOURCE_LIBS}\OdbcFb.pdb; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
 #ifdef HtmlHelp
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DocumentationComponent; Flags: ignoreversion
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {sys}; Components: DocumentationComponent; Flags: ignoreversion
+Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DeveloperComponent DeploymentComponent
+Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
+Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DocumentationComponent
+Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {sys}; Components: DocumentationComponent
 Source: {#SOURCE_DOCS}\HtmlHelp\html\*.*; DestDir: {app}\html; Components: DocumentationComponent
 Source: {#SOURCE_DOCS}\HtmlHelp\images\*.*; DestDir: {app}\images; Components: DocumentationComponent
 #endif
@@ -148,12 +148,12 @@ Source: {#SOURCE_DOCS}\IDPLicense.txt; DestDir: {app}; Components: Documentation
 ;Source: {#SOURCE_DOCS}\ReleaseNotes_v2.0.html; DestDir: {app}; Components: DocumentationComponent
 
 #if PlatformTarget == "x64"
-Source: {#SOURCE_LIBS32}OdbcFb.dll; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile
+Source: {#SOURCE_LIBS32}OdbcFb.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace 32bit
 Source: {#SOURCE_LIBS32}\OdbcFb.lib; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent
 Source: {#SOURCE_LIBS32}\OdbcFb.pdb; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent
 #ifdef HtmlHelp
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent; Flags: ignoreversion
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DocumentationComponent; Flags: ignoreversion
+Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent
+Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DocumentationComponent
 #endif
 #endif
 
