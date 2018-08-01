@@ -1734,6 +1734,10 @@ SQLRETURN OdbcStatement::sqlDescribeCol(int col,
 	{
 		int realSqlType;
 		StatementMetaData *metaData = getStatementMetaDataIRD();
+
+		if ( col > metaData->getColumnCount() )
+			return sqlReturn (SQL_ERROR, "07009", "Invalid descriptor index");
+
 		const char *name = metaData->getColumnLabel (col);
 		setString (name, colName, nameSize, nameLength);
 		if (sqlType)
