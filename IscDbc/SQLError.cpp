@@ -176,7 +176,7 @@ SQLError::operator const char* ()
 return getText();
 }
 
-SQLError::SQLError( int code, int codefb, const char * txt, ...)
+SQLError::SQLError( int code, __int64 codefb, const char * txt, ...)
 {
 	va_list		args;
 	va_start	(args, txt);
@@ -190,7 +190,7 @@ SQLError::SQLError( int code, int codefb, const char * txt, ...)
 
 	text = temp;
 	sqlcode = (int) code;
-	fbcode = codefb;
+	fbcode = (int) codefb;
 }
 
 const char* SQLError::getTrace()
