@@ -34,7 +34,7 @@ public:
 	virtual int release();
 	virtual void addRef();
 	virtual const char* getTrace();
-	SQLError (int sqlcode, int fbcode, const char *text, ...);
+	SQLError (int sqlcode, __int64 fbcode, const char *text, ...);
 	SQLError (SqlCode sqlcode, const char *text, ...);
 	SQLError (Stream *trace, SqlCode code, const char *txt,...);
 	~SQLError() throw();

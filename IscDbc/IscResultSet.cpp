@@ -102,7 +102,7 @@ bool IscResultSet::nextFetch()
 	ISC_STATUS statusVector [20];
 
 	int dialect = statement->connection->getDatabaseDialect ();
-	int ret = statement->connection->GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
+	ISC_STATUS ret = statement->connection->GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
 
 	if (ret)
 	{
@@ -128,7 +128,7 @@ bool IscResultSet::next()
 	ISC_STATUS statusVector [20];
 
 	int dialect = statement->connection->getDatabaseDialect ();
-	int ret = statement->connection->GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
+	ISC_STATUS ret = statement->connection->GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
 
 	if (ret)
 	{
@@ -181,7 +181,7 @@ bool IscResultSet::readStaticCursor()
 
 	int dialect = statement->connection->getDatabaseDialect ();
 	CFbDll * GDS = statement->connection->GDS;
-	int ret;
+	ISC_STATUS ret;
 
 	sqlda->initStaticCursor ( statement );
 	

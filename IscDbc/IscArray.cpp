@@ -366,7 +366,7 @@ void IscArray::getBytesFromArray()
 	isc_tr_handle transactionHandle = statement->startTransaction();
 	ISC_LONG lenbuf = arrBufDataSize;
 
-	int ret = connection->GDS->_array_get_slice(statusVector, &connection->databaseHandle, &transactionHandle,
+	ISC_STATUS ret = connection->GDS->_array_get_slice(statusVector, &connection->databaseHandle, &transactionHandle,
 		arrayId, &arrDesc, arrBufData, &lenbuf);
 
 	if ( ret )
@@ -722,7 +722,7 @@ void IscArray::writeArray(Value * value)
 
 	memset( arrayId, 0, sizeof ( ISC_QUAD ));
 
-	int ret = connection->GDS->_array_put_slice(statusVector, &connection->databaseHandle, &transactionHandle,
+	ISC_STATUS ret = connection->GDS->_array_put_slice(statusVector, &connection->databaseHandle, &transactionHandle,
 		arrayId, &arrDesc, arrBufData, &lenbuf);
 	if (ret || lenbuf != arrBufDataSize)
 		THROW_ISC_EXCEPTION (connection, statusVector);

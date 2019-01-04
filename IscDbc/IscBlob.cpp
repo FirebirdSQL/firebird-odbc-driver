@@ -121,7 +121,7 @@ void IscBlob::fetchBlob()
 	isc_tr_handle transactionHandle = statement->startTransaction();
 	isc_blob_handle blobHandle = NULL;
 
-	int ret = connection->GDS->_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
+	ISC_STATUS ret = connection->GDS->_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
 							  &blobHandle, &blobId, 0, NULL);
 
 	if (ret)
@@ -132,7 +132,7 @@ void IscBlob::fetchBlob()
 
 	for (;;)
 		{
-		int ret = connection->GDS->_get_segment (statusVector, &blobHandle, &length, sizeof (buffer), buffer);
+		ISC_STATUS ret = connection->GDS->_get_segment (statusVector, &blobHandle, &length, sizeof (buffer), buffer);
 		if (ret)
 			if (ret == isc_segstr_eof)
 				break;
@@ -298,7 +298,7 @@ void IscBlob::directOpenBlob( char * sqldata )
 		GDS->_close_blob (statusVector, &directBlobHandle);
 
 	isc_tr_handle transactionHandle = statement->startTransaction();
-	int ret = GDS->_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
+	ISC_STATUS ret = GDS->_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
 							  &directBlobHandle, (ISC_QUAD*) sqldata, 0, NULL);
 	if (ret)
 		THROW_ISC_EXCEPTION (connection, statusVector);
@@ -332,7 +332,7 @@ bool IscBlob::directFetchBlob( char * bufData, int lenData, int &lenRead )
 		CFbDll * GDS = connection->GDS;
 		int post = lenData > DEFAULT_BLOB_BUFFER_LENGTH ? DEFAULT_BLOB_BUFFER_LENGTH : lenData;
 		char *data = bufData;
-		int ret;
+		ISC_STATUS ret;
 
 		while ( lenData )
 		{
@@ -371,7 +371,7 @@ bool IscBlob::directGetSegmentToHexStr( char * bufData, int lenData, int &lenRea
 		CFbDll * GDS = connection->GDS;
 		int post = lenData > DEFAULT_BLOB_BUFFER_LENGTH ? DEFAULT_BLOB_BUFFER_LENGTH : lenData;
 		char *data = bufData;
-		int ret;
+		ISC_STATUS ret;
 
 		while ( lenData )
 		{
