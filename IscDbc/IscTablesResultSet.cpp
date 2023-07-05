@@ -59,8 +59,8 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 	if (catalog && *catalog)
 		addString(pt, catalog);
 	addString(pt, "' as varchar(255)) as table_cat,\n"									// 1
-					  "cast (tbl.rdb$owner_name as varchar(31)) as table_schem,\n"		// 2
-					  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
+					  "cast (tbl.rdb$owner_name as varchar(63)) as table_schem,\n"		// 2
+					  "cast (tbl.rdb$relation_name as varchar(63)) as table_name,\n"	// 3
 					  "cast ('TABLE' as varchar(13)) as table_type,\n"					// 4
 					  "cast (NULL as varchar(255)) as remarks,\n"						// 5
 					  "tbl.rdb$system_flag,\n"											// 6
@@ -84,9 +84,9 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 			pt = ptSql;
 			addString(pt, "select cast( '");
 			addString(pt, metaData->getDSN());
-			addString(pt, "' as varchar(31)) as table_cat,\n"	        // 1
-				    "cast (NULL as varchar(31)) as table_schem,\n"		// 2
-					"cast (NULL as varchar(31)) as table_name,\n"		// 3
+			addString(pt, "' as varchar(63)) as table_cat,\n"	        // 1
+				    "cast (NULL as varchar(63)) as table_schem,\n"		// 2
+					"cast (NULL as varchar(63)) as table_name,\n"		// 3
 					"cast (NULL as varchar(13)) as table_type,\n"		// 4
 					"cast (NULL as varchar(255)) as remarks\n"			// 5
 					"from rdb$database tbl\n");
@@ -102,8 +102,8 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 			&& !(tableNamePattern && *tableNamePattern) )
 		{
 			ptSql = "select distinct cast (NULL as varchar(7)) as table_cat,\n"	 // 1
-			        "cast (tbl.rdb$owner_name as varchar(31)) as table_schem,\n" // 2
-					"cast (NULL as varchar(31)) as table_name,\n"				 // 3
+			        "cast (tbl.rdb$owner_name as varchar(63)) as table_schem,\n" // 2
+					"cast (NULL as varchar(63)) as table_name,\n"				 // 3
 					"cast (NULL as varchar(13)) as table_type,\n"				 // 4
 					"cast (NULL as varchar(255)) as remarks\n"					 // 5
 				    "from rdb$relations tbl\n";
@@ -117,8 +117,8 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 			&& !(tableNamePattern && *tableNamePattern) )
 		{
 			ptSql = "select cast (NULL as varchar(7)) as table_cat,\n"		// 1
-				    "cast (NULL as varchar(31)) as table_schem,\n"			// 2
-					"cast (NULL as varchar(31)) as table_name,\n"			// 3
+				    "cast (NULL as varchar(63)) as table_schem,\n"			// 2
+					"cast (NULL as varchar(63)) as table_name,\n"			// 3
 					"cast ('SYSTEM TABLE' as varchar(13)) as table_type,\n"	// 4
 					"cast (NULL as varchar(255)) as remarks\n"				// 5
 					"from rdb$database tbl\n";
