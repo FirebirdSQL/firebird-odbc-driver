@@ -136,7 +136,7 @@
 #define ZERO_BUILDNUM
 #endif
 
-#define BUILD_DRIVER_VERSION(major,minor,buildnum) major"."minor"."buildnum
+#define BUILD_DRIVER_VERSION(major,minor,buildnum) major "." minor "." buildnum
 #ifdef __BORLANDC__
 #define BUILD_VERSION_STR(major,minor,revno,buildnum) major "." minor "." "0" "." buildnum
 #else
