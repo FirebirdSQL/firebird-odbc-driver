@@ -50,6 +50,7 @@ static char databaseInfoItems [] = {
 	isc_info_end 
 	};
 
+using namespace Firebird;
 
 namespace IscDbcLibrary {
 
@@ -78,10 +79,20 @@ Attachment::Attachment()
 
 Attachment::~Attachment()
 {
-	ISC_STATUS statusVector [20];
+	if ( GDS && databaseHandle ) {
 
-	if (databaseHandle)
-		GDS->_detach_database (statusVector, &databaseHandle);
+		ThrowStatusWrapper status( GDS->_status );
+		try
+		{
+			databaseHandle->detach( &status );
+			databaseHandle = nullptr;
+		}
+		catch( ... )
+		{
+			if( databaseHandle ) databaseHandle->release();
+			databaseHandle = nullptr;
+		}
+	}
 
 	if( GDS )
 	{
@@ -156,20 +167,17 @@ void Attachment::createDatabase(const char *dbName, Properties *properties)
 		p += sprintf( p, "DEFAULT CHARACTER SET %s ", charset );
 
 	*p = '\0';
-
-	isc_tr_handle   trans = NULL;
-	ISC_STATUS      statusVector[20];
-
-	if ( GDS->_dsql_execute_immediate( statusVector, &databaseHandle, &trans, 0, (char*)sql, databaseDialect, NULL ) )
-    {
-		if ( statusVector[1] )
-			throw SQLEXCEPTION ( GDS->_sqlcode( statusVector ), statusVector [1], getIscStatusText( statusVector ) );
-	}
 	
-	if ( trans && GDS->_commit_transaction( statusVector, &trans ) )
-    {
-		if ( statusVector[1] )
-			throw SQLEXCEPTION ( GDS->_sqlcode( statusVector ), statusVector [1], getIscStatusText( statusVector ) );
+	ThrowStatusWrapper status( GDS->_status );
+	try
+	{
+		databaseHandle =
+			GDS->_master->getUtilInterface()->executeCreateDatabase( &status, strlen(sql), sql, databaseDialect, nullptr );
+	}
+	catch( const FbException& error )
+	{
+		const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
 	}
 }
 
@@ -182,102 +190,101 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 
 	isRoles = false;
 	databaseName = dbName;
-	char dpb [2048], *p = dpb;
-	*p++ = isc_dpb_version1;
+	const char emptyStr[] = "";
 
-	const char *user = properties->findValue ("user", NULL);
-
-	if (user && *user)
+	IUtil* utl = GDS->_master->getUtilInterface();
+	ThrowStatusWrapper throw_status( GDS->_status );
+	IXpbBuilder* dpb = nullptr;
+	try
 	{
-		userName = user;
-		userAccess = user;
-		userType = 8;
-		*p++ = isc_dpb_user_name,
-		*p++ = (char)strlen (user);
-		for (const char *q = user; *q;)
-			*p++ = *q++;
+		dpb = utl->getXpbBuilder(&throw_status, IXpbBuilder::DPB, NULL, 0);
+
+		const char *user = properties->findValue ("user", NULL);
+
+		if (user && *user)
+		{
+			userName = user;
+			userAccess = user;
+			userType = 8;
+			dpb->insertString( &throw_status, isc_dpb_user_name, user );
+		}
+		else
+		{
+			dpb->insertString( &throw_status, isc_dpb_user_name, emptyStr );
+		}
+
+		const char *password = properties->findValue ("password", NULL);
+
+		if (password && *password)
+		{
+			dpb->insertString( &throw_status, isc_dpb_password, password );
+		}
+		else
+		{
+			dpb->insertString( &throw_status, isc_dpb_password, emptyStr );
+		}
+
+		const char *timeout = properties->findValue ("timeout", NULL);
+
+		if (timeout && *timeout)
+		{
+			connectionTimeout = atoi(timeout);
+			dpb->insertInt(&throw_status, isc_dpb_connect_timeout, connectionTimeout);
+		}
+
+		const char *role = properties->findValue ("role", NULL);
+
+		if (role && *role)
+		{
+			userAccess = role;
+
+			char *ch = (char *)(const char *)userAccess;
+			while ( (*ch = UPPER ( *ch )) )
+				++ch;
+
+			userType = 13;
+			isRoles = true;
+
+			dpb->insertString(&throw_status, isc_dpb_sql_role_name, role);
+		}
+
+		const char *charset = properties->findValue ("charset", NULL);
+		if ( !charset )
+			charset = properties->findValue ("characterset", NULL);
+
+		if (charset && *charset)
+		{
+			dpb->insertString(&throw_status, isc_dpb_lc_ctype, charset);
+			charsetCode = findCharsetsCode( charset );
+		}
+
+		const char *property = properties->findValue ("databaseAccess", NULL);
+
+		if ( property )
+			databaseAccess = (int)(*property - '0');
+		else
+			databaseAccess = 0;
 	}
-	else
+	catch( const FbException& error )
 	{
-		*p++ = isc_dpb_user_name,
-		*p++ = 0;
+		if( dpb ) dpb->dispose();
+		const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
 	}
 
-	const char *password = properties->findValue ("password", NULL);
+	CheckStatusWrapper check_status( GDS->_status );
 
-	if (password && *password)
+	databaseHandle =
+		GDS->_prov->attachDatabase( &check_status, dbName, dpb->getBufferLength(&check_status), dpb->getBuffer(&check_status) );
+
+	dpb->dispose();
+	dpb = nullptr;
+
+	if ( check_status.getState() & IStatus::STATE_ERRORS )
 	{
-		*p++ = isc_dpb_password,
-		*p++ = (char)strlen (password);
-		for (const char *q = password; *q;)
-			*p++ = *q++;
-	}
-	else
-	{
-		*p++ = isc_dpb_password,
-		*p++ = 0;
-	}
+		const ISC_STATUS * statusVector = check_status.getErrors();
 
-	const char *timeout = properties->findValue ("timeout", NULL);
-
-	if (timeout && *timeout)
-	{
-		connectionTimeout = atoi(timeout);
-
-		*p++ = isc_dpb_connect_timeout;
-		*p++ = sizeof (int);
-		*p++ = (char)connectionTimeout;
-		*p++ = (char)(connectionTimeout >> 8);
-		*p++ = (char)(connectionTimeout >> 16);
-		*p++ = (char)(connectionTimeout >> 24);
-	}
-
-	const char *role = properties->findValue ("role", NULL);
-
-	if (role && *role)
-	{
-		userAccess = role;
-
-		char *ch = (char *)(const char *)userAccess;
-		while ( (*ch = UPPER ( *ch )) )
-			++ch;
-
-		userType = 13;
-		isRoles = true;
-		*p++ = isc_dpb_sql_role_name;
-		*p++ = (char)strlen (role);
-		for (const char *q = role; *q;)
-			*p++ = *q++;
-	}
-
-	const char *charset = properties->findValue ("charset", NULL);
-	if ( !charset )
-		charset = properties->findValue ("characterset", NULL);
-
-	if (charset && *charset)
-	{
-		*p++ = isc_dpb_lc_ctype;
-		*p++ = (char)strlen (charset);
-		for (const char *q = charset; *q;)
-			*p++ = *q++;
-
-		charsetCode = findCharsetsCode( charset );
-	}
-
-	const char *property = properties->findValue ("databaseAccess", NULL);
-
-	if ( property )
-		databaseAccess = (int)(*property - '0');
-	else
-		databaseAccess = 0;
-
-	int dpbLength = p - dpb;
-	ISC_STATUS statusVector [20];
-
-	if (GDS->_attach_database (statusVector, (short)strlen (dbName), (char*) dbName, &databaseHandle, 
-							 dpbLength, dpb))
-	{
-		if ( statusVector [1] == 335544344l )
+		if ( statusVector [1] == isc_io_error )
 		{
 			if ( databaseAccess == CREATE_DB )
 				createDatabase( dbName, properties );
@@ -300,25 +307,35 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 					break;
 				}
 
-				throw SQLEXCEPTION ( GDS->_sqlcode( statusVector ), statusVector [1], text );
+				throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], text );
 			}
 		}
 		else
-			throw SQLEXCEPTION ( GDS->_sqlcode( statusVector ), statusVector [1], getIscStatusText( statusVector ) );
+			throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( &check_status ) );
 	}
 	else if ( databaseAccess == DROP_DB )
 	{
-		if ( GDS->_drop_database ( statusVector, &databaseHandle ) )
-			throw SQLEXCEPTION ( GDS->_sqlcode( statusVector ), statusVector [1], getIscStatusText( statusVector ) );
+		try
+		{
+			databaseHandle->dropDatabase( &throw_status );
+		}
+		catch( const FbException& error )
+		{
+			const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+			throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+		}
 		return;
 	}
 
 	char result [2048];
 	databaseDialect = SQL_DIALECT_V5;
 
-	if (!GDS->_database_info (statusVector, &databaseHandle, sizeof (databaseInfoItems), databaseInfoItems, sizeof (result), result))
+	databaseHandle->getInfo( &check_status, sizeof (databaseInfoItems),
+	                         (const unsigned char*)databaseInfoItems, sizeof (result), (unsigned char*)result );
+
+	if( ( check_status.getState() & IStatus::STATE_ERRORS ) == 0 )
 	{
- 		for (p = result; p < result + sizeof (result) && *p != isc_info_end;)
+		for (auto p = result; p < result + sizeof (result) && *p != isc_info_end;)
 		{
 			char item = *p++;
 			int length = GDS->_vax_integer (p, 2);
@@ -455,7 +472,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	else
 		databaseDialect = SQL_DIALECT_V6;
 
-	property = properties->findValue ("quoted", NULL);
+	const char* property = properties->findValue ("quoted", NULL);
 
 	if ( property && *property == 'Y')
 		quotedIdentifier = true;
@@ -510,24 +527,6 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		dsn = property;
 
 	checkAdmin();
-}
-
-JString Attachment::getIscStatusText(ISC_STATUS * statusVector)
-{
-	char text[4096], *p = text;
-
-	while ( GDS->_interprete( p, &statusVector  ) )
-	{
-		while ( *p ) ++p;
-		*p++ = '\n';
-	}
-
-	if ( p > text )
-		--p;
-
-	*p = 0;
-
-	return text;
 }
 
 void Attachment::addRef()

@@ -34,8 +34,10 @@
 #include "IscStatement.h"
 #include "Value.h"
 
-namespace IscDbcLibrary {
+using namespace Firebird;
 
+namespace IscDbcLibrary {
+/*
 #define SET_SQLVAR(index, name, type, prec, offset)			\
 {															\
 	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar + index - 1;	\
@@ -53,7 +55,7 @@ namespace IscDbcLibrary {
 
 #define SET_INDICATOR_VAL(col,type,isNull)  if ( isNull && (*(type*)(var[col].sqldata + sqldataOffsetPtr)) == -1 ) *var[col].sqlind = -1; else *var[col].sqlind = 0;
 #define SET_INDICATOR_STR(col)  if ( ((char*)(var[col].sqldata + sqldataOffsetPtr)) == NULL || !strlen(((char*)(var[col].sqldata + sqldataOffsetPtr))) ) *var[col].sqlind = -1; else *var[col].sqlind = (short)strlen((char*)(var[col].sqldata + sqldataOffsetPtr)) + 1;
-
+*/
 struct Types {
 	char	label;
 	short	lenTypeName;
@@ -82,65 +84,74 @@ struct Types {
 	short	typeIntervalPrecision;
     };
 
-#define NO_NULLS			0		// SQL_NO_NULLS
-#define NULLABLE			1		// SQL_NULLABLE
-#define CASE_SENSITIVE		1		// SQL_TRUE
-#define CASE_INSENSITIVE	0		// SQL_FALSE
-#define IS_SIGNED			1		// SQL_TRUE
-#define NOT_SIGNED			0		// SQL_FALSE
-#define NOT_NUMERIC			-1
-#define SEARCHABLE_EXCEPT_LIKE  2	// SQL_ALL_EXCEPT_LIKE
-#define SEARCHABLE			3		// SQL_SEARCHABLE
-#define UNSEARCHABLE		0		// SQL_UNSEARCHABLE
-#define MONEY				1		// SQL_TRUE
-#define NOT_MONEY			0		// SQL_FALSE
-#define NOT_AUTO_INCR		0		// SQL_FALSE
-#define UNSCALED			-1
+#define F_NO_NULLS					0		// SQL_NO_NULLS
+#define F_NULLABLE					1		// SQL_NULLABLE
+#define F_CASE_SENSITIVE			1		// SQL_TRUE
+#define F_CASE_INSENSITIVE			0		// SQL_FALSE
+#define F_IS_SIGNED					1		// SQL_TRUE
+#define F_NOT_SIGNED				0		// SQL_FALSE
+#define F_NOT_NUMERIC				-1
+#define F_SEARCHABLE_EXCEPT_LIKE	2		// SQL_ALL_EXCEPT_LIKE
+#define F_SEARCHABLE				3		// SQL_SEARCHABLE
+#define F_UNSEARCHABLE				0		// SQL_UNSEARCHABLE
+#define F_MONEY						1		// SQL_TRUE
+#define F_NOT_MONEY					0		// SQL_FALSE
+#define F_NOT_AUTO_INCR				0		// SQL_FALSE
+#define F_UNSCALED					-1
 
 #define TYPE_SQL_DATETIME	9
 
-#define ALPHA(type,code,prec) 0,sizeof(type)-1,type,code,prec,1,"'",1,"'",6,"length",NULLABLE,CASE_SENSITIVE,SEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
-#define BLOB(type,code,prec,prefix,suffix,casesensitive) 0,sizeof(type)-1,type,code,prec,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",NULLABLE,casesensitive,UNSEARCHABLE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,UNSCALED,UNSCALED,code,NOT_NUMERIC,NOT_NUMERIC,NOT_NUMERIC
-#define NUMERIC_TINYINT(type,code,prec,attr,min,max,numprecradix) 0,sizeof(type)-1,type,code,prec,0,"",0,"",sizeof(attr)-1,attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,IS_SIGNED,NOT_MONEY,NOT_AUTO_INCR,25,"CHAR CHARACTER SET OCTETS",min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
-#define NUMERIC(type,code,prec,attr,min,max,numprecradix) 0,sizeof(type)-1,type,code,prec,0,"",0,"",sizeof(attr)-1,attr,NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_SIGNED,NOT_MONEY,NOT_AUTO_INCR,sizeof(type)-1,type,min,max,code,NOT_NUMERIC,numprecradix,NOT_NUMERIC
-#define DATE(type,code,prec,prefix,suffix,datetimesub) 0,sizeof(type)-1,type,code,prec,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,UNSCALED,UNSCALED,TYPE_SQL_DATETIME,datetimesub,NOT_NUMERIC,NOT_NUMERIC
-#define DATETIME(type,code,prec,prefix,suffix,datetimesub) 0,sizeof(type)-1,type,code,prec,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",NULLABLE,CASE_INSENSITIVE,SEARCHABLE_EXCEPT_LIKE,NOT_NUMERIC,NOT_MONEY,NOT_NUMERIC,sizeof(type)-1,type,0,4,TYPE_SQL_DATETIME,datetimesub,NOT_NUMERIC,NOT_NUMERIC
+#define ALPHA(type,code,prec) 0,sizeof(type)-1,type,code,prec,1,"'",1,"'",6,"length",F_NULLABLE,F_CASE_SENSITIVE,F_SEARCHABLE,F_NOT_NUMERIC,F_NOT_MONEY,F_NOT_NUMERIC,sizeof(type)-1,type,F_UNSCALED,F_UNSCALED,code,F_NOT_NUMERIC,F_NOT_NUMERIC,F_NOT_NUMERIC
+#define BLOB(type,code,prec,prefix,suffix,casesensitive) 0,sizeof(type)-1,type,code,prec,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",F_NULLABLE,casesensitive,F_UNSEARCHABLE,F_NOT_NUMERIC,F_NOT_MONEY,F_NOT_NUMERIC,sizeof(type)-1,type,F_UNSCALED,F_UNSCALED,code,F_NOT_NUMERIC,F_NOT_NUMERIC,F_NOT_NUMERIC
+#define NUMERIC_TINYINT(type,code,prec,attr,min,max,numprecradix) 0,sizeof(type)-1,type,code,prec,0,"",0,"",sizeof(attr)-1,attr,F_NULLABLE,F_CASE_INSENSITIVE,F_SEARCHABLE_EXCEPT_LIKE,F_IS_SIGNED,F_NOT_MONEY,F_NOT_AUTO_INCR,25,"CHAR CHARACTER SET OCTETS",min,max,code,F_NOT_NUMERIC,numprecradix,F_NOT_NUMERIC
+#define NUMERIC(type,code,prec,attr,min,max,numprecradix) 0,sizeof(type)-1,type,code,prec,0,"",0,"",sizeof(attr)-1,attr,F_NULLABLE,F_CASE_INSENSITIVE,F_SEARCHABLE_EXCEPT_LIKE,F_NOT_SIGNED,F_NOT_MONEY,F_NOT_AUTO_INCR,sizeof(type)-1,type,min,max,code,F_NOT_NUMERIC,numprecradix,F_NOT_NUMERIC
+#define DATE(type,code,prec,prefix,suffix,datetimesub) 0,sizeof(type)-1,type,code,prec,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",F_NULLABLE,F_CASE_INSENSITIVE,F_SEARCHABLE_EXCEPT_LIKE,F_NOT_NUMERIC,F_NOT_MONEY,F_NOT_NUMERIC,sizeof(type)-1,type,F_UNSCALED,F_UNSCALED,TYPE_SQL_DATETIME,datetimesub,F_NOT_NUMERIC,F_NOT_NUMERIC
+#define DATETIME(type,code,prec,prefix,suffix,datetimesub) 0,sizeof(type)-1,type,code,prec,sizeof(prefix)-1,prefix,sizeof(suffix)-1,suffix,0,"",F_NULLABLE,F_CASE_INSENSITIVE,F_SEARCHABLE_EXCEPT_LIKE,F_NOT_NUMERIC,F_NOT_MONEY,F_NOT_NUMERIC,sizeof(type)-1,type,0,4,TYPE_SQL_DATETIME,datetimesub,F_NOT_NUMERIC,F_NOT_NUMERIC
 
 static Types types [] = 
 {
 	ALPHA ("CHAR", JDBC_CHAR, MAX_CHAR_LENGTH),
 	ALPHA ("VARCHAR", JDBC_VARCHAR, MAX_VARCHAR_LENGTH),
-	BLOB ("BLOB SUB_TYPE TEXT", JDBC_LONGVARCHAR, MAX_BLOB_LENGTH, "'","'",CASE_SENSITIVE),
+	BLOB ("BLOB SUB_TYPE TEXT", JDBC_LONGVARCHAR, MAX_BLOB_LENGTH, "'","'",F_CASE_SENSITIVE),
 	ALPHA ("CHAR(x) CHARACTER SET UNICODE_FSS", JDBC_WCHAR, MAX_WCHAR_LENGTH),
 	ALPHA ("VARCHAR(x) CHARACTER SET UNICODE_FSS", JDBC_WVARCHAR, MAX_WVARCHAR_LENGTH),
-	BLOB ("BLOB SUB_TYPE TEXT CHARACTER SET UNICODE_FSS", JDBC_WLONGVARCHAR, MAX_WLONGVARCHAR_LENGTH, "'","'",CASE_SENSITIVE),
-	BLOB ("BLOB SUB_TYPE 0", JDBC_LONGVARBINARY, MAX_BLOB_LENGTH, "","",CASE_INSENSITIVE),
-	BLOB ("BLOB SUB_TYPE 0", JDBC_VARBINARY, MAX_BLOB_LENGTH, "","",CASE_INSENSITIVE),
-	BLOB ("BLOB SUB_TYPE 0", JDBC_BINARY, MAX_BLOB_LENGTH, "","",CASE_INSENSITIVE),
+	BLOB ("BLOB SUB_TYPE TEXT CHARACTER SET UNICODE_FSS", JDBC_WLONGVARCHAR, MAX_WLONGVARCHAR_LENGTH, "'","'",F_CASE_SENSITIVE),
+	BLOB ("BLOB SUB_TYPE 0", JDBC_LONGVARBINARY, MAX_BLOB_LENGTH, "","",F_CASE_INSENSITIVE),
+	BLOB ("BLOB SUB_TYPE 0", JDBC_VARBINARY, MAX_BLOB_LENGTH, "","",F_CASE_INSENSITIVE),
+	BLOB ("BLOB SUB_TYPE 0", JDBC_BINARY, MAX_BLOB_LENGTH, "","",F_CASE_INSENSITIVE),
 	NUMERIC ("NUMERIC", JDBC_NUMERIC, MAX_NUMERIC_LENGTH, "precision,scale", 0, MAX_NUMERIC_LENGTH, 10),
 	NUMERIC ("DECIMAL", JDBC_DECIMAL, MAX_DECIMAL_LENGTH, "precision,scale", 0, MAX_DECIMAL_LENGTH, 10),
 	NUMERIC ("INTEGER", JDBC_INTEGER, MAX_INT_LENGTH, "", 0, 0, 10),
 	NUMERIC ("SMALLINT", JDBC_TINYINT, MAX_SMALLINT_LENGTH, "", 0, 0, 10),
 	NUMERIC ("SMALLINT", JDBC_SMALLINT, MAX_SMALLINT_LENGTH, "", 0, 0, 10),	
-	NUMERIC ("DOUBLE PRECISION", JDBC_FLOAT, MAX_DOUBLE_DIGIT_LENGTH, "", UNSCALED, UNSCALED, 2),
-	NUMERIC ("FLOAT", JDBC_REAL, MAX_FLOAT_DIGIT_LENGTH, "", UNSCALED, UNSCALED, 2),
-	NUMERIC ("DOUBLE PRECISION", JDBC_DOUBLE, MAX_DOUBLE_DIGIT_LENGTH, "", UNSCALED, UNSCALED, 2),
+	NUMERIC ("DOUBLE PRECISION", JDBC_FLOAT, MAX_DOUBLE_DIGIT_LENGTH, "", F_UNSCALED, F_UNSCALED, 2),
+	NUMERIC ("FLOAT", JDBC_REAL, MAX_FLOAT_DIGIT_LENGTH, "", F_UNSCALED, F_UNSCALED, 2),
+	NUMERIC ("DOUBLE PRECISION", JDBC_DOUBLE, MAX_DOUBLE_DIGIT_LENGTH, "", F_UNSCALED, F_UNSCALED, 2),
 	NUMERIC ("BIGINT", JDBC_BIGINT, MAX_QUAD_LENGTH,"", 0, MAX_QUAD_LENGTH, 10),
-	NUMERIC ("BOOLEAN", JDBC_BOOLEAN, MAX_BOOLEAN_LENGTH, "", UNSCALED, UNSCALED, NOT_NUMERIC),
+	NUMERIC ("BOOLEAN", JDBC_BOOLEAN, MAX_BOOLEAN_LENGTH, "", F_UNSCALED, F_UNSCALED, F_NOT_NUMERIC),
 	DATE("DATE",JDBC_DATE,MAX_DATE_LENGTH,"{d'","'}",1),
 	DATETIME("TIME",JDBC_TIME,MAX_TIME_LENGTH,"{t'","'}",2),
 	DATETIME("TIMESTAMP",JDBC_TIMESTAMP,MAX_TIMESTAMP_LENGTH,"{ts'","'}",3)
 };
 
+static constexpr size_t TYPES_SIZE = sizeof (types) / sizeof (types [0]);
+static constexpr size_t EXPECTED_TYPES_SIZE = 22;
+static_assert( TYPES_SIZE == EXPECTED_TYPES_SIZE, "TypesResultSet.cpp::types array length != 22" );
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCharacter) : IscResultSet (NULL)
+TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCharacter, IscConnection* conn) :
+	IscResultSet{nullptr},
+	outputSqlda {conn},
+	status      {conn->GDS->_status},
+	typesOutputHelper{&status, conn->GDS->_master},
+	localBuffer {TYPES_SIZE}
 {	
 	dataTypes = dataType;
 
-	int endRow = sizeof (types) / sizeof (types [0]);
+	int endRow = TYPES_SIZE;
 
 	if ( appOdbcVersion == 3 ) // SQL_OV_ODBC3
 	{
@@ -189,13 +200,64 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCha
 	types[1].typePrecision = MAX_VARCHAR_LENGTH / bytesPerCharacter;
 	types[2].typePrecision = MAX_BLOB_LENGTH / bytesPerCharacter;
 
+	sqlda = &outputSqlda;
+	sqlda->allocBuffer( statement, typesOutputHelper.getMetadata() );
+
+	auto * typePtr = types;
+
+#define	HLP_SET_STR(FLDNAME,LEN,STR,MAX_SIZE) \
+		typesOutputHelper->FLDNAME.length = typePtr->LEN; \
+		strncpy( typesOutputHelper->FLDNAME.str, typePtr->STR, MAX_SIZE ); \
+		typesOutputHelper->FLDNAME##Null = FB_FALSE;
+
+#define HLP_SET_INT(FLDNAME,VAL) \
+		typesOutputHelper->FLDNAME = typePtr->VAL; \
+		typesOutputHelper->FLDNAME##Null = FB_FALSE;
+
+	for( auto & v : localBuffer )
+	{
+		typesOutputHelper.clear();
+
+		HLP_SET_STR( TYPE_NAME, lenTypeName, typeName, 50 );
+		HLP_SET_INT( DATA_TYPE, typeType );
+		HLP_SET_INT( COLUMN_SIZE, typePrecision );
+		HLP_SET_STR( LITERAL_PREFIX, lenTypePrefix, typePrefix, 6 );
+		HLP_SET_STR( LITERAL_SUFFIX, lenTypeSuffix, typeSuffix, 6 );
+		HLP_SET_STR( CREATE_PARAMS, lenTypeParams, typeParams, 20 );
+		HLP_SET_INT( NULLABLE, typeNullable );
+		HLP_SET_INT( CASE_SENSITIVE, typeCaseSensitive );
+		HLP_SET_INT( SEARCHABLE, typeSearchable );
+		HLP_SET_INT( UNSIGNED_ATTRIBUTE, typeUnsigned );
+		HLP_SET_INT( FIXED_PREC_SCALE, typeMoney );
+		HLP_SET_INT( AUTO_UNIQUE_VALUE, typeAutoIncrement );
+		HLP_SET_STR( LOCAL_TYPE_NAME, lenTypeLocalName, typeLocalName, 50 );
+		HLP_SET_INT( MINIMUM_SCALE, typeMinScale );
+		HLP_SET_INT( MAXIMUM_SCALE, typeMaxScale );
+		HLP_SET_INT( SQL_DATA_TYPE, typeSqlDataType );
+		HLP_SET_INT( SQL_DATETIME_SUB, typeDateTimeSub );
+		HLP_SET_INT( NUM_PREC_RADIX, typeNumPrecRadix );
+		HLP_SET_INT( INTERVAL_PRECISION, typeIntervalPrecision );
+
+		++typePtr;
+
+		auto * buf = (char *)typesOutputHelper.getData();
+		auto buflen = typesOutputHelper.getMetadata()->getMessageLength(&status);
+		v.assign( buf, buf + buflen );
+	}
+	sqlda->buffer.assign( localBuffer[0].begin(), localBuffer[0].end() );	// jump to the first row
+
+#undef	HLP_SET_INT
+#undef	HLP_SET_STR
+
 	recordNumber = 0;
-	numberColumns = 19;
+	numberColumns = sqlda->columnsCount;
 	values.alloc (numberColumns);
 	allocConversions();
 
+	//dark magic here, ptr is out of bounds?..
+	sqldataOffsetPtr = NULL;
+/*
 	indicators = (SQLLEN*)calloc( 1, sizeof(SQLLEN) * numberColumns );
-	sqlda = &outputSqlda;
 	((XSQLDA*)*sqlda)->sqld = numberColumns;
 	sqldataOffsetPtr = (uintptr_t)types - sizeof (*types);
 	sqlda->orgsqlvar = new CAttrSqlVar [numberColumns];
@@ -230,11 +292,14 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCha
 		*orgvar++ = var;
 		(var++)->sqlind = (short*)ind++;
 	}
+*/
 }
 
 TypesResultSet::~TypesResultSet()
 {
+	/*
 	free(indicators);
+	*/
 }
 
 bool TypesResultSet::nextFetch()
@@ -250,14 +315,22 @@ bool TypesResultSet::nextFetch()
 			recordNumber = 1;
 			return false;
 		}
-		sqldataOffsetPtr = (uintptr_t)types + (recordNumber - 1) * sizeof (*types);
 	}
 
-	if (++recordNumber > sizeof (types) / sizeof (types [0]))
+	if (++recordNumber > TYPES_SIZE)
 		return false;
 
-	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar;
-	sqldataOffsetPtr += sizeof (*types);
+	//XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar;
+	auto * var = sqlda->orgsqlvar;
+	sqldataOffsetPtr = (size_t)localBuffer[ recordNumber - 1 ].data();
+
+#define SET_INDICATOR_VAL(col,type,isNull) \
+	var[col].assignBuffer( localBuffer[ recordNumber - 1 ].data() ); \
+	if ( isNull && (*(type*)(var[col].sqldata)) == -1 ) *var[col].sqlind = -1;
+
+#define SET_INDICATOR_STR(col) \
+	var[col].assignBuffer( localBuffer[ recordNumber - 1 ].data() ); \
+	if ( *(short*)(var[col].sqldata) == 0 ) *var[col].sqlind = -1;
 
 	SET_INDICATOR_STR(0);						// TYPE_NAME
 	SET_INDICATOR_VAL(1,short,false);			// DATA_TYPE
@@ -277,7 +350,10 @@ bool TypesResultSet::nextFetch()
 	SET_INDICATOR_VAL(15,short,false);			// SQL_DATA_TYPE
 	SET_INDICATOR_VAL(16,short,true);			// SQL_DATETIME_SUB
 	SET_INDICATOR_VAL(17,int,true);				// NUM_PREC_RADIX
-	SET_INDICATOR_VAL(18,short,true);			// INTERVAL_PRECISION	
+	SET_INDICATOR_VAL(18,short,true);			// INTERVAL_PRECISION
+
+#undef SET_INDICATOR_STR
+#undef SET_INDICATOR_VAL
 
 	return true;
 }
@@ -296,18 +372,20 @@ bool TypesResultSet::next()
 
 	++activePosRowInSet;
 
-	XSQLVAR *var = sqlda->sqlda->sqlvar;
+	//XSQLVAR *var = sqlda->sqlda->sqlvar;
+	//auto * var = sqlda->orgsqlvar;
     Value *value = values.values;
 
-	for (int n = 0; n < sqlda->sqlda->sqld; ++n, ++var, ++value)
-		statement->setValue (value, var);
+	for (int n = 0; n < sqlda->columnsCount; ++n, ++value)
+		statement->setValue (value, n + 1, *sqlda);
+		//TODO: what is "statement" here?.. 
 
 	return true;
 }
 
 int TypesResultSet::findType()
 {	
-	for(int i=0; i<sizeof (types)/sizeof (types [0]) ; i++)
+	for(int i=0; i < TYPES_SIZE; i++)
 		if (types[i].typeType == dataTypes)
 			return i;		
 

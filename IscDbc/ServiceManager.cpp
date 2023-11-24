@@ -33,6 +33,8 @@
 #include "../SetupAttributes.h"
 #include "ServiceManager.h"
 
+using namespace Firebird;
+
 namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
@@ -54,6 +56,15 @@ CServiceManager::CServiceManager()
 
 CServiceManager::~CServiceManager()
 {
+	if( GDS && svcHandle ) {
+		ThrowStatusWrapper status( GDS->_status );
+		try {
+			svcHandle->detach( &status );
+		} catch( ... ) {
+			svcHandle->release();
+		}
+		svcHandle = nullptr;
+	}
 	if( GDS )
 		delete GDS;
 }
@@ -63,546 +74,469 @@ Properties* CServiceManager::allocProperties()
 	return new Parameters;
 }
 
-void CServiceManager::startBackupDatabase( Properties *prop, ULONG options )
+bool CServiceManager::attachServiceManager()
 {
-	ISC_STATUS status[20];
 	char svcName[RESPONSE_BUFFER/12];
-	char spbBuffer[RESPONSE_BUFFER/2];
-	char *spb = spbBuffer;
-	short spbLength;
-	char thdBuffer[RESPONSE_BUFFER/2];
-	char *thd = thdBuffer;
-	short thdLength;
-	char respBuffer[RESPONSE_BUFFER];
-	char *resp = respBuffer;
-	const char *pt;
 	const char *param;
 	bool isServer = false;
+
+	IUtil* utl = GDS->_master->getUtilInterface();
+	ThrowStatusWrapper status( GDS->_status );
+	IXpbBuilder* spb = nullptr;
+	try
+	{
+		spb = utl->getXpbBuilder(&status, IXpbBuilder::SPB_ATTACH, NULL, 0);
+
+		param = properties->findValue( SETUP_USER, NULL );
+		spb->insertString(&status, isc_spb_user_name, param);
+
+		param = properties->findValue( SETUP_PASSWORD, NULL );
+		spb->insertString(&status, isc_spb_password, param);
+
+		param = properties->findValue( "serverName", NULL );
+
+		if ( param && *param )
+		{
+			//    TCP: ServerName + ":service_mgr"
+			//    SPX: ServerName + "@service_mgr"
+			//    Pipe: "\\\\" + ServerName + "\\service_mgr"
+			//    Local: "service_mgr"
+			sprintf( svcName, "%s:service_mgr", param );
+			isServer = true;
+		}
+		else
+			strcpy( svcName, "service_mgr" );
+		
+		svcHandle = GDS->_prov->attachServiceManager( &status, svcName, spb->getBufferLength(&status), spb->getBuffer(&status) );
+		spb->dispose();
+		spb = nullptr;
+	}
+	catch( const FbException& error )
+	{
+		if( spb ) spb->dispose();
+		const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+	}
+	return isServer;
+}
+
+void CServiceManager::startBackupDatabase( Properties *prop, ULONG options )
+{
+	const char *param;
 	ULONG tempVal;
-
-	properties = prop;
-	ADD_PARAM( spb, isc_spb_version );
-	ADD_PARAM( spb, isc_spb_current_version );
-	param = properties->findValue( SETUP_USER, NULL );
-	ADD_PARAM_STRING_LEN8( spb, isc_spb_user_name, param );
-	param = properties->findValue( SETUP_PASSWORD, NULL );
-	ADD_PARAM_STRING_LEN8( spb, isc_spb_password, param );
-
-	spbLength = spb - spbBuffer;
 
 	if ( !GDS )
 		loadShareLibrary();
 
-	param = properties->findValue( "serverName", NULL );
+	properties = prop;	
+	bool isServer = attachServiceManager();
 
-	if ( param && *param )
+	IUtil* utl = GDS->_master->getUtilInterface();
+	ThrowStatusWrapper status( GDS->_status );
+	IXpbBuilder* spb = nullptr;
+	try
 	{
-		//    TCP: ServerName + ":service_mgr"
-		//    SPX: ServerName + "@service_mgr"
-		//    Pipe: "\\\\" + ServerName + "\\service_mgr"
-		//    Local: "service_mgr"
-		sprintf( svcName, "%s:service_mgr", param );
-		isServer = true;
+		spb = utl->getXpbBuilder(&status, IXpbBuilder::SPB_START, NULL, 0);
+
+		spb->insertTag( &status, isc_action_svc_backup );
+
+		param = properties->findValue( SETUP_DBNAME, NULL );
+		if ( isServer )
+			while ( *param++ != ':' );
+		spb->insertString( &status, isc_spb_dbname, param );
+
+		param = properties->findValue( "backupFile", NULL );
+		spb->insertString( &status, isc_spb_bkp_file, param );
+
+		if ( options )
+		{
+			spb->insertInt( &status, isc_spb_options, options );
+		}
+
+		spb->insertTag( &status, isc_spb_verbose );
+
+		param = properties->findValue( "blockingFactor", "0" );
+		tempVal = atol( param );
+		if ( tempVal )
+		{
+			spb->insertInt( &status, isc_spb_bkp_factor, tempVal );
+		}
+
+		svcHandle->start( &status, spb->getBufferLength(&status), spb->getBuffer(&status) );
+		spb->dispose();
+		spb = nullptr;
 	}
-	else
-		strcpy( svcName, "service_mgr" );
-
-	if ( GDS->_service_attach( status, 0, svcName, &svcHandle, spbLength, spbBuffer ) )
-		throw SQLEXCEPTION ( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
-
-	ADD_PARAM( thd, isc_action_svc_backup );
-	param = properties->findValue( SETUP_DBNAME, NULL );
-	if ( isServer )
-		while ( *param++ != ':' );
-	ADD_PARAM_STRING_LEN16( thd, isc_spb_dbname, param );
-	param = properties->findValue( "backupFile", NULL );
-	ADD_PARAM_STRING_LEN16( thd, isc_spb_bkp_file, param );
-
-	if ( options )
+	catch( const FbException& error )
 	{
-		ADD_PARAM_LEN32( thd, isc_spb_options, options );
+		if( spb ) spb->dispose();
+		const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
 	}
-
-	ADD_PARAM( thd, isc_spb_verbose );
-
-	param = properties->findValue( "blockingFactor", "0" );
-	tempVal = atol( param );
-	if ( tempVal )
-	{
-		ADD_PARAM_LEN32( thd, isc_spb_bkp_factor, tempVal );
-	}
-
-	thdLength = thd - thdBuffer;
-
-	if ( GDS->_service_start( status, &svcHandle, NULL, thdLength, thdBuffer ) )
-		throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
 }
 
 void CServiceManager::startRestoreDatabase( Properties *prop, ULONG options )
 {
-	ISC_STATUS status[20];
-	char svcName[RESPONSE_BUFFER/12];
-	char spbBuffer[RESPONSE_BUFFER/2];
-	char *spb = spbBuffer;
-	short spbLength;
-	char thdBuffer[RESPONSE_BUFFER/2];
-	char *thd = thdBuffer;
-	short thdLength;
-	char respBuffer[RESPONSE_BUFFER];
-	char *resp = respBuffer;
-	const char *pt;
 	const char *param;
-	bool isServer = false;
 	ULONG sizeVal;
 
 	properties = prop;
-	ADD_PARAM( spb, isc_spb_version );
-	ADD_PARAM( spb, isc_spb_current_version );
-	param = properties->findValue( SETUP_USER, NULL );
-	ADD_PARAM_STRING_LEN8( spb, isc_spb_user_name, param );
-	param = properties->findValue( SETUP_PASSWORD, NULL );
-	ADD_PARAM_STRING_LEN8( spb, isc_spb_password, param );
+	bool isServer = attachServiceManager();
 
-	spbLength = spb - spbBuffer;
-
-	if ( !GDS )
-		loadShareLibrary();
-
-	param = properties->findValue( "serverName", NULL );
-
-	if ( param && *param )
+	IUtil* utl = GDS->_master->getUtilInterface();
+	ThrowStatusWrapper status( GDS->_status );
+	IXpbBuilder* spb = nullptr;
+	try
 	{
-		//    TCP: ServerName + ":service_mgr"
-		//    SPX: ServerName + "@service_mgr"
-		//    Pipe: "\\\\" + ServerName + "\\service_mgr"
-		//    Local: "service_mgr"
-		sprintf( svcName, "%s:service_mgr", param );
-		isServer = true;
+		spb = utl->getXpbBuilder(&status, IXpbBuilder::SPB_START, NULL, 0);
+
+		spb->insertTag( &status, isc_action_svc_restore );
+
+		if ( !(options & isc_spb_res_replace) )
+			options |= isc_spb_res_create;
+
+		if ( options )
+		{
+			spb->insertInt( &status, isc_spb_options, options );
+		}
+
+		spb->insertTag( &status, isc_spb_verbose );
+
+		param = properties->findValue( SETUP_PAGE_SIZE, "0" );
+		sizeVal = atol( param );
+		if ( sizeVal )
+		{
+			spb->insertInt( &status, isc_spb_res_page_size, sizeVal );
+		}
+
+		param = properties->findValue( "buffersSize", "0" );
+		sizeVal = atol( param );
+		if ( sizeVal )
+		{
+			spb->insertInt( &status, isc_spb_res_buffers, sizeVal );
+		}
+
+		param = properties->findValue( "backupFile", NULL );
+		spb->insertString( &status, isc_spb_bkp_file, param );
+
+		param = properties->findValue( SETUP_DBNAME, NULL );
+		//if ( isServer )
+		//	while ( *param++ != ':' );
+		spb->insertString( &status, isc_spb_dbname, param );
+		
+		svcHandle->start( &status, spb->getBufferLength(&status), spb->getBuffer(&status) );
+		spb->dispose();
+		spb = nullptr;
 	}
-	else
-		strcpy( svcName, "service_mgr" );
-
-	if ( GDS->_service_attach( status, 0, svcName, &svcHandle, spbLength, spbBuffer ) )
-		throw SQLEXCEPTION ( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
-
-	ADD_PARAM( thd, isc_action_svc_restore );
-
-	if ( !(options & isc_spb_res_replace) )
-		options |= isc_spb_res_create;
-
-	if ( options )
+	catch( const FbException& error )
 	{
-		ADD_PARAM_LEN32( thd, isc_spb_options, options );
+		if( spb ) spb->dispose();
+		const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
 	}
-
-	ADD_PARAM( thd, isc_spb_verbose );
-
-	param = properties->findValue( SETUP_PAGE_SIZE, "0" );
-	sizeVal = atol( param );
-	if ( sizeVal )
-	{
-		ADD_PARAM_LEN32( thd, isc_spb_res_page_size, sizeVal );
-	}
-
-	param = properties->findValue( "buffersSize", "0" );
-	sizeVal = atol( param );
-	if ( sizeVal )
-	{
-		ADD_PARAM_LEN32( thd, isc_spb_res_buffers, sizeVal );
-	}
-
-	param = properties->findValue( "backupFile", NULL );
-	ADD_PARAM_STRING_LEN16( thd, isc_spb_bkp_file, param );
-	param = properties->findValue( SETUP_DBNAME, NULL );
-	//if ( isServer )
-	//	while ( *param++ != ':' );
-	ADD_PARAM_STRING_LEN16( thd, isc_spb_dbname, param );
-
-	thdLength = thd - thdBuffer;
-
-	if ( GDS->_service_start( status, &svcHandle, NULL, thdLength, thdBuffer ) )
-		throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
 }
 
 void CServiceManager::exitRestoreDatabase()
 {
-	ISC_STATUS status[20];
-	isc_db_handle databaseHandle = NULL;
-	char dpbBuffer[RESPONSE_BUFFER/2];
-	int dpbLength;
-	const char *pt;
+	IAttachment* databaseHandle = NULL;
 	const char *param;
 
 	param = properties->findValue( "noReadOnly", NULL );
 	if ( param && *param == 'N')
  	{
-		char *dpb = dpbBuffer;
-		ADD_PARAM( dpb, isc_dpb_version1 );
-		param = properties->findValue( SETUP_USER, NULL );
-		ADD_PARAM_STRING_LEN8( dpb, isc_dpb_user_name, param );
-		param = properties->findValue( SETUP_PASSWORD, NULL );
-		ADD_PARAM_STRING_LEN8( dpb, isc_dpb_password, param );
-		ADD_PARAM( dpb, isc_dpb_set_db_readonly );
-		ADD_PARAM( dpb, 1 );
-		ADD_PARAM( dpb, 1 ); // set true
+		IUtil* utl = GDS->_master->getUtilInterface();
+		IXpbBuilder* dpb = nullptr;
+		ThrowStatusWrapper status( GDS->_status );
 
-		dpbLength = dpb - dpbBuffer;
+		try
+		{
+			dpb = utl->getXpbBuilder( &status, IXpbBuilder::DPB, NULL, 0 );
 
-		param = properties->findValue( SETUP_DBNAME, NULL );
+			param = properties->findValue( SETUP_USER, NULL );
+			dpb->insertString( &status, isc_dpb_user_name, param );
 
-		if ( GDS->_attach_database( status, 0, (char*)param, &databaseHandle, dpbLength, dpbBuffer ) )
-			throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
+			param = properties->findValue( SETUP_PASSWORD, NULL );
+			dpb->insertString( &status, isc_dpb_password, param );
 
-		if ( GDS->_detach_database( status, &databaseHandle ) )
-			throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
+			char ch = 1;
+			dpb->insertBytes( &status, isc_dpb_set_db_readonly, &ch, 1 );
+
+			param = properties->findValue( SETUP_DBNAME, NULL );
+						
+			databaseHandle = GDS->_prov->attachDatabase( &status, param, dpb->getBufferLength(&status), dpb->getBuffer(&status) );
+			databaseHandle->detach( &status );
+			dpb->dispose();
+			dpb = nullptr;
+		}
+		catch( const FbException& error )
+		{
+			if( dpb ) dpb->dispose();
+
+			if( databaseHandle ) try {
+				databaseHandle->detach( &status );
+			} catch( ... ) {
+				databaseHandle->release();
+			}
+
+			const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+			throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+		}
 	}
 }
 
 void CServiceManager::startStaticticsDatabase( Properties *prop, ULONG options )
 {
-	ISC_STATUS status[20];
-	char svcName[RESPONSE_BUFFER/12];
-	char spbBuffer[RESPONSE_BUFFER/2];
-	char *spb = spbBuffer;
-	short spbLength;
-	char thdBuffer[RESPONSE_BUFFER/2];
-	char *thd = thdBuffer;
-	short thdLength;
-	char respBuffer[RESPONSE_BUFFER];
-	char *resp = respBuffer;
-	const char *pt;
 	const char *param;
-	bool isServer = false;
-
-	properties = prop;
-	ADD_PARAM( spb, isc_spb_version );
-	ADD_PARAM( spb, isc_spb_current_version );
-	param = properties->findValue( SETUP_USER, NULL );
-	ADD_PARAM_STRING_LEN8( spb, isc_spb_user_name, param );
-	param = properties->findValue( SETUP_PASSWORD, NULL );
-	ADD_PARAM_STRING_LEN8( spb, isc_spb_password, param );
-
-	spbLength = spb - spbBuffer;
 
 	if ( !GDS )
 		loadShareLibrary();
 
-	param = properties->findValue( "serverName", NULL );
+	properties = prop;
+	bool isServer = attachServiceManager();
 
-	if ( param && *param )
+	IUtil* utl = GDS->_master->getUtilInterface();
+	ThrowStatusWrapper status( GDS->_status );
+	IXpbBuilder* spb = nullptr;
+	try
 	{
-		//    TCP: ServerName + ":service_mgr"
-		//    SPX: ServerName + "@service_mgr"
-		//    Pipe: "\\\\" + ServerName + "\\service_mgr"
-		//    Local: "service_mgr"
-		sprintf( svcName, "%s:service_mgr", param );
-		isServer = true;
+		spb = utl->getXpbBuilder(&status, IXpbBuilder::SPB_START, NULL, 0);
+
+		spb->insertTag( &status, isc_action_svc_db_stats );
+
+		param = properties->findValue( SETUP_DBNAME, NULL );
+		if ( isServer )
+			while ( *param++ != ':' );
+		spb->insertString( &status, isc_spb_dbname, param );
+
+		if ( options )
+		{
+			spb->insertInt( &status, isc_spb_options, options );
+		}
+
+		svcHandle->start( &status, spb->getBufferLength(&status), spb->getBuffer(&status) );
+		spb->dispose();
+		spb = nullptr;
 	}
-	else
-		strcpy( svcName, "service_mgr" );
-
-	if ( GDS->_service_attach( status, 0, svcName, &svcHandle, spbLength, spbBuffer ) )
-		throw SQLEXCEPTION ( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
-
-	ADD_PARAM( thd, isc_action_svc_db_stats );
-
-	param = properties->findValue( SETUP_DBNAME, NULL );
-	if ( isServer )
-		while ( *param++ != ':' );
-	ADD_PARAM_STRING_LEN16( thd, isc_spb_dbname, param );
-
-	if ( options )
+	catch( const FbException& error )
 	{
-		ADD_PARAM_LEN32( thd, isc_spb_options, options );
+		if( spb ) spb->dispose();
+		const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
 	}
-
-	thdLength = thd - thdBuffer;
-
-	if ( GDS->_service_start( status, &svcHandle, NULL, thdLength, thdBuffer ) )
-		throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
 }
 
 void CServiceManager::startShowDatabaseLog( Properties *prop )
 {
-	ISC_STATUS status[20];
-	char svcName[RESPONSE_BUFFER/12];
-	char spbBuffer[RESPONSE_BUFFER/2];
-	char *spb = spbBuffer;
-	short spbLength;
-	char thdBuffer[RESPONSE_BUFFER/2];
-	char *thd = thdBuffer;
-	short thdLength;
-	char respBuffer[RESPONSE_BUFFER];
-	char *resp = respBuffer;
-	const char *pt;
-	const char *param;
-	bool isServer = false;
-
-	properties = prop;
-	ADD_PARAM( spb, isc_spb_version );
-	ADD_PARAM( spb, isc_spb_current_version );
-	param = properties->findValue( SETUP_USER, NULL );
-	ADD_PARAM_STRING_LEN8( spb, isc_spb_user_name, param );
-	param = properties->findValue( SETUP_PASSWORD, NULL );
-	ADD_PARAM_STRING_LEN8( spb, isc_spb_password, param );
-
-	spbLength = spb - spbBuffer;
-
 	if ( !GDS )
 		loadShareLibrary();
+	
+	properties = prop;
+	bool isServer = attachServiceManager();
 
-	param = properties->findValue( "serverName", NULL );
-
-	if ( param && *param )
+	IUtil* utl = GDS->_master->getUtilInterface();
+	ThrowStatusWrapper status( GDS->_status );
+	IXpbBuilder* spb = nullptr;
+	try
 	{
-		//    TCP: ServerName + ":service_mgr"
-		//    SPX: ServerName + "@service_mgr"
-		//    Pipe: "\\\\" + ServerName + "\\service_mgr"
-		//    Local: "service_mgr"
-		sprintf( svcName, "%s:service_mgr", param );
-		isServer = true;
+		spb = utl->getXpbBuilder(&status, IXpbBuilder::SPB_START, NULL, 0);
+		spb->insertTag( &status, isc_action_svc_get_ib_log );		
+		
+		svcHandle->start( &status, spb->getBufferLength(&status), spb->getBuffer(&status) );
+		spb->dispose();
+		spb = nullptr;
 	}
-	else
-		strcpy( svcName, "service_mgr" );
-
-	if ( GDS->_service_attach( status, 0, svcName, &svcHandle, spbLength, spbBuffer ) )
-		throw SQLEXCEPTION ( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
-
-	ADD_PARAM( thd, isc_action_svc_get_ib_log );
-	thdLength = thd - thdBuffer;
-
-	if ( GDS->_service_start( status, &svcHandle, NULL, thdLength, thdBuffer ) )
-		throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
+	catch( const FbException& error )
+	{
+		if( spb ) spb->dispose();
+		const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+	}
 }
 
 void CServiceManager::startRepairDatabase( Properties *prop, ULONG options, ULONG optionsValidate )
 {
-	ISC_STATUS status[20];
-	char svcName[RESPONSE_BUFFER/12];
-	char spbBuffer[RESPONSE_BUFFER/2];
-	char *spb = spbBuffer;
-	short spbLength;
-	char thdBuffer[RESPONSE_BUFFER/2];
-	char *thd = thdBuffer;
-	short thdLength;
-	char respBuffer[RESPONSE_BUFFER];
-	char *resp = respBuffer;
-	const char *pt;
 	const char *param;
-	bool isServer = false;
-
-	properties = prop;
-	ADD_PARAM( spb, isc_spb_version );
-	ADD_PARAM( spb, isc_spb_current_version );
-	param = properties->findValue( SETUP_USER, NULL );
-	ADD_PARAM_STRING_LEN8( spb, isc_spb_user_name, param );
-	param = properties->findValue( SETUP_PASSWORD, NULL );
-	ADD_PARAM_STRING_LEN8( spb, isc_spb_password, param );
-
-	spbLength = spb - spbBuffer;
 
 	if ( !GDS )
 		loadShareLibrary();
 
-	param = properties->findValue( "serverName", NULL );
+	properties = prop;
+	bool isServer = attachServiceManager();
 
-	if ( param && *param )
+	IUtil* utl = GDS->_master->getUtilInterface();
+	ThrowStatusWrapper status( GDS->_status );
+	IXpbBuilder* spb = nullptr;
+	try
 	{
-		//    TCP: ServerName + ":service_mgr"
-		//    SPX: ServerName + "@service_mgr"
-		//    Pipe: "\\\\" + ServerName + "\\service_mgr"
-		//    Local: "service_mgr"
-		sprintf( svcName, "%s:service_mgr", param );
-		isServer = true;
+		spb = utl->getXpbBuilder(&status, IXpbBuilder::SPB_START, NULL, 0);
+		
+		spb->insertTag( &status, isc_action_svc_repair );
+
+		param = properties->findValue( SETUP_DBNAME, NULL );
+		if ( isServer )
+			while ( *param++ != ':' );
+		spb->insertString( &status, isc_spb_dbname, param );
+
+		if ( options )
+		{
+			spb->insertInt( &status, isc_spb_options, options );
+		}
+
+		if ( optionsValidate )
+		{
+			spb->insertInt( &status, isc_spb_options, optionsValidate );
+		}
+	
+		svcHandle->start( &status, spb->getBufferLength(&status), spb->getBuffer(&status) );
+		spb->dispose();
+		spb = nullptr;
 	}
-	else
-		strcpy( svcName, "service_mgr" );
-
-	if ( GDS->_service_attach( status, 0, svcName, &svcHandle, spbLength, spbBuffer ) )
-		throw SQLEXCEPTION ( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
-
-	ADD_PARAM( thd, isc_action_svc_repair );
-
-	param = properties->findValue( SETUP_DBNAME, NULL );
-	if ( isServer )
-		while ( *param++ != ':' );
-	ADD_PARAM_STRING_LEN16( thd, isc_spb_dbname, param );
-
-	if ( options )
+	catch( const FbException& error )
 	{
-		ADD_PARAM_LEN32( thd, isc_spb_options, options );
+		if( spb ) spb->dispose();
+		const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
 	}
-
-	if ( optionsValidate )
-	{
-		ADD_PARAM_LEN32( thd, isc_spb_options, optionsValidate );
-	}
-
-	thdLength = thd - thdBuffer;
-
-	if ( GDS->_service_start( status, &svcHandle, NULL, thdLength, thdBuffer ) )
-		throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
 }
 
 void CServiceManager::startUsersQuery( Properties *prop )
 {
-	ISC_STATUS status[20];
-	char svcName[RESPONSE_BUFFER/12];
-	char spbBuffer[RESPONSE_BUFFER/2];
-	char *spb = spbBuffer;
-	short spbLength;
-	char thdBuffer[RESPONSE_BUFFER/2];
-	char *thd = thdBuffer;
-	short thdLength;
-	char respBuffer[RESPONSE_BUFFER];
-	char *resp = respBuffer;
-	const char *pt;
 	const char *param;
 	const char *paramUser;
-	bool isServer = false;
 	ULONG tempVal;
-
-	properties = prop;
-	ADD_PARAM( spb, isc_spb_version );
-	ADD_PARAM( spb, isc_spb_current_version );
-	param = properties->findValue( SETUP_USER, NULL );
-	ADD_PARAM_STRING_LEN8( spb, isc_spb_user_name, param );
-	param = properties->findValue( SETUP_PASSWORD, NULL );
-	ADD_PARAM_STRING_LEN8( spb, isc_spb_password, param );
-
-	spbLength = spb - spbBuffer;
 
 	if ( !GDS )
 		loadShareLibrary();
 
-	param = properties->findValue( "serverName", NULL );
+	properties = prop;
+	bool isServer = attachServiceManager();
 
-	if ( param && *param )
+	IUtil* utl = GDS->_master->getUtilInterface();
+	ThrowStatusWrapper status( GDS->_status );
+	IXpbBuilder* spb = nullptr;
+	try
 	{
-		//    TCP: ServerName + ":service_mgr"
-		//    SPX: ServerName + "@service_mgr"
-		//    Pipe: "\\\\" + ServerName + "\\service_mgr"
-		//    Local: "service_mgr"
-		sprintf( svcName, "%s:service_mgr", param );
-		isServer = true;
-	}
-	else
-		strcpy( svcName, "service_mgr" );
+		spb = utl->getXpbBuilder(&status, IXpbBuilder::SPB_START, NULL, 0);
 
-	if ( GDS->_service_attach( status, 0, svcName, &svcHandle, spbLength, spbBuffer ) )
-		throw SQLEXCEPTION ( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
-
-	do
-	{
-		paramUser = properties->findValue( "userName", NULL );
-
-		param = properties->findValue( "displayUser", NULL );
-		if ( param && *param )
+		do
 		{
-			ADD_PARAM( thd, isc_action_svc_display_user );
-			if ( paramUser && *paramUser )
-			{
-				ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_username, paramUser );
-			}
-			break;
-		}
+			paramUser = properties->findValue( "userName", NULL );
 
-		param = properties->findValue( "deleteUser", NULL );
-		if ( param && *param )
-		{
-			ADD_PARAM( thd, isc_action_svc_delete_user );
-			if ( paramUser && *paramUser )
-			{
-				ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_username, paramUser );
-			}
-			break;
-		}
-
-		param = properties->findValue( "addUser", NULL );
-		if ( param && *param )
-		{
-			ADD_PARAM( thd, isc_action_svc_add_user );
-		}
-		else
-		{
-			param = properties->findValue( "modifyUser", NULL );
+			param = properties->findValue( "displayUser", NULL );
 			if ( param && *param )
 			{
-				ADD_PARAM( thd, isc_action_svc_modify_user );
+				spb->insertTag( &status, isc_action_svc_display_user );
+				if ( paramUser && *paramUser )
+				{
+					spb->insertString( &status, isc_spb_sec_username, paramUser );
+				}
+				break;
 			}
-		}
 
-		if ( paramUser && *paramUser )
-		{
-			ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_username, paramUser );
-		}
+			param = properties->findValue( "deleteUser", NULL );
+			if ( param && *param )
+			{
+				spb->insertTag( &status, isc_action_svc_delete_user );
+				if ( paramUser && *paramUser )
+				{
+					spb->insertString( &status, isc_spb_sec_username, paramUser );
+				}
+				break;
+			}
 
-		param = properties->findValue( "userPassword", NULL );
-		if ( param && *param )
-		{
-			ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_password, param );
-		}
+			param = properties->findValue( "addUser", NULL );
+			if ( param && *param )
+			{
+				spb->insertTag( &status, isc_action_svc_add_user );
+			}
+			else
+			{
+				param = properties->findValue( "modifyUser", NULL );
+				if ( param && *param )
+				{
+					spb->insertTag( &status, isc_action_svc_modify_user );
+				}
+			}
 
-		param = properties->findValue( "firstName", NULL );
-		if ( param && *param )
-		{
-			ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_firstname, param );
-		}
-		param = properties->findValue( "middleName", NULL );
-		if ( param && *param )
-		{
-			ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_middlename, param );
-		}
-		param = properties->findValue( "lastName", NULL );
-		if ( param && *param )
-		{
-			ADD_PARAM_STRING_LEN16( thd, isc_spb_sec_lastname, param );
-		}
+			if ( paramUser && *paramUser )
+			{
+				spb->insertString( &status, isc_spb_sec_username, paramUser );
+			}
 
-		param = properties->findValue( "groupId", NULL );
-		if ( param && *param )
-		{
-			tempVal = atol( param );
-			ADD_PARAM_LEN32( thd, isc_spb_sec_groupid, tempVal );
-		}
-		param = properties->findValue( "userId", NULL );
-		if ( param && *param )
-		{
-			tempVal = atol( param );
-			ADD_PARAM_LEN32( thd, isc_spb_sec_userid, tempVal );
-		}
+			param = properties->findValue( "userPassword", NULL );
+			if ( param && *param )
+			{
+				spb->insertString( &status, isc_spb_sec_password, param );
+			}
 
-	} while ( false );
+			param = properties->findValue( "firstName", NULL );
+			if ( param && *param )
+			{
+				spb->insertString( &status, isc_spb_sec_firstname, param );
+			}
+			param = properties->findValue( "middleName", NULL );
+			if ( param && *param )
+			{
+				spb->insertString( &status, isc_spb_sec_middlename, param );
+			}
+			param = properties->findValue( "lastName", NULL );
+			if ( param && *param )
+			{
+				spb->insertString( &status, isc_spb_sec_lastname, param );
+			}
 
-	thdLength = thd - thdBuffer;
+			param = properties->findValue( "groupId", NULL );
+			if ( param && *param )
+			{
+				tempVal = atol( param );
+				spb->insertInt( &status, isc_spb_sec_groupid, tempVal );
+			}
+			param = properties->findValue( "userId", NULL );
+			if ( param && *param )
+			{
+				tempVal = atol( param );
+				spb->insertInt( &status, isc_spb_sec_userid, tempVal );
+			}
 
-	if ( GDS->_service_start( status, &svcHandle, NULL, thdLength, thdBuffer ) )
-		throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
+		} while ( false );
+
+		svcHandle->start( &status, spb->getBufferLength(&status), spb->getBuffer(&status) );
+		spb->dispose();
+		spb = nullptr;
+	}
+	catch( const FbException& error )
+	{
+		if( spb ) spb->dispose();
+		const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+	}
 }
 
 bool CServiceManager::nextQuery( char *outBuffer, int lengthOut, int &lengthRealOut, int &countError )
 {
-	ISC_STATUS status[20];
 	char sendBuffer[] = { isc_info_svc_line };
 	char respBuffer[RESPONSE_BUFFER];
 	char *resp = respBuffer;
 	int length = lengthOut;
 	int offset;
 	bool nextQuery = false;
+	CheckStatusWrapper status( GDS->_status );
 
 	do
 	{
-		GDS->_service_query( status, &svcHandle, NULL, 0, NULL, 
-							sizeof( sendBuffer ), sendBuffer, RESPONSE_BUFFER, respBuffer );
+		svcHandle->query( &status, 0, NULL, 
+		                  sizeof( sendBuffer ), (const unsigned char*)sendBuffer,
+						  RESPONSE_BUFFER, (unsigned char*)respBuffer );
+
 		char *p = respBuffer;
 
 		offset = 0;
 		nextQuery = *p == isc_info_svc_line;
 
-		if ( status[1] )
+		if ( status.getState() & IStatus::STATE_ERRORS )
 		{
+			const ISC_STATUS * statusVector = status.getErrors();
 			if ( !nextQuery )
-				throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
+				throw SQLEXCEPTION( GDS->getSqlCode( statusVector ), statusVector[1], getIscStatusText( &status ) );
 			++countError;
 		}
 
@@ -653,20 +587,26 @@ bool CServiceManager::nextQuery( char *outBuffer, int lengthOut, int &lengthReal
 
 bool CServiceManager::nextQueryLimboTransactionInfo( char *outBuffer, int lengthOut, int &lengthRealOut )
 {
-	ISC_STATUS status[20];
 	char sendBuffer[] = { isc_info_svc_limbo_trans };
 	char respBuffer[RESPONSE_BUFFER];
 	char *resp = respBuffer;
 	int length = lengthOut;
 	int offset;
 	bool nextQuery = false;
+	CheckStatusWrapper status( GDS->_status );
 
 	do
 	{
-		GDS->_service_query( status, &svcHandle, NULL, 0, NULL, 
-							sizeof( sendBuffer ), sendBuffer, RESPONSE_BUFFER, respBuffer );
-		if ( status[1] )
-			throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
+		svcHandle->query( &status, 0, NULL, 
+		                  sizeof( sendBuffer ), (const unsigned char*)sendBuffer,
+						  RESPONSE_BUFFER, (unsigned char*)respBuffer );
+
+		if ( status.getState() & IStatus::STATE_ERRORS )
+		{
+			const ISC_STATUS * statusVector = status.getErrors();
+			if ( !nextQuery )
+				throw SQLEXCEPTION( GDS->getSqlCode( statusVector ), statusVector[1], getIscStatusText( &status ) );
+		}
 
 		char *p = respBuffer;
 
@@ -718,7 +658,6 @@ bool CServiceManager::nextQueryLimboTransactionInfo( char *outBuffer, int length
 
 bool CServiceManager::nextQueryUserInfo( char *outBuffer, int lengthOut, int &lengthRealOut )
 {
-	ISC_STATUS status[20];
 	char sendBuffer[] = { isc_info_svc_get_users };
 	char respBuffer[RESPONSE_BUFFER];
 	char *resp = respBuffer;
@@ -727,13 +666,20 @@ bool CServiceManager::nextQueryUserInfo( char *outBuffer, int lengthOut, int &le
 	int length = lengthOut;
 	int offset;
 	bool nextQuery = false;
+	CheckStatusWrapper status( GDS->_status );
 
 	do
 	{
-		GDS->_service_query( status, &svcHandle, NULL, 0, NULL, 
-							sizeof( sendBuffer ), sendBuffer, RESPONSE_BUFFER, respBuffer );
-		if ( status[1] )
-			throw SQLEXCEPTION( GDS->_sqlcode( status ), status[1], getIscStatusText( status ) );
+		svcHandle->query( &status, 0, NULL, 
+		                  sizeof( sendBuffer ), (const unsigned char*)sendBuffer,
+						  RESPONSE_BUFFER, (unsigned char*)respBuffer );
+
+		if ( status.getState() & IStatus::STATE_ERRORS )
+		{
+			const ISC_STATUS * statusVector = status.getErrors();
+			if ( !nextQuery )
+				throw SQLEXCEPTION( GDS->getSqlCode( statusVector ), statusVector[1], getIscStatusText( &status ) );
+		}
 
 		char *p = respBuffer;
 
@@ -855,10 +801,21 @@ bool CServiceManager::nextQueryUserInfo( char *outBuffer, int lengthOut, int &le
 
 void CServiceManager::closeService()
 {
-	ISC_STATUS status[20];
-	if ( svcHandle )
-	{
-		GDS->_service_detach( status, &svcHandle );
+	if ( svcHandle ) {
+
+		ThrowStatusWrapper status( GDS->_status );
+
+		try
+		{
+			svcHandle->detach( &status );
+			svcHandle = nullptr;
+		}
+		catch( ... )
+		{
+			svcHandle->release();
+			svcHandle = nullptr;
+		}
+
 		unloadShareLibrary();
 	}
 }
@@ -893,24 +850,6 @@ void CServiceManager::unloadShareLibrary()
 		GDS->Release();
 		GDS = NULL;
 	}
-}
-
-JString CServiceManager::getIscStatusText( ISC_STATUS *statusVector )
-{
-	char text [4096], *p = text;
-
-	while ( GDS->_interprete( p, &statusVector ) )
-	{
-		while ( *p ) ++p;
-		*p++ = '\n';
-	}
-
-	if ( p > text )
-		--p;
-
-	*p = 0;
-
-	return text;
 }
 
 void CServiceManager::addRef()

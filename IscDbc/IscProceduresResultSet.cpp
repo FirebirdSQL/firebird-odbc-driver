@@ -117,7 +117,8 @@ static int gen_blr(int *user_arg, int /*offset*/, char * string)
 bool IscProceduresResultSet::canSelectFromProcedure()
 {
 	int countSUSPEND = 0;
-	XSQLVAR *var = sqlda->Var(10);
+	//XSQLVAR *var = sqlda->Var(10);
+	auto *var = sqlda->orgVar(10);
 	IscBlob * blob = (IscBlob *)*(intptr_t*)var->sqldata;
 	int length = blob->length();
 	

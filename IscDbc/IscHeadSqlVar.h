@@ -31,7 +31,7 @@ namespace IscDbcLibrary {
 
 #define MAKEHEAD(a, b, c, d)	\
 {								\
-    sqlvar->sqltype = a + 1;	\
+    sqlvar->sqltype = a;	\
     sqlvar->sqlscale = b;		\
     sqlvar->sqlsubtype = c;		\
     sqlvar->sqllen = d;			\
@@ -39,7 +39,8 @@ namespace IscDbcLibrary {
 
 class IscHeadSqlVar : public HeadSqlVar
 {
-	XSQLVAR		*sqlvar;
+	//XSQLVAR		*sqlvar;
+	CAttrSqlVar *sqlvar;
 	char		*saveSqldata;
 	short		*saveSqlind;
 	bool		replaceForParamArray;
@@ -49,7 +50,8 @@ public:
 
 	IscHeadSqlVar( CAttrSqlVar *attrVar )
 	{
-		sqlvar = attrVar->varOrg;
+		//sqlvar = attrVar->varOrg;
+		sqlvar = attrVar;
 		saveSqldata = sqlvar->sqldata;
 		saveSqlind = sqlvar->sqlind;
 		replaceForParamArray = attrVar->replaceForParamArray;

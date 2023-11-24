@@ -1140,7 +1140,7 @@ ResultSet* IscDatabaseMetaData::getTypeInfo(int dataType)
 		{
 			bytesPerCharacter = resultSet.sqlda->getShort(1);	
 		} 
-		return new TypesResultSet( dataType, connection->getUseAppOdbcVersion(), bytesPerCharacter );
+		return new TypesResultSet( dataType, connection->getUseAppOdbcVersion(), bytesPerCharacter, connection );
 	}
 	catch (...)
 	{

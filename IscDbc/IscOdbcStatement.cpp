@@ -53,7 +53,7 @@ IscOdbcStatement::~IscOdbcStatement()
 
 ResultSet* IscOdbcStatement::executeQuery()
 {
-	if (outputSqlda.sqlda->sqld < 1)
+	if (outputSqlda.columnsCount < 1)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "statement is not a Select");
 
 	IscStatement::execute();
@@ -64,7 +64,7 @@ ResultSet* IscOdbcStatement::executeQuery()
 
 void IscOdbcStatement::executeMetaDataQuery()
 {
-	if (outputSqlda.sqlda->sqld < 1)
+	if (outputSqlda.columnsCount < 1)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "statement is not a Select");
 
 	IscStatement::execute();
@@ -98,7 +98,7 @@ void IscOdbcStatement::prepareStatement(const char * sqlString)
 		getInputParameters();
 	}
 
-	inputSqlda.allocBuffer ( this );
+	//inputSqlda.allocBuffer ( this );
 
 	if ( replaceParamArray )
 	{
@@ -116,6 +116,7 @@ void IscOdbcStatement::prepareStatement(const char * sqlString)
 
 void IscOdbcStatement::getInputParameters()
 {
+	/*
 	ISC_STATUS statusVector [20];
 
 	int dialect = connection->getDatabaseDialect ();
@@ -130,6 +131,7 @@ void IscOdbcStatement::getInputParameters()
 		if (statusVector [1])
 			THROW_ISC_EXCEPTION (connection, statusVector);
 	}
+	*/
 }
 
 int IscOdbcStatement::getNumParams()
@@ -170,18 +172,19 @@ StatementMetaData* IscOdbcStatement::getStatementMetaDataIRD()
 int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *& labelParamArray )
 {
 	const char *strSql = sql, *ch;
-	int numberColumns = inputSqlda.sqlda->sqld;
-	XSQLVAR *var = inputSqlda.sqlda->sqlvar;
+	int numberColumns = inputSqlda.columnsCount;
+	//XSQLVAR *var = inputSqlda.sqlda->sqlvar;
+	auto *var = inputSqlda.orgsqlvar;
 	int *offsetParam = NULL;
 	int *offsetNameParam = NULL;
 	int countDefined = 0;
 
 	for (int n = 0; n < numberColumns; ++n, ++var)
 	{
-		switch ( var->sqltype & ~1 )
+		switch ( var->sqltype )
 		{
 		case SQL_ARRAY:
-			if ( !var->sqlname_length )
+			if ( var->sqlname && *var->sqlname == 0 /*!var->sqlname_length*/ )
 			{
 				if ( !offsetParam )
 				{
@@ -224,17 +227,21 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 						break;
 					}
 
-				XSQLVAR *varIn = inputSqlda.sqlda->sqlvar;
+				//XSQLVAR *varIn = inputSqlda.sqlda->sqlvar;
+				auto *varIn = inputSqlda.orgsqlvar;
 				int len = end - start;
 
 				for ( int m = 0; m < n; ++m, ++varIn )
 				{
-					if ( varIn->sqlname_length == len && !strncasecmp ( varIn->sqlname, start, len ) )
+					if ( /*varIn->sqlname_length == len*/ varIn->sqlname && strlen(varIn->sqlname) == len && !strncasecmp ( varIn->sqlname, start, len ) )
 					{
+						/* TODO!! No appropriate OOAPI methods!
+
 						memcpy ( var->sqlname, varIn->sqlname, len );
 						var->sqlname_length = len;
 						memcpy ( var->relname, varIn->relname, varIn->relname_length );
 						var->relname_length = varIn->relname_length;
+						*/
 						offsetNameParam[n] = end - strSql;
 
 						if ( delimiter == '"' )

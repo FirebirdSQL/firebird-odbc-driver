@@ -26,6 +26,7 @@
 #if !defined(_TYPESRESULTSET_H_)
 #define _TYPESRESULTSET_H_
 
+#include <vector>
 #include "IscResultSet.h"
 #include "Sqlda.h"
 
@@ -37,7 +38,7 @@ public: // StatementMetaData
 	virtual int objectVersion(){ return STATEMENTMETADATA_VERSION; }
 
 public:
-	TypesResultSet( int dataType, int appOdbcVersion, int bytesPerCharacter );
+	TypesResultSet( int dataType, int appOdbcVersion, int bytesPerCharacter, IscConnection* conn );
 	~TypesResultSet();
 
 	virtual bool nextFetch();
@@ -47,7 +48,33 @@ public:
 	int			recordNumber;
 	int			dataTypes;
 	Sqlda		outputSqlda;
-	SQLLEN		*indicators;
+	//SQLLEN		*indicators;
+
+	Firebird::ThrowStatusWrapper status;
+
+	FB_MESSAGE( TypesOutputHelper, Firebird::ThrowStatusWrapper,
+		( FB_VARCHAR(50), TYPE_NAME )
+		( FB_SMALLINT,    DATA_TYPE )
+		( FB_INTEGER,     COLUMN_SIZE )
+		( FB_VARCHAR(6),  LITERAL_PREFIX )
+		( FB_VARCHAR(6),  LITERAL_SUFFIX )
+		( FB_VARCHAR(20), CREATE_PARAMS )
+		( FB_SMALLINT,    NULLABLE )
+		( FB_SMALLINT,    CASE_SENSITIVE )
+		( FB_SMALLINT,    SEARCHABLE )
+		( FB_SMALLINT,    UNSIGNED_ATTRIBUTE )
+		( FB_SMALLINT,    FIXED_PREC_SCALE )
+		( FB_SMALLINT,    AUTO_UNIQUE_VALUE )
+		( FB_VARCHAR(50), LOCAL_TYPE_NAME )
+		( FB_SMALLINT,    MINIMUM_SCALE )
+		( FB_SMALLINT,    MAXIMUM_SCALE )
+		( FB_SMALLINT,    SQL_DATA_TYPE )
+		( FB_SMALLINT,    SQL_DATETIME_SUB )
+		( FB_INTEGER,     NUM_PREC_RADIX )
+		( FB_SMALLINT,    INTERVAL_PRECISION )
+	) typesOutputHelper;
+
+	std::vector< std::vector< char > > localBuffer;
 };
 
 }; // end namespace IscDbcLibrary

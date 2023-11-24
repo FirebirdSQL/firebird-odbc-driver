@@ -41,6 +41,8 @@
 #include "SQLError.h"
 #include "Value.h"
 
+using namespace Firebird;
+
 namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
@@ -96,9 +98,24 @@ void IscResultSet::initResultSet(IscStatement *iscStatement)
 // It is forbidden to use in IscDbc
 bool IscResultSet::nextFetch()
 {
-	if (!statement)
+	if (!statement || !statement->fbResultSet)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
 
+	ThrowStatusWrapper status( statement->connection->GDS->_status );
+	try
+	{
+		auto fetch_stat = statement->fbResultSet->fetchNext( &status, sqlda->buffer.data() );
+
+		if( fetch_stat == IStatus::RESULT_NO_DATA ) {
+			close();
+			return false;
+		}
+	}
+	catch( const FbException& error )
+	{
+		THROW_ISC_EXCEPTION( statement->connection, error.getStatus() );
+	}
+/*	
 	ISC_STATUS statusVector [20];
 
 	int dialect = statement->connection->getDatabaseDialect ();
@@ -113,18 +130,34 @@ bool IscResultSet::nextFetch()
 		}
 		THROW_ISC_EXCEPTION (statement->connection, statusVector);
 	}
-
+*/
 	return true;
 }
 
 bool IscResultSet::next()
 {
-	if (!statement)
+	if (!statement || !statement->fbResultSet)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
 
 	deleteBlobs();
 	reset();
 	allocConversions();
+
+	ThrowStatusWrapper status( statement->connection->GDS->_status );
+	try
+	{
+		auto fetch_stat = statement->fbResultSet->fetchNext( &status, sqlda->buffer.data() );
+
+		if( fetch_stat == IStatus::RESULT_NO_DATA ) {
+			close();
+			return false;
+		}
+	}
+	catch( const FbException& error )
+	{
+		THROW_ISC_EXCEPTION( statement->connection, error.getStatus() );
+	}
+/*
 	ISC_STATUS statusVector [20];
 
 	int dialect = statement->connection->getDatabaseDialect ();
@@ -139,12 +172,12 @@ bool IscResultSet::next()
 		}
 		THROW_ISC_EXCEPTION (statement->connection, statusVector);
 	}
-
-	XSQLVAR *var = sqlda->sqlda->sqlvar;
+*/
+	//auto *var = sqlda->orgsqlvar;
     Value *value = values.values;
 
-	for (int n = 0; n < sqlda->sqlda->sqld; ++n, ++var, ++value)
-		statement->setValue (value, var);
+	for (int n = 0; n < numberColumns; ++n, ++value)
+		statement->setValue (value, n + 1, *sqlda);
 
 	return true;
 }
@@ -156,14 +189,35 @@ bool IscResultSet::setCurrentRowInBufferStaticCursor(int nRow)
 
 bool IscResultSet::readFromSystemCatalog()
 {
-	if (!statement)
+	if (!statement || !statement->fbResultSet)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
 
-	sqlda->initStaticCursor ( statement );
-	
+	char* next_buffer = sqlda->initStaticCursor ( statement );
+
+	ThrowStatusWrapper status( statement->connection->GDS->_status );
+	try
+	{
+		while( true )
+		{
+			auto fetch_stat = statement->fbResultSet->fetchNext( &status, next_buffer );
+			if( fetch_stat == IStatus::RESULT_NO_DATA ) {
+				close();
+				break;
+			}
+
+			next_buffer = sqlda->addRowSqldaInBufferStaticCursor();
+		}
+	}
+	catch( const FbException& error )
+	{
+		sqlda->restoreOrgAdressFieldsStaticCursor();
+		THROW_ISC_EXCEPTION( statement->connection, error.getStatus() );
+	}
+
+/*
 	while( nextFetch() )
 		sqlda->addRowSqldaInBufferStaticCursor();
-
+*/
 	sqlda->restoreOrgAdressFieldsStaticCursor();
 
 	sqlda->setCurrentRowInBufferStaticCursor(0);
@@ -174,25 +228,42 @@ bool IscResultSet::readFromSystemCatalog()
 
 bool IscResultSet::readStaticCursor()
 {
-	if (!statement)
+	if (!statement || !statement->fbResultSet)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
 
-	ISC_STATUS statusVector [20];
+	//ISC_STATUS statusVector [20];
 
-	int dialect = statement->connection->getDatabaseDialect ();
+	//int dialect = statement->connection->getDatabaseDialect ();
 	CFbDll * GDS = statement->connection->GDS;
-	ISC_STATUS ret;
+	//ISC_STATUS ret;
 
-	sqlda->initStaticCursor ( statement );
-	
+	char* next_buffer = sqlda->initStaticCursor ( statement );
+
+	ThrowStatusWrapper status( GDS->_status );
+	try
+	{
+		while( true )
+		{
+			auto fetch_stat = statement->fbResultSet->fetchNext( &status, next_buffer );
+			if( fetch_stat == IStatus::RESULT_NO_DATA ) break;
+
+			next_buffer = sqlda->addRowSqldaInBufferStaticCursor();
+		}
+	}
+	catch( const FbException& error )
+	{
+		sqlda->restoreOrgAdressFieldsStaticCursor();
+		THROW_ISC_EXCEPTION( statement->connection, error.getStatus() );
+	}
+/*
 	while(!(ret = GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda)))
 		sqlda->addRowSqldaInBufferStaticCursor();
-
+*/
 	sqlda->restoreOrgAdressFieldsStaticCursor();
-
+/*
 	if ( ret != 100 )
 		THROW_ISC_EXCEPTION (statement->connection, statusVector);
-
+*/
 	sqlda->setCurrentRowInBufferStaticCursor(0);
 	sqlda->copyNextSqldaFromBufferStaticCursor();
 

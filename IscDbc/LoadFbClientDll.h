@@ -305,6 +305,12 @@ typedef void        ISC_EXPORT print_blr(char ISC_FAR*,
 					void ISC_FAR*,
 					short);
 
+/* OOAPI */
+
+typedef Firebird::IMaster* ISC_EXPORT get_master_interface();
+typedef ISC_STATUS ISC_EXPORT get_transaction_handle(ISC_STATUS* userStatus, isc_tr_handle* handle, void* obj);
+typedef ISC_STATUS ISC_EXPORT get_database_handle(ISC_STATUS* userStatus, isc_db_handle* handle, void* obj);
+
 class CFbDll
 {
 public:
@@ -382,6 +388,25 @@ public:
 	encode_sql_time*			_encode_sql_time;
 	encode_timestamp*			_encode_timestamp;
 	print_blr*					_print_blr;
+
+	/* OOAPI */
+	get_master_interface*		_get_master_interface;
+	get_transaction_handle*		_get_transaction_handle;
+	get_database_handle*		_get_database_handle;
+
+public:
+    Firebird::IMaster*		_master;
+	Firebird::IProvider*	_prov;
+	Firebird::IStatus*		_status;
+
+	inline classJString::JString getIscStatusText( Firebird::IStatus* status )
+	{
+		char text [4096];
+		_master->getUtilInterface()->formatStatus( text, sizeof(text), status );
+		return text;
+	}
+
+	inline ISC_LONG getSqlCode( const ISC_STATUS* ev ) { return this->_sqlcode( const_cast<ISC_STATUS*>( ev ) ); }
 };
 
 }; // end namespace IscDbcLibrary

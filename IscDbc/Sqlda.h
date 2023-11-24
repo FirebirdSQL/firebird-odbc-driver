@@ -25,6 +25,7 @@
 #if !defined(_SQLDA_H_INCLUDED_)
 #define _SQLDA_H_INCLUDED_
 
+#include <vector>
 #include "IscArray.h"
 #include <sqltypes.h>
 
@@ -41,7 +42,7 @@ public:
 		if ( array ) 
 			delete array; 
 	}
-
+/*
 	void operator = ( XSQLVAR *var )
 	{
 		sqltype = var->sqltype;
@@ -50,13 +51,47 @@ public:
 		sqllen = var->sqllen; 
 		varOrg = var;
 	}
+*/	
+	inline void assign( Firebird::ThrowStatusWrapper& status, Firebird::IMessageMetadata* _meta, char * _buffer, unsigned _index ) {
+		index = _index;
+		//
+		offsetData = _meta->getOffset    ( &status, index );
+		offsetNull = _meta->getNullOffset( &status, index );
+		isNullable = _meta->isNullable   ( &status, index );
+		sqlname    = _meta->getField     ( &status, index );
+		relname    = _meta->getRelation  ( &status, index );
+		aliasname  = _meta->getAlias     ( &status, index );
+		sqltype    = _meta->getType      ( &status, index );
+		sqlscale   = _meta->getScale     ( &status, index );
+		sqlsubtype = _meta->getSubType   ( &status, index );
+		sqllen     = _meta->getLength    ( &status, index );
 
+		assignBuffer( _buffer );
+		//
+		++index; //to make it 1-based)
+	}
+
+	inline void assignBuffer( char* buffer, bool setNotNull = true ) {
+		sqldata = buffer + offsetData;
+		sqlind  = (short*)( buffer + offsetNull );
+		if( setNotNull ) *sqlind = 0;
+	}
+
+	unsigned		offsetData;
+	unsigned		offsetNull;
+	bool			isNullable;
+	const char*		sqlname;
+	const char*		relname;
+	const char*		aliasname;
 	short			sqltype;			/* datatype of field */
 	short			sqlscale;			/* scale factor */
 	short			sqlsubtype;			/* datatype subtype - BLOBs & Text types only */
 	short			sqllen;				/* length of data area */
+	char*           sqldata;
+	short*          sqlind;
 	CAttrArray		*array;
-	XSQLVAR			*varOrg;
+//	XSQLVAR			*varOrg;
+	unsigned		index;
 	bool			replaceForParamArray;
 };
 
@@ -67,15 +102,15 @@ class CDataStaticCursor;
 class Sqlda  
 {
 protected:
-	void initStaticCursor(IscStatement *stmt);
-	void addRowSqldaInBufferStaticCursor();
+	char* initStaticCursor(IscStatement *stmt);
+	char* addRowSqldaInBufferStaticCursor();
 	void restoreOrgAdressFieldsStaticCursor();
 
 public:
 	const char* getOwnerName (int index);
 	int findColumn (const char *columnName);
-	void setBlob (XSQLVAR *var, Value *value, IscStatement *stmt);
-	void setArray (XSQLVAR *var, Value *value, IscStatement *stmt);
+	void setBlob (CAttrSqlVar* var, Value * value, IscStatement *stmt);
+	void setArray (CAttrSqlVar* var, Value *value, IscStatement *stmt);
 	void setValue (int slot, Value *value, IscStatement	*stmt);
 	const char* getTableName (int index);
 	int getSqlType (CAttrSqlVar *var, int &realSqlType);
@@ -101,20 +136,21 @@ public:
 	int getColumnCount();
 	void init();
 	void remove();
-	void allocBuffer(IscStatement *stmt);
-	bool checkOverflow();
+	void allocBuffer(IscStatement *stmt, Firebird::IMessageMetadata* msgMetadata);
+	//bool checkOverflow();
 	void deleteSqlda();
 	void clearSqlda();
-	operator XSQLDA*(){ return sqlda; }
-	XSQLVAR * Var(int index){ return sqlda->sqlvar + index - 1; }
+	//operator XSQLDA*(){ return sqlda; }
+	//XSQLVAR * Var(int index){ return sqlda->sqlvar + index - 1; }
 	CAttrSqlVar * orgVar(int index){ return orgsqlvar + index - 1; }
 
-	Sqlda();
+	Sqlda( IscConnection* conn );
 	~Sqlda();
 
 	int isBlobOrArray(int index);
 	bool isNull(int index);
 	void setNull(int index);
+	void setNotNull(int index);
 
 	bool getBoolean (int index);
 	short getShort (int index);
@@ -130,14 +166,20 @@ public:
 
 	CDataStaticCursor * dataStaticCursor;
 	int			lengthBufferRows;
-	int			*offsetSqldata;
-	int			indicatorsOffset;
+	//unsigned	*offsetSqldata;
+	//int			indicatorsOffset;
 
-	XSQLDA		*sqlda;
-	char		tempSqlda [XSQLDA_LENGTH (DEFAULT_SQLDA_COUNT)];
-	char		*buffer;
+	//XSQLDA		*sqlda;
+	//char		tempSqlda [XSQLDA_LENGTH (DEFAULT_SQLDA_COUNT)];
+	//char		*buffer;
+
+	IscConnection* connection;
+	Firebird::IMessageMetadata* meta;
+	std::vector<char> buffer;
+
 	CAttrSqlVar	*orgsqlvar;
-	bool		needsbuffer;
+	//bool		needsbuffer;
+	unsigned columnsCount;
 
 	friend class IscResultSet;
 };
