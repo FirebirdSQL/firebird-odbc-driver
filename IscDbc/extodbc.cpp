@@ -92,7 +92,7 @@ int getPlanStatement(IscConnection * connection, IStatement* Stmt,const void * b
         *lengthPtr += plan_len;
 
         if( *lengthPtr + 1 < bufferLength ) plan_buffer[ *lengthPtr++ ] = '\n';
-        plan_buffer[ std::min( *lengthPtr, bufferLength - 1 )  ] = 0;
+        plan_buffer[ (std::min)( *lengthPtr, bufferLength - 1 )  ] = 0;
     } 
     catch( const FbException& error )
     {

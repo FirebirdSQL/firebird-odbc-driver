@@ -124,11 +124,11 @@ void CServiceManager::startBackupDatabase( Properties *prop, ULONG options )
 {
 	const char *param;
 	ULONG tempVal;
+	properties = prop;	
 
 	if ( !GDS )
 		loadShareLibrary();
 
-	properties = prop;	
 	bool isServer = attachServiceManager();
 
 	IUtil* utl = GDS->_master->getUtilInterface();
@@ -180,6 +180,10 @@ void CServiceManager::startRestoreDatabase( Properties *prop, ULONG options )
 	ULONG sizeVal;
 
 	properties = prop;
+
+	if ( !GDS )
+		loadShareLibrary();
+
 	bool isServer = attachServiceManager();
 
 	IUtil* utl = GDS->_master->getUtilInterface();
@@ -219,8 +223,8 @@ void CServiceManager::startRestoreDatabase( Properties *prop, ULONG options )
 		spb->insertString( &status, isc_spb_bkp_file, param );
 
 		param = properties->findValue( SETUP_DBNAME, NULL );
-		//if ( isServer )
-		//	while ( *param++ != ':' );
+		if ( isServer )
+			while ( *param++ != ':' );
 		spb->insertString( &status, isc_spb_dbname, param );
 		
 		svcHandle->start( &status, spb->getBufferLength(&status), spb->getBuffer(&status) );
@@ -239,6 +243,9 @@ void CServiceManager::exitRestoreDatabase()
 {
 	IAttachment* databaseHandle = NULL;
 	const char *param;
+
+	if ( !GDS )
+		loadShareLibrary();
 
 	param = properties->findValue( "noReadOnly", NULL );
 	if ( param && *param == 'N')
@@ -286,11 +293,11 @@ void CServiceManager::exitRestoreDatabase()
 void CServiceManager::startStaticticsDatabase( Properties *prop, ULONG options )
 {
 	const char *param;
+	properties = prop;
 
 	if ( !GDS )
 		loadShareLibrary();
 
-	properties = prop;
 	bool isServer = attachServiceManager();
 
 	IUtil* utl = GDS->_master->getUtilInterface();
@@ -326,10 +333,11 @@ void CServiceManager::startStaticticsDatabase( Properties *prop, ULONG options )
 
 void CServiceManager::startShowDatabaseLog( Properties *prop )
 {
+	properties = prop;
+
 	if ( !GDS )
 		loadShareLibrary();
 	
-	properties = prop;
 	bool isServer = attachServiceManager();
 
 	IUtil* utl = GDS->_master->getUtilInterface();
@@ -355,11 +363,11 @@ void CServiceManager::startShowDatabaseLog( Properties *prop )
 void CServiceManager::startRepairDatabase( Properties *prop, ULONG options, ULONG optionsValidate )
 {
 	const char *param;
+	properties = prop;
 
 	if ( !GDS )
 		loadShareLibrary();
 
-	properties = prop;
 	bool isServer = attachServiceManager();
 
 	IUtil* utl = GDS->_master->getUtilInterface();
@@ -403,11 +411,11 @@ void CServiceManager::startUsersQuery( Properties *prop )
 	const char *param;
 	const char *paramUser;
 	ULONG tempVal;
+	properties = prop;
 
 	if ( !GDS )
 		loadShareLibrary();
 
-	properties = prop;
 	bool isServer = attachServiceManager();
 
 	IUtil* utl = GDS->_master->getUtilInterface();

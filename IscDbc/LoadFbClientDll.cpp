@@ -124,13 +124,15 @@ bool CFbDll::LoadDll (const char * client, const char * clientDef)
 void CFbDll::Release(void)
 {
 	if( _prov ) {
-
+/*
 		CheckStatusWrapper status( _status );
 		try {
 			_prov->shutdown( &status, 0, fb_shutrsn_app_stopped );
 		} catch ( ... ) {
 			_prov->release();
 		}
+*/
+		_prov->release();
 		_prov = nullptr;
 	}
 
