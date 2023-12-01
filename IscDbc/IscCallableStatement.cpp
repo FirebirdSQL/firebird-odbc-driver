@@ -100,6 +100,11 @@ bool IscCallableStatement::execute()
 	ITransaction* transHandle = startTransaction();
 	int n;
 
+	if( inputSqlda.isExternalOverriden() )
+	{
+		inputSqlda.rebuildMetaFromAttributes( this );
+	}
+
 	for (n = 0; n < numberParameters; ++n)
 		inputSqlda.setValue (n, parameters.values + n, this);
 

@@ -124,15 +124,16 @@ bool CFbDll::LoadDll (const char * client, const char * clientDef)
 void CFbDll::Release(void)
 {
 	if( _prov ) {
-/*
+
 		CheckStatusWrapper status( _status );
 		try {
-			_prov->shutdown( &status, 0, fb_shutrsn_app_stopped );
+			//TODO: for some reasons this code doesnt't work properly
+			//_prov->shutdown( &status, 0, fb_shutrsn_app_stopped );
 		} catch ( ... ) {
-			_prov->release();
+			//TODO: some logging?..
 		}
-*/
-		_prov->release();
+
+		_master->getPluginManager()->releasePlugin( _prov );
 		_prov = nullptr;
 	}
 
@@ -145,13 +146,13 @@ void CFbDll::Release(void)
 
 //  Do not remove the comment!!!
 //  OdbcFb this intermediate link
-// 
-// 	if ( _Handle )
-// #ifdef _WINDOWS
-// 		FreeLibrary(_Handle);
-// #else
-// 		dlclose (_Handle);
-// #endif
+
+	if ( _Handle )
+#ifdef _WINDOWS
+		FreeLibrary(_Handle);
+#else
+		dlclose (_Handle);
+#endif
 
 	_Handle = NULL;
 }

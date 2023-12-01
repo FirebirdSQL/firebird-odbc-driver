@@ -31,10 +31,13 @@ namespace IscDbcLibrary {
 
 #define MAKEHEAD(a, b, c, d)	\
 {								\
-    sqlvar->sqltype = a;	\
-    sqlvar->sqlscale = b;		\
-    sqlvar->sqlsubtype = c;		\
-    sqlvar->sqllen = d;			\
+	bool oFlag = !( sqlvar->sqltype == a && sqlvar->sqlscale == b && sqlvar->sqlsubtype == c && sqlvar->sqllen == d ); \
+	if( !oFlag ) return;		\
+	sqlvar->sqltype = a;		\
+	sqlvar->sqlscale = b;		\
+	sqlvar->sqlsubtype = c;		\
+	sqlvar->sqllen = d;			\
+	sqlvar->wasExternalOverriden = oFlag; \
 }
 
 class IscHeadSqlVar : public HeadSqlVar
@@ -78,16 +81,16 @@ public:
 	void		setTypeDate()		{ MAKEHEAD(SQL_TYPE_DATE, 0, 0, sizeof (ISC_DATE)); }
 	void		setTypeInt64()		{ MAKEHEAD(SQL_INT64, 0, 0, sizeof (QUAD)); }
 
-	void		setSqlType ( short type ) { sqlvar->sqltype = type; }
-	void		setSqlScale ( short scale ) { sqlvar->sqlscale = scale; }
-	void		setSqlSubType ( short subtype ) { sqlvar->sqlsubtype = subtype; }
-	void		setSqlLen ( short len ) { sqlvar->sqllen = len; }
+	//void		setSqlType ( short type ) { sqlvar->sqltype = type; }
+	void		setSqlScale ( short scale ) { if( sqlvar->sqlscale != scale ) { sqlvar->sqlscale = scale; sqlvar->wasExternalOverriden = true; } }
+	//void		setSqlSubType ( short subtype ) { sqlvar->sqlsubtype = subtype; }
+	void		setSqlLen ( short len ) { if( sqlvar->sqllen != len ) { sqlvar->sqllen = len; sqlvar->wasExternalOverriden = true; } }
 	short		getSqlMultiple () { return sqlMultiple; }
 
 	char *		getSqlData() { return sqlvar->sqldata; }
 	short *		getSqlInd() { return sqlvar->sqlind; }
-	void		setSqlData( char *data ) { sqlvar->sqldata = data; }
-	void		setSqlInd( short *ind ) { sqlvar->sqlind = ind; }
+	void		setSqlData( char *data ) { if( sqlvar->sqldata != data ) { sqlvar->sqldata = data; sqlvar->wasExternalOverriden = true; } }
+	//void		setSqlInd( short *ind ) { sqlvar->sqlind = ind; }
 
 	bool		isReplaceForParamArray () { return replaceForParamArray; }
 

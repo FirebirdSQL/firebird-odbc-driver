@@ -397,7 +397,6 @@ void Sqlda::remove()
 {
 	delete dataStaticCursor;
 	//delete [] buffer;
-	buffer.clear();
 	//delete [] offsetSqldata;
 
 	deleteSqlda(); // Should stand only here!!!
@@ -449,37 +448,29 @@ void Sqlda::allocBuffer ( IscStatement *stmt, IMessageMetadata* msgMetadata )
 
 	needsbuffer = false;
 	*/
-	delete [] orgsqlvar;
+	//delete [] orgsqlvar;
 	//delete [] buffer;
 	//delete [] offsetSqldata;
 
-	assert( msgMetadata );
+	if( !msgMetadata )
+		throw SQLEXCEPTION (RUNTIME_ERROR, "Sqlda::allocBuffer(): no metadata");
+
+	if( meta ) meta->release();
 	meta = msgMetadata;
 
 	ThrowStatusWrapper status( connection->GDS->_status );
 	try
 	{
 		lengthBufferRows = meta->getMessageLength( &status );
-		buffer.resize( lengthBufferRows );
-		columnsCount = meta->getCount( &status );
-		orgsqlvar     = new CAttrSqlVar [columnsCount];
-
-		for( auto n = 0; n < columnsCount; ++n )
-		{
-			orgsqlvar[n].assign( status, meta, buffer.data(), n );
-			auto * var = &orgsqlvar[n];
-
-			//arrays
-			if( stmt && var->sqltype == SQL_ARRAY ) {
-				var->array = new CAttrArray;
-				var->array->loadAttributes ( stmt, var->relname, var->sqlname, var->sqlsubtype );
-			}
-		}
+		columnsCount     = meta->getCount( &status );
 	}
 	catch( const FbException& error )
 	{
 		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
 	}
+
+	buffer.resize( lengthBufferRows );
+	mapSqlAttributes( stmt );
 /*
 	int offset = 0;
 	int n = 0;
@@ -571,6 +562,125 @@ void Sqlda::allocBuffer ( IscStatement *stmt, IMessageMetadata* msgMetadata )
 		*indicators++ = 0;
 	}
 */
+}
+
+void Sqlda::rebuildMetaFromAttributes( IscStatement *stmt )
+{
+	std::vector<short> indicators( columnsCount );
+	IMetadataBuilder* metaBuilder = nullptr;
+	ThrowStatusWrapper status( connection->GDS->_status );
+	try
+	{
+		metaBuilder = meta ? meta->getBuilder( &status ) : connection->GDS->_master->getMetadataBuilder(&status, columnsCount);
+
+		auto * var = orgsqlvar;
+		for( auto i = 0; i < columnsCount; ++i, ++var )
+		{
+			metaBuilder->setType   ( &status, i, var->sqltype | (short)( var->isNullable ? 1 : 0 ) );
+			metaBuilder->setSubType( &status, i, var->sqlsubtype );
+			metaBuilder->setScale  ( &status, i, var->sqlscale   );
+			metaBuilder->setLength ( &status, i, var->sqllen     );
+			indicators[i] = *var->sqlind;
+		}
+
+		if( meta ) meta->release();
+		meta = metaBuilder->getMetadata( &status );
+		if( meta->getCount( &status ) != columnsCount )
+			throw SQLEXCEPTION (RUNTIME_ERROR, "Sqlda::rebuildMetaFromAttributes(): incorrect columns count");
+
+		lengthBufferRows = meta->getMessageLength( &status );
+		if( buffer.size() != lengthBufferRows )
+		{
+			buffer.resize( lengthBufferRows );
+			std::fill(buffer.begin(), buffer.end(), 0);
+		}
+
+		var = orgsqlvar;
+		for( auto i = 0; i < columnsCount; ++i, ++var )
+		{
+			const auto offs     = meta->getOffset( &status, i );
+			const auto offsNull = meta->getNullOffset( &status, i );
+
+			*(short*)( buffer.data() + offsNull ) = indicators[i];
+			if( indicators[i] != sqlNull )
+				memcpy( buffer.data() + offs, var->sqldata, var->sqllen );
+		}
+
+		metaBuilder->release();
+		metaBuilder = nullptr;
+	}
+	catch( const FbException& error )
+	{
+		if( metaBuilder ) metaBuilder->release();
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
+	catch( ... )
+	{
+		if( metaBuilder ) metaBuilder->release();
+		throw;
+	}
+
+	mapSqlAttributes( stmt );
+}
+
+void Sqlda::mapSqlAttributes( IscStatement *stmt )
+{
+	if( buffer.size() != lengthBufferRows )
+		throw SQLEXCEPTION (RUNTIME_ERROR, "Sqlda::mapSqlAttributes(): incorrect buffer size");
+	if( !meta )
+		throw SQLEXCEPTION (RUNTIME_ERROR, "Sqlda::mapSqlAttributes(): no metadata");
+
+	delete[] orgsqlvar;
+	orgsqlvar = new CAttrSqlVar[columnsCount];
+
+	ThrowStatusWrapper status( connection->GDS->_status );
+	try
+	{
+		for( auto n = 0; n < columnsCount; ++n )
+		{
+			auto * var = &orgsqlvar[n];
+
+			var->assign( status, meta, buffer.data(), n );
+
+			//arrays
+			if( stmt && var->sqltype == SQL_ARRAY ) {
+				var->array = new CAttrArray;
+				var->array->loadAttributes ( stmt, var->relname, var->sqlname, var->sqlsubtype );
+			}
+		}
+	}
+	catch( const FbException& error )
+	{
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
+}
+
+IMessageMetadata* Sqlda::setStrProperties( int index, const char* fldName, const char* fldRelation, const char* fldAlias )
+{
+	if( !meta ) return nullptr;
+	--index; // int index is 1-based here
+
+	IMessageMetadata* newMeta = nullptr;
+	IMetadataBuilder* metaBuilder = nullptr;
+	ThrowStatusWrapper status( connection->GDS->_status );
+	try
+	{
+		metaBuilder = meta->getBuilder( &status );
+
+		if( fldName )     metaBuilder->setField   ( &status, index, fldName     );
+		if( fldRelation ) metaBuilder->setRelation( &status, index, fldRelation );
+		if( fldAlias )    metaBuilder->setAlias   ( &status, index, fldAlias    );
+
+		newMeta = metaBuilder->getMetadata( &status );
+		metaBuilder->release();
+		metaBuilder = nullptr;
+	}
+	catch( const FbException& error )
+	{
+		if( metaBuilder ) metaBuilder->release();
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
+	return newMeta;
 }
 
 char* Sqlda::initStaticCursor(IscStatement *stmt)
@@ -780,7 +890,7 @@ int Sqlda::getColumnDisplaySize(int index)
 const char* Sqlda::getColumnLabel(int index)
 {
 	auto * var = orgVar(index);
-	return *var->aliasname ? var->aliasname : var->sqlname;
+	return ( var->aliasname && *var->aliasname ) ? var->aliasname : var->sqlname;
 }
 
 const char* Sqlda::getColumnName(int index)

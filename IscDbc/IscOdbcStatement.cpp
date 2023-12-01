@@ -33,6 +33,8 @@
 #include "Value.h"
 #include "IscStatementMetaData.h"
 
+using namespace Firebird;
+
 namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
@@ -235,8 +237,14 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 				{
 					if ( /*varIn->sqlname_length == len*/ varIn->sqlname && strlen(varIn->sqlname) == len && !strncasecmp ( varIn->sqlname, start, len ) )
 					{
-						/* TODO!! No appropriate OOAPI methods!
-
+						//Here we hope that changing sqlname/relname should not affect the meta buffer
+						auto * newMeta = inputSqlda.setStrProperties( var->index, varIn->sqlname, varIn->relname, nullptr );
+						if( newMeta )
+						{
+							if( inputSqlda.meta ) inputSqlda.meta->release();
+							inputSqlda.meta = newMeta;
+						}
+						/*
 						memcpy ( var->sqlname, varIn->sqlname, len );
 						var->sqlname_length = len;
 						memcpy ( var->relname, varIn->relname, varIn->relname_length );
@@ -293,6 +301,11 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 		tempSql[offset] = '\0';
 		delete [] offsetParam;
 		delete [] offsetNameParam;
+
+		//
+		inputSqlda.mapSqlAttributes( this );
+		//
+
 		return countDefined;
 	}
 	return 0;

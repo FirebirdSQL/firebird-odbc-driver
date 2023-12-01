@@ -655,6 +655,11 @@ bool IscStatement::execute()
 	if ( isActiveSelect() && connection->transactionInfo.autoCommit && resultSets.isEmpty() )
 		clearSelect();
 
+	if( inputSqlda.isExternalOverriden() )
+	{
+		inputSqlda.rebuildMetaFromAttributes( this );
+	}
+
 	ThrowStatusWrapper status( connection->GDS->_status );
 	try
 	{
@@ -734,6 +739,11 @@ bool IscStatement::execute()
 
 bool IscStatement::executeProcedure()
 {
+	if( inputSqlda.isExternalOverriden() )
+	{
+		inputSqlda.rebuildMetaFromAttributes( this );
+	}
+
 	ThrowStatusWrapper status( connection->GDS->_status );
 	try
 	{

@@ -93,6 +93,7 @@ public:
 //	XSQLVAR			*varOrg;
 	unsigned		index;
 	bool			replaceForParamArray;
+	bool			wasExternalOverriden;
 };
 
 class Value;
@@ -137,6 +138,7 @@ public:
 	void init();
 	void remove();
 	void allocBuffer(IscStatement *stmt, Firebird::IMessageMetadata* msgMetadata);
+	void mapSqlAttributes(IscStatement *stmt);
 	//bool checkOverflow();
 	void deleteSqlda();
 	void clearSqlda();
@@ -182,6 +184,17 @@ public:
 	unsigned columnsCount;
 
 	friend class IscResultSet;
+
+	Firebird::IMessageMetadata* setStrProperties( int index, const char* fldName, const char* fldRelation, const char* fldAlias );
+
+	inline bool isExternalOverriden() {
+		auto * var = orgsqlvar;
+		for( auto i = 0; i < columnsCount; ++i ) {
+			if( (var++)->wasExternalOverriden ) return true;
+		}
+		return false;
+	}
+	void rebuildMetaFromAttributes( IscStatement *stmt );
 };
 
 }; // end namespace IscDbcLibrary
