@@ -1025,7 +1025,7 @@ SQLLEN * OdbcConvert::getAdressBindIndTo(char * pointer)
 	if( indicatorFrom && *(short*)indicatorFrom == SQL_NULL_DATA )			\
 	{														\
 		if ( indicatorTo )									\
-			*indicatorTo = SQL_NULL_DATA;					\
+			*(short*)indicatorTo = SQL_NULL_DATA;			\
 		if ( pointerTo )									\
 			*(char*)pointerTo = 0;                          \
 		return SQL_SUCCESS;									\
@@ -1037,7 +1037,7 @@ SQLLEN * OdbcConvert::getAdressBindIndTo(char * pointer)
 	if( indicatorFrom && *(short*)indicatorFrom == SQL_NULL_DATA )			\
 	{														\
 		if ( indicatorTo )									\
-			*indicatorTo = SQL_NULL_DATA;					\
+			*(short*)indicatorTo = SQL_NULL_DATA;			\
 		if ( pointerTo )									\
 			*(wchar_t*)pointerTo = 0;                          \
 		return SQL_SUCCESS;									\
@@ -1051,35 +1051,35 @@ SQLLEN * OdbcConvert::getAdressBindIndTo(char * pointer)
 		if( *(short*)indicatorFrom == SQL_NULL_DATA )		\
 		{													\
 			if ( indicatorTo )								\
-				*indicatorTo = SQL_NULL_DATA;				\
+				*(short*)indicatorTo = SQL_NULL_DATA;		\
 			if ( pointer )									\
 				*(C_TYPE_TO*)pointer = 0;                   \
 			return SQL_SUCCESS;								\
 		}													\
 		else if ( indicatorTo )								\
-			*indicatorTo = sizeof(C_TYPE_TO);				\
+			*(short*)indicatorTo = sizeof(C_TYPE_TO);		\
 	}														\
 	else /* if ( to->isIndicatorSqlDa ) */					\
 	{														\
-		if(indicatorFrom && *indicatorFrom==SQL_NULL_DATA)	\
+		if(indicatorFrom && *(short*)indicatorFrom==SQL_NULL_DATA)	\
 		{													\
 			*(short*)indicatorTo = SQL_NULL_DATA;			\
 			return SQL_SUCCESS;								\
 		}													\
 		else												\
-			*indicatorTo = 0;								\
+			*(short*)indicatorTo = 0;						\
 	}														\
 	if ( !pointer )											\
 		return SQL_SUCCESS;
 
 #define ODBCCONVERT_CHECKNULL_SQLDA							\
-	if( indicatorFrom && *indicatorFrom == SQL_NULL_DATA )	\
+	if( indicatorFrom && *(short*)indicatorFrom == SQL_NULL_DATA )	\
 	{														\
 		*(short*)indicatorTo = SQL_NULL_DATA;				\
 		return SQL_SUCCESS;									\
 	}														\
 	else													\
-		*indicatorTo = 0;									\
+		*(short*)indicatorTo = 0;							\
 
 #define GET_LEN_FROM_OCTETLENGTHPTR			\
 	if ( octetLengthPtr )					\

@@ -339,24 +339,29 @@ public:
 		return countAllRows;
 	}
 
-	void operator << (char * orgBuf)
+	void operator << (std::vector<char>& buf)
 	{
-		memcpy(nextPosition(),orgBuf,lenRow);
+		assert(lenRow == buf.size());
+		memcpy(nextPosition(), buf.data(), lenRow);
 	}
 
-	void operator >> (char * orgBuf)
+	void operator >> (std::vector<char>& buf)
 	{
-		memcpy(orgBuf,nextPosition(),lenRow);
+		assert(lenRow == buf.size());
+		char* ptr = nextPosition();
+		buf.assign( ptr, ptr + lenRow );
 	}
 
-	void copyToBuffer(char * orgBuf)
+	void copyToBuffer(std::vector<char>& buf)
 	{
-		memcpy(orgBuf,ptRowBlock,lenRow);
+		assert(lenRow == buf.size());
+		buf.assign( ptRowBlock, ptRowBlock + lenRow );
 	}
 
-	void copyToCurrentSqlda(char * orgBuf)
+	void copyToCurrentSqlda(std::vector<char>& buf)
 	{
-		memcpy(ptRowBlock,orgBuf,lenRow);
+		assert(lenRow == buf.size());
+		memcpy(ptRowBlock, buf.data(), lenRow);
 	}
 };
 
@@ -411,6 +416,7 @@ void Sqlda::clearSqlda()
 void Sqlda::deleteSqlda()
 {
 	delete [] orgsqlvar;
+	buffer.clear();
 
 	if( meta ) {
 		meta->release();
@@ -600,10 +606,11 @@ void Sqlda::rebuildMetaFromAttributes( IscStatement *stmt )
 		{
 			const auto offs     = meta->getOffset( &status, i );
 			const auto offsNull = meta->getNullOffset( &status, i );
+			const auto len = (std::min)((unsigned)var->sqllen, meta->getLength(&status, i) );
 
 			*(short*)( buffer.data() + offsNull ) = indicators[i];
 			if( indicators[i] != sqlNull )
-				memcpy( buffer.data() + offs, var->sqldata, var->sqllen );
+				memcpy( buffer.data() + offs, var->sqldata, len );
 		}
 
 		metaBuilder->release();
@@ -714,22 +721,22 @@ void Sqlda::getAdressFieldFromCurrentRowInBufferStaticCursor(int column, char *&
 
 void Sqlda::copyNextSqldaInBufferStaticCursor()
 {
-	*dataStaticCursor << buffer.data();
+	*dataStaticCursor << buffer;
 }
 
 void Sqlda::copyNextSqldaFromBufferStaticCursor()
 {
-	*dataStaticCursor >> buffer.data();
+	*dataStaticCursor >> buffer;
 }
 
 void Sqlda::saveCurrentSqldaToBuffer()
 {
-	dataStaticCursor->copyToBuffer( buffer.data() );
+	dataStaticCursor->copyToBuffer( buffer );
 }
 
 void Sqlda::restoreBufferToCurrentSqlda()
 {
-	dataStaticCursor->copyToCurrentSqlda( buffer.data() );
+	dataStaticCursor->copyToCurrentSqlda( buffer );
 }
 
 int Sqlda::getCountRowsStaticCursor()
