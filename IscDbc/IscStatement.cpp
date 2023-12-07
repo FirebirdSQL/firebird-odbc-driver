@@ -769,12 +769,14 @@ bool IscStatement::executeProcedure()
 
 void IscStatement::clearResults()
 {
+#if 0
 	openCursor = false;
 	typeStmt = stmtNone;
 	closeFbResultSet();
 	freeStatementHandle();
 	inputSqlda.clearSqlda();
 	outputSqlda.clearSqlda();
+#endif
 }
 
 int IscStatement::objectVersion()

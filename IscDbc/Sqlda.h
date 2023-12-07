@@ -61,7 +61,7 @@ public:
 		sqlname    = _meta->getField     ( &status, index );
 		relname    = _meta->getRelation  ( &status, index );
 		aliasname  = _meta->getAlias     ( &status, index );
-		sqltype    = _meta->getType      ( &status, index );
+		sqltype    = _meta->getType      ( &status, index ) & ~1;
 		sqlscale   = _meta->getScale     ( &status, index );
 		sqlsubtype = _meta->getSubType   ( &status, index );
 		sqllen     = _meta->getLength    ( &status, index );
