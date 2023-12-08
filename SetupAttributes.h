@@ -36,8 +36,14 @@
 #define SUFFIX_BUILD		"32"
 #endif
 
-#define DRIVER_FULL_NAME	"Firebird/InterBase(r) driver"
+#define DRIVER_FULL_NAME	"Firebird ODBC Driver"
+
+#ifdef _WINDOWS
+#define DRIVER_NAME			"FirebirdODBC"
+#else
 #define DRIVER_NAME			"OdbcFb"
+#endif
+
 #define DEFAULT_DRIVER		"IscDbc"
 
 #ifdef _WINDOWS

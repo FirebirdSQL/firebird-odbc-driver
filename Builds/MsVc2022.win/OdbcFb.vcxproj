@@ -22,6 +22,7 @@
     <VCProjectVersion>17.0</VCProjectVersion>
     <ProjectGuid>{C6127398-654D-4196-B8C1-5BB32D75D7FD}</ProjectGuid>
     <RootNamespace>Firebird OdbcFb</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -70,18 +71,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(Platform)/$(Configuration)\</OutDir>
     <IntDir>$(Platform)/$(Configuration)\</IntDir>
+    <TargetName>FirebirdODBC</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(Platform)/$(Configuration)\</OutDir>
     <IntDir>$(Platform)/$(Configuration)\</IntDir>
+    <TargetName>FirebirdODBC</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(Platform)/$(Configuration)\</OutDir>
     <IntDir>$(Platform)/$(Configuration)\</IntDir>
+    <TargetName>FirebirdODBC</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(Platform)/$(Configuration)\</OutDir>
     <IntDir>$(Platform)/$(Configuration)\</IntDir>
+    <TargetName>FirebirdODBC</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -108,6 +113,7 @@
       <CompileAs>Default</CompileAs>
       <AdditionalModuleDependencies>%(AdditionalModuleDependencies)</AdditionalModuleDependencies>
       <UseStandardPreprocessor>true</UseStandardPreprocessor>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -116,7 +122,7 @@
     <Link>
       <AdditionalOptions>/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>version.lib;wsock32.lib;comctl32.lib;legacy_stdio_definitions.lib;legacy_stdio_wide_specifiers.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(Platform)/$(Configuration)/OdbcFb.dll</OutputFile>
+      <OutputFile>$(Platform)/$(Configuration)/FirebirdODBC.dll</OutputFile>
       <AdditionalLibraryDirectories>debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>..\..\OdbcJdbc.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -161,7 +167,7 @@
     <Link>
       <AdditionalOptions>/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>version.lib;wsock32.lib;comctl32.lib;legacy_stdio_definitions.lib;legacy_stdio_wide_specifiers.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(Platform)/$(Configuration)/OdbcFb.dll</OutputFile>
+      <OutputFile>$(Platform)/$(Configuration)/FirebirdODBC.dll</OutputFile>
       <AdditionalLibraryDirectories>debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>..\..\OdbcJdbc.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -198,6 +204,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <CompileAs>Default</CompileAs>
       <AdditionalModuleDependencies>%(AdditionalModuleDependencies)</AdditionalModuleDependencies>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -206,7 +213,7 @@
     <Link>
       <AdditionalOptions>/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>version.lib;wsock32.lib;comctl32.lib;legacy_stdio_definitions.lib;legacy_stdio_wide_specifiers.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(Platform)/$(Configuration)/OdbcFb.dll</OutputFile>
+      <OutputFile>$(Platform)/$(Configuration)/FirebirdODBC.dll</OutputFile>
       <ModuleDefinitionFile>..\..\OdbcJdbc.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(Platform)/$(Configuration)/$(TargetName).pdb</ProgramDatabaseFile>
@@ -247,7 +254,7 @@
     <Link>
       <AdditionalOptions>/EXPORT:ConfigDSN /EXPORT:ConfigDriver,PRIVATE /EXPORT:DllRegisterServer,PRIVATE /EXPORT:DllUnregisterServer,PRIVATE /EXPORT:DllInstall,PRIVATE %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>version.lib;wsock32.lib;comctl32.lib;legacy_stdio_definitions.lib;legacy_stdio_wide_specifiers.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(Platform)/$(Configuration)/OdbcFb.dll</OutputFile>
+      <OutputFile>$(Platform)/$(Configuration)/FirebirdODBC.dll</OutputFile>
       <ModuleDefinitionFile>..\..\OdbcJdbc.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(Platform)/$(Configuration)/$(TargetName).pdb</ProgramDatabaseFile>
