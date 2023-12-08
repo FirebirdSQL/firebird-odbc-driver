@@ -22,7 +22,7 @@
 LANGUAGE 0x09, 0x01
 #pragma code_page(1252)
 #ifndef __MINGW32__
-2 24 MOVEABLE PURE "OdbcFb.dll.manifest"
+2 24 MOVEABLE PURE "FirebirdODBC.dll.manifest"
 #endif
 #endif //_WINDOWS
 
