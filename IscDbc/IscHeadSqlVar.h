@@ -36,7 +36,7 @@ namespace IscDbcLibrary {
 	sqlvar->sqltype = a;		\
 	sqlvar->sqlscale = b;		\
 	sqlvar->sqlsubtype = c;		\
-	sqlvar->sqllen = d;			\
+	if(d) sqlvar->sqllen = d;	\
 	sqlvar->wasExternalOverriden = oFlag; \
 }
 

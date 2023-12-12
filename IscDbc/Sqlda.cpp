@@ -594,11 +594,13 @@ void Sqlda::rebuildMetaFromAttributes( IscStatement *stmt )
 		if( meta->getCount( &status ) != columnsCount )
 			throw SQLEXCEPTION (RUNTIME_ERROR, "Sqlda::rebuildMetaFromAttributes(): incorrect columns count");
 
+		std::vector<char> bufferNew;
+
 		lengthBufferRows = meta->getMessageLength( &status );
-		if( buffer.size() != lengthBufferRows )
+		//if( buffer.size() != lengthBufferRows )
 		{
-			buffer.resize( lengthBufferRows );
-			std::fill(buffer.begin(), buffer.end(), 0);
+			bufferNew.resize( lengthBufferRows );
+			//std::fill(buffer.begin(), buffer.end(), 0);
 		}
 
 		var = orgsqlvar;
@@ -608,11 +610,12 @@ void Sqlda::rebuildMetaFromAttributes( IscStatement *stmt )
 			const auto offsNull = meta->getNullOffset( &status, i );
 			const auto len = (std::min)((unsigned)var->sqllen, meta->getLength(&status, i) );
 
-			*(short*)( buffer.data() + offsNull ) = indicators[i];
+			*(short*)( bufferNew.data() + offsNull ) = indicators[i];
 			if( indicators[i] != sqlNull )
-				memcpy( buffer.data() + offs, var->sqldata, len );
+				memcpy( bufferNew.data() + offs, var->sqldata, len );
 		}
 
+		buffer = bufferNew;
 		metaBuilder->release();
 		metaBuilder = nullptr;
 	}

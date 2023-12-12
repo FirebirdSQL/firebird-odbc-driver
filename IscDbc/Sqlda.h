@@ -74,7 +74,7 @@ public:
 	inline void assignBuffer( char* buffer, bool setNotNull = true ) {
 		sqldata = buffer + offsetData;
 		sqlind  = (short*)( buffer + offsetNull );
-		if( setNotNull ) *sqlind = 0;
+		//if( setNotNull ) *sqlind = 0;
 	}
 
 	unsigned		offsetData;
