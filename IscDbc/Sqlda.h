@@ -189,7 +189,7 @@ public:
 
 	inline bool isExternalOverriden() {
 		auto * var = orgsqlvar;
-		for( auto i = 0; i < columnsCount; ++i ) {
+		for( unsigned i = 0; i < columnsCount; ++i ) {
 			if( (var++)->wasExternalOverriden ) return true;
 		}
 		return false;

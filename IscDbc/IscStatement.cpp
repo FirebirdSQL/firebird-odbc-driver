@@ -1004,7 +1004,7 @@ void IscStatement::freeStatementHandle()
 			statementHandle->free( &status );
 			statementHandle = nullptr;
 		}
-		catch( const FbException& error ) {}
+		catch( const FbException& ) {}
 
 		if( statementHandle ) {
 			statementHandle->release();

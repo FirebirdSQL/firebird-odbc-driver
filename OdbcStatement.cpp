@@ -154,7 +154,7 @@ using namespace IscDbcLibrary;
 void TraceOutput(char * msg, intptr_t val)
 {
 	char buf[80];
-	sprintf( buf, "\t%s = %ld : %p\n", msg, val, val );
+	sprintf( buf, "\t%s = %ld : %p\n", msg, val, (void*)val );
 	OutputDebugString(buf);
 }
 

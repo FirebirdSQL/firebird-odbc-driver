@@ -131,9 +131,8 @@ public:
 		//SQLLEN *indicators = (SQLLEN*)( ptRow + indicatorsOffset );
 
 		auto * var = ptSqlda;
-		int n;
 
-		for (n = 0; n < numberColumns; ++n)
+		for (unsigned n = 0; n < numberColumns; ++n)
 		{
 			switch (var->sqltype)
 			{
@@ -580,7 +579,7 @@ void Sqlda::rebuildMetaFromAttributes( IscStatement *stmt )
 		metaBuilder = meta ? meta->getBuilder( &status ) : connection->GDS->_master->getMetadataBuilder(&status, columnsCount);
 
 		auto * var = orgsqlvar;
-		for( auto i = 0; i < columnsCount; ++i, ++var )
+		for( unsigned i = 0; i < columnsCount; ++i, ++var )
 		{
 			metaBuilder->setType   ( &status, i, var->sqltype | (short)( var->isNullable ? 1 : 0 ) );
 			metaBuilder->setSubType( &status, i, var->sqlsubtype );
@@ -604,7 +603,7 @@ void Sqlda::rebuildMetaFromAttributes( IscStatement *stmt )
 		}
 
 		var = orgsqlvar;
-		for( auto i = 0; i < columnsCount; ++i, ++var )
+		for( unsigned i = 0; i < columnsCount; ++i, ++var )
 		{
 			const auto offs     = meta->getOffset( &status, i );
 			const auto offsNull = meta->getNullOffset( &status, i );
@@ -646,7 +645,7 @@ void Sqlda::mapSqlAttributes( IscStatement *stmt )
 	ThrowStatusWrapper status( connection->GDS->_status );
 	try
 	{
-		for( auto n = 0; n < columnsCount; ++n )
+		for( unsigned n = 0; n < columnsCount; ++n )
 		{
 			auto * var = &orgsqlvar[n];
 
@@ -754,7 +753,7 @@ int Sqlda::getColumnCount()
 
 void Sqlda::print()
 {
-	for (int n = 0; n < columnsCount; ++n)
+	for (unsigned n = 0; n < columnsCount; ++n)
 	{
 		auto * var = orgsqlvar + n;
 		char *p = var->sqldata;
@@ -1376,7 +1375,7 @@ void Sqlda::setBlob(CAttrSqlVar* var, Value * value, IscStatement *stmt)
 		blobHandle->close( &status );
 		blobHandle = nullptr;
 	}
-	catch( const FbException& error )
+	catch( const FbException& )
 	{
 		if( blobHandle ) blobHandle->release();
 	}
@@ -1400,7 +1399,7 @@ void Sqlda::setArray(CAttrSqlVar* var, Value *value, IscStatement *stmt)
 
 int Sqlda::findColumn(const char * columnName)
 {
-	for (int n = 0; n < columnsCount; ++n)
+	for (unsigned n = 0; n < columnsCount; ++n)
 		if (strcasecmp (orgsqlvar[n].sqlname, columnName) == 0)
 			return n;
 

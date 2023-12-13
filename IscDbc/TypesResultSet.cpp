@@ -301,7 +301,7 @@ bool TypesResultSet::next()
 
 	//for (int n = 0; n < sqlda->sqlda->sqld; ++n, ++var, ++value)
 	//	statement->setValue (value, var);
-	for (int n = 0; n < sqlda->columnsCount; ++n, ++value)
+	for (unsigned n = 0; n < sqlda->columnsCount; ++n, ++value)
 		statement->setValue (value, n + 1, *sqlda);
 
 	return true;

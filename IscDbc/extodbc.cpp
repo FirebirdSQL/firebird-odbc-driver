@@ -45,7 +45,7 @@ int getTypeStatement(IscConnection * connection, IStatement* Stmt,const void * b
     {
         *lengthPtr = static_cast<int>( Stmt->getType( &status ) );
     } 
-    catch( const FbException& error )
+    catch( const FbException& )
     {
         return -1;
     }
@@ -62,7 +62,7 @@ int getInfoCountRecordsStatement(IscConnection * connection, IStatement* Stmt,co
     {
         *lengthPtr = static_cast<int>( Stmt->getAffectedRecords( &status ) );
     } 
-    catch( const FbException& error )
+    catch( const FbException& )
     {
         return -1;
     }
@@ -94,7 +94,7 @@ int getPlanStatement(IscConnection * connection, IStatement* Stmt,const void * b
         if( *lengthPtr + 1 < bufferLength ) plan_buffer[ *lengthPtr++ ] = '\n';
         plan_buffer[ (std::min)( *lengthPtr, bufferLength - 1 )  ] = 0;
     } 
-    catch( const FbException& error )
+    catch( const FbException& )
     {
         return -1;
     }
@@ -159,7 +159,7 @@ int getInfoDatabase(IscConnection * connection, const void * info_buffer, int bu
     {
         Db->getInfo( &status, db_info_length, (const unsigned char*)db_info, 256, (unsigned char*)buffer );
     } 
-    catch( const FbException& error )
+    catch( const FbException& )
     {
         return -1;
     }
@@ -297,7 +297,7 @@ void getStatInformations(IscConnection * connection, char bNumberCall)
     {
         Db->getInfo( &status, item_length, (const unsigned char*)items, buffer_length, (unsigned char*)buffer );
     } 
-    catch( const FbException& error )
+    catch( const FbException& )
     {
         return;
     }
@@ -393,7 +393,7 @@ int getStatInformations(IscConnection * connection, const void * info_buffer, in
     {
         Db->getInfo( &status, item_length, (const unsigned char*)items, buffer_length, (unsigned char*)buffer );
     } 
-    catch( const FbException& error )
+    catch( const FbException& )
     {
         return -1;
     }

@@ -375,7 +375,7 @@ void IscArray::getBytesFromArray()
 	isc_tr_handle transactionHandle = NULL;
 	isc_db_handle dbHandle = NULL;
 
-	ISC_STATUS ret =
+	bool ret =
 	    connection->GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
 	        ||
 	    connection->GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
@@ -513,7 +513,7 @@ void IscArray::writeBlob(char * sqldata)
 	isc_tr_handle transactionHandle = NULL;
 	isc_db_handle dbHandle = NULL;
 
-	ISC_STATUS ret =
+	bool ret =
 	    GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
 	        ||
 	    GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
@@ -537,7 +537,7 @@ void IscArray::writeBlob(char * sqldata, char *data, ISC_LONG length)
 	isc_tr_handle transactionHandle = NULL;
 	isc_db_handle dbHandle = NULL;
 
-	ISC_STATUS ret =
+	bool ret =
 	    GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
 	        ||
 	    GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
@@ -718,7 +718,7 @@ void IscArray::writeStringHexToBlob(char * sqldata, char *data, int length)
 	isc_tr_handle transactionHandle = NULL;
 	isc_db_handle dbHandle = NULL;
 
-	ISC_STATUS ret =
+	bool ret =
 	    GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
 	        ||
 	    GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
@@ -762,7 +762,7 @@ void IscArray::writeArray(Value * value)
 	isc_tr_handle transactionHandle = NULL;
 	isc_db_handle dbHandle = NULL;
 
-	ISC_STATUS ret =
+	bool ret =
 	    connection->GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
 	        ||
 	    connection->GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
