@@ -36,15 +36,17 @@
 
 namespace IscDbcLibrary {
 
-#define SET_SQLVAR(index, name, type, prec, offset)			\
+#define SET_SQLVAR(num, name, type, prec, offset)			\
 {															\
-	auto *var = sqlda->orgVar( index );						\
+	auto *var = sqlda->orgVar( num );						\
 															\
 	var->sqlname = name;									\
 	var->sqltype = type;									\
 	var->isNullable = true;									\
 	var->sqllen = prec;										\
 	var->sqldata = (char*)offset;							\
+	var->index = num;										\
+	var->sqlind = (short*)&indicators.at( num - 1 );		\
 }															\
 
 #define SET_INDICATOR_VAL(col,type,isNull)  if ( isNull && (*(type*)(var[col].sqldata + sqldataOffsetPtr)) == -1 ) *var[col].sqlind = -1; else *var[col].sqlind = 0;
@@ -192,7 +194,7 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCha
 	values.alloc (numberColumns);
 	allocConversions();
 
-	indicators = (SQLLEN*)calloc( 1, sizeof(SQLLEN) * numberColumns );
+	indicators.resize( numberColumns );
 	sqlda = &outputSqlda;
 	sqlda->columnsCount = numberColumns;
 	sqldataOffsetPtr = (uintptr_t)types - sizeof (*types);
@@ -217,16 +219,9 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCha
 	SET_SQLVAR(17, "SQL_DATETIME_SUB"	, SQL_SHORT		,	 5	, OFFSET(Types,typeDateTimeSub)			)
 	SET_SQLVAR(18, "NUM_PREC_RADIX"		, SQL_LONG		,	10	, OFFSET(Types,typeNumPrecRadix)		)
 	SET_SQLVAR(19, "INTERVAL_PRECISION"	, SQL_SHORT		,	 5	, OFFSET(Types,typeIntervalPrecision)	)
-
-	SQLLEN *ind = indicators;
-	for( auto & var : sqlda->orgsqlvar ) var.sqlind = (short*)ind++;
-
 }
 
-TypesResultSet::~TypesResultSet()
-{
-	free(indicators);
-}
+TypesResultSet::~TypesResultSet() {}
 
 bool TypesResultSet::nextFetch()
 {
@@ -287,11 +282,7 @@ bool TypesResultSet::next()
 
 	++activePosRowInSet;
 
-	//XSQLVAR *var = sqlda->sqlda->sqlvar;
     Value *value = values.values;
-
-	//for (int n = 0; n < sqlda->sqlda->sqld; ++n, ++var, ++value)
-	//	statement->setValue (value, var);
 	for (unsigned n = 0; n < sqlda->columnsCount; ++n, ++value)
 		statement->setValue (value, n + 1, *sqlda);
 

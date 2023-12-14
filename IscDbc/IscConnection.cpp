@@ -2224,7 +2224,6 @@ void IscConnection::commitRetaining()
 		try
 		{
 			tr.transactionHandle->commitRetaining( &status );
-			tr.transactionHandle = nullptr;
 		}
 		catch( const FbException& error )
 		{
@@ -2245,7 +2244,6 @@ void IscConnection::rollbackRetaining()
 		try
 		{
 			tr.transactionHandle->rollbackRetaining( &status );
-			tr.transactionHandle = nullptr;
 		}
 		catch( const FbException& error )
 		{

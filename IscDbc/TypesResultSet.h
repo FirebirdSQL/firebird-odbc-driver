@@ -47,7 +47,7 @@ public:
 	int			recordNumber;
 	int			dataTypes;
 	Sqlda		outputSqlda;
-	SQLLEN		*indicators;
+	std::vector<SQLLEN> indicators;
 };
 
 }; // end namespace IscDbcLibrary
