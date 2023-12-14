@@ -80,13 +80,12 @@ bool IscMetaDataResultSet::next()
 
 	++activePosRowInSet;
 
-	//XSQLVAR *var = sqlda->sqlda->sqlvar;
-	auto * var = sqlda->orgsqlvar;
     Value *value = values.values;
-	int count = sqlda->columnsCount;//sqlda->sqld;
+	int count = sqlda->columnsCount;
 
-	for ( auto n = 0; n < count; ++n, ++var, ++value )
+	for ( auto n = 0; n < count; ++n, ++value )
 	{
+		auto * var = &sqlda->orgsqlvar.at(n);
 		statement->setValue( value, n + 1, *sqlda );
 
 		if ( *var->sqlind != -1 && (var->sqltype) == SQL_VARYING )

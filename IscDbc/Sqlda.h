@@ -31,28 +31,37 @@
 
 namespace IscDbcLibrary {
 
-#define DEFAULT_SQLDA_COUNT		20
-
 class CAttrSqlVar
 {
 public:
-	CAttrSqlVar()	{ memset( this, 0, sizeof ( *this) ); }
+	CAttrSqlVar() :
+		offsetData{ 0 },
+		offsetNull{ 0 },
+		isNullable{ false },
+		sqlname{ nullptr },
+		relname{ nullptr },
+		aliasname{ nullptr },
+		sqltype{ 0 },
+		sqlscale{ 0 },
+		sqlsubtype{ 0 },
+		sqllen{ 0 },
+		sqldata{ nullptr },
+		sqlind{ nullptr },
+		array{ nullptr },
+		index{ 0 },
+		replaceForParamArray{ false },
+		wasExternalOverriden{ false }
+	{}
+
 	~CAttrSqlVar()	
 	{ 
 		if ( array ) 
 			delete array; 
 	}
-/*
-	void operator = ( XSQLVAR *var )
-	{
-		sqltype = var->sqltype;
-		sqlscale = var->sqlscale;
-		sqlsubtype = var->sqlsubtype;
-		sqllen = var->sqllen; 
-		varOrg = var;
-	}
-*/	
-	inline void assign( Firebird::ThrowStatusWrapper& status, Firebird::IMessageMetadata* _meta, char * _buffer, unsigned _index ) {
+
+	using buffer_t = std::vector<char>;
+
+	inline void assign( Firebird::ThrowStatusWrapper& status, Firebird::IMessageMetadata* _meta, buffer_t& _buffer, unsigned _index ) {
 		index = _index;
 		//
 		offsetData = _meta->getOffset    ( &status, index );
@@ -71,10 +80,14 @@ public:
 		++index; //to make it 1-based)
 	}
 
-	inline void assignBuffer( char* buffer, bool setNotNull = true ) {
+	inline void assignBuffer(buffer_t& buffer ) {
+		sqldata = &buffer.at( offsetData );
+		sqlind  = (short*)&buffer.at( offsetNull );
+	}
+	//TODO: deprecate it!
+	inline void assignBuffer(char* buffer) {
 		sqldata = buffer + offsetData;
-		sqlind  = (short*)( buffer + offsetNull );
-		//if( setNotNull ) *sqlind = 0;
+		sqlind = (short*)(buffer + offsetNull);
 	}
 
 	unsigned		offsetData;
@@ -90,7 +103,6 @@ public:
 	char*           sqldata;
 	short*          sqlind;
 	CAttrArray		*array;
-//	XSQLVAR			*varOrg;
 	unsigned		index;
 	bool			replaceForParamArray;
 	bool			wasExternalOverriden;
@@ -139,12 +151,9 @@ public:
 	void remove();
 	void allocBuffer(IscStatement *stmt, Firebird::IMessageMetadata* msgMetadata);
 	void mapSqlAttributes(IscStatement *stmt);
-	//bool checkOverflow();
 	void deleteSqlda();
 	void clearSqlda();
-	//operator XSQLDA*(){ return sqlda; }
-	//XSQLVAR * Var(int index){ return sqlda->sqlvar + index - 1; }
-	CAttrSqlVar * orgVar(int index){ return orgsqlvar + index - 1; }
+	CAttrSqlVar* orgVar(int index) { return &orgsqlvar.at( index - 1 ); }
 
 	Sqlda( IscConnection* conn );
 	~Sqlda();
@@ -168,19 +177,15 @@ public:
 
 	CDataStaticCursor * dataStaticCursor;
 	int			lengthBufferRows;
-	//unsigned	*offsetSqldata;
-	//int			indicatorsOffset;
-
-	//XSQLDA		*sqlda;
-	//char		tempSqlda [XSQLDA_LENGTH (DEFAULT_SQLDA_COUNT)];
-	//char		*buffer;
 
 	IscConnection* connection;
 	Firebird::IMessageMetadata* meta;
-	std::vector<char> buffer;
 
-	CAttrSqlVar	*orgsqlvar;
-	//bool		needsbuffer;
+	using buffer_t = std::vector<char>;
+	buffer_t buffer;
+
+	using orgsqlvar_t = std::vector<CAttrSqlVar>;
+	orgsqlvar_t orgsqlvar;
 	unsigned columnsCount;
 
 	friend class IscResultSet;
@@ -188,10 +193,7 @@ public:
 	Firebird::IMessageMetadata* setStrProperties( int index, const char* fldName, const char* fldRelation, const char* fldAlias );
 
 	inline bool isExternalOverriden() {
-		auto * var = orgsqlvar;
-		for( unsigned i = 0; i < columnsCount; ++i ) {
-			if( (var++)->wasExternalOverriden ) return true;
-		}
+		for( auto & var : orgsqlvar ) if (var.wasExternalOverriden) return true;
 		return false;
 	}
 	void rebuildMetaFromAttributes( IscStatement *stmt );

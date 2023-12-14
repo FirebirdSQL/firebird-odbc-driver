@@ -195,9 +195,8 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCha
 	indicators = (SQLLEN*)calloc( 1, sizeof(SQLLEN) * numberColumns );
 	sqlda = &outputSqlda;
 	sqlda->columnsCount = numberColumns;
-	//((XSQLDA*)*sqlda)->sqld = numberColumns;
 	sqldataOffsetPtr = (uintptr_t)types - sizeof (*types);
-	sqlda->orgsqlvar = new CAttrSqlVar [numberColumns];
+	sqlda->orgsqlvar.resize( numberColumns );
 
 	SET_SQLVAR( 1, "TYPE_NAME"			, SQL_VARYING	,	52  , OFFSET(Types,lenTypeName)				)
 	SET_SQLVAR( 2, "DATA_TYPE"			, SQL_SHORT		,	 5	, OFFSET(Types,typeType)				)
@@ -219,16 +218,9 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCha
 	SET_SQLVAR(18, "NUM_PREC_RADIX"		, SQL_LONG		,	10	, OFFSET(Types,typeNumPrecRadix)		)
 	SET_SQLVAR(19, "INTERVAL_PRECISION"	, SQL_SHORT		,	 5	, OFFSET(Types,typeIntervalPrecision)	)
 
-	CAttrSqlVar * var = sqlda->orgsqlvar;
-	int i = numberColumns;
-	//XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar;
 	SQLLEN *ind = indicators;
+	for( auto & var : sqlda->orgsqlvar ) var.sqlind = (short*)ind++;
 
-	while ( i-- )
-	{
-		//*orgvar++ = var;
-		(var++)->sqlind = (short*)ind++;
-	}
 }
 
 TypesResultSet::~TypesResultSet()
@@ -255,8 +247,7 @@ bool TypesResultSet::nextFetch()
 	if (++recordNumber > sizeof (types) / sizeof (types [0]))
 		return false;
 
-	//XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar;
-	auto *var = sqlda->orgsqlvar;
+	auto & var = sqlda->orgsqlvar;
 	sqldataOffsetPtr += sizeof (*types);
 
 	SET_INDICATOR_STR(0);						// TYPE_NAME

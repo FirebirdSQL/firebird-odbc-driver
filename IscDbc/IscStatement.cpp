@@ -105,7 +105,9 @@ namespace IscDbcLibrary {
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscStatement::IscStatement(IscConnection *connect) : inputSqlda{connect}, outputSqlda{connect}
+IscStatement::IscStatement(IscConnection *connect) :
+	inputSqlda{connect},
+	outputSqlda{connect}
 {
 	connection = connect;
 	useCount = 1;
@@ -120,6 +122,7 @@ IscStatement::IscStatement(IscConnection *connect) : inputSqlda{connect}, output
 	typeStmt = stmtNone;
 	resultsCount = 0;
 	resultsSequence	= 0;
+	summaryUpdateCount = 0;
 }
 
 IscStatement::~IscStatement()

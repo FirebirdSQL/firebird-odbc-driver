@@ -115,22 +115,7 @@ bool IscResultSet::nextFetch()
 	{
 		THROW_ISC_EXCEPTION( statement->connection, error.getStatus() );
 	}
-/*	
-	ISC_STATUS statusVector [20];
 
-	int dialect = statement->connection->getDatabaseDialect ();
-	ISC_STATUS ret = statement->connection->GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
-
-	if (ret)
-	{
-		if (ret == 100)
-		{
-			close();
-			return false;
-		}
-		THROW_ISC_EXCEPTION (statement->connection, statusVector);
-	}
-*/
 	return true;
 }
 
@@ -157,23 +142,7 @@ bool IscResultSet::next()
 	{
 		THROW_ISC_EXCEPTION( statement->connection, error.getStatus() );
 	}
-/*
-	ISC_STATUS statusVector [20];
 
-	int dialect = statement->connection->getDatabaseDialect ();
-	ISC_STATUS ret = statement->connection->GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda);
-
-	if (ret)
-	{
-		if (ret == 100)
-		{
-			close();
-			return false;
-		}
-		THROW_ISC_EXCEPTION (statement->connection, statusVector);
-	}
-*/
-	//auto *var = sqlda->orgsqlvar;
     Value *value = values.values;
 
 	for (int n = 0; n < numberColumns; ++n, ++value)
@@ -214,12 +183,7 @@ bool IscResultSet::readFromSystemCatalog()
 		THROW_ISC_EXCEPTION( statement->connection, error.getStatus() );
 	}
 
-/*
-	while( nextFetch() )
-		sqlda->addRowSqldaInBufferStaticCursor();
-*/
 	sqlda->restoreOrgAdressFieldsStaticCursor();
-
 	sqlda->setCurrentRowInBufferStaticCursor(0);
 	sqlda->copyNextSqldaFromBufferStaticCursor();
 
@@ -231,12 +195,7 @@ bool IscResultSet::readStaticCursor()
 	if (!statement || !statement->fbResultSet)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
 
-	//ISC_STATUS statusVector [20];
-
-	//int dialect = statement->connection->getDatabaseDialect ();
 	CFbDll * GDS = statement->connection->GDS;
-	//ISC_STATUS ret;
-
 	char* next_buffer = sqlda->initStaticCursor ( statement );
 
 	ThrowStatusWrapper status( GDS->_status );
@@ -255,15 +214,8 @@ bool IscResultSet::readStaticCursor()
 		sqlda->restoreOrgAdressFieldsStaticCursor();
 		THROW_ISC_EXCEPTION( statement->connection, error.getStatus() );
 	}
-/*
-	while(!(ret = GDS->_dsql_fetch (statusVector, &statement->statementHandle, dialect, *sqlda)))
-		sqlda->addRowSqldaInBufferStaticCursor();
-*/
+
 	sqlda->restoreOrgAdressFieldsStaticCursor();
-/*
-	if ( ret != 100 )
-		THROW_ISC_EXCEPTION (statement->connection, statusVector);
-*/
 	sqlda->setCurrentRowInBufferStaticCursor(0);
 	sqlda->copyNextSqldaFromBufferStaticCursor();
 

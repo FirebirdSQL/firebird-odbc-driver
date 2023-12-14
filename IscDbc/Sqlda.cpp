@@ -75,8 +75,7 @@ static short sqlNull = -1;
 class CDataStaticCursor
 {
 public:
-	//int		*offsetSqldata;
-	CAttrSqlVar *ptSqlda;
+	Sqlda::orgsqlvar_t & ptSqlVars;
 	bool	bYesBlob;
 	int		nMAXROWBLOCK;
 	int		lenRow;
@@ -86,9 +85,8 @@ public:
 	int		countAllRows;
 	int		curBlock;
 	char	*ptRowBlock;
-	char	*ptOrgRowBlock;
+	Sqlda::buffer_t & ptOrgRowBlock;
 	unsigned numberColumns;
-	//int		indicatorsOffset;
 	int		minRow;
 	int		maxRow;
 	int		curRow;
@@ -98,15 +96,13 @@ public:
 
 public:
 
-	//CDataStaticCursor ( IscStatement *stmt, XSQLDA * sqlda, int * ptOffsetSqldata, int lnRow)
-	CDataStaticCursor ( IscStatement *stmt, char* buffer, CAttrSqlVar * sqlda, unsigned columnsCount, int lnRow)
+	CDataStaticCursor ( IscStatement *stmt, Sqlda::buffer_t & buffer, Sqlda::orgsqlvar_t & sqlVars, unsigned columnsCount, int lnRow)
+		: ptSqlVars{ sqlVars },
+		  ptOrgRowBlock{ buffer }
 	{
 		statement = stmt;
 		bYesBlob = false;
-		ptSqlda = sqlda;
-		//offsetSqldata = ptOffsetSqldata;
 		lenRow = lnRow;
-		//indicatorsOffset = lenRow - ptSqlda->sqld * sizeof(SQLLEN);
 		nMAXROWBLOCK = 65535l/lnRow;
 		
 		if ( nMAXROWBLOCK < 40 )
@@ -123,29 +119,22 @@ public:
 		curRow = 0;
 		numberColumns = columnsCount;
 
-		ptOrgRowBlock = buffer;
 		numColumnBlob = (short *)calloc(1,numberColumns*sizeof(*numColumnBlob));
 		countColumnBlob = 0;
 		char * ptRow = ptRowBlock;
-		//int	*offset = offsetSqldata;
-		//SQLLEN *indicators = (SQLLEN*)( ptRow + indicatorsOffset );
 
-		auto * var = ptSqlda;
-
-		for (unsigned n = 0; n < numberColumns; ++n)
+		for( auto & var : ptSqlVars )
 		{
-			switch (var->sqltype)
+			switch (var.sqltype)
 			{
 			case SQL_ARRAY:
 			case SQL_BLOB:
 				if ( !bYesBlob )
 					bYesBlob = true;
-				numColumnBlob[countColumnBlob++] = n;
+				numColumnBlob[countColumnBlob++] = var.index - 1;
 				break;
 			}
-			(var++)->assignBuffer( ptRow );
-			//*indicators = 0;
-			//(var++)->sqlind = (short*)indicators++;
+			var.assignBuffer( ptRow );
 		}
 		if ( !bYesBlob )
 			free( numColumnBlob ),
@@ -158,20 +147,19 @@ public:
 
 		if ( bYesBlob )
 		{
-			//XSQLVAR * sqlvar = ptSqlda->sqlvar;
-			auto * sqlvar = ptSqlda;
+			auto & sqlvar = ptSqlVars;
 
 			for ( i = 0; i < countColumnBlob; ++i )
 			{
-				auto * var = sqlvar + numColumnBlob[i];
+				auto & var = sqlvar.at( numColumnBlob[i] );
 				int nRow = 0; 
 
-				if ( (var->sqltype) == SQL_ARRAY )
+				if ( (var.sqltype) == SQL_ARRAY )
 				{
 					for (n = 0; n < countBlocks ; ++n)
 						if ( listBlocks[n] )
 						{
-							char * pt = listBlocks[n] + (var->sqldata - sqlvar[0].sqldata);
+							char * pt = listBlocks[n] + (var.sqldata - sqlvar[0].sqldata);
 							for (int l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
 							{
 								if ( pt && *(intptr_t*)pt )
@@ -182,12 +170,12 @@ public:
 							}
 						}
 				}
-				else if ( (var->sqltype) == SQL_BLOB )
+				else if ( (var.sqltype) == SQL_BLOB )
 				{
 					for (n = 0; n < countBlocks ; ++n)
 						if ( listBlocks[n] )
 						{
-							char * pt = listBlocks[n] + (var->sqldata - sqlvar[0].sqldata);
+							char * pt = listBlocks[n] + (var.sqldata - sqlvar[0].sqldata);
 							for (int l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
 								if ( pt && *(intptr_t*)pt )
 									delete (IscBlob *)*(intptr_t*)pt;
@@ -212,65 +200,40 @@ public:
 		if ( bYesBlob )
 		{
 			int n;
-			//XSQLVAR * sqlvar = ptSqlda->sqlvar;
-			auto * sqlvar = ptSqlda;
+			auto & sqlvar = ptSqlVars;
 			for ( n = 0; n < countColumnBlob; ++n )
 			{
-				auto * var = sqlvar + numColumnBlob[n];
-				if ( *var->sqlind == -1 )
-					*(intptr_t*)var->sqldata = 0;
-				else if ( (var->sqltype) == SQL_ARRAY )
+				auto & var = sqlvar.at( numColumnBlob[n] );
+				if ( *var.sqlind == -1 )
+					*(intptr_t*)var.sqldata = 0;
+				else if ( (var.sqltype) == SQL_ARRAY )
 				{
 					CAttrArray * ptArr = new CAttrArray;
-					IscArray iscArr(statement,var);
+					IscArray iscArr(statement,&var);
 					iscArr.getBytesFromArray();
 					iscArr.detach(ptArr);
-					*(intptr_t*)var->sqldata = (intptr_t)ptArr;
+					*(intptr_t*)var.sqldata = (intptr_t)ptArr;
 				}
-				else if ( (var->sqltype) == SQL_BLOB )
+				else if ( var.sqltype == SQL_BLOB )
 				{
-					IscBlob * ptBlob = new IscBlob (statement, var->sqldata, var->sqlsubtype);
+					IscBlob * ptBlob = new IscBlob (statement, var.sqldata, var.sqlsubtype);
 					ptBlob->fetchBlob();
-					*(intptr_t*)var->sqldata = (intptr_t)ptBlob;
+					*(intptr_t*)var.sqldata = (intptr_t)ptBlob;
 				}
 			}
 		}
 
 		nextPosition();
 
-		//XSQLVAR * var = ptSqlda->sqlvar;
-		auto * var = ptSqlda;
-		char * ptRow = ptRowBlock;
-		//int	*offset = offsetSqldata;
-		//SQLLEN *indicators = (SQLLEN*)( ptRow + indicatorsOffset );
-		//int n = ptSqlda->sqld;
-		int n = numberColumns;
-
-		while ( n-- )
-		{
-			(var++)->assignBuffer( ptRow );
-			//*indicators = 0;
-			//(var++)->sqlind = (short*)indicators++;
-		}
+		for( auto & var : ptSqlVars ) var.assignBuffer( ptRowBlock );
 
 		++countAllRows;
-		return ptRow;
+		return ptRowBlock;
 	}
 
 	void restoreOriginalAdressFieldsSqlDa()
 	{
-		//XSQLVAR * var = ptSqlda->sqlvar;
-		auto * var = ptSqlda;
-		char * ptRow = ptOrgRowBlock;
-		//int	*offset = offsetSqldata;
-		//SQLLEN *indicators = (SQLLEN*)( ptRow + indicatorsOffset );
-		int n = numberColumns;//ptSqlda->sqld;
-
-		while ( n-- )
-		{
-			(var++)->assignBuffer( ptRow, false /*setNotNull*/ );
-			//(var++)->sqlind = (short*)indicators++;
-		}
+		for( auto & var : ptSqlVars ) var.assignBuffer( ptOrgRowBlock );
 	}
 
 	bool current(int nRow)
@@ -296,11 +259,9 @@ public:
 	void getAdressFieldFromCurrentRowInBufferStaticCursor(int column, char *& sqldata, short *& sqlind)
 	{
 		char * ptRow = ptRowBlock + lenRow;
-		//sqldata = ptRow + offsetSqldata[--column];
-		//sqlind = (short*)( ptRow + indicatorsOffset + column * sizeof(SQLLEN) );
-		auto * var = ptSqlda + ( column - 1 );
-		sqldata = ptRow + var->offsetData;
-		sqlind  = (short*)( ptRow + var->offsetNull );
+		auto & var = ptSqlVars.at( column - 1 );
+		sqldata = ptRow + var.offsetData;
+		sqlind  = (short*)( ptRow + var.offsetNull );
 	}
 
 	char * nextPosition()
@@ -338,26 +299,26 @@ public:
 		return countAllRows;
 	}
 
-	void operator << (std::vector<char>& buf)
+	void operator << (Sqlda::buffer_t & buf)
 	{
 		assert(lenRow == buf.size());
 		memcpy(nextPosition(), buf.data(), lenRow);
 	}
 
-	void operator >> (std::vector<char>& buf)
+	void operator >> (Sqlda::buffer_t & buf)
 	{
 		assert(lenRow == buf.size());
 		char* ptr = nextPosition();
 		buf.assign( ptr, ptr + lenRow );
 	}
 
-	void copyToBuffer(std::vector<char>& buf)
+	void copyToBuffer(Sqlda::buffer_t & buf)
 	{
 		assert(lenRow == buf.size());
 		buf.assign( ptRowBlock, ptRowBlock + lenRow );
 	}
 
-	void copyToCurrentSqlda(std::vector<char>& buf)
+	void copyToCurrentSqlda(Sqlda::buffer_t & buf)
 	{
 		assert(lenRow == buf.size());
 		memcpy(ptRowBlock, buf.data(), lenRow);
@@ -380,29 +341,15 @@ Sqlda::~Sqlda()
 
 void Sqlda::init()
 {
-	/*
-	memset(tempSqlda,0,sizeof(tempSqlda));
-	sqlda = (XSQLDA*) tempSqlda;
-	sqlda->version = SQLDA_VERSION1;
-	sqlda->sqln = DEFAULT_SQLDA_COUNT;
-	buffer = NULL;
-	*/
-	
 	meta = nullptr;
-	orgsqlvar = NULL;
-	dataStaticCursor = NULL;
-	//offsetSqldata = NULL;
-	//indicatorsOffset = 0;
+	orgsqlvar.clear();
+	dataStaticCursor = nullptr;
 	columnsCount = 0;
-	//needsbuffer = true;
 }
 
 void Sqlda::remove()
 {
 	delete dataStaticCursor;
-	//delete [] buffer;
-	//delete [] offsetSqldata;
-
 	deleteSqlda(); // Should stand only here!!!
 }
 
@@ -414,7 +361,7 @@ void Sqlda::clearSqlda()
 
 void Sqlda::deleteSqlda()
 {
-	delete [] orgsqlvar;
+	orgsqlvar.clear();
 	buffer.clear();
 
 	if( meta ) {
@@ -422,41 +369,9 @@ void Sqlda::deleteSqlda()
 		meta = nullptr;
 	}
 }
-/*
-bool Sqlda::checkOverflow()
-{
-    // sqln: number of fields allocated
-    // sqld: actual number of fields
 
-	if (sqlda->sqld <= sqlda->sqln)
-		return false;
-
-	int count = sqlda->sqld;
-	deleteSqlda();
-	sqlda = (XSQLDA*) malloc (XSQLDA_LENGTH (count));
-	sqlda->version = SQLDA_VERSION1;
-	sqlda->sqln = count;
-
-	needsbuffer = true;
-
-	return true;
-}
-*/
 void Sqlda::allocBuffer ( IscStatement *stmt, IMessageMetadata* msgMetadata )
 {
-	//We've already done it,
-	// doing it again lengthens SQL_TEXT areas and causes
-	// trouble. Contributed by Roger Gammans
-	
-	/*
-	if (!needsbuffer) return;
-
-	needsbuffer = false;
-	*/
-	//delete [] orgsqlvar;
-	//delete [] buffer;
-	//delete [] offsetSqldata;
-
 	if( !msgMetadata )
 		throw SQLEXCEPTION (RUNTIME_ERROR, "Sqlda::allocBuffer(): no metadata");
 
@@ -476,97 +391,6 @@ void Sqlda::allocBuffer ( IscStatement *stmt, IMessageMetadata* msgMetadata )
 
 	buffer.resize( lengthBufferRows );
 	mapSqlAttributes( stmt );
-/*
-	int offset = 0;
-	int n = 0;
-	int numberColumns = sqlda->sqld;
-	XSQLVAR *var = sqlda->sqlvar;
-	offsetSqldata = new int [numberColumns];
-	orgsqlvar = new CAttrSqlVar [numberColumns];
-	CAttrSqlVar * orgvar = orgsqlvar;
-
-	for (n = 0; n < numberColumns; ++n, ++var, ++orgvar)
-	{
-		int length = var->sqllen;
-		int boundary = length;
-
-		*orgvar = var;
-
-		switch (var->sqltype & ~1)
-		{
-		case SQL_TEXT:
-			boundary = 1;
-			++length;
-			break;
-
-		case SQL_VARYING:
-			boundary = 2;
-			length += 2;
-			break;
-
-		case SQL_BOOLEAN:
-			length = sizeof (TYPE_BOOLEAN);
-			break;
-
-		case SQL_SHORT:
-			length = sizeof (short);
-			break;
-
-		case SQL_LONG:
-		case SQL_TYPE_TIME:
-		case SQL_TYPE_DATE:
-			length = sizeof (int);
-			break;
-
-		case SQL_FLOAT:
-			length = sizeof (float);
-			break;
-
-		case SQL_D_FLOAT:
-		case SQL_DOUBLE:
-			length = sizeof (double);
-			break;
-
-		case SQL_QUAD:
-		case SQL_INT64:
-		case SQL_TIMESTAMP:
-			length = sizeof (QUAD);
-			break;
-
-		case SQL_BLOB:
-			length = sizeof (ISC_QUAD);
-			boundary = sizeof(void*);
-			break;
-
-		case SQL_ARRAY:
-			orgvar->array = new CAttrArray;
-			orgvar->array->loadAttributes ( stmt, var->relname, var->sqlname, var->sqlsubtype );
-			length = sizeof (ISC_QUAD);
-			boundary = sizeof(void*);
-			break;
-		}
-		if (length == 0)
-			throw SQLEXCEPTION (COMPILE_ERROR, "Sqlda variable has zero length");
-		offset = ROUNDUP (offset, boundary);
-		var->sqldata = (char*)(offsetSqldata[n] = offset);
-		offset += length;
-	}
-
-	offset = ROUNDUP (offset, sizeof (SQLLEN));
-	indicatorsOffset = offset;
-	offset += sizeof(SQLLEN) * numberColumns;
-	buffer = new char [offset];
-	lengthBufferRows = offset;
-	SQLLEN *indicators = (SQLLEN*)( buffer + indicatorsOffset );
-	var = sqlda->sqlvar;
-
-	for ( n = 0; n < numberColumns; ++n )
-	{
-		var->sqldata = buffer + (intptr_t) var->sqldata;
-		(var++)->sqlind = (short*)indicators;
-		*indicators++ = 0;
-	}
-*/
 }
 
 void Sqlda::rebuildMetaFromAttributes( IscStatement *stmt )
@@ -578,14 +402,14 @@ void Sqlda::rebuildMetaFromAttributes( IscStatement *stmt )
 	{
 		metaBuilder = meta ? meta->getBuilder( &status ) : connection->GDS->_master->getMetadataBuilder(&status, columnsCount);
 
-		auto * var = orgsqlvar;
-		for( unsigned i = 0; i < columnsCount; ++i, ++var )
+		for( auto & var : orgsqlvar )
 		{
-			metaBuilder->setType   ( &status, i, var->sqltype | (short)( var->isNullable ? 1 : 0 ) );
-			metaBuilder->setSubType( &status, i, var->sqlsubtype );
-			metaBuilder->setScale  ( &status, i, var->sqlscale   );
-			metaBuilder->setLength ( &status, i, var->sqllen     );
-			indicators[i] = *var->sqlind;
+			const auto i = var.index - 1;
+			metaBuilder->setType   ( &status, i, var.sqltype | (short)( var.isNullable ? 1 : 0 ) );
+			metaBuilder->setSubType( &status, i, var.sqlsubtype );
+			metaBuilder->setScale  ( &status, i, var.sqlscale   );
+			metaBuilder->setLength ( &status, i, var.sqllen     );
+			indicators[i] = *var.sqlind;
 		}
 
 		if( meta ) meta->release();
@@ -596,22 +420,18 @@ void Sqlda::rebuildMetaFromAttributes( IscStatement *stmt )
 		std::vector<char> bufferNew;
 
 		lengthBufferRows = meta->getMessageLength( &status );
-		//if( buffer.size() != lengthBufferRows )
-		{
-			bufferNew.resize( lengthBufferRows );
-			//std::fill(buffer.begin(), buffer.end(), 0);
-		}
+		bufferNew.resize( lengthBufferRows );
 
-		var = orgsqlvar;
-		for( unsigned i = 0; i < columnsCount; ++i, ++var )
+		for( auto & var : orgsqlvar )
 		{
+			const auto i = var.index - 1;
 			const auto offs     = meta->getOffset( &status, i );
 			const auto offsNull = meta->getNullOffset( &status, i );
-			const auto len = (std::min)((unsigned)var->sqllen, meta->getLength(&status, i) );
+			const auto len = (std::min)((unsigned)var.sqllen, meta->getLength(&status, i) );
 
 			*(short*)( bufferNew.data() + offsNull ) = indicators[i];
 			if( indicators[i] != sqlNull )
-				memcpy( bufferNew.data() + offs, var->sqldata, len );
+				memcpy( bufferNew.data() + offs, var.sqldata, len );
 		}
 
 		buffer = bufferNew;
@@ -638,18 +458,24 @@ void Sqlda::mapSqlAttributes( IscStatement *stmt )
 		throw SQLEXCEPTION (RUNTIME_ERROR, "Sqlda::mapSqlAttributes(): incorrect buffer size");
 	if( !meta )
 		throw SQLEXCEPTION (RUNTIME_ERROR, "Sqlda::mapSqlAttributes(): no metadata");
+	if( !orgsqlvar.empty() && orgsqlvar.size() != columnsCount )
+		throw SQLEXCEPTION(RUNTIME_ERROR, "Sqlda::mapSqlAttributes(): incorrect columnsCount");
 
-	delete[] orgsqlvar;
-	orgsqlvar = new CAttrSqlVar[columnsCount];
+	if (orgsqlvar.empty()) {
+		orgsqlvar.resize(columnsCount);
+	}
+	else {
+		std::fill(orgsqlvar.begin(), orgsqlvar.end(), CAttrSqlVar{});
+	}
 
 	ThrowStatusWrapper status( connection->GDS->_status );
 	try
 	{
 		for( unsigned n = 0; n < columnsCount; ++n )
 		{
-			auto * var = &orgsqlvar[n];
+			auto * var = &orgsqlvar.at(n);
 
-			var->assign( status, meta, buffer.data(), n );
+			var->assign( status, meta, buffer, n );
 
 			//arrays
 			if( stmt && var->sqltype == SQL_ARRAY ) {
@@ -697,7 +523,7 @@ char* Sqlda::initStaticCursor(IscStatement *stmt)
 	if ( dataStaticCursor )
 		delete 	dataStaticCursor;
 
-	dataStaticCursor = new CDataStaticCursor( stmt, buffer.data(), orgsqlvar, columnsCount, lengthBufferRows );
+	dataStaticCursor = new CDataStaticCursor( stmt, buffer, orgsqlvar, columnsCount, lengthBufferRows );
 	return dataStaticCursor->ptRowBlock;
 }
 
@@ -755,7 +581,7 @@ void Sqlda::print()
 {
 	for (unsigned n = 0; n < columnsCount; ++n)
 	{
-		auto * var = orgsqlvar + n;
+		auto * var = &orgsqlvar.at( n );
 		char *p = var->sqldata;
 
 		printf ("%d. type %d, len %d, addr %p (%p) ",
@@ -1399,9 +1225,9 @@ void Sqlda::setArray(CAttrSqlVar* var, Value *value, IscStatement *stmt)
 
 int Sqlda::findColumn(const char * columnName)
 {
-	for (unsigned n = 0; n < columnsCount; ++n)
-		if (strcasecmp (orgsqlvar[n].sqlname, columnName) == 0)
-			return n;
+	for( const auto & var : orgsqlvar )
+		if (strcasecmp (var.sqlname, columnName) == 0)
+			return var.index - 1;
 
 	return -1;
 }

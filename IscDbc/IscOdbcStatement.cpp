@@ -175,18 +175,17 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 {
 	const char *strSql = sql, *ch;
 	int numberColumns = inputSqlda.columnsCount;
-	//XSQLVAR *var = inputSqlda.sqlda->sqlvar;
-	auto *var = inputSqlda.orgsqlvar;
 	int *offsetParam = NULL;
 	int *offsetNameParam = NULL;
 	int countDefined = 0;
 
-	for (int n = 0; n < numberColumns; ++n, ++var)
+	for (int n = 0; n < numberColumns; ++n)
 	{
+		auto* var = &inputSqlda.orgsqlvar.at( n );
 		switch ( var->sqltype )
 		{
 		case SQL_ARRAY:
-			if ( var->sqlname && *var->sqlname == 0 /*!var->sqlname_length*/ )
+			if ( var->sqlname && *var->sqlname == 0 )
 			{
 				if ( !offsetParam )
 				{
@@ -229,13 +228,12 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 						break;
 					}
 
-				//XSQLVAR *varIn = inputSqlda.sqlda->sqlvar;
-				auto *varIn = inputSqlda.orgsqlvar;
 				int len = end - start;
 
-				for ( int m = 0; m < n; ++m, ++varIn )
+				for ( int m = 0; m < n; ++m )
 				{
-					if ( /*varIn->sqlname_length == len*/ varIn->sqlname && strlen(varIn->sqlname) == len && !strncasecmp ( varIn->sqlname, start, len ) )
+					auto * varIn = &inputSqlda.orgsqlvar.at( m );
+					if ( varIn->sqlname && strlen(varIn->sqlname) == len && !strncasecmp ( varIn->sqlname, start, len ) )
 					{
 						//Here we hope that changing sqlname/relname should not affect the meta buffer
 						auto * newMeta = inputSqlda.setStrProperties( var->index, varIn->sqlname, varIn->relname, nullptr );
@@ -244,12 +242,7 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 							if( inputSqlda.meta ) inputSqlda.meta->release();
 							inputSqlda.meta = newMeta;
 						}
-						/*
-						memcpy ( var->sqlname, varIn->sqlname, len );
-						var->sqlname_length = len;
-						memcpy ( var->relname, varIn->relname, varIn->relname_length );
-						var->relname_length = varIn->relname_length;
-						*/
+
 						offsetNameParam[n] = end - strSql;
 
 						if ( delimiter == '"' )
@@ -275,7 +268,7 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 
 		ch = strSql;
 	
-		for ( n = 0; n < numberColumns; ++n, ++var)
+		for ( n = 0; n < numberColumns; ++n )
 		{
 			int &offsetEndName = offsetNameParam[n];
 
