@@ -90,7 +90,7 @@ public:
 	int		minRow;
 	int		maxRow;
 	int		curRow;
-	short	*numColumnBlob;
+	std::vector<short> numColumnBlob;
 	short	countColumnBlob;
 	IscStatement	*statement;
 
@@ -119,7 +119,7 @@ public:
 		curRow = 0;
 		numberColumns = columnsCount;
 
-		numColumnBlob = (short *)calloc(1,numberColumns*sizeof(*numColumnBlob));
+		numColumnBlob.resize(numberColumns);
 		countColumnBlob = 0;
 		char * ptRow = ptRowBlock;
 
@@ -136,9 +136,6 @@ public:
 			}
 			var.assignBuffer( ptRow );
 		}
-		if ( !bYesBlob )
-			free( numColumnBlob ),
-			numColumnBlob = NULL;
 	}
 
 	~CDataStaticCursor()
@@ -190,9 +187,6 @@ public:
 				free( listBlocks[n] );
 		free( listBlocks );
 		free( countRowsInBlock );
-
-		if ( numColumnBlob )
-			free( numColumnBlob );
 	}
 
 	char* addRow ()
