@@ -114,9 +114,12 @@ class CDataStaticCursor;
 
 class Sqlda  
 {
+public:
+	using buffer_t = std::vector<char>;
+
 protected:
-	char* initStaticCursor(IscStatement *stmt);
-	char* addRowSqldaInBufferStaticCursor();
+	buffer_t& initStaticCursor(IscStatement *stmt);
+	buffer_t& addRowSqldaInBufferStaticCursor();
 	void restoreOrgAdressFieldsStaticCursor();
 
 public:
@@ -181,7 +184,6 @@ public:
 	IscConnection* connection;
 	Firebird::IMessageMetadata* meta;
 
-	using buffer_t = std::vector<char>;
 	buffer_t buffer;
 
 	using orgsqlvar_t = std::vector<CAttrSqlVar>;

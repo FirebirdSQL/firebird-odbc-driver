@@ -161,20 +161,20 @@ bool IscResultSet::readFromSystemCatalog()
 	if (!statement || !statement->fbResultSet)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
 
-	char* next_buffer = sqlda->initStaticCursor ( statement );
+	auto * next_buffer = &sqlda->initStaticCursor ( statement );
 
 	ThrowStatusWrapper status( statement->connection->GDS->_status );
 	try
 	{
 		while( true )
 		{
-			auto fetch_stat = statement->fbResultSet->fetchNext( &status, next_buffer );
+			auto fetch_stat = statement->fbResultSet->fetchNext( &status, next_buffer->data() );
 			if( fetch_stat == IStatus::RESULT_NO_DATA ) {
 				close();
 				break;
 			}
 
-			next_buffer = sqlda->addRowSqldaInBufferStaticCursor();
+			next_buffer = &sqlda->addRowSqldaInBufferStaticCursor();
 		}
 	}
 	catch( const FbException& error )
@@ -196,17 +196,17 @@ bool IscResultSet::readStaticCursor()
 		throw SQLEXCEPTION (RUNTIME_ERROR, "resultset is not active");
 
 	CFbDll * GDS = statement->connection->GDS;
-	char* next_buffer = sqlda->initStaticCursor ( statement );
+	auto * next_buffer = &sqlda->initStaticCursor ( statement );
 
 	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
 		while( true )
 		{
-			auto fetch_stat = statement->fbResultSet->fetchNext( &status, next_buffer );
+			auto fetch_stat = statement->fbResultSet->fetchNext( &status, next_buffer->data() );
 			if( fetch_stat == IStatus::RESULT_NO_DATA ) break;
 
-			next_buffer = sqlda->addRowSqldaInBufferStaticCursor();
+			next_buffer = &sqlda->addRowSqldaInBufferStaticCursor();
 		}
 	}
 	catch( const FbException& error )

@@ -77,15 +77,27 @@ class CDataStaticCursor
 public:
 	Sqlda::orgsqlvar_t & ptSqlVars;
 	bool	bYesBlob;
-	int		nMAXROWBLOCK;
+	static constexpr int nMAXROWBLOCK = 40;
 	int		lenRow;
-	char	**listBlocks;
-	int		*countRowsInBlock;
 	int		countBlocks;
 	int		countAllRows;
 	int		curBlock;
-	char	*ptRowBlock;
-	Sqlda::buffer_t & ptOrgRowBlock;
+
+	using vchar_t = Sqlda::buffer_t;
+	using rowBlock_t = std::vector<vchar_t>;
+
+	struct RowBlock {
+		rowBlock_t rows;
+		size_t size() { return rows.size(); }
+		RowBlock(size_t row_count = 0, int row_len = 0) :
+			rows{ row_count, static_cast<vchar_t>(row_len) }
+		{}
+	};
+
+	std::vector<RowBlock> listBlocks;
+	rowBlock_t::reverse_iterator itCurrentRow; //we use reverse iterator because we need to set it _before_ begin()
+
+	vchar_t & ptOrgRowBlock;
 	unsigned numberColumns;
 	int		minRow;
 	int		maxRow;
@@ -96,32 +108,25 @@ public:
 
 public:
 
-	CDataStaticCursor ( IscStatement *stmt, Sqlda::buffer_t & buffer, Sqlda::orgsqlvar_t & sqlVars, unsigned columnsCount, int lnRow)
+	CDataStaticCursor ( IscStatement *stmt, vchar_t & buffer, Sqlda::orgsqlvar_t & sqlVars, unsigned columnsCount, int lnRow)
 		: ptSqlVars{ sqlVars },
 		  ptOrgRowBlock{ buffer }
 	{
 		statement = stmt;
 		bYesBlob = false;
 		lenRow = lnRow;
-		nMAXROWBLOCK = 65535l/lnRow;
-		
-		if ( nMAXROWBLOCK < 40 )
-			nMAXROWBLOCK = 40;
 
 		countBlocks = 10;
 		countAllRows = 0;
-		listBlocks = (char **)calloc(1,countBlocks*sizeof(*listBlocks));
-		countRowsInBlock = (int *)calloc(1,countBlocks*sizeof(*countRowsInBlock));
-		ptRowBlock = *listBlocks = (char *)malloc(lenRow*nMAXROWBLOCK);
+		listBlocks.resize( countBlocks );
+		listBlocks.at(0) = { nMAXROWBLOCK, lnRow };
+		itCurrentRow = std::prev( listBlocks.at(0).rows.rend() ); // == begin()
+
 		curBlock = 0;
 		minRow = 0;
-		maxRow = *countRowsInBlock = nMAXROWBLOCK;
+		maxRow = nMAXROWBLOCK;
 		curRow = 0;
 		numberColumns = columnsCount;
-
-		numColumnBlob.resize(numberColumns);
-		countColumnBlob = 0;
-		char * ptRow = ptRowBlock;
 
 		for( auto & var : ptSqlVars )
 		{
@@ -129,67 +134,52 @@ public:
 			{
 			case SQL_ARRAY:
 			case SQL_BLOB:
-				if ( !bYesBlob )
-					bYesBlob = true;
-				numColumnBlob[countColumnBlob++] = var.index - 1;
+				numColumnBlob.push_back( var.index - 1 );
 				break;
 			}
-			var.assignBuffer( ptRow );
+			var.assignBuffer( *itCurrentRow );
 		}
+		countColumnBlob = (short)numColumnBlob.size();
+		bYesBlob = countColumnBlob > 0;
 	}
 
 	~CDataStaticCursor()
 	{
-		int i,n;
-
 		if ( bYesBlob )
 		{
-			auto & sqlvar = ptSqlVars;
-
-			for ( i = 0; i < countColumnBlob; ++i )
+			for ( auto i = 0; i < countColumnBlob; ++i )
 			{
-				auto & var = sqlvar.at( numColumnBlob[i] );
-				int nRow = 0; 
+				auto & var = ptSqlVars.at( numColumnBlob[i] );
 
-				if ( (var.sqltype) == SQL_ARRAY )
+				if (var.sqltype == SQL_ARRAY || var.sqltype == SQL_BLOB)
 				{
-					for (n = 0; n < countBlocks ; ++n)
-						if ( listBlocks[n] )
+					for (auto& rowBlock : listBlocks)
+					{
+						for (unsigned i = 0; i < rowBlock.size(); ++i)
 						{
-							char * pt = listBlocks[n] + (var.sqldata - sqlvar[0].sqldata);
-							for (int l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
+							auto& row = rowBlock.rows.at(i);
+							auto* pt = &row.at(var.offsetData);
+
+							if (pt && *(intptr_t*)pt)
 							{
-								if ( pt && *(intptr_t*)pt )
+								if (var.sqltype == SQL_ARRAY)
 								{
-									free ( ((CAttrArray *)*(intptr_t*)pt)->arrBufData );
-									delete (CAttrArray *)*(intptr_t*)pt;
+									free(((CAttrArray*)*(intptr_t*)pt)->arrBufData);
+									delete (CAttrArray*)*(intptr_t*)pt;
+								}
+								else
+								{
+									delete (IscBlob*)*(intptr_t*)pt;
 								}
 							}
 						}
-				}
-				else if ( (var.sqltype) == SQL_BLOB )
-				{
-					for (n = 0; n < countBlocks ; ++n)
-						if ( listBlocks[n] )
-						{
-							char * pt = listBlocks[n] + (var.sqldata - sqlvar[0].sqldata);
-							for (int l = 0; nRow < countAllRows && l < countRowsInBlock[n]; ++l, pt += lenRow, ++nRow)
-								if ( pt && *(intptr_t*)pt )
-									delete (IscBlob *)*(intptr_t*)pt;
-						}
+					}
 				}
 			}
 		}
-
-
-		for (n = 0; n < countBlocks ; ++n)
-			if ( listBlocks[n] )
-				free( listBlocks[n] );
-		free( listBlocks );
-		free( countRowsInBlock );
 	}
 
-	char* addRow ()
+	vchar_t& addRow ()
 	{
 		if ( bYesBlob )
 		{
@@ -218,14 +208,15 @@ public:
 		}
 
 		nextPosition();
+		auto& row = *itCurrentRow;
 
-		for( auto & var : ptSqlVars ) var.assignBuffer( ptRowBlock );
+		for( auto & var : ptSqlVars ) var.assignBuffer( row );
 
 		++countAllRows;
-		return ptRowBlock;
+		return row;
 	}
 
-	void restoreOriginalAdressFieldsSqlDa()
+	inline void restoreOriginalAdressFieldsSqlDa()
 	{
 		for( auto & var : ptSqlVars ) var.assignBuffer( ptOrgRowBlock );
 	}
@@ -234,88 +225,86 @@ public:
 	{
 		int i, n;
 
+		assert( nRow >= 0 );
+
 		if( !(nRow >= minRow && nRow < maxRow) )
 		{
-			for ( i = 0, n = countRowsInBlock[i]; 
-						nRow > n && i < countBlocks; 
-						n += countRowsInBlock[++i]);
+			for (i = 0, n = listBlocks.at(i).size();
+				nRow > n && i < countBlocks;
+				n += listBlocks.at(++i).size());
+
 			curBlock = i;
 			maxRow = n;
-			minRow = maxRow - countRowsInBlock[curBlock];
+			minRow = maxRow - listBlocks.at(curBlock).size();
 		}
 
-		curRow = nRow - 1; // We put previous for use next() !!!
-		ptRowBlock = listBlocks[curBlock] + (curRow - minRow) * lenRow;
+		curRow = nRow;
+		itCurrentRow = listBlocks.at(curBlock).rows.rend();
+		std::advance( itCurrentRow, -(curRow - minRow) );
+		--curRow; // We put previous for use next() !!!
 
 		return true;
 	}
 
 	void getAdressFieldFromCurrentRowInBufferStaticCursor(int column, char *& sqldata, short *& sqlind)
 	{
-		char * ptRow = ptRowBlock + lenRow;
-		auto & var = ptSqlVars.at( column - 1 );
-		sqldata = ptRow + var.offsetData;
-		sqlind  = (short*)( ptRow + var.offsetNull );
+		auto it = std::prev(itCurrentRow);
+		auto& row = *it;
+		auto& var = ptSqlVars.at(column - 1);
+		sqldata = &row.at(var.offsetData);
+		sqlind = (short*)&row.at(var.offsetNull);
 	}
 
-	char * nextPosition()
+	vchar_t& nextPosition()
 	{
-		if ( ++curRow < maxRow )
-			ptRowBlock += lenRow;
+		if (++curRow < maxRow)
+		{
+			std::advance( itCurrentRow, -1 ); // == ++it
+		}
 		else
 		{
 			if ( ++curBlock == countBlocks )
 			{
-				int newCount = countBlocks+10;
-				listBlocks = (char **)realloc(listBlocks,newCount*sizeof(*listBlocks));
-				memset(&listBlocks[countBlocks],0,10*sizeof(*listBlocks));
-				countRowsInBlock = (int *)realloc(countRowsInBlock,newCount*sizeof(*countRowsInBlock));
-				memset(&countRowsInBlock[countBlocks],0,10*sizeof(*countRowsInBlock));
-				countBlocks = newCount;
+				countBlocks += 10;
+				listBlocks.resize( countBlocks );
 			}
 			
-			if ( !listBlocks[curBlock] )
+			if ( listBlocks.at(curBlock).rows.size() == 0 )
 			{
-				listBlocks[curBlock] = (char *)malloc(lenRow*nMAXROWBLOCK);
-				countRowsInBlock[curBlock] = nMAXROWBLOCK;
+				listBlocks.at(curBlock) = { nMAXROWBLOCK, lenRow };
 			}
 
-			ptRowBlock = listBlocks[curBlock];
+			itCurrentRow = std::prev( listBlocks.at(curBlock).rows.rend() );
 			minRow = curRow;
-			maxRow = minRow + countRowsInBlock[curBlock];
+			maxRow = minRow + listBlocks.at(curBlock).size();
 		}
 
-		return ptRowBlock;
+		return *itCurrentRow;
 	}
 
-	int getCountRowsStaticCursor()
+	inline int getCountRowsStaticCursor()
 	{
 		return countAllRows;
 	}
 
-	void operator << (Sqlda::buffer_t & buf)
+	inline void operator << (Sqlda::buffer_t & buf)
 	{
-		assert(lenRow == buf.size());
-		memcpy(nextPosition(), buf.data(), lenRow);
+		nextPosition() = buf;
 	}
 
-	void operator >> (Sqlda::buffer_t & buf)
+	inline void operator >> (Sqlda::buffer_t & buf)
 	{
-		assert(lenRow == buf.size());
-		char* ptr = nextPosition();
-		buf.assign( ptr, ptr + lenRow );
+		buf = nextPosition();
 	}
 
-	void copyToBuffer(Sqlda::buffer_t & buf)
+	inline void copyToBuffer(Sqlda::buffer_t & buf)
 	{
-		assert(lenRow == buf.size());
-		buf.assign( ptRowBlock, ptRowBlock + lenRow );
+		buf = *itCurrentRow;
 	}
 
-	void copyToCurrentSqlda(Sqlda::buffer_t & buf)
+	inline void copyToCurrentSqlda(Sqlda::buffer_t & buf)
 	{
-		assert(lenRow == buf.size());
-		memcpy(ptRowBlock, buf.data(), lenRow);
+		*itCurrentRow = buf;
 	}
 };
 
@@ -512,16 +501,16 @@ IMessageMetadata* Sqlda::setStrProperties( int index, const char* fldName, const
 	return newMeta;
 }
 
-char* Sqlda::initStaticCursor(IscStatement *stmt)
+Sqlda::buffer_t& Sqlda::initStaticCursor(IscStatement *stmt)
 {
 	if ( dataStaticCursor )
 		delete 	dataStaticCursor;
 
 	dataStaticCursor = new CDataStaticCursor( stmt, buffer, orgsqlvar, columnsCount, lengthBufferRows );
-	return dataStaticCursor->ptRowBlock;
+	return *dataStaticCursor->itCurrentRow;
 }
 
-char* Sqlda::addRowSqldaInBufferStaticCursor()
+Sqlda::buffer_t& Sqlda::addRowSqldaInBufferStaticCursor()
 {
 	return dataStaticCursor->addRow();
 }
