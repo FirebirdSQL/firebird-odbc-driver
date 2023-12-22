@@ -418,7 +418,7 @@ void IscStatement::close()
 
 	if ( isActiveSelect() )
 	{
-		openCursor = false;
+		//openCursor = false;
 		if ( transactionLocal )
 		{
 			if ( transactionInfo.autoCommit )
@@ -570,7 +570,6 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 	if (resultSets.isEmpty())
 	{
 		bool isActiveCursor = this->isActiveCursor();
-		openCursor = false;
 		typeStmt = stmtNone;
 
 		if ( connection )
@@ -578,13 +577,6 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 			if ( isActiveCursor )
 			{
 				closeFbResultSet();
-/*
-				ISC_STATUS statusVector[20];
-				connection->GDS->_dsql_free_statement( statusVector, &statementHandle, DSQL_close );
-				// Cursor already closed or not assigned
-				if ( statusVector[1] && statusVector[1] != 335544569)
-					THROW_ISC_EXCEPTION (connection, statusVector);
-*/
 			}			
 			
 			if ( transactionLocal )
@@ -658,9 +650,12 @@ bool IscStatement::execute()
 	if ( isActiveSelect() && connection->transactionInfo.autoCommit && resultSets.isEmpty() )
 		clearSelect();
 
+	// We should rebuild sql input params buffer if any values/types were overriden ealier
+	bool needToRestoreMeta = false;
 	if( inputSqlda.isExternalOverriden() )
 	{
 		inputSqlda.rebuildMetaFromAttributes( this );
+		needToRestoreMeta = true; // and we also should restore it after execute
 	}
 
 	ThrowStatusWrapper status( connection->GDS->_status );
@@ -686,6 +681,14 @@ bool IscStatement::execute()
 			connection->rollbackAuto();
 		clearSelect();
 		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
+
+	// restore input buffer if it was rebuilt
+	// otherwise the subsequent executes of this stmt may fail
+	if (needToRestoreMeta && inputSqlda.metaBackup)
+	{
+		inputSqlda.allocBuffer(this, inputSqlda.metaBackup);
+		inputSqlda.metaBackup = nullptr;
 	}
 
 	resultsCount		= 1;
@@ -985,7 +988,6 @@ void IscStatement::clearSelect()
 		resultsCount = 0;
 		resultsSequence	= 0;
 		closeFbResultSet();
-		openCursor = false;
 		typeStmt = stmtNone;
 		if ( transactionLocal )
 		{

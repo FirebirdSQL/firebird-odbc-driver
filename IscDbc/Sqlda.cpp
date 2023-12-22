@@ -207,7 +207,8 @@ public:
 			}
 		}
 
-		nextPosition();
+		this->copyToCurrentSqlda(ptOrgRowBlock);	//save fetched buffer to current row
+		nextPosition();								//scroll to the next position
 		auto& row = *itCurrentRow;
 
 		for( auto & var : ptSqlVars ) var.assignBuffer( row );
@@ -325,6 +326,7 @@ Sqlda::~Sqlda()
 void Sqlda::init()
 {
 	meta = nullptr;
+	metaBackup = meta;
 	orgsqlvar.clear();
 	dataStaticCursor = nullptr;
 	columnsCount = 0;
@@ -395,8 +397,10 @@ void Sqlda::rebuildMetaFromAttributes( IscStatement *stmt )
 			indicators[i] = *var.sqlind;
 		}
 
-		if( meta ) meta->release();
+		if (metaBackup) metaBackup->release();
+		metaBackup = meta;
 		meta = metaBuilder->getMetadata( &status );
+
 		if( meta->getCount( &status ) != columnsCount )
 			throw SQLEXCEPTION (RUNTIME_ERROR, "Sqlda::rebuildMetaFromAttributes(): incorrect columns count");
 
@@ -410,11 +414,14 @@ void Sqlda::rebuildMetaFromAttributes( IscStatement *stmt )
 			const auto i = var.index - 1;
 			const auto offs     = meta->getOffset( &status, i );
 			const auto offsNull = meta->getNullOffset( &status, i );
-			const auto len = (std::min)((unsigned)var.sqllen, meta->getLength(&status, i) );
 
 			*(short*)( bufferNew.data() + offsNull ) = indicators[i];
-			if( indicators[i] != sqlNull )
-				memcpy( bufferNew.data() + offs, var.sqldata, len );
+
+			if (indicators[i] != sqlNull)
+			{
+				const auto len = (std::min)((unsigned)var.sqllen, meta->getLength(&status, i));
+				memcpy(bufferNew.data() + offs, var.sqldata, len);
+			}
 		}
 
 		buffer = bufferNew;
