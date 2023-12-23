@@ -137,7 +137,7 @@ Name: DocumentationComponent; Description: {cm:DocumentationComponent}; Types: D
 
 
 [Files]
-Source: {#SOURCE_LIBS}{#OBJNAME}.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile
+Source: {#SOURCE_LIBS}{#OBJNAME}.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile replacesameversion confirmoverwrite
 Source: {#SOURCE_LIBS}\{#OBJNAME}.lib; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
 Source: {#SOURCE_LIBS}\{#OBJNAME}.pdb; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
 #ifdef HtmlHelp
