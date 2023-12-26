@@ -107,7 +107,7 @@ void IscOdbcStatement::prepareStatement(const char * sqlString)
 		int * label = labelParamArray;
 		while ( replaceParamArray-- )
 		{
-			CAttrSqlVar *var = inputSqlda.orgVar ( *label++ );
+			CAttrSqlVar *var = inputSqlda.Var ( *label++ );
 			var->replaceForParamArray = true;
 		}
 
@@ -181,7 +181,7 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 
 	for (int n = 0; n < numberColumns; ++n)
 	{
-		auto* var = &inputSqlda.orgsqlvar.at( n );
+		auto* var = &inputSqlda.sqlvar.at( n );
 		switch ( var->sqltype )
 		{
 		case SQL_ARRAY:
@@ -232,7 +232,7 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 
 				for ( int m = 0; m < n; ++m )
 				{
-					auto * varIn = &inputSqlda.orgsqlvar.at( m );
+					auto * varIn = &inputSqlda.sqlvar.at( m );
 					if ( varIn->sqlname && strlen(varIn->sqlname) == len && !strncasecmp ( varIn->sqlname, start, len ) )
 					{
 						//Here we hope that changing sqlname/relname should not affect the meta buffer

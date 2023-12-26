@@ -94,16 +94,10 @@ IscCallableStatement::IscCallableStatement(IscConnection *connection)
 
 bool IscCallableStatement::execute()
 {
-	//ISC_STATUS statusVector [20];
 	values.alloc (numberColumns);
 	int numberParameters = inputSqlda.getColumnCount();
 	ITransaction* transHandle = startTransaction();
 	int n;
-
-	if( inputSqlda.isExternalOverriden() )
-	{
-		inputSqlda.rebuildMetaFromAttributes( this );
-	}
 
 	for (n = 0; n < numberParameters; ++n)
 		inputSqlda.setValue (n, parameters.values + n, this);
@@ -111,20 +105,16 @@ bool IscCallableStatement::execute()
 	ThrowStatusWrapper status( connection->GDS->_status );
 	try
 	{
-		statementHandle->execute( &status, transHandle, inputSqlda.meta,  inputSqlda.buffer.data(),
+		Sqlda::ExecBuilder execBuilder(inputSqlda);
+
+		statementHandle->execute( &status, transHandle, execBuilder.getMeta(), execBuilder.getBuffer(),
 		                                                outputSqlda.meta, outputSqlda.buffer.data() );
 	}
 	catch( const FbException& error )
 	{
 		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
 	}
-/*
-	int dialect = connection->getDatabaseDialect();
 
-	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle,
-						  dialect, inputSqlda, outputSqlda))
-		THROW_ISC_EXCEPTION (connection, statusVector);
-*/
 	resultsCount	= 1;
 	resultsSequence = 0;
 	getUpdateCounts();

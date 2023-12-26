@@ -85,7 +85,7 @@ bool IscMetaDataResultSet::next()
 
 	for ( auto n = 0; n < count; ++n, ++value )
 	{
-		auto * var = &sqlda->orgsqlvar.at(n);
+		auto * var = &sqlda->sqlvar.at(n);
 		statement->setValue( value, n + 1, *sqlda );
 
 		if ( *var->sqlind != -1 && (var->sqltype) == SQL_VARYING )
@@ -155,7 +155,7 @@ void IscMetaDataResultSet::addString(char *& stringOut, const char * string, int
 void IscMetaDataResultSet::convertBlobToString( int indSrc, int indDst )
 {
 	//XSQLVAR *varDst = sqlda->Var( indDst );
-	auto * varDst = sqlda->orgVar( indDst );
+	auto * varDst = sqlda->Var( indDst );
 	IscBlob * blob = new IscBlob( statement, varDst->sqldata, varDst->sqlsubtype );
 	blob->fetchBlob();
 
@@ -163,7 +163,7 @@ void IscMetaDataResultSet::convertBlobToString( int indSrc, int indDst )
 
 	int length = blob->length();
 	//XSQLVAR *varSrc = sqlda->Var( indSrc );
-	auto * varSrc = sqlda->orgVar( indSrc );
+	auto * varSrc = sqlda->Var( indSrc );
 	char * src = varSrc->sqldata + sizeof ( short );
 	int lenSrc = varSrc->sqllen;
 	*varSrc->sqlind = 0;

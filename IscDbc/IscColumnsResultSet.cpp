@@ -230,7 +230,7 @@ bool IscColumnsResultSet::getDefSource (int indexIn, int indexTarget)
 	}
 
 	//XSQLVAR *var = sqlda->Var(indexIn);
-	auto * var = sqlda->orgVar( indexIn );
+	auto * var = sqlda->Var( indexIn );
 	char buffer[1024];
 	char * beg = buffer + 7; // sizeof("default")
 	char * end;

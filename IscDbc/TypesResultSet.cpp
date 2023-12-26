@@ -38,7 +38,7 @@ namespace IscDbcLibrary {
 
 #define SET_SQLVAR(num, name, type, prec, offset)			\
 {															\
-	auto *var = sqlda->orgVar( num );						\
+	auto *var = sqlda->Var( num );						\
 															\
 	var->sqlname = name;									\
 	var->sqltype = type;									\
@@ -198,7 +198,7 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCha
 	sqlda = &outputSqlda;
 	sqlda->columnsCount = numberColumns;
 	sqldataOffsetPtr = (uintptr_t)types - sizeof (*types);
-	sqlda->orgsqlvar.resize( numberColumns );
+	sqlda->sqlvar.resize( numberColumns );
 
 	SET_SQLVAR( 1, "TYPE_NAME"			, SQL_VARYING	,	52  , OFFSET(Types,lenTypeName)				)
 	SET_SQLVAR( 2, "DATA_TYPE"			, SQL_SHORT		,	 5	, OFFSET(Types,typeType)				)
@@ -242,7 +242,7 @@ bool TypesResultSet::nextFetch()
 	if (++recordNumber > sizeof (types) / sizeof (types [0]))
 		return false;
 
-	auto & var = sqlda->orgsqlvar;
+	auto & var = sqlda->sqlvar;
 	sqldataOffsetPtr += sizeof (*types);
 
 	SET_INDICATOR_STR(0);						// TYPE_NAME

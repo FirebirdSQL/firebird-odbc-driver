@@ -31,14 +31,12 @@ namespace IscDbcLibrary {
 
 #define MAKEHEAD(a, b)	\
 {																	\
-	if ( sqlvar->sqltype == a ) return;								\
 	sqlvar->sqltype = a;											\
 	sqlvar->sqllen = b;												\
 	/*scale is always set separately*/								\
 	sqlvar->sqlscale = 0;											\
 	/*subtype should not be reset to 0 for blobs*/					\
-	sqlvar->sqlsubtype = (a == SQL_BLOB) ? sqlvar->sqlsubtype : 0;	\
-	sqlvar->wasExternalOverriden = true;							\
+	sqlvar->sqlsubtype = (a == SQL_BLOB || a == SQL_ARRAY) ? sqlvar->sqlsubtype : 0;	\
 }
 
 class IscHeadSqlVar : public HeadSqlVar
@@ -68,20 +66,18 @@ public:
 	{ 
 		if (sqlvar->sqltype != SQL_TEXT)
 		{
+			if (sqlvar->sqltype != SQL_VARYING) sqlvar->sqlsubtype = 0;
 			sqlvar->sqltype = SQL_TEXT;
 			sqlvar->sqlscale = 0;
-			sqlvar->sqlsubtype = 0;
-			sqlvar->wasExternalOverriden = true;
 		}
 	}
 	inline void	setTypeVarying()
 	{
 		if (sqlvar->sqltype != SQL_VARYING)
 		{
+			if (sqlvar->sqltype != SQL_TEXT) sqlvar->sqlsubtype = 0;
 			sqlvar->sqltype = SQL_VARYING;
 			sqlvar->sqlscale = 0;
-			sqlvar->sqlsubtype = 0;
-			sqlvar->wasExternalOverriden = true;
 		}
 	}
 
@@ -99,30 +95,9 @@ public:
 	inline void	setTypeDate()		{ MAKEHEAD(SQL_TYPE_DATE,	sizeof(ISC_DATE));		}
 	inline void	setTypeInt64()		{ MAKEHEAD(SQL_INT64,		sizeof(QUAD));			}
 
-	inline void	setSqlScale ( short scale )
-	{
-		if( sqlvar->sqlscale != scale )
-		{
-			sqlvar->sqlscale = scale;
-			sqlvar->wasExternalOverriden = true;
-		}
-	}
-	inline void	setSqlLen ( short len )
-	{
-		if( sqlvar->sqllen != len )
-		{
-			sqlvar->sqllen = len;
-			sqlvar->wasExternalOverriden = true;
-		}
-	}
-	inline void	setSqlData ( char* data )
-	{
-		if (sqlvar->sqldata != data)
-		{
-			sqlvar->sqldata = data;
-			sqlvar->wasExternalOverriden = true;
-		}
-	}
+	inline void	setSqlScale ( short scale ) { sqlvar->sqlscale = scale; }
+	inline void	setSqlLen(short len) { sqlvar->sqllen = len; }
+	inline void	setSqlData ( char* data ) { sqlvar->sqldata = data; }
 
 	inline short	getSqlMultiple () { return sqlMultiple; }
 	inline char *	getSqlData() { return sqlvar->sqldata; }

@@ -650,29 +650,23 @@ bool IscStatement::execute()
 	if ( isActiveSelect() && connection->transactionInfo.autoCommit && resultSets.isEmpty() )
 		clearSelect();
 
-	// We should rebuild sql input params buffer if any values/types were overriden ealier
-	bool needToRestoreMeta = false;
-	if( inputSqlda.isExternalOverriden() )
-	{
-		inputSqlda.rebuildMetaFromAttributes( this );
-		needToRestoreMeta = true; // and we also should restore it after execute
-	}
-
 	ThrowStatusWrapper status( connection->GDS->_status );
 	try
 	{
 		// Make sure there is a transaction
 		ITransaction* transHandle = startTransaction();
 
+		Sqlda::ExecBuilder execBuilder(inputSqlda);
+
 		if( openCursor == false )
 		{
-			statementHandle->execute( &status, transHandle, inputSqlda.meta, inputSqlda.buffer.data(), NULL, NULL );
+			statementHandle->execute( &status, transHandle, execBuilder.getMeta(), execBuilder.getBuffer(), NULL, NULL);
 		}
 		else
 		{
 			fbResultSet = statementHandle->openCursor( &status, transHandle,
-			                                           inputSqlda.meta, inputSqlda.buffer.data(),
-													   outputSqlda.meta, 0 );
+			                                           execBuilder.getMeta(), execBuilder.getBuffer(),
+			                                           outputSqlda.meta, 0 );
 		}
 	}
 	catch( const FbException& error )
@@ -681,14 +675,6 @@ bool IscStatement::execute()
 			connection->rollbackAuto();
 		clearSelect();
 		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
-	}
-
-	// restore input buffer if it was rebuilt
-	// otherwise the subsequent executes of this stmt may fail
-	if (needToRestoreMeta && inputSqlda.metaBackup)
-	{
-		inputSqlda.allocBuffer(this, inputSqlda.metaBackup);
-		inputSqlda.metaBackup = nullptr;
 	}
 
 	resultsCount		= 1;
@@ -745,19 +731,17 @@ bool IscStatement::execute()
 
 bool IscStatement::executeProcedure()
 {
-	if( inputSqlda.isExternalOverriden() )
-	{
-		inputSqlda.rebuildMetaFromAttributes( this );
-	}
-
 	ThrowStatusWrapper status( connection->GDS->_status );
 	try
 	{
 		// Make sure there is a transaction
 		ITransaction* transHandle = startTransaction();
 
+		Sqlda::ExecBuilder execBuilder(inputSqlda);
+
 		statementHandle->execute( &status, transHandle,
-			inputSqlda.meta, inputSqlda.buffer.data(), outputSqlda.meta, outputSqlda.buffer.data() );
+		                          execBuilder.getMeta(), execBuilder.getBuffer(),
+		                          outputSqlda.meta, outputSqlda.buffer.data() );
 	}
 	catch( const FbException& error )
 	{
@@ -858,7 +842,7 @@ int IscStatement::getUpdateCounts()
 
 void IscStatement::setValue( Value *value, unsigned index, Sqlda& sqlData )
 {
-	auto * var = sqlData.orgVar( index );
+	auto * var = sqlData.Var( index );
 	auto * buf = var->sqldata;
 	
 	if( sqlData.isNull( index ) )

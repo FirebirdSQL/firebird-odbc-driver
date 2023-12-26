@@ -327,7 +327,7 @@ void Sqlda::init()
 {
 	meta = nullptr;
 	metaBackup = meta;
-	orgsqlvar.clear();
+	sqlvar.clear();
 	dataStaticCursor = nullptr;
 	columnsCount = 0;
 }
@@ -346,7 +346,7 @@ void Sqlda::clearSqlda()
 
 void Sqlda::deleteSqlda()
 {
-	orgsqlvar.clear();
+	sqlvar.clear();
 	buffer.clear();
 
 	if( meta ) {
@@ -378,68 +378,88 @@ void Sqlda::allocBuffer ( IscStatement *stmt, IMessageMetadata* msgMetadata )
 	mapSqlAttributes( stmt );
 }
 
-void Sqlda::rebuildMetaFromAttributes( IscStatement *stmt )
+Sqlda::ExecBuilder::ExecBuilder(Sqlda& sqlda) : _sqlda{sqlda}, _localMeta { nullptr }, _localBuffer{}
 {
-	std::vector<short> indicators( columnsCount );
+	bool overrideFlag = sqlda.isExternalOverriden();
+
+	_meta =   overrideFlag ? &_localMeta   : &_sqlda.meta;
+	_buffer = overrideFlag ? &_localBuffer : &_sqlda.buffer;
+
 	IMetadataBuilder* metaBuilder = nullptr;
-	ThrowStatusWrapper status( connection->GDS->_status );
-	try
+	ThrowStatusWrapper status(_sqlda.connection->GDS->_status);
+
+	auto build_new_meta = [&]()->IMessageMetadata*
 	{
-		metaBuilder = meta ? meta->getBuilder( &status ) : connection->GDS->_master->getMetadataBuilder(&status, columnsCount);
+		if (!_sqlda.meta)
+			throw SQLEXCEPTION(RUNTIME_ERROR, "Sqlda::ExecBuilder(): sqlda.meta==null before execute!");
 
-		for( auto & var : orgsqlvar )
+		metaBuilder = _sqlda.meta->getBuilder(&status);
+
+		for (auto& var : _sqlda.sqlvar)
 		{
 			const auto i = var.index - 1;
-			metaBuilder->setType   ( &status, i, var.sqltype | (short)( var.isNullable ? 1 : 0 ) );
-			metaBuilder->setSubType( &status, i, var.sqlsubtype );
-			metaBuilder->setScale  ( &status, i, var.sqlscale   );
-			metaBuilder->setLength ( &status, i, var.sqllen     );
-			indicators[i] = *var.sqlind;
+			metaBuilder->setType(&status, i, var.sqltype | (short)(var.isNullable ? 1 : 0));
+
+			//ooapi provides charset in separated field, so we should set subtype=0 for text types
+			const auto subtype = (var.sqltype == SQL_TEXT || var.sqltype == SQL_VARYING) ? 0 : var.sqlsubtype;
+			metaBuilder->setSubType(&status, i, subtype);
+
+			metaBuilder->setCharSet(&status, i, var.sqlcharset);
+			metaBuilder->setScale(&status, i, var.sqlscale);
+			metaBuilder->setLength(&status, i, var.sqllen);
 		}
 
-		if (metaBackup) metaBackup->release();
-		metaBackup = meta;
-		meta = metaBuilder->getMetadata( &status );
-
-		if( meta->getCount( &status ) != columnsCount )
-			throw SQLEXCEPTION (RUNTIME_ERROR, "Sqlda::rebuildMetaFromAttributes(): incorrect columns count");
-
-		std::vector<char> bufferNew;
-
-		lengthBufferRows = meta->getMessageLength( &status );
-		bufferNew.resize( lengthBufferRows );
-
-		for( auto & var : orgsqlvar )
-		{
-			const auto i = var.index - 1;
-			const auto offs     = meta->getOffset( &status, i );
-			const auto offsNull = meta->getNullOffset( &status, i );
-
-			*(short*)( bufferNew.data() + offsNull ) = indicators[i];
-
-			if (indicators[i] != sqlNull)
-			{
-				const auto len = (std::min)((unsigned)var.sqllen, meta->getLength(&status, i));
-				memcpy(bufferNew.data() + offs, var.sqldata, len);
-			}
-		}
-
-		buffer = bufferNew;
+		auto * res = metaBuilder->getMetadata(&status);
 		metaBuilder->release();
 		metaBuilder = nullptr;
-	}
-	catch( const FbException& error )
+		return res;
+	};
+
+	try
 	{
-		if( metaBuilder ) metaBuilder->release();
-		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+		if (overrideFlag)
+		{
+			//build the new metadata
+			_localMeta = build_new_meta();
+
+			if ((*_meta)->getCount(&status) != _sqlda.columnsCount)
+				throw SQLEXCEPTION(RUNTIME_ERROR, "Sqlda::ExecBuilder(): incorrect columns count");
+
+			//resize the new buffer to required length
+			_buffer->resize((*_meta)->getMessageLength(&status));
+		}
+
+		//fill exec buffer with data - regardless of whether it was rebuilt or not
+		for (auto& var : _sqlda.sqlvar)
+		{
+			const auto i = var.index - 1;
+			const auto offs = (*_meta)->getOffset(&status, i);
+			const auto offsNull = (*_meta)->getNullOffset(&status, i);
+
+			if ( (*(short*)(_buffer->data() + offsNull) = *var.sqlind) != sqlNull )
+			{
+				memcpy(_buffer->data() + offs, var.sqldata, (*_meta)->getLength(&status, i));
+			}
+		}
 	}
-	catch( ... )
+	catch (const FbException& error)
 	{
-		if( metaBuilder ) metaBuilder->release();
+		if (metaBuilder) metaBuilder->release();
+		THROW_ISC_EXCEPTION(_sqlda.connection, error.getStatus());
+	}
+	catch (...)
+	{
+		if (metaBuilder) metaBuilder->release();
 		throw;
 	}
+}
 
-	mapSqlAttributes( stmt );
+Sqlda::ExecBuilder::~ExecBuilder()
+{
+	//release meta
+	if (_localMeta) _localMeta->release();
+	//restore original sql vars
+	for (auto& var : _sqlda.sqlvar) *static_cast<SqlProperties*>(&var) = var.orgSqlProperties;
 }
 
 void Sqlda::mapSqlAttributes( IscStatement *stmt )
@@ -448,14 +468,14 @@ void Sqlda::mapSqlAttributes( IscStatement *stmt )
 		throw SQLEXCEPTION (RUNTIME_ERROR, "Sqlda::mapSqlAttributes(): incorrect buffer size");
 	if( !meta )
 		throw SQLEXCEPTION (RUNTIME_ERROR, "Sqlda::mapSqlAttributes(): no metadata");
-	if( !orgsqlvar.empty() && orgsqlvar.size() != columnsCount )
+	if( !sqlvar.empty() && sqlvar.size() != columnsCount )
 		throw SQLEXCEPTION(RUNTIME_ERROR, "Sqlda::mapSqlAttributes(): incorrect columnsCount");
 
-	if (orgsqlvar.empty()) {
-		orgsqlvar.resize(columnsCount);
+	if (sqlvar.empty()) {
+		sqlvar.resize(columnsCount);
 	}
 	else {
-		std::fill(orgsqlvar.begin(), orgsqlvar.end(), CAttrSqlVar{});
+		std::fill(sqlvar.begin(), sqlvar.end(), CAttrSqlVar{});
 	}
 
 	ThrowStatusWrapper status( connection->GDS->_status );
@@ -463,7 +483,7 @@ void Sqlda::mapSqlAttributes( IscStatement *stmt )
 	{
 		for( unsigned n = 0; n < columnsCount; ++n )
 		{
-			auto * var = &orgsqlvar.at(n);
+			auto * var = &sqlvar.at(n);
 
 			var->assign( status, meta, buffer, n );
 
@@ -513,7 +533,7 @@ Sqlda::buffer_t& Sqlda::initStaticCursor(IscStatement *stmt)
 	if ( dataStaticCursor )
 		delete 	dataStaticCursor;
 
-	dataStaticCursor = new CDataStaticCursor( stmt, buffer, orgsqlvar, columnsCount, lengthBufferRows );
+	dataStaticCursor = new CDataStaticCursor( stmt, buffer, sqlvar, columnsCount, lengthBufferRows );
 	return *dataStaticCursor->itCurrentRow;
 }
 
@@ -571,7 +591,7 @@ void Sqlda::print()
 {
 	for (unsigned n = 0; n < columnsCount; ++n)
 	{
-		auto * var = &orgsqlvar.at( n );
+		auto * var = &sqlvar.at( n );
 		char *p = var->sqldata;
 
 		printf ("%d. type %d, len %d, addr %p (%p) ",
@@ -650,7 +670,7 @@ void Sqlda::print()
 //
 int Sqlda::getColumnDisplaySize(int index)
 {
-	CAttrSqlVar *var = orgVar(index);
+	CAttrSqlVar *var = Var(index);
 
 	switch (var->sqltype)
 	{
@@ -714,18 +734,18 @@ int Sqlda::getColumnDisplaySize(int index)
 
 const char* Sqlda::getColumnLabel(int index)
 {
-	auto * var = orgVar(index);
+	auto * var = Var(index);
 	return ( var->aliasname && *var->aliasname ) ? var->aliasname : var->sqlname;
 }
 
 const char* Sqlda::getColumnName(int index)
 {
-	return orgVar(index)->sqlname;
+	return Var(index)->sqlname;
 }
 
 int Sqlda::getPrecision(int index)
 {
-	CAttrSqlVar *var = orgVar(index);
+	CAttrSqlVar *var = Var(index);
 
 	switch (var->sqltype)
 	{
@@ -789,7 +809,7 @@ int Sqlda::getPrecision(int index)
 
 int Sqlda::getNumPrecRadix(int index)
 {
-	CAttrSqlVar *var = orgVar(index);
+	CAttrSqlVar *var = Var(index);
 
 	switch (var->sqltype)
 	{
@@ -809,7 +829,7 @@ int Sqlda::getNumPrecRadix(int index)
 
 int Sqlda::getScale(int index)
 {
-	CAttrSqlVar *var = orgVar(index);
+	CAttrSqlVar *var = Var(index);
 
 	switch (var->sqltype)
 	{
@@ -823,22 +843,22 @@ int Sqlda::getScale(int index)
 
 bool Sqlda::isNullable(int index)
 {
-	return orgVar( index )->isNullable;
+	return Var( index )->isNullable;
 }
 
 int Sqlda::getColumnType(int index, int &realSqlType)
 {
-	return getSqlType ( orgVar(index), realSqlType );
+	return getSqlType ( Var(index), realSqlType );
 }
 
 const char* Sqlda::getColumnTypeName(int index)
 {
-	return getSqlTypeName ( orgVar(index) );
+	return getSqlTypeName ( Var(index) );
 }
 
 short Sqlda::getSubType(int index)
 {
-	return orgVar( index )->sqlsubtype;
+	return Var( index )->sqlsubtype;
 }
 
 int Sqlda::getSqlType(CAttrSqlVar *var, int &realSqlType)
@@ -969,14 +989,14 @@ const char* Sqlda::getSqlTypeName ( CAttrSqlVar *var )
 
 const char* Sqlda::getTableName(int index)
 {
-	return orgVar( index )->relname;
+	return Var( index )->relname;
 }
 
 void Sqlda::setValue(int slot, Value * value, IscStatement	*stmt)
 {
 	const auto index = slot + 1;
 
-	auto * var = orgVar( index );
+	auto * var = Var( index );
 
 	// Check to see if we need to do the conversion.  Otherwise, the
 	// InterBase do it.
@@ -1215,7 +1235,7 @@ void Sqlda::setArray(CAttrSqlVar* var, Value *value, IscStatement *stmt)
 
 int Sqlda::findColumn(const char * columnName)
 {
-	for( const auto & var : orgsqlvar )
+	for( const auto & var : sqlvar )
 		if (strcasecmp (var.sqlname, columnName) == 0)
 			return var.index - 1;
 
@@ -1233,7 +1253,7 @@ const char* Sqlda::getOwnerName(int index)
 
 int Sqlda::isBlobOrArray(int index)
 {
-	int type = orgVar(index)->sqltype;
+	int type = Var(index)->sqltype;
 
 	switch (type)
 	{
@@ -1247,64 +1267,64 @@ int Sqlda::isBlobOrArray(int index)
 
 bool Sqlda::isNull(int index)
 {
-	return *( orgVar( index )->sqlind ) == sqlNull;
+	return *( Var( index )->sqlind ) == sqlNull;
 }
 
 void Sqlda::setNull(int index)
 {
-	*( orgVar( index )->sqlind ) = sqlNull;
+	*( Var( index )->sqlind ) = sqlNull;
 }
 
 void Sqlda::setNotNull(int index)
 {
-	*( orgVar( index )->sqlind ) = 0;
+	*( Var( index )->sqlind ) = 0;
 }
 
 bool Sqlda::getBoolean (int index)
 {
-	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype) == SQL_BOOLEAN);
+	CONVERSION_CHECK_DEBUG((Var(index)->sqltype) == SQL_BOOLEAN);
 	if ( isNull ( index ) )
 		return 0;
-	return !!*(TYPE_BOOLEAN*)( orgVar(index)->sqldata );
+	return !!*(TYPE_BOOLEAN*)( Var(index)->sqldata );
 }
 
 short Sqlda::getShort (int index)
 {
-	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype) == SQL_SHORT);
+	CONVERSION_CHECK_DEBUG((Var(index)->sqltype) == SQL_SHORT);
 	if ( isNull ( index) )
 		return 0;
-	return *(short*)( orgVar(index)->sqldata );
+	return *(short*)( Var(index)->sqldata );
 }
 
 int Sqlda::getInt (int index)
 {
-	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype) == SQL_LONG);
+	CONVERSION_CHECK_DEBUG((Var(index)->sqltype) == SQL_LONG);
 	if ( isNull ( index) )
 		return 0;
-	return *(int*)( orgVar(index)->sqldata );
+	return *(int*)( Var(index)->sqldata );
 }
 
 char * Sqlda::getText (int index, int &len)
 {
-	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype) == SQL_TEXT);
+	CONVERSION_CHECK_DEBUG((Var(index)->sqltype) == SQL_TEXT);
 	if( isNull ( index) )
 	{
 		len = 0;
 		return "";
 	}
-	len = orgVar(index)->sqllen;
-	return orgVar(index)->sqldata;
+	len = Var(index)->sqllen;
+	return Var(index)->sqldata;
 }
 
 char * Sqlda::getVarying (int index, int &len)
 {
-	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype) == SQL_VARYING);
+	CONVERSION_CHECK_DEBUG((Var(index)->sqltype) == SQL_VARYING);
 	if( isNull ( index) )
 	{
 		len = 0;
 		return "";
 	}
-	auto * buf = orgVar(index)->sqldata;
+	auto * buf = Var(index)->sqldata;
 	len = *(short*)buf;
 	return  buf + 2;
 }
@@ -1313,30 +1333,30 @@ char * Sqlda::getVarying (int index, int &len)
 
 void Sqlda::updateBoolean (int index, bool value)
 {
-	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype) == SQL_BOOLEAN);
-	*(TYPE_BOOLEAN*)( orgVar(index)->sqldata ) = value;
+	CONVERSION_CHECK_DEBUG((Var(index)->sqltype) == SQL_BOOLEAN);
+	*(TYPE_BOOLEAN*)( Var(index)->sqldata ) = value;
 	setNotNull( index );
 }
 
 void Sqlda::updateShort (int index, short value)
 {
-	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype) == SQL_SHORT);
-	*(short*)( orgVar(index)->sqldata ) = value;
+	CONVERSION_CHECK_DEBUG((Var(index)->sqltype) == SQL_SHORT);
+	*(short*)( Var(index)->sqldata ) = value;
 	setNotNull( index );
 }
 
 void Sqlda::updateInt (int index, int value)
 {
-	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype) == SQL_LONG);
-	*(int*)( orgVar(index)->sqldata ) = value;
+	CONVERSION_CHECK_DEBUG((Var(index)->sqltype) == SQL_LONG);
+	*(int*)( Var(index)->sqldata ) = value;
 	setNotNull( index );
 }
 
 void Sqlda::updateText (int index, const char* dst)
 {
-	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype) == SQL_TEXT);
-    char * src = orgVar(index)->sqldata;
-	int n = orgVar(index)->sqllen;
+	CONVERSION_CHECK_DEBUG((Var(index)->sqltype) == SQL_TEXT);
+    char * src = Var(index)->sqldata;
+	int n = Var(index)->sqllen;
 	setNotNull( index );
 
     if ( n < 1)
@@ -1350,10 +1370,10 @@ void Sqlda::updateText (int index, const char* dst)
 
 void Sqlda::updateVarying (int index, const char* dst)
 {
-	CONVERSION_CHECK_DEBUG((orgVar(index)->sqltype) == SQL_VARYING);
-	char * buf = orgVar(index)->sqldata;
+	CONVERSION_CHECK_DEBUG((Var(index)->sqltype) == SQL_VARYING);
+	char * buf = Var(index)->sqldata;
     char * src = buf + sizeof(short);
-	int n = orgVar(index)->sqllen;
+	int n = Var(index)->sqllen;
 	setNotNull( index );
 
     if ( n < 1)
@@ -1362,7 +1382,7 @@ void Sqlda::updateVarying (int index, const char* dst)
     while ( n-- && *dst) //TODO: slow code
         *src++ = *dst++;
 
-	*(unsigned short*)buf = (unsigned short)(orgVar(index)->sqllen - n - 1);
+	*(unsigned short*)buf = (unsigned short)(Var(index)->sqllen - n - 1);
 }
 
 }; // end namespace IscDbcLibrary
