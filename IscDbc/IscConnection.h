@@ -146,6 +146,7 @@ public:
 	virtual void prepareTransaction();
 	virtual bool getTransactionPending();
 	Firebird::IAttachment* getHandleDb();
+	virtual bool isMsAccess() override { return GDS ? GDS->isMsAccess() : false; }
 
 public:
 	CNodeParamTransaction *tmpParamTransaction;

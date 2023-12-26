@@ -9,6 +9,7 @@ using namespace Firebird;
 namespace IscDbcLibrary {
 
 CFbDll::CFbDll() :
+	_isMsAccess{ detectMsAccess() },
 	_master{nullptr},
 	_prov{nullptr},
 	_status{nullptr}

@@ -4,6 +4,10 @@
 #ifdef _WINDOWS
 #include <windows.h>
 #endif
+#include <sstream>
+
+#include <filesystem>
+#include <algorithm>
 
 namespace IscDbcLibrary {
 
@@ -313,6 +317,47 @@ typedef ISC_STATUS ISC_EXPORT get_database_handle(ISC_STATUS* userStatus, isc_db
 
 class CFbDll
 {
+private:
+	bool	_isMsAccess;
+	bool	detectMsAccess()
+	{
+#ifdef _WINDOWS
+		try
+		{
+			char buf[1024] = {};
+			auto n = GetModuleFileName(NULL, buf, sizeof(buf));
+			if (!n) return false;
+
+			std::filesystem::path fpath = std::string(buf, n);
+
+			{
+				std::stringstream ss;
+				ss << "Loaded from: " << fpath << "\n";
+				OutputDebugString(ss.str().c_str());
+			}
+
+			auto stem = fpath.stem().string();
+			auto extn = fpath.extension().string();
+			std::transform(stem.begin(), stem.end(), stem.begin(), [](unsigned char c) { return std::toupper(c); });
+			std::transform(extn.begin(), extn.end(), extn.begin(), [](unsigned char c) { return std::toupper(c); });
+
+			bool res = stem.find("MSACCESS") != std::string::npos && extn == ".EXE";
+			{
+				if (res) OutputDebugString("MS Access detected! Special patch will be applied.\n");
+			}
+			return res;
+		}
+		catch (...)
+		{
+			OutputDebugString("Unknown error in detectMsAccess().\n");
+			return false;
+		}
+
+#else
+		return false;
+#endif
+	}
+
 public:
 	CFbDll();
 	~CFbDll();
@@ -407,6 +452,8 @@ public:
 	}
 
 	inline ISC_LONG getSqlCode( const ISC_STATUS* ev ) { return this->_sqlcode( const_cast<ISC_STATUS*>( ev ) ); }
+
+	inline bool isMsAccess() { return _isMsAccess; }
 };
 
 }; // end namespace IscDbcLibrary

@@ -255,6 +255,8 @@ public:
 
 	virtual void		addRef() = 0;
 	virtual int			release() = 0;
+
+	virtual bool		isMsAccess() = 0;
 };
 
 #define DATABASEMETADATA_VERSION	1

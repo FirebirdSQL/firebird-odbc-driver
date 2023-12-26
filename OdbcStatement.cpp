@@ -2072,12 +2072,15 @@ SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 			 case SQL_WCHAR:
 			 case SQL_WVARCHAR:
 			 case SQL_WLONGVARCHAR:
-// MSACCESS HACK!!!!
-#if 0
-				cType = SQL_C_CHAR;
-#else
-				cType = SQL_C_WCHAR;
-#endif
+				// MSACCESS HACK!!!!
+				if (connection->connection->isMsAccess())
+				{
+					cType = SQL_C_CHAR;
+				}
+				else
+				{
+					cType = SQL_C_WCHAR;
+				}
 				break;
 			 case SQL_BIT:
 			 case SQL_BOOLEAN:
