@@ -490,7 +490,15 @@ void Sqlda::mapSqlAttributes( IscStatement *stmt )
 			//arrays
 			if( stmt && var->sqltype == SQL_ARRAY ) {
 				var->array = new CAttrArray;
-				var->array->loadAttributes ( stmt, var->relname, var->sqlname, var->sqlsubtype );
+				/* 
+				* loadAttributes() raises an SQLError exc on empty relname / sqlname
+				* Empty names are common case for input parameters.
+				* But it seems to me, we have no need for var->array attributes for inputs.
+				*/
+				if (*var->relname && *var->sqlname)
+				{
+					var->array->loadAttributes(stmt, var->relname, var->sqlname, var->sqlsubtype);
+				}
 			}
 		}
 	}
@@ -498,34 +506,6 @@ void Sqlda::mapSqlAttributes( IscStatement *stmt )
 	{
 		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
 	}
-}
-
-IMessageMetadata* Sqlda::setStrProperties( int index, const char* fldName, const char* fldRelation, const char* fldAlias )
-{
-	if( !meta ) return nullptr;
-	--index; // int index is 1-based here
-
-	IMessageMetadata* newMeta = nullptr;
-	IMetadataBuilder* metaBuilder = nullptr;
-	ThrowStatusWrapper status( connection->GDS->_status );
-	try
-	{
-		metaBuilder = meta->getBuilder( &status );
-
-		if( fldName )     metaBuilder->setField   ( &status, index, fldName     );
-		if( fldRelation ) metaBuilder->setRelation( &status, index, fldRelation );
-		if( fldAlias )    metaBuilder->setAlias   ( &status, index, fldAlias    );
-
-		newMeta = metaBuilder->getMetadata( &status );
-		metaBuilder->release();
-		metaBuilder = nullptr;
-	}
-	catch( const FbException& error )
-	{
-		if( metaBuilder ) metaBuilder->release();
-		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
-	}
-	return newMeta;
 }
 
 Sqlda::buffer_t& Sqlda::initStaticCursor(IscStatement *stmt)

@@ -231,8 +231,6 @@ public:
 
 	friend class IscResultSet;
 
-	Firebird::IMessageMetadata* setStrProperties( int index, const char* fldName, const char* fldRelation, const char* fldAlias );
-
 	inline bool isExternalOverriden() {
 		for( auto & var : sqlvar ) if (var.propertiesOverriden()) return true;
 		return false;

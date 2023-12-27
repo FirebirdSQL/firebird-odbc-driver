@@ -100,8 +100,6 @@ void IscOdbcStatement::prepareStatement(const char * sqlString)
 		getInputParameters();
 	}
 
-	//inputSqlda.allocBuffer ( this );
-
 	if ( replaceParamArray )
 	{
 		int * label = labelParamArray;
@@ -235,13 +233,8 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 					auto * varIn = &inputSqlda.sqlvar.at( m );
 					if ( varIn->sqlname && strlen(varIn->sqlname) == len && !strncasecmp ( varIn->sqlname, start, len ) )
 					{
-						//Here we hope that changing sqlname/relname should not affect the meta buffer
-						auto * newMeta = inputSqlda.setStrProperties( var->index, varIn->sqlname, varIn->relname, nullptr );
-						if( newMeta )
-						{
-							if( inputSqlda.meta ) inputSqlda.meta->release();
-							inputSqlda.meta = newMeta;
-						}
+						var->sqlname = varIn->sqlname;
+						var->relname = varIn->relname;
 
 						offsetNameParam[n] = end - strSql;
 
@@ -294,10 +287,6 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 		tempSql[offset] = '\0';
 		delete [] offsetParam;
 		delete [] offsetNameParam;
-
-		//
-		inputSqlda.mapSqlAttributes( this );
-		//
 
 		return countDefined;
 	}
