@@ -31,6 +31,10 @@
 #include <sqlext.h>
 #include "Mlist.h"
 #include "SupportFunctions.h"
+#include <vector>
+#include <string>
+#include <cstring>
+#include <sstream>
 
 namespace IscDbcLibrary {
 
@@ -75,7 +79,7 @@ SupportFunctions::SupportFunctions()
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_RTRIM, 			"RTRIM", 			"RTRIM",			defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SOUNDEX, 		"SOUNDEX", 			"SOUNDEX",			defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SPACE, 			"SPACE", 			"SPACE",			defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SUBSTRING, 		"SUBSTRING", 		"SUBSTRING",		defaultTranslator);
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SUBSTRING, 		"SUBSTRING", 		"SUBSTRING",		substringTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_UCASE, 			"UCASE", 			"UPPER",			defaultTranslator);
 
 //  Numeric functions
@@ -388,6 +392,49 @@ void SupportFunctions::bracketfromTranslator ( char *&ptIn, char *&ptOut )
 	lenSqlFn = (int)( ptIn - ptOut );
 
 	writeResult ( supportFn->nameFbFn, ptOut );
+	ptIn = ptOut;
+}
+
+// translate {fn SUBSTRING(value,from,for) }
+// to SUBSTRING(value FROM from FOR for)
+void SupportFunctions::substringTranslator(char*& ptIn, char*& ptOut)
+{
+	char* pEnd = std::strchr(ptIn, '}');
+	char* pBegin = std::strchr(ptIn, '(');
+
+	if (!pBegin || !pEnd || pBegin >= pEnd) return;
+
+	const size_t offset = ptIn - ptOut;
+	lenSqlFn = offset + pEnd - ptIn;
+
+	auto bracketCounter = 0;
+	std::vector<std::string> vtokens;
+
+	for (char *ptr = pBegin, *pToken = ptr + 1; ptr < pEnd; ++ptr)
+	{
+		bracketCounter += *ptr == '(';
+		bracketCounter -= *ptr == ')';
+		if ( (bracketCounter == 1 && *ptr == ',') || (!bracketCounter && *ptr == ')') )
+		{
+			vtokens.emplace_back(pToken, ptr - pToken);
+			pToken = ptr + 1;
+		}
+	}
+	if (bracketCounter) return;
+	if (vtokens.size() != 2 && vtokens.size() != 3) return;
+
+	std::ostringstream oss;
+	oss << std::string(supportFn->nameFbFn, supportFn->lenFbFn);
+	oss << "(";
+	oss << vtokens.at(0);
+	oss << " FROM " << vtokens.at(1);
+	if (vtokens.size() == 3) oss << " FOR " << vtokens.at(2);
+	oss << ")";
+
+	lenFbFn = oss.str().size();
+	lenOut = (int)strlen(ptOut);
+
+	writeResult(oss.str().c_str(), ptOut);
 	ptIn = ptOut;
 }
 

@@ -137,6 +137,7 @@ public:
 	void fullreplaceTranslator ( char *&ptIn, char *&ptOut );
 	void convertTranslator ( char *&ptIn, char *&ptOut );
 	void bracketfromTranslator ( char *&ptIn, char *&ptOut );
+	void substringTranslator(char*& ptIn, char*& ptOut);
 };
 
 }; // end namespace IscDbcLibrary
