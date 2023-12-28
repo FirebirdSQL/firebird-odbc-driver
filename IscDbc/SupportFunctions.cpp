@@ -31,8 +31,7 @@
 #include <sqlext.h>
 #include "Mlist.h"
 #include "SupportFunctions.h"
-#include <vector>
-#include <string>
+
 #include <cstring>
 #include <sstream>
 
@@ -394,33 +393,53 @@ void SupportFunctions::bracketfromTranslator ( char *&ptIn, char *&ptOut )
 	writeResult ( supportFn->nameFbFn, ptOut );
 	ptIn = ptOut;
 }
+/*
+* Tokenize string (param1, param2,...,paramN) to a vector of tokens [param1,...,paramN]
+* ptIn finally points to the trailing ')' of our expression - or to 0-char, if the bracket is not found
+* 
+* Returns true on success & false on error
+*/
+bool SupportFunctions::Tokenize(char*& ptIn, std::vector<std::string>& vtokens)
+{
+	char* pBegin = std::strchr(ptIn, '(');
+	if (!pBegin) return false;
+
+	auto bracketCounter = 0;
+	bool inQuotes = false;
+	char* ptr = pBegin;
+
+	for (char* pToken = ptr + 1; *ptr; ++ptr)
+	{
+		if (*ptr == '\'') inQuotes = !inQuotes;
+
+		if (!inQuotes)
+		{
+			bracketCounter += *ptr == '(';
+			bracketCounter -= *ptr == ')';
+
+			if ((bracketCounter == 1 && *ptr == ',') || !bracketCounter)
+			{
+				vtokens.emplace_back(pToken, ptr - pToken);
+				pToken = ptr + 1;
+				if (!bracketCounter) break;
+			}
+		}
+	}
+	if (!*ptr) return false;
+	if (bracketCounter || inQuotes) return false;
+
+	ptIn = ptr;
+	return true;
+}
 
 // translate {fn SUBSTRING(value,from,for) }
 // to SUBSTRING(value FROM from FOR for)
 void SupportFunctions::substringTranslator(char*& ptIn, char*& ptOut)
 {
-	char* pEnd = std::strchr(ptIn, '}');
-	char* pBegin = std::strchr(ptIn, '(');
-
-	if (!pBegin || !pEnd || pBegin >= pEnd) return;
-
-	const size_t offset = ptIn - ptOut;
-	lenSqlFn = offset + pEnd - ptIn;
-
-	auto bracketCounter = 0;
+	char* pEnd = ptIn;
 	std::vector<std::string> vtokens;
 
-	for (char *ptr = pBegin, *pToken = ptr + 1; ptr < pEnd; ++ptr)
-	{
-		bracketCounter += *ptr == '(';
-		bracketCounter -= *ptr == ')';
-		if ( (bracketCounter == 1 && *ptr == ',') || (!bracketCounter && *ptr == ')') )
-		{
-			vtokens.emplace_back(pToken, ptr - pToken);
-			pToken = ptr + 1;
-		}
-	}
-	if (bracketCounter) return;
+	if (!Tokenize(pEnd, vtokens)) return;
 	if (vtokens.size() != 2 && vtokens.size() != 3) return;
 
 	std::ostringstream oss;
@@ -431,6 +450,9 @@ void SupportFunctions::substringTranslator(char*& ptIn, char*& ptOut)
 	if (vtokens.size() == 3) oss << " FOR " << vtokens.at(2);
 	oss << ")";
 
+	const size_t offset = ptIn - ptOut;
+
+	lenSqlFn = offset + pEnd - ptIn + 1;
 	lenFbFn = oss.str().size();
 	lenOut = (int)strlen(ptOut);
 

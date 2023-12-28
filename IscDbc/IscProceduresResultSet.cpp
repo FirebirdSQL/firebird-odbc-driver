@@ -51,8 +51,8 @@ void IscProceduresResultSet::getProcedures(const char * catalog, const char * sc
 	if (catalog && *catalog)
 		addString(pt, catalog);
 	addString(pt, "' as varchar(255)) as procedure_cat,\n"									// 1
-				"\tcast (proc.rdb$owner_name as varchar(31)) as procedure_schem,\n"		// 2
-				"\tcast (proc.rdb$procedure_name as varchar(31)) as procedure_name,\n"	// 3
+				"\tcast (proc.rdb$owner_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as procedure_schem,\n"		// 2
+				"\tcast (proc.rdb$procedure_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as procedure_name,\n"	// 3
 				"\tproc.rdb$procedure_inputs as num_input_params,\n"		// 4
 				"\tproc.rdb$procedure_outputs as num_output_params,\n"		// 5
 				"\t1 as num_result_sets,\n"									// 6

@@ -166,6 +166,10 @@ typedef unsigned __int64			UQUAD;
 #define MAX_TIMESTAMP_LENGTH		24
 #define MAX_QUAD_LENGTH				18
 
+#define MAX_META_IDENT_LEN			63
+#define MACRO_TO_STR_(s)			#s
+#define MACRO_TO_STR(s)				MACRO_TO_STR_(s)
+
 namespace IscDbcLibrary 
 {
 int getTypeStatement(IscConnection *connection, Firebird::IStatement* Stmt,const void * buffer, int bufferLength, int *lengthPtr);

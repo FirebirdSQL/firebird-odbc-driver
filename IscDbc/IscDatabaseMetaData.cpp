@@ -826,7 +826,7 @@ int IscDatabaseMetaData::getMaxCharLiteralLength()
 
 int IscDatabaseMetaData::getMaxColumnNameLength()
 	{
-	return 31;
+	return MAX_META_IDENT_LEN;
 	}
 
 int IscDatabaseMetaData::getMaxColumnsInGroupBy()
@@ -864,7 +864,7 @@ int IscDatabaseMetaData::getMaxConnections()
 
 int IscDatabaseMetaData::getMaxCursorNameLength()
 	{
-	return 31;
+	return MAX_META_IDENT_LEN;
 	}
 
 int IscDatabaseMetaData::getMaxIndexLength()
@@ -879,7 +879,7 @@ int IscDatabaseMetaData::getMaxSchemaNameLength()
 
 int IscDatabaseMetaData::getMaxProcedureNameLength()
 	{
-	return 31;
+	return MAX_META_IDENT_LEN;
 	}
 
 int IscDatabaseMetaData::getMaxCatalogNameLength()
@@ -910,7 +910,7 @@ int IscDatabaseMetaData::getMaxStatements()
 
 int IscDatabaseMetaData::getMaxTableNameLength()
 	{
-	return 31;
+	return MAX_META_IDENT_LEN;
 	}
 
 int IscDatabaseMetaData::getMaxTablesInSelect()
@@ -920,7 +920,7 @@ int IscDatabaseMetaData::getMaxTablesInSelect()
 
 int IscDatabaseMetaData::getMaxUserNameLength()
 	{
-	return 31;
+	return MAX_META_IDENT_LEN;
 	}
 
 int IscDatabaseMetaData::getDefaultTransactionIsolation()
