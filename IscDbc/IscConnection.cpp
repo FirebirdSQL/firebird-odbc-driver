@@ -1713,6 +1713,10 @@ int IscConnection::getNativeSql (const char * inStatementText, int textLength1,
 					ptIn += 2; // 'ts'
 				else if ( !strncasecmp ( ptOut, "{D", 2 ) || !strncasecmp ( ptOut, "{T", 2 ) )
 					ptIn += 1; // 'd', 't'
+				else if (!strncasecmp(ptIn, "ESCAPE", 6))
+				{
+					//nothing to do
+				}
 				else
 				{
 					ptIn += 2; // 'fn'
