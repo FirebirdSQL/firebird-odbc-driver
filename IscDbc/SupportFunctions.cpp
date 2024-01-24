@@ -32,6 +32,9 @@
 #include "Mlist.h"
 #include "SupportFunctions.h"
 
+#include <cstring>
+#include <sstream>
+
 namespace IscDbcLibrary {
 
 #define ADD_SUPPORT_FN( typeFn, key, nameSql, nameFb, translateFn )																	\
@@ -58,24 +61,24 @@ SupportFunctions::SupportFunctions()
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_CHARACTER_LENGTH,"CHARACTER_LENGTH", "CHARACTER_LENGTH",	defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_OCTET_LENGTH, 	"OCTET_LENGTH", 	"OCTET_LENGTH",		defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_POSITION, 		"POSITION", 		"POSITION",			defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_ASCII, 			"ASCII", 			"ASCII",			defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_CHAR, 			"CHAR", 			"CHAR",				defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_CONCAT, 			"CONCAT", 			"CONCAT",			defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_DIFFERENCE, 		"DIFFERENCE", 		"DIFFERENCE",		defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_INSERT, 			"INSERT", 			"INSERT",			defaultTranslator);
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_ASCII, 			"ASCII", 			"ASCII_VAL",		defaultTranslator);
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_CHAR, 			"CHAR", 			"ASCII_CHAR",		defaultTranslator);
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_CONCAT, 			"CONCAT", 			"||",				concatTranslator );
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_DIFFERENCE, 		"DIFFERENCE", 		"NOT_IMPLEMENTED",	defaultTranslator);
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_INSERT, 			"INSERT", 			"OVERLAY",			insertTranslator );
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LCASE, 			"LCASE", 			"LOWER",			defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LEFT, 			"LEFT", 			"LEFT",				defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LENGTH, 			"LENGTH", 			"LENGTH",			defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LOCATE, 			"LOCATE", 			"LOCATE",			defaultTranslator);
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LOCATE, 			"LOCATE", 			"POSITION",			defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LOCATE_2, 		"LOCATE_2", 		"LOCATE_2",			defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LTRIM, 			"LTRIM", 			"LTRIM",			defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_REPEAT, 			"REPEAT", 			"REPEAT",			defaultTranslator);
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_LTRIM, 			"LTRIM", 			"TRIM",				trimTranslator   );
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_REPEAT, 			"REPEAT", 			"NOT_IMPLEMENTED",	defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_REPLACE, 		"REPLACE", 			"REPLACE",			defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_RIGHT, 			"RIGHT", 			"RIGHT",			defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_RTRIM, 			"RTRIM", 			"RTRIM",			defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SOUNDEX, 		"SOUNDEX", 			"SOUNDEX",			defaultTranslator);
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_RTRIM, 			"RTRIM", 			"TRIM",				trimTranslator   );
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SOUNDEX, 		"SOUNDEX", 			"NOT_IMPLEMENTED",	defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SPACE, 			"SPACE", 			"SPACE",			defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SUBSTRING, 		"SUBSTRING", 		"SUBSTRING",		defaultTranslator);
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SUBSTRING, 		"SUBSTRING", 		"SUBSTRING",		substringTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_UCASE, 			"UCASE", 			"UPPER",			defaultTranslator);
 
 //  Numeric functions
@@ -388,6 +391,146 @@ void SupportFunctions::bracketfromTranslator ( char *&ptIn, char *&ptOut )
 	lenSqlFn = (int)( ptIn - ptOut );
 
 	writeResult ( supportFn->nameFbFn, ptOut );
+	ptIn = ptOut;
+}
+/*
+* Tokenize string (param1, param2,...,paramN) to a vector of tokens [param1,...,paramN]
+* ptIn finally points to the trailing ')' of our expression - or to 0-char, if the bracket is not found
+* 
+* Returns true on success & false on error
+*/
+bool SupportFunctions::Tokenize(char*& ptIn, std::vector<std::string>& vtokens)
+{
+	char* pBegin = std::strchr(ptIn, '(');
+	if (!pBegin) return false;
+
+	auto bracketCounter = 0;
+	bool inQuotes = false;
+	char* ptr = pBegin;
+
+	for (char* pToken = ptr + 1; *ptr; ++ptr)
+	{
+		if (*ptr == '\'') inQuotes = !inQuotes;
+
+		if (!inQuotes)
+		{
+			bracketCounter += *ptr == '(';
+			bracketCounter -= *ptr == ')';
+
+			if ((bracketCounter == 1 && *ptr == ',') || !bracketCounter)
+			{
+				vtokens.emplace_back(pToken, ptr - pToken);
+				pToken = ptr + 1;
+				if (!bracketCounter) break;
+			}
+		}
+	}
+	if (!*ptr) return false;
+	if (bracketCounter || inQuotes) return false;
+
+	ptIn = ptr;
+	return true;
+}
+
+// translate {fn SUBSTRING(value,from,for) }
+// to SUBSTRING(value FROM from FOR for)
+void SupportFunctions::substringTranslator(char*& ptIn, char*& ptOut)
+{
+	char* pEnd = ptIn;
+	std::vector<std::string> vtokens;
+
+	if (!Tokenize(pEnd, vtokens)) return;
+	if (vtokens.size() != 2 && vtokens.size() != 3) return;
+
+	std::ostringstream oss;
+	oss << std::string(supportFn->nameFbFn, supportFn->lenFbFn);
+	oss << "(";
+	oss << vtokens.at(0);
+	oss << " FROM " << vtokens.at(1);
+	if (vtokens.size() == 3) oss << " FOR " << vtokens.at(2);
+	oss << ")";
+
+	const size_t offset = ptIn - ptOut;
+
+	lenSqlFn = offset + pEnd - ptIn + 1;
+	lenFbFn = oss.str().size();
+	lenOut = (int)strlen(ptOut);
+
+	writeResult(oss.str().c_str(), ptOut);
+	ptIn = ptOut;
+}
+
+void SupportFunctions::concatTranslator(char*& ptIn, char*& ptOut)
+{
+	char* pEnd = ptIn;
+	std::vector<std::string> vtokens;
+
+	if (!Tokenize(pEnd, vtokens)) return;
+	if (vtokens.size() != 2) return;
+
+	std::ostringstream oss;
+	oss << vtokens.at(0) << std::string(supportFn->nameFbFn, supportFn->lenFbFn) << vtokens.at(1);
+
+	const size_t offset = ptIn - ptOut;
+
+	lenSqlFn = offset + pEnd - ptIn + 1;
+	lenFbFn = oss.str().size();
+	lenOut = (int)strlen(ptOut);
+
+	writeResult(oss.str().c_str(), ptOut);
+	ptIn = ptOut;
+}
+
+void SupportFunctions::insertTranslator(char*& ptIn, char*& ptOut)
+{
+	char* pEnd = ptIn;
+	std::vector<std::string> vtokens;
+
+	if (!Tokenize(pEnd, vtokens)) return;
+	if (vtokens.size() != 4) return;
+
+	std::ostringstream oss;
+	oss << std::string(supportFn->nameFbFn, supportFn->lenFbFn);
+	oss << "(";
+	oss << vtokens.at(0);
+	oss << " PLACING " << vtokens.at(3);
+	oss << " FROM " << vtokens.at(1);
+	oss << " FOR " << vtokens.at(2);
+	oss << ")";
+
+	const size_t offset = ptIn - ptOut;
+
+	lenSqlFn = offset + pEnd - ptIn + 1;
+	lenFbFn = oss.str().size();
+	lenOut = (int)strlen(ptOut);
+
+	writeResult(oss.str().c_str(), ptOut);
+	ptIn = ptOut;
+}
+
+void SupportFunctions::trimTranslator(char*& ptIn, char*& ptOut)
+{
+	char* pEnd = ptIn;
+	std::vector<std::string> vtokens;
+
+	if (!Tokenize(pEnd, vtokens)) return;
+	if (vtokens.size() != 1) return;
+
+	std::ostringstream oss;
+	oss << std::string(supportFn->nameFbFn, supportFn->lenFbFn);
+	oss << "(";
+	oss << ( *supportFn->nameSqlFn == 'L' ? "LEADING" : "TRAILING");
+	oss << " FROM ";
+	oss << vtokens.at(0);
+	oss << ")";
+
+	const size_t offset = ptIn - ptOut;
+
+	lenSqlFn = offset + pEnd - ptIn + 1;
+	lenFbFn = oss.str().size();
+	lenOut = (int)strlen(ptOut);
+
+	writeResult(oss.str().c_str(), ptOut);
 	ptIn = ptOut;
 }
 

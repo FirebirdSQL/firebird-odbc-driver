@@ -27,6 +27,9 @@
 
 #include <stdlib.h>
 
+#include <string>
+#include <vector>
+
 namespace IscDbcLibrary {
 
 #ifdef _WINDOWS
@@ -137,6 +140,12 @@ public:
 	void fullreplaceTranslator ( char *&ptIn, char *&ptOut );
 	void convertTranslator ( char *&ptIn, char *&ptOut );
 	void bracketfromTranslator ( char *&ptIn, char *&ptOut );
+	void substringTranslator(char*& ptIn, char*& ptOut);
+	void concatTranslator(char*& ptIn, char*& ptOut);
+	void insertTranslator(char*& ptIn, char*& ptOut);
+	void trimTranslator(char*& ptIn, char*& ptOut);
+
+	bool Tokenize(char*& ptIn, std::vector<std::string>& vtokens);
 };
 
 }; // end namespace IscDbcLibrary

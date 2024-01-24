@@ -60,9 +60,9 @@ void IscSpecialColumnsResultSet::specialColumns (const char * catalog, const cha
 {
 	char sql[2048] =
 		"select distinct f.rdb$field_type as scope,\n"				// 1 
-				"\tcast (rfr.rdb$field_name as varchar(31)) as column_name, \n"	// 2
+				"\tcast (rfr.rdb$field_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as column_name, \n"	// 2
 				"\tf.rdb$field_type as data_type,\n"				// 3
-				"\tcast (rfr.rdb$field_name as varchar(31)) as type_name,\n"	// 4
+				"\tcast (rfr.rdb$field_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as type_name,\n"		// 4
 				"\t0 as column_size,\n"								// 5
 				"\t0 as buffer_length,\n"							// 6
 				"\t0 as decimal_digits,\n"							// 7

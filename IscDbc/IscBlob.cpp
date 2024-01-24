@@ -37,6 +37,8 @@
 
 extern short conwBinToHexStr[];
 
+using namespace Firebird;
+
 namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
@@ -55,11 +57,11 @@ IscBlob::IscBlob()
 	enType = enTypeBlob;
 }
 
-IscBlob::IscBlob(IscStatement *stmt, XSQLVAR *var)
+IscBlob::IscBlob(IscStatement *stmt, char* buf, short sqlsubtype)
 {
 	directBlob = false;
-	bind (stmt, (char*)var->sqldata);
-	setType(var->sqlsubtype);
+	bind (stmt, buf);
+	setType(sqlsubtype);
 }
 
 IscBlob::~IscBlob()
@@ -116,34 +118,37 @@ int IscBlob::getSegment(int offset, int length, void * address)
 
 void IscBlob::fetchBlob()
 {
-	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
-	isc_tr_handle transactionHandle = statement->startTransaction();
-	isc_blob_handle blobHandle = NULL;
+	ITransaction* transactionHandle = statement->startTransaction();
+	IBlob* blobHandle = nullptr;
 
-	ISC_STATUS ret = connection->GDS->_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
-							  &blobHandle, &blobId, 0, NULL);
+	ThrowStatusWrapper status( connection->GDS->_status );
+	try
+	{
+		blobHandle = connection->databaseHandle->openBlob( &status, transactionHandle, &blobId, 0, NULL );
 
-	if (ret)
-		THROW_ISC_EXCEPTION (connection, statusVector);
+		char buffer [DEFAULT_BLOB_BUFFER_LENGTH];
+		unsigned int length;
 
-	char buffer [DEFAULT_BLOB_BUFFER_LENGTH];
-	unsigned short length;
-
-	for (;;)
+		for (;;)
 		{
-		ISC_STATUS ret = connection->GDS->_get_segment (statusVector, &blobHandle, &length, sizeof (buffer), buffer);
-		if (ret)
-			if (ret == isc_segstr_eof)
-				break;
-			else if (ret != isc_segment)
-				THROW_ISC_EXCEPTION (connection, statusVector);
-		putSegment (length, buffer, true);
+			auto res = blobHandle->getSegment( &status, sizeof (buffer), buffer, &length );
+
+			const bool keep_reading = ( res == IStatus::RESULT_OK || res == IStatus::RESULT_SEGMENT );
+			if( !keep_reading ) break;
+
+			putSegment (length, buffer, true);
 		}
 
-	connection->GDS->_close_blob (statusVector, &blobHandle);
-	blobHandle = NULL;
-	fetched = true;
+		blobHandle->close( &status );
+		blobHandle = nullptr;
+		fetched = true;
+	}
+	catch( const FbException& error )
+	{
+		if( blobHandle ) blobHandle->release();
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
 }
 
 char* IscBlob::getString()
@@ -172,103 +177,99 @@ void* IscBlob::getSegment(int pos)
 
 void IscBlob::writeBlob(char * sqldata)
 {
-	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
-	isc_blob_handle blobHandle = NULL;
-	isc_tr_handle transactionHandle = statement->startTransaction();
-	GDS->_create_blob2 ( statusVector, 
-					  &connection->databaseHandle,
-					  &transactionHandle,
-					  &blobHandle,
-					  (ISC_QUAD*) sqldata,
-					  0, NULL);
+	IBlob* blobHandle = nullptr;
+	ITransaction* transactionHandle = statement->startTransaction();
 
-	if ( statusVector [1] )
-		THROW_ISC_EXCEPTION (connection, statusVector);
-
-	for ( int len, offset = 0; len = getSegmentLength (offset); offset += len )
+	ThrowStatusWrapper status( GDS->_status );
+	try
 	{
-		GDS->_put_segment ( statusVector, &blobHandle, len, (char*) getSegment (offset));
-		if ( statusVector [1] )
-			THROW_ISC_EXCEPTION (connection, statusVector);
-	}
+		blobHandle = connection->databaseHandle->createBlob( &status, transactionHandle, (ISC_QUAD*)sqldata, 0, NULL );
 
-	GDS->_close_blob ( statusVector, &blobHandle);
-	if ( statusVector [1] )
-		THROW_ISC_EXCEPTION (connection, statusVector);
+		for ( int len, offset = 0; len = getSegmentLength (offset); offset += len )
+		{
+			blobHandle->putSegment( &status, len, (char*) getSegment (offset) );
+		}
+
+		blobHandle->close( &status );
+		blobHandle = nullptr;
+	}
+	catch( const FbException& error )
+	{
+		if( blobHandle ) blobHandle->release();
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
 }
 
 void IscBlob::writeStreamHexToBlob(char * sqldata)
 {
-	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
-	isc_blob_handle blobHandle = NULL;
-	isc_tr_handle transactionHandle = statement->startTransaction();
-	GDS->_create_blob2 ( statusVector, 
-					  &connection->databaseHandle,
-					  &transactionHandle,
-					  &blobHandle,
-					  (ISC_QUAD*) sqldata,
-					  0, NULL);
+	IBlob* blobHandle = NULL;
+	ITransaction* transactionHandle = statement->startTransaction();
 
-	if ( statusVector [1] )
-		THROW_ISC_EXCEPTION (connection, statusVector);
-
-	for ( int len, offset = 0; len = getSegmentLength (offset); offset += len )
+	ThrowStatusWrapper status( GDS->_status );
+	try
 	{
-		GDS->_put_segment ( statusVector, &blobHandle, len/2, convStrHexToBinary ( (char*)getSegment (offset), len ) );
-		if ( statusVector [1] )
-			THROW_ISC_EXCEPTION (connection, statusVector);
-	}
+		blobHandle = connection->databaseHandle->createBlob( &status, transactionHandle, (ISC_QUAD*)sqldata, 0, NULL );
 
-	GDS->_close_blob ( statusVector, &blobHandle);
-	if ( statusVector [1] )
-		THROW_ISC_EXCEPTION (connection, statusVector);
+		for ( int len, offset = 0; len = getSegmentLength (offset); offset += len )
+		{
+			blobHandle->putSegment( &status, len/2, convStrHexToBinary ( (char*)getSegment (offset), len ) );
+		}
+
+		blobHandle->close( &status );
+		blobHandle = nullptr;
+	}
+	catch( const FbException& error )
+	{
+		if( blobHandle ) blobHandle->release();
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
 }
 
 void IscBlob::writeBlob(char * sqldata, char *data, int length)
 {
-	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
-	isc_blob_handle blobHandle = NULL;
-	isc_tr_handle transactionHandle = statement->startTransaction();
-	GDS->_create_blob2 ( statusVector, 
-					  &connection->databaseHandle,
-					  &transactionHandle,
-					  &blobHandle,
-					  (ISC_QUAD*) sqldata,
-					  0, NULL );
+	IBlob* blobHandle = nullptr;
+	ITransaction* transactionHandle = statement->startTransaction();
 
-	if ( statusVector [1] )
-		THROW_ISC_EXCEPTION (connection, statusVector);
-
-	if ( length )
+	ThrowStatusWrapper status( GDS->_status );
+	try
 	{
-		int post = DEFAULT_BLOB_BUFFER_LENGTH;
+		blobHandle = connection->databaseHandle->createBlob( &status, transactionHandle, (ISC_QUAD*)sqldata, 0, NULL );
 
-		while ( length > post )
+		for ( int len, offset = 0; len = getSegmentLength (offset); offset += len )
 		{
-			GDS->_put_segment ( statusVector, &blobHandle, post, data);
-			if ( statusVector [1] )
-				THROW_ISC_EXCEPTION ( connection, statusVector );
-			data += post;
-			length -= post;
+			blobHandle->putSegment( &status, len/2, convStrHexToBinary ( (char*)getSegment (offset), len ) );
 		}
 
-		if ( length > 0 )
+		if ( length )
 		{
-			GDS->_put_segment ( statusVector, &blobHandle, (unsigned short)length, data);
-			if ( statusVector [1] )
-				THROW_ISC_EXCEPTION (connection, statusVector);
+			int post = DEFAULT_BLOB_BUFFER_LENGTH;
+
+			while ( length > post )
+			{
+				blobHandle->putSegment( &status, post, data );
+				data += post;
+				length -= post;
+			}
+
+			if ( length > 0 )
+			{
+				blobHandle->putSegment( &status, (unsigned short)length, data );
+			}
 		}
+
+		blobHandle->close( &status );
+		blobHandle = nullptr;
 	}
-
-	GDS->_close_blob ( statusVector, &blobHandle);
-	if ( statusVector [1] )
-		THROW_ISC_EXCEPTION ( connection, statusVector);
+	catch( const FbException& error ) {
+		if( blobHandle ) blobHandle->release();
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
 }
 
 void  IscBlob::writeStringHexToBlob(char * sqldata, char *data, int length)
@@ -289,41 +290,51 @@ extern signed int getVaxInteger(const unsigned char * ptr, signed short length);
 
 void IscBlob::directOpenBlob( char * sqldata )
 {
-	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
 	fetched = false;
 
+	ThrowStatusWrapper status( GDS->_status );
+
 	if ( directBlobHandle )
-		GDS->_close_blob (statusVector, &directBlobHandle);
+		try
+		{
+			directBlobHandle->close( &status );
+			directBlobHandle = nullptr;
+		}
+		catch( ... ) {
+			if( directBlobHandle ) directBlobHandle->release();
+		}
 
-	isc_tr_handle transactionHandle = statement->startTransaction();
-	ISC_STATUS ret = GDS->_open_blob2 (statusVector, &connection->databaseHandle, &transactionHandle,
-							  &directBlobHandle, (ISC_QUAD*) sqldata, 0, NULL);
-	if (ret)
-		THROW_ISC_EXCEPTION (connection, statusVector);
-	
-	const char blob_info[] = { isc_info_blob_total_length };
-	unsigned char buffer[64];
+	ITransaction* transactionHandle = statement->startTransaction();
 
-	ret = GDS->_blob_info ( statusVector, &directBlobHandle, sizeof(blob_info), (char*)blob_info, sizeof(buffer), (char*)buffer);
-	if (ret)
-		THROW_ISC_EXCEPTION (connection, statusVector);
+	try
+	{
+		directBlobHandle = connection->databaseHandle->openBlob( &status, transactionHandle, (ISC_QUAD*) sqldata, 0, NULL );
 
-	unsigned char * p = buffer;
+		const char blob_info[] = { isc_info_blob_total_length };
+		unsigned char buffer[64];
 
-	if ( *p++ == isc_info_blob_total_length )
-		directLength = getVaxInteger(p+2, (short)getVaxInteger(p, 2));
-	else
-		directLength = 0;
-	directBlob = true;
-	offset = 0;
+		directBlobHandle->getInfo( &status, sizeof(blob_info), (const unsigned char*)blob_info, sizeof(buffer), (unsigned char*)buffer );
+
+		unsigned char * p = buffer;
+
+		if ( *p++ == isc_info_blob_total_length )
+			directLength = getVaxInteger(p+2, (short)getVaxInteger(p, 2));
+		else
+			directLength = 0;
+		directBlob = true;
+		offset = 0;
+	}
+	catch( const FbException& error )
+	{
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
 }
 
 bool IscBlob::directFetchBlob( char * bufData, int lenData, int &lenRead )
 {
-	ISC_STATUS statusVector [20];
-	unsigned short length;
+	unsigned length;
 	bool bEndData = false;
 
 	if ( lenData )
@@ -332,37 +343,36 @@ bool IscBlob::directFetchBlob( char * bufData, int lenData, int &lenRead )
 		CFbDll * GDS = connection->GDS;
 		int post = lenData > DEFAULT_BLOB_BUFFER_LENGTH ? DEFAULT_BLOB_BUFFER_LENGTH : lenData;
 		char *data = bufData;
-		ISC_STATUS ret;
+		ThrowStatusWrapper status( GDS->_status );
 
-		while ( lenData )
+		try
 		{
-			if ( (ret = GDS->_get_segment (statusVector, &directBlobHandle, &length, post, data)) )
+			while ( lenData )
 			{
-				if (ret == isc_segstr_eof)
-				{
-					directCloseBlob();
-					bEndData = true;
-					break;
-				}
-				else if (ret != isc_segment)
-					THROW_ISC_EXCEPTION (connection, statusVector);
-			}
-			data += length;
-			lenData -= length;
-			if ( lenData < post )
-				post = lenData;
-		}
+				auto res = directBlobHandle->getSegment( &status, post, data, &length );
+				const bool keep_reading = ( res == IStatus::RESULT_OK || res == IStatus::RESULT_SEGMENT );
+				if( !keep_reading ) break;
 
-		lenRead = data - bufData;
-		offset += lenRead;
+				data += length;
+				lenData -= length;
+				if ( lenData < post )
+					post = lenData;
+			}
+
+			lenRead = data - bufData;
+			offset += lenRead;
+		}
+		catch( const FbException& error )
+		{
+			THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+		}
 	}
 	return bEndData;
 }
 
 bool IscBlob::directGetSegmentToHexStr( char * bufData, int lenData, int &lenRead )
 {
-	ISC_STATUS statusVector [20];
-	unsigned short length;
+	unsigned length;
 	bool bEndData = false;
 
 	if ( lenData )
@@ -371,36 +381,35 @@ bool IscBlob::directGetSegmentToHexStr( char * bufData, int lenData, int &lenRea
 		CFbDll * GDS = connection->GDS;
 		int post = lenData > DEFAULT_BLOB_BUFFER_LENGTH ? DEFAULT_BLOB_BUFFER_LENGTH : lenData;
 		char *data = bufData;
-		ISC_STATUS ret;
+		ThrowStatusWrapper status( GDS->_status );
 
-		while ( lenData )
+		try
 		{
-			if ( (ret = GDS->_get_segment (statusVector, &directBlobHandle, &length, post, data)) )
+			while ( lenData )
 			{
-				if (ret == isc_segstr_eof)
-				{
-					directCloseBlob();
-					bEndData = true;
-					break;
-				}
-				else if (ret != isc_segment)
-					THROW_ISC_EXCEPTION (connection, statusVector);
+				auto res = directBlobHandle->getSegment( &status, post, data, &length );
+				const bool keep_reading = ( res == IStatus::RESULT_OK || res == IStatus::RESULT_SEGMENT );
+				if( !keep_reading ) break;
+
+				short *address = (short*)data + length - 1;
+				unsigned char *end = (unsigned char *)data + length - 1;
+
+				data += length*2;
+				lenData -= length;
+				if ( lenData < post )
+					post = lenData;
+
+				while( length-- )
+					*address-- = conwBinToHexStr[*end--];
 			}
-			
-			short *address = (short*)data + length - 1;
-			unsigned char *end = (unsigned char *)data + length - 1;
 
-			data += length*2;
-			lenData -= length;
-			if ( lenData < post )
-				post = lenData;
-
-			while( length-- )
-				*address-- = conwBinToHexStr[*end--];
+			lenRead = data - bufData;
+			offset += lenRead;
 		}
-
-		lenRead = data - bufData;
-		offset += lenRead;
+		catch( const FbException& error )
+		{
+			THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+		}
 	}
 	return bEndData;
 }
@@ -409,9 +418,19 @@ void IscBlob::directCloseBlob()
 {
 	if ( directBlobHandle )
 	{
-		ISC_STATUS statusVector [20];
-		statement->connection->GDS->_close_blob (statusVector, &directBlobHandle);
-		directBlobHandle = NULL;
+		ThrowStatusWrapper status( statement->connection->GDS->_status );
+		try
+		{
+			directBlobHandle->close( &status );
+			directBlobHandle = nullptr;
+		}
+		catch( ... )
+		{
+			if( directBlobHandle ) {
+				directBlobHandle->release();
+				directBlobHandle = nullptr;
+			}
+		}
 	}
 	fetched = true;
 	directBlob = false;
@@ -422,47 +441,61 @@ void IscBlob::directCloseBlob()
 //
 void IscBlob::directCreateBlob( char * sqldata )
 {
-	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
+	ThrowStatusWrapper status( GDS->_status );
 
 	if ( directBlobHandle )
-		GDS->_close_blob (statusVector, &directBlobHandle);
+		try
+		{
+			directBlobHandle->close( &status );
+			directBlobHandle = nullptr;
+		}
+		catch( ... )
+		{
+			if( directBlobHandle ) {
+				directBlobHandle->release();
+				directBlobHandle = nullptr;
+			}
+		}
 
-	isc_tr_handle transactionHandle = statement->startTransaction();
-	GDS->_create_blob2 ( statusVector, 
-					  &connection->databaseHandle,
-					  &transactionHandle,
-					  &directBlobHandle,
-					  (ISC_QUAD*) sqldata,
-					  0, NULL );
+	ITransaction* transactionHandle = statement->startTransaction();
 
-	if ( statusVector [1] )
-		THROW_ISC_EXCEPTION (connection, statusVector);
+	try
+	{
+		directBlobHandle = connection->databaseHandle->createBlob( &status, transactionHandle, (ISC_QUAD*) sqldata, 0, NULL);
+	}
+	catch( const FbException& error )
+	{
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
 }
 
 void IscBlob::directWriteBlob( char *data, int length )
 {
-	ISC_STATUS statusVector [20];
 	IscConnection * connection = statement->connection;
 	CFbDll * GDS = connection->GDS;
+	ThrowStatusWrapper status( GDS->_status );
 
 	int post = DEFAULT_BLOB_BUFFER_LENGTH;
 
-	while ( length > post )
+	try
 	{
-		GDS->_put_segment ( statusVector, &directBlobHandle, post, data);
-		if ( statusVector [1] )
-			THROW_ISC_EXCEPTION ( connection, statusVector );
-		data += post;
-		length -= post;
-	}
+		while ( length > post )
+		{
+			directBlobHandle->putSegment( &status, post, data );
+			data += post;
+			length -= post;
+		}
 
-	if ( length > 0 )
+		if ( length > 0 )
+		{
+			directBlobHandle->putSegment( &status, (unsigned short)length, data );
+		}
+	}
+	catch( const FbException& error )
 	{
-		GDS->_put_segment ( statusVector, &directBlobHandle, (unsigned short)length, data);
-		if ( statusVector [1] )
-			THROW_ISC_EXCEPTION (connection, statusVector);
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
 	}
 }
 

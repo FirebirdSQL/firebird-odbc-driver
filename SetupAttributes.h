@@ -26,8 +26,8 @@
 
 
 #define BUILDTYPE_VERSION 	"WI_T"
-#define MAJOR_VERSION 		2
-#define MINOR_VERSION 		1
+#define MAJOR_VERSION 		3
+#define MINOR_VERSION 		0
 #define REVNO_VERSION 		0
 
 #ifdef _WIN64
@@ -36,8 +36,14 @@
 #define SUFFIX_BUILD		"32"
 #endif
 
-#define DRIVER_FULL_NAME	"Firebird ODBC driver"
+#define DRIVER_FULL_NAME	"Firebird ODBC Driver"
+
+#ifdef _WINDOWS
+#define DRIVER_NAME			"FirebirdODBC"
+#else
 #define DRIVER_NAME			"OdbcFb"
+#endif
+
 #define DEFAULT_DRIVER		"IscDbc"
 
 #ifdef _WINDOWS

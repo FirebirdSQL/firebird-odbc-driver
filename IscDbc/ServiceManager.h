@@ -71,7 +71,7 @@ public:
 
 	void loadShareLibrary();
 	void unloadShareLibrary();
-	JString getIscStatusText( ISC_STATUS *statusVector );
+	inline JString getIscStatusText( Firebird::IStatus* status ) { return GDS->getIscStatusText( status ); }
 	virtual void addRef();
 	virtual int release();
 
@@ -80,8 +80,11 @@ public:
 
 	CFbDll		*GDS;
 	Properties	*properties;
-	isc_svc_handle	svcHandle;
+    Firebird::IService* svcHandle;
 	int			useCount;
+
+private:
+	bool attachServiceManager();
 };
 
 }; // end namespace IscDbcLibrary

@@ -93,6 +93,24 @@ int init()
 	return 0;
 }
 
+inline void setIndicatorPtr(SQLLEN* ptr, SQLLEN value, DescRecord* rec)
+{
+	if (rec->isIndicatorSqlDa)
+	{
+		*(short*)ptr = (short)value;
+	}
+	else
+	{
+		*ptr = value;
+	}
+}
+
+inline bool checkIndicatorPtr(SQLLEN* ptr, SQLLEN value, DescRecord* rec)
+{
+	if (!ptr) return false;
+	return rec->isIndicatorSqlDa ? *(short*)ptr == (short)value : *ptr == value;
+}
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -115,8 +133,8 @@ void OdbcConvert::setZeroColumn(DescRecord * to, int rowNumber)
 	SQLLEN *indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 
 	*(int*)pointer = rowNumber + 1;
-	if ( indicatorTo )
-		*indicatorTo = sizeof(int);
+	if (indicatorTo)
+		setIndicatorPtr(indicatorTo, sizeof(int), to);
 }
 
 void OdbcConvert::setBindOffsetPtrTo(SQLLEN	*bindOffsetPtr, SQLLEN *bindOffsetPtrInd)
@@ -1022,10 +1040,10 @@ SQLLEN * OdbcConvert::getAdressBindIndTo(char * pointer)
 }
 
 #define ODBCCONVERT_CHECKNULL(pointerTo)					\
-	if( indicatorFrom && *(short*)indicatorFrom == SQL_NULL_DATA )			\
+	if( checkIndicatorPtr( indicatorFrom, SQL_NULL_DATA, from ) ) \
 	{														\
 		if ( indicatorTo )									\
-			*indicatorTo = SQL_NULL_DATA;					\
+			setIndicatorPtr( indicatorTo, SQL_NULL_DATA, to ); \
 		if ( pointerTo )									\
 			*(char*)pointerTo = 0;                          \
 		return SQL_SUCCESS;									\
@@ -1034,10 +1052,10 @@ SQLLEN * OdbcConvert::getAdressBindIndTo(char * pointer)
 		return SQL_SUCCESS;
 
 #define ODBCCONVERT_CHECKNULLW(pointerTo)					\
-	if( indicatorFrom && *(short*)indicatorFrom == SQL_NULL_DATA )			\
+	if( checkIndicatorPtr( indicatorFrom, SQL_NULL_DATA, from ) ) \
 	{														\
 		if ( indicatorTo )									\
-			*indicatorTo = SQL_NULL_DATA;					\
+			setIndicatorPtr( indicatorTo, SQL_NULL_DATA, to ); \
 		if ( pointerTo )									\
 			*(wchar_t*)pointerTo = 0;                          \
 		return SQL_SUCCESS;									\
@@ -1048,38 +1066,38 @@ SQLLEN * OdbcConvert::getAdressBindIndTo(char * pointer)
 #define ODBCCONVERT_CHECKNULL_COMMON(C_TYPE_TO)				\
 	if ( from->isIndicatorSqlDa )							\
 	{														\
-		if( *(short*)indicatorFrom == SQL_NULL_DATA )		\
+		if( checkIndicatorPtr( indicatorFrom, SQL_NULL_DATA, from ) ) \
 		{													\
 			if ( indicatorTo )								\
-				*indicatorTo = SQL_NULL_DATA;				\
+				setIndicatorPtr( indicatorTo, SQL_NULL_DATA, to ); \
 			if ( pointer )									\
 				*(C_TYPE_TO*)pointer = 0;                   \
 			return SQL_SUCCESS;								\
 		}													\
 		else if ( indicatorTo )								\
-			*indicatorTo = sizeof(C_TYPE_TO);				\
+			setIndicatorPtr( indicatorTo, sizeof(C_TYPE_TO), to ); \
 	}														\
 	else /* if ( to->isIndicatorSqlDa ) */					\
 	{														\
-		if(indicatorFrom && *indicatorFrom==SQL_NULL_DATA)	\
+		if( checkIndicatorPtr( indicatorFrom, SQL_NULL_DATA, from ) ) \
 		{													\
-			*(short*)indicatorTo = SQL_NULL_DATA;			\
+			setIndicatorPtr( indicatorTo, SQL_NULL_DATA, to ); \
 			return SQL_SUCCESS;								\
 		}													\
 		else												\
-			*indicatorTo = 0;								\
+			setIndicatorPtr( indicatorTo, 0, to );			\
 	}														\
 	if ( !pointer )											\
 		return SQL_SUCCESS;
 
 #define ODBCCONVERT_CHECKNULL_SQLDA							\
-	if( indicatorFrom && *indicatorFrom == SQL_NULL_DATA )	\
+	if( checkIndicatorPtr( indicatorFrom, SQL_NULL_DATA, from ) ) \
 	{														\
-		*(short*)indicatorTo = SQL_NULL_DATA;				\
+		setIndicatorPtr( indicatorTo, SQL_NULL_DATA, to );	\
 		return SQL_SUCCESS;									\
 	}														\
 	else													\
-		*indicatorTo = 0;									\
+		setIndicatorPtr( indicatorTo, 0, to );				\
 
 #define GET_LEN_FROM_OCTETLENGTHPTR			\
 	if ( octetLengthPtr )					\
@@ -1246,7 +1264,7 @@ int OdbcConvert::conv##TYPE_FROM##ToTagNumeric(DescRecord * from, DescRecord * t
 	*++number = 0;																				\
 																								\
 	if ( indicatorTo )																			\
-		*indicatorTo = sizeof ( tagSQL_NUMERIC_STRUCT );										\
+		setIndicatorPtr( indicatorTo,  sizeof ( tagSQL_NUMERIC_STRUCT ), to );					\
 																								\
 	return SQL_SUCCESS;																			\
 }																								\
@@ -1347,7 +1365,7 @@ int OdbcConvert::conv##TYPE_FROM##ToString(DescRecord * from, DescRecord * to)		
 		to->headSqlVarPtr->setSqlLen(len);														\
 	} else																						\
 	if ( indicatorTo )																			\
-		*indicatorTo = len;																		\
+		setIndicatorPtr( indicatorTo, len, to );												\
 																								\
 	return SQL_SUCCESS;																			\
 }																								\
@@ -1435,7 +1453,7 @@ int OdbcConvert::conv##TYPE_FROM##ToStringW(DescRecord * from, DescRecord * to)	
 		to->headSqlVarPtr->setSqlLen(len);														\
 	} else																						\
 	if ( indicatorTo )																			\
-		*indicatorTo = len;																		\
+		setIndicatorPtr( indicatorTo, len, to );												\
 																								\
 	return SQL_SUCCESS;																			\
 }																								\
@@ -1517,7 +1535,7 @@ int OdbcConvert::conv##TYPE_FROM##ToBinary(DescRecord * from, DescRecord * to)		
 		to->headSqlVarPtr->setSqlLen(len << 1);													\
 	} else																						\
 	if ( indicatorTo )																			\
-		*indicatorTo = len << 1;																\
+		setIndicatorPtr( indicatorTo, len << 1, to );											\
 																								\
 	return SQL_SUCCESS;																			\
 }																								\
@@ -1600,7 +1618,7 @@ int OdbcConvert::convBlob##To##TYPE_TO(DescRecord * from, DescRecord * to)						
 	}																							\
 																								\
 	if ( indicatorTo && !to->isIndicatorSqlDa )													\
-		*indicatorTo = sizeof(C_TYPE_TO);														\
+		setIndicatorPtr( indicatorTo, sizeof(C_TYPE_TO), to );									\
 																								\
 	return ret;																					\
 }																								\
@@ -1635,7 +1653,7 @@ int OdbcConvert::convGuidToString(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
 
 	return SQL_SUCCESS;
 }
@@ -1660,7 +1678,7 @@ int OdbcConvert::convGuidToStringW(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
 
 	return SQL_SUCCESS;
 }
@@ -1752,7 +1770,7 @@ int OdbcConvert::convFloatToString(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
 
 	return SQL_SUCCESS;
 }
@@ -1777,7 +1795,7 @@ int OdbcConvert::convFloatToStringW(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
 
 	return SQL_SUCCESS;
 }
@@ -1836,7 +1854,8 @@ int OdbcConvert::convDoubleToTagNumeric(DescRecord * from, DescRecord * to)
 	*++number = 0;
 
 	if ( indicatorTo && !to->isIndicatorSqlDa )
-		*indicatorTo = sizeof ( tagSQL_NUMERIC_STRUCT );
+		setIndicatorPtr(indicatorTo, sizeof(tagSQL_NUMERIC_STRUCT), to);
+
 
 	return SQL_SUCCESS;
 }
@@ -1858,7 +1877,7 @@ int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
 
 	return SQL_SUCCESS;
 }
@@ -1883,7 +1902,7 @@ int OdbcConvert::convDoubleToStringW(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
 
 	return SQL_SUCCESS;
 }
@@ -1941,7 +1960,7 @@ int OdbcConvert::conv##TYPE_FROM##To##TYPE_TO(DescRecord * from, DescRecord * to
 	ODBCCONVERT_CHECKNULL( pointer );															\
 																								\
 	if ( indicatorTo )																			\
-		*indicatorTo = 0;																		\
+		setIndicatorPtr(indicatorTo, 0, to);													\
 																								\
 	return SQL_SUCCESS;																			\
 }																								\
@@ -1977,7 +1996,7 @@ int OdbcConvert::convDateToString(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
 
 	return SQL_SUCCESS;
 }
@@ -2003,7 +2022,7 @@ int OdbcConvert::convDateToStringW(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
 
 	return SQL_SUCCESS;
 }
@@ -2019,7 +2038,7 @@ int OdbcConvert::convDateToTagDate(DescRecord * from, DescRecord * to)
 	decode_sql_date(*(int*)getAdressBindDataFrom((char*)from->dataPtr), tagDt->day, tagDt->month, tagDt->year);
 
 	if ( indicatorTo && !to->isIndicatorSqlDa )
-		*indicatorTo = sizeof(tagDATE_STRUCT);
+		setIndicatorPtr(indicatorTo, sizeof(tagDATE_STRUCT), to);
 
 	return SQL_SUCCESS;
 }
@@ -2065,7 +2084,7 @@ int OdbcConvert::convDateToBinary(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(outlen);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = outlen;
+		setIndicatorPtr(indicatorTo, outlen, to);
 
 	return SQL_SUCCESS;
 }
@@ -2118,7 +2137,7 @@ int OdbcConvert::convDateToTagTimestamp(DescRecord * from, DescRecord * to)
 	tagTs->fraction = 0;
 
 	if ( indicatorTo && !to->isIndicatorSqlDa )
-		*indicatorTo = sizeof(tagTIMESTAMP_STRUCT);
+		setIndicatorPtr(indicatorTo, sizeof(tagTIMESTAMP_STRUCT), to);
 
 	return SQL_SUCCESS;
 }
@@ -2159,7 +2178,7 @@ int OdbcConvert::convTimeToString(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
 
 	return SQL_SUCCESS;
 }
@@ -2191,7 +2210,7 @@ int OdbcConvert::convTimeToStringW(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
 
 	return SQL_SUCCESS;
 }
@@ -2207,7 +2226,7 @@ int OdbcConvert::convTimeToTagTime(DescRecord * from, DescRecord * to)
 	decode_sql_time(*(int*)getAdressBindDataFrom((char*)from->dataPtr), tagTm->hour, tagTm->minute, tagTm->second);
 
 	if ( indicatorTo && !to->isIndicatorSqlDa )
-		*indicatorTo = sizeof(tagTIME_STRUCT);
+		setIndicatorPtr(indicatorTo, sizeof(tagTIME_STRUCT), to);
 
 	return SQL_SUCCESS;
 }
@@ -2257,7 +2276,7 @@ int OdbcConvert::convTimeToBinary(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(outlen);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = outlen;
+		setIndicatorPtr(indicatorTo, outlen, to);
 
 	return SQL_SUCCESS;
 }
@@ -2311,7 +2330,7 @@ int OdbcConvert::convTimeToTagTimestamp(DescRecord * from, DescRecord * to)
 	tagTs->fraction = (ntime % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
 
 	if ( indicatorTo && !to->isIndicatorSqlDa )
-		*indicatorTo = sizeof(tagTIMESTAMP_STRUCT);
+		setIndicatorPtr(indicatorTo, sizeof(tagTIMESTAMP_STRUCT), to);
 
 	return SQL_SUCCESS;
 }
@@ -2355,7 +2374,7 @@ int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
 
 	return SQL_SUCCESS;
 }
@@ -2391,7 +2410,7 @@ int OdbcConvert::convDateTimeToStringW(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo,len, to);
 
 	return SQL_SUCCESS;
 }
@@ -2409,7 +2428,7 @@ int OdbcConvert::convDateTimeToTagDate(DescRecord * from, DescRecord * to)
 	decode_sql_date(nday, tagDt->day, tagDt->month, tagDt->year);
 
 	if ( indicatorTo && !to->isIndicatorSqlDa )
-		*indicatorTo = sizeof(tagDATE_STRUCT);
+		setIndicatorPtr(indicatorTo, sizeof(tagDATE_STRUCT), to);
 
 	return SQL_SUCCESS;
 }
@@ -2427,7 +2446,7 @@ int OdbcConvert::convDateTimeToTagTime(DescRecord * from, DescRecord * to)
 	decode_sql_time(ntime, tagTm->hour, tagTm->minute, tagTm->second);
 
 	if ( indicatorTo && !to->isIndicatorSqlDa )
-		*indicatorTo = sizeof(tagTIME_STRUCT);
+		setIndicatorPtr(indicatorTo, sizeof(tagTIME_STRUCT), to);
 
 	return SQL_SUCCESS;
 }
@@ -2453,7 +2472,7 @@ int OdbcConvert::convDateTimeToTagDateTime(DescRecord * from, DescRecord * to)
 	tagTs->fraction = (ntime % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
 
 	if ( indicatorTo && !to->isIndicatorSqlDa )
-		*indicatorTo = sizeof(tagTIMESTAMP_STRUCT);
+		setIndicatorPtr(indicatorTo, sizeof(tagTIMESTAMP_STRUCT), to);
 
 	return SQL_SUCCESS;
 }
@@ -2512,7 +2531,7 @@ int OdbcConvert::convDateTimeToBinary(DescRecord * from, DescRecord * to)
 	}
 
 	if ( indicatorTo && !to->isIndicatorSqlDa )
-		*indicatorTo = sizeof(tagTIMESTAMP_STRUCT);
+		setIndicatorPtr(indicatorTo, sizeof(tagTIMESTAMP_STRUCT), to);
 
 	return SQL_SUCCESS;
 }
@@ -2665,7 +2684,7 @@ int OdbcConvert::convBlobToBlob(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(dataRemaining);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = dataRemaining;
+		setIndicatorPtr(indicatorTo, dataRemaining, to);
 
 	return ret;
 }
@@ -2748,7 +2767,7 @@ int OdbcConvert::convBlobToBinary(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(dataRemaining);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = dataRemaining;
+		setIndicatorPtr(indicatorTo, dataRemaining, to);
 
 	return ret;
 }
@@ -2857,7 +2876,7 @@ int OdbcConvert::convBlobToString(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(dataRemaining);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = dataRemaining;
+		setIndicatorPtr(indicatorTo, dataRemaining, to);
 
 	return ret;
 }
@@ -3006,7 +3025,7 @@ int OdbcConvert::convBlobToStringW( DescRecord * from, DescRecord * to )
 		to->headSqlVarPtr->setSqlLen(dataRemaining * sizeof(wchar_t));
 	} else
 	if ( indicatorTo )
-		*indicatorTo = dataRemaining * sizeof(wchar_t);
+		setIndicatorPtr(indicatorTo, dataRemaining * sizeof(wchar_t), to);
 
 	return ret;
 }
@@ -3046,8 +3065,8 @@ int OdbcConvert::convBinaryToBlob(DescRecord * from, DescRecord * to)
 			blob->directCloseBlob();
 		}
 	}
-	else		
-		*(short*)indicatorTo = SQL_NULL_DATA;
+	else
+		setIndicatorPtr(indicatorTo, SQL_NULL_DATA, to);
 
 	return ret;
 }
@@ -3244,7 +3263,7 @@ int OdbcConvert::convStringToString(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(length);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = length;
+		setIndicatorPtr(indicatorTo, length, to);
 
 	return ret;
 }
@@ -3323,7 +3342,7 @@ int OdbcConvert::convStringToStringW(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(dataRemaining * sizeof( wchar_t ));
 	} else
 	if ( indicatorTo )
-		*indicatorTo = dataRemaining * sizeof( wchar_t );
+		setIndicatorPtr(indicatorTo, dataRemaining * sizeof(wchar_t), to);
 
 	return ret;
 }
@@ -3363,7 +3382,7 @@ int OdbcConvert::convStringToVarString(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(lenVar);
 	} else
 	if ( indicatorTo )
-		*(short*)indicatorTo = lenVar;
+		setIndicatorPtr(indicatorTo, lenVar, to); /* attention here */
 
 	return ret;
 }
@@ -3390,7 +3409,7 @@ int OdbcConvert::convStringToBlob(DescRecord * from, DescRecord * to)
 	if( len > 0 )
 		to->dataBlobPtr->writeStringHexToBlob(pointerTo, pointerFrom, len);
 	else		
-		*(short*)indicatorTo = SQL_NULL_DATA;
+		setIndicatorPtr(indicatorTo, SQL_NULL_DATA, to);
 
 	return ret;
 }
@@ -3424,7 +3443,7 @@ int OdbcConvert::convStringWToBlob(DescRecord * from, DescRecord * to)
 		delete [] tempValue;
 	}
 	else		
-		*(short*)indicatorTo = SQL_NULL_DATA;
+		setIndicatorPtr(indicatorTo, SQL_NULL_DATA, to);
 
 	return ret;
 }
@@ -3520,7 +3539,7 @@ int OdbcConvert::convStringToBinary(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(length);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = length;
+		setIndicatorPtr(indicatorTo, length, to);
 
 	return ret;
 }
@@ -3924,7 +3943,7 @@ int OdbcConvert::convVarStringToBinary(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(length);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = length;
+		setIndicatorPtr(indicatorTo, length, to);
 
 	return ret;
 }
@@ -3990,7 +4009,7 @@ int OdbcConvert::convVarStringToString(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(length);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = length;
+		setIndicatorPtr(indicatorTo, length, to);
 
 	return ret;
 }
@@ -4065,7 +4084,7 @@ int OdbcConvert::convVarStringToStringW(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(dataRemaining * sizeof( wchar_t ));
 	} else
 		if ( indicatorTo )
-			*indicatorTo = dataRemaining * sizeof( wchar_t );
+			setIndicatorPtr(indicatorTo, dataRemaining * sizeof(wchar_t), to);
 
 	return ret;
 }
@@ -4107,7 +4126,8 @@ int OdbcConvert::convVarStringSystemToString(DescRecord * from, DescRecord * to)
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
+
 
 	return ret;
 }
@@ -4150,7 +4170,7 @@ int OdbcConvert::convVarStringSystemToStringW(DescRecord * from, DescRecord * to
 		to->headSqlVarPtr->setSqlLen(len);
 	} else
 	if ( indicatorTo )
-		*indicatorTo = len;
+		setIndicatorPtr(indicatorTo, len, to);
 
 	return ret;
 }

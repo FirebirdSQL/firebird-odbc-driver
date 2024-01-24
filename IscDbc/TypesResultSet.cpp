@@ -36,19 +36,17 @@
 
 namespace IscDbcLibrary {
 
-#define SET_SQLVAR(index, name, type, prec, offset)			\
+#define SET_SQLVAR(num, name, type, prec, offset)			\
 {															\
-	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar + index - 1;	\
-	char *src = var->sqlname;							\
-	const char *dst = name;									\
-	do														\
-		*src++=*dst;										\
-	while(*dst++);											\
+	auto *var = sqlda->Var( num );						\
 															\
-	var->sqlname_length = src - var->sqlname - 1;			\
-	var->sqltype = type + 1;								\
+	var->sqlname = name;									\
+	var->sqltype = type;									\
+	var->isNullable = true;									\
 	var->sqllen = prec;										\
 	var->sqldata = (char*)offset;							\
+	var->index = num;										\
+	var->sqlind = (short*)&indicators.at( num - 1 );		\
 }															\
 
 #define SET_INDICATOR_VAL(col,type,isNull)  if ( isNull && (*(type*)(var[col].sqldata + sqldataOffsetPtr)) == -1 ) *var[col].sqlind = -1; else *var[col].sqlind = 0;
@@ -136,7 +134,9 @@ static Types types [] =
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCharacter) : IscResultSet (NULL)
+TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCharacter, IscConnection* conn) :
+	IscResultSet{nullptr},
+	outputSqlda {conn}
 {	
 	dataTypes = dataType;
 
@@ -194,12 +194,11 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCha
 	values.alloc (numberColumns);
 	allocConversions();
 
-	indicators = (SQLLEN*)calloc( 1, sizeof(SQLLEN) * numberColumns );
+	indicators.resize( numberColumns );
 	sqlda = &outputSqlda;
-	((XSQLDA*)*sqlda)->sqld = numberColumns;
+	sqlda->columnsCount = numberColumns;
 	sqldataOffsetPtr = (uintptr_t)types - sizeof (*types);
-	sqlda->orgsqlvar = new CAttrSqlVar [numberColumns];
-	CAttrSqlVar * orgvar = sqlda->orgsqlvar;
+	sqlda->sqlvar.resize( numberColumns );
 
 	SET_SQLVAR( 1, "TYPE_NAME"			, SQL_VARYING	,	52  , OFFSET(Types,lenTypeName)				)
 	SET_SQLVAR( 2, "DATA_TYPE"			, SQL_SHORT		,	 5	, OFFSET(Types,typeType)				)
@@ -220,22 +219,9 @@ TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCha
 	SET_SQLVAR(17, "SQL_DATETIME_SUB"	, SQL_SHORT		,	 5	, OFFSET(Types,typeDateTimeSub)			)
 	SET_SQLVAR(18, "NUM_PREC_RADIX"		, SQL_LONG		,	10	, OFFSET(Types,typeNumPrecRadix)		)
 	SET_SQLVAR(19, "INTERVAL_PRECISION"	, SQL_SHORT		,	 5	, OFFSET(Types,typeIntervalPrecision)	)
-
-	int i = numberColumns;
-	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar;
-	SQLLEN *ind = indicators;
-
-	while ( i-- )
-	{
-		*orgvar++ = var;
-		(var++)->sqlind = (short*)ind++;
-	}
 }
 
-TypesResultSet::~TypesResultSet()
-{
-	free(indicators);
-}
+TypesResultSet::~TypesResultSet() {}
 
 bool TypesResultSet::nextFetch()
 {
@@ -256,7 +242,7 @@ bool TypesResultSet::nextFetch()
 	if (++recordNumber > sizeof (types) / sizeof (types [0]))
 		return false;
 
-	XSQLVAR *var = ((XSQLDA*)*sqlda)->sqlvar;
+	auto & var = sqlda->sqlvar;
 	sqldataOffsetPtr += sizeof (*types);
 
 	SET_INDICATOR_STR(0);						// TYPE_NAME
@@ -296,11 +282,9 @@ bool TypesResultSet::next()
 
 	++activePosRowInSet;
 
-	XSQLVAR *var = sqlda->sqlda->sqlvar;
     Value *value = values.values;
-
-	for (int n = 0; n < sqlda->sqlda->sqld; ++n, ++var, ++value)
-		statement->setValue (value, var);
+	for (unsigned n = 0; n < sqlda->columnsCount; ++n, ++value)
+		statement->setValue (value, n + 1, *sqlda);
 
 	return true;
 }

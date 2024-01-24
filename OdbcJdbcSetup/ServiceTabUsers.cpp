@@ -176,6 +176,7 @@ bool CServiceTabUsers::onCommand( HWND hWnd, int nCommand )
 void CServiceTabUsers::addParameters( CServiceClient &services )
 {
 	CServiceTabChild::addParameters( services );
+	services.putParameterValue("serverName", server);
 }
 
 bool CServiceTabUsers::createDialogIndirect( CServiceTabCtrl *parentTabCtrl )
