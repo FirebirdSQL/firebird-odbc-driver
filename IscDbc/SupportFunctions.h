@@ -144,6 +144,7 @@ public:
 	void concatTranslator(char*& ptIn, char*& ptOut);
 	void insertTranslator(char*& ptIn, char*& ptOut);
 	void trimTranslator(char*& ptIn, char*& ptOut);
+	void spaceTranslator(char*& ptIn, char*& ptOut);
 
 	bool Tokenize(char*& ptIn, std::vector<std::string>& vtokens);
 };
