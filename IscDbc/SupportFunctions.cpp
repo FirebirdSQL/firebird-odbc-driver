@@ -77,7 +77,7 @@ SupportFunctions::SupportFunctions()
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_RIGHT, 			"RIGHT", 			"RIGHT",			defaultTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_RTRIM, 			"RTRIM", 			"TRIM",				trimTranslator   );
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SOUNDEX, 		"SOUNDEX", 			"NOT_IMPLEMENTED",	defaultTranslator);
-    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SPACE, 			"SPACE", 			"SPACE",			defaultTranslator);
+    ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SPACE, 			"SPACE", 			"RPAD",				spaceTranslator  );
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_SUBSTRING, 		"SUBSTRING", 		"SUBSTRING",		substringTranslator);
     ADD_SUPPORT_FN( STR_FN, SQL_FN_STR_UCASE, 			"UCASE", 			"UPPER",			defaultTranslator);
 
@@ -522,6 +522,30 @@ void SupportFunctions::trimTranslator(char*& ptIn, char*& ptOut)
 	oss << ( *supportFn->nameSqlFn == 'L' ? "LEADING" : "TRAILING");
 	oss << " FROM ";
 	oss << vtokens.at(0);
+	oss << ")";
+
+	const size_t offset = ptIn - ptOut;
+
+	lenSqlFn = offset + pEnd - ptIn + 1;
+	lenFbFn = oss.str().size();
+	lenOut = (int)strlen(ptOut);
+
+	writeResult(oss.str().c_str(), ptOut);
+	ptIn = ptOut;
+}
+
+void SupportFunctions::spaceTranslator(char*& ptIn, char*& ptOut)
+{
+	char* pEnd = ptIn;
+	std::vector<std::string> vtokens;
+
+	if (!Tokenize(pEnd, vtokens)) return;
+	if (vtokens.size() != 1) return;
+
+	std::ostringstream oss;
+	oss << std::string(supportFn->nameFbFn, supportFn->lenFbFn);
+	oss << "(";
+	oss << "'', " << vtokens.at(0);
 	oss << ")";
 
 	const size_t offset = ptIn - ptOut;
