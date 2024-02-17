@@ -49,7 +49,6 @@ public:
 	void loadClientLiblary( Properties *properties );
 	bool isFirebirdVer2_0(){ return majorFb == 2; }
 	void createDatabase(const char *dbName, Properties *properties);
-	void setLegacyBindingsForFB4_5();
 	void openDatabase(const char * dbName, Properties * properties);
 	Attachment();
 	~Attachment();
