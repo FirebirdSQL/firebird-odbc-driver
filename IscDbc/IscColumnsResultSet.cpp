@@ -137,6 +137,46 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 	numberColumns = 18;
 }
 
+// Legacy types converter
+void IscColumnsResultSet::LegacyTypesConversion()
+{
+	if (!sqlda) {
+		return;
+	}
+
+	static const short INT128_MAX_CHARS = 255;
+	auto blrType = sqlda->getShort(5);
+
+	switch (blrType)
+	{
+	case blr_dec64:
+	case blr_dec128:
+		sqlda->updateShort(5, blr_double);
+		sqlda->updateShort(24, 8);
+		break;
+	case blr_int128:
+		sqlda->updateShort(5, blr_varying);
+		sqlda->updateInt(7, 0);						//collation none
+		sqlda->updateInt(8, 2);						//charset ANSI
+		sqlda->updateInt(16,   INT128_MAX_CHARS);	//char/octet length
+		sqlda->updateShort(19, INT128_MAX_CHARS);
+		sqlda->updateShort(24, INT128_MAX_CHARS);
+		break;
+	case blr_sql_time_tz:
+	case blr_ex_time_tz:
+		sqlda->updateShort(5, blr_sql_time);
+		sqlda->updateShort(24, 4);
+		break;
+	case blr_timestamp_tz:
+	case blr_ex_timestamp_tz:
+		sqlda->updateShort(5, blr_timestamp);
+		sqlda->updateShort(24, 8);
+		break;
+	default:
+		break;
+	}
+}
+
 bool IscColumnsResultSet::nextFetch()
 {
 	if (!IscResultSet::nextFetch())
@@ -144,6 +184,11 @@ bool IscColumnsResultSet::nextFetch()
 		blob.clear();
 		return false;
 	}
+
+	//Since I don't know how to implement INT128, DECFLOAT & TIMIZONE just now
+	//because there are NO appropriate ODBC SQL types in ODBC spec
+	//we'll tempopary use a legacy types conversion here.
+	LegacyTypesConversion();
 
 	if ( !metaData->getUseSchemaIdentifier() )
 		sqlda->setNull(2);

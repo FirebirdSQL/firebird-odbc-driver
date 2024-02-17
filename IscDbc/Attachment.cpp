@@ -181,6 +181,40 @@ void Attachment::createDatabase(const char *dbName, Properties *properties)
 	}
 }
 
+void Attachment::setLegacyBindingsForFB4_5()
+{
+	if (!GDS || !databaseHandle || majorFb < 4) return;
+
+	ThrowStatusWrapper status(GDS->_status);
+	ITransaction* tr = NULL;
+
+	static std::vector<std::string> cmds = {
+		"set bind of int128 to varchar",
+		"set bind of decfloat to legacy",
+		"set bind of time zone to legacy"
+	};
+
+	try
+	{
+		tr = databaseHandle->startTransaction(&status, 0, NULL);
+
+		for( auto & cmd : cmds )
+			databaseHandle->execute(&status, tr, 0, cmd.c_str(), SQL_DIALECT_V6, NULL, NULL, NULL, NULL);
+
+		tr->commit(&status);
+		tr = NULL;
+	}
+	catch (const FbException& )
+	{
+		if (tr)
+		{
+			try { tr->rollback(&status); } catch (...) { tr->release(); }
+		}
+	}
+
+	OutputDebugString("WARN: Set legacy bindings for INT128, DECFLOAT & TIME ZONE types\n");
+}
+
 void Attachment::openDatabase(const char *dbName, Properties *properties)
 {
 	if( !GDS )
@@ -527,6 +561,11 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		dsn = property;
 
 	checkAdmin();
+
+	//Since I don't know how to implement INT128, DECFLOAT & TIMIZONE just now
+	//because there are NO appropriate ODBC SQL types in ODBC spec
+	//we'll tempopary use a legacy bindings here.
+	setLegacyBindingsForFB4_5();
 }
 
 void Attachment::addRef()
