@@ -129,6 +129,8 @@ CDsnDialog::CDsnDialog( HWND hDlgParent,
 	m_sensitive = FALSE;
 	m_autoQuoted = FALSE;
 	m_safeThread = FALSE;
+	m_setBindCommand = "";
+	m_enableCompatMode = TRUE;
 
 	drivers = jdbcDrivers;
 	charsets = jdbcCharsets;
@@ -163,6 +165,7 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 		GetDlgItemText(hDlg, IDC_DESCRIPTION, m_description.getBuffer(256), 256);
 		GetDlgItemText(hDlg, IDC_PASSWORD, m_password.getBuffer(256), 256);
 		GetDlgItemText(hDlg, IDC_USER, m_user.getBuffer(256), 256);
+		GetDlgItemText(hDlg, IDC_COMPAT_BINDINGS, m_setBindCommand.getBuffer(256), 256);
 
 		hWnd = GetDlgItem(hDlg, IDC_DRIVER);
 		
@@ -208,6 +211,7 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 		m_sensitive = SendDlgItemMessage(hDlg, IDC_CHECK_SENSITIVE, BM_GETCHECK, 0, 0);
 		m_autoQuoted = SendDlgItemMessage(hDlg, IDC_CHECK_AUTOQUOTED, BM_GETCHECK, 0, 0);
 		m_safeThread = SendDlgItemMessage(hDlg, IDC_CHECK_SFTHREAD, BM_GETCHECK, 0, 0);
+		m_enableCompatMode = SendDlgItemMessage(hDlg, IDC_CHECK_COMPAT_MODE, BM_GETCHECK, 0, 0);
 	}
 	else
 	{
@@ -217,6 +221,7 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 		SetDlgItemText( hDlg, IDC_DESCRIPTION, (const char *)m_description );
 		SetDlgItemText( hDlg, IDC_PASSWORD, (const char *)m_password );
 		SetDlgItemText( hDlg, IDC_USER, (const char *)m_user );
+		SetDlgItemText( hDlg, IDC_COMPAT_BINDINGS, (const char*)m_setBindCommand );
 
 		hWnd = GetDlgItem(hDlg, IDC_DRIVER);
 
@@ -257,6 +262,18 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 		{
 			EnableWindow( GetDlgItem( hDlg, IDC_LOCKTIMEOUT ), FALSE );
 			SetDisabledDlgItem( hDlg, IDC_STATIC_LOCKTIMEOUT );
+		}
+
+		CheckDlgButton(hDlg, IDC_CHECK_COMPAT_MODE, m_enableCompatMode);
+		if ( m_enableCompatMode )
+		{
+			EnableWindow(GetDlgItem(hDlg, IDC_COMPAT_BINDINGS), TRUE);
+			SetDisabledDlgItem(hDlg, IDC_STATIC_COMPAT_BIND_LBL, FALSE);
+		}
+		else
+		{
+			EnableWindow(GetDlgItem(hDlg, IDC_COMPAT_BINDINGS), FALSE);
+			SetDisabledDlgItem(hDlg, IDC_STATIC_COMPAT_BIND_LBL );
 		}
 
         CheckDlgButton( hDlg, IDC_CHECK_QUOTED, m_quoted );
@@ -663,6 +680,20 @@ BOOL CALLBACK wndprocDsnDialog( HWND hDlg, UINT message, WPARAM wParam, LPARAM l
 			}
 			break;
 
+		case IDC_CHECK_COMPAT_MODE:
+			dsnDialog->UpdateData(hDlg);
+			if (dsnDialog->m_enableCompatMode)
+			{
+				EnableWindow(GetDlgItem(hDlg, IDC_COMPAT_BINDINGS), TRUE);
+				dsnDialog->SetDisabledDlgItem(hDlg, IDC_STATIC_COMPAT_BIND_LBL, FALSE);
+			}
+			else
+			{
+				EnableWindow(GetDlgItem(hDlg, IDC_COMPAT_BINDINGS), FALSE);
+				dsnDialog->SetDisabledDlgItem(hDlg, IDC_STATIC_COMPAT_BIND_LBL);
+			}
+			break;
+
         case IDC_HELP_ODBC:
 			dsnDialog->WinHtmlHelp( hDlg );
 			break;
@@ -744,6 +775,10 @@ void CDsnDialog::OnTestConnection( HWND hDlg )
 		services.putParameterValue( SETUP_DIALECT, m_dialect3 ? "3" : "1" );
 		services.putParameterValue( SETUP_DBNAME, m_database );
 
+		services.putParameterValue( SETUP_ENABLE_COMPAT_BIND, m_enableCompatMode ? "Y" : "N");
+		if ( m_enableCompatMode && !m_setBindCommand.IsEmpty() )
+			services.putParameterValue( SETUP_SET_COMPAT_BIND, m_setBindCommand );
+
 		services.openDatabase();
 
 		MessageBox( hDlg, _TR( IDS_MESSAGE_01, "Connection successful!" ), TEXT( strHeadDlg ), MB_ICONINFORMATION | MB_OK );
@@ -820,12 +855,12 @@ intptr_t CDsnDialog::DoModal()
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 40;         // NumberOfItems
+	*p++ = 40 + 4;         // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
 	*p++ = 310;        // cx
-	*p++ = 252;        // cy
+	*p++ = 252 + 14 + 10;        // cy
 	*p++ = 0;          // Menu
 	*p++ = 0;          // Class
 
@@ -852,15 +887,15 @@ intptr_t CDsnDialog::DoModal()
     TMP_BUTTONCONTROL ( _TR( IDS_CHECK_NOWAIT, "nowait (default wait)" ), IDC_CHECK_NOWAIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,178,136,10 )
     TMP_EDITTEXT      ( IDC_LOCKTIMEOUT,24,188,23,10,ES_AUTOHSCROLL )
     TMP_LTEXT         ( _TR( IDS_STATIC_LOCKTIMEOUT, "Lock Timeout" ), IDC_STATIC_LOCKTIMEOUT,50,189,86,8 )
-    TMP_DEFPUSHBUTTON ( _TR( IDS_BUTTON_OK, "OK" ), IDOK,86,233,60,14 )
-    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_CANCEL, "Cancel" ), IDCANCEL,154,233,60,14 )
     TMP_LTEXT         ( _TR( IDS_STATIC_DSN, "Data Source Name (DSN)" ), IDC_STATIC,7,2,167,8 )
     TMP_LTEXT         ( _TR( IDS_STATIC_DATABASE, "Database" ), IDC_STATIC,7,51,218,8 )
     TMP_LTEXT         ( _TR( IDS_STATIC_ACCOUNT, "Database Account" ), IDC_STATIC,7,101,107,8 )
     TMP_LTEXT         ( _TR( IDS_STATIC_PASSWORD, "Password" ), IDC_STATIC,118,101,72,8 )
     TMP_LTEXT         ( _TR( IDS_STATIC_ROLE, "Role" ), IDC_STATIC,213,101,105,8 )
     TMP_LTEXT         ( _TR( IDS_STATIC_CHARSET, "Character Set" ), IDC_STATIC,7,125,98,8 )
-    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_OPTIONS, "Options" ), IDC_STATIC,7,151,296,77 )
+
+    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_OPTIONS, "Options" ), IDC_STATIC,7,151,296,77 + 16 + 10 )
+
     TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_INIT_TRANSACTION, "Transaction" ), IDC_STATIC,10,159,142,42 )
     TMP_LTEXT         ( _TR( IDS_STATIC_CLIENT, "Client" ), IDC_STATIC,7,76,218,8 )
     TMP_GROUPBOX      ( "", IDC_STATIC,10,196,142,17 )
@@ -874,9 +909,18 @@ intptr_t CDsnDialog::DoModal()
     TMP_BUTTONCONTROL ( _TR( IDS_CHECK_SENSITIVE, "sensitive identifier" ), IDC_CHECK_SENSITIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,181,139,9 )
     TMP_BUTTONCONTROL ( _TR( IDS_CHECK_AUTOQUOTED, "autoquoted identifier" ), IDC_CHECK_AUTOQUOTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,159,193,139,9 )
     TMP_COMBOBOX      ( IDC_COMBOBOX_USE_SCHEMA,159,207,136,60,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP )
-    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_TEST_CONNECTION, "Test connection" ), IDC_TEST_CONNECTION,213,130,90,18 )
+
+	TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_TEST_CONNECTION, "Test connection" ), IDC_TEST_CONNECTION,213,130,90,18 )
     TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_SERVICES, "Services" ), IDC_BUTTON_SERVICE,118,130,90,18 )
-    TMP_PUSHBUTTON    ( _TR( IDS_BUTTON_HELP_ODBC, "Help" ), IDC_HELP_ODBC,243,233,60,14 )
+
+	TMP_GROUPBOX      ( "", IDC_STATIC, 10, 220, 290, 32 )
+	TMP_BUTTONCONTROL ( _TR(IDS_CHECK_COMPAT_MODE, "Enable FB4+ compatibility mode"), IDC_CHECK_COMPAT_MODE, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 14, 227, 280, 10)
+	TMP_LTEXT         ( "Set bind:", IDC_STATIC_COMPAT_BIND_LBL, 14, 239, 41, 10)
+	TMP_EDITTEXT      ( IDC_COMPAT_BINDINGS, 50, 237, 245, 12, ES_AUTOHSCROLL )
+
+	TMP_DEFPUSHBUTTON(_TR(IDS_BUTTON_OK, "OK"), IDOK, 86, 233+14+10, 60, 14)
+	TMP_PUSHBUTTON(_TR(IDS_BUTTON_CANCEL, "Cancel"), IDCANCEL, 154, 233+14+10, 60, 14)
+	TMP_PUSHBUTTON(_TR(IDS_BUTTON_HELP_ODBC, "Help"), IDC_HELP_ODBC, 243, 233+14+10, 60, 14)
 
 	intptr_t nRet = DialogBoxIndirectParam(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, m_hWndParent, (DLGPROC)wndprocDsnDialog, (LPARAM)this );
 	LocalFree (LocalHandle (pdlgtemplate));
