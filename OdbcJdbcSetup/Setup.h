@@ -78,6 +78,8 @@ public:
 	JString		useschema;
 	JString		locktimeout;
 	JString		safeThread;
+	JString		setCompatBindStr;
+	JString		enableCompatBind;
 	ULONG		serviceDb;
 };
 

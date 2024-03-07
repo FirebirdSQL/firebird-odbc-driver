@@ -268,9 +268,12 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 		//Since I don't know how to implement INT128, DECFLOAT & TIMIZONE just now
 		//because there are NO appropriate ODBC SQL types in ODBC spec
 		//we'll tempopary use a legacy bindings here.
+		const char* enable_compat_bind = properties->findValue("EnableCompatBind", "Y");
+		if( *enable_compat_bind == 'Y' )
 		{
-			const char* bind_cmd = "int128 to varchar;decfloat to legacy;time zone to legacy";
-			dpb->insertString(&throw_status, isc_dpb_set_bind, bind_cmd);
+			const char* bind_cmd = properties->findValue("SetCompatBind", NULL);
+			dpb->insertString(&throw_status, isc_dpb_set_bind,
+				(bind_cmd && *bind_cmd) ? bind_cmd : "int128 to varchar;decfloat to legacy;time zone to legacy");
 		}
 	}
 	catch( const FbException& error )

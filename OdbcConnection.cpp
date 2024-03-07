@@ -322,6 +322,8 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	autoQuotedIdentifier = false;
 	userEventsInterfase	= NULL;
 	charsetCode			= 0; // NONE
+	enableCompatBind    = true;
+	setCompatBindStr    = NULL;
 
 #ifdef _WINDOWS
 #if _MSC_VER > 1000
@@ -649,6 +651,15 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 				safeThread = false;
 
 			defOptions |= DEF_SAFETHREAD;
+		}
+		else if ( IS_KEYWORD( SETUP_SET_COMPAT_BIND ) || IS_KEYWORD( KEY_DSN_SETCOMPATBIND ) )
+			setCompatBindStr = value;
+		else if ( IS_KEYWORD(SETUP_ENABLE_COMPAT_BIND) || IS_KEYWORD( KEY_DSN_ENABLECOMPATBIND ) )
+		{
+			if (*value == 'N')
+				enableCompatBind = false;
+
+			defOptions |= DEF_COMPATMODE;
 		}
 		else if ( IS_KEYWORD( "ODBC" ) )
 			;
@@ -1669,6 +1680,12 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 			properties->putValue ("timeout", buffer);
 		}
 
+		if (enableCompatBind)
+			properties->putValue("EnableCompatBind", enableCompatBind ? "Y" : "N");
+
+		if (enableCompatBind && setCompatBindStr)
+			properties->putValue("SetCompatBind", setCompatBindStr);
+
 		connection->openDatabase (databaseName, properties);
 		properties->release();
 
@@ -1766,6 +1783,17 @@ void OdbcConnection::expandConnectParameters()
 
 		if (description.IsEmpty())
 			description = readAttribute (SETUP_DESCRIPTION);
+
+		if (!(defOptions & DEF_COMPATMODE))
+		{
+			options = readAttribute(SETUP_ENABLE_COMPAT_BIND);
+
+			if (*(const char*)options == 'N')
+				enableCompatBind = false;
+		}
+
+		if (setCompatBindStr.IsEmpty())
+			setCompatBindStr = readAttribute (SETUP_SET_COMPAT_BIND);
 
 		if (databaseName.IsEmpty())
 			databaseName = readAttribute (SETUP_DBNAME);
@@ -1867,6 +1895,17 @@ void OdbcConnection::expandConnectParameters()
 
 		if (description.IsEmpty())
 			description = readAttributeFileDSN (SETUP_DESCRIPTION);
+
+		if (!(defOptions & DEF_COMPATMODE))
+		{
+			options = readAttributeFileDSN (SETUP_ENABLE_COMPAT_BIND);
+
+			if (*(const char*)options == 'N')
+				enableCompatBind = false;
+		}
+
+		if (setCompatBindStr.IsEmpty())
+			setCompatBindStr = readAttributeFileDSN (SETUP_SET_COMPAT_BIND);
 
 		if (databaseName.IsEmpty())
 			databaseName = readAttributeFileDSN (SETUP_DBNAME);
@@ -1993,6 +2032,8 @@ void OdbcConnection::saveConnectParameters()
 	writeAttributeFileDSN (SETUP_USESCHEMA, useSchemaIdentifier);
 	writeAttributeFileDSN (SETUP_LOCKTIMEOUT, useLockTimeoutWaitTransactions);
 	writeAttributeFileDSN (SETUP_SAFETHREAD, safeThread ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_ENABLE_COMPAT_BIND, enableCompatBind ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_SET_COMPAT_BIND, setCompatBindStr);
 
 	char buffer[256];
 	CSecurityPassword security;

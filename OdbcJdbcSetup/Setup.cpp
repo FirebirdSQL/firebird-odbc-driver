@@ -798,6 +798,7 @@ Setup::Setup( HWND windowHandle, const char *drvr, const char *attr )
 	jdbcDriver = drivers [0];
 	serviceDb = enOpenDb;
 	safeThread = "Y";
+	enableCompatBind = "Y";
 
 	if ( drvr )
 		driver = drvr;
@@ -893,6 +894,8 @@ void Setup::getParameters()
 		autoQuoted = "N";
 
 	pageSize = getAttribute( SETUP_PAGE_SIZE );
+
+	setCompatBindStr = getAttribute( SETUP_SET_COMPAT_BIND );
 }
 
 bool Setup::addDsn()
@@ -1503,7 +1506,8 @@ bool Setup::configureDialog()
 	dialog.m_charset = charset;
 	dialog.m_useschema = useschema;
 	dialog.m_locktimeout = locktimeout;
-
+	dialog.m_setBindCommand = setCompatBindStr;
+	
 	if ( IS_CHECK_YES(*(const char*)readonlyTpb) )
 		dialog.m_readonly = TRUE;
 	else 
@@ -1539,6 +1543,11 @@ bool Setup::configureDialog()
 	else 
 		dialog.m_safeThread = FALSE;
 
+	if (IS_CHECK_NO(*(const char*)enableCompatBind))
+		dialog.m_enableCompatMode = FALSE;
+	else
+		dialog.m_enableCompatMode = TRUE;
+
 	do
 	{
 		intptr_t ret = dialog.DoModal();
@@ -1573,6 +1582,7 @@ bool Setup::configureDialog()
 	charset = dialog.m_charset;
 	useschema = dialog.m_useschema;
 	locktimeout = dialog.m_locktimeout;
+	setCompatBindStr = dialog.m_setBindCommand;
 
 	if( dialog.m_readonly ) readonlyTpb = "Y";
 	else readonlyTpb = "N";
@@ -1594,6 +1604,9 @@ bool Setup::configureDialog()
 
 	if( dialog.m_safeThread ) safeThread = "Y";
 	else safeThread = "N";
+
+	if (dialog.m_enableCompatMode) enableCompatBind = "Y";
+	else enableCompatBind = "N";
 
 	if ( !SQLWriteDSNToIni( dialog.m_name, driver ) )
 	{
@@ -1624,6 +1637,8 @@ void Setup::writeAttributes()
 	writeAttribute( SETUP_AUTOQUOTED, autoQuoted );
 	writeAttribute( SETUP_USESCHEMA, useschema );
 	writeAttribute( SETUP_SAFETHREAD, safeThread );
+	writeAttribute( SETUP_SET_COMPAT_BIND, setCompatBindStr);
+	writeAttribute( SETUP_ENABLE_COMPAT_BIND, enableCompatBind);
 
 	char buffer[256];
 	CSecurityPassword security;
@@ -1650,6 +1665,8 @@ void Setup::readAttributes()
 	useschema = readAttribute( SETUP_USESCHEMA );
 	pageSize = 0;
 	safeThread = readAttribute( SETUP_SAFETHREAD );
+	setCompatBindStr = readAttribute( SETUP_SET_COMPAT_BIND );
+	enableCompatBind = readAttribute( SETUP_ENABLE_COMPAT_BIND );
 
 	JString pass = readAttribute( SETUP_PASSWORD );
 	if ( pass.length() > 40 )
