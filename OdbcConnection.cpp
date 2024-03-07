@@ -1680,8 +1680,7 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 			properties->putValue ("timeout", buffer);
 		}
 
-		if (enableCompatBind)
-			properties->putValue("EnableCompatBind", enableCompatBind ? "Y" : "N");
+		properties->putValue("EnableCompatBind", enableCompatBind ? "Y" : "N");
 
 		if (enableCompatBind && setCompatBindStr)
 			properties->putValue("SetCompatBind", setCompatBindStr);
