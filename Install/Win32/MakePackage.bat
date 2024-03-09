@@ -37,10 +37,12 @@
 :SET_ENVIRONMENT
 ::Assume we are preparing a production build
 if not defined BUILDCONFIG (set BUILDCONFIG=release)
+set FB_TARGET_PLATFORM=x64
 
 :: See what we have on the command line
 for %%v in ( %* )  do (
   ( if /I "%%v"=="DEBUG" (set BUILDCONFIG=debug) )
+  ( if /I "%%v"=="WIN32" (set FB_TARGET_PLATFORM=Win32) )
 )
 
 @cd ..\..
@@ -66,8 +68,8 @@ sed /"#define BUILDNUM_VERSION"/!d %ROOT_PATH%\WriteBuildNo.h > %temp%.\b$1.bat
 sed -n -e s/\"//g -e s/"#define BUILDNUM_VERSION"//w%temp%.\b$2.bat %temp%.\b$1.bat
 for /f "tokens=*" %%a in ('type %temp%.\b$2.bat') do set PRODUCT_VER_STRING=3.0.0.%%a
 @echo s/1.2.0/%PRODUCT_VER_STRING%/ > %temp%.\b$3.bat
-@echo s/define MSVC_VERSION 6/define MSVC_VERSION %MSVC_VERSION%/ >> %temp%.\b$3.bat
-@echo s/define BUILDCONFIG release/define BUILDCONFIG %BUILDCONFIG%/ >> %temp%.\b$3.bat
+::@echo s/define MSVC_VERSION 6/define MSVC_VERSION %MSVC_VERSION%/ >> %temp%.\b$3.bat
+@echo s/#define BUILDCONFIG "release"/#define BUILDCONFIG "%BUILDCONFIG%"/ >> %temp%.\b$3.bat
 @echo s/PRODUCT_VER_STRING/%PRODUCT_VER_STRING%/ >> %temp%.\b$3.bat
 @set PRODUCT_VERSION=%PRODUCT_VER_STRING%
 sed -f  %temp%.\b$3.bat %~dp0\OdbcJdbcSetup.iss > %~dp0\OdbcJdbcSetup_%PRODUCT_VER_STRING%.iss
@@ -95,7 +97,7 @@ goto :EOF
 
 :ISX
 ::========
-if NOT DEFINED INNO5_SETUP_PATH (set INNO5_SETUP_PATH="%PROGRAMFILES%\Inno Setup")
+if NOT DEFINED INNO5_SETUP_PATH (set INNO5_SETUP_PATH="C:\Program Files (x86)\Inno Setup 5")
 @Echo Now let's compile the InnoSetup scripts
 @Echo.
 %INNO5_SETUP_PATH%\iscc "%ROOT_PATH%\Install\Win32\OdbcJdbcSetup_%PRODUCT_VER_STRING%.iss"
