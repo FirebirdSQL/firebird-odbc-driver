@@ -1,4 +1,4 @@
-﻿ 0x0410 , 
+ 0x0410 , 
 {
 IDS_DLG_TITLE_SETUP, // "Firebird ODBC Setup"
 	"Impostazioni per ODBC Firebird"
@@ -55,7 +55,7 @@ IDS_GROUPBOX_DIALECT, // "Dialect"
 	" Dialetto "
 ,
 IDS_GROUPBOX_EXT_PROPERTY, // "Extend property identifier"
-	" Proprietа estese identificatori "
+	" Proprieta estese identificatori "
 ,
 IDS_CHECK_QUOTED, // "quoted identifiers"
 	"identificatori tra doppi apici"
