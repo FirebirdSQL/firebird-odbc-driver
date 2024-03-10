@@ -56,7 +56,7 @@ jobs:
       run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=x64 ${{env.SOLUTION_FILE_PATH}}
 
     - name: Build InnoSetup installers
-      working-directory: ${{env.GITHUB_WORKSPACE}}\\Install\\Win32
+      working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
         cd Install/Win32
         MakePackage.bat
