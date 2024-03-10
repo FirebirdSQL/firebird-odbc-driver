@@ -45,6 +45,7 @@ jobs:
 
     - name: Stub
       working-directory: ${{env.GITHUB_WORKSPACE}}\\Install\\Win32
+      run: echo "Stub"
       
     - name: Build win32
       working-directory: ${{env.GITHUB_WORKSPACE}}
