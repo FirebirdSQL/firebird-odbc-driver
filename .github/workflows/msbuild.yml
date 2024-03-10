@@ -34,7 +34,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Install html-help-workshop
-      run: choco --yes install html-help-workshop
+      run: choco install html-help-workshop
 
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
