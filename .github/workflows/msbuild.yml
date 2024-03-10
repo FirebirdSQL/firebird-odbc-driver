@@ -46,7 +46,7 @@ jobs:
     - name: Stub
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
-        echo ${{env.GITHUB_WORKSPACE}}
+        echo "pwd: $env.GITHUB_WORKSPACE"
         dir
       
     - name: Build win32
