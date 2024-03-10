@@ -33,8 +33,11 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
-    - name: Install html-help-workshop
-      run: choco install html-help-workshop
+    - name: Install html-help-workshop, sed, innosetup
+      run: |
+        choco install html-help-workshop
+        choco install sed
+        choco install innosetup
 
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
