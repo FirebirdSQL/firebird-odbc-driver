@@ -44,9 +44,8 @@ jobs:
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
 
     - name: Stub
-      working-directory: ${{env.GITHUB_WORKSPACE}}
+      working-directory: ${{env.GITHUB_WORKSPACE}}\Install
       run: |
-        echo "pwd: $env.GITHUB_WORKSPACE"
         dir
       
     - name: Build win32
