@@ -43,12 +43,6 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
 
-    - name: Stub
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: |
-        cd Install/Win32
-        dir
-      
     - name: Build win32
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
@@ -64,6 +58,5 @@ jobs:
     - name: Build InnoSetup installers
       working-directory: ${{env.GITHUB_WORKSPACE}}\\Install\\Win32
       run: |
+        cd Install/Win32
         MakePackage.bat
-        
-
