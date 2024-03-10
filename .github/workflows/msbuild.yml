@@ -58,5 +58,6 @@ jobs:
     - name: Build InnoSetup installers
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
-        cd Install/Win32
-        MakePackage.bat
+        cd Install\Win32
+        dir
+        ./MakePackage.bat
