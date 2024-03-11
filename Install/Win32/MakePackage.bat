@@ -97,10 +97,10 @@ goto :EOF
 
 :ISX
 ::========
-if NOT DEFINED INNO5_SETUP_PATH (set INNO5_SETUP_PATH="C:\Program Files (x86)\Inno Setup 5")
+if NOT DEFINED INNO_SETUP_PATH set INNO_SETUP_PATH=C:\Program Files (x86)\Inno Setup 5
 @Echo Now let's compile the InnoSetup scripts
 @Echo.
-%INNO5_SETUP_PATH%\iscc "%ROOT_PATH%\Install\Win32\OdbcJdbcSetup_%PRODUCT_VER_STRING%.iss"
+"%INNO_SETUP_PATH%"\iscc "%ROOT_PATH%\Install\Win32\OdbcJdbcSetup_%PRODUCT_VER_STRING%.iss"
 goto :EOF
 
 
