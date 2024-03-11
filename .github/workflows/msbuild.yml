@@ -46,11 +46,11 @@ jobs:
     - name: Stub
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
-        env
-        #echo ${env.ProgramFiles}
-        #cd ${env.ProgramFiles}
+        #env
+        echo ${env.PROGRAMFILES}
+        #cd ${env.PROGRAMFILES}
         #dir
-        #echo ${env.ProgramFiles(x86)}
+        echo ${env.ProgramFiles(x86)}
         #cd ${env.ProgramFiles(x86)}
         #dir
 
