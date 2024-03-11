@@ -46,12 +46,8 @@ jobs:
     - name: Stub
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
-        echo "ppp: %programfiles%"
-        cd "%programfiles%"
+        cd "C:\Program Files\"
         dir
-        #echo "ppp86: $env.ProgramFiles(x86)"
-        #cd $env.ProgramFiles(x86)
-        #dir
 
     - name: Build win32
       working-directory: ${{env.GITHUB_WORKSPACE}}
