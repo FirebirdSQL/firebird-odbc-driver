@@ -20,7 +20,7 @@ env:
   # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
   BUILD_CONFIGURATION: Release
 
-  INNO5_SETUP_PATH: 'C:\\Program Files (x86)\\Inno Setup 6'
+  INNO5_SETUP_PATH: 'C:\Program Files (x86)\Inno Setup 6'
 
 permissions:
   contents: read
