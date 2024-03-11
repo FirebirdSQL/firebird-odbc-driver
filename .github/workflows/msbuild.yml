@@ -46,11 +46,11 @@ jobs:
     - name: Stub
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
-        echo "%ProgramFiles%"
-        cd %ProgramFiles%
+        echo ${ProgramFiles}
+        cd ${ProgramFiles}
         dir
-        echo "%ProgramFiles(x86)%"
-        cd %ProgramFiles(x86)%
+        echo ${ProgramFiles(x86}
+        cd ${ProgramFiles(x86)}
         dir
 
     - name: Build win32
