@@ -43,6 +43,16 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
 
+    - name: Stub
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        echo "%ProgramFiles%"
+        cd %ProgramFiles%
+        dir
+        echo "%ProgramFiles(x86)%"
+        cd %ProgramFiles(x86)%
+        dir
+
     - name: Build win32
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
