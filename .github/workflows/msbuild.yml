@@ -46,7 +46,7 @@ jobs:
     - name: Stub
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
-        cd "C:\Program Files\"
+        cd "C:\Program Files (x86)\"
         dir
 
     - name: Build win32
