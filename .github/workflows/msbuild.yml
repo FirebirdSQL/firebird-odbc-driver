@@ -46,13 +46,12 @@ jobs:
     - name: Stub
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
-        #env
-        echo ${env.PROGRAMFILES}
-        #cd ${env.PROGRAMFILES}
-        #dir
-        echo ${env.ProgramFiles(x86)}
-        #cd ${env.ProgramFiles(x86)}
-        #dir
+        echo "ppp: ${env.PROGRAMFILES}"
+        cd ${env.PROGRAMFILES}
+        dir
+        echo "ppp86: ${env.ProgramFiles(x86)}"
+        cd ${env.ProgramFiles(x86)}
+        dir
 
     - name: Build win32
       working-directory: ${{env.GITHUB_WORKSPACE}}
