@@ -71,3 +71,11 @@ jobs:
         dir
         ./MakePackage.bat
         ./MakePackage.bat WIN32
+
+    - name: VirusTotal Scan
+      uses: crazy-max/ghaction-virustotal@v4
+      with:
+          #vt_api_key: ${{ secrets.VT_API_KEY }}
+          vt_api_key: effc35cbb3eb35975d5cf74eee8b75a1a1b12b6af0d66ed2a65cba48becaecc0
+          files: |
+            ./Install/Win32/install_image/*.exe
