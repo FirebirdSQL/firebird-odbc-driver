@@ -70,3 +70,4 @@ jobs:
         cd Install\Win32
         dir
         ./MakePackage.bat
+        ./MakePackage.bat WIN32
