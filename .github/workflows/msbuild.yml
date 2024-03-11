@@ -46,8 +46,8 @@ jobs:
     - name: Stub
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: |
-        echo "ppp: ${{env.PROGRAMFILES}}"
-        cd ${{env.PROGRAMFILES}}
+        echo "ppp: $PROGRAMFILES"
+        cd $PROGRAMFILES
         dir
         #echo "ppp86: $env.ProgramFiles(x86)"
         #cd $env.ProgramFiles(x86)
