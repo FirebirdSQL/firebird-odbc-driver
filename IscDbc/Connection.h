@@ -255,6 +255,8 @@ public:
 
 	virtual void		addRef() = 0;
 	virtual int			release() = 0;
+
+	virtual bool		isMsAccess() = 0;
 };
 
 #define DATABASEMETADATA_VERSION	1
@@ -517,16 +519,16 @@ public:
 	virtual void		setTypeDate() = 0;
 	virtual void		setTypeInt64() = 0;
 
-	virtual void		setSqlType ( short type ) = 0;
+	//virtual void		setSqlType ( short type ) = 0;
 	virtual void		setSqlScale ( short scale ) = 0;
-	virtual void		setSqlSubType ( short subtype ) = 0;
+	//virtual void		setSqlSubType ( short subtype ) = 0;
 	virtual void		setSqlLen ( short len ) = 0;
 	virtual short		getSqlMultiple () = 0;
 
 	virtual char *		getSqlData() = 0;
 	virtual short *		getSqlInd() = 0;
 	virtual void		setSqlData( char *data ) = 0;
-	virtual void		setSqlInd( short *ind ) = 0;
+	//virtual void		setSqlInd( short *ind ) = 0;
 
 	virtual bool		isReplaceForParamArray () = 0;
 

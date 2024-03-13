@@ -84,11 +84,11 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 	if (catalog && *catalog)
 		addString(pt, catalog);
 	addString(pt, "' as varchar(255)) as table_cat,\n"								// 1 - VARCHAR
-				"\tcast (tbl.rdb$owner_name as varchar(31)) as table_schem,\n"		// 2 - VARCHAR
-				"\tcast (rfr.rdb$relation_name as varchar(31)) as table_name,\n"	// 3 - VARCHAR NOT NULL
-				"\tcast (rfr.rdb$field_name as varchar(31)) as column_name,\n"		// 4 - VARCHAR NOT NULL
+				"\tcast (tbl.rdb$owner_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_schem,\n"		// 2 - VARCHAR
+				"\tcast (rfr.rdb$relation_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_name,\n"		// 3 - VARCHAR NOT NULL
+				"\tcast (rfr.rdb$field_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as column_name,\n"		// 4 - VARCHAR NOT NULL
 				"\tfld.rdb$field_type as data_type,\n"				// 5 - SMALLINT NOT NULL
-				"\tcast (fld.rdb$field_name as varchar(31)) as type_name,\n"		// 6 - VARCHAR NOT NULL
+				"\tcast (fld.rdb$field_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as type_name,\n"			// 6 - VARCHAR NOT NULL
 				"\tcast (fld.rdb$collation_id as integer) as column_size,\n"		// 7 - INTEGER
 				"\tcast (fld.rdb$character_set_id as integer) as buffer_length,\n"	// 8 - INTEGER
 				"\tcast (fld.rdb$field_scale as smallint) as decimal_digits,\n"		// 9 - SMALLINT
@@ -137,6 +137,46 @@ void IscColumnsResultSet::getColumns(const char * catalog, const char * schemaPa
 	numberColumns = 18;
 }
 
+// Legacy types converter
+void IscColumnsResultSet::LegacyTypesConversion()
+{
+	if (!sqlda) {
+		return;
+	}
+
+	static const short INT128_MAX_CHARS = 255;
+	auto blrType = sqlda->getShort(5);
+
+	switch (blrType)
+	{
+	case blr_dec64:
+	case blr_dec128:
+		sqlda->updateShort(5, blr_double);
+		sqlda->updateShort(24, 8);
+		break;
+	case blr_int128:
+		sqlda->updateShort(5, blr_varying);
+		sqlda->updateInt(7, 0);						//collation none
+		sqlda->updateInt(8, 2);						//charset ANSI
+		sqlda->updateInt(16,   INT128_MAX_CHARS);	//char/octet length
+		sqlda->updateShort(19, INT128_MAX_CHARS);
+		sqlda->updateShort(24, INT128_MAX_CHARS);
+		break;
+	case blr_sql_time_tz:
+	case blr_ex_time_tz:
+		sqlda->updateShort(5, blr_sql_time);
+		sqlda->updateShort(24, 4);
+		break;
+	case blr_timestamp_tz:
+	case blr_ex_timestamp_tz:
+		sqlda->updateShort(5, blr_timestamp);
+		sqlda->updateShort(24, 8);
+		break;
+	default:
+		break;
+	}
+}
+
 bool IscColumnsResultSet::nextFetch()
 {
 	if (!IscResultSet::nextFetch())
@@ -144,6 +184,11 @@ bool IscColumnsResultSet::nextFetch()
 		blob.clear();
 		return false;
 	}
+
+	//Since I don't know how to implement INT128, DECFLOAT & TIMIZONE just now
+	//because there are NO appropriate ODBC SQL types in ODBC spec
+	//we'll tempopary use a legacy types conversion here.
+	LegacyTypesConversion();
 
 	if ( !metaData->getUseSchemaIdentifier() )
 		sqlda->setNull(2);
@@ -229,7 +274,8 @@ bool IscColumnsResultSet::getDefSource (int indexIn, int indexTarget)
 		return false;
 	}
 
-	XSQLVAR *var = sqlda->Var(indexIn);
+	//XSQLVAR *var = sqlda->Var(indexIn);
+	auto * var = sqlda->Var( indexIn );
 	char buffer[1024];
 	char * beg = buffer + 7; // sizeof("default")
 	char * end;

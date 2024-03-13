@@ -43,11 +43,11 @@ void IscPrimaryKeysResultSet::getPrimaryKeys(const char * catalog, const char * 
 {
 	char sql[2048] =
 		"select cast ('' as varchar(7)) as table_cat,\n"							// 1
-				"\tcast (tbl.rdb$owner_name as varchar(31)) as table_schem,\n"		// 2
-				"\tcast (rel.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
-				"\tcast (seg.rdb$field_name as varchar(31)) as column_name,\n"		// 4
+				"\tcast (tbl.rdb$owner_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_schem,\n"	// 2
+				"\tcast (rel.rdb$relation_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_name,\n"	// 3
+				"\tcast (seg.rdb$field_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as column_name,\n"	// 4
 				"\tcast (seg.rdb$field_position+1 as smallint) as key_seq,\n"		// 5
-				"\tcast (rel.rdb$constraint_name as varchar(31)) as pk_name\n"		// 6
+				"\tcast (rel.rdb$constraint_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as pk_name\n"	// 6
 		"from rdb$relation_constraints rel, rdb$indices idx, rdb$index_segments seg,\n"
 		"     rdb$relations tbl\n"
 		" where rel.rdb$constraint_type = 'PRIMARY KEY'\n"

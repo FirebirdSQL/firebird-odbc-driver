@@ -37,6 +37,7 @@ class IscColumnsResultSet : public IscMetaDataResultSet
 public:
 	virtual bool nextFetch();
 	void getColumns(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * fieldNamePattern);
+	void LegacyTypesConversion();
 	IscColumnsResultSet(IscDatabaseMetaData *metaData);
 	void initResultSet(IscStatement *stmt);
 private:

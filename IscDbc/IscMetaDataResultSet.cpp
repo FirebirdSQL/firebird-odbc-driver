@@ -80,15 +80,15 @@ bool IscMetaDataResultSet::next()
 
 	++activePosRowInSet;
 
-	XSQLVAR *var = sqlda->sqlda->sqlvar;
     Value *value = values.values;
-	int count = sqlda->sqlda->sqld;
+	int count = sqlda->columnsCount;
 
-	for ( ; count--; ++var, ++value )
+	for ( auto n = 0; n < count; ++n, ++value )
 	{
-		statement->setValue( value, var );
+		auto * var = &sqlda->sqlvar.at(n);
+		statement->setValue( value, n + 1, *sqlda );
 
-		if ( *var->sqlind != -1 && (var->sqltype & ~1) == SQL_VARYING )
+		if ( *var->sqlind != -1 && (var->sqltype) == SQL_VARYING )
 		{
 			int	&length = value->data.string.length;
 			char *beg = value->data.string.string;
@@ -154,14 +154,16 @@ void IscMetaDataResultSet::addString(char *& stringOut, const char * string, int
 
 void IscMetaDataResultSet::convertBlobToString( int indSrc, int indDst )
 {
-	XSQLVAR *varDst = sqlda->Var( indDst );
-	IscBlob * blob = new IscBlob( statement, varDst );
+	//XSQLVAR *varDst = sqlda->Var( indDst );
+	auto * varDst = sqlda->Var( indDst );
+	IscBlob * blob = new IscBlob( statement, varDst->sqldata, varDst->sqlsubtype );
 	blob->fetchBlob();
 
 	*varDst->sqlind = -1;
 
 	int length = blob->length();
-	XSQLVAR *varSrc = sqlda->Var( indSrc );
+	//XSQLVAR *varSrc = sqlda->Var( indSrc );
+	auto * varSrc = sqlda->Var( indSrc );
 	char * src = varSrc->sqldata + sizeof ( short );
 	int lenSrc = varSrc->sqllen;
 	*varSrc->sqlind = 0;

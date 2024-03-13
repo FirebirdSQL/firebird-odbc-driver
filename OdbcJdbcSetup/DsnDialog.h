@@ -79,6 +79,8 @@ public:
 	BOOL	m_sensitive;
 	BOOL	m_autoQuoted;
 	BOOL	m_safeThread;
+	JString m_setBindCommand;
+	BOOL	m_enableCompatMode;
 
 public:
 	intptr_t DoModal();

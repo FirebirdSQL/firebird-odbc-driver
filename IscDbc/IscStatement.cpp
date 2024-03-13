@@ -97,18 +97,23 @@ static char requestInfo [] = { isc_info_sql_records,
 							   isc_info_sql_stmt_type,
 							   isc_info_end };
 
+using namespace Firebird;
+
 namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-IscStatement::IscStatement(IscConnection *connect)
+IscStatement::IscStatement(IscConnection *connect) :
+	inputSqlda{connect},
+	outputSqlda{connect}
 {
 	connection = connect;
 	useCount = 1;
 	numberColumns = 0;
 	statementHandle = NULL;
+	fbResultSet = nullptr;
 	transactionLocal = false;
 	transactionStatusChange = false;
 	transactionStatusChangingToLocal = false;
@@ -117,6 +122,7 @@ IscStatement::IscStatement(IscConnection *connect)
 	typeStmt = stmtNone;
 	resultsCount = 0;
 	resultsSequence	= 0;
+	summaryUpdateCount = 0;
 }
 
 IscStatement::~IscStatement()
@@ -147,11 +153,20 @@ void IscStatement::rollbackLocal()
 
 	if ( tr.transactionHandle )
 	{
-		ISC_STATUS statusVector[20];
-		connection->GDS->_rollback_transaction( statusVector, &tr.transactionHandle );
-
-		if ( statusVector[1] )
-			THROW_ISC_EXCEPTION( connection, statusVector );
+		ThrowStatusWrapper status( connection->GDS->_status );
+		try
+		{
+			tr.transactionHandle->rollback( &status );
+			tr.transactionHandle = nullptr;
+		} 
+		catch( const FbException& error )
+		{
+			if( tr.transactionHandle ) {
+				tr.transactionHandle->release();
+				tr.transactionHandle = nullptr;
+			}
+			THROW_ISC_EXCEPTION( connection, error.getStatus() );
+		}
 	}
 	tr.transactionPending = false;
 }
@@ -162,16 +177,19 @@ void IscStatement::commitLocal()
 
 	if ( tr.transactionHandle )
 	{
-		ISC_STATUS statusVector[20];
-		connection->GDS->_commit_transaction( statusVector, &tr.transactionHandle );
-
 		if ( !tr.nodeParamTransaction && transactionLocal )
 			transactionLocal = false;
 
-		if ( statusVector[1] )
+		ThrowStatusWrapper status( connection->GDS->_status );
+		try
+		{
+			tr.transactionHandle->commit( &status );
+			tr.transactionHandle = nullptr;
+		} 
+		catch( const FbException& error )
 		{
 			rollbackLocal();
-			THROW_ISC_EXCEPTION( connection, statusVector );
+			THROW_ISC_EXCEPTION( connection, error.getStatus() );
 		}
 	}
 	tr.transactionPending = false;
@@ -260,7 +278,7 @@ void IscStatement::switchTransaction( bool local )
 		transactionStatusChangingToLocal = false;
 }
 
-isc_tr_handle IscStatement::startTransaction()
+ITransaction* IscStatement::startTransaction()
 {
 	if ( connection->shareConnected )
 		return connection->startTransaction();
@@ -305,74 +323,78 @@ isc_tr_handle IscStatement::startTransaction()
 			return tr->transactionHandle;
 	}
 
-    ISC_STATUS statusVector[20];
-    char    iscTpb[9], *tpbBuffer;
-	int		count;
-
-	if ( !tr->nodeParamTransaction )
+	IUtil* utl    = connection->GDS->_master->getUtilInterface();
+	IXpbBuilder* tpb = nullptr;
+	ThrowStatusWrapper status( connection->GDS->_status );
+	try
 	{
-		tpbBuffer = iscTpb;
-		count = sizeof( iscTpb ) - 4; // 4 it's size block for Lock Timeout Wait Transactions
+		char *tpbBuffer;
+		int count;
 
-		iscTpb[0] = isc_tpb_version3;
-		iscTpb[1] = tr->transactionExtInit & TRA_ro ? isc_tpb_read : isc_tpb_write;
-		iscTpb[2] = tr->transactionExtInit & TRA_nw ? isc_tpb_nowait : isc_tpb_wait;
-
-		/* Isolation level */
-		switch( tr->transactionIsolation )
+		if ( !tr->nodeParamTransaction )
 		{
-		case 0x00000008L:
-			// SQL_TXN_SERIALIZABLE:
-			iscTpb[3] = isc_tpb_consistency;
-			count = 4;
-			break;
+			tpb = utl->getXpbBuilder(&status, IXpbBuilder::TPB, NULL, 0);
 
-		case 0x00000004L:
-			// SQL_TXN_REPEATABLE_READ:
-			iscTpb[3] = isc_tpb_concurrency;
-			count = 4;
-			break;
+			tpb->insertTag( &status, (tr->transactionExtInit & TRA_ro) ? isc_tpb_read   : isc_tpb_write );
+			tpb->insertTag( &status, (tr->transactionExtInit & TRA_nw) ? isc_tpb_nowait : isc_tpb_wait  );
 
-		case 0x00000001L:
-			// SQL_TXN_READ_UNCOMMITTED:
-			iscTpb[3] = isc_tpb_read_committed;
-			iscTpb[4] = isc_tpb_no_rec_version;
-			break;
+			/* Isolation level */
+			switch( tr->transactionIsolation )
+			{
+				case 0x00000008L:
+					// SQL_TXN_SERIALIZABLE:
+					tpb->insertTag( &status, isc_tpb_consistency );
+					break;
 
-		case 0x00000002L:
-		default:
-			// SQL_TXN_READ_COMMITTED:
-			iscTpb[3] = isc_tpb_read_committed;
-			iscTpb[4] = isc_tpb_rec_version;
-			break;
+				case 0x00000004L:
+					// SQL_TXN_REPEATABLE_READ:
+					tpb->insertTag( &status, isc_tpb_concurrency );
+					break;
+
+				case 0x00000001L:
+					// SQL_TXN_READ_UNCOMMITTED:
+					tpb->insertTag( &status, isc_tpb_read_committed );
+					tpb->insertTag( &status, isc_tpb_no_rec_version );
+					break;
+
+				case 0x00000002L:
+				default:
+					// SQL_TXN_READ_COMMITTED:
+					tpb->insertTag( &status, isc_tpb_read_committed );
+					tpb->insertTag( &status, isc_tpb_rec_version );
+					break;
+			}
+
+			if ( !(tr->transactionExtInit & TRA_nw) 
+				&& connection->attachment->isFirebirdVer2_0()
+				&& connection->attachment->getUseLockTimeoutWaitTransactions() )
+			{
+				tpb->insertInt(&status, isc_tpb_lock_timeout, connection->attachment->getUseLockTimeoutWaitTransactions() );
+			}
+			
+			count = tpb->getBufferLength(&status);
+			tpbBuffer = (char*)tpb->getBuffer(&status);
+		}
+		else
+		{
+			tpbBuffer = tr->nodeParamTransaction->tpbBuffer;
+			count = tr->nodeParamTransaction->lengthTpbBuffer;
+			tr->autoCommit = tr->nodeParamTransaction->autoCommit;
 		}
 
-		if ( !(tr->transactionExtInit & TRA_nw) 
-			&& connection->attachment->isFirebirdVer2_0()
-			&& connection->attachment->getUseLockTimeoutWaitTransactions() )
-		{
-			char *pt = &iscTpb[count];
+		tr->transactionHandle =
+			connection->attachment->databaseHandle->startTransaction( &status, count, (const unsigned char*)tpbBuffer );
 
-			*pt++ = isc_tpb_lock_timeout;
-			*pt++ = sizeof ( short );
-			*pt++ = (char)connection->attachment->getUseLockTimeoutWaitTransactions();
-			*pt++ = (char)(connection->attachment->getUseLockTimeoutWaitTransactions() >> 8);
-
-			count += 4;
+		if( tpb ) {
+			tpb->dispose();
+			tpb = nullptr;
 		}
 	}
-	else
+	catch( const FbException& error )
 	{
-		tpbBuffer = tr->nodeParamTransaction->tpbBuffer;
-		count = tr->nodeParamTransaction->lengthTpbBuffer;
-		tr->autoCommit = tr->nodeParamTransaction->autoCommit;
+		if( tpb ) tpb->dispose();
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
 	}
-
-    connection->GDS->_start_transaction( statusVector, &tr->transactionHandle, 1, &connection->attachment->databaseHandle,
-            count, tpbBuffer );
-
-    if ( statusVector[1] )
-		THROW_ISC_EXCEPTION( connection, statusVector );
 
 	if ( !tr->autoCommit )
 		tr->transactionPending = true;
@@ -396,7 +418,7 @@ void IscStatement::close()
 
 	if ( isActiveSelect() )
 	{
-		openCursor = false;
+		//openCursor = false;
 		if ( transactionLocal )
 		{
 			if ( transactionInfo.autoCommit )
@@ -474,7 +496,7 @@ ResultSet* IscStatement::getResultSet()
 	if (!statementHandle)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "no active statement");
 
-    if ( !isActiveSelect() && outputSqlda.sqlda->sqld < 1)
+    if ( !isActiveSelect() && outputSqlda.getColumnCount() < 1)
 		throw SQLEXCEPTION (NO_RECORDS_FOR_FETCH, "current statement doesn't return results");
 	
 	return createResultSet();
@@ -489,11 +511,15 @@ ResultSet* IscStatement::executeQuery(const char * sqlString)
 
 void IscStatement::setCursorName(const char * name)
 {
-	ISC_STATUS statusVector [20];
-	connection->GDS->_dsql_set_cursor_name (statusVector, &statementHandle, (char*) name, 0);
-
-	if (statusVector [1])
-		THROW_ISC_EXCEPTION (connection, statusVector);
+	ThrowStatusWrapper status( connection->GDS->_status );
+	try
+	{
+		statementHandle->setCursorName( &status, name );
+	}
+	catch( const FbException& error )
+	{
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
 }
 
 void IscStatement::setEscapeProcessing(bool enable)
@@ -524,7 +550,7 @@ bool IscStatement::getMoreResults()
 
 	++resultsSequence;
 
-	if (outputSqlda.sqlda->sqld > 0)
+	if (outputSqlda.getColumnCount() > 0)
 		return true;
 
 	return false;
@@ -532,7 +558,7 @@ bool IscStatement::getMoreResults()
 
 int IscStatement::getUpdateCount()
 {
-	if (outputSqlda.sqlda->sqld > 0)
+	if (outputSqlda.getColumnCount() > 0)
 		return -1;
 
 	return summaryUpdateCount;
@@ -544,19 +570,13 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 	if (resultSets.isEmpty())
 	{
 		bool isActiveCursor = this->isActiveCursor();
-		openCursor = false;
 		typeStmt = stmtNone;
 
 		if ( connection )
 		{
 			if ( isActiveCursor )
 			{
-				// Close cursors too.
-				ISC_STATUS statusVector[20];
-				connection->GDS->_dsql_free_statement( statusVector, &statementHandle, DSQL_close );
-				// Cursor already closed or not assigned
-				if ( statusVector[1] && statusVector[1] != 335544569)
-					THROW_ISC_EXCEPTION (connection, statusVector);
+				closeFbResultSet();
 			}			
 			
 			if ( transactionLocal )
@@ -578,39 +598,31 @@ void IscStatement::prepareStatement(const char * sqlString)
 
 	// Make sure we have a transaction started.  Allocate a statement.
 
-	isc_tr_handle transHandle = startTransaction();
-	ISC_STATUS statusVector [20];
-	GDS->_dsql_allocate_statement (statusVector, &connection->databaseHandle, &statementHandle);
-
-	if (statusVector [1])
-		THROW_ISC_EXCEPTION (connection, statusVector);
-
-	// Prepare dynamic SQL statement.  Make first attempt to get parameters
-
-	int dialect = connection->getDatabaseDialect();
-	GDS->_dsql_prepare (statusVector, &transHandle, &statementHandle,
-					  0, (char*) sqlString, dialect, outputSqlda);
-
-	if (statusVector [1])
-		THROW_ISC_EXCEPTION (connection, statusVector);
-
-	// If we didn't allocate a large enough SQLDA, try again.
-
-	if (outputSqlda.checkOverflow())
+	ITransaction* transHandle = startTransaction();
+	ThrowStatusWrapper status( connection->GDS->_status );
+	try
 	{
-		GDS->_dsql_describe (statusVector, &statementHandle, dialect, outputSqlda);
-		if (statusVector [1])
-			THROW_ISC_EXCEPTION (connection, statusVector);
-	}
-	
-	outputSqlda.allocBuffer ( this );
+		int dialect = connection->getDatabaseDialect();
 
-	openCursor			= false;
+		statementHandle =
+			connection->databaseHandle->prepare( &status, transHandle, 0, sqlString, dialect, IStatement::PREPARE_PREFETCH_METADATA );
+
+		inputSqlda.allocBuffer( this, statementHandle->getInputMetadata( &status ) );
+		outputSqlda.allocBuffer( this, statementHandle->getOutputMetadata( &status ) );
+
+		//OOAPI gives a 100% way to check whether stmt is selectable or not.
+		openCursor = ( statementHandle->getFlags(&status) & IStatement::FLAG_HAS_CURSOR );
+	}
+	catch( const FbException& error )
+	{
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
+
 	typeStmt			= stmtPrepare;
 	resultsCount		= 1;
 	resultsSequence		= 0;
 	int statementType	= getUpdateCounts();
-	
+
 	switch ( statementType )
 	{
 	case isc_info_sql_stmt_ddl:
@@ -638,18 +650,31 @@ bool IscStatement::execute()
 	if ( isActiveSelect() && connection->transactionInfo.autoCommit && resultSets.isEmpty() )
 		clearSelect();
 
-	// Make sure there is a transaction
-	ISC_STATUS statusVector [20];
-	isc_tr_handle transHandle = startTransaction();
+	ThrowStatusWrapper status( connection->GDS->_status );
+	try
+	{
+		// Make sure there is a transaction
+		ITransaction* transHandle = startTransaction();
 
-	int dialect = connection->getDatabaseDialect ();
-	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle, 
-			dialect, inputSqlda, NULL))
+		Sqlda::ExecBuilder execBuilder(inputSqlda);
+
+		if( openCursor == false )
+		{
+			statementHandle->execute( &status, transHandle, execBuilder.getMeta(), execBuilder.getBuffer(), NULL, NULL);
+		}
+		else
+		{
+			fbResultSet = statementHandle->openCursor( &status, transHandle,
+			                                           execBuilder.getMeta(), execBuilder.getBuffer(),
+			                                           outputSqlda.meta, 0 );
+		}
+	}
+	catch( const FbException& error )
 	{
 		if ( connection->transactionInfo.autoCommit )
 			connection->rollbackAuto();
 		clearSelect();
-		THROW_ISC_EXCEPTION (connection, statusVector);
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
 	}
 
 	resultsCount		= 1;
@@ -659,7 +684,8 @@ bool IscStatement::execute()
 	if ( isActiveSelect() )
 		typeStmt = stmtNone;
 
-	openCursor = false;
+	//* already set it on prepare()
+	//openCursor = false;
 
 	switch (statementType)
 	{
@@ -679,12 +705,12 @@ bool IscStatement::execute()
 
 	case isc_info_sql_stmt_select:
 		typeStmt = stmtSelect;
-		openCursor = true;
+		//openCursor = true;
 		break;
 
 	case isc_info_sql_stmt_select_for_upd:
 		typeStmt = stmtSelectForUpdate;
-		openCursor = true;
+		//openCursor = true;
 		break;
 
 	case isc_info_sql_stmt_insert:
@@ -700,32 +726,47 @@ bool IscStatement::execute()
 		break;
 	}
 
-	return outputSqlda.sqlda->sqld > 0;
+	return outputSqlda.getColumnCount() > 0;
 }
 
 bool IscStatement::executeProcedure()
 {
-	ISC_STATUS statusVector [20];
-	isc_tr_handle transHandle = startTransaction();
+	ThrowStatusWrapper status( connection->GDS->_status );
+	try
+	{
+		// Make sure there is a transaction
+		ITransaction* transHandle = startTransaction();
 
-	int dialect = connection->getDatabaseDialect ();
-	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle,
-			dialect, inputSqlda, outputSqlda))
+		Sqlda::ExecBuilder execBuilder(inputSqlda);
+
+		statementHandle->execute( &status, transHandle,
+		                          execBuilder.getMeta(), execBuilder.getBuffer(),
+		                          outputSqlda.meta, outputSqlda.buffer.data() );
+	}
+	catch( const FbException& error )
 	{
 		if ( connection->transactionInfo.autoCommit )
 			connection->rollbackAuto();
-		THROW_ISC_EXCEPTION (connection, statusVector);
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
 	}
 
 	resultsCount		= 1;
 	resultsSequence		= 0;
 	getUpdateCounts();
 
-	return outputSqlda.sqlda->sqld > 0;
+	return outputSqlda.getColumnCount() > 0;
 }
 
 void IscStatement::clearResults()
 {
+#if 0
+	openCursor = false;
+	typeStmt = stmtNone;
+	closeFbResultSet();
+	freeStatementHandle();
+	inputSqlda.clearSqlda();
+	outputSqlda.clearSqlda();
+#endif
 }
 
 int IscStatement::objectVersion()
@@ -736,15 +777,19 @@ int IscStatement::objectVersion()
 int IscStatement::getUpdateCounts()
 {
 	char buffer [128];
-	ISC_STATUS	statusVector [20];
 	CFbDll * GDS = connection->GDS;
 
-	GDS->_dsql_sql_info (statusVector, &statementHandle, 
-						sizeof (requestInfo), requestInfo,
-						sizeof (buffer), buffer);
-
-	if (statusVector [1])
-		THROW_ISC_EXCEPTION (connection, statusVector);
+	ThrowStatusWrapper status( GDS->_status );
+	try
+	{
+		statementHandle->getInfo( &status, 
+						sizeof (requestInfo), (const unsigned char*)requestInfo,
+						sizeof (buffer), (unsigned char*)buffer );
+	}
+	catch( const FbException& error )
+	{
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
 
 	int statementType = 0;
 	int insertCount = 0, updateCount = 0, deleteCount = 0;
@@ -795,25 +840,27 @@ int IscStatement::getUpdateCounts()
 	return statementType;
 }
 
-void IscStatement::setValue(Value *value, XSQLVAR *var)
+void IscStatement::setValue( Value *value, unsigned index, Sqlda& sqlData )
 {
-	if ((var->sqltype & 1) && *var->sqlind == -1)
+	auto * var = sqlData.Var( index );
+	auto * buf = var->sqldata;
+	
+	if( sqlData.isNull( index ) )
 		value->setNull();
 	else
-		switch (var->sqltype & ~1)
+		switch ( var->sqltype )
 			{
 			case SQL_TEXT:
 				{
-				char *data = (char*) var->sqldata;
-				data [ var->sqllen ] = 0;    
-				value->setString (data, false);
+				buf [ var->sqllen ] = 0;    
+				value->setString (buf, false);
 				}
 				break;
 
 			case SQL_VARYING:
 				{
-				int length = *((short*) var->sqldata);
-				char *data = var->sqldata + 2;
+				int length = *((short*)buf);
+				char *data = buf + 2;
 				if ( length < var->sqllen )
 				{
 					data [length] = 0;
@@ -826,34 +873,34 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 				break;
 
 			case SQL_BOOLEAN:
-				value->setValue (*(TYPE_BOOLEAN*) var->sqldata, var->sqlscale);
+				value->setValue (*(TYPE_BOOLEAN*)buf, var->sqlscale);
 				break;
 
 			case SQL_SHORT:
-				value->setValue (*(short*) var->sqldata, var->sqlscale);
+				value->setValue (*(short*)buf, var->sqlscale);
 				break;
 
 			case SQL_LONG:
-				value->setValue (*(int*) var->sqldata, var->sqlscale);
+				value->setValue (*(int*)buf, var->sqlscale);
 				break;
 
 			case SQL_FLOAT:
-				value->setValue (*(float*) var->sqldata);
+				value->setValue (*(float*)buf);
 				break;
 
 			case SQL_D_FLOAT:
 			case SQL_DOUBLE:
-				value->setValue (*(double*) var->sqldata);
+				value->setValue (*(double*)buf);
 				break;
 
 			case SQL_QUAD:
 			case SQL_INT64:
-				value->setValue (*(QUAD*) var->sqldata, var->sqlscale);
+				value->setValue (*(QUAD*)buf, var->sqlscale);
 				break;
 
 			case SQL_BLOB:
 				{
-				IscBlob* blob = new IscBlob (this, var);
+				IscBlob* blob = new IscBlob (this, buf, var->sqlsubtype);
 				value->setValue (blob);
 				blob->release();
 				}
@@ -861,7 +908,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 
 			case SQL_TIMESTAMP:
 				{
-				ISC_TIMESTAMP *date = (ISC_TIMESTAMP*) var->sqldata;
+				ISC_TIMESTAMP *date = (ISC_TIMESTAMP*)buf;
 				TimeStamp timestamp;
 				timestamp.date = date->timestamp_date;
 				timestamp.nanos = date->timestamp_time;
@@ -871,7 +918,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 
 			case SQL_TYPE_DATE:
 				{
-				ISC_DATE date = *(ISC_DATE*) var->sqldata;
+				ISC_DATE date = *(ISC_DATE*)buf;
 				int days = date;
 				DateTime dateTime;
 				dateTime.date = days; //NOMEY +
@@ -881,7 +928,7 @@ void IscStatement::setValue(Value *value, XSQLVAR *var)
 
 			case SQL_TYPE_TIME:
 				{
-				ISC_TIME data = *(ISC_TIME*) var->sqldata;
+				ISC_TIME data = *(ISC_TIME*)buf;
 				SqlTime time;
 				time.timeValue = data;
 				value->setValue (time);
@@ -924,7 +971,7 @@ void IscStatement::clearSelect()
 	{
 		resultsCount = 0;
 		resultsSequence	= 0;
-		openCursor = false;
+		closeFbResultSet();
 		typeStmt = stmtNone;
 		if ( transactionLocal )
 		{
@@ -941,9 +988,34 @@ void IscStatement::freeStatementHandle()
 {
 	if ( connection && statementHandle )
 	{
-		ISC_STATUS statusVector [20];
-		connection->GDS->_dsql_free_statement (statusVector, &statementHandle, DSQL_drop);
-		statementHandle = NULL;
+		ThrowStatusWrapper status( connection->GDS->_status );
+		try {
+			statementHandle->free( &status );
+			statementHandle = nullptr;
+		}
+		catch( const FbException& ) {}
+
+		if( statementHandle ) {
+			statementHandle->release();
+			statementHandle = nullptr;
+		}
+	}
+}
+
+void IscStatement::closeFbResultSet()
+{
+	if( !fbResultSet ) return;
+
+	ThrowStatusWrapper status( connection->GDS->_status );
+	try {
+		fbResultSet->close( &status );
+		fbResultSet = nullptr;
+	} catch( const FbException& error ) {
+		if( fbResultSet ) {
+			fbResultSet->release();
+			fbResultSet = nullptr;
+		}
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
 	}
 }
 

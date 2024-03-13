@@ -1,5 +1,6 @@
 Builds/*/Win32/
 Builds/*/x64/
+Builds/*/.vs/
 Install/Win32/install_image/
 *.suo
 *.ncb

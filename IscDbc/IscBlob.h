@@ -52,7 +52,7 @@ public:
 	void writeStringHexToBlob(char * sqldata, char *data, int length);
 	int length();
 	IscBlob();
-	IscBlob(IscStatement *stmt, XSQLVAR *var);
+	IscBlob(IscStatement *stmt, char* buf, short sqlsubtype);
 	~IscBlob();
 
 	void directCreateBlob( char * sqldata );
@@ -64,7 +64,7 @@ public:
 
 	IscStatement	*statement;
 	ISC_QUAD		blobId;
-	isc_blob_handle directBlobHandle;
+	Firebird::IBlob* directBlobHandle;
 	bool			fetched;
 	bool			directBlob;
 };

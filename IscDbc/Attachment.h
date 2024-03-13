@@ -43,7 +43,7 @@ public:
 	int getDatabaseDialect();
 	inline int getUseSchemaIdentifier();
 	inline int getUseLockTimeoutWaitTransactions();
-	JString getIscStatusText (ISC_STATUS *statusVector);
+	inline JString getIscStatusText ( Firebird::IStatus* status ) { return GDS->getIscStatusText( status ); }
 	int release();
 	void addRef();
 	void loadClientLiblary( Properties *properties );
@@ -54,8 +54,12 @@ public:
 	~Attachment();
 
 	CFbDll		*GDS;
-	isc_db_handle databaseHandle;
-	isc_tr_handle transactionHandle; // for two phase
+	//isc_db_handle databaseHandle;
+	//isc_tr_handle transactionHandle; // for two phase
+
+	Firebird::IAttachment* databaseHandle;
+	Firebird::ITransaction* transactionHandle; // for two phase
+
 	JString		dsn;
 	JString		databaseName;
 	JString		databaseServerName;

@@ -4,6 +4,10 @@
 #ifdef _WINDOWS
 #include <windows.h>
 #endif
+#include <sstream>
+
+#include <filesystem>
+#include <algorithm>
 
 namespace IscDbcLibrary {
 
@@ -305,8 +309,55 @@ typedef void        ISC_EXPORT print_blr(char ISC_FAR*,
 					void ISC_FAR*,
 					short);
 
+/* OOAPI */
+
+typedef Firebird::IMaster* ISC_EXPORT get_master_interface();
+typedef ISC_STATUS ISC_EXPORT get_transaction_handle(ISC_STATUS* userStatus, isc_tr_handle* handle, void* obj);
+typedef ISC_STATUS ISC_EXPORT get_database_handle(ISC_STATUS* userStatus, isc_db_handle* handle, void* obj);
+
 class CFbDll
 {
+private:
+	bool	_isMsAccess;
+	bool	detectMsAccess()
+	{
+#ifdef _WINDOWS
+		try
+		{
+			char buf[1024] = {};
+			auto n = GetModuleFileName(NULL, buf, sizeof(buf));
+			if (!n) return false;
+
+			std::filesystem::path fpath = std::string(buf, n);
+
+			{
+				std::stringstream ss;
+				ss << "Loaded from: " << fpath << "\n";
+				OutputDebugString(ss.str().c_str());
+			}
+
+			auto stem = fpath.stem().string();
+			auto extn = fpath.extension().string();
+			std::transform(stem.begin(), stem.end(), stem.begin(), [](unsigned char c) { return std::toupper(c); });
+			std::transform(extn.begin(), extn.end(), extn.begin(), [](unsigned char c) { return std::toupper(c); });
+
+			bool res = stem.find("MSACCESS") != std::string::npos && extn == ".EXE";
+			{
+				if (res) OutputDebugString("MS Access detected! Special patch will be applied.\n");
+			}
+			return res;
+		}
+		catch (...)
+		{
+			OutputDebugString("Unknown error in detectMsAccess().\n");
+			return false;
+		}
+
+#else
+		return false;
+#endif
+	}
+
 public:
 	CFbDll();
 	~CFbDll();
@@ -382,6 +433,27 @@ public:
 	encode_sql_time*			_encode_sql_time;
 	encode_timestamp*			_encode_timestamp;
 	print_blr*					_print_blr;
+
+	/* OOAPI */
+	get_master_interface*		_get_master_interface;
+	get_transaction_handle*		_get_transaction_handle;
+	get_database_handle*		_get_database_handle;
+
+public:
+    Firebird::IMaster*		_master;
+	Firebird::IProvider*	_prov;
+	Firebird::IStatus*		_status;
+
+	inline classJString::JString getIscStatusText( Firebird::IStatus* status )
+	{
+		char text [4096];
+		_master->getUtilInterface()->formatStatus( text, sizeof(text), status );
+		return text;
+	}
+
+	inline ISC_LONG getSqlCode( const ISC_STATUS* ev ) { return this->_sqlcode( const_cast<ISC_STATUS*>( ev ) ); }
+
+	inline bool isMsAccess() { return _isMsAccess; }
 };
 
 }; // end namespace IscDbcLibrary

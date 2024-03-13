@@ -1,11 +1,11 @@
 # firebird-odbc-driver
 
-Firebird ODBC driver
+Firebird ODBC driver v3.0
 
 ## Development
 
-- https://www.firebirdsql.org/en/devel-odbc-driver/ 
+- https://github.com/FirebirdSQL/firebird-odbc-driver
 
 ## Downloads
 
-- https://www.firebirdsql.org/en/odbc-driver/
+- https://github.com/FirebirdSQL/firebird-odbc-driver/wiki

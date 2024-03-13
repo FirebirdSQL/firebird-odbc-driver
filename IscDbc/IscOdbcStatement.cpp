@@ -33,6 +33,8 @@
 #include "Value.h"
 #include "IscStatementMetaData.h"
 
+using namespace Firebird;
+
 namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
@@ -53,7 +55,7 @@ IscOdbcStatement::~IscOdbcStatement()
 
 ResultSet* IscOdbcStatement::executeQuery()
 {
-	if (outputSqlda.sqlda->sqld < 1)
+	if (outputSqlda.columnsCount < 1)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "statement is not a Select");
 
 	IscStatement::execute();
@@ -64,7 +66,7 @@ ResultSet* IscOdbcStatement::executeQuery()
 
 void IscOdbcStatement::executeMetaDataQuery()
 {
-	if (outputSqlda.sqlda->sqld < 1)
+	if (outputSqlda.columnsCount < 1)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "statement is not a Select");
 
 	IscStatement::execute();
@@ -98,14 +100,12 @@ void IscOdbcStatement::prepareStatement(const char * sqlString)
 		getInputParameters();
 	}
 
-	inputSqlda.allocBuffer ( this );
-
 	if ( replaceParamArray )
 	{
 		int * label = labelParamArray;
 		while ( replaceParamArray-- )
 		{
-			CAttrSqlVar *var = inputSqlda.orgVar ( *label++ );
+			CAttrSqlVar *var = inputSqlda.Var ( *label++ );
 			var->replaceForParamArray = true;
 		}
 
@@ -116,6 +116,7 @@ void IscOdbcStatement::prepareStatement(const char * sqlString)
 
 void IscOdbcStatement::getInputParameters()
 {
+	/*
 	ISC_STATUS statusVector [20];
 
 	int dialect = connection->getDatabaseDialect ();
@@ -130,6 +131,7 @@ void IscOdbcStatement::getInputParameters()
 		if (statusVector [1])
 			THROW_ISC_EXCEPTION (connection, statusVector);
 	}
+	*/
 }
 
 int IscOdbcStatement::getNumParams()
@@ -170,18 +172,18 @@ StatementMetaData* IscOdbcStatement::getStatementMetaDataIRD()
 int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *& labelParamArray )
 {
 	const char *strSql = sql, *ch;
-	int numberColumns = inputSqlda.sqlda->sqld;
-	XSQLVAR *var = inputSqlda.sqlda->sqlvar;
+	int numberColumns = inputSqlda.columnsCount;
 	int *offsetParam = NULL;
 	int *offsetNameParam = NULL;
 	int countDefined = 0;
 
-	for (int n = 0; n < numberColumns; ++n, ++var)
+	for (int n = 0; n < numberColumns; ++n)
 	{
-		switch ( var->sqltype & ~1 )
+		auto* var = &inputSqlda.sqlvar.at( n );
+		switch ( var->sqltype )
 		{
 		case SQL_ARRAY:
-			if ( !var->sqlname_length )
+			if ( var->sqlname && *var->sqlname == 0 )
 			{
 				if ( !offsetParam )
 				{
@@ -224,17 +226,16 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 						break;
 					}
 
-				XSQLVAR *varIn = inputSqlda.sqlda->sqlvar;
 				int len = end - start;
 
-				for ( int m = 0; m < n; ++m, ++varIn )
+				for ( int m = 0; m < n; ++m )
 				{
-					if ( varIn->sqlname_length == len && !strncasecmp ( varIn->sqlname, start, len ) )
+					auto * varIn = &inputSqlda.sqlvar.at( m );
+					if ( varIn->sqlname && strlen(varIn->sqlname) == len && !strncasecmp ( varIn->sqlname, start, len ) )
 					{
-						memcpy ( var->sqlname, varIn->sqlname, len );
-						var->sqlname_length = len;
-						memcpy ( var->relname, varIn->relname, varIn->relname_length );
-						var->relname_length = varIn->relname_length;
+						var->sqlname = varIn->sqlname;
+						var->relname = varIn->relname;
+
 						offsetNameParam[n] = end - strSql;
 
 						if ( delimiter == '"' )
@@ -260,7 +261,7 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 
 		ch = strSql;
 	
-		for ( n = 0; n < numberColumns; ++n, ++var)
+		for ( n = 0; n < numberColumns; ++n )
 		{
 			int &offsetEndName = offsetNameParam[n];
 
@@ -286,6 +287,7 @@ int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *
 		tempSql[offset] = '\0';
 		delete [] offsetParam;
 		delete [] offsetNameParam;
+
 		return countDefined;
 	}
 	return 0;

@@ -1,4 +1,4 @@
-The IBPhoenix Firebird ODBC Driver Installation
+The Firebird ODBC Driver v3.0 Installation
 ===============================================
 
 The installer presents 3 installation options:

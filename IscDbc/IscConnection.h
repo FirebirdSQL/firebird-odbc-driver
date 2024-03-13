@@ -49,7 +49,7 @@ public:
 	}
 
 public:
-	isc_tr_handle	transactionHandle;
+	Firebird::ITransaction*	transactionHandle;
 	int				transactionIsolation;
 	int				transactionExtInit;
 	bool			autoCommit;
@@ -113,12 +113,13 @@ public:
 	virtual Properties* allocProperties();
 	JString getInfoString (char *buffer, int item, const char *defaultString);
 	int getInfoItem (char *buffer, int item, int defaultValue);
-	JString getIscStatusText (ISC_STATUS *statusVector);
+	JString getIscStatusText (Firebird::IStatus *status);
+	JString getIscStatusTextLegacy(ISC_STATUS * statusVector);
 	bool removeSchemaFromSQL( char *strSql, int lenSql, char *strSqlOut, int &lenSqlOut );
 	virtual int getNativeSql (const char * inStatementText, int textLength1,
 								char * outStatementText, int bufferLength,
 								int * textLength2Ptr);
-	isc_tr_handle startTransaction();
+	Firebird::ITransaction* startTransaction();
 	void deleteStatement (IscStatement *statement);
 	IscConnection();
 	~IscConnection();
@@ -144,13 +145,14 @@ public:
 	inline bool isMatchExt( char *& string, const char *keyWord, const int length );
 	virtual void prepareTransaction();
 	virtual bool getTransactionPending();
-	isc_db_handle getHandleDb();
+	Firebird::IAttachment* getHandleDb();
+	virtual bool isMsAccess() override { return GDS ? GDS->isMsAccess() : false; }
 
 public:
 	CNodeParamTransaction *tmpParamTransaction;
 	Attachment		*attachment;
 	CFbDll			*GDS;
-	isc_db_handle   databaseHandle;
+	Firebird::IAttachment* databaseHandle;
 	InfoTransaction	transactionInfo;
 	LinkedList		statements;
 	IscDatabaseMetaData	*metaData;

@@ -1,4 +1,4 @@
-Firebird ODBC Driver v2.0 Readme
+Firebird ODBC Driver v3.0 Readme
 ==========================================
 
 o What's new
@@ -11,12 +11,13 @@ o Feedback
 What's New
 ----------
 
-Welcome to the latest release of the Firebird ODBC driver. This release
+Welcome to the latest release of the Firebird ODBC driver v3.0. This release
 sees many significant advances in the driver. Notable changes are:
 
-o Increased conformance to the different ODBC specifications.
-o Better documentation.
-o Improved installation (and uninstallation) routines for Win32 and Linux.
+o OOAPI implementation inside;
+o Windows dll is renamed to FirebirdODBC.dll to avoid compatibility issues;
+o Windows driver name is set to "Firebird ODBC Driver" for the same reasons;
+o This version is for Firebird 3.0 and later clients only.
 
 
 All the new features and fixes are documented in the release notes.
@@ -40,31 +41,21 @@ applet in the Control Panel.
 o Known Issues
 --------------
 
-Applications such as OpenOffice Quickstarter retain a lock on the driver 
-libraries. Installation and Uninstallation will fail under these circumstances. 
-The only work around is to ensure that all applications that might be
-using the driver are closed before you start installation.
-
-There are no other known issues at this time.
+Testing in progress. You are welcome to participate!
 
 
 Feedback
 --------
 
-If you have feedback (good or bad) please email the Firebird
-OBDC driver development list at sourceforge. You can subscribe
-by visiting:
+If you have any feedback (good or bad) please visit the Firebird
+ODBC driver project at GitHub:
 
-  http://firebird.sourceforge.net/index.php?op=lists
+  https://github.com/FirebirdSQL/firebird-odbc-driver
 
-There is also information on how to access this list via a
-newsgroup mirror.
+The dedicated Firebird ODBC Driver v3.0 page is here:
 
-NOTE: This is not a support forum! It is for development issues only.
-This means that general questions about ODBC, SQL, or database access
+  https://github.com/FirebirdSQL/firebird-odbc-driver/wiki
+
+NOTE: This is not a general support forum! It is for development issues only.
+This means that common questions about ODBC, SQL, or database access
 will probably be ignored.
-
-
-
-
-

@@ -30,7 +30,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ibase.h>
+#include <firebird/Interface.h>
+#include <firebird/Message.h>
 #include "JString.h"
 #include "LoadFbClientDll.h"
 
@@ -49,7 +50,13 @@
 #define SQLEXCEPTION		SQLError
 #define NOT_YET_IMPLEMENTED	throw SQLEXCEPTION (FEATURE_NOT_YET_IMPLEMENTED, "not yet implemented")
 #define NOT_SUPPORTED(type,rellen,rel,collen,col) throw SQLEXCEPTION (UNSUPPORTED_DATATYPE, "datatype is not supported in ODBC: %s column %*s.%*s", type,rellen,rel,collen,col)
-#define THROW_ISC_EXCEPTION(connection, statusVector) throw SQLEXCEPTION ( connection->GDS->_sqlcode( statusVector ), statusVector [1], connection->getIscStatusText (statusVector))
+
+#define THROW_ISC_EXCEPTION(connection, status)\
+const ISC_STATUS * statusVector = status->getErrors();\
+throw SQLEXCEPTION ( connection->GDS->getSqlCode( statusVector ), statusVector [1], connection->getIscStatusText (status))
+
+#define THROW_ISC_EXCEPTION_LEGACY(connection, statusVector) throw SQLEXCEPTION ( connection->GDS->_sqlcode( statusVector ), statusVector [1], connection->getIscStatusTextLegacy (statusVector))
+
 #define OFFSET(type,fld)	(size_t)&(((type*)0)->fld)
 #define MAX(a,b)			((a > b) ? a : b)
 #define MIN(a,b)			((a < b) ? a : b)
@@ -104,7 +111,10 @@
 #define strncasecmp		strnicmp
 #endif // _MSC_VER >= 1400
 
+#if _MSC_VER < 1700
 #define snprintf		_snprintf
+#endif
+
 #define fcvt			_fcvt
 #define gcvt			_gcvt
 
@@ -156,11 +166,15 @@ typedef unsigned __int64			UQUAD;
 #define MAX_TIMESTAMP_LENGTH		24
 #define MAX_QUAD_LENGTH				18
 
+#define MAX_META_IDENT_LEN			63
+#define MACRO_TO_STR_(s)			#s
+#define MACRO_TO_STR(s)				MACRO_TO_STR_(s)
+
 namespace IscDbcLibrary 
 {
-int getTypeStatement(IscConnection *connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength, int *lengthPtr);
-int getInfoCountRecordsStatement(IscConnection *connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength, int *lengthPtr);
-int getPlanStatement(IscConnection *connection, isc_stmt_handle statementHandle,const void * value, int bufferLength, int *lengthPtr);
+int getTypeStatement(IscConnection *connection, Firebird::IStatement* Stmt,const void * buffer, int bufferLength, int *lengthPtr);
+int getInfoCountRecordsStatement(IscConnection *connection, Firebird::IStatement* Stmt,const void * buffer, int bufferLength, int *lengthPtr);
+int getPlanStatement(IscConnection *connection, Firebird::IStatement* statementHandle,const void * value, int bufferLength, int *lengthPtr);
 int getPageDatabase(IscConnection *connection, const void * info_buffer, int bufferLength,short *lengthPtr);
 int getWalDatabase(IscConnection *connection, const void * info_buffer, int bufferLength,short *lengthPtr);
 int strBuildStatInformations(const void * info_buffer, int bufferLength,short *lengthPtr);

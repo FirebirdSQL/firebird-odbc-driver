@@ -33,6 +33,8 @@
 #include "IscUserEvents.h"
 #include "SQLError.h"
 
+using namespace Firebird;
+
 namespace IscDbcLibrary {
 
 IscUserEvents::IscUserEvents( IscConnection *connect, PropertiesEvents *context, callbackEvent astRoutine, void *userAppData )
@@ -113,12 +115,19 @@ void IscUserEvents::initEventBlock()
 void IscUserEvents::queEvents( void * interfase )
 {
 	ISC_STATUS statusVector[20];
-	connection->GDS->_que_events( statusVector, &connection->databaseHandle,
-								   &eventId, lengthEventBlock, eventBuffer,
-								   (isc_callback)callbackAstRoutine,
-								   !interfase ? (UserEvents*)this : interfase );
+
+	isc_db_handle dbHandle = NULL;
+	connection->GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle );
+
 	if ( statusVector [1] )
-		THROW_ISC_EXCEPTION( connection, statusVector );
+		THROW_ISC_EXCEPTION_LEGACY( connection, statusVector );
+
+	connection->GDS->_que_events( statusVector, &dbHandle,
+	                              &eventId, lengthEventBlock, eventBuffer,
+	                              (isc_callback)callbackAstRoutine,
+	                              !interfase ? (UserEvents*)this : interfase );
+	if ( statusVector [1] )
+		THROW_ISC_EXCEPTION_LEGACY( connection, statusVector );
 }
 
 inline

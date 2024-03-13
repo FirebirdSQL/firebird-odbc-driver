@@ -35,12 +35,13 @@ namespace IscDbcLibrary {
 class IscConnection;
 class IscStatement;
 class Value;
+class CAttrSqlVar;
 
 class CAttrArray
 {
 public:
 	CAttrArray()	{ memset( this, 0, sizeof ( *this) ); }
-	void			loadAttributes ( IscStatement *stmt, char * nameRelation, char * nameFields, int sqlsubtype );
+	void			loadAttributes ( IscStatement *stmt, const char * nameRelation, const char * nameFields, int sqlsubtype );
 	int				getPrecisionInternal();
 	int				getBufferLength();
 	JString			getFbSqlType();
@@ -75,7 +76,7 @@ public:
 	void writeArray(Value * value);
 
 	void init();
-	void bind(IscStatement *stmt, XSQLVAR *var);
+	void bind(IscStatement *stmt, CAttrSqlVar * var);
 	void bind(Statement *stmt, char * sqldata);
 	void getBinary(int pos, int length, void * address);
 	int length();
@@ -84,7 +85,7 @@ public:
 
 	IscArray();
 	IscArray(CAttrArray * ptArr);
-	IscArray(IscStatement *stmt, XSQLVAR *var);
+	IscArray(IscStatement *stmt, CAttrSqlVar * var);
 	~IscArray();
 
 	IscStatement	*statement;

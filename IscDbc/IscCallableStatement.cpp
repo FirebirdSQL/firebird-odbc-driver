@@ -46,6 +46,8 @@
 #include "Value.h"
 #include "SQLError.h"
 
+using namespace Firebird;
+
 namespace IscDbcLibrary {
 
 char charTable [256] = {0};
@@ -92,32 +94,37 @@ IscCallableStatement::IscCallableStatement(IscConnection *connection)
 
 bool IscCallableStatement::execute()
 {
-	ISC_STATUS statusVector [20];
 	values.alloc (numberColumns);
 	int numberParameters = inputSqlda.getColumnCount();
-	isc_tr_handle transHandle = startTransaction();
+	ITransaction* transHandle = startTransaction();
 	int n;
 
 	for (n = 0; n < numberParameters; ++n)
 		inputSqlda.setValue (n, parameters.values + n, this);
 
-	int dialect = connection->getDatabaseDialect();
+	ThrowStatusWrapper status( connection->GDS->_status );
+	try
+	{
+		Sqlda::ExecBuilder execBuilder(inputSqlda);
 
-	if (connection->GDS->_dsql_execute2 (statusVector, &transHandle, &statementHandle,
-						  dialect, inputSqlda, outputSqlda))
-		THROW_ISC_EXCEPTION (connection, statusVector);
+		statementHandle->execute( &status, transHandle, execBuilder.getMeta(), execBuilder.getBuffer(),
+		                                                outputSqlda.meta, outputSqlda.buffer.data() );
+	}
+	catch( const FbException& error )
+	{
+		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	}
 
 	resultsCount	= 1;
 	resultsSequence = 0;
 	getUpdateCounts();
 
-	XSQLVAR *var = outputSqlda.sqlda->sqlvar;
     Value *value = values.values;
 
-	for (n = 0; n < numberColumns; ++n, ++var, ++value)
-		setValue (value, var);
+	for (n = 0; n < numberColumns; ++n, ++value)
+		setValue (value, n + 1, outputSqlda);
 
-	return outputSqlda.sqlda->sqld > 0;
+	return numberColumns > 0;
 }
 
 int IscCallableStatement::objectVersion()

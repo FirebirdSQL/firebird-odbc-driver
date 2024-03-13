@@ -86,12 +86,12 @@ void IscProcedureColumnsResultSet::getProcedureColumns(const char * catalog,
 	if (catalog && *catalog)
 		addString(pt, catalog);
 	addString(pt, "' as varchar(255)) as procedure_cat,\n"									// 1
-				"\tcast (p.rdb$owner_name as varchar(31)) as procedure_schem,\n"		// 2
-				"\tcast (pp.rdb$procedure_name as varchar(31)) as procedure_name,\n"	// 3
-				"\tcast (pp.rdb$parameter_name as varchar(31)) as column_name,\n"		// 4
+				"\tcast (p.rdb$owner_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as procedure_schem,\n"		// 2
+				"\tcast (pp.rdb$procedure_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as procedure_name,\n"	// 3
+				"\tcast (pp.rdb$parameter_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as column_name,\n"		// 4
 				"\tpp.rdb$parameter_type as column_type,\n"			// 5
 				"\tf.rdb$field_type as data_type,\n"				// 6
-				"\tcast (pp.rdb$procedure_name as varchar(31)) as type_name,\n"			// 7
+				"\tcast (pp.rdb$procedure_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as type_name,\n"		// 7
 				"\tcast ( f.rdb$field_length as integer ) as column_size,\n"			// 8
 				"\tcast ( null as integer ) as buffer_length,\n"	// 9
 				"\tcast ( f.rdb$field_scale as smallint) as decimal_digits,\n"			// 10

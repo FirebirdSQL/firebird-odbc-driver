@@ -43,7 +43,7 @@ namespace IscDbcLibrary {
 //////////////////////////////////////////////////////////////////////
 
 IscTablePrivilegesResultSet::IscTablePrivilegesResultSet(IscDatabaseMetaData *metaData)
-        : IscMetaDataResultSet(metaData)
+		: IscMetaDataResultSet(metaData)
 {
 	allTablesAreSelectable = metaData->allTablesAreSelectable();
 }
@@ -51,15 +51,15 @@ IscTablePrivilegesResultSet::IscTablePrivilegesResultSet(IscDatabaseMetaData *me
 void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern)
 {
 	char sql[2048] =  "select cast ('' as varchar(7)) as table_cat,"					//1
-				          "cast (tbl.rdb$owner_name as varchar(31)) as table_schem,"	//2
-						  "cast (tbl.rdb$relation_name as varchar(31)) as table_name,"	//3
-						  "cast (priv.rdb$grantor as varchar(31)) as grantor,"			//4
-						  "cast (priv.rdb$user as varchar(31)) as grantee,"				//5
+						  "cast (tbl.rdb$owner_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_schem,"		//2
+						  "cast (tbl.rdb$relation_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_name,"	//3
+						  "cast (priv.rdb$grantor as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as grantor,"			//4
+						  "cast (priv.rdb$user as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as grantee,"				//5
 						  "cast (priv.rdb$privilege as varchar(11)) as privilege,"		//6
 						  "cast ('YES' as varchar(3)) as isgrantable, "					//7
 						  "priv.rdb$grant_option as GRANT_OPTION "						//8
-                          "from rdb$relations tbl, rdb$user_privileges priv\n"
-                          "where tbl.rdb$relation_name = priv.rdb$relation_name\n";
+						  "from rdb$relations tbl, rdb$user_privileges priv\n"
+						  "where tbl.rdb$relation_name = priv.rdb$relation_name\n";
 
 	char * ptFirst = sql + strlen(sql);
 
@@ -73,22 +73,22 @@ void IscTablePrivilegesResultSet::getTablePrivileges(const char * catalog, const
 		addString(ptFirst, buf, len);
 	}
 
-    if (schemaPattern && *schemaPattern)
-        expandPattern (ptFirst, " and ","tbl.rdb$owner_name", schemaPattern);
+	if (schemaPattern && *schemaPattern)
+		expandPattern (ptFirst, " and ","tbl.rdb$owner_name", schemaPattern);
 
-    if (tableNamePattern && *tableNamePattern)
-        expandPattern (ptFirst, " and ","tbl.rdb$relation_name", tableNamePattern);
+	if (tableNamePattern && *tableNamePattern)
+		expandPattern (ptFirst, " and ","tbl.rdb$relation_name", tableNamePattern);
 
-    addString(ptFirst, " order by tbl.rdb$relation_name, priv.rdb$privilege, priv.rdb$user");
+	addString(ptFirst, " order by tbl.rdb$relation_name, priv.rdb$privilege, priv.rdb$user");
 
-    prepareStatement (sql);
-    numberColumns = 7;
+	prepareStatement (sql);
+	numberColumns = 7;
 }
 
 bool IscTablePrivilegesResultSet::nextFetch()
 {
-    if (!IscResultSet::nextFetch())
-        return false;
+	if (!IscResultSet::nextFetch())
+		return false;
 
 	if ( !metaData->getUseSchemaIdentifier() )
 		sqlda->setNull(2);
@@ -101,35 +101,35 @@ bool IscTablePrivilegesResultSet::nextFetch()
 
 	const char *privilege = sqlda->getVarying(6, len1);
 
-    switch ( *privilege )
-    {
-        case 'S':
-            sqlda->updateVarying( 6, "SELECT" );
-            break;
+	switch ( *privilege )
+	{
+		case 'S':
+			sqlda->updateVarying( 6, "SELECT" );
+			break;
 
-        case 'I':
-            sqlda->updateVarying( 6, "INSERT" );
-            break;
+		case 'I':
+			sqlda->updateVarying( 6, "INSERT" );
+			break;
 
-        case 'U':
-            sqlda->updateVarying( 6, "UPDATE" );
-            break;
+		case 'U':
+			sqlda->updateVarying( 6, "UPDATE" );
+			break;
 
-        case 'D':
-            sqlda->updateVarying( 6, "DELETE" );
-            break;
+		case 'D':
+			sqlda->updateVarying( 6, "DELETE" );
+			break;
 
-        case 'R':
-            sqlda->updateVarying( 6, "REFERENCES" );
-            break;
-    }
+		case 'R':
+			sqlda->updateVarying( 6, "REFERENCES" );
+			break;
+	}
 
 	int isGrantable = sqlda->getShort(8);
 
 	if ( !isGrantable )
 		sqlda->updateVarying( 7, "NO" );
 
-    return true;
+	return true;
 }
 
 }; // end namespace IscDbcLibrary

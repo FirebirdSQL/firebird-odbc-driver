@@ -4,16 +4,22 @@
 #include <stdio.h>
 #endif
 
+using namespace Firebird;
+
 namespace IscDbcLibrary {
 
-CFbDll::CFbDll() 
+CFbDll::CFbDll() :
+	_isMsAccess{ detectMsAccess() },
+	_master{nullptr},
+	_prov{nullptr},
+	_status{nullptr}
 { 
 	_Handle = NULL;
 }
 
 CFbDll::~CFbDll() 
 { 
-	Release(); 
+	Release();
 }
 
 bool CFbDll::LoadDll (const char * client, const char * clientDef)
@@ -37,8 +43,10 @@ bool CFbDll::LoadDll (const char * client, const char * clientDef)
 
 #ifdef _WINDOWS
 #define __ENTRYPOINT(X) _##X = (X*)GetProcAddress(_Handle, "isc_"#X)
+#define __ENTRYPOINT_OOAPI(X) _##X = (X*)GetProcAddress(_Handle, "fb_"#X)
 #else
 #define __ENTRYPOINT(X) _##X = (X*)dlsym(_Handle, "isc_"#X)
+#define __ENTRYPOINT_OOAPI(X) _##X = (X*)dlsym(_Handle, "fb_"#X)
 #endif					
 
 	__ENTRYPOINT(create_database);
@@ -102,20 +110,50 @@ bool CFbDll::LoadDll (const char * client, const char * clientDef)
 	__ENTRYPOINT(encode_timestamp);
 	__ENTRYPOINT(print_blr);
 
+	/* OOAPI */
+	__ENTRYPOINT_OOAPI(get_master_interface);
+	__ENTRYPOINT_OOAPI(get_transaction_handle);
+	__ENTRYPOINT_OOAPI(get_database_handle);
+
+	_master = _get_master_interface();
+	_prov   = _master->getDispatcher();
+	_status = _master->getStatus();
+
 	return true;
 }
 
 void CFbDll::Release(void)
 {
+	if( _prov ) {
+
+		CheckStatusWrapper status( _status );
+		try {
+			//TODO: for some reasons this code doesnt't work properly
+			//_prov->shutdown( &status, 0, fb_shutrsn_app_stopped );
+		} catch ( ... ) {
+			//TODO: some logging?..
+		}
+
+		_master->getPluginManager()->releasePlugin( _prov );
+		_prov = nullptr;
+	}
+
+	if( _status ) {
+		_status->dispose();
+		_status = nullptr;
+	}
+
+	_master = nullptr;
+
 //  Do not remove the comment!!!
 //  OdbcFb this intermediate link
-// 
-// 	if ( _Handle )
-// #ifdef _WINDOWS
-// 		FreeLibrary(_Handle);
-// #else
-// 		dlclose (_Handle);
-// #endif
+
+	if ( _Handle )
+#ifdef _WINDOWS
+		FreeLibrary(_Handle);
+#else
+		dlclose (_Handle);
+#endif
 
 	_Handle = NULL;
 }

@@ -69,41 +69,41 @@ void IscIndexInfoResultSet::getIndexInfo(const char * catalog,
 	const char *szAnd = " and ";
 	char sqlQuery[4096] =
 		"select cast('' as varchar(7)) as table_cat,\n"						// 1
-				"\tcast(rl.rdb$owner_name as varchar(31)) as table_schem,\n"	// 2
-				"\tcast(rl.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
+				"\tcast(rl.rdb$owner_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_schem,\n"		// 2
+				"\tcast(rl.rdb$relation_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_name,\n"	// 3
 				"\tcast(0 as smallint) as non_unique,\n"						// 4
-				"\tcast(NULL as varchar(31)) as index_qualifier,\n"				// 5
-				"\tcast(NULL as varchar(31)) index_name,\n"						// 6
+				"\tcast(NULL as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as index_qualifier,\n"				// 5
+				"\tcast(NULL as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) index_name,\n"						// 6
 				"\tcast(0 as smallint) as index_type,\n"						// 7  SQL_TABLE_STAT
 				"\tcast(NULL as smallint) as ordinal_position,\n"				// 8
-				"\tcast(NULL as varchar(31)) as column_name,\n"					// 9
+				"\tcast(NULL as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as column_name,\n"					// 9
 				"\tcast(NULL as char CHARACTER SET NONE) as asc_or_desc,\n"						// 10
 				"\tcast(NULL as integer) as cardinality,\n"						// 11
 				"\tcast(NULL as integer) as index_pages,\n"						// 12
-				"\tcast(NULL as varchar(31)) as filter_condition,\n"			// 13
+				"\tcast(NULL as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as filter_condition,\n"				// 13
 				"\tcast(NULL as smallint) as index_type,\n"						// 14
-				"\tcast(NULL as varchar(31)) as constraint_type\n"				// 15
+				"\tcast(NULL as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as constraint_type\n"				// 15
 		"from rdb$relations rl\n";
 
 	char sql[2048] =
 		"\tunion\n" 
 		"select cast('' as varchar(7)) as table_cat,\n"						// 1
-				"\tcast(tbl.rdb$owner_name as varchar(31)) as table_schem,\n"	// 2
-				"\tcast(idx.rdb$relation_name as varchar(31)) as table_name,\n"	// 3
+				"\tcast(tbl.rdb$owner_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_schem,\n"		// 2
+				"\tcast(idx.rdb$relation_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_name,\n"	// 3
 				"\tcast((1-idx.rdb$unique_flag) as smallint) as non_unique,\n"	// 4
-				"\tcast(idx.rdb$index_name as varchar(31)) as index_qualifier,\n"	// 5
-				"\tcast(idx.rdb$index_name as varchar(31)) as index_name,\n"	// 6
+				"\tcast(idx.rdb$index_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as index_qualifier,\n"	// 5
+				"\tcast(idx.rdb$index_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as index_name,\n"		// 6
 				"\tcast(3 as smallint) as index_type,\n"						// 7 (SQL_INDEX_OTHER)
 				"\tcast(seg.rdb$field_position as smallint) as ordinal_position,\n"	// 8
 				"\tcast(coalesce(seg.rdb$field_name,\n" 
-				"substring(idx.rdb$expression_source from 1 for 31)) as varchar(31)) as column_name,\n"	// 9
+				"substring(idx.rdb$expression_source from 1 for " MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as column_name,\n"	// 9
 				"\tcast(NULL as char CHARACTER SET NONE) as asc_or_desc,\n"						// 10
 				"\tcast((case when idx.rdb$statistics = 0 then 0 else\n" 
 				"1/idx.rdb$statistics end) as integer) as cardinality,\n"		// 11
 				"\tcast(NULL as integer) as index_pages,\n"						// 12
-				"\tcast(NULL as varchar(31)) as filter_condition,\n"			// 13
+				"\tcast(NULL as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as filter_condition,\n"						// 13
 				"\tcast(idx.rdb$index_type as smallint) as index_type,\n"		// 14
-				"\tcast(relc.rdb$constraint_type as varchar(31)) as constraint_type\n"	// 15
+				"\tcast(relc.rdb$constraint_type as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as constraint_type\n"	// 15
 		"from rdb$indices idx\n"
 			"\tleft join rdb$relations tbl on tbl.rdb$relation_name = idx.rdb$relation_name\n"
 			"\tleft join rdb$index_segments seg on idx.rdb$index_name = seg.rdb$index_name\n"
