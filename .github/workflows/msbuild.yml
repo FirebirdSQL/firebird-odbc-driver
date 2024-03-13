@@ -8,8 +8,8 @@ name: MSBuild
 on:
   push:
     branches: [ "feature_ooapi" ]
-  pull_request:
-    branches: [ "feature_ooapi" ]
+  #pull_request:
+  #  branches: [ "feature_ooapi" ]
 
 env:
   # Path to the solution file relative to the root of the project.
@@ -80,3 +80,9 @@ jobs:
           files: |
             ./Install/Win32/install_image/*_Win32.exe
             ./Install/Win32/install_image/*_x64.exe
+
+    - name: Upload artefacts
+      uses: actions/upload-artifact@v4
+      with:
+          name: win_installers
+          path: ./Install/Win32/install_image/
