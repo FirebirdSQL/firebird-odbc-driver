@@ -167,4 +167,7 @@ IDS_BUTTON_CLOSE,
 ,
 IDS_CHECK_COMPAT_MODE,
 	"Habilitar el modo de compatibilidad FB4+"
+,
+IDS_CHECK_WIRE_COMPRESSION,
+	"Habilitar la compresion"
 }

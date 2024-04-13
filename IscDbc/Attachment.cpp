@@ -191,6 +191,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 	isRoles = false;
 	databaseName = dbName;
 	const char emptyStr[] = "";
+	std::stringstream dpb_config;
 
 	IUtil* utl = GDS->_master->getUtilInterface();
 	ThrowStatusWrapper throw_status( GDS->_status );
@@ -275,6 +276,16 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 			dpb->insertString(&throw_status, isc_dpb_set_bind,
 				(bind_cmd && *bind_cmd) ? bind_cmd : "int128 to varchar;decfloat to legacy;time zone to legacy");
 		}
+
+		//Wire Compression
+		const char* enable_wire_compression = properties->findValue("EnableWireCompression", "N");
+		if (*enable_wire_compression == 'Y')
+		{
+			dpb_config << "WireCompression=true\n";
+		}
+
+		//store accumulated dpb config
+		dpb->insertString(&throw_status, isc_dpb_config, dpb_config.str().c_str());
 	}
 	catch( const FbException& error )
 	{

@@ -324,6 +324,7 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	charsetCode			= 0; // NONE
 	enableCompatBind    = true;
 	setCompatBindStr    = NULL;
+	enableWireCompression = false;
 
 #ifdef _WINDOWS
 #if _MSC_VER > 1000
@@ -660,6 +661,13 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 				enableCompatBind = false;
 
 			defOptions |= DEF_COMPATMODE;
+		}
+		else if (IS_KEYWORD(SETUP_ENABLE_WIRECOMPRESSION) || IS_KEYWORD(KEY_DSN_ENABLEWIRECOMPRESSION))
+		{
+			if (*value == 'N')
+				enableWireCompression = false;
+
+			defOptions |= DEF_WIRECOMPRESSION;
 		}
 		else if ( IS_KEYWORD( "ODBC" ) )
 			;
@@ -1685,6 +1693,8 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 		if (enableCompatBind && setCompatBindStr)
 			properties->putValue("SetCompatBind", setCompatBindStr);
 
+		properties->putValue("EnableWireCompression", enableWireCompression ? "Y" : "N");
+
 		connection->openDatabase (databaseName, properties);
 		properties->release();
 
@@ -1793,6 +1803,14 @@ void OdbcConnection::expandConnectParameters()
 
 		if (setCompatBindStr.IsEmpty())
 			setCompatBindStr = readAttribute (SETUP_SET_COMPAT_BIND);
+
+		if (!(defOptions & DEF_WIRECOMPRESSION))
+		{
+			options = readAttribute(SETUP_ENABLE_WIRECOMPRESSION);
+
+			if (*(const char*)options == 'Y')
+				enableWireCompression = true;
+		}
 
 		if (databaseName.IsEmpty())
 			databaseName = readAttribute (SETUP_DBNAME);
@@ -1905,6 +1923,14 @@ void OdbcConnection::expandConnectParameters()
 
 		if (setCompatBindStr.IsEmpty())
 			setCompatBindStr = readAttributeFileDSN (SETUP_SET_COMPAT_BIND);
+
+		if (!(defOptions & DEF_WIRECOMPRESSION))
+		{
+			options = readAttributeFileDSN(SETUP_ENABLE_WIRECOMPRESSION);
+
+			if (*(const char*)options == 'Y')
+				enableWireCompression = true;
+		}
 
 		if (databaseName.IsEmpty())
 			databaseName = readAttributeFileDSN (SETUP_DBNAME);
@@ -2033,6 +2059,7 @@ void OdbcConnection::saveConnectParameters()
 	writeAttributeFileDSN (SETUP_SAFETHREAD, safeThread ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_ENABLE_COMPAT_BIND, enableCompatBind ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_SET_COMPAT_BIND, setCompatBindStr);
+	writeAttributeFileDSN (SETUP_ENABLE_WIRECOMPRESSION, enableWireCompression ? "Y" : "N");
 
 	char buffer[256];
 	CSecurityPassword security;
