@@ -81,6 +81,7 @@ public:
 	BOOL	m_safeThread;
 	JString m_setBindCommand;
 	BOOL	m_enableCompatMode;
+	BOOL	m_enableWireCompression;
 
 public:
 	intptr_t DoModal();

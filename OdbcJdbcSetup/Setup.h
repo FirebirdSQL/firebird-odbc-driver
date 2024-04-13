@@ -80,6 +80,7 @@ public:
 	JString		safeThread;
 	JString		setCompatBindStr;
 	JString		enableCompatBind;
+	JString		enableWireCompression;
 	ULONG		serviceDb;
 };
 

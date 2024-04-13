@@ -50,6 +50,7 @@ class OdbcConnection : public OdbcObject
 		DEF_AUTOQUOTED = 32,
 		DEF_SAFETHREAD = 64,
 		DEF_COMPATMODE = 128,
+		DEF_WIRECOMPRESSION = 256,
 	};
 
 public:
@@ -130,6 +131,7 @@ public:
 	JString		pageSize;
 	JString		setCompatBindStr;
 	bool		enableCompatBind;
+	bool		enableWireCompression;
 	int			optTpb;
 	int			defOptions;
 	JString		useSchemaIdentifier;

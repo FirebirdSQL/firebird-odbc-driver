@@ -131,6 +131,7 @@ CDsnDialog::CDsnDialog( HWND hDlgParent,
 	m_safeThread = FALSE;
 	m_setBindCommand = "";
 	m_enableCompatMode = TRUE;
+	m_enableWireCompression = FALSE;
 
 	drivers = jdbcDrivers;
 	charsets = jdbcCharsets;
@@ -212,6 +213,7 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 		m_autoQuoted = SendDlgItemMessage(hDlg, IDC_CHECK_AUTOQUOTED, BM_GETCHECK, 0, 0);
 		m_safeThread = SendDlgItemMessage(hDlg, IDC_CHECK_SFTHREAD, BM_GETCHECK, 0, 0);
 		m_enableCompatMode = SendDlgItemMessage(hDlg, IDC_CHECK_COMPAT_MODE, BM_GETCHECK, 0, 0);
+		m_enableWireCompression = SendDlgItemMessage(hDlg, IDC_CHECK_WIRE_COMPRESSION, BM_GETCHECK, 0, 0);
 	}
 	else
 	{
@@ -275,6 +277,8 @@ void CDsnDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 			EnableWindow(GetDlgItem(hDlg, IDC_COMPAT_BINDINGS), FALSE);
 			SetDisabledDlgItem(hDlg, IDC_STATIC_COMPAT_BIND_LBL );
 		}
+
+		CheckDlgButton(hDlg, IDC_CHECK_WIRE_COMPRESSION, m_enableWireCompression);
 
         CheckDlgButton( hDlg, IDC_CHECK_QUOTED, m_quoted );
 
@@ -779,6 +783,8 @@ void CDsnDialog::OnTestConnection( HWND hDlg )
 		if ( m_enableCompatMode && !m_setBindCommand.IsEmpty() )
 			services.putParameterValue( SETUP_SET_COMPAT_BIND, m_setBindCommand );
 
+		services.putParameterValue(SETUP_ENABLE_WIRECOMPRESSION, m_enableWireCompression ? "Y" : "N");
+
 		services.openDatabase();
 
 		MessageBox( hDlg, _TR( IDS_MESSAGE_01, "Connection successful!" ), TEXT( strHeadDlg ), MB_ICONINFORMATION | MB_OK );
@@ -855,12 +861,12 @@ intptr_t CDsnDialog::DoModal()
 	*p++ = 0;          // LOWORD (lExtendedStyle)
 	*p++ = 0;          // HIWORD (lExtendedStyle)
 
-	*p++ = 40 + 4;         // NumberOfItems
+	*p++ = 40 + 4 + 2;         // NumberOfItems
 
 	*p++ = 0;          // x
 	*p++ = 0;          // y
 	*p++ = 310;        // cx
-	*p++ = 252 + 14 + 10;        // cy
+	*p++ = 252 + 14 + 10 + 14;        // cy
 	*p++ = 0;          // Menu
 	*p++ = 0;          // Class
 
@@ -894,7 +900,7 @@ intptr_t CDsnDialog::DoModal()
     TMP_LTEXT         ( _TR( IDS_STATIC_ROLE, "Role" ), IDC_STATIC,213,101,105,8 )
     TMP_LTEXT         ( _TR( IDS_STATIC_CHARSET, "Character Set" ), IDC_STATIC,7,125,98,8 )
 
-    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_OPTIONS, "Options" ), IDC_STATIC,7,151,296,77 + 16 + 10 )
+    TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_OPTIONS, "Options" ), IDC_STATIC,7,151,296,77 + 16 + 10 + 14 )
 
     TMP_GROUPBOX      ( _TR( IDS_GROUPBOX_INIT_TRANSACTION, "Transaction" ), IDC_STATIC,10,159,142,42 )
     TMP_LTEXT         ( _TR( IDS_STATIC_CLIENT, "Client" ), IDC_STATIC,7,76,218,8 )
@@ -918,9 +924,12 @@ intptr_t CDsnDialog::DoModal()
 	TMP_LTEXT         ( "Set bind:", IDC_STATIC_COMPAT_BIND_LBL, 14, 239, 41, 10)
 	TMP_EDITTEXT      ( IDC_COMPAT_BINDINGS, 50, 237, 245, 12, ES_AUTOHSCROLL )
 
-	TMP_DEFPUSHBUTTON(_TR(IDS_BUTTON_OK, "OK"), IDOK, 86, 233+14+10, 60, 14)
-	TMP_PUSHBUTTON(_TR(IDS_BUTTON_CANCEL, "Cancel"), IDCANCEL, 154, 233+14+10, 60, 14)
-	TMP_PUSHBUTTON(_TR(IDS_BUTTON_HELP_ODBC, "Help"), IDC_HELP_ODBC, 243, 233+14+10, 60, 14)
+	TMP_GROUPBOX("", IDC_STATIC, 10, 247, 290, 17)
+	TMP_BUTTONCONTROL(_TR(IDS_CHECK_WIRE_COMPRESSION, "Enable compression"), IDC_CHECK_WIRE_COMPRESSION, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 14, 253, 280, 10)
+
+	TMP_DEFPUSHBUTTON(_TR(IDS_BUTTON_OK, "OK"), IDOK, 86, 233+14+10+14, 60, 14)
+	TMP_PUSHBUTTON(_TR(IDS_BUTTON_CANCEL, "Cancel"), IDCANCEL, 154, 233+14+10+14, 60, 14)
+	TMP_PUSHBUTTON(_TR(IDS_BUTTON_HELP_ODBC, "Help"), IDC_HELP_ODBC, 243, 233+14+10+14, 60, 14)
 
 	intptr_t nRet = DialogBoxIndirectParam(m_hInstance, (LPDLGTEMPLATE) pdlgtemplate, m_hWndParent, (DLGPROC)wndprocDsnDialog, (LPARAM)this );
 	LocalFree (LocalHandle (pdlgtemplate));

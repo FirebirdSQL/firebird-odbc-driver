@@ -799,6 +799,7 @@ Setup::Setup( HWND windowHandle, const char *drvr, const char *attr )
 	serviceDb = enOpenDb;
 	safeThread = "Y";
 	enableCompatBind = "Y";
+	enableWireCompression = "N";
 
 	if ( drvr )
 		driver = drvr;
@@ -1548,6 +1549,11 @@ bool Setup::configureDialog()
 	else
 		dialog.m_enableCompatMode = TRUE;
 
+	if (IS_CHECK_YES(*(const char*)enableWireCompression))
+		dialog.m_enableWireCompression = TRUE;
+	else
+		dialog.m_enableWireCompression = FALSE;
+
 	do
 	{
 		intptr_t ret = dialog.DoModal();
@@ -1608,6 +1614,9 @@ bool Setup::configureDialog()
 	if (dialog.m_enableCompatMode) enableCompatBind = "Y";
 	else enableCompatBind = "N";
 
+	if (dialog.m_enableWireCompression) enableWireCompression = "Y";
+	else enableWireCompression = "N";
+
 	if ( !SQLWriteDSNToIni( dialog.m_name, driver ) )
 	{
 		MessageBoxInstallerError( _TR( IDS_ERROR_MESSAGE_17, "Config DSN" ), NULL );
@@ -1639,6 +1648,7 @@ void Setup::writeAttributes()
 	writeAttribute( SETUP_SAFETHREAD, safeThread );
 	writeAttribute( SETUP_SET_COMPAT_BIND, setCompatBindStr);
 	writeAttribute( SETUP_ENABLE_COMPAT_BIND, enableCompatBind);
+	writeAttribute( SETUP_ENABLE_WIRECOMPRESSION, enableWireCompression);
 
 	char buffer[256];
 	CSecurityPassword security;
@@ -1667,6 +1677,7 @@ void Setup::readAttributes()
 	safeThread = readAttribute( SETUP_SAFETHREAD );
 	setCompatBindStr = readAttribute( SETUP_SET_COMPAT_BIND );
 	enableCompatBind = readAttribute( SETUP_ENABLE_COMPAT_BIND );
+	enableWireCompression = readAttribute(SETUP_ENABLE_WIRECOMPRESSION);
 
 	JString pass = readAttribute( SETUP_PASSWORD );
 	if ( pass.length() > 40 )

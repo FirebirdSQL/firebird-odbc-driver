@@ -167,4 +167,7 @@ IDS_BUTTON_CLOSE,
 ,
 IDS_CHECK_COMPAT_MODE,
 	"¬ключить режим совместимости FB4+"
+,
+IDS_CHECK_COMPAT_MODE,
+	"¬ключить сжатие"
 }
