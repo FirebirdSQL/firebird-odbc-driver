@@ -41,7 +41,9 @@ applet in the Control Panel.
 o Known Issues
 --------------
 
-Testing in progress. You are welcome to participate!
+All known issues are listed here: https://github.com/FirebirdSQL/firebird-odbc-driver/issues
+All these issues seem to be minor and legacy.
+If you're an issue owner and/or you're interested in this fix, please update it and our team will get to work asap.
 
 
 Feedback
