@@ -1,3 +1,19 @@
+====== ODBC v3.0 driver notes ======================================
+
+Version 3.0 has no significant changes to the build sequence compared to the previous version.
+However, to build from source, you should use C++17.
+
+How to build:
+ * Move to Builds/gcc.lin
+ * Rename makefile.linux -> makefile
+ * Provide the correct path to your Firebird installation (FIREBIRD var)
+ * Set the DEBUG var if you need a debug build
+ * Run `make`
+ * Your libraries are in ./Release_<arch> or ./Debug_<arch> folder.
+
+===
+
+
 1)==================================================================
   For connect from unixODBC :
 

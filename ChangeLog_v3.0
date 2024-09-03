@@ -1,0 +1,33 @@
+
+ * OOAPI implemented
+   Related to this entire release
+
+ * Power BI problem, I think that is ODBC Driver.
+   #216 by hamacker was closed on Feb 16
+
+ * DECFLOAT not support
+   #214 by Zeki-Gursoy was closed on Feb 21
+
+ * Windows defender warns malware in installers.zip
+   #212 by tomneko was closed on Jan 17
+
+ * Installer does not overwrite older DLLs
+   #211 by jabrugger was closed on Dec 28, 2023
+
+ * Cannot link tables using MS Access
+   #210 by jabrugger was closed on Dec 26, 2023
+
+ * SUBSTRING in ODBC escape translations
+   #207 by edwig was closed on Feb 12
+
+ * ODBC - Firebird 4 affect-version: 3.0 Beta resolution: fixed
+   #205 by Uzytkownik111 was closed on Feb 29
+
+ * Configuration switch for WireCompression affect-version: 3.0 Beta enhancement priority: minor
+   #204 by MartinKoeditz was closed on Sep 03
+
+ * SQLTables error where table name is over 31 characters affect-version: 3.0 Beta resolution: fixed
+   #202 by faridzidan was closed on Feb 29
+
+ * SQLGetData with zero-length BLOB affect-version: 3.0 Beta resolution: fixed
+   #201 by aafemt was closed on Feb 29
