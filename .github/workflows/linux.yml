@@ -25,9 +25,7 @@ jobs:
         cp makefile.linux makefile
         make
     
-    - name: Upload artefacts
     - uses: actions/upload-artifact@v4
       with:
           name: linux_libs
           path: ./Builds/Gcc.lin/Release_*
-          
