@@ -31,3 +31,7 @@
 
  * SQLGetData with zero-length BLOB affect-version: 3.0 Beta resolution: fixed
    #201 by aafemt was closed on Feb 29
+   
+ * ODBC Statements do not respect the driver SQL_ATTR_MAX_ROWS setting. [ODBC74] affect-version: 2.0
+   affect-version: 3.0 Beta priority: minor type: bug
+   #73 by firebird-automations was closed Sep 4 2024
