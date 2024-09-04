@@ -1,0 +1,35 @@
+name: Linux
+
+on:
+  push:
+    branches: [ "feature_ooapi" ]
+#pull_request:
+#branches: [ "master" ]
+
+permissions:
+  contents: read
+  
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install UnixODBC package
+      run: sudo apt-get install -y unixodbc unixodbc-dev
+
+    - name: Go to build folder & make
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: |
+        cd Builds/Gcc.lin
+        cp makefile.linux makefile
+        make
+    
+    - name: Upload artefacts
+    - uses: actions/upload-artifact@v4
+      with:
+          name: linux_libs
+          path: ./Builds/Gcc.lin/Release_*
+          
