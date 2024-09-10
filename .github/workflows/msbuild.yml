@@ -7,7 +7,7 @@ name: MSBuild
 
 on:
   push:
-    branches: [ "feature_ooapi" ]
+    branches: [ "feature_ooapi", "master" ]
   #pull_request:
   #  branches: [ "feature_ooapi" ]
 
