@@ -2,7 +2,7 @@ name: Linux
 
 on:
   push:
-    branches: [ "feature_ooapi" ]
+    branches: [ "feature_ooapi", "master" ]
 
 permissions:
   contents: read
