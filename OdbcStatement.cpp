@@ -154,7 +154,7 @@ using namespace IscDbcLibrary;
 void TraceOutput(char * msg, intptr_t val)
 {
 	char buf[80];
-	sprintf( buf, "\t%s = %ld : %p\n", msg, val, val );
+	sprintf( buf, "\t%s = %ld : %p\n", msg, val, (void*)val );
 	OutputDebugString(buf);
 }
 
@@ -763,6 +763,9 @@ SQLRETURN OdbcStatement::fetchData()
 					
 					bindOffsetPtrTmp += rowBindType;
 					++nRow;
+
+					if (maxRows && nRow == maxRows)
+						break;
 				}
 				if ( statusPtr && nRow )
 					memset(statusPtr, SQL_ROW_SUCCESS, sizeof(*statusPtr) * nRow);
@@ -1095,6 +1098,9 @@ SQLRETURN OdbcStatement::sqlFetchScrollCursorStatic(int orientation, int offset)
 
 					bindOffsetPtrTmp += rowBindType;
 					++nRow;
+
+					if (maxRows && nRow == maxRows)
+						break;
 				}
 				if ( statusPtr )
 					memset(statusPtr, SQL_ROW_SUCCESS, sizeof(*statusPtr) * nRow);
@@ -2072,7 +2078,15 @@ SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 			 case SQL_WCHAR:
 			 case SQL_WVARCHAR:
 			 case SQL_WLONGVARCHAR:
-				cType = SQL_C_WCHAR;
+				// MSACCESS HACK!!!!
+				if (connection->connection->isMsAccess())
+				{
+					cType = SQL_C_CHAR;
+				}
+				else
+				{
+					cType = SQL_C_WCHAR;
+				}
 				break;
 			 case SQL_BIT:
 			 case SQL_BOOLEAN:

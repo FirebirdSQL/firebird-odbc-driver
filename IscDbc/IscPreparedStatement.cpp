@@ -70,7 +70,7 @@ IscPreparedStatement::~IscPreparedStatement()
 
 ResultSet* IscPreparedStatement::executeQuery()
 {
-	if (outputSqlda.sqlda->sqld < 1)
+	if (outputSqlda.columnsCount < 1)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "statement is not a Select");
 
 	execute();
@@ -88,7 +88,7 @@ int IscPreparedStatement::executeUpdate()
 
 void IscPreparedStatement::executeMetaDataQuery()
 {
-	if (outputSqlda.sqlda->sqld < 1)
+	if (outputSqlda.columnsCount < 1)
 		throw SQLEXCEPTION (RUNTIME_ERROR, "statement is not a Select");
 
 	execute();
@@ -155,6 +155,7 @@ void IscPreparedStatement::prepare(const char * sqlString)
 
 void IscPreparedStatement::getInputParameters()
 {
+/*
 	ISC_STATUS statusVector [20];
 
 	int dialect = connection->getDatabaseDialect ();
@@ -169,9 +170,11 @@ void IscPreparedStatement::getInputParameters()
 		if (statusVector [1])
 			THROW_ISC_EXCEPTION (connection, statusVector);
 	}
-
+*/
 	parameters.alloc (inputSqlda.getColumnCount());
+/*
 	inputSqlda.allocBuffer ( this );
+*/
 }
 
 int IscPreparedStatement::getNumParams()

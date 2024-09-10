@@ -37,7 +37,7 @@ public: // StatementMetaData
 	virtual int objectVersion(){ return STATEMENTMETADATA_VERSION; }
 
 public:
-	TypesResultSet( int dataType, int appOdbcVersion, int bytesPerCharacter );
+	TypesResultSet( int dataType, int appOdbcVersion, int bytesPerCharacter, IscConnection* conn );
 	~TypesResultSet();
 
 	virtual bool nextFetch();
@@ -47,7 +47,7 @@ public:
 	int			recordNumber;
 	int			dataTypes;
 	Sqlda		outputSqlda;
-	SQLLEN		*indicators;
+	std::vector<SQLLEN> indicators;
 };
 
 }; // end namespace IscDbcLibrary

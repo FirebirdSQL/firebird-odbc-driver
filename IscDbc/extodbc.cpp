@@ -22,6 +22,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <algorithm>
 #include <stdlib.h>
 #ifdef __FreeBSD__
 #include <sys/time.h>
@@ -31,54 +32,73 @@
 #include <string.h>
 #include "IscDbc.h"
 
+using namespace Firebird;
+
 namespace IscDbcLibrary {
 
-int getTypeStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,int *lengthPtr)
+int getTypeStatement(IscConnection * connection, IStatement* Stmt,const void * buffer, int bufferLength,int *lengthPtr)
 {
-	ISC_STATUS	statusVector[20];
-	char type_info[] = { isc_info_sql_stmt_type };
-	char * info_buffer=(char*)buffer;
-	int &l=*lengthPtr;
 	CFbDll * GDS = connection->GDS;
+    ThrowStatusWrapper status( GDS->_status );
 
-	if(GDS->_dsql_sql_info(statusVector,&Stmt,sizeof(type_info),type_info,bufferLength,info_buffer))
-		return -1;
-	l = GDS->_vax_integer((char*)info_buffer+1,2);
+    try
+    {
+        *lengthPtr = static_cast<int>( Stmt->getType( &status ) );
+    } 
+    catch( const FbException& )
+    {
+        return -1;
+    }
+
 	return 0;
 }
 
-int getInfoCountRecordsStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,int *lengthPtr)
+int getInfoCountRecordsStatement(IscConnection * connection, IStatement* Stmt,const void * buffer, int bufferLength,int *lengthPtr)
 {
-	ISC_STATUS	statusVector[20];
-	char records_info[] = { isc_info_sql_records,isc_info_end };
-	char * info_buffer=(char*)buffer;
-	int &l=*lengthPtr;
 	CFbDll * GDS = connection->GDS;
+    ThrowStatusWrapper status( GDS->_status );
 
-	if(GDS->_dsql_sql_info(statusVector,&Stmt,sizeof(records_info),records_info,bufferLength,info_buffer))
-		return -1;
-	l = GDS->_vax_integer((char*)info_buffer+1,2);
+    try
+    {
+        *lengthPtr = static_cast<int>( Stmt->getAffectedRecords( &status ) );
+    } 
+    catch( const FbException& )
+    {
+        return -1;
+    }
+
 	return 0;
 }
 
-int getPlanStatement(IscConnection * connection, isc_stmt_handle Stmt,const void * buffer, int bufferLength,int *lengthPtr)
+int getPlanStatement(IscConnection * connection, IStatement* Stmt,const void * buffer, int bufferLength,int *lengthPtr)
 {
-	ISC_STATUS	statusVector[20];
-	char plan_info[] = { isc_info_sql_get_plan };
-	char * plan_buffer=(char*)buffer;
-	int &l=*lengthPtr;
-	CFbDll * GDS = connection->GDS;
+    if( bufferLength < 3 ) return -1;
 
-	if(GDS->_dsql_sql_info(statusVector,&Stmt,sizeof(plan_info),plan_info,bufferLength,plan_buffer))
-		return -1;
-	else if(plan_buffer[0] == isc_info_sql_get_plan) 
-	{
-		l = GDS->_vax_integer((char*)plan_buffer+1,2)+3;
-		plan_buffer[0] = plan_buffer[1] = 32; // ' '
-		plan_buffer[2] = '\n';
-		if(l+1<bufferLength)plan_buffer[l++] = '\n'; 
-		plan_buffer[l] = 0;
-	}
+	char * plan_buffer = (char*)buffer;
+
+	CFbDll * GDS = connection->GDS;
+    ThrowStatusWrapper status( GDS->_status );
+
+    try
+    {
+        const char* plan = Stmt->getPlan( &status , false/*detailed*/ );
+
+        plan_buffer[0] = plan_buffer[1] = 32; // ' '
+        plan_buffer[2] = '\n';
+        *lengthPtr = 3;
+
+        int plan_len = strnlen( plan, bufferLength - *lengthPtr );
+        memcpy( plan_buffer + *lengthPtr, plan, plan_len );
+        *lengthPtr += plan_len;
+
+        if( *lengthPtr + 1 < bufferLength ) plan_buffer[ *lengthPtr++ ] = '\n';
+        plan_buffer[ (std::min)( *lengthPtr, bufferLength - 1 )  ] = 0;
+    } 
+    catch( const FbException& )
+    {
+        return -1;
+    }
+
 	return 0;
 }
 
@@ -124,18 +144,25 @@ int getInfoDatabase(IscConnection * connection, const void * info_buffer, int bu
 {
 	char *d, buffer[256], item, *info;
 	int length;
-	ISC_STATUS	statusVector[20];
 	char * info_buf=(char*)info_buffer;
 	short &l=*lengthPtr,len;
 	int set_used=0;
 	long value_out;
+
 	CFbDll * GDS = connection->GDS;
-	isc_db_handle Db = connection->getHandleDb();
+	IAttachment* Db = connection->getHandleDb();
 
 	*info_buf = '\0'; l=0;
 
-	if (GDS->_database_info(statusVector, &Db,db_info_length,db_info,256,buffer))
-		return -1;
+    ThrowStatusWrapper status( GDS->_status );
+    try
+    {
+        Db->getInfo( &status, db_info_length, (const unsigned char*)db_info, 256, (unsigned char*)buffer );
+    } 
+    catch( const FbException& )
+    {
+        return -1;
+    }
 
 	for(d = buffer, info = info_buf; *d != isc_info_end;) 
 	{
@@ -242,9 +269,9 @@ void getStatInformations(IscConnection * connection, char bNumberCall)
 	StatInfo * ptStat;
 	char *p, buffer[256];
 	signed short l, buffer_length, item_length;
-	ISC_STATUS	statusVector[20];
+
 	CFbDll * GDS = connection->GDS;
-	isc_db_handle Db = connection->getHandleDb();
+	IAttachment* Db = connection->getHandleDb();
 
 	buffer_length = sizeof(buffer);
 	item_length = sizeof(items);
@@ -265,7 +292,15 @@ void getStatInformations(IscConnection * connection, char bNumberCall)
 	ptStat->elapsed =
 		(long)(time_buffer.time - LARGE_NUMBER) * 100 + (time_buffer.millitm / 10);
 
-	GDS->_database_info(statusVector, &Db,item_length, items, buffer_length, buffer);
+    ThrowStatusWrapper status( GDS->_status );
+    try
+    {
+        Db->getInfo( &status, item_length, (const unsigned char*)items, buffer_length, (unsigned char*)buffer );
+    } 
+    catch( const FbException& )
+    {
+        return;
+    }
 
 	p = buffer;
 
@@ -340,9 +375,9 @@ int getStatInformations(IscConnection * connection, const void * info_buffer, in
 	StatInfo * ptStat = (StatInfo *)info_buffer;
 	char *p, buffer[256];
 	signed short l, buffer_length, item_length;
-	ISC_STATUS	statusVector[20];
+
 	CFbDll * GDS = connection->GDS;
-	isc_db_handle Db = connection->getHandleDb();
+	IAttachment* Db = connection->getHandleDb();
 
 	buffer_length = sizeof(buffer);
 	item_length = sizeof(items);
@@ -353,7 +388,15 @@ int getStatInformations(IscConnection * connection, const void * info_buffer, in
 	ptStat->elapsed =
 		(long)(time_buffer.time - LARGE_NUMBER) * 100 + (time_buffer.millitm / 10);
 
-	GDS->_database_info(statusVector, &Db,item_length, items, buffer_length, buffer);
+    ThrowStatusWrapper status( GDS->_status );
+    try
+    {
+        Db->getInfo( &status, item_length, (const unsigned char*)items, buffer_length, (unsigned char*)buffer );
+    } 
+    catch( const FbException& )
+    {
+        return -1;
+    }
 
 	p = buffer;
 

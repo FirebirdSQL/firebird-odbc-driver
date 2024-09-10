@@ -25,39 +25,124 @@
 #if !defined(_SQLDA_H_INCLUDED_)
 #define _SQLDA_H_INCLUDED_
 
+#include <vector>
 #include "IscArray.h"
 #include <sqltypes.h>
 
 namespace IscDbcLibrary {
 
-#define DEFAULT_SQLDA_COUNT		20
+struct SqlProperties
+{
+	unsigned		offsetData;
+	unsigned		offsetNull;
+	bool			isNullable;
+	const char*		sqlname;
+	const char*		relname;
+	const char*		aliasname;
+	short			sqltype;			/* datatype of field */
+	short			sqlscale;			/* scale factor */
+	short			sqlsubtype;			/* datatype subtype - BLOBs & Text types only */
+	unsigned		sqlcharset;
+	short			sqllen;				/* length of data area */
 
-class CAttrSqlVar
+	inline SqlProperties() :
+		offsetData{ 0 },
+		offsetNull{ 0 },
+		isNullable{ false },
+		sqlname{ nullptr },
+		relname{ nullptr },
+		aliasname{ nullptr },
+		sqltype{ 0 },
+		sqlscale{ 0 },
+		sqlsubtype{ 0 },
+		sqlcharset{ 0 },
+		sqllen{ 0 }
+	{}
+
+	inline bool operator==(const SqlProperties& other)
+	{
+		return
+			sqltype == other.sqltype &&
+			sqlscale == other.sqlscale &&
+			sqlsubtype == other.sqlsubtype &&
+			sqllen == other.sqllen;
+	}
+};
+
+class CAttrSqlVar : public SqlProperties
 {
 public:
-	CAttrSqlVar()	{ memset( this, 0, sizeof ( *this) ); }
+	CAttrSqlVar() :
+		SqlProperties{},
+
+		sqldata{ nullptr },
+		sqlind{ nullptr },
+
+		array{ nullptr },
+		index{ 0 },
+		replaceForParamArray{ false }
+	{}
+
 	~CAttrSqlVar()	
 	{ 
 		if ( array ) 
 			delete array; 
 	}
 
-	void operator = ( XSQLVAR *var )
-	{
-		sqltype = var->sqltype;
-		sqlscale = var->sqlscale;
-		sqlsubtype = var->sqlsubtype;
-		sqllen = var->sqllen; 
-		varOrg = var;
+	using buffer_t = std::vector<char>;
+
+private:
+	inline void bindProperties( Firebird::ThrowStatusWrapper& status, Firebird::IMessageMetadata* _meta, unsigned _index ) {
+		index = _index;
+		//
+		offsetData = _meta->getOffset    ( &status, index );
+		offsetNull = _meta->getNullOffset( &status, index );
+		isNullable = _meta->isNullable   ( &status, index );
+		sqlname    = _meta->getField     ( &status, index );
+		relname    = _meta->getRelation  ( &status, index );
+		aliasname  = _meta->getAlias     ( &status, index );
+		//attention - ooapi may return type+bit if getType() is called from IMetadataBuilder!
+		sqltype    = _meta->getType      ( &status, index ) & ~1;
+		//
+		sqlscale   = _meta->getScale     ( &status, index );
+		sqlsubtype = _meta->getSubType   ( &status, index );
+		sqlcharset = _meta->getCharSet   ( &status, index );
+		sqllen     = _meta->getLength    ( &status, index );
+
+		//OOAPI provides subtype & charset separately
+		if (sqltype == SQL_TEXT || sqltype == SQL_VARYING)
+		{
+			sqlsubtype = sqlcharset;
+		}
+		//
+		++index; //to make it 1-based)
+
+		orgSqlProperties = *static_cast<SqlProperties*>(this); // save original props
 	}
 
-	short			sqltype;			/* datatype of field */
-	short			sqlscale;			/* scale factor */
-	short			sqlsubtype;			/* datatype subtype - BLOBs & Text types only */
-	short			sqllen;				/* length of data area */
+public:
+	inline void assign(Firebird::ThrowStatusWrapper& status, Firebird::IMessageMetadata* _meta, buffer_t& _buffer, unsigned _index)
+	{
+		bindProperties( status, _meta, _index );
+		assignBuffer( _buffer );
+	}
+
+	inline void assignBuffer(buffer_t& buffer ) {
+		sqldata = &buffer.at( offsetData );
+		sqlind  = (short*)&buffer.at( offsetNull );
+	}
+
+	inline bool propertiesOverriden() {
+		return !( *this == orgSqlProperties );
+	}
+
+	char*           sqldata;
+	short*          sqlind;
 	CAttrArray		*array;
-	XSQLVAR			*varOrg;
+	unsigned		index;				// 1-based parameter index
+
 	bool			replaceForParamArray;
+	SqlProperties	orgSqlProperties;	// original properties after prepare
 };
 
 class Value;
@@ -66,16 +151,19 @@ class CDataStaticCursor;
 
 class Sqlda  
 {
+public:
+	using buffer_t = std::vector<char>;
+
 protected:
-	void initStaticCursor(IscStatement *stmt);
-	void addRowSqldaInBufferStaticCursor();
+	buffer_t& initStaticCursor(IscStatement *stmt);
+	buffer_t& addRowSqldaInBufferStaticCursor();
 	void restoreOrgAdressFieldsStaticCursor();
 
 public:
 	const char* getOwnerName (int index);
 	int findColumn (const char *columnName);
-	void setBlob (XSQLVAR *var, Value *value, IscStatement *stmt);
-	void setArray (XSQLVAR *var, Value *value, IscStatement *stmt);
+	void setBlob (CAttrSqlVar* var, Value * value, IscStatement *stmt);
+	void setArray (CAttrSqlVar* var, Value *value, IscStatement *stmt);
 	void setValue (int slot, Value *value, IscStatement	*stmt);
 	const char* getTableName (int index);
 	int getSqlType (CAttrSqlVar *var, int &realSqlType);
@@ -101,20 +189,19 @@ public:
 	int getColumnCount();
 	void init();
 	void remove();
-	void allocBuffer(IscStatement *stmt);
-	bool checkOverflow();
+	void allocBuffer(IscStatement *stmt, Firebird::IMessageMetadata* msgMetadata);
+	void mapSqlAttributes(IscStatement *stmt);
 	void deleteSqlda();
 	void clearSqlda();
-	operator XSQLDA*(){ return sqlda; }
-	XSQLVAR * Var(int index){ return sqlda->sqlvar + index - 1; }
-	CAttrSqlVar * orgVar(int index){ return orgsqlvar + index - 1; }
+	CAttrSqlVar* Var(int index) { return &sqlvar.at( index - 1 ); }
 
-	Sqlda();
+	Sqlda( IscConnection* conn );
 	~Sqlda();
 
 	int isBlobOrArray(int index);
 	bool isNull(int index);
 	void setNull(int index);
+	void setNotNull(int index);
 
 	bool getBoolean (int index);
 	short getShort (int index);
@@ -130,16 +217,49 @@ public:
 
 	CDataStaticCursor * dataStaticCursor;
 	int			lengthBufferRows;
-	int			*offsetSqldata;
-	int			indicatorsOffset;
 
-	XSQLDA		*sqlda;
-	char		tempSqlda [XSQLDA_LENGTH (DEFAULT_SQLDA_COUNT)];
-	char		*buffer;
-	CAttrSqlVar	*orgsqlvar;
-	bool		needsbuffer;
+	IscConnection* connection;
+	Firebird::IMessageMetadata* meta;
+	Firebird::IMessageMetadata* metaBackup;
+
+	buffer_t buffer;
+
+	using orgsqlvar_t = std::vector<CAttrSqlVar>;
+	orgsqlvar_t sqlvar;
+
+	unsigned columnsCount;
 
 	friend class IscResultSet;
+
+	inline bool isExternalOverriden() {
+		for( auto & var : sqlvar ) if (var.propertiesOverriden()) return true;
+		return false;
+	}
+
+	/*
+	*	This class is used to build meta & buffer just before the execution, taking into account sqlvar change during bind
+	*	It restores the original sqlvars in dtor
+	*/
+	class ExecBuilder
+	{
+	public:
+		ExecBuilder(Sqlda& sqlda);
+		~ExecBuilder();
+
+		inline Firebird::IMessageMetadata* getMeta() {
+			return *_meta;
+		}
+		inline char* getBuffer() {
+			return _buffer->data();
+		}
+	private:
+		Sqlda& _sqlda;
+		Firebird::IMessageMetadata** _meta;
+		buffer_t* _buffer;
+
+		Firebird::IMessageMetadata* _localMeta;
+		buffer_t _localBuffer;
+	};
 };
 
 }; // end namespace IscDbcLibrary

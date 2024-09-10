@@ -26,8 +26,8 @@
 
 
 #define BUILDTYPE_VERSION 	"WI_T"
-#define MAJOR_VERSION 		2
-#define MINOR_VERSION 		1
+#define MAJOR_VERSION 		3
+#define MINOR_VERSION 		0
 #define REVNO_VERSION 		0
 
 #ifdef _WIN64
@@ -36,8 +36,14 @@
 #define SUFFIX_BUILD		"32"
 #endif
 
-#define DRIVER_FULL_NAME	"Firebird ODBC driver"
+#define DRIVER_FULL_NAME	"Firebird ODBC Driver"
+
+#ifdef _WINDOWS
+#define DRIVER_NAME			"FirebirdODBC"
+#else
 #define DRIVER_NAME			"OdbcFb"
+#endif
+
 #define DEFAULT_DRIVER		"IscDbc"
 
 #ifdef _WINDOWS
@@ -86,6 +92,9 @@
 #define SETUP_PAGE_SIZE		"PageSize"
 #define SETUP_LOCKTIMEOUT	"LockTimeoutWaitTransactions"
 #define SETUP_SAFETHREAD    "SafeThread"
+#define SETUP_SET_COMPAT_BIND "SetCompatBind"
+#define SETUP_ENABLE_COMPAT_BIND "EnableCompatBind"
+#define SETUP_ENABLE_WIRECOMPRESSION "EnableWireCompression"
 
 #define FLAG_DATABASEACCESS	"DatabaseAccess"
 
@@ -109,6 +118,9 @@
 #define KEY_DSN_USESCHEMA	"USESCHEMA"
 #define KEY_DSN_LOCKTIMEOUT	"LOCKTIMEOUT"
 #define KEY_DSN_SAFETHREAD	"SAFETHREAD"
+#define KEY_DSN_SETCOMPATBIND "SETCOMPATBIND"
+#define KEY_DSN_ENABLECOMPATBIND "ENABLECOMPATBIND"
+#define KEY_DSN_ENABLEWIRECOMPRESSION "ENABLEWIRECOMPRESSION"
 
 #define LEN_KEY(keydsn) sizeof(keydsn) - 1
 

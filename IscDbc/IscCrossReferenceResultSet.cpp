@@ -57,18 +57,18 @@ void IscCrossReferenceResultSet::getCrossReference (const char * primaryCatalog,
 {
 	char sql[4096] =
 		"select cast ('' as varchar(7)) as pktable_cat,\n"	// 1
-				" cast (ptbl.rdb$owner_name as varchar(31)) as pktable_schem,\n"	// 2
-				" cast (pidx.rdb$relation_name as varchar(31)) as pktable_name,\n"	// 3
-				" cast (pseg.rdb$field_name as varchar(31)) as pkcolumn_name,\n"	// 4
+				" cast (ptbl.rdb$owner_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as pktable_schem,\n"		// 2
+				" cast (pidx.rdb$relation_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as pktable_name,\n"	// 3
+				" cast (pseg.rdb$field_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as pkcolumn_name,\n"		// 4
 				" cast ('' as varchar(7)) as fktable_cat,\n"	// 5
-				" cast (ftbl.rdb$owner_name as varchar(31)) as fktable_schem,\n"// 6
-				" cast (fidx.rdb$relation_name as varchar(31)) as fktable_name,\n"	// 7
-				" cast (fseg.rdb$field_name as varchar(31)) as fkcolumn_name,\n"	// 8
+				" cast (ftbl.rdb$owner_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as fktable_schem,\n"		// 6
+				" cast (fidx.rdb$relation_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as fktable_name,\n"	// 7
+				" cast (fseg.rdb$field_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as fkcolumn_name,\n"		// 8
 				" cast (pseg.rdb$field_position+1 as smallint) as key_seq,\n"		// 9
 				" cast (0 as smallint) as update_rule,\n"		// 10
 				" cast (0 as smallint) as delete_rule,\n"		// 11
-				" cast (fkey.rdb$constraint_name as varchar(31)) as fk_name,\n"		// 12
-				" cast (refc.rdb$const_name_uq as varchar(31)) as pk_name,\n"		// 13
+				" cast (fkey.rdb$constraint_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as fk_name,\n"		// 12
+				" cast (refc.rdb$const_name_uq as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as pk_name,\n"			// 13
 				" 7 as deferrability,\n"						// 14	SQL_NOT_DEFERRABLE
 				" refc.rdb$update_rule,\n"						// 15
 				" refc.rdb$delete_rule\n"						// 16

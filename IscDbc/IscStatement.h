@@ -50,15 +50,16 @@ public:
 						};
 
 	void freeStatementHandle();
+	void closeFbResultSet();
 	void clearSelect();
 	void rollbackLocal();
 	void commitLocal();
 	void setReadOnlyTransaction();
-	isc_tr_handle startTransaction();
+	Firebird::ITransaction* startTransaction();
 	static ISC_TIME getIscTime (SqlTime value);
 	static ISC_TIMESTAMP getIscTimeStamp (TimeStamp value);
 	static ISC_DATE getIscDate (DateTime date);
-	void setValue(Value *value, XSQLVAR *var);
+	void setValue(Value *value, unsigned index, Sqlda& sqlData );
 	int getUpdateCounts();
 	virtual int objectVersion();
 	void clearResults();
@@ -116,14 +117,16 @@ public:
 	int				numberColumns;
 	int				resultsCount;
 	int				resultsSequence;
-	isc_stmt_handle	statementHandle;
+	Firebird::IStatement* statementHandle;
 	InfoTransaction	transactionInfo;
+	Firebird::IResultSet* fbResultSet;
 	bool			transactionLocal;
 	bool			transactionStatusChange;
 	bool			transactionStatusChangingToLocal;
 
 	Sqlda			inputSqlda;
 	Sqlda			outputSqlda;
+
 	int				summaryUpdateCount;
 	int				typeStmt;
 	bool			openCursor;

@@ -34,6 +34,8 @@
 #include "IscConnection.h"
 #include "Attachment.h"
 
+using namespace Firebird;
+
 namespace IscDbcLibrary {
 
 EnvShare environmentShare;
@@ -91,38 +93,33 @@ void EnvShare::startTransaction()
 	if ( countConnection )
 	{
 		int i;
-		ISC_STATUS statusVector [20];
 		CFbDll *GDS = connections[0]->GDS;
-		struct 
-		{
-			isc_db_handle db;
-			char *opt;
-			int countOpt;
-		} shDb[MAX_COUNT_DBC_SHARE] = {0};
 
-		for ( i = 0; i < countConnection; i++ )
+		IDtc* dtc = GDS->_master->getDtc();
+		ThrowStatusWrapper status( GDS->_status );
+		IDtcStart* dtcBuilder = nullptr;
+		try
 		{
-			shDb[i].db = connections[i]->databaseHandle;
+			dtcBuilder = dtc->startBuilder( &status );
+
+			for( i = 0; i < countConnection; i++ ) {
+				dtcBuilder->addAttachment( &status, connections[i]->databaseHandle );
+			}
+
+			transactionHandle = dtcBuilder->start( &status );
+
+			for ( i = 0; i < countConnection; i++ )
+				connections[i]->attachment->transactionHandle = transactionHandle;
+
+			dtcBuilder->dispose();
+			dtcBuilder = nullptr;
 		}
-
-		GDS->_start_transaction(statusVector, &transactionHandle, countConnection, 
-			&shDb[0].db, shDb[0].countOpt, shDb[0].opt,
-			&shDb[1].db, shDb[1].countOpt, shDb[1].opt,
-			&shDb[2].db, shDb[2].countOpt, shDb[2].opt,
-			&shDb[3].db, shDb[3].countOpt, shDb[3].opt,
-			&shDb[4].db, shDb[4].countOpt, shDb[4].opt,
-			&shDb[5].db, shDb[5].countOpt, shDb[5].opt,
-			&shDb[6].db, shDb[6].countOpt, shDb[6].opt,
-			&shDb[7].db, shDb[7].countOpt, shDb[7].opt,
-			&shDb[8].db, shDb[8].countOpt, shDb[8].opt,
-			&shDb[9].db, shDb[9].countOpt, shDb[9].opt
-			);
-
-		if ( statusVector [1] )
-			throw SQLEXCEPTION( connections[0]->GDS->_sqlcode( statusVector ), statusVector [1], connections[0]->attachment->getIscStatusText( statusVector ) );
-
-		for ( i = 0; i < countConnection; i++ )
-			connections[i]->attachment->transactionHandle = transactionHandle;
+		catch( const FbException& error )
+		{
+			if( dtcBuilder ) dtcBuilder->dispose();
+			const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+			throw SQLEXCEPTION( GDS->getSqlCode( statusVector ), statusVector [1], GDS->getIscStatusText( error.getStatus() ) );
+		}
 	}
 }
 
@@ -143,14 +140,19 @@ void EnvShare::commit()
 {
 	if ( transactionHandle )
 	{
-		ISC_STATUS statusVector [20];
-		connections[0]->GDS->_commit_transaction (statusVector, &transactionHandle);
-		connections[0]->transactionInfo.transactionPending = false;
-
-		if ( statusVector [1] )
+		CFbDll *GDS = connections[0]->GDS;
+		ThrowStatusWrapper status( GDS->_status );
+		try
+		{
+			transactionHandle->commit( &status );
+			transactionHandle = nullptr;
+			connections[0]->transactionInfo.transactionPending = false;
+		}
+		catch( const FbException& error )
 		{
 			rollback();
-			throw SQLEXCEPTION( connections[0]->GDS->_sqlcode( statusVector ), statusVector [1], connections[0]->attachment->getIscStatusText( statusVector ) );
+			const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+			throw SQLEXCEPTION( GDS->getSqlCode( statusVector ), statusVector [1], GDS->getIscStatusText( error.getStatus() ) );
 		}
 	}
 }
@@ -159,12 +161,23 @@ void EnvShare::rollback()
 {
 	if ( transactionHandle )
 	{
-		ISC_STATUS statusVector [20];
-		connections[0]->GDS->_rollback_transaction (statusVector, &transactionHandle);
-		connections[0]->transactionInfo.transactionPending = false;
-
-		if ( statusVector [1] )
-			throw SQLEXCEPTION( connections[0]->GDS->_sqlcode( statusVector ), statusVector [1], connections[0]->attachment->getIscStatusText( statusVector ) );
+		CFbDll *GDS = connections[0]->GDS;
+		ThrowStatusWrapper status( GDS->_status );
+		try
+		{
+			transactionHandle->rollback( &status );
+			transactionHandle = nullptr;
+			connections[0]->transactionInfo.transactionPending = false;
+		}
+		catch( const FbException& error )
+		{
+			if( transactionHandle ) {
+				transactionHandle->release();
+				transactionHandle = nullptr;
+			}
+			const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+			throw SQLEXCEPTION( GDS->getSqlCode( statusVector ), statusVector [1], GDS->getIscStatusText( error.getStatus() ) );
+		}
 	}
 }
 

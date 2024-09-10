@@ -27,7 +27,9 @@
 ;
 ;
 
-#define MSVC_VERSION 9
+#define OBJNAME "FirebirdODBC"
+
+#define MSVC_VERSION 11
 #define BUILDCONFIG "release"
 
 #if MSVC_VERSION==7
@@ -36,6 +38,8 @@
 #define BUILD_ENV "MsVc80.win"
 #elif MSVC_VERSION==9
 #define BUILD_ENV "MsVc90.win"
+#elif MSVC_VERSION==11
+#define BUILD_ENV "MsVc2022.win"
 #else
 BUILD_ENV undefined
 #endif
@@ -78,7 +82,8 @@ BUILD_ENV undefined
 #endif
 
 [Setup]
-AppName=Firebird ODBC Driver
+DisableDirPage=No
+AppName=Firebird ODBC Driver 3
 AppVerName=Firebird ODBC driver {#ProductVersion}
 AppVersion={#ProductVersion}
 AppMutex=InnoSetupExtensionsCompilerAppMutex
@@ -87,10 +92,10 @@ AppPublisherURL={#FIREBIRD_URL}
 AppSupportURL={#FIREBIRD_URL}
 AppUpdatesURL={#FIREBIRD_URL}
 
-DefaultDirName={pf}\Firebird\Firebird_ODBC
-DefaultGroupName=Firebird\Firebird ODBC Driver
-UninstallDisplayIcon={sys}\OdbcFb.dll
-UninstallFilesDir={localappdata}\OdbcFb
+DefaultDirName={pf}\Firebird\Firebird_ODBC_3
+DefaultGroupName=Firebird\Firebird ODBC Driver 3
+UninstallDisplayIcon={sys}\{#OBJNAME}.dll
+UninstallFilesDir={localappdata}\{#OBJNAME}
 
 PrivilegesRequired=admin
 
@@ -132,14 +137,14 @@ Name: DocumentationComponent; Description: {cm:DocumentationComponent}; Types: D
 
 
 [Files]
-Source: {#SOURCE_LIBS}OdbcFb.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile
-Source: {#SOURCE_LIBS}\OdbcFb.lib; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
-Source: {#SOURCE_LIBS}\OdbcFb.pdb; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
+Source: {#SOURCE_LIBS}{#OBJNAME}.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace sharedfile replacesameversion confirmoverwrite
+Source: {#SOURCE_LIBS}\{#OBJNAME}.lib; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
+Source: {#SOURCE_LIBS}\{#OBJNAME}.pdb; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
 #ifdef HtmlHelp
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DeveloperComponent DeploymentComponent
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {app}; Components: DocumentationComponent
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {sys}; Components: DocumentationComponent
+Source: {#SOURCE_DOCS}\HtmlHelp\{#OBJNAME}.chm; DestDir: {app}; Components: DeveloperComponent DeploymentComponent
+Source: {#SOURCE_DOCS}\HtmlHelp\{#OBJNAME}.chm; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent
+Source: {#SOURCE_DOCS}\HtmlHelp\{#OBJNAME}.chm; DestDir: {app}; Components: DocumentationComponent
+Source: {#SOURCE_DOCS}\HtmlHelp\{#OBJNAME}.chm; DestDir: {sys}; Components: DocumentationComponent
 Source: {#SOURCE_DOCS}\HtmlHelp\html\*.*; DestDir: {app}\html; Components: DocumentationComponent
 Source: {#SOURCE_DOCS}\HtmlHelp\images\*.*; DestDir: {app}\images; Components: DocumentationComponent
 #endif
@@ -148,12 +153,12 @@ Source: {#SOURCE_DOCS}\IDPLicense.txt; DestDir: {app}; Components: Documentation
 ;Source: {#SOURCE_DOCS}\ReleaseNotes_v2.0.html; DestDir: {app}; Components: DocumentationComponent
 
 #if PlatformTarget == "x64"
-Source: {#SOURCE_LIBS32}OdbcFb.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace 32bit
-Source: {#SOURCE_LIBS32}\OdbcFb.lib; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent
-Source: {#SOURCE_LIBS32}\OdbcFb.pdb; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent
+Source: {#SOURCE_LIBS32}{#OBJNAME}.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace 32bit
+Source: {#SOURCE_LIBS32}\{#OBJNAME}.lib; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent
+Source: {#SOURCE_LIBS32}\{#OBJNAME}.pdb; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent
 #ifdef HtmlHelp
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent
-Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: DocumentationComponent
+Source: {#SOURCE_DOCS}\HtmlHelp\{#OBJNAME}.chm; DestDir: {syswow64}; Components: DeveloperComponent DeploymentComponent
+Source: {#SOURCE_DOCS}\HtmlHelp\{#OBJNAME}.chm; DestDir: {syswow64}; Components: DocumentationComponent
 #endif
 #endif
 
@@ -161,9 +166,9 @@ Source: {#SOURCE_DOCS}\HtmlHelp\OdbcFb.chm; DestDir: {syswow64}; Components: Doc
 Name: {group}\Uninstall Firebird ODBC driver; Filename: {uninstallexe}; Components: DocumentationComponent; Comment: Remove Firebird ODBC Driver Documentation
 Name: {group}\Uninstall Firebird ODBC driver; Filename: {uninstallexe}; Components: DeveloperComponent; Comment: Remove Firebird ODBC Driver Library and Documentation
 #ifdef HtmlHelp
-Name: {group}\Firebird ODBC Help; Filename: {app}\OdbcFb.chm; Components: DocumentationComponent
-Name: {group}\Firebird ODBC Help; Filename: {sys}\OdbcFb.chm; Components: DeveloperComponent
-Name: {app}\Firebird ODBC Help; Filename: {sys}\OdbcFb.chm; Components: DeveloperComponent
+Name: {group}\Firebird ODBC Help; Filename: {app}\{#OBJNAME}.chm; Components: DocumentationComponent
+Name: {group}\Firebird ODBC Help; Filename: {sys}\{#OBJNAME}.chm; Components: DeveloperComponent
+Name: {app}\Firebird ODBC Help; Filename: {sys}\{#OBJNAME}.chm; Components: DeveloperComponent
 #endif
 ;Name: {group}\Firebird ODBC v2.0 Release Notes; Filename: {app}\ReleaseNotes_v2.0.html; Components: DocumentationComponent
 Name: {group}\Firebird ODBC readme.txt; Filename: {app}\Readme.txt; Components: DocumentationComponent
@@ -171,15 +176,15 @@ Name: {group}\Firebird ODBC license.txt; Filename: {app}\IDPLicense.txt; Compone
 
 
 [Run]
-;Filename: {sys}\regsvr32.exe; Parameters: "/s ""{app}""\OdbcFb.dll"; Components: DeveloperComponent DeploymentComponent
+;Filename: {sys}\regsvr32.exe; Parameters: "/s ""{app}""\{#OBJNAME}.dll"; Components: DeveloperComponent DeploymentComponent
 
 
 [UninstallRun]
-;Filename: {sys}\regsvr32.exe; Parameters: "/u /s ""{app}""\OdbcFb.dll"; Components: DeveloperComponent DeploymentComponent
+;Filename: {sys}\regsvr32.exe; Parameters: "/u /s ""{app}""\{#OBJNAME}.dll"; Components: DeveloperComponent DeploymentComponent
 
 
 [UninstallDelete]
-Type: Files; Name: {sys}\OdbcFb.dll; Components: DeveloperComponent DeploymentComponent
+Type: Files; Name: {sys}\{#OBJNAME}.dll; Components: DeveloperComponent DeploymentComponent
 
 
 [CustomMessages]

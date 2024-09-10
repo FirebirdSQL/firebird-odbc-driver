@@ -1,3 +1,19 @@
+====== ODBC v3.0 driver notes ======================================
+
+Version 3.0 has no significant changes to the build sequence compared to the previous version.
+However, to build from source, you should use C++17.
+
+How to build:
+ * Make sure you have Unix ODBC dev package installed. If not - install it (for example: `sudo apt install unixodbc-dev` for Ubuntu)
+ * Move to Builds/Gcc.lin
+ * Rename makefile.linux -> makefile
+ * Set the DEBUG var if you need a Debug build instead of Release (by default)
+ * Run `make`
+ * Your libraries are in ./Release_<arch> or ./Debug_<arch> folder.
+
+===
+
+
 1)==================================================================
   For connect from unixODBC :
 

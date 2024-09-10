@@ -55,7 +55,7 @@ IDS_GROUPBOX_DIALECT, // "Dialect"
 	" Dialetto "
 ,
 IDS_GROUPBOX_EXT_PROPERTY, // "Extend property identifier"
-	" Proprietà estese identificatori "
+	" Proprieta estese identificatori "
 ,
 IDS_CHECK_QUOTED, // "quoted identifiers"
 	"identificatori tra doppi apici"
@@ -161,4 +161,13 @@ IDS_STATIC_LOCKTIMEOUT, // "lock timeout"
 ,
 IDS_CHECK_SFTHREAD, // "safe thread"
 	"safe thread"
+,
+IDS_BUTTON_CLOSE,
+	""
+,
+IDS_CHECK_COMPAT_MODE,
+	"Abilita la modalita di compatibilita FB4+"
+,
+IDS_CHECK_WIRE_COMPRESSION,
+	"Abilita la compressione"
 }

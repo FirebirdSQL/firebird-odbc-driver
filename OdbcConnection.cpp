@@ -322,6 +322,9 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	autoQuotedIdentifier = false;
 	userEventsInterfase	= NULL;
 	charsetCode			= 0; // NONE
+	enableCompatBind    = true;
+	setCompatBindStr    = NULL;
+	enableWireCompression = false;
 
 #ifdef _WINDOWS
 #if _MSC_VER > 1000
@@ -650,6 +653,22 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 
 			defOptions |= DEF_SAFETHREAD;
 		}
+		else if ( IS_KEYWORD( SETUP_SET_COMPAT_BIND ) || IS_KEYWORD( KEY_DSN_SETCOMPATBIND ) )
+			setCompatBindStr = value;
+		else if ( IS_KEYWORD(SETUP_ENABLE_COMPAT_BIND) || IS_KEYWORD( KEY_DSN_ENABLECOMPATBIND ) )
+		{
+			if (*value == 'N')
+				enableCompatBind = false;
+
+			defOptions |= DEF_COMPATMODE;
+		}
+		else if (IS_KEYWORD(SETUP_ENABLE_WIRECOMPRESSION) || IS_KEYWORD(KEY_DSN_ENABLEWIRECOMPRESSION))
+		{
+			if (*value == 'N')
+				enableWireCompression = false;
+
+			defOptions |= DEF_WIRECOMPRESSION;
+		}
 		else if ( IS_KEYWORD( "ODBC" ) )
 			;
 		else
@@ -671,7 +690,7 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 	if (!driver.IsEmpty())
 	{
 		if ( r > returnString )
-			r = appendString (r, ";"SETUP_DRIVER"=");
+			r = appendString (r, ";" SETUP_DRIVER"=");
 		else
 			r = appendString (r, SETUP_DRIVER"=");
 		r = appendString (r, driver);
@@ -679,13 +698,13 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 
 	if (!databaseName.IsEmpty())
 	{
-		r = appendString (r, ";"SETUP_DBNAME"=");
+		r = appendString (r, ";" SETUP_DBNAME"=");
 		r = appendString (r, databaseName);
 	}
 
 	if (!charset.IsEmpty())
 	{
-		r = appendString (r, ";"KEY_DSN_CHARSET"=");
+		r = appendString (r, ";" KEY_DSN_CHARSET"=");
 		r = appendString (r, charset);
 	}
 
@@ -722,7 +741,7 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 	{
 		if (!password.IsEmpty())
 		{
-			r = appendString (r, ";"KEY_DSN_PWD"=");
+			r = appendString (r, ";" KEY_DSN_PWD"=");
 
 			if ( connection->getUseAppOdbcVersion() == SQL_OV_ODBC3 )
 			{
@@ -737,25 +756,25 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 
 		if (!account.IsEmpty())
 		{
-			r = appendString (r, ";"KEY_DSN_UID"=");
+			r = appendString (r, ";" KEY_DSN_UID"=");
 			r = appendString (r, account);
 		}
 
 		if (!role.IsEmpty())
 		{
-			r = appendString (r, ";"SETUP_ROLE"=");
+			r = appendString (r, ";" SETUP_ROLE"=");
 			r = appendString (r, role);
 		}
 
 		if (!client.IsEmpty())
 		{
-			r = appendString (r, ";"SETUP_CLIENT"=");
+			r = appendString (r, ";" SETUP_CLIENT"=");
 			r = appendString (r, client);
 		}
 
 		if (!filedsn.IsEmpty())
 		{
-			r = appendString (r, ";"KEY_FILEDSN"=");
+			r = appendString (r, ";" KEY_FILEDSN"=");
 			r = appendString (r, filedsn);
 		}
 
@@ -1669,6 +1688,13 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 			properties->putValue ("timeout", buffer);
 		}
 
+		properties->putValue("EnableCompatBind", enableCompatBind ? "Y" : "N");
+
+		if (enableCompatBind && setCompatBindStr)
+			properties->putValue("SetCompatBind", setCompatBindStr);
+
+		properties->putValue("EnableWireCompression", enableWireCompression ? "Y" : "N");
+
 		connection->openDatabase (databaseName, properties);
 		properties->release();
 
@@ -1766,6 +1792,25 @@ void OdbcConnection::expandConnectParameters()
 
 		if (description.IsEmpty())
 			description = readAttribute (SETUP_DESCRIPTION);
+
+		if (!(defOptions & DEF_COMPATMODE))
+		{
+			options = readAttribute(SETUP_ENABLE_COMPAT_BIND);
+
+			if (*(const char*)options == 'N')
+				enableCompatBind = false;
+		}
+
+		if (setCompatBindStr.IsEmpty())
+			setCompatBindStr = readAttribute (SETUP_SET_COMPAT_BIND);
+
+		if (!(defOptions & DEF_WIRECOMPRESSION))
+		{
+			options = readAttribute(SETUP_ENABLE_WIRECOMPRESSION);
+
+			if (*(const char*)options == 'Y')
+				enableWireCompression = true;
+		}
 
 		if (databaseName.IsEmpty())
 			databaseName = readAttribute (SETUP_DBNAME);
@@ -1867,6 +1912,25 @@ void OdbcConnection::expandConnectParameters()
 
 		if (description.IsEmpty())
 			description = readAttributeFileDSN (SETUP_DESCRIPTION);
+
+		if (!(defOptions & DEF_COMPATMODE))
+		{
+			options = readAttributeFileDSN (SETUP_ENABLE_COMPAT_BIND);
+
+			if (*(const char*)options == 'N')
+				enableCompatBind = false;
+		}
+
+		if (setCompatBindStr.IsEmpty())
+			setCompatBindStr = readAttributeFileDSN (SETUP_SET_COMPAT_BIND);
+
+		if (!(defOptions & DEF_WIRECOMPRESSION))
+		{
+			options = readAttributeFileDSN(SETUP_ENABLE_WIRECOMPRESSION);
+
+			if (*(const char*)options == 'Y')
+				enableWireCompression = true;
+		}
 
 		if (databaseName.IsEmpty())
 			databaseName = readAttributeFileDSN (SETUP_DBNAME);
@@ -1993,6 +2057,9 @@ void OdbcConnection::saveConnectParameters()
 	writeAttributeFileDSN (SETUP_USESCHEMA, useSchemaIdentifier);
 	writeAttributeFileDSN (SETUP_LOCKTIMEOUT, useLockTimeoutWaitTransactions);
 	writeAttributeFileDSN (SETUP_SAFETHREAD, safeThread ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_ENABLE_COMPAT_BIND, enableCompatBind ? "Y" : "N");
+	writeAttributeFileDSN (SETUP_SET_COMPAT_BIND, setCompatBindStr);
+	writeAttributeFileDSN (SETUP_ENABLE_WIRECOMPRESSION, enableWireCompression ? "Y" : "N");
 
 	char buffer[256];
 	CSecurityPassword security;

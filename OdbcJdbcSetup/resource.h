@@ -84,6 +84,10 @@
 #define IDC_LOCKTIMEOUT                 1079
 #define IDC_STATIC_LOCKTIMEOUT          1080
 #define IDC_CHECK_SFTHREAD              1081
+#define IDC_COMPAT_BINDINGS             1082
+#define IDC_CHECK_COMPAT_MODE           1083
+#define IDC_STATIC_COMPAT_BIND_LBL      1084
+#define IDC_CHECK_WIRE_COMPRESSION      1085
 #define IDC_STATIC                      -1
 
 //
@@ -144,3 +148,5 @@
 #define IDS_STATIC_LOCKTIMEOUT          52
 #define IDS_CHECK_SFTHREAD		53
 #define IDS_BUTTON_CLOSE		54
+#define IDS_CHECK_COMPAT_MODE		55
+#define IDS_CHECK_WIRE_COMPRESSION	56

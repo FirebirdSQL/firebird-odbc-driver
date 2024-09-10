@@ -58,7 +58,7 @@ public:
 public:
 	IscConnection	*connections[MAX_COUNT_DBC_SHARE];
 	int				countConnection;
-	isc_tr_handle	transactionHandle;
+	Firebird::ITransaction*	transactionHandle;
 
 	ListParamTransaction *listTransaction;
 	JString			databaseServerName;

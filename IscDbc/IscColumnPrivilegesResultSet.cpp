@@ -46,11 +46,11 @@ IscColumnPrivilegesResultSet::IscColumnPrivilegesResultSet(IscDatabaseMetaData *
 void IscColumnPrivilegesResultSet::getColumnPrivileges(const char * catalog, const char * schemaPattern, const char * tableNamePattern, const char * columnNamePattern)
 {
 	char sql[4096] = "select cast ('' as varchar(7)) as table_cat,"
-				          "cast (tbl.rdb$owner_name as varchar(31)) as table_schem,"
-						  "cast (rfr.rdb$relation_name as varchar(31)) as table_name,"
-						  "cast (rfr.rdb$field_name as varchar(31)) as column_name,"
-						  "cast (priv.rdb$grantor as varchar(31)) as grantor,"
-						  "cast (priv.rdb$user as varchar(31)) as grantee,"
+				          "cast (tbl.rdb$owner_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_schem,"
+						  "cast (rfr.rdb$relation_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_name,"
+						  "cast (rfr.rdb$field_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as column_name,"
+						  "cast (priv.rdb$grantor as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as grantor,"
+						  "cast (priv.rdb$user as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as grantee,"
 						  "cast( priv.rdb$privilege as varchar(11) ) as privilege,"
 						  "cast ( priv.rdb$grant_option as varchar(3) ) as is_grantable "
 						  "from rdb$relation_fields rfr, rdb$user_privileges priv, rdb$relations tbl\n"

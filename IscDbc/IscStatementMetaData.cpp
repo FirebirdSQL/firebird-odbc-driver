@@ -191,7 +191,8 @@ void IscStatementMetaData::createBlobDataTransfer(int index, Blob *& ptDataBlob)
 		}
 		else // if ( isRet == SQL_ARRAY )
 		{
-			IscArray * pt = new IscArray(statement, sqlda->Var(index));
+			//IscArray * pt = new IscArray(statement, sqlda->Var(index));
+			IscArray * pt = new IscArray(statement, sqlda->Var( index ));
 			ptDataBlob = pt;
 		}
 	}
@@ -199,7 +200,7 @@ void IscStatementMetaData::createBlobDataTransfer(int index, Blob *& ptDataBlob)
 
 void IscStatementMetaData::getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar *& ptHeadSqlVar)
 {
-	CAttrSqlVar *var = sqlda->orgVar(index);
+	CAttrSqlVar *var = sqlda->Var(index);
 
 	if ( ptHeadSqlVar )
 		ptHeadSqlVar->release();

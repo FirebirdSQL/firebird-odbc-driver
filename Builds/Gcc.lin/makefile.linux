@@ -30,7 +30,7 @@ GCC		= g++
 
 #Override default variables for this build
 #ARCH = x86
-#FIREBIRD=/usr/lib64/firebird
+FIREBIRD=../../FBClient.Headers
 
 # Get version info
 MAJOR_VERSION = $(shell cat ../../SetupAttributes.h | grep "define MAJOR_VERSION" | cut -f 3)

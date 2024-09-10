@@ -161,4 +161,10 @@ IDS_STATIC_LOCKTIMEOUT, // "lock timeout"
 ,
 IDS_CHECK_SFTHREAD, // "safe thread"
 	"потоко-безпечне джерело"
+,
+IDS_BUTTON_CLOSE,
+	""
+,
+IDS_CHECK_COMPAT_MODE,
+	"Увімкнути стиск"
 }
