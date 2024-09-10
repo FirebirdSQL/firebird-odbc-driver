@@ -9,8 +9,8 @@ The most notable is that this version has OOAPI implementation inside.
 This version is for Firebird 3.0 and later clients only.
 
 All the new features and fixes are documented here - 
-* [Release Notes](https://html-preview.github.io/?url=https://github.com/FirebirdSQL/firebird-odbc-driver/blob/feature_ooapi/Install/ReleaseNotes_v3.0.html)
-* [ChangeLog](https://raw.githubusercontent.com/FirebirdSQL/firebird-odbc-driver/feature_ooapi/ChangeLog_v3.0)
+* [Release Notes](https://html-preview.github.io/?url=https://github.com/FirebirdSQL/firebird-odbc-driver/blob/master/Install/ReleaseNotes_v3.0.html)
+* [ChangeLog](https://raw.githubusercontent.com/FirebirdSQL/firebird-odbc-driver/master/ChangeLog_v3.0)
 
 ## Downloads
 The latest build artifacts:
