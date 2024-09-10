@@ -7,9 +7,7 @@ name: MSBuild
 
 on:
   push:
-    branches: [ "feature_ooapi", "master" ]
-  #pull_request:
-  #  branches: [ "feature_ooapi" ]
+    branches: [ "master" ]
 
 env:
   # Path to the solution file relative to the root of the project.
