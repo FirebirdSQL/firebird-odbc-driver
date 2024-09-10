@@ -1,8 +1,8 @@
 name: Linux
 
-on:
-  push:
-    branches: [ "master" ]
+on: workflow_dispatch
+  #push:
+    #branches: [ "feature_ooapi" ]
 
 permissions:
   contents: read
