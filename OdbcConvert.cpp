@@ -95,6 +95,9 @@ int init()
 
 inline void setIndicatorPtr(SQLLEN* ptr, SQLLEN value, DescRecord* rec)
 {
+	if (!ptr)
+		return;
+
 	if (rec->isIndicatorSqlDa)
 	{
 		*(short*)ptr = (short)value;
@@ -1018,25 +1021,25 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 inline 
 SQLPOINTER OdbcConvert::getAdressBindDataFrom(char * pointer)
 {
-	return (SQLPOINTER)(pointer + *bindOffsetPtrFrom);
+	return pointer ? (SQLPOINTER)(pointer + *bindOffsetPtrFrom) : NULL;
 }
 
 inline
 SQLLEN * OdbcConvert::getAdressBindIndFrom(char * pointer)
 {
-	return (SQLLEN *)(pointer + *bindOffsetPtrIndFrom);
+	return pointer ? (SQLLEN *)(pointer + *bindOffsetPtrIndFrom) : NULL; 
 }
 
 inline 
 SQLPOINTER OdbcConvert::getAdressBindDataTo(char * pointer)
 {
-	return (SQLPOINTER)(pointer + *bindOffsetPtrTo);
+	return pointer ? (SQLPOINTER)(pointer + *bindOffsetPtrTo) : NULL;
 }
 
 inline
 SQLLEN * OdbcConvert::getAdressBindIndTo(char * pointer)
 {
-	return (SQLLEN *)(pointer + *bindOffsetPtrIndTo);
+	return pointer ? (SQLLEN *)(pointer + *bindOffsetPtrIndTo) : NULL;
 }
 
 #define ODBCCONVERT_CHECKNULL(pointerTo)					\
@@ -1081,10 +1084,11 @@ SQLLEN * OdbcConvert::getAdressBindIndTo(char * pointer)
 	{														\
 		if( checkIndicatorPtr( indicatorFrom, SQL_NULL_DATA, from ) ) \
 		{													\
-			setIndicatorPtr( indicatorTo, SQL_NULL_DATA, to ); \
+			if ( indicatorTo )                              \
+				setIndicatorPtr( indicatorTo, SQL_NULL_DATA, to ); \
 			return SQL_SUCCESS;								\
 		}													\
-		else												\
+		else if ( indicatorTo )								\
 			setIndicatorPtr( indicatorTo, 0, to );			\
 	}														\
 	if ( !pointer )											\
@@ -1093,10 +1097,11 @@ SQLLEN * OdbcConvert::getAdressBindIndTo(char * pointer)
 #define ODBCCONVERT_CHECKNULL_SQLDA							\
 	if( checkIndicatorPtr( indicatorFrom, SQL_NULL_DATA, from ) ) \
 	{														\
-		setIndicatorPtr( indicatorTo, SQL_NULL_DATA, to );	\
+		if ( indicatorTo )									\
+			setIndicatorPtr( indicatorTo, SQL_NULL_DATA, to );	\
 		return SQL_SUCCESS;									\
 	}														\
-	else													\
+	else if ( indicatorTo )									\
 		setIndicatorPtr( indicatorTo, 0, to );				\
 
 #define GET_LEN_FROM_OCTETLENGTHPTR			\
