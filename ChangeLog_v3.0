@@ -1,3 +1,5 @@
+ * Abnormal termination in SQLFetch()
+   #229 by fdcastel
 
  * OOAPI implemented
    Related to this entire release
