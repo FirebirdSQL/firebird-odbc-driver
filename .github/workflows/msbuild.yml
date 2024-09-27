@@ -80,10 +80,31 @@ jobs:
             ./Install/Win32/install_image/*_Win32.exe
             ./Install/Win32/install_image/*_x64.exe
 
-    - name: Upload artefacts
+    - name: Upload artefacts 
       run: |
           echo "${{ steps.virustotal_scan.outputs.analysis }}" > ./Install/Win32/install_image/VirusTotalScan.txt
+          
     - uses: actions/upload-artifact@v4
+      id: upload_step1
       with:
-          name: win_installers
-          path: ./Install/Win32/install_image/
+          name: VirusTotalScan
+          path: ./Install/Win32/install_image/VirusTotalScan.txt
+
+    - uses: actions/upload-artifact@v4
+      id: upload_step2
+      with:
+          name: Win32Installer
+          path: ./Install/Win32/install_image/*_Win32.exe
+
+    - uses: actions/upload-artifact@v4
+      id: upload_step3
+      with:
+          name: x64Installer
+          path: ./Install/Win32/install_image/*_x64.exe
+          
+    - name: Upload results
+      run: |
+        echo 'VirusTotalScan: Artifact ID is ${{ steps.upload_step1.outputs.artifact-id }}, URL is ${{ steps.upload_step1.outputs.artifact-url }}'
+        echo 'Win32Installer: Artifact ID is ${{ steps.upload_step2.outputs.artifact-id }}, URL is ${{ steps.upload_step2.outputs.artifact-url }}'
+        echo 'x64Installer:   Artifact ID is ${{ steps.upload_step3.outputs.artifact-id }}, URL is ${{ steps.upload_step3.outputs.artifact-url }}'
+     
