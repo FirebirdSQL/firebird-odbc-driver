@@ -28,4 +28,6 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
           name: linux_libs
-          path: ./Builds/Gcc.lin/Release_*
+          path: |
+            ./Builds/Gcc.lin/Release_*
+            !./Builds/Gcc.lin/Release_*/obj
