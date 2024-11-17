@@ -220,7 +220,6 @@ public:
 
 	IscConnection* connection;
 	Firebird::IMessageMetadata* meta;
-	Firebird::IMessageMetadata* metaBackup;
 
 	buffer_t buffer;
 

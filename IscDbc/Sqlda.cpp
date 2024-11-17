@@ -326,7 +326,6 @@ Sqlda::~Sqlda()
 void Sqlda::init()
 {
 	meta = nullptr;
-	metaBackup = meta;
 	sqlvar.clear();
 	dataStaticCursor = nullptr;
 	columnsCount = 0;
@@ -456,10 +455,14 @@ Sqlda::ExecBuilder::ExecBuilder(Sqlda& sqlda) : _sqlda{sqlda}, _localMeta { null
 
 Sqlda::ExecBuilder::~ExecBuilder()
 {
-	//release meta
-	if (_localMeta) _localMeta->release();
-	//restore original sql vars
-	for (auto& var : _sqlda.sqlvar) *static_cast<SqlProperties*>(&var) = var.orgSqlProperties;
+	//save new meta
+	if (_localMeta)
+	{
+		for (auto& var : _sqlda.sqlvar) var.orgSqlProperties = *static_cast<SqlProperties*>(&var);
+		if(_sqlda.meta) _sqlda.meta->release();
+		_sqlda.meta = _localMeta;
+		_sqlda.buffer = _localBuffer;
+	}
 }
 
 void Sqlda::mapSqlAttributes( IscStatement *stmt )

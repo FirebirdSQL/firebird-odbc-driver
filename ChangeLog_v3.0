@@ -1,3 +1,6 @@
+ * EXECUTE STATEMENT changed for the worse in ODBC 3.0
+   #233 opened by Fabio-LV
+
  * Abnormal termination in SQLFetch()
    #229 by fdcastel
 
