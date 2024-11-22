@@ -313,7 +313,7 @@ public:
 // Construction/Destruction Sqlda
 //////////////////////////////////////////////////////////////////////
 
-Sqlda::Sqlda( IscConnection* conn ) : connection{conn}, buffer{}
+Sqlda::Sqlda(IscConnection* conn) : connection{ conn }, buffer{}, execBuffer{}, useExecBufferMeta{ false }
 {
 	init();
 }
@@ -325,7 +325,7 @@ Sqlda::~Sqlda()
 
 void Sqlda::init()
 {
-	meta = nullptr;
+	execMeta = meta = nullptr;
 	sqlvar.clear();
 	dataStaticCursor = nullptr;
 	columnsCount = 0;
@@ -347,11 +347,17 @@ void Sqlda::deleteSqlda()
 {
 	sqlvar.clear();
 	buffer.clear();
+	execBuffer.clear();
 
 	if( meta ) {
 		meta->release();
 		meta = nullptr;
 	}
+	if ( execMeta ) {
+		execMeta->release();
+		execMeta = nullptr;
+	}
+	useExecBufferMeta = false;
 }
 
 void Sqlda::allocBuffer ( IscStatement *stmt, IMessageMetadata* msgMetadata )
@@ -361,6 +367,14 @@ void Sqlda::allocBuffer ( IscStatement *stmt, IMessageMetadata* msgMetadata )
 
 	if( meta ) meta->release();
 	meta = msgMetadata;
+
+	if (execMeta)
+	{
+		execMeta->release();
+		execMeta = nullptr;
+	}
+	execBuffer.clear();
+	useExecBufferMeta = false;
 
 	ThrowStatusWrapper status( connection->GDS->_status );
 	try
@@ -377,92 +391,109 @@ void Sqlda::allocBuffer ( IscStatement *stmt, IMessageMetadata* msgMetadata )
 	mapSqlAttributes( stmt );
 }
 
-Sqlda::ExecBuilder::ExecBuilder(Sqlda& sqlda) : _sqlda{sqlda}, _localMeta { nullptr }, _localBuffer{}
+/*
+*	This method is used to build meta & buffer just before the execution, taking into account sqlvar change during bind
+*/
+bool Sqlda::checkAndRebuild()
 {
-	bool overrideFlag = sqlda.isExternalOverriden();
+	const bool overrideFlag = isExternalOverriden();
 
-	_meta =   overrideFlag ? &_localMeta   : &_sqlda.meta;
-	_buffer = overrideFlag ? &_localBuffer : &_sqlda.buffer;
-
-	IMetadataBuilder* metaBuilder = nullptr;
-	ThrowStatusWrapper status(_sqlda.connection->GDS->_status);
-
-	auto build_new_meta = [&]()->IMessageMetadata*
+	if (overrideFlag)
 	{
-		if (!_sqlda.meta)
-			throw SQLEXCEPTION(RUNTIME_ERROR, "Sqlda::ExecBuilder(): sqlda.meta==null before execute!");
+		IMetadataBuilder* metaBuilder = nullptr;
+		ThrowStatusWrapper status(connection->GDS->_status);
 
-		metaBuilder = _sqlda.meta->getBuilder(&status);
-
-		for (auto& var : _sqlda.sqlvar)
+		auto build_new_meta = [&]()->IMessageMetadata*
 		{
-			const auto i = var.index - 1;
-			metaBuilder->setType(&status, i, var.sqltype | (short)(var.isNullable ? 1 : 0));
+			if (!meta)
+				throw SQLEXCEPTION(RUNTIME_ERROR, "Sqlda::ExecBuilder(): sqlda.meta==null before execute!");
 
-			//ooapi provides charset in separated field, so we should set subtype=0 for text types
-			const auto subtype = (var.sqltype == SQL_TEXT || var.sqltype == SQL_VARYING) ? 0 : var.sqlsubtype;
-			metaBuilder->setSubType(&status, i, subtype);
+			metaBuilder = meta->getBuilder(&status);
 
-			metaBuilder->setCharSet(&status, i, var.sqlcharset);
-			metaBuilder->setScale(&status, i, var.sqlscale);
-			metaBuilder->setLength(&status, i, var.sqllen);
-		}
-
-		auto * res = metaBuilder->getMetadata(&status);
-		metaBuilder->release();
-		metaBuilder = nullptr;
-		return res;
-	};
-
-	try
-	{
-		if (overrideFlag)
-		{
-			//build the new metadata
-			_localMeta = build_new_meta();
-
-			if ((*_meta)->getCount(&status) != _sqlda.columnsCount)
-				throw SQLEXCEPTION(RUNTIME_ERROR, "Sqlda::ExecBuilder(): incorrect columns count");
-
-			//resize the new buffer to required length
-			_buffer->resize((*_meta)->getMessageLength(&status));
-		}
-
-		//fill exec buffer with data - regardless of whether it was rebuilt or not
-		for (auto& var : _sqlda.sqlvar)
-		{
-			const auto i = var.index - 1;
-			const auto offs = (*_meta)->getOffset(&status, i);
-			const auto offsNull = (*_meta)->getNullOffset(&status, i);
-
-			if ( (*(short*)(_buffer->data() + offsNull) = *var.sqlind) != sqlNull )
+			for (const auto& var : sqlvar)
 			{
-				memcpy(_buffer->data() + offs, var.sqldata, (*_meta)->getLength(&status, i));
+				const auto i = var.index - 1;
+				metaBuilder->setType(&status, i, var.sqltype | (short)(var.isNullable ? 1 : 0));
+
+				//ooapi provides charset in separated field, so we should set subtype=0 for text types
+				const auto subtype = (var.sqltype == SQL_TEXT || var.sqltype == SQL_VARYING) ? 0 : var.sqlsubtype;
+				metaBuilder->setSubType(&status, i, subtype);
+
+				metaBuilder->setCharSet(&status, i, var.sqlcharset);
+				metaBuilder->setScale(&status, i, var.sqlscale);
+				metaBuilder->setLength(&status, i, var.sqllen);
+			}
+
+			auto* res = metaBuilder->getMetadata(&status);
+			metaBuilder->release();
+			metaBuilder = nullptr;
+			return res;
+		};
+
+		try
+		{
+			//printf("Rebuilding metadata due to sqlvar changes...\n");
+
+			if (execMeta)
+			{
+				execMeta->release();
+			}
+
+			execMeta = build_new_meta();
+
+			if (execMeta->getCount(&status) != columnsCount)
+			{
+				throw SQLEXCEPTION(RUNTIME_ERROR, "Sqlda::checkAndRebuild(): incorrect columns count");
+			}
+
+			lengthBufferRows = execMeta->getMessageLength(&status);
+			execBuffer.clear();
+			execBuffer.resize(lengthBufferRows);
+
+			for (auto& var : sqlvar)
+			{
+				const auto i = var.index - 1;
+				//save effective sqldata&sqlind, pointing to the new execBuffer
+				var.eff_sqldata = &execBuffer.at(execMeta->getOffset(&status, i));
+				var.eff_sqlind = (short*)&execBuffer.at(execMeta->getNullOffset(&status, i));
+				//update last sqlvars to avoid buffers rebuilt next time
+				var.lastSqlProperties = var;
+			}
+
+			useExecBufferMeta = true;
+		}
+		catch (const FbException& error)
+		{
+			if (metaBuilder) metaBuilder->release();
+			THROW_ISC_EXCEPTION(connection, error.getStatus());
+		}
+		catch (...)
+		{
+			if (metaBuilder) metaBuilder->release();
+			throw;
+		}
+	}
+	else
+	{
+		//printf("Metadata is actual\n");
+	}
+
+	{
+		for (const auto& var : sqlvar)
+		{
+			if (var.eff_sqlind != var.sqlind)
+			{
+				memcpy(var.eff_sqlind, var.sqlind, sizeof(short));
+			}
+
+			if (var.eff_sqldata != var.sqldata && *var.eff_sqlind != sqlNull)
+			{
+				memcpy(var.eff_sqldata, var.sqldata, var.sqllen);
 			}
 		}
 	}
-	catch (const FbException& error)
-	{
-		if (metaBuilder) metaBuilder->release();
-		THROW_ISC_EXCEPTION(_sqlda.connection, error.getStatus());
-	}
-	catch (...)
-	{
-		if (metaBuilder) metaBuilder->release();
-		throw;
-	}
-}
 
-Sqlda::ExecBuilder::~ExecBuilder()
-{
-	//save new meta
-	if (_localMeta)
-	{
-		for (auto& var : _sqlda.sqlvar) var.orgSqlProperties = *static_cast<SqlProperties*>(&var);
-		if(_sqlda.meta) _sqlda.meta->release();
-		_sqlda.meta = _localMeta;
-		_sqlda.buffer = _localBuffer;
-	}
+	return overrideFlag;
 }
 
 void Sqlda::mapSqlAttributes( IscStatement *stmt )

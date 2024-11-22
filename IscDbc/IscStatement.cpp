@@ -656,16 +656,18 @@ bool IscStatement::execute()
 		// Make sure there is a transaction
 		ITransaction* transHandle = startTransaction();
 
-		Sqlda::ExecBuilder execBuilder(inputSqlda);
+		inputSqlda.checkAndRebuild();
+		auto* _imeta = inputSqlda.useExecBufferMeta ? inputSqlda.execMeta   : inputSqlda.meta;
+		auto& _ibuf  = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer : inputSqlda.buffer;
 
 		if( openCursor == false )
 		{
-			statementHandle->execute( &status, transHandle, execBuilder.getMeta(), execBuilder.getBuffer(), NULL, NULL);
+			statementHandle->execute( &status, transHandle, _imeta, _ibuf.data(), NULL, NULL);
 		}
 		else
 		{
 			fbResultSet = statementHandle->openCursor( &status, transHandle,
-			                                           execBuilder.getMeta(), execBuilder.getBuffer(),
+			                                           _imeta, _ibuf.data(),
 			                                           outputSqlda.meta, 0 );
 		}
 	}
@@ -737,10 +739,12 @@ bool IscStatement::executeProcedure()
 		// Make sure there is a transaction
 		ITransaction* transHandle = startTransaction();
 
-		Sqlda::ExecBuilder execBuilder(inputSqlda);
+		inputSqlda.checkAndRebuild();
+		auto* _imeta = inputSqlda.useExecBufferMeta ? inputSqlda.execMeta   : inputSqlda.meta;
+		auto& _ibuf  = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer : inputSqlda.buffer;
 
 		statementHandle->execute( &status, transHandle,
-		                          execBuilder.getMeta(), execBuilder.getBuffer(),
+		                          _imeta, _ibuf.data(),
 		                          outputSqlda.meta, outputSqlda.buffer.data() );
 	}
 	catch( const FbException& error )
