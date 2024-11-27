@@ -684,7 +684,7 @@ void Sqlda::print()
 //
 int Sqlda::getColumnDisplaySize(int index)
 {
-	CAttrSqlVar *var = Var(index);
+	const SqlProperties *var = orgVarSqlProperties(index);
 
 	switch (var->sqltype)
 	{
@@ -724,7 +724,7 @@ int Sqlda::getColumnDisplaySize(int index)
 										MAX_QUAD_LENGTH + 1);
 		
 	case SQL_ARRAY:
-		return var->array->arrOctetLength;
+		return Var(index)->array->arrOctetLength;
 //		return MAX_ARRAY_LENGTH;
 
 	case SQL_BLOB:

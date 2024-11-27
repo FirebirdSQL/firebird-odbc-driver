@@ -200,6 +200,7 @@ public:
 	void deleteSqlda();
 	void clearSqlda();
 	CAttrSqlVar* Var(int index) { return &sqlvar.at(index - 1); }
+	const SqlProperties* orgVarSqlProperties(int index) { return &sqlvar.at(index - 1).orgSqlProperties; }
 
 	Sqlda(IscConnection* conn);
 	~Sqlda();
