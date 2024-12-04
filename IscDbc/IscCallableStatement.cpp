@@ -105,9 +105,11 @@ bool IscCallableStatement::execute()
 	ThrowStatusWrapper status( connection->GDS->_status );
 	try
 	{
-		Sqlda::ExecBuilder execBuilder(inputSqlda);
+		inputSqlda.checkAndRebuild();
+		auto* _imeta = inputSqlda.useExecBufferMeta ? inputSqlda.execMeta   : inputSqlda.meta;
+		auto& _ibuf  = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer : inputSqlda.buffer;
 
-		statementHandle->execute( &status, transHandle, execBuilder.getMeta(), execBuilder.getBuffer(),
+		statementHandle->execute( &status, transHandle, _imeta, _ibuf.data(),
 		                                                outputSqlda.meta, outputSqlda.buffer.data() );
 	}
 	catch( const FbException& error )
