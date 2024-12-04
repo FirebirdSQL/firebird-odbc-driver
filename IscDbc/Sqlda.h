@@ -160,10 +160,16 @@ class Sqlda
 public:
 	using buffer_t = std::vector<char>;
 
+	enum e_sqlda_dir {
+		SQLDA_INPUT,
+		SQLDA_OUTPUT,
+	};
+
 protected:
 	buffer_t& initStaticCursor(IscStatement* stmt);
 	buffer_t& addRowSqldaInBufferStaticCursor();
 	void restoreOrgAdressFieldsStaticCursor();
+	e_sqlda_dir SqldaDir;
 
 public:
 	const char* getOwnerName(int index);
@@ -202,7 +208,7 @@ public:
 	CAttrSqlVar* Var(int index) { return &sqlvar.at(index - 1); }
 	const SqlProperties* orgVarSqlProperties(int index) { return &sqlvar.at(index - 1).orgSqlProperties; }
 
-	Sqlda(IscConnection* conn);
+	Sqlda(IscConnection* conn, e_sqlda_dir dir);
 	~Sqlda();
 
 	int isBlobOrArray(int index);

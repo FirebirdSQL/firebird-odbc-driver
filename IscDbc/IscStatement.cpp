@@ -106,8 +106,8 @@ namespace IscDbcLibrary {
 //////////////////////////////////////////////////////////////////////
 
 IscStatement::IscStatement(IscConnection *connect) :
-	inputSqlda{connect},
-	outputSqlda{connect}
+	inputSqlda{connect, Sqlda::SQLDA_INPUT},
+	outputSqlda{connect, Sqlda::SQLDA_OUTPUT}
 {
 	connection = connect;
 	useCount = 1;

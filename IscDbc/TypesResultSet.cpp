@@ -136,7 +136,7 @@ static Types types [] =
 
 TypesResultSet::TypesResultSet(int dataType, int appOdbcVersion, int bytesPerCharacter, IscConnection* conn) :
 	IscResultSet{nullptr},
-	outputSqlda {conn}
+	outputSqlda {conn, Sqlda::SQLDA_OUTPUT}
 {	
 	dataTypes = dataType;
 

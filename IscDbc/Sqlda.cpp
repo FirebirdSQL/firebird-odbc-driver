@@ -313,7 +313,7 @@ public:
 // Construction/Destruction Sqlda
 //////////////////////////////////////////////////////////////////////
 
-Sqlda::Sqlda(IscConnection* conn) : connection{ conn }, buffer{}, execBuffer{}, useExecBufferMeta{ false }
+Sqlda::Sqlda(IscConnection* conn, e_sqlda_dir dir) : connection{ conn }, buffer{}, execBuffer{}, useExecBufferMeta{ false }, SqldaDir{ dir }
 {
 	init();
 }
@@ -684,7 +684,7 @@ void Sqlda::print()
 //
 int Sqlda::getColumnDisplaySize(int index)
 {
-	const SqlProperties *var = orgVarSqlProperties(index);
+	const SqlProperties *var = (SqldaDir == SQLDA_INPUT) ? orgVarSqlProperties(index) : Var(index);
 
 	switch (var->sqltype)
 	{
