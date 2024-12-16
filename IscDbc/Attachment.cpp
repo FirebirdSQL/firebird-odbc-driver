@@ -357,7 +357,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 
 	if( ( check_status.getState() & IStatus::STATE_ERRORS ) == 0 )
 	{
-		for (auto p = result; p < result + sizeof (result) && *p != isc_info_end;)
+		for (auto p = result; p < result + sizeof (result) && *p != isc_info_end && *p != isc_info_truncated;)
 		{
 			char item = *p++;
 			int length = GDS->_vax_integer (p, 2);
