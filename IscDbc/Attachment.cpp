@@ -42,11 +42,11 @@ static char databaseInfoItems [] = {
 	isc_info_db_id,
 	isc_info_db_sql_dialect,
 	isc_info_base_level,
-	isc_info_user_names,
 	isc_info_ods_version,
 	isc_info_firebird_version,
 	isc_info_version, 
 	isc_info_page_size,
+	isc_info_user_names,
 	isc_info_end 
 	};
 
