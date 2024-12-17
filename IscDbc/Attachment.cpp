@@ -42,11 +42,11 @@ static char databaseInfoItems [] = {
 	isc_info_db_id,
 	isc_info_db_sql_dialect,
 	isc_info_base_level,
-	isc_info_user_names,
 	isc_info_ods_version,
 	isc_info_firebird_version,
 	isc_info_version, 
 	isc_info_page_size,
+	isc_info_user_names,
 	isc_info_end 
 	};
 
@@ -357,7 +357,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 
 	if( ( check_status.getState() & IStatus::STATE_ERRORS ) == 0 )
 	{
-		for (auto p = result; p < result + sizeof (result) && *p != isc_info_end;)
+		for (auto p = result; p < result + sizeof (result) && *p != isc_info_end && *p != isc_info_truncated;)
 		{
 			char item = *p++;
 			int length = GDS->_vax_integer (p, 2);
