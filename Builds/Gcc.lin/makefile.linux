@@ -95,10 +95,13 @@ COMPFLAGS  = -w -D_REENTRANT -D_PTHREADS -DEXTERNAL -D$(ODBCMANAGER) $(INCLUDEDI
 
 ifeq ($(ARCH),x86_64)
 COMPFLAGS   += -fPIC -m64
-LINKFLAGS	= -shared -m64
+LINKFLAGS= -shared -m64
+else ifeq ($(ARCH),aarch64)
+COMPFLAGS   += -fPIC
+LINKFLAGS= -shared
 else
 COMPFLAGS   += -m32
-LINKFLAGS	= -shared -m32
+LINKFLAGS= -shared -m32
 endif
 #
 #LINKFLAGS	= -rdynamic -export-dynamic -shared 
