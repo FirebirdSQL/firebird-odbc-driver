@@ -15,20 +15,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: pguyot/arm-runner-action@v2
-    
-    - name: Install UnixODBC package
-      run: sudo apt-get install -y unixodbc unixodbc-dev
-
-    - name: Go to build folder & make
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: |
-        cd Builds/Gcc.lin
-        cp makefile.linux makefile
-        make
+      with:
+        copy_repository_path: /opt/fb_odbc
+        copy_artifact_path: |
+                    Builds/Gcc.lin/Release_*
+                    !Builds/Gcc.lin/Release_*/obj
+        copy_artifact_dest: /opt/fb_odbc_arts
+        commands: |
+            sudo apt-get install -y unixodbc unixodbc-dev
+            cd /opt/fb_odbc/Builds/Gcc.lin
+            cp makefile.linux makefile
+            make
     
     - uses: actions/upload-artifact@v4
       with:
-          name: linux_libs
-          path: |
-            ./Builds/Gcc.lin/Release_*
-            !./Builds/Gcc.lin/Release_*/obj
+          name: linux_arm64_libs
+          path: /opt/fb_odbc_arts
+
