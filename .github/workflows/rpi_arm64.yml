@@ -30,6 +30,6 @@ jobs:
       with:
           name: linux_arm64_libs
           path: |
-              /opt/fb_odbc_arts
-              !/opt/fb_odbc_arts/obj
+              .
+              !./obj
 
