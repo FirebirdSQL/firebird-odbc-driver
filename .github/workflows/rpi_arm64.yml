@@ -30,6 +30,6 @@ jobs:
       with:
           name: linux_arm64_libs
           path: |
-              .
-              !./obj
+              Release_*
+              !Release_*/obj
 
