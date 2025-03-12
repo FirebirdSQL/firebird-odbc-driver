@@ -15,7 +15,8 @@ All the new features and fixes are documented here -
 ## Downloads
 The latest build artifacts:
 * [Windows installation package](https://github.com/user-attachments/files/19207749/win_installers.zip) [![MSBuild](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/msbuild.yml/badge.svg)](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/msbuild.yml)
-* [Linux so binary](https://github.com/user-attachments/files/19207739/linux_libs.zip) [![Linux](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/linux.yml/badge.svg)](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/linux.yml)
+* [Linux x86-64](https://github.com/user-attachments/files/19207739/linux_libs.zip) [![Linux](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/linux.yml/badge.svg)](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/linux.yml)
+* [Linux_ARM64](https://github.com/user-attachments/files/19210460/linux_arm64_libs.zip) [![RaspberryPI](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/rpi_arm64.yml/badge.svg)](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/rpi_arm64.yml)
 
 You can also download the lastest & archive build packages here: https://github.com/FirebirdSQL/firebird-odbc-driver/wiki
 
