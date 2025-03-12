@@ -22,7 +22,7 @@ jobs:
         copy_artifact_path: |
                     Builds/Gcc.lin/Release_*
                     !Builds/Gcc.lin/Release_*/obj
-        copy_artifact_dest: /opt/fb_odbc_arts
+        # copy_artifact_dest: /opt/fb_odbc_arts
         commands: |
             sudo apt-get install -y unixodbc unixodbc-dev
             cd /opt/fb_odbc/Builds/Gcc.lin
