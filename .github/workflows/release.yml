@@ -108,13 +108,13 @@ jobs:
         Copy-Item "README.md" "package/"
         
         # Create zip file
-        Compress-Archive -Path "package/*" -DestinationPath "firebird-odbc-windows-x86.zip"
+        Compress-Archive -Path "package/*" -DestinationPath "firebird-odbc-windows-x86-${{ github.ref_name }}.zip"
 
     - name: Upload x86 package
       uses: actions/upload-artifact@v4
       with:
         name: firebird-odbc-windows-x86
-        path: firebird-odbc-windows-x86.zip
+        path: firebird-odbc-windows-x86-${{ github.ref_name }}.zip
 
   package-windows-x64:
     needs: build-windows-x64
@@ -142,13 +142,13 @@ jobs:
         Copy-Item "README.md" "package/"
         
         # Create zip file
-        Compress-Archive -Path "package/*" -DestinationPath "firebird-odbc-windows-x64.zip"
+        Compress-Archive -Path "package/*" -DestinationPath "firebird-odbc-windows-x64-${{ github.ref_name }}.zip"
 
     - name: Upload x64 package
       uses: actions/upload-artifact@v4
       with:
         name: firebird-odbc-windows-x64
-        path: firebird-odbc-windows-x64.zip
+        path: firebird-odbc-windows-x64-${{ github.ref_name }}.zip
 
   # ARM64 package (commented for future use)
   # package-windows-arm64:
@@ -231,7 +231,7 @@ jobs:
         # Rename the output file to our desired name
         $originalFile = Get-ChildItem install_image\*_Win32.exe | Select-Object -First 1
         if ($originalFile) {
-          $newName = "firebird-odbc-windows-x86-installer.exe"
+          $newName = "firebird-odbc-windows-x86-installer-${{ github.ref_name }}.exe"
           Rename-Item $originalFile.FullName $newName
           Write-Host "✅ Renamed installer to: $newName"
         } else {
@@ -253,7 +253,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: firebird-odbc-windows-x86-installer
-        path: Install/Win32/install_image/firebird-odbc-windows-x86-installer.exe
+        path: Install/Win32/install_image/firebird-odbc-windows-x86-installer-${{ github.ref_name }}.exe
         if-no-files-found: error
 
   installer-windows-x64:
@@ -323,7 +323,7 @@ jobs:
         # Rename the output file to our desired name
         $originalFile = Get-ChildItem install_image\*_x64.exe | Select-Object -First 1
         if ($originalFile) {
-          $newName = "firebird-odbc-windows-x64-installer.exe"
+          $newName = "firebird-odbc-windows-x64-installer-${{ github.ref_name }}.exe"
           Rename-Item $originalFile.FullName $newName
           Write-Host "✅ Renamed installer to: $newName"
         } else {
@@ -345,7 +345,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: firebird-odbc-windows-x64-installer
-        path: Install/Win32/install_image/firebird-odbc-windows-x64-installer.exe
+        path: Install/Win32/install_image/firebird-odbc-windows-x64-installer-${{ github.ref_name }}.exe
         if-no-files-found: error
 
   build-linux:
@@ -377,13 +377,13 @@ jobs:
         cp Release_*/libOdbcFb.so firebird-odbc-linux-${{ matrix.arch }}/
         cp ../../Install/IDPLicense.txt firebird-odbc-linux-${{ matrix.arch }}/
         cp ../../README.md firebird-odbc-linux-${{ matrix.arch }}/
-        tar -czf firebird-odbc-linux-${{ matrix.arch }}.tar.gz firebird-odbc-linux-${{ matrix.arch }}/
+        tar -czf firebird-odbc-linux-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz firebird-odbc-linux-${{ matrix.arch }}/
 
     - name: Upload Linux ${{ matrix.arch }} Artifact
       uses: actions/upload-artifact@v4
       with:
         name: firebird-odbc-linux-${{ matrix.arch }}
-        path: Builds/Gcc.lin/firebird-odbc-linux-${{ matrix.arch }}.tar.gz
+        path: Builds/Gcc.lin/firebird-odbc-linux-${{ matrix.arch }}-${{ github.ref_name }}.tar.gz
 
   create-release:
     needs: [
@@ -411,11 +411,11 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          firebird-odbc-windows-x86.zip
-          firebird-odbc-windows-x64.zip
-          firebird-odbc-linux-x64.tar.gz
-          firebird-odbc-linux-arm64.tar.gz
-          firebird-odbc-windows-x86-installer.exe
-          firebird-odbc-windows-x64-installer.exe
+          firebird-odbc-windows-x86-${{ github.ref_name }}.zip
+          firebird-odbc-windows-x64-${{ github.ref_name }}.zip
+          firebird-odbc-linux-x64-${{ github.ref_name }}.tar.gz
+          firebird-odbc-linux-arm64-${{ github.ref_name }}.tar.gz
+          firebird-odbc-windows-x86-installer-${{ github.ref_name }}.exe
+          firebird-odbc-windows-x64-installer-${{ github.ref_name }}.exe
         draft: false
         prerelease: false
