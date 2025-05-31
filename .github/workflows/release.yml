@@ -1,0 +1,419 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # Stage 1: Build Windows binaries (parallel)
+  build-windows-x86:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore NuGet packages
+      run: nuget restore ./Builds/MsVc2022.win/OdbcFb.sln
+
+    - name: Build x86
+      run: |
+        msbuild /m /p:Configuration=Release /p:Platform=Win32 ./Builds/MsVc2022.win/OdbcFb.sln
+
+    - name: Upload x86 binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: firebird-odbc-win-x86-binaries
+        path: |
+          Builds/MsVc2022.win/Win32/Release/*.dll
+          Builds/MsVc2022.win/Win32/Release/*.lib
+          Builds/MsVc2022.win/Win32/Release/*.pdb
+        if-no-files-found: error
+
+  build-windows-x64:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore NuGet packages
+      run: nuget restore ./Builds/MsVc2022.win/OdbcFb.sln
+
+    - name: Build x64
+      run: |
+        msbuild /m /p:Configuration=Release /p:Platform=x64 ./Builds/MsVc2022.win/OdbcFb.sln
+
+    - name: Upload x64 binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: firebird-odbc-win-x64-binaries
+        path: |
+          Builds/MsVc2022.win/x64/Release/*.dll
+          Builds/MsVc2022.win/x64/Release/*.lib
+          Builds/MsVc2022.win/x64/Release/*.pdb
+        if-no-files-found: error
+
+  # ARM64 build (commented for future use)
+  # build-windows-arm64:
+  #   runs-on: windows-11-arm
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Setup MSBuild
+  #     uses: microsoft/setup-msbuild@v2
+  #   - name: Restore NuGet packages
+  #     run: nuget restore ./Builds/MsVc2022.win/OdbcFb.sln
+  #   - name: Build ARM64
+  #     run: msbuild /m /p:Configuration=Release /p:Platform=ARM64 ./Builds/MsVc2022.win/OdbcFb.sln
+  #   - name: Upload ARM64 binaries
+  #     uses: actions/upload-artifact@v4
+  #     with:
+  #       name: firebird-odbc-win-arm64-binaries
+  #       path: |
+  #         Builds/MsVc2022.win/ARM64/Release/*.dll
+  #         Builds/MsVc2022.win/ARM64/Release/*.lib
+  #         Builds/MsVc2022.win/ARM64/Release/*.pdb
+  #       if-no-files-found: error
+
+  # Stage 2: Package Windows binaries into zip files
+  package-windows-x86:
+    needs: build-windows-x86
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download x86 binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: firebird-odbc-win-x86-binaries
+        path: binaries/
+
+    - name: Create x86 package
+      run: |
+        # Create package directory
+        New-Item -ItemType Directory -Force -Path "package"
+        
+        # Copy binaries
+        Copy-Item "binaries/*" "package/" -Recurse
+        
+        # Copy documentation
+        Copy-Item "Install/Win32/Readme.txt" "package/"
+        Copy-Item "Install/IDPLicense.txt" "package/"
+        Copy-Item "README.md" "package/"
+        
+        # Create zip file
+        Compress-Archive -Path "package/*" -DestinationPath "firebird-odbc-windows-x86.zip"
+
+    - name: Upload x86 package
+      uses: actions/upload-artifact@v4
+      with:
+        name: firebird-odbc-windows-x86
+        path: firebird-odbc-windows-x86.zip
+
+  package-windows-x64:
+    needs: build-windows-x64
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download x64 binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: firebird-odbc-win-x64-binaries
+        path: binaries/
+
+    - name: Create x64 package
+      run: |
+        # Create package directory
+        New-Item -ItemType Directory -Force -Path "package"
+        
+        # Copy binaries
+        Copy-Item "binaries/*" "package/" -Recurse
+        
+        # Copy documentation
+        Copy-Item "Install/Win32/Readme.txt" "package/"
+        Copy-Item "Install/IDPLicense.txt" "package/"
+        Copy-Item "README.md" "package/"
+        
+        # Create zip file
+        Compress-Archive -Path "package/*" -DestinationPath "firebird-odbc-windows-x64.zip"
+
+    - name: Upload x64 package
+      uses: actions/upload-artifact@v4
+      with:
+        name: firebird-odbc-windows-x64
+        path: firebird-odbc-windows-x64.zip
+
+  # ARM64 package (commented for future use)
+  # package-windows-arm64:
+  #   needs: build-windows-arm64
+  #   runs-on: windows-latest
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Download ARM64 binaries
+  #     uses: actions/download-artifact@v4
+  #     with:
+  #       name: firebird-odbc-win-arm64-binaries
+  #       path: binaries/
+  #   - name: Create ARM64 package
+  #     run: |
+  #       New-Item -ItemType Directory -Force -Path "package"
+  #       Copy-Item "binaries/*" "package/" -Recurse
+  #       Copy-Item "Install/Win32/Readme.txt" "package/"
+  #       Copy-Item "Install/IDPLicense.txt" "package/"
+  #       Copy-Item "README.md" "package/"
+  #       Compress-Archive -Path "package/*" -DestinationPath "firebird-odbc-windows-arm64.zip"
+  #   - name: Upload ARM64 package
+  #     uses: actions/upload-artifact@v4
+  #     with:
+  #       name: firebird-odbc-windows-arm64
+  #       path: firebird-odbc-windows-arm64.zip
+  # Stage 3: Create Windows installers
+  installer-windows-x86:
+    needs: build-windows-x86
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install tools
+      run: |
+        choco install --no-progress --yes html-help-workshop
+        choco install --no-progress --yes sed
+        choco install --no-progress --yes innosetup
+
+    - name: Download x86 binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: firebird-odbc-win-x86-binaries
+        path: Builds/MsVc2022.win/Win32/Release/
+
+    - name: Debug - List downloaded files
+      run: |
+        echo "=== Downloaded x86 binaries ==="
+        Get-ChildItem -Recurse Builds/MsVc2022.win/Win32/Release/ | Format-Table Name, FullName
+        
+        echo "=== Checking expected paths ==="
+        $expectedPath = "Builds/MsVc2022.win/Win32/Release"
+        if (Test-Path $expectedPath) {
+          echo "✅ Path exists: $expectedPath"
+          Get-ChildItem $expectedPath | ForEach-Object { echo "  - $($_.Name)" }
+        } else {
+          echo "❌ Path missing: $expectedPath"
+        }
+
+    - name: Create x86 installer
+      env:
+        INNO_SETUP_PATH: C:\Program Files (x86)\Inno Setup 6
+      run: |
+        # Verify InnoSetup is accessible
+        Write-Host "=== Verifying InnoSetup installation ==="
+        if (Get-Command iscc -ErrorAction SilentlyContinue) {
+          $isccPath = Get-Command iscc | Select-Object -ExpandProperty Source
+          Write-Host "✅ iscc.exe found: $isccPath"
+        } else {
+          Write-Host "❌ iscc.exe not found in PATH"
+          exit 1
+        }
+        
+        # Verify environment variable is set
+        Write-Host "INNO_SETUP_PATH = $env:INNO_SETUP_PATH"
+        
+        # Create installer
+        cd Install\Win32
+        .\MakePackage.bat WIN32
+        
+        # Rename the output file to our desired name
+        $originalFile = Get-ChildItem install_image\*_Win32.exe | Select-Object -First 1
+        if ($originalFile) {
+          $newName = "firebird-odbc-windows-x86-installer.exe"
+          Rename-Item $originalFile.FullName $newName
+          Write-Host "✅ Renamed installer to: $newName"
+        } else {
+          Write-Host "❌ No Win32 installer file found"
+          exit 1
+        }
+
+    - name: Debug - Check installer output
+      run: |
+        echo "=== Checking installer output directory ==="
+        if (Test-Path "Install/Win32/install_image") {
+          echo "✅ install_image directory exists"
+          Get-ChildItem "Install/Win32/install_image" | ForEach-Object { echo "  - $($_.Name)" }
+        } else {
+          echo "❌ install_image directory missing"
+        }
+
+    - name: Upload x86 installer
+      uses: actions/upload-artifact@v4
+      with:
+        name: firebird-odbc-windows-x86-installer
+        path: Install/Win32/install_image/firebird-odbc-windows-x86-installer.exe
+        if-no-files-found: error
+
+  installer-windows-x64:
+    needs: [build-windows-x86, build-windows-x64]
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install tools
+      run: |
+        choco install --no-progress --yes html-help-workshop
+        choco install --no-progress --yes sed
+        choco install --no-progress --yes innosetup
+
+    - name: Download x86 binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: firebird-odbc-win-x86-binaries
+        path: Builds/MsVc2022.win/Win32/Release/
+
+    - name: Download x64 binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: firebird-odbc-win-x64-binaries
+        path: Builds/MsVc2022.win/x64/Release/
+
+    - name: Debug - List downloaded files
+      run: |
+        echo "=== Downloaded x86 binaries ==="
+        Get-ChildItem -Recurse Builds/MsVc2022.win/Win32/Release/ | Format-Table Name, FullName
+        
+        echo "=== Downloaded x64 binaries ==="
+        Get-ChildItem -Recurse Builds/MsVc2022.win/x64/Release/ | Format-Table Name, FullName
+        
+        echo "=== Checking expected paths ==="
+        $paths = @("Builds/MsVc2022.win/Win32/Release", "Builds/MsVc2022.win/x64/Release")
+        foreach ($path in $paths) {
+          if (Test-Path $path) {
+            echo "✅ Path exists: $path"
+            Get-ChildItem $path | ForEach-Object { echo "  - $($_.Name)" }
+          } else {
+            echo "❌ Path missing: $path"
+          }
+        }
+
+    - name: Create x64 installer (dual-architecture)
+      env:
+        INNO_SETUP_PATH: C:\Program Files (x86)\Inno Setup 6
+      run: |
+        # Verify InnoSetup is accessible
+        Write-Host "=== Verifying InnoSetup installation ==="
+        if (Get-Command iscc -ErrorAction SilentlyContinue) {
+          $isccPath = Get-Command iscc | Select-Object -ExpandProperty Source
+          Write-Host "✅ iscc.exe found: $isccPath"
+        } else {
+          Write-Host "❌ iscc.exe not found in PATH"
+          exit 1
+        }
+        
+        # Verify environment variable is set
+        Write-Host "INNO_SETUP_PATH = $env:INNO_SETUP_PATH"
+        
+        # Create dual-architecture installer
+        cd Install\Win32
+        .\MakePackage.bat
+        
+        # Rename the output file to our desired name
+        $originalFile = Get-ChildItem install_image\*_x64.exe | Select-Object -First 1
+        if ($originalFile) {
+          $newName = "firebird-odbc-windows-x64-installer.exe"
+          Rename-Item $originalFile.FullName $newName
+          Write-Host "✅ Renamed installer to: $newName"
+        } else {
+          Write-Host "❌ No x64 installer file found"
+          exit 1
+        }
+
+    - name: Debug - Check installer output
+      run: |
+        echo "=== Checking installer output directory ==="
+        if (Test-Path "Install/Win32/install_image") {
+          echo "✅ install_image directory exists"
+          Get-ChildItem "Install/Win32/install_image" | ForEach-Object { echo "  - $($_.Name)" }
+        } else {
+          echo "❌ install_image directory missing"
+        }
+
+    - name: Upload x64 installer
+      uses: actions/upload-artifact@v4
+      with:
+        name: firebird-odbc-windows-x64-installer
+        path: Install/Win32/install_image/firebird-odbc-windows-x64-installer.exe
+        if-no-files-found: error
+
+  build-linux:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build Linux ${{ matrix.arch }}
+      run: |
+        # Install dependencies (unixodbc)
+        sudo apt-get update -y
+        sudo apt-get install -y unixodbc unixodbc-dev build-essential
+
+        # Build ODBC driver
+        cd Builds/Gcc.lin
+        cp makefile.linux makefile
+        make
+
+        # Package with documentation
+        mkdir -p firebird-odbc-linux-${{ matrix.arch }}
+        cp Release_*/libOdbcFb.so firebird-odbc-linux-${{ matrix.arch }}/
+        cp ../../Install/IDPLicense.txt firebird-odbc-linux-${{ matrix.arch }}/
+        cp ../../README.md firebird-odbc-linux-${{ matrix.arch }}/
+        tar -czf firebird-odbc-linux-${{ matrix.arch }}.tar.gz firebird-odbc-linux-${{ matrix.arch }}/
+
+    - name: Upload Linux ${{ matrix.arch }} Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: firebird-odbc-linux-${{ matrix.arch }}
+        path: Builds/Gcc.lin/firebird-odbc-linux-${{ matrix.arch }}.tar.gz
+
+  create-release:
+    needs: [
+      package-windows-x86,
+      package-windows-x64,
+      installer-windows-x86,
+      installer-windows-x64,
+      build-linux
+    ]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true
+
+    - name: List downloaded artifacts
+      run: |
+        echo "=== Downloaded artifacts ==="
+        find . -type f -name "*.zip" -o -name "*.exe" -o -name "*.tar.gz" | sort
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          firebird-odbc-windows-x86.zip
+          firebird-odbc-windows-x64.zip
+          firebird-odbc-linux-x64.tar.gz
+          firebird-odbc-linux-arm64.tar.gz
+          firebird-odbc-windows-x86-installer.exe
+          firebird-odbc-windows-x64-installer.exe
+        draft: false
+        prerelease: false
