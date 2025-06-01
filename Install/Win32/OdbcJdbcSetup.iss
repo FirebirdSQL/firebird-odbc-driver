@@ -81,6 +81,7 @@ BUILD_ENV undefined
 #undef HtmlHelp
 #endif
 
+
 [Setup]
 DisableDirPage=No
 AppName=Firebird ODBC Driver 3
@@ -119,6 +120,7 @@ ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 #endif
 
+
 [Languages]
 Name: en; MessagesFile: compiler:Default.isl
 Name: ru; MessagesFile: compiler:Default.isl,compiler:Languages\Russian.isl
@@ -150,7 +152,6 @@ Source: {#SOURCE_DOCS}\HtmlHelp\images\*.*; DestDir: {app}\images; Components: D
 #endif
 Source: {#SOURCE_DOCS}\Win32\Readme.txt; DestDir: {app}; Components: DocumentationComponent; Flags: isreadme
 Source: {#SOURCE_DOCS}\IDPLicense.txt; DestDir: {app}; Components: DocumentationComponent
-;Source: {#SOURCE_DOCS}\ReleaseNotes_v2.0.html; DestDir: {app}; Components: DocumentationComponent
 
 #if PlatformTarget == "x64"
 Source: {#SOURCE_LIBS32}{#OBJNAME}.dll; DestDir: {sys}; Components: DeveloperComponent DeploymentComponent; Flags: regserver restartreplace 32bit
@@ -162,6 +163,7 @@ Source: {#SOURCE_DOCS}\HtmlHelp\{#OBJNAME}.chm; DestDir: {syswow64}; Components:
 #endif
 #endif
 
+
 [Icons]
 Name: {group}\Uninstall Firebird ODBC driver; Filename: {uninstallexe}; Components: DocumentationComponent; Comment: Remove Firebird ODBC Driver Documentation
 Name: {group}\Uninstall Firebird ODBC driver; Filename: {uninstallexe}; Components: DeveloperComponent; Comment: Remove Firebird ODBC Driver Library and Documentation
@@ -170,17 +172,8 @@ Name: {group}\Firebird ODBC Help; Filename: {app}\{#OBJNAME}.chm; Components: Do
 Name: {group}\Firebird ODBC Help; Filename: {sys}\{#OBJNAME}.chm; Components: DeveloperComponent
 Name: {app}\Firebird ODBC Help; Filename: {sys}\{#OBJNAME}.chm; Components: DeveloperComponent
 #endif
-;Name: {group}\Firebird ODBC v2.0 Release Notes; Filename: {app}\ReleaseNotes_v2.0.html; Components: DocumentationComponent
 Name: {group}\Firebird ODBC readme.txt; Filename: {app}\Readme.txt; Components: DocumentationComponent
 Name: {group}\Firebird ODBC license.txt; Filename: {app}\IDPLicense.txt; Components: DocumentationComponent
-
-
-[Run]
-;Filename: {sys}\regsvr32.exe; Parameters: "/s ""{app}""\{#OBJNAME}.dll"; Components: DeveloperComponent DeploymentComponent
-
-
-[UninstallRun]
-;Filename: {sys}\regsvr32.exe; Parameters: "/u /s ""{app}""\{#OBJNAME}.dll"; Components: DeveloperComponent DeploymentComponent
 
 
 [UninstallDelete]
@@ -195,12 +188,12 @@ en.DeveloperComponent=Install driver to
 en.DeploymentComponent=Install driver only. No docs, uninstall.
 en.DocumentationComponent=Documentation in CHM and HTML format
 
-ru.DeveloperInstall=Полная установка - драйвер в системную папку, документацию в группу программ.
-ru.DeploymentInstall=Только драйвер - никаких документов, меню, иконок.
-ru.DocumentationInstall=Только документацию.
-ru.DeveloperComponent=Установка драйвера в
-ru.DeploymentComponent=Установка только драйвера, без документации и деинсталяции.
-ru.DocumentationComponent=Документация в формате CHM и HTML
+ru.DeveloperInstall=РџРѕР»РЅР°СЏ СѓСЃС‚Р°РЅРѕРІРєР° - РґСЂР°Р№РІРµСЂ РІ СЃРёСЃС‚РµРјРЅСѓСЋ РїР°РїРєСѓ, РґРѕРєСѓРјРµРЅС‚Р°С†РёСЋ РІ РіСЂСѓРїРїСѓ РїСЂРѕРіСЂР°РјРј.
+ru.DeploymentInstall=РўРѕР»СЊРєРѕ РґСЂР°Р№РІРµСЂ - РЅРёРєР°РєРёС… РґРѕРєСѓРјРµРЅС‚РѕРІ, РјРµРЅСЋ, РёРєРѕРЅРѕРє.
+ru.DocumentationInstall=РўРѕР»СЊРєРѕ РґРѕРєСѓРјРµРЅС‚Р°С†РёСЋ.
+ru.DeveloperComponent=РЈСЃС‚Р°РЅРѕРІРєР° РґСЂР°Р№РІРµСЂР° РІ
+ru.DeploymentComponent=РЈСЃС‚Р°РЅРѕРІРєР° С‚РѕР»СЊРєРѕ РґСЂР°Р№РІРµСЂР°, Р±РµР· РґРѕРєСѓРјРµРЅС‚Р°С†РёРё Рё РґРµРёРЅСЃС‚Р°Р»СЏС†РёРё.
+ru.DocumentationComponent=Р”РѕРєСѓРјРµРЅС‚Р°С†РёСЏ РІ С„РѕСЂРјР°С‚Рµ CHM Рё HTML
 
 
 [Code]
