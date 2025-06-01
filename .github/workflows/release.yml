@@ -71,13 +71,12 @@ jobs:
         # Create package directory
         New-Item -ItemType Directory -Force -Path "package"
         
-        # Copy binaries
-        Copy-Item "binaries/*" "package/" -Recurse
+        # Copy binaries (just exclude .pdb files, for now)
+        Copy-Item "binaries/*" "package/" -Recurse -Exclude "*.pdb"
         
         # Copy documentation
         Copy-Item "Install/Win32/Readme.txt" "package/"
         Copy-Item "Install/IDPLicense.txt" "package/"
-        Copy-Item "README.md" "package/"
         
         # Create zip file
         Compress-Archive -Path "package/*" -DestinationPath "firebird-odbc-windows-${{ matrix.arch }}-${{ github.ref_name }}.zip"
