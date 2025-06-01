@@ -66,26 +66,37 @@ jobs:
         name: firebird-odbc-win-${{ matrix.arch }}-binaries
         path: binaries/
 
-    - name: Create ${{ matrix.arch }} package
+    - name: Create ${{ matrix.arch }} .zip packages
       run: |
-        # Create package directory
+        # Create folders
         New-Item -ItemType Directory -Force -Path "package"
+        New-Item -ItemType Directory -Force -Path "package-debug"
         
-        # Copy binaries (just exclude .pdb files, for now)
+        # Copy binaries
         Copy-Item "binaries/*" "package/" -Recurse -Exclude "*.pdb"
+        Copy-Item "binaries/*" "package-debug/" -Recurse
         
         # Copy documentation
         Copy-Item "Install/Win32/Readme.txt" "package/"
         Copy-Item "Install/IDPLicense.txt" "package/"
+        Copy-Item "Install/Win32/Readme.txt" "package-debug/"
+        Copy-Item "Install/IDPLicense.txt" "package-debug/"
         
-        # Create zip file
+        # Create zip files
         Compress-Archive -Path "package/*" -DestinationPath "firebird-odbc-windows-${{ matrix.arch }}-${{ github.ref_name }}.zip"
+        Compress-Archive -Path "package-debug/*" -DestinationPath "firebird-odbc-windows-${{ matrix.arch }}-${{ github.ref_name }}-debug.zip"
 
-    - name: Upload ${{ matrix.arch }} package
+    - name: Upload ${{ matrix.arch }} main .zip package
       uses: actions/upload-artifact@v4
       with:
         name: firebird-odbc-windows-${{ matrix.arch }}
         path: firebird-odbc-windows-${{ matrix.arch }}-${{ github.ref_name }}.zip
+
+    - name: Upload ${{ matrix.arch }} debug .zip package
+      uses: actions/upload-artifact@v4
+      with:
+        name: firebird-odbc-windows-${{ matrix.arch }}-debug
+        path: firebird-odbc-windows-${{ matrix.arch }}-${{ github.ref_name }}-debug.zip
 
   # Stage 3: Create Windows installers
   installer-windows:
@@ -248,6 +259,8 @@ jobs:
         files: |
           firebird-odbc-windows-x86-${{ github.ref_name }}.zip
           firebird-odbc-windows-x64-${{ github.ref_name }}.zip
+          firebird-odbc-windows-x86-${{ github.ref_name }}-debug.zip
+          firebird-odbc-windows-x64-${{ github.ref_name }}-debug.zip
           firebird-odbc-linux-x64-${{ github.ref_name }}.tar.gz
           firebird-odbc-linux-arm64-${{ github.ref_name }}.tar.gz
           firebird-odbc-windows-x86-installer-${{ github.ref_name }}.exe
