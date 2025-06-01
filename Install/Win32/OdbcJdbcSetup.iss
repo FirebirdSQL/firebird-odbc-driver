@@ -23,7 +23,7 @@
 ;
 ;  OdbcJdbcSetup.iss
 ;
-;  Currently compiled against InnoSetup v5.3 from http://www.innosetup.com/
+;  Currently compiled against InnoSetup v6.4 from https://innosetup.com/
 ;
 ;
 
@@ -52,33 +52,12 @@ BUILD_ENV undefined
 
 #define FIREBIRD_URL "http://www.firebirdsql.org"
 
-;---- If we haven't already set PlatformTarget then pick it up from the environment.
-#ifndef PlatformTarget
-#define PlatformTarget GetEnv("FB_TARGET_PLATFORM")
-#endif
-#if PlatformTarget == ""
-#define PlatformTarget "win32"
-#endif
-
-;---- If we haven't already set ProductVersion then pick it up from the environment.
-#ifndef ProductVersion
-#define ProductVersion GetEnv("PRODUCT_VERSION")
-#endif
-
-#define BUILD_ROOT="..\..\"
+#define BUILD_ROOT "..\\..\\"
 #define SOURCE_LIBS "Builds\"+AddBackslash(BUILD_ENV)+AddBackslash(PlatformTarget)+AddBackslash(BUILDCONFIG)
 #define SOURCE_DOCS="Install\"
 
 #if PlatformTarget == "x64"
-#define SOURCE_LIBS32="Builds\"+AddBackslash(BUILD_ENV)+AddBackslash("Win32")+AddBackslash(BUILDCONFIG)
-#endif
-
-; Check if HTML help is available
-#ifndef HtmlHelp
-#define HtmlHelp GetEnv("HTMLHELP")
-#endif
-#if HtmlHelp == ""
-#undef HtmlHelp
+#define SOURCE_LIBS32="Builds\\"+AddBackslash(BUILD_ENV)+AddBackslash("Win32")+AddBackslash(BUILDCONFIG)
 #endif
 
 

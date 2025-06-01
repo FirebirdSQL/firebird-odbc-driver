@@ -98,12 +98,8 @@ jobs:
         include:
           - arch: x86
             platform: Win32
-            make_param: WIN32
-            installer_pattern: "*_Win32.exe"
           - arch: x64
             platform: x64
-            make_param: ""
-            installer_pattern: "*_x64.exe"
             needs_x86: true
     steps:
     - uses: actions/checkout@v4
@@ -111,7 +107,6 @@ jobs:
     - name: Install tools
       run: |
         choco install --no-progress --yes html-help-workshop
-        choco install --no-progress --yes sed
         choco install --no-progress --yes innosetup
 
     - name: Download ${{ matrix.arch }} binaries
@@ -131,40 +126,58 @@ jobs:
       run: |
         echo "=== Downloaded ${{ matrix.arch }} binaries ==="
         Get-ChildItem -Recurse Builds/MsVc2022.win/${{ matrix.platform }}/Release/ | Format-Table Name, FullName
-        
         if ("${{ matrix.needs_x86 }}" -eq "true") {
           echo "=== Downloaded x86 binaries ==="
           Get-ChildItem -Recurse Builds/MsVc2022.win/Win32/Release/ | Format-Table Name, FullName
         }
 
-    - name: Create ${{ matrix.arch }} installer
-      env:
-        INNO_SETUP_PATH: C:\Program Files (x86)\Inno Setup 6
+    - name: Compile HTML Help (${{ matrix.arch }})
       run: |
-        # Verify InnoSetup is accessible
-        Write-Host "=== Verifying InnoSetup installation ==="
-        if (Get-Command iscc -ErrorAction SilentlyContinue) {
-          $isccPath = Get-Command iscc | Select-Object -ExpandProperty Source
-          Write-Host "✅ iscc.exe found: $isccPath"
+        cd Install/Win32
+        $hhcPath = "C:/Program Files (x86)/HTML Help Workshop/hhc.exe"
+        Write-Host "Compiling help file '../HtmlHelp/OdbcJdbc.hhp' using $hhcPath..."
+        
+        # HTML Help Compiler returns exit code 1 even on success, so we need to handle this.
+        
+        # Run the HTML Help Compiler and capture the result
+        $result = & $hhcPath "../HtmlHelp/OdbcJdbc.hhp" 2>&1
+        $hhcExitCode = $LASTEXITCODE
+        
+        Write-Host "HTML Help Compiler output:"
+        Write-Host $result
+        Write-Host "HTML Help Compiler exit code: $hhcExitCode"
+        
+        # Check if the compilation was successful by verifying the output file exists
+        $chmFile = "../HtmlHelp/FirebirdODBC.chm"
+        if (Test-Path $chmFile) {
+          Write-Host "✅ HTML Help compilation successful. Created: $chmFile"
+          exit 0
         } else {
-          Write-Host "❌ iscc.exe not found in PATH"
+          Write-Host "❌ HTML Help compilation failed. File not found: $chmFile"
           exit 1
         }
+      shell: pwsh
+
+    - name: Compile Inno Setup Script (${{ matrix.arch }})
+      run: |
+        cd Install/Win32
         
-        # Create installer
-        cd Install\Win32
-        .\MakePackage.bat ${{ matrix.make_param }}
+        $finalInstallerBaseName = "firebird-odbc-windows-${{ matrix.arch }}-installer-${{ github.ref_name }}"
         
-        # Rename the output file to our desired name
-        $originalFile = Get-ChildItem install_image\${{ matrix.installer_pattern }} | Select-Object -First 1
-        if ($originalFile) {
-          $newName = "firebird-odbc-windows-${{ matrix.arch }}-installer-${{ github.ref_name }}.exe"
-          Rename-Item $originalFile.FullName $newName
-          Write-Host "✅ Renamed installer to: $newName"
-        } else {
-          Write-Host "❌ No ${{ matrix.arch }} installer file found"
-          exit 1
-        }
+        $appVersion = "${{ github.ref_name }}"
+        $platformDefine = "${{ matrix.platform }}"
+
+        Write-Host "Compiling Inno Setup script 'OdbcJdbcSetup.iss'..."
+        Write-Host "Output installer base name: $finalInstallerBaseName"
+        Write-Host "Platform: $platformDefine, Version: $appVersion"
+
+        # Chocolatey puts "iscc.exe" in the PATH, so we can call it directly
+        & iscc.exe "OdbcJdbcSetup.iss" /F"$finalInstallerBaseName" `
+            /DPlatformTarget="$platformDefine" `
+            /DProductVersion="$appVersion" `
+            /DHtmlHelp="1"
+        Write-Host "✅ Inno Setup compilation command executed."
+      shell: pwsh
 
     - name: Upload ${{ matrix.arch }} installer
       uses: actions/upload-artifact@v4
