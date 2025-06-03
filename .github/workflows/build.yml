@@ -1,0 +1,118 @@
+name: build
+
+on:
+  push:
+    branches: [ "**" ]  # All branches, including forks
+  pull_request:
+    branches: [ "**" ]  # All pull requests
+
+permissions:
+  contents: read
+
+jobs:
+  # Build Windows binaries
+  build-windows:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86
+            platform: Win32
+            runner: windows-latest
+          - arch: x64
+            platform: x64
+            runner: windows-latest
+          # Uncomment when ARM64 runners are available
+          # - arch: arm64
+          #   platform: ARM64
+          #   runner: windows-11-arm
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore NuGet packages
+      run: nuget restore ./Builds/MsVc2022.win/OdbcFb.sln
+
+    - name: Build ${{ matrix.arch }}
+      run: |
+        msbuild /m /p:Configuration=Release /p:Platform=${{ matrix.platform }} ./Builds/MsVc2022.win/OdbcFb.sln
+
+  # - name: Run tests (${{ matrix.arch }})
+  #   run: |
+  #     echo "Tests would run here for ${{ matrix.arch }}"
+
+    - name: Upload ${{ matrix.arch }} binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: firebird-odbc-win-${{ matrix.arch }}-build
+        path: |
+          Builds/MsVc2022.win/${{ matrix.platform }}/Release/*.dll
+          Builds/MsVc2022.win/${{ matrix.platform }}/Release/*.lib
+          Builds/MsVc2022.win/${{ matrix.platform }}/Release/*.pdb
+        if-no-files-found: error
+
+  # Build Linux binaries
+  build-linux:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build Linux ${{ matrix.arch }}
+      run: |
+        # Install dependencies (unixodbc)
+        sudo apt-get update -y
+        sudo apt-get install -y unixodbc unixodbc-dev build-essential
+
+        # Build ODBC driver
+        cd Builds/Gcc.lin
+        cp makefile.linux makefile
+        make
+
+  # - name: Run tests (${{ matrix.arch }})
+  #   run: |
+  #     echo "Tests would run here for ${{ matrix.arch }}"
+
+    - name: Upload Linux ${{ matrix.arch }} build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: firebird-odbc-linux-${{ matrix.arch }}-build
+        path: Builds/Gcc.lin/Release_*/libOdbcFb.so
+        if-no-files-found: error
+
+  # Summary job to provide clear CI status
+  build-summary:
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - name: Build Summary
+      run: |
+        echo "## Build Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [[ "${{ needs.build-windows.result }}" == "success" ]]; then
+          echo "✅ Windows builds: **PASSED**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Windows builds: **FAILED**" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        if [[ "${{ needs.build-linux.result }}" == "success" ]]; then
+          echo "✅ Linux builds: **PASSED**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Linux builds: **FAILED**" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Build completed for commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY

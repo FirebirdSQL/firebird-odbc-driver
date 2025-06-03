@@ -1,4 +1,4 @@
-name: release
+name: Release
 
 on:
   push:
@@ -9,8 +9,9 @@ permissions:
   contents: read
 
 jobs:
-  # Stage 1: Build Windows binaries (matrix strategy)
+  # Stage 1: Build Windows binaries
   build-windows:
+    if: ${{ github.repository == 'FirebirdSQL/firebird-odbc-driver' }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -39,10 +40,14 @@ jobs:
       run: |
         msbuild /m /p:Configuration=Release /p:Platform=${{ matrix.platform }} ./Builds/MsVc2022.win/OdbcFb.sln
 
+  # - name: Run tests (${{ matrix.arch }})
+  #   run: |
+  #     echo "Tests would run here for ${{ matrix.arch }}"
+
     - name: Upload ${{ matrix.arch }} binaries
       uses: actions/upload-artifact@v4
       with:
-        name: firebird-odbc-win-${{ matrix.arch }}-binaries
+        name: firebird-odbc-win-${{ matrix.arch }}-release
         path: |
           Builds/MsVc2022.win/${{ matrix.platform }}/Release/*.dll
           Builds/MsVc2022.win/${{ matrix.platform }}/Release/*.lib
@@ -71,17 +76,17 @@ jobs:
         # Create folders
         New-Item -ItemType Directory -Force -Path "package"
         New-Item -ItemType Directory -Force -Path "package-debug"
-        
+
         # Copy binaries
         Copy-Item "binaries/*" "package/" -Recurse -Exclude "*.pdb"
         Copy-Item "binaries/*" "package-debug/" -Recurse
-        
+
         # Copy documentation
         Copy-Item "Install/Win32/Readme.txt" "package/"
         Copy-Item "Install/IDPLicense.txt" "package/"
         Copy-Item "Install/Win32/Readme.txt" "package-debug/"
         Copy-Item "Install/IDPLicense.txt" "package-debug/"
-        
+
         # Create zip files
         Compress-Archive -Path "package/*" -DestinationPath "firebird-odbc-windows-${{ matrix.arch }}-${{ github.ref_name }}.zip"
         Compress-Archive -Path "package-debug/*" -DestinationPath "firebird-odbc-windows-${{ matrix.arch }}-${{ github.ref_name }}-with-debug-symbols.zip"
@@ -146,17 +151,17 @@ jobs:
         cd Install/Win32
         $hhcPath = "C:/Program Files (x86)/HTML Help Workshop/hhc.exe"
         Write-Host "Compiling help file '../HtmlHelp/OdbcJdbc.hhp' using $hhcPath..."
-        
+
         # HTML Help Compiler returns exit code 1 even on success, so we need to handle this.
-        
+
         # Run the HTML Help Compiler and capture the result
         $result = & $hhcPath "../HtmlHelp/OdbcJdbc.hhp" 2>&1
         $hhcExitCode = $LASTEXITCODE
-        
+
         Write-Host "HTML Help Compiler output:"
         Write-Host $result
         Write-Host "HTML Help Compiler exit code: $hhcExitCode"
-        
+
         # Check if the compilation was successful by verifying the output file exists
         $chmFile = "../HtmlHelp/FirebirdODBC.chm"
         if (Test-Path $chmFile) {
@@ -171,9 +176,9 @@ jobs:
     - name: Compile Inno Setup Script (${{ matrix.arch }})
       run: |
         cd Install/Win32
-        
+
         $finalInstallerBaseName = "firebird-odbc-windows-${{ matrix.arch }}-installer-${{ github.ref_name }}"
-        
+
         $appVersion = "${{ github.ref_name }}"
         $platformDefine = "${{ matrix.platform }}"
 
@@ -197,6 +202,7 @@ jobs:
         if-no-files-found: error
 
   build-linux:
+    if: ${{ github.repository == 'FirebirdSQL/firebird-odbc-driver' }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
