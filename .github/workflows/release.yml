@@ -84,7 +84,7 @@ jobs:
         
         # Create zip files
         Compress-Archive -Path "package/*" -DestinationPath "firebird-odbc-windows-${{ matrix.arch }}-${{ github.ref_name }}.zip"
-        Compress-Archive -Path "package-debug/*" -DestinationPath "firebird-odbc-windows-${{ matrix.arch }}-${{ github.ref_name }}-debug.zip"
+        Compress-Archive -Path "package-debug/*" -DestinationPath "firebird-odbc-windows-${{ matrix.arch }}-${{ github.ref_name }}-with-debug-symbols.zip"
 
     - name: Upload ${{ matrix.arch }} main .zip package
       uses: actions/upload-artifact@v4
@@ -96,7 +96,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: firebird-odbc-windows-${{ matrix.arch }}-debug
-        path: firebird-odbc-windows-${{ matrix.arch }}-${{ github.ref_name }}-debug.zip
+        path: firebird-odbc-windows-${{ matrix.arch }}-${{ github.ref_name }}-with-debug-symbols.zip
 
   # Stage 3: Create Windows installers
   installer-windows:
@@ -259,8 +259,8 @@ jobs:
         files: |
           firebird-odbc-windows-x86-${{ github.ref_name }}.zip
           firebird-odbc-windows-x64-${{ github.ref_name }}.zip
-          firebird-odbc-windows-x86-${{ github.ref_name }}-debug.zip
-          firebird-odbc-windows-x64-${{ github.ref_name }}-debug.zip
+          firebird-odbc-windows-x86-${{ github.ref_name }}-with-debug-symbols.zip
+          firebird-odbc-windows-x64-${{ github.ref_name }}-with-debug-symbols.zip
           firebird-odbc-linux-x64-${{ github.ref_name }}.tar.gz
           firebird-odbc-linux-arm64-${{ github.ref_name }}.tar.gz
           firebird-odbc-windows-x86-installer-${{ github.ref_name }}.exe
