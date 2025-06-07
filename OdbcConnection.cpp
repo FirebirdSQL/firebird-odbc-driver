@@ -1,14 +1,14 @@
 /*
- *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
+ *
+ *     The contents of this file are subject to the Initial
+ *     Developer's Public License Version 1.0 (the "License");
+ *     you may not use this file except in compliance with the
+ *     License. You may obtain a copy of the License at
  *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl.
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
+ *     Software distributed under the License is distributed on
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+ *     express or implied.  See the License for the specific
  *     language governing rights and limitations under the License.
  *
  *
@@ -19,45 +19,45 @@
  *
  *	2003-03-24	OdbcConnection.cpp
  *				Contributed by Norbert Meyer
- *				delete Statements before close connection 
- *				(statement-destructor needs connection-pointer 
- *				for call connection->deleteStatement.  
- *				If connection->deleteStatement not called, 
- *				you get an AV if you use Statements and call 
- *				  SQLDisconnect(...); 
+ *				delete Statements before close connection
+ *				(statement-destructor needs connection-pointer
+ *				for call connection->deleteStatement.
+ *				If connection->deleteStatement not called,
+ *				you get an AV if you use Statements and call
+ *				  SQLDisconnect(...);
  *				  SQLFreeHandle(..., connection);
  *
- *	2002-12-05	OdbcConnection.cpp 
+ *	2002-12-05	OdbcConnection.cpp
  *				Contributed by C. Guzman Alvarez
  *				SQLGetInfo returns more info.
  *				Solve error in SQL_ORDER_BY_COLUMNS_IN_SELECT.
  *
- *	2002-08-12	OdbcConnection.cpp 
+ *	2002-08-12	OdbcConnection.cpp
  *				Contributed by C. G. Alvarez
- *				Added SQL_API_SQLGETCONNECTOPTION to list of 
+ *				Added SQL_API_SQLGETCONNECTOPTION to list of
  *				supported functions
  *
  *				Added more items to sqlGetInfo()
  *
- *  2002-07-02  OdbcConnection.cpp 
+ *  2002-07-02  OdbcConnection.cpp
  *				Added better management of txn isolation
  *				Added fix to enable setting the asyncEnable property
  *				contributed by C. G. Alvarez
  *
- *  2002-07-01  OdbcConnection.cpp 
- *				Added SQL_API_SQLSETCONNECTOPTION to 
+ *  2002-07-01  OdbcConnection.cpp
+ *				Added SQL_API_SQLSETCONNECTOPTION to
  *				supportedFunctions	C. G. Alvarez
  *
  *	2002-06-26	OdbcConnection::sqlGetInfo
- *				Added call to clearErrors() at start of 
+ *				Added call to clearErrors() at start of
  *				the method(Roger Gammans).
  *
- *	2002-06-25  OdbcConnection.cpp  
+ *	2002-06-25  OdbcConnection.cpp
  *				Contributed by C. G. Alvarez
  *				Return Database Server Name from sqlGetInfo
  *
  *
- *	2002-06-08  OdbcConnection.cpp 
+ *	2002-06-08  OdbcConnection.cpp
  *				Contributed by C. G. Alvarez
  *				sqlSetConnectAttr() and connect()
  *				now supports SQL_ATTR_TXN_ISOLATION
@@ -257,7 +257,7 @@ bool moduleInit()
 		if ( fn < 100 )
 		{
 			//
-			// SQL_API_ALL_FUNCTIONS is used by an ODBC 2.x application 
+			// SQL_API_ALL_FUNCTIONS is used by an ODBC 2.x application
 			// to determine support of ODBC 2.x and earlier functions
 			//
 			// where functionsArray should be 100 elements
@@ -330,18 +330,13 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 #if _MSC_VER > 1000
 	enlistConnect = false;
 #endif // _MSC_VER > 1000
-	WcsToMbs			= _WcsToMbs;
-	MbsToWcs			= _MbsToWcs;
-#else
-	WcsToMbs			= wcstombs;
-	MbsToWcs			= mbstowcs;
 #endif // _WINDOWS
 
 }
 
 OdbcConnection::~OdbcConnection()
 {
-	releaseObjects();	
+	releaseObjects();
 }
 
 void OdbcConnection::releaseObjects()
@@ -358,7 +353,7 @@ void OdbcConnection::releaseObjects()
 		statements = (OdbcStatement*)statement->next;
 		delete statement;
 	}
-	
+
 	while ( descriptors )
 	{
 		OdbcDesc* descriptor = descriptors;
@@ -396,8 +391,8 @@ SQLRETURN OdbcConnection::sqlSetConnectAttr( SQLINTEGER attribute, SQLPOINTER va
 
 		if ( !IsInstalledMsTdsInterface() )
 		{
-			return sqlReturn( SQL_ERROR, 
-							  "IM001", 
+			return sqlReturn( SQL_ERROR,
+							  "IM001",
 							  "Unable start DTC transaction : library 'xolehlp.dll' failed to load" );
 		}
 
@@ -709,7 +704,7 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 	}
 
 #ifdef _WINDOWS
-	if ( driverCompletion != SQL_DRIVER_NOPROMPT 
+	if ( driverCompletion != SQL_DRIVER_NOPROMPT
 		&& ( account.IsEmpty() || password.IsEmpty() ) )
 	{
 		CConnectDialog dlg;
@@ -791,8 +786,8 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 	return sqlSuccess();
 }
 
-SQLRETURN OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, 
-										 SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, 
+SQLRETURN OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1,
+										 SQLCHAR * outConnectionString, SQLSMALLINT bufferLength,
 										 SQLSMALLINT * stringLength2Ptr)
 {
 	bool bFullConnectionString = false;
@@ -1016,7 +1011,7 @@ SQLRETURN OdbcConnection::sqlNativeSql( SQLCHAR * inStatementText, SQLINTEGER te
 
 	try
 	{
-		if ( !connection->getNativeSql( (const char *)inStatementText, textLength1, 
+		if ( !connection->getNativeSql( (const char *)inStatementText, textLength1,
 							tempNative.getBuffer ( textLength ), textLength, &textLength ) )
 		{
 			textLength = textLength1;
@@ -1615,7 +1610,6 @@ SQLRETURN OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, 
 	account = getString (&p, uid, uidLength, "");
 	password = getString (&p, passwd, passwdLength, "");
 	role = "";
-	charset = "";
 	expandConnectParameters();
 	SQLRETURN ret = connect (jdbcDriver, databaseName, account, password, role, charset);
 
@@ -1668,8 +1662,8 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 		properties->putValue ("autoQuoted", autoQuotedIdentifier ? "Y" : "N");
 
 		properties->putValue ("databaseAccess",
-								databaseAccess == CREATE_DB ? "1" 
-								: databaseAccess == DROP_DB ? "2" 
+								databaseAccess == CREATE_DB ? "1"
+								: databaseAccess == DROP_DB ? "2"
 								: "0");
 
 		if (useSchemaIdentifier)
@@ -1706,8 +1700,7 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 		connection->setExtInitTransaction( optTpb );
 		connection->setUseAppOdbcVersion( env->useAppOdbcVersion );
 		charsetCode = connection->getConnectionCharsetCode();
-		WcsToMbs = connection->getConnectionWcsToMbs();
-		MbsToWcs = connection->getConnectionMbsToWcs();
+		convert.setCharsetCode(charsetCode);
 	}
 	catch ( std::exception &ex )
 	{
@@ -1842,7 +1835,9 @@ void OdbcConnection::expandConnectParameters()
 			role = readAttribute(SETUP_ROLE);
 
 		if (charset.IsEmpty())
+		{
 			charset = readAttribute(SETUP_CHARSET);
+		}
 
 		if ( !(defOptions & DEF_READONLY_TPB) )
 		{
@@ -2098,7 +2093,7 @@ SQLRETURN OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int b
 		value = asyncEnabled;
 		break;
 
-	case SQL_ATTR_ACCESS_MODE:			//   101		
+	case SQL_ATTR_ACCESS_MODE:			//   101
 		value = accessMode;
 		break;
 

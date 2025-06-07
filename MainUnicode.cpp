@@ -1,14 +1,14 @@
 /*
- *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
+ *
+ *     The contents of this file are subject to the Initial
+ *     Developer's Public License Version 1.0 (the "License");
+ *     you may not use this file except in compliance with the
+ *     License. You may obtain a copy of the License at
  *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl.
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
+ *     Software distributed under the License is distributed on
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+ *     express or implied.  See the License for the specific
  *     language governing rights and limitations under the License.
  *
  *
@@ -27,6 +27,7 @@
 #include "OdbcJdbc.h"
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
+#include "OdbcConvert.h"
 #include "OdbcStatement.h"
 #include "SafeEnvThread.h"
 #include "Main.h"
@@ -45,23 +46,22 @@ extern UINT codePage; // from Main.cpp
 template <typename TypeRealLen = SQLSMALLINT>
 class ConvertingString
 {
-	enum typestring { NONE, WIDECHARS, BYTESCHARS };
+	char		*byteString = nullptr;	// Internal buffer in connection charset used for interaction with Firebird API
+	size_t		byteLength = 0;			// Length of byteString not including terminating null
+	SQLWCHAR	*unicodeString = nullptr; // User-defined buffer of wide characters
+	size_t		unicodeLength = 0;		// Length of unicodeString buffer in characters
+	TypeRealLen	*realLength = nullptr;	// Pointer to a variable accepting output data size
+	bool		returnCountOfBytes = false; // if *realLength expect size in bytes (i.e. unicodeString was actually SQLPOINTER in caller code)
+	OdbcConnection *connection = nullptr;
 
-	SQLCHAR		*byteString;
-	SQLWCHAR	*unicodeString;
-	TypeRealLen	*realLength;
-	int			lengthString;
-	typestring	isWhy;
-	bool		returnCountOfBytes;
-	OdbcConnection *connection;
-	
 public:
 	void setConnection( OdbcConnection *connect )
 	{
 		connection = connect;
 	}
 
-	ConvertingString() 
+	ConvertingString() = delete;
+/*
 	{
 		isWhy = NONE;
 		returnCountOfBytes = true;
@@ -71,167 +71,128 @@ public:
 		lengthString = 0;
 		connection = NULL;
 	}
+*/
 
+	// Binding of output string
 	ConvertingString( int length, SQLWCHAR *wcString, TypeRealLen *pLength = NULL, bool retCountOfBytes = true )
 	{
-		connection = NULL;
 		realLength = pLength;
 		returnCountOfBytes = retCountOfBytes;
 
 		if ( wcString )
 		{
-			isWhy = BYTESCHARS;
 			unicodeString = wcString;
-			if ( length == SQL_NTS )
-				lengthString = 0;
-			else if ( retCountOfBytes )
-				lengthString = length / sizeof(wchar_t);
-			else
-				lengthString = length;
-		}
-		else
-			isWhy = NONE;
+			// A strange case but still valid according to ODBC specs:
+			// BufferLength
+			// If DiagIdentifier is a driver-defined field, the application indicates the nature of the field
+			// to the Driver Manager by setting the BufferLength argumant. BufferLength can have the
+			// following values:
+			// - If DiagInfoPtr is a pointer to a character string, BufferLength is the length of the
+			// string or SQL_NTS.
+			//
+			// IMHO, it is a bug in specs but unixODBC and iODBC passes the value as is so let's try
+			// to do something smart.
+			if (length == SQL_NTS)
+				unicodeLength = SQLWCHAR_len(wcString) + 1;
 
-		Alloc();
+			// If DiagInfoPtr is a pointer to a binary string, the application places the result of the
+			// SQL_LEN_BINARY_ATTR(length) macro in BufferLength. This places a negative value
+			// in BufferLength
+			//
+			// Hardly applicable, but still
+			if (length < SQL_LEN_BINARY_ATTR_OFFSET)
+			{
+				unicodeLength = (SQL_LEN_BINARY_ATTR_OFFSET - length) / sizeof(SQLWCHAR);
+			}
+			else if ( retCountOfBytes )
+			{
+				// In this case length is in bytes,
+				unicodeLength = length / sizeof(SQLWCHAR);
+			}
+			else // Length is in wide characters
+			{
+				unicodeLength = length;
+			}
+		}
+
+		if (unicodeLength)
+		{
+			byteLength = unicodeLength * Convert::maxUtfBytes + 1;
+			// Connection charset is fixed to UTF-8 so every character can take up to 4 bytes
+			byteString = new char[byteLength]{}; // Null terminator as well
+		}
 	}
 
+	// Binding of input string
+	// Length is in characters.
 	ConvertingString( OdbcConnection *connect, SQLWCHAR *wcString, int length )
 	{
 		connection = connect;
-		realLength = NULL;
-		unicodeString = NULL;
-		returnCountOfBytes = true;
-		isWhy = BYTESCHARS;
 
 		if ( wcString )
-			convUnicodeToString( wcString, length );
-		else
 		{
-			byteString = NULL;
-			lengthString = 0;
-		}
-	}
-
-	operator SQLCHAR*()	{ return byteString; }
-	int getLength() { return lengthString; }
-
-	~ConvertingString() 
-	{
-		switch ( isWhy )
-		{
-		case BYTESCHARS:
-
-			if ( unicodeString )
+			if (length = SQL_NTS)
 			{
-				size_t len;
+				length = SQLWCHAR_len(wcString);
+			}
+			if (length > 0)
+			{
+				byteLength = length * Convert::maxUtfBytes + 1;
+				byteString = new char[byteLength];
 
-				if ( connection )
-					len = connection->MbsToWcs( (wchar_t*)unicodeString, (const char*)byteString, lengthString );
+				if (connect)
+				{
+					connect->fromWcs(wcString, length, byteString, byteLength);
+					// Here error status is lost. That's not good.
+				}
 				else
 				{
-#ifdef _WINDOWS
-					len = MultiByteToWideChar( codePage, 0, (const char*)byteString, -1,
-											  unicodeString, lengthString );
-					if ( len > 0 )
-						len--;
-#else
-					len = mbstowcs( (wchar_t*)unicodeString, (const char*)byteString, lengthString );
-#endif
-				}
-
-				if ( len > 0 )
-				{
-					*(LPWSTR)(unicodeString + len) = L'\0';
-
-					if ( realLength )
-					{
-						if ( returnCountOfBytes )
-							*realLength = (TypeRealLen)( len * 2 );
-						else
-							*realLength = (TypeRealLen)len;
-					}
+					Convert conv(Charset::Code::Utf8);
+					conv.fromWcs(wcString, length, byteString, byteLength);
 				}
 			}
-
-			delete[] byteString;
-			break;
-
-		case NONE:
-			if ( realLength && returnCountOfBytes )
-				*realLength *= 2;
-			break;
 		}
 	}
 
-	SQLCHAR * convUnicodeToString( SQLWCHAR *wcString, int length )
+	char* data() { return byteString; }
+	[[depreceted("byteString has connection charset which may be different from ANSI")]]
+		operator SQLCHAR*() { return reinterpret_cast<SQLCHAR*>(byteString); }
+	int getLength() { return byteLength; }
+
+	// Though this is elegant from code POV, converting in destructor has one problem:
+	// There is no way to report conversion errors including string right truncation.
+	// TODO: Rework every instantiation to use explicit conversion with appropriate error handling.
+	~ConvertingString()
 	{
-		size_t bytesNeeded;
-		wchar_t *ptEndWC = NULL;
-		wchar_t saveWC;
-
-		if ( length == SQL_NTS )
-			length = (int)wcslen( (const wchar_t*)wcString );
-		else if ( wcString[length] != L'\0' )
+		if ( unicodeString )
 		{
-			ptEndWC = (wchar_t*)&wcString[length];
-			saveWC = *ptEndWC;
-			*ptEndWC = L'\0';
-		}
-
-		if ( connection )
-			bytesNeeded = connection->WcsToMbs( NULL, (const wchar_t*)wcString, length );
-		else
-		{
-#ifdef _WINDOWS
-			bytesNeeded = WideCharToMultiByte( codePage, (DWORD)0, wcString, length, NULL, (int)0, NULL, NULL );
-#else
-			bytesNeeded = wcstombs( NULL, (const wchar_t*)wcString, length );
-#endif
-		}
-
-		byteString = new SQLCHAR[ bytesNeeded + 2 ];
-
-		if ( connection )
-			bytesNeeded = connection->WcsToMbs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
-		else
-		{
-#ifdef _WINDOWS
-			bytesNeeded = WideCharToMultiByte( codePage, 0, wcString, length, (LPSTR)byteString, (int)bytesNeeded, NULL, NULL );
-#else
-			bytesNeeded = wcstombs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
-#endif
-		}
-
-		byteString[ bytesNeeded ] = '\0';
-		lengthString = (int)bytesNeeded;
-
-		if ( ptEndWC )
-			*ptEndWC = saveWC;
-
-		return byteString;
-	}
-
-protected:
-	void Alloc()
-	{
-		switch ( isWhy )
-		{
-		case BYTESCHARS:
-			if ( lengthString )
+			size_t len = unicodeLength;
+			ssize_t stringLength = SQL_NTS;
+			if (realLength)
 			{
-				byteString = new SQLCHAR[ lengthString + 2 ];
-				memset(byteString, 0, lengthString + 2); 
+				stringLength = *realLength;
+			}
+
+			if ( connection )
+			{
+				connection->toWcs(byteString, stringLength, unicodeString, len);
 			}
 			else
-				byteString = NULL;
-			break;
+			{
+				Convert conv(Charset::Code::Utf8);
+				conv.toWcs(byteString, stringLength, unicodeString, len);
+			}
 
-		case NONE:
-			unicodeString = NULL;
-			byteString = NULL;
-			lengthString = 0;
-			break;
+			if ( realLength )
+			{
+				if ( returnCountOfBytes )
+					*realLength = (TypeRealLen)(len * sizeof(SQLWCHAR));
+				else
+					*realLength = (TypeRealLen)len;
+			}
 		}
+
+		delete[] byteString;
 	}
 };
 
@@ -242,7 +203,20 @@ SQLRETURN SQL_API SQLColAttributesW( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
 								    SQLSMALLINT bufferLength, SQLSMALLINT *stringLength,
 								    SQLLEN *numericAttribute )
 {
-	TRACE("SQLColAttributesW");
+	LOG_PRINT((logFile,
+				"SQLColAttributesW:\n"
+				"   +hStmt              : %p\n"
+				"   +columnNumber       : %u\n"
+				"   +fieldIdentifier    : %u\n"
+				"   +characterAttribute : %p\n"
+				"   +bufferLength       : %u\n"
+				"   +stringLength       : %p\n"
+				"   +numericAttribute   : %p\n\n"
+				, hStmt, columnNumber, fieldIdentifier
+				, characterAttribute, bufferLength, stringLength
+				, numericAttribute
+			));
+
 	GUARD_HSTMT( hStmt );
 
 	switch ( fieldIdentifier )
@@ -263,15 +237,30 @@ SQLRETURN SQL_API SQLColAttributesW( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
 														(SQLWCHAR *)characterAttribute, stringLength );
 			CharacterAttribute.setConnection( GETCONNECT_STMT( hStmt ) );
 
-			return ((OdbcStatement*) hStmt)->sqlColAttribute( columnNumber, fieldIdentifier,
-											(SQLPOINTER)(SQLCHAR*)CharacterAttribute, CharacterAttribute.getLength(),
+			SQLRETURN res = ((OdbcStatement*) hStmt)->sqlColAttribute( columnNumber, fieldIdentifier,
+											(SQLPOINTER)CharacterAttribute.data(), CharacterAttribute.getLength(),
 											stringLength, numericAttribute );
+
+			LOG_PRINT((logFile,
+						"SQLColAttributesW return string:\n"
+						"   +characterAttribute : %s\n"
+						"   +stringLength       : %d\n\n"
+						, CharacterAttribute.data(), stringLength == nullptr ? 0 : *stringLength
+					));
+			return res;
 		}
 	}
 
-	return ((OdbcStatement*) hStmt)->sqlColAttribute( columnNumber, fieldIdentifier,
+	SQLRETURN res =  ((OdbcStatement*) hStmt)->sqlColAttribute( columnNumber, fieldIdentifier,
 													characterAttribute, bufferLength,
 													stringLength, numericAttribute );
+	LOG_PRINT((logFile,
+				"SQLColAttributesW return number:\n"
+				"   +numericAttribute : %ld\n\n"
+				, *numericAttribute
+			));
+
+	return res;
 }
 
 ///// SQLConnectW /////	ODBC 1.0	///// ISO 92
@@ -281,28 +270,35 @@ SQLRETURN SQL_API SQLConnectW( SQLHDBC hDbc,
 						      SQLWCHAR *userName, SQLSMALLINT nameLength2,
 						      SQLWCHAR *authentication, SQLSMALLINT nameLength3 )
 {
-	TRACE ("SQLConnectW");
 	GUARD_HDBC( hDbc );
 
-	ConvertingString<> ServerName( (OdbcConnection*)hDbc, serverName, nameLength1 );
-	ConvertingString<> UserName( (OdbcConnection*)hDbc, userName, nameLength2 );
-	ConvertingString<> Authentication( (OdbcConnection*)hDbc, authentication, nameLength3 );
+	OdbcConnection* conn = (OdbcConnection*)hDbc;
 
-	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlConnect( ServerName, ServerName.getLength(), UserName,
-												UserName.getLength(), Authentication, Authentication.getLength() );
-	LOG_PRINT(( logFile, 
+	// Force UTF-8 connection charset and DPB processing
+	conn->charsetCode = Charset::Code::Utf8;
+	conn->charset = "UTF8";
+	conn->convert.setCharsetCode(Charset::Code::Utf8);
+
+	ConvertingString<> ServerName( conn, serverName, nameLength1 );
+	ConvertingString<> UserName( conn, userName, nameLength2 );
+	ConvertingString<> Authentication( conn, authentication, nameLength3 );
+
+	SQLRETURN ret = conn->sqlConnect( ServerName, SQL_NTS,
+										UserName, SQL_NTS,
+										Authentication, SQL_NTS );
+	LOG_PRINT(( logFile,
 				"SQLConnectW           : Line %d\n"
 				"   +status            : %d\n"
 				"   +hDbc              : %p\n"
-				"   +serverName        : %S\n"
-				"   +userName          : %S\n"
-				"   +authentication    : %S\n\n",
+				"   +serverName        : %s\n"
+				"   +userName          : %s\n"
+				"   +authentication    : %s\n\n",
 					__LINE__,
 					ret,
 					hDbc,
-					serverName ? serverName : (SQLWCHAR*)"",
-					userName ? userName : (SQLWCHAR*)"",
-					authentication ? authentication : (SQLWCHAR*)"" ));
+					serverName ? ServerName.data() : "",
+					userName ? UserName.data() : "",
+					authentication ? Authentication.data() : "" ));
 
 	return ret;
 }
@@ -311,7 +307,7 @@ SQLRETURN SQL_API SQLConnectW( SQLHDBC hDbc,
 
 SQLRETURN SQL_API SQLDescribeColW( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
 							      SQLWCHAR *columnName, SQLSMALLINT bufferLength,
-								  SQLSMALLINT *nameLength, SQLSMALLINT *dataType, 
+								  SQLSMALLINT *nameLength, SQLSMALLINT *dataType,
 								  SQLULEN *columnSize, SQLSMALLINT *decimalDigits,
 								  SQLSMALLINT *nullable )
 {
@@ -397,7 +393,7 @@ SQLRETURN SQL_API SQLPrepareW( SQLHSTMT hStmt,
 	GUARD_HSTMT( hStmt );
 
 	ConvertingString<> StatementText( GETCONNECT_STMT( hStmt ), statementText, textLength );
-	
+
 	return ((OdbcStatement*) hStmt)->sqlPrepare( StatementText, StatementText.getLength() );
 }
 
@@ -443,27 +439,41 @@ SQLRETURN SQL_API SQLDriverConnectW( SQLHDBC hDbc, SQLHWND hWnd, SQLWCHAR *szCon
 									SQLSMALLINT cbConnStrOutMax, SQLSMALLINT *pcbConnStrOut,
 									SQLUSMALLINT fDriverCompletion )
 {
-	TRACE ("SQLDriverConnectW");
 	GUARD_HDBC( hDbc );
 
-	ConvertingString<> ConnStrIn( (OdbcConnection*)hDbc, szConnStrIn, cbConnStrIn );
-	ConvertingString<> ConnStrOut( cbConnStrOutMax, szConnStrOut, pcbConnStrOut, false );
-	ConnStrOut.setConnection( (OdbcConnection*)hDbc );
+	OdbcConnection* conn = (OdbcConnection*)hDbc;
 
-	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlDriverConnect( hWnd, ConnStrIn, ConnStrIn.getLength(),
-													ConnStrOut, ConnStrOut.getLength(), pcbConnStrOut,
-													fDriverCompletion );
-	LOG_PRINT(( logFile, 
-				"SQLDriverConnectW     : Line %d\n"
-				"   +status            : %d\n"
-				"   +hDbc              : %p\n"
-				"   +szConnStrIn       : %S\n"
-				"   +szConnStrOut      : %S\n\n",
-					__LINE__,
+	// Force UTF-8 connection charset and DPB processing
+	conn->charsetCode = Charset::Code::Utf8;
+	conn->charset = "UTF8";
+	conn->convert.setCharsetCode(Charset::Code::Utf8);
+
+	ConvertingString<> ConnStrIn(conn, szConnStrIn, cbConnStrIn );
+	ConvertingString<> ConnStrOut( cbConnStrOutMax, szConnStrOut, pcbConnStrOut, false );
+	ConnStrOut.setConnection(conn);
+
+	LOG_PRINT(( logFile,
+				"SQLDriverConnectW:\n"
+				"   +hDbc         : %p\n"
+				"   +szConnStrIn  : %s (%d)\n"
+				"   +szConnStrOut : %p (%d)\n\n",
+					hDbc,
+					szConnStrIn ? ConnStrIn.data() : "", cbConnStrIn,
+					szConnStrOut, cbConnStrOutMax ));
+
+	SQLRETURN ret = conn->sqlDriverConnect( hWnd, ConnStrIn, ConnStrIn.getLength(),
+											ConnStrOut, ConnStrOut.getLength(), pcbConnStrOut,
+											fDriverCompletion );
+	LOG_PRINT(( logFile,
+				"SQLDriverConnectW return:\n"
+				"   +status       : %d\n"
+				"   +hDbc         : %p\n"
+				"   +szConnStrIn  : %s\n"
+				"   +szConnStrOut : %s\n\n",
 					ret,
 					hDbc,
-					szConnStrIn ? szConnStrIn : (SQLWCHAR*)"",
-					szConnStrOut ? szConnStrOut : (SQLWCHAR*)"" ));
+					szConnStrIn ? ConnStrIn.data() : "",
+					szConnStrOut ? ConnStrOut.data() : "" ));
 
 	return ret;
 }
@@ -596,7 +606,7 @@ SQLRETURN SQL_API SQLSetConnectOptionW( SQLHDBC hDbc, SQLUSMALLINT option, SQLUL
 
 			ConvertingString<> Value( (OdbcConnection*)hDbc, (SQLWCHAR *)value, bufferLength );
 
-			return ((OdbcConnection*) hDbc)->sqlSetConnectAttr( option, 
+			return ((OdbcConnection*) hDbc)->sqlSetConnectAttr( option,
 												(SQLPOINTER)(SQLCHAR*)Value, Value.getLength() );
 		}
 	}
@@ -750,7 +760,7 @@ SQLRETURN SQL_API SQLNativeSqlW( SQLHDBC hDbc,
 
 	if ( cbSqlStrIn == SQL_NTS )
 		cbSqlStrIn = (SQLINTEGER)wcslen( (const wchar_t*)szSqlStrIn );
-	
+
 	bool isByte = !( cbSqlStrIn % 2 );
 
 	ConvertingString<> SqlStrIn( (OdbcConnection*)hDbc, szSqlStrIn, cbSqlStrIn );
@@ -764,7 +774,7 @@ SQLRETURN SQL_API SQLNativeSqlW( SQLHDBC hDbc,
 
 ///// SQLPrimaryKeysW /////
 
-SQLRETURN SQL_API SQLPrimaryKeysW( SQLHSTMT hStmt, 
+SQLRETURN SQL_API SQLPrimaryKeysW( SQLHSTMT hStmt,
 								  SQLWCHAR *szCatalogName, SQLSMALLINT cbCatalogName,
 								  SQLWCHAR *szSchemaName, SQLSMALLINT cbSchemaName,
 								  SQLWCHAR *szTableName, SQLSMALLINT cbTableName )
@@ -910,7 +920,7 @@ SQLRETURN SQL_API SQLColAttributeW( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
 
 		if ( bufferLength > 0 )
 		{
-			ConvertingString<> CharacterAttribute( bufferLength, 
+			ConvertingString<> CharacterAttribute( bufferLength,
 									(SQLWCHAR *)characterAttribute, stringLength );
 			CharacterAttribute.setConnection( GETCONNECT_STMT( hStmt ) );
 
@@ -944,7 +954,7 @@ SQLRETURN SQL_API SQLGetConnectAttrW( SQLHDBC hDbc,
 			ConvertingString<SQLINTEGER> Value( bufferLength, (SQLWCHAR *)value, stringLength );
 			Value.setConnection( (OdbcConnection*)hDbc );
 
-			return ((OdbcConnection*) hDbc)->sqlGetConnectAttr( attribute, 
+			return ((OdbcConnection*) hDbc)->sqlGetConnectAttr( attribute,
 											(SQLPOINTER)(SQLCHAR*)Value, Value.getLength(), stringLength );
 		}
 	}
@@ -956,7 +966,7 @@ SQLRETURN SQL_API SQLGetConnectAttrW( SQLHDBC hDbc,
 ///// SQLGetDescFieldW /////
 
 SQLRETURN SQL_API SQLGetDescFieldW( SQLHDESC hDesc, SQLSMALLINT recNumber,
-								   SQLSMALLINT fieldIdentifier, SQLPOINTER value, 
+								   SQLSMALLINT fieldIdentifier, SQLPOINTER value,
 								   SQLINTEGER bufferLength, SQLINTEGER *stringLength )
 {
 	TRACE ("SQLGetDescFieldW");
@@ -997,8 +1007,8 @@ SQLRETURN SQL_API SQLGetDescFieldW( SQLHDESC hDesc, SQLSMALLINT recNumber,
 SQLRETURN SQL_API SQLGetDescRecW( SQLHDESC hDesc,
 								 SQLSMALLINT recNumber, SQLWCHAR *name,
 								 SQLSMALLINT bufferLength, SQLSMALLINT *stringLength,
-								 SQLSMALLINT *type, SQLSMALLINT *subType, 
-								 SQLLEN     *length, SQLSMALLINT *precision, 
+								 SQLSMALLINT *type, SQLSMALLINT *subType,
+								 SQLLEN     *length, SQLSMALLINT *precision,
 								 SQLSMALLINT *scale, SQLSMALLINT *nullable )
 {
 	TRACE ("SQLGetDescRecW");
@@ -1008,7 +1018,7 @@ SQLRETURN SQL_API SQLGetDescRecW( SQLHDESC hDesc,
 	Name.setConnection( GETCONNECT_DESC( hDesc ) );
 
 	return ((OdbcDesc*) hDesc)->sqlGetDescRec( recNumber, Name, Name.getLength(),
-											  stringLength, type, subType, 
+											  stringLength, type, subType,
 											  length, precision, scale, nullable );
 }
 
@@ -1159,7 +1169,7 @@ SQLRETURN SQL_API SQLSetDescFieldW( SQLHDESC hDesc,
 		if ( bufferLength > 0 || bufferLength == SQL_NTS )
 		{
 			int len;
-			
+
 			if ( bufferLength == SQL_NTS )
 				len = (int)wcslen( (const wchar_t*)value );
 			else

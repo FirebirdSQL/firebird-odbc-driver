@@ -1,14 +1,14 @@
 /*
- *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
+ *
+ *     The contents of this file are subject to the Initial
+ *     Developer's Public License Version 1.0 (the "License");
+ *     you may not use this file except in compliance with the
+ *     License. You may obtain a copy of the License at
  *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl.
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
+ *     Software distributed under the License is distributed on
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+ *     express or implied.  See the License for the specific
  *     language governing rights and limitations under the License.
  *
  *
@@ -37,17 +37,18 @@
 #include "SQLError.h"
 #include "Parameters.h"
 #include "IscConnection.h"
+#include "MultibyteConvert.h"
 
-static char databaseInfoItems [] = { 
+static char databaseInfoItems [] = {
 	isc_info_db_id,
 	isc_info_db_sql_dialect,
 	isc_info_base_level,
 	isc_info_ods_version,
 	isc_info_firebird_version,
-	isc_info_version, 
+	isc_info_version,
 	isc_info_page_size,
 	isc_info_user_names,
-	isc_info_end 
+	isc_info_end
 	};
 
 using namespace Firebird;
@@ -167,7 +168,7 @@ void Attachment::createDatabase(const char *dbName, Properties *properties)
 		p += sprintf( p, "DEFAULT CHARACTER SET %s ", charset );
 
 	*p = '\0';
-	
+
 	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
@@ -259,6 +260,11 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 			charsetCode = findCharsetsCode( charset );
 		}
 
+		if (charsetCode == Charset::Code::Utf8)
+		{
+			dpb->insertTag(&throw_status, isc_dpb_utf8_filename);
+		}
+
 		const char *property = properties->findValue ("databaseAccess", NULL);
 
 		if ( property )
@@ -313,7 +319,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 			else
 			{
 				JString text;
-				
+
 				switch ( statusVector [7] )
 				{
 				case isc_io_access_err:
@@ -376,7 +382,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 			case isc_info_db_sql_dialect:
 				databaseDialect = GDS->_vax_integer (p, length);
 				break;
-			
+
 			case isc_info_base_level:
 				serverBaseLevel = GDS->_vax_integer (p, length);
 				break;
@@ -396,7 +402,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 					char * start = p + 2;
 					char * beg = start;
 					char * end = beg + p [1];
-					
+
 					while ( beg < end )
 					{
 						if ( *beg >= '0' && *beg <= '9' )
@@ -437,7 +443,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 					char * beg = start;
 					char * end = beg + p [1];
 					char * tmp = NULL;
-					
+
 					while ( beg < end )
 					{
 						if ( *beg >= '0' && *beg <= '9' )
@@ -488,7 +494,7 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 			p += length;
 		}
 	}
-	
+
 	if ( dialect && *dialect == '1')
 		databaseDialect = SQL_DIALECT_V5;
 	else
