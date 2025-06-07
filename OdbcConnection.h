@@ -1,14 +1,14 @@
 /*
- *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
+ *
+ *     The contents of this file are subject to the Initial
+ *     Developer's Public License Version 1.0 (the "License");
+ *     you may not use this file except in compliance with the
+ *     License. You may obtain a copy of the License at
  *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl.
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
+ *     Software distributed under the License is distributed on
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+ *     express or implied.  See the License for the specific
  *     language governing rights and limitations under the License.
  *
  *
@@ -30,6 +30,7 @@
 #endif
 
 #include "OdbcDesc.h"
+#include "IscDbc/MultibyteConvert.h"
 #include "IscDbc/JString.h"
 #include "Headers/OdbcUserEvents.h"
 
@@ -38,10 +39,10 @@ namespace OdbcJdbcLibrary {
 class OdbcEnv;
 class OdbcStatement;
 
-class OdbcConnection : public OdbcObject  
+class OdbcConnection : public OdbcObject
 {
-	enum 
-	{	
+	enum
+	{
 		DEF_READONLY_TPB = 1,
 		DEF_NOWAIT_TPB = 2,
 		DEF_DIALECT = 4,
@@ -73,9 +74,9 @@ public:
 	JString readAttribute (const char *attribute);
 	JString readAttributeFileDSN (const char * attribute);
 	void writeAttributeFileDSN (const char * attribute, const char * value);
-	SQLRETURN sqlDriverConnect (SQLHWND hWnd, 
-						   const SQLCHAR *connectString, int connectStringLength, 
-						   SQLCHAR *outConnectBuffer, int connectBufferLength, SQLSMALLINT *outStringLength, 
+	SQLRETURN sqlDriverConnect (SQLHWND hWnd,
+						   const SQLCHAR *connectString, int connectStringLength,
+						   SQLCHAR *outConnectBuffer, int connectBufferLength, SQLSMALLINT *outStringLength,
 						   int driverCompletion);
 	SQLRETURN sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMALLINT stringLength1, SQLCHAR * outConnectionString, SQLSMALLINT bufferLength, SQLSMALLINT * stringLength2Ptr);
 	SQLRETURN sqlNativeSql(SQLCHAR * inStatementText, SQLINTEGER textLength1,	SQLCHAR * outStatementText, SQLINTEGER bufferLength, SQLINTEGER * textLength2Ptr);
@@ -148,8 +149,17 @@ public:
 	int			statementNumber;
 	int			levelBrowseConnect;
 	int			charsetCode;
-	WCSTOMBS	WcsToMbs;
-	MBSTOWCS	MbsToWcs;
+	Convert		convert;
+
+	// Connect from SQLWCHAR to connection charset
+	int fromWcs(const SQLWCHAR* wcs, ssize_t wcsLength, char* str, size_t& strLength)
+	{
+		return convert.fromWcs(wcs, wcsLength, str, strLength);
+	}
+	int toWcs(const char* str, ssize_t strLength, SQLWCHAR* wcs, size_t& wcsLength)
+	{
+		return convert.toWcs(str, strLength, wcs, wcsLength);
+	}
 
 	PODBC_USER_EVENTS_INTERFASE userEventsInterfase;
 

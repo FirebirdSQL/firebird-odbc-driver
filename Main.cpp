@@ -1,14 +1,14 @@
 /*
- *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
+ *
+ *     The contents of this file are subject to the Initial
+ *     Developer's Public License Version 1.0 (the "License");
+ *     you may not use this file except in compliance with the
+ *     License. You may obtain a copy of the License at
  *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl.
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
+ *     Software distributed under the License is distributed on
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+ *     express or implied.  See the License for the specific
  *     language governing rights and limitations under the License.
  *
  *
@@ -22,9 +22,9 @@
  *	2003-03-24	main.cpp
  *				Contributed by Roger Gammans
  *				Fix SQLError prototype to match the prototype
- *				in the sql.h header file. This stops g++ 
- *				generating SQLError as a C++ name-mangled 
- *				entry point. A C function entry is used 
+ *				in the sql.h header file. This stops g++
+ *				generating SQLError as a C++ name-mangled
+ *				entry point. A C function entry is used
  *				allowing correct binding to the driver manager.
  *
  *	2002-10-11	main.cpp
@@ -56,10 +56,10 @@
 
  *
  *	2002-04-30  main.cpp
- *				Added suggestions by Carlos G Alvarez 
+ *				Added suggestions by Carlos G Alvarez
  *				o Test for logfile before trying to close it.
  *				o Changed parameter types for SQLSetConnectOption
- *	
+ *
  */
 
 #ifdef _WINDOWS
@@ -89,7 +89,7 @@ void logMsg (const char *msg)
 	}
 }
 #endif
-		
+
 void notYetImplemented (const char *msg)
 {
     LOG_MSG (msg);
@@ -139,7 +139,7 @@ BOOL APIENTRY DllMain(  HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved 
 }
 #endif
 
-static SQLRETURN __SQLAllocHandle( SQLSMALLINT handleType, SQLHANDLE inputHandle, 
+static SQLRETURN __SQLAllocHandle( SQLSMALLINT handleType, SQLHANDLE inputHandle,
 								SQLHANDLE *outputHandle )
 {
 	TRACE ("__SQLAllocHandle");
@@ -194,14 +194,14 @@ SQLRETURN SQL_API SQLAllocStmt( SQLHDBC hDbc, SQLHSTMT *hStmt )
 
 ///// SQLBindCol /////	ODBC 1.0	///// ISO 92
 
-SQLRETURN SQL_API SQLBindCol( SQLHSTMT hStmt, SQLUSMALLINT columnNumber, 
-						   SQLSMALLINT targetType, SQLPOINTER targetValue, 
+SQLRETURN SQL_API SQLBindCol( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
+						   SQLSMALLINT targetType, SQLPOINTER targetValue,
 						   SQLLEN bufferLength, SQLLEN *strLen_or_Ind )
 {
 	TRACE ("SQLBindCol");
 	GUARD_HSTMT( hStmt );
 
-	return ((OdbcStatement*) hStmt)->sqlBindCol( columnNumber, targetType, targetValue, 
+	return ((OdbcStatement*) hStmt)->sqlBindCol( columnNumber, targetType, targetValue,
 												bufferLength, strLen_or_Ind );
 }
 
@@ -241,7 +241,7 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC hDbc,
 
 	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlConnect( serverName, nameLength1, userName,
 												nameLength2, authentication, nameLength3 );
-	LOG_PRINT(( logFile, 
+	LOG_PRINT(( logFile,
 				"SQLConnect            : Line %d\n"
 				"   +status            : %d\n"
 				"   +hDbc              : %p\n"
@@ -260,15 +260,15 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC hDbc,
 ///// SQLDescribeCol /////	ODBC 1.0	///// ISO 92
 
 SQLRETURN SQL_API SQLDescribeCol( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
-							   SQLCHAR *columnName, SQLSMALLINT bufferLength, 
-							   SQLSMALLINT *nameLength, SQLSMALLINT *dataType, 
+							   SQLCHAR *columnName, SQLSMALLINT bufferLength,
+							   SQLSMALLINT *nameLength, SQLSMALLINT *dataType,
 							   SQLULEN *columnSize, SQLSMALLINT *decimalDigits,
 							   SQLSMALLINT *nullable )
 {
 	TRACE ("SQLDescribeCol");
 	GUARD_HSTMT( hStmt );
 
-	return ((OdbcStatement*) hStmt)->sqlDescribeCol( columnNumber, columnName, bufferLength, 
+	return ((OdbcStatement*) hStmt)->sqlDescribeCol( columnNumber, columnName, bufferLength,
 												nameLength, dataType, columnSize, decimalDigits,
 												nullable );
 }
@@ -306,7 +306,7 @@ SQLRETURN SQL_API SQLError( SQLHENV hEnv,
 													msgBufferLength, msgLength );
 	}
 	if ( hEnv )
-		return ((OdbcEnv*)hEnv)->sqlError( sqlState, nativeErrorCode, msgBuffer, 
+		return ((OdbcEnv*)hEnv)->sqlError( sqlState, nativeErrorCode, msgBuffer,
 													msgBufferLength, msgLength );
 
 	return SQL_ERROR;
@@ -338,7 +338,7 @@ SQLRETURN SQL_API SQLFetch( SQLHSTMT hStmt )
 {
 	TRACE ("SQLFetch");
 	GUARD_HSTMT( hStmt );
-	
+
 	return ((OdbcStatement*) hStmt)->sqlFetch();
 }
 
@@ -407,7 +407,7 @@ SQLRETURN SQL_API SQLPrepare( SQLHSTMT hStmt,
 {
 	TRACE ("SQLPrepare");
 	GUARD_HSTMT( hStmt );
-	
+
 	return ((OdbcStatement*) hStmt)->sqlPrepare( statementText, textLength );
 }
 
@@ -496,7 +496,7 @@ SQLRETURN SQL_API SQLDriverConnect( SQLHDBC hDbc, SQLHWND hWnd, SQLCHAR *szConnS
 	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlDriverConnect( hWnd, szConnStrIn, cbConnStrIn,
 													szConnStrOut, cbConnStrOutMax, pcbConnStrOut,
 													fDriverCompletion );
-	LOG_PRINT(( logFile, 
+	LOG_PRINT(( logFile,
 				"SQLDriverConnect   : Line %d\n"
 				"   +status         : %d\n"
 				"   +hDbc           : %p\n"
@@ -540,7 +540,14 @@ SQLRETURN SQL_API SQLGetData( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
 							 SQLSMALLINT targetType, SQLPOINTER targetValue,
 							 SQLLEN bufferLength, SQLLEN *strLen_or_Ind )
 {
-	TRACE ("SQLGetData");
+	LOG_PRINT((logFile, "SQLGetData:\n"
+				"   +hStmt         : %p\n"
+				"   +columnNumber  : %u\n"
+				"   +targetType    : %d\n"
+				"   +bufferLength  : %lu\n"
+				"   +lenOrInd      : %p\n\n"
+				, hStmt, columnNumber, targetType, bufferLength, strLen_or_Ind));
+
 	GUARD_HSTMT( hStmt );
 
 	return ((OdbcStatement*) hStmt)->sqlGetData( columnNumber, targetType, targetValue,
@@ -552,7 +559,12 @@ SQLRETURN SQL_API SQLGetData( SQLHSTMT hStmt, SQLUSMALLINT columnNumber,
 SQLRETURN SQL_API SQLGetFunctions( SQLHDBC hDbc, SQLUSMALLINT functionId,
 								  SQLUSMALLINT *supported )
 {
-	TRACE ("SQLGetFunctions");
+	LOG_PRINT((logFile, "SQLGetFunctions:\n"
+				"   +hDbc              : %p\n"
+				"   +functionId        : %u\n"
+				"   +supported ptr     : %p\n\n"
+				, hDbc, functionId, supported));
+
 	GUARD_HDBC( hDbc );
 
 	return ((OdbcConnection*) hDbc)->sqlGetFunctions( functionId, supported );
@@ -602,7 +614,7 @@ SQLRETURN SQL_API SQLParamData( SQLHSTMT hStmt, SQLPOINTER *value )
 
 ///// SQLPutData /////
 
-SQLRETURN SQL_API SQLPutData( SQLHSTMT hStmt, SQLPOINTER data, SQLLEN strLen_or_Ind ) 
+SQLRETURN SQL_API SQLPutData( SQLHSTMT hStmt, SQLPOINTER data, SQLLEN strLen_or_Ind )
 {
 	TRACE ("SQLPutData");
 	GUARD_HSTMT( hStmt );
@@ -810,7 +822,7 @@ SQLRETURN SQL_API SQLParamOptions( SQLHSTMT hStmt, SQLULEN cRow, SQLULEN *piRow 
 
 ///// SQLPrimaryKeys /////
 
-SQLRETURN SQL_API SQLPrimaryKeys( SQLHSTMT hStmt, 
+SQLRETURN SQL_API SQLPrimaryKeys( SQLHSTMT hStmt,
 								SQLCHAR *szCatalogName, SQLSMALLINT cbCatalogName,
 								SQLCHAR *szSchemaName, SQLSMALLINT cbSchemaName,
 								SQLCHAR *szTableName, SQLSMALLINT cbTableName )
@@ -1149,15 +1161,15 @@ SQLRETURN SQL_API SQLGetDescField( SQLHDESC hDesc,
 SQLRETURN SQL_API SQLGetDescRec( SQLHDESC hDesc,
 								SQLSMALLINT recNumber, SQLCHAR *name,
 								SQLSMALLINT bufferLength, SQLSMALLINT *stringLength,
-								SQLSMALLINT *type, SQLSMALLINT *subType, 
-								SQLLEN     *length, SQLSMALLINT *precision, 
+								SQLSMALLINT *type, SQLSMALLINT *subType,
+								SQLLEN     *length, SQLSMALLINT *precision,
 								SQLSMALLINT *scale, SQLSMALLINT *nullable )
 {
 	TRACE ("SQLGetDescRec");
 	GUARD_HDESC( hDesc );
 
 	return ((OdbcDesc*) hDesc)->sqlGetDescRec( recNumber, name,
-											bufferLength, stringLength, type, subType, 
+											bufferLength, stringLength, type, subType,
 											length, precision, scale, nullable );
 }
 
@@ -1197,6 +1209,13 @@ SQLRETURN SQL_API SQLGetEnvAttr( SQLHENV hEnv,
 							   SQLINTEGER bufferLength, SQLINTEGER *stringLength )
 {
 	TRACE ("SQLGetEnvAttr");
+
+	LOG_PRINT((logFile, "SQLGetEnvAttr:\n"
+				"   +hEnv        : %p\n"
+				"   +attribute   : %d\n"
+				"   +value       : %p\n"
+				"   bufferLength : %d\n\n"
+				, hEnv, attribute, value, bufferLength));
 
 	return ((OdbcEnv*) hEnv)->sqlGetEnvAttr( attribute, value,
 											bufferLength, stringLength );
@@ -1269,6 +1288,13 @@ SQLRETURN SQL_API SQLSetEnvAttr( SQLHENV hEnv,
 							   SQLINTEGER stringLength )
 {
 	TRACE ("SQLSetEnvAttr");
+
+	LOG_PRINT((logFile, "SQLSetEnvAttr:\n"
+				"   +hEnv        : %p\n"
+				"   +attribute   : %d\n"
+				"   +value       : %p\n"
+				"   stringLength : %d\n\n"
+				, hEnv, attribute, value, stringLength));
 
 	return ((OdbcEnv*) hEnv)->sqlSetEnvAttr( attribute, value, stringLength );
 }
