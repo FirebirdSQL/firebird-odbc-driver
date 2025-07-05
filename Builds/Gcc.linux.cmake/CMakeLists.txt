@@ -83,5 +83,5 @@ target_compile_features(objlib PUBLIC cxx_std_17)
 add_library(OdbcFb       SHARED $<TARGET_OBJECTS:objlib>)
 add_library(OdbcFbStatic STATIC $<TARGET_OBJECTS:objlib>)
 
-target_link_libraries(OdbcFb       PRIVATE dl PRIVATE crypt PRIVATE ODBC::ODBC)
-target_link_libraries(OdbcFbStatic PRIVATE dl PRIVATE crypt PRIVATE ODBC::ODBC)
+target_link_libraries(OdbcFb       PRIVATE dl PRIVATE crypt PRIVATE odbcinst)
+target_link_libraries(OdbcFbStatic PRIVATE dl PRIVATE crypt PRIVATE odbcinst)
