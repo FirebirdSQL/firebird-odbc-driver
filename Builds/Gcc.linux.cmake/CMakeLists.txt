@@ -8,7 +8,7 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 add_compile_options(
     "$<$<CONFIG:DEBUG>:-O0;-g3;-D_DEBUG;-DDEBUG;-DLOGGING;-fexceptions>"
-    "$<$<CONFIG:RELEASE>:-O3;-DNDEBUG>"
+    "$<$<CONFIG:RELEASE>:-O3;-DNDEBUG;-ftree-loop-vectorize;-ffast-math>"
 )
 
 set(FBODBC_ARCH ${CMAKE_HOST_SYSTEM_PROCESSOR})
@@ -32,6 +32,10 @@ else()
     add_definitions(-DFBODBC_ARCH_GENERIC)
     set(FBODBC_ARCH_GENERIC 1 CACHE BOOL "Arch generic")
     message(WARNING "Architecture <${FBODBC_ARCH}> conditionally supported")
+endif()
+
+if(FBODBC_ARCH_X86 OR FBODBC_ARCH_X86_64)
+    add_definitions(-msse4.1)
 endif()
 
 find_package(ODBC REQUIRED)
