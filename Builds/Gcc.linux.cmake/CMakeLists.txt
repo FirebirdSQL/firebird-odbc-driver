@@ -40,6 +40,9 @@ endif()
 
 find_package(ODBC REQUIRED)
 
+set(ODBCMANAGER "unixODBC")
+add_definitions("-D${ODBCMANAGER}")
+
 set(FBODBC_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 include_directories("${FBODBC_SRC_DIR}/Headers")
