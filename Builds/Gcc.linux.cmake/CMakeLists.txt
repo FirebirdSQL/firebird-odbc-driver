@@ -40,12 +40,6 @@ endif()
 
 find_package(ODBC REQUIRED)
 
-if(ODBC_FOUND)
-    message(STATUS "ODBC found: ${ODBC_INCLUDE_DIRS} ${ODBC_LIBRARIES}")
-endif(ODBC_FOUND)
-
-include_directories(${ODBC_INCLUDE_DIRS})
-
 set(FBODBC_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 include_directories("${FBODBC_SRC_DIR}/Headers")
@@ -62,12 +56,12 @@ foreach(NameAndValue ${ConfigContents})
   string(REGEX MATCH "^[^=]+" Name ${NameAndValue})
   # Find the value
   string(REPLACE "${Name}=" "" Value ${NameAndValue})
-
+  # Strip trailing spaces in name
   string(REGEX REPLACE "[ ]+" "" Name ${Name})
+  # Strip tabs & spaces in value and convert it to list
   string(REGEX REPLACE "^[ |\t]+" "" Value ${Value})
   string(REGEX REPLACE "[\t]+" "" Value ${Value})
   string(REGEX REPLACE "[ ]+" ";" Value ${Value})
-
   # Set the variable
   set(${Name} ${Value})
 endforeach()
