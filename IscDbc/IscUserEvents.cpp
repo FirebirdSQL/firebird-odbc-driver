@@ -116,7 +116,7 @@ void IscUserEvents::queEvents( void * interfase )
 {
 	ISC_STATUS statusVector[20];
 
-	isc_db_handle dbHandle = NULL;
+	isc_db_handle dbHandle = 0;
 	connection->GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle );
 
 	if ( statusVector [1] )
