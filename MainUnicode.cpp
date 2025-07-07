@@ -28,7 +28,6 @@
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
 #include "OdbcStatement.h"
-#include "SafeEnvThread.h"
 #include "Main.h"
 
 #define GETCONNECT_STMT( hStmt ) (((OdbcStatement*)hStmt)->connection)
@@ -45,7 +44,7 @@ extern UINT codePage; // from Main.cpp
 template <typename TypeRealLen = SQLSMALLINT>
 class ConvertingString
 {
-	enum typestring { NONE, WIDECHARS, BYTESCHARS };
+	enum typestring { NONE, /*WIDECHARS,*/ BYTESCHARS };
 
 	SQLCHAR		*byteString;
 	SQLWCHAR	*unicodeString;
@@ -293,19 +292,21 @@ SQLRETURN SQL_API SQLConnectW( SQLHDBC hDbc,
 
 	SQLRETURN ret = ((OdbcConnection*) hDbc)->sqlConnect( ServerName, ServerName.getLength(), UserName,
 												UserName.getLength(), Authentication, Authentication.getLength() );
+
 	LOG_PRINT(( logFile, 
 				"SQLConnectW           : Line %d\n"
 				"   +status            : %d\n"
 				"   +hDbc              : %p\n"
-				"   +serverName        : %S\n"
-				"   +userName          : %S\n"
-				"   +authentication    : %S\n\n",
+				"   +serverName        : %s\n"
+				"   +userName          : %s\n"
+				"   +authentication    : %s\n\n",
 					__LINE__,
 					ret,
 					hDbc,
-					serverName ? serverName : (SQLWCHAR*)"",
-					userName ? userName : (SQLWCHAR*)"",
-					authentication ? authentication : (SQLWCHAR*)"" ));
+					ServerName.getLength()     ? ServerName     : (SQLCHAR*)"",
+					UserName.getLength()       ? UserName       : (SQLCHAR*)"",
+					Authentication.getLength() ? Authentication : (SQLCHAR*)""
+			   ));
 
 	return ret;
 }
@@ -460,13 +461,14 @@ SQLRETURN SQL_API SQLDriverConnectW( SQLHDBC hDbc, SQLHWND hWnd, SQLWCHAR *szCon
 				"SQLDriverConnectW     : Line %d\n"
 				"   +status            : %d\n"
 				"   +hDbc              : %p\n"
-				"   +szConnStrIn       : %S\n"
-				"   +szConnStrOut      : %S\n\n",
+				"   +szConnStrIn       : %s\n"
+				"   +szConnStrOut      : %s\n\n",
 					__LINE__,
 					ret,
 					hDbc,
-					szConnStrIn ? szConnStrIn : (SQLWCHAR*)"",
-					szConnStrOut ? szConnStrOut : (SQLWCHAR*)"" ));
+					ConnStrIn.getLength()  ? ConnStrIn  : (SQLCHAR*)"",
+					ConnStrOut.getLength() ? ConnStrOut : (SQLCHAR*)""
+			   ));
 
 	return ret;
 }

@@ -151,7 +151,7 @@ namespace OdbcJdbcLibrary {
 
 using namespace IscDbcLibrary;
 
-void TraceOutput(char * msg, intptr_t val)
+void TraceOutput(const char * msg, intptr_t val)
 {
 	char buf[80];
 	sprintf( buf, "\t%s = %ld : %p\n", msg, val, (void*)val );
@@ -859,7 +859,7 @@ SQLRETURN OdbcStatement::sqlFetch()
 }
 
 #ifdef DEBUG
-char *strDebOrientFetch[]=
+const char *strDebOrientFetch[]=
 {
 	"",
 	"SQL_FETCH_NEXT",
@@ -1250,7 +1250,7 @@ SQLRETURN OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLULEN *
 }
 
 #ifdef DEBUG
-char *strDebOrientSetPos[]=
+const char *strDebOrientSetPos[]=
 {
 	"SQL_POSITION",
 	"SQL_REFRESH",
