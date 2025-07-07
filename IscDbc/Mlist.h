@@ -172,7 +172,7 @@ public:
 	
 	int SearchAndInsert(T * key)
 	{
-		register int ret = 1, i, l = 0, u = count - 1;
+		int ret = 1, i, l = 0, u = count - 1;
 		int size = sizeof(T);
 		T * buf = ptRoot;
 
@@ -206,7 +206,7 @@ public:
 
 	int Search(T * key)
 	{
-		register int ret = 1, i, l = 0, u = count - 1;
+		int ret = 1, i, l = 0, u = count - 1;
 		int size = sizeof(T);
 		T * buf = ptRoot;
 

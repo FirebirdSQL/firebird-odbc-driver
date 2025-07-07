@@ -39,7 +39,7 @@ namespace IscDbcLibrary {
 
 struct IntlCharsets
 {
-	char	*name;
+	const char *name;
 	short	lengthName;
 	short	code;
 	short	size;

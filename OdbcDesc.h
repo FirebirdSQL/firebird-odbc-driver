@@ -143,14 +143,17 @@ DescRecord* OdbcDesc::getDescRecord(int number, bool bCashe)
 {
 	if (number >= recordSlots)
 	{
-		int oldSlots = recordSlots;
+		size_t oldSlots = recordSlots;
 		DescRecord **oldRecords = records;
 		recordSlots = number + (bCashe ? 20 : 1);
 		records = new DescRecord* [recordSlots];
-		memset (records, 0, sizeof (DescRecord*) * recordSlots);
+		memset (records, 0, sizeof (DescRecord*) * (size_t)recordSlots);
 		if (oldSlots)
 		{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
 			memcpy (records, oldRecords, sizeof (DescRecord*) * oldSlots);
+#pragma GCC diagnostic pop
 			delete [] oldRecords;
 		}
 	}
@@ -168,6 +171,8 @@ DescRecord* OdbcDesc::getDescRecord(int number, bool bCashe)
 		case odtImplementationRow:
 		case odtImplementationParameter:
 			record->isIndicatorSqlDa = true;
+		default:
+			break;
 		}
 	}
 

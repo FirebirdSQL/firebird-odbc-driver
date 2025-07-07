@@ -1496,12 +1496,12 @@ SQLRETURN OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLLEN 
 		sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, ptr, 0);
 	}
 
-	sqlSetStmtAttr(SQL_ATTR_CONCURRENCY, (SQLPOINTER)fConcurrency, 0);
+	sqlSetStmtAttr(SQL_ATTR_CONCURRENCY, (SQLPOINTER)(intptr_t)fConcurrency, 0);
 
 	if ( crowKeyset > 0 )
-		sqlSetStmtAttr(SQL_ATTR_KEYSET_SIZE, (SQLPOINTER)crowKeyset, 0);
+		sqlSetStmtAttr(SQL_ATTR_KEYSET_SIZE, (SQLPOINTER)(intptr_t)crowKeyset, 0);
 	else
-		sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)crowRowset, 0);
+		sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)(intptr_t)crowRowset, 0);
 
 	return sqlSuccess();
 }
@@ -3138,10 +3138,12 @@ SQLRETURN OdbcStatement::sqlPutData (SQLPOINTER value, SQLLEN valueSize)
 			binding->beginBlobDataTransfer();
 
 		if ( valueSize == SQL_NTS )
+		{
 			if ( binding->conciseType == SQL_C_WCHAR )
 				valueSize = (SQLINTEGER)wcslen( (wchar_t*)value ) * sizeof(wchar_t);
 			else // if ( binding->conciseType == SQL_C_CHAR )
 				valueSize = (SQLINTEGER)strlen( (char*)value );
+		}
 
 		if( valueSize )
 		{
@@ -3176,10 +3178,12 @@ SQLRETURN OdbcStatement::sqlPutData (SQLPOINTER value, SQLLEN valueSize)
 			binding->startedTransfer = true;
 
 		if ( valueSize == SQL_NTS )
+		{
 			if ( binding->conciseType == SQL_C_WCHAR )
 				valueSize = (SQLINTEGER)wcslen( (wchar_t*)value ) * sizeof(wchar_t);
 			else // if ( binding->conciseType == SQL_C_CHAR )
 				valueSize = (SQLINTEGER)strlen( (char*)value );
+		}
 
 		CBindColumn &bindParam = (*listBindIn)[ parameterNeedData - 1 ];
 		SQLPOINTER valueSave = binding->dataPtr;

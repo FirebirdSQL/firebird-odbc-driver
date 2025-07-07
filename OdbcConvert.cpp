@@ -1650,7 +1650,7 @@ int OdbcConvert::convGuidToString(DescRecord * from, DescRecord * to)
 	int len, outlen = to->length;
 
 	len = snprintf(pointer, outlen, "%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X",
-		(unsigned int) g->Data1, g->Data2, g->Data3, g->Data4[0], g->Data4[1], g->Data4[2], g->Data4[3], g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
+		(uint64_t) g->Data1, g->Data2, g->Data3, g->Data4[0], g->Data4[1], g->Data4[2], g->Data4[3], g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
 
 	if ( len == -1 ) len = outlen;
 
@@ -2166,14 +2166,14 @@ int OdbcConvert::convTimeToString(DescRecord * from, DescRecord * to)
 
 	SQLUSMALLINT hour, minute, second;
 	int ntime = *(int*)getAdressBindDataFrom((char*)from->dataPtr);
-	int nnano = ntime % ISC_TIME_SECONDS_PRECISION;
+	int32_t nnano = ntime % ISC_TIME_SECONDS_PRECISION;
 
 	decode_sql_time(ntime, hour, minute, second);
 
 	int len, outlen = to->length;
 
 	if ( nnano )
-		len = snprintf(pointer, outlen, "%02d:%02d:%02d.%04lu",hour, minute, second, nnano);
+		len = snprintf(pointer, outlen, "%02d:%02d:%02d.%04" PRId32,hour, minute, second, nnano);
 	else
 		len = snprintf(pointer, outlen, "%02d:%02d:%02d",hour, minute, second);
 
@@ -2359,7 +2359,7 @@ int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 	QUAD pointerFrom = *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr);
 	int ndate = LO_LONG(pointerFrom);
 	int ntime = HI_LONG(pointerFrom);
-	int nnano = ntime % ISC_TIME_SECONDS_PRECISION;
+	int32_t nnano = ntime % ISC_TIME_SECONDS_PRECISION;
 	SQLUSMALLINT mday, month;
 	SQLSMALLINT year;
 	SQLUSMALLINT hour, minute, second;
@@ -2369,7 +2369,7 @@ int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 	int len, outlen = to->length;
 
 	if ( nnano )
-		len = snprintf(pointer, outlen, "%04d-%02d-%02d %02d:%02d:%02d.%04lu",year,month,mday,hour, minute, second, nnano);
+		len = snprintf(pointer, outlen, "%04d-%02d-%02d %02d:%02d:%02d.%04" PRId32,year,month,mday,hour, minute, second, nnano);
 	else
 		len = snprintf(pointer, outlen, "%04d-%02d-%02d %02d:%02d:%02d",year,month,mday,hour, minute, second);
 

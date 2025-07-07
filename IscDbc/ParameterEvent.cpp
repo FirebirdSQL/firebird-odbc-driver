@@ -35,7 +35,7 @@ ParameterEvent::ParameterEvent( ParameterEvent *next, const char *name, int leng
 {
 	nextParameter = next;
 	lengthNameEvent = length;
-	countEvents = ~0lu;
+	countEvents = ~0u;
 	changed = false;
 
 	nameEvent = new char[lengthNameEvent + 1];

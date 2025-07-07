@@ -185,7 +185,10 @@ public:
 #ifdef _WINDOWS
 			bytesNeeded = WideCharToMultiByte( codePage, (DWORD)0, wcString, length, NULL, (int)0, NULL, NULL );
 #else
-			bytesNeeded = wcstombs( NULL, (const wchar_t*)wcString, length );
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull"
+            bytesNeeded = wcstombs( NULL, (const wchar_t*)wcString, length );
+#pragma GCC diagnostic pop
 #endif
 		}
 

@@ -1931,7 +1931,7 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 			{
 				int len1 = (int)strlen( attachment->userName );
 				int len2;
-				char *beg = resultSet.sqlda->getVarying( 5, len2 );
+				char *beg = (char*)resultSet.sqlda->getVarying( 5, len2 );
 				char *end = beg + len2;
 				char *save = end;
 

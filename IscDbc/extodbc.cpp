@@ -256,7 +256,7 @@ static StatInfo StatInfoBefore, StatInfoAfter;
 
 void getStatInformations(IscConnection * connection, char bNumberCall)
 {
-	struct timeb time_buffer;
+	struct timespec tspec;
 #define LARGE_NUMBER 696600000	/* to avoid overflow, get rid of decades) */
 
 	char items[] = 
@@ -288,9 +288,9 @@ void getStatInformations(IscConnection * connection, char bNumberCall)
 	}
 	ptStat->Remove();
 
-	ftime(&time_buffer);
+	clock_gettime(CLOCK_REALTIME, &tspec);
 	ptStat->elapsed =
-		(long)(time_buffer.time - LARGE_NUMBER) * 100 + (time_buffer.millitm / 10);
+		(long)(tspec.tv_sec - LARGE_NUMBER) * 100 + (tspec.tv_nsec / 1000000ul / 10ul);
 
     ThrowStatusWrapper status( GDS->_status );
     try
@@ -362,7 +362,7 @@ void getStatInformations(IscConnection * connection, char bNumberCall)
 
 int getStatInformations(IscConnection * connection, const void * info_buffer, int bufferLength,short *lengthPtr)
 {
-	struct timeb time_buffer;
+	struct timespec tspec;
 #define LARGE_NUMBER 696600000	/* to avoid overflow, get rid of decades) */
 
 	char items[] = 
@@ -384,9 +384,9 @@ int getStatInformations(IscConnection * connection, const void * info_buffer, in
 
 	*lengthPtr = bufferLength;
 
-	ftime(&time_buffer);
+	clock_gettime(CLOCK_REALTIME, &tspec);
 	ptStat->elapsed =
-		(long)(time_buffer.time - LARGE_NUMBER) * 100 + (time_buffer.millitm / 10);
+		(long)(tspec.tv_sec - LARGE_NUMBER) * 100 + (tspec.tv_nsec / 1000000ul / 10ul);
 
     ThrowStatusWrapper status( GDS->_status );
     try
@@ -470,7 +470,7 @@ const char * strFormatReport =
 
 int strBuildStatInformations(const void * info_buffer, int bufferLength, short *lengthPtr)
 {
-	signed int delta, length;
+	int64_t delta, length;
 	char *p, c;
 	const char * string = strFormatReport;
 
@@ -530,12 +530,12 @@ int strBuildStatInformations(const void * info_buffer, int bufferLength, short *
 			case 'b':
 			case 'c':
 			case 'x':
-				sprintf((char*)p, "%ld", delta);
+				sprintf((char*)p, "%" PRId64, delta);
 				while (*p)
 					p++;
 				break;
 			case 'e':
-				sprintf(p, "%ld.%.2ld", delta / 100, delta % 100);
+				sprintf(p, "%" PRId64 ".%.2" PRId64, delta / 100, delta % 100);
 				while (*p)
 					p++;
 				break;

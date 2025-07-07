@@ -219,8 +219,8 @@ public:
 	bool getBoolean(int index);
 	short getShort(int index);
 	int getInt(int index);
-	char* getText(int index, int& len);
-	char* getVarying(int index, int& len);
+	const char* getText(int index, int& len);
+	const char* getVarying(int index, int& len);
 
 	void updateBoolean(int index, bool value);
 	void updateShort(int index, short value);
