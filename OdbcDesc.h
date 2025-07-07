@@ -86,7 +86,7 @@ typedef MList<CBindColumn,CBindColumnComparator> ListBindColumn;
 class OdbcDesc : public OdbcObject  
 {
 public:
-	inline DescRecord*	getDescRecord(int number, bool bCashe = true);
+	inline DescRecord*	getDescRecord(size_t number, bool bCashe = true);
 	SQLRETURN sqlGetDescField(int recNumber, int fieldId, SQLPOINTER value, int length, SQLINTEGER *lengthPtr);
 	SQLRETURN sqlSetDescField (int recNumber, int fieldId, SQLPOINTER value, int length);
 	SQLRETURN sqlGetDescRec(SQLSMALLINT recNumber, SQLCHAR *Name, SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, 
@@ -132,14 +132,14 @@ public:
 	StatementMetaData	*metaDataIn;
 	StatementMetaData	*metaDataOut;
 	OdbcDescType		headType;
-	int					recordSlots;
+	size_t				recordSlots;
 	DescRecord			**records;
 
 	bool				bDefined;
 };
 
 inline
-DescRecord* OdbcDesc::getDescRecord(int number, bool bCashe)
+DescRecord* OdbcDesc::getDescRecord(size_t number, bool bCashe)
 {
 	if (number >= recordSlots)
 	{
@@ -150,10 +150,7 @@ DescRecord* OdbcDesc::getDescRecord(int number, bool bCashe)
 		memset (records, 0, sizeof (DescRecord*) * (size_t)recordSlots);
 		if (oldSlots)
 		{
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
 			memcpy (records, oldRecords, sizeof (DescRecord*) * oldSlots);
-#pragma GCC diagnostic pop
 			delete [] oldRecords;
 		}
 	}
