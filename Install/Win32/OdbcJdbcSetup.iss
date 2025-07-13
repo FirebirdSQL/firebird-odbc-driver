@@ -121,7 +121,6 @@ ArchitecturesInstallIn64BitMode=x64
 
 [Languages]
 Name: en; MessagesFile: compiler:Default.isl
-Name: ru; MessagesFile: compiler:Default.isl,compiler:Languages\Russian.isl
 
 
 [Types]
@@ -194,13 +193,6 @@ en.DocumentationInstall=Install documentation only.
 en.DeveloperComponent=Install driver to
 en.DeploymentComponent=Install driver only. No docs, uninstall.
 en.DocumentationComponent=Documentation in CHM and HTML format
-
-ru.DeveloperInstall=Полная установка - драйвер в системную папку, документацию в группу программ.
-ru.DeploymentInstall=Только драйвер - никаких документов, меню, иконок.
-ru.DocumentationInstall=Только документацию.
-ru.DeveloperComponent=Установка драйвера в
-ru.DeploymentComponent=Установка только драйвера, без документации и деинсталяции.
-ru.DocumentationComponent=Документация в формате CHM и HTML
 
 
 [Code]
