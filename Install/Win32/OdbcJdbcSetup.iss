@@ -195,12 +195,12 @@ en.DeveloperComponent=Install driver to
 en.DeploymentComponent=Install driver only. No docs, uninstall.
 en.DocumentationComponent=Documentation in CHM and HTML format
 
-ru.DeveloperInstall=Полная установка - драйвер в системную папку, документацию в группу программ.
-ru.DeploymentInstall=Только драйвер - никаких документов, меню, иконок.
-ru.DocumentationInstall=Только документацию.
-ru.DeveloperComponent=Установка драйвера в
-ru.DeploymentComponent=Установка только драйвера, без документации и деинсталяции.
-ru.DocumentationComponent=Документация в формате CHM и HTML
+ru.DeveloperInstall=РџРѕР»РЅР°СЏ СѓСЃС‚Р°РЅРѕРІРєР° - РґСЂР°Р№РІРµСЂ РІ СЃРёСЃС‚РµРјРЅСѓСЋ РїР°РїРєСѓ, РґРѕРєСѓРјРµРЅС‚Р°С†РёСЋ РІ РіСЂСѓРїРїСѓ РїСЂРѕРіСЂР°РјРј.
+ru.DeploymentInstall=РўРѕР»СЊРєРѕ РґСЂР°Р№РІРµСЂ - РЅРёРєР°РєРёС… РґРѕРєСѓРјРµРЅС‚РѕРІ, РјРµРЅСЋ, РёРєРѕРЅРѕРє.
+ru.DocumentationInstall=РўРѕР»СЊРєРѕ РґРѕРєСѓРјРµРЅС‚Р°С†РёСЋ.
+ru.DeveloperComponent=РЈСЃС‚Р°РЅРѕРІРєР° РґСЂР°Р№РІРµСЂР° РІ
+ru.DeploymentComponent=РЈСЃС‚Р°РЅРѕРІРєР° С‚РѕР»СЊРєРѕ РґСЂР°Р№РІРµСЂР°, Р±РµР· РґРѕРєСѓРјРµРЅС‚Р°С†РёРё Рё РґРµРёРЅСЃС‚Р°Р»СЏС†РёРё.
+ru.DocumentationComponent=Р”РѕРєСѓРјРµРЅС‚Р°С†РёСЏ РІ С„РѕСЂРјР°С‚Рµ CHM Рё HTML
 
 
 [Code]
