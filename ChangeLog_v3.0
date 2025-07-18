@@ -1,3 +1,15 @@
+ * Update OdbcJdbcSetup.iss
+   by @irodushka in https://github.com/FirebirdSQL/firebird-odbc-driver/pull/253
+
+ * UK translation fix 
+   by @NickNevzorov in https://github.com/FirebirdSQL/firebird-odbc-driver/pull/250
+
+ * Issue#240: makefile fix for aarm64 build
+   by @irodushka in https://github.com/FirebirdSQL/firebird-odbc-driver/pull/241
+
+ * Unstable operation with a large number of connections
+   by @NickNevzorov in https://github.com/FirebirdSQL/firebird-odbc-driver/pull/237
+
  * EXECUTE STATEMENT changed for the worse in ODBC 3.0
    #233 opened by Fabio-LV
 
