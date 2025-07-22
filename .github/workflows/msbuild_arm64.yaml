@@ -35,11 +35,11 @@ jobs:
       with:
         msbuild-architecture: arm64
 
-    - name: Install html-help-workshop, sed, innosetup
-      run: |
-        choco install html-help-workshop
-        choco install sed
-        choco install innosetup
+    #- name: Install html-help-workshop, sed, innosetup
+    #  run: |
+    #    choco install html-help-workshop
+    #    choco install sed
+    #    choco install innosetup
 
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
@@ -52,17 +52,17 @@ jobs:
         #dir
         env
 
-    - name: Build win32
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      # Add additional options to the MSBuild command line here (like platform or verbosity level).
-      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=Win32 ${{env.SOLUTION_FILE_PATH}}
+    #- name: Build win32
+    #  working-directory: ${{env.GITHUB_WORKSPACE}}
+    #  # Add additional options to the MSBuild command line here (like platform or verbosity level).
+    #  # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
+    #  run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=Win32 ${{env.SOLUTION_FILE_PATH}}
 
     - name: Build x64
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=x64 ${{env.SOLUTION_FILE_PATH}}
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=ARM64 ${{env.SOLUTION_FILE_PATH}}
 
     - name: Build InnoSetup installers
       working-directory: ${{env.GITHUB_WORKSPACE}}
