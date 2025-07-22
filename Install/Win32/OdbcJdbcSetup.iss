@@ -114,9 +114,12 @@ WizardImageFile={#SOURCE_DOCS}\Win32\firebird-logo1.bmp
 WizardImageBackColor=clWhite
 WizardSmallImageFile={#SOURCE_DOCS}\Win32\firebird-logo2.bmp
 
+ArchitecturesInstallIn64BitMode=win64
+
 #if PlatformTarget == "x64"
-ArchitecturesAllowed=x64
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesAllowed=x64compatible
+#elif PlatformTarget == "ARM64"
+ArchitecturesAllowed=arm64
 #endif
 
 [Languages]

@@ -43,6 +43,7 @@ set FB_TARGET_PLATFORM=x64
 for %%v in ( %* )  do (
   ( if /I "%%v"=="DEBUG" (set BUILDCONFIG=debug) )
   ( if /I "%%v"=="WIN32" (set FB_TARGET_PLATFORM=Win32) )
+  ( if /I "%%v"=="ARM64" (set FB_TARGET_PLATFORM=ARM64) )
 )
 
 @cd ..\..
@@ -52,6 +53,7 @@ for %%v in ( %* )  do (
 if not defined FB_TARGET_PLATFORM (
   @if "%PROCESSOR_ARCHITECTURE%"=="x86" (set FB_TARGET_PLATFORM=Win32)
   @if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (set FB_TARGET_PLATFORM=x64)
+  @if "%PROCESSOR_ARCHITECTURE%"=="ARM64" (set FB_TARGET_PLATFORM=ARM64)
 )
 
 @goto :EOF

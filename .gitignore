@@ -1,5 +1,7 @@
 Builds/*/Win32/
 Builds/*/x64/
+Builds/*/ARM/
+Builds/*/ARM64/
 Builds/*/.vs/
 Install/Win32/install_image/
 *.suo
@@ -8,3 +10,4 @@ Install/Win32/install_image/
 *.chm
 build_*.log
 OdbcJdbcSetup_*.iss
+.vs/*
