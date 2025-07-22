@@ -30,10 +30,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v2
       with:
-        msbuild-architecture: 'arm64'
+        msbuild-architecture: arm64
 
     - name: Install html-help-workshop, sed, innosetup
       run: |
