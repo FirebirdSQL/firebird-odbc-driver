@@ -119,7 +119,7 @@ ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 ; #elif PlatformTarget == "ARM64"
 ; ArchitecturesAllowed=arm64
-; ArchitecturesInstallIn64BitMode=arm64
+ArchitecturesInstallIn64BitMode=arm64
 #endif
 
 [Languages]
