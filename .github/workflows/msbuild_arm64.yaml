@@ -32,16 +32,18 @@ jobs:
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
+      with:
+        msbuild-architecture: 'arm64'
+        
+  #  - name: Install html-help-workshop, sed, innosetup
+  #    run: |
+  #      choco install html-help-workshop
+  #      choco install sed
+  #      choco install innosetup
 
-    - name: Install html-help-workshop, sed, innosetup
-      run: |
-        choco install html-help-workshop
-        choco install sed
-        choco install innosetup
-
-    - name: Restore NuGet packages
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+  #  - name: Restore NuGet packages
+  #    working-directory: ${{env.GITHUB_WORKSPACE}}
+  #    run: nuget restore ${{env.SOLUTION_FILE_PATH}}
 
     - name: Stub
       working-directory: ${{env.GITHUB_WORKSPACE}}
@@ -56,20 +58,20 @@ jobs:
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=ARM64 ${{env.SOLUTION_FILE_PATH}}
 
-    - name: Build InnoSetup installers
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: |
-        cd Install\Win32
-        dir
-        ./MakePackage.bat
+    #- name: Build InnoSetup installers
+    #  working-directory: ${{env.GITHUB_WORKSPACE}}
+    #  run: |
+    #    cd Install\Win32
+    #    dir
+    #    ./MakePackage.bat
        
-    - uses: actions/upload-artifact@v4
-      id: upload_step3
-      with:
-          name: x64Installer
-          path: ./Install/Win32/install_image/*_x64.exe
+    # - uses: actions/upload-artifact@v4
+    #  id: upload_step3
+    #  with:
+    #      name: x64Installer
+    #      path: ./Install/Win32/install_image/*_x64.exe
           
-    - name: Upload results
-      run: |
-        echo 'x64Installer:   Artifact ID is ${{ steps.upload_step3.outputs.artifact-id }}, URL is ${{ steps.upload_step3.outputs.artifact-url }}'
+    #- name: Upload results
+    #  run: |
+    #    echo 'x64Installer:   Artifact ID is ${{ steps.upload_step3.outputs.artifact-id }}, URL is ${{ steps.upload_step3.outputs.artifact-url }}'
      
