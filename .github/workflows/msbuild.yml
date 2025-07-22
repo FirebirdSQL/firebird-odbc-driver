@@ -7,7 +7,7 @@ name: MSBuild
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "feature_arm64_win" ]
 
 env:
   # Path to the solution file relative to the root of the project.
