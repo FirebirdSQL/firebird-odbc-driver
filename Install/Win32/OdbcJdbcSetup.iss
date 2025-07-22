@@ -57,7 +57,7 @@ BUILD_ENV undefined
 #define PlatformTarget GetEnv("FB_TARGET_PLATFORM")
 #endif
 #if PlatformTarget == ""
-#define PlatformTarget "win32"
+#define PlatformTarget "x64"
 #endif
 
 ;---- If we haven't already set ProductVersion then pick it up from the environment.
@@ -120,6 +120,8 @@ ArchitecturesInstallIn64BitMode=win64
 ArchitecturesAllowed=x64compatible
 #elif PlatformTarget == "ARM64"
 ArchitecturesAllowed=arm64
+#elif PlatformTarget == "Win32"
+ArchitecturesAllowed=x86os
 #endif
 
 [Languages]
