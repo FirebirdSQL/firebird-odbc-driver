@@ -117,8 +117,8 @@ WizardSmallImageFile={#SOURCE_DOCS}\Win32\firebird-logo2.bmp
 #if PlatformTarget == "x64"
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
-; #elif PlatformTarget == "ARM64"
-; ArchitecturesAllowed=arm64
+#elif PlatformTarget == "ARM64"
+ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=arm64
 #endif
 
