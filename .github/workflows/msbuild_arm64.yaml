@@ -50,7 +50,9 @@ jobs:
       run: |
         #cd "C:\Program Files (x86)\"
         #dir
-        env
+        #env
+        cd "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\"
+        dir
 
     #- name: Build win32
     #  working-directory: ${{env.GITHUB_WORKSPACE}}
