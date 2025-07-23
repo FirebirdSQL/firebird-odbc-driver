@@ -629,11 +629,11 @@ void Sqlda::print()
 					break;
 
 				case SQL_SHORT:
-					printf ("%d", *(short*) p);
+					printf ("%" PRId16, *(int16_t*) p);
 					break;
 
 				case SQL_LONG:
-					printf ("%ld", *(int*) p);
+					printf ("%" PRId32, *(int32_t*) p);
 					break;
 
 				case SQL_FLOAT:
@@ -1318,7 +1318,7 @@ int Sqlda::getInt (int index)
 	return *(int*)( Var(index)->sqldata );
 }
 
-char * Sqlda::getText (int index, int &len)
+const char * Sqlda::getText (int index, int &len)
 {
 	CONVERSION_CHECK_DEBUG((Var(index)->sqltype) == SQL_TEXT);
 	if( isNull ( index) )
@@ -1330,7 +1330,7 @@ char * Sqlda::getText (int index, int &len)
 	return Var(index)->sqldata;
 }
 
-char * Sqlda::getVarying (int index, int &len)
+const char * Sqlda::getVarying (int index, int &len)
 {
 	CONVERSION_CHECK_DEBUG((Var(index)->sqltype) == SQL_VARYING);
 	if( isNull ( index) )

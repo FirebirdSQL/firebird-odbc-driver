@@ -820,7 +820,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 struct infoDebSetDescField
 {
 	int kod;
-	char * name;
+	const char * name;
 } debSetDescField[]=
 {
 	__DebSetDescField(SQL_ERROR),
@@ -854,7 +854,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			break;
 	if(i==sizeof(debSetDescField)/sizeof(*debSetDescField))
 		i=0;
-	sprintf(strTmp,"\tid %4i - %s : recNumber %i : value %i\n",fieldId,debSetDescField[i].name,
+	sprintf(strTmp,"\tid %4i - %s : recNumber %i : value %" PRId64 "\n",fieldId,debSetDescField[i].name,
 								recNumber, value ? (intptr_t)value : 0);
 	OutputDebugString(strTmp); 
 #endif
