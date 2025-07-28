@@ -1,14 +1,14 @@
 /*
- *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
+ *
+ *     The contents of this file are subject to the Initial
+ *     Developer's Public License Version 1.0 (the "License");
+ *     you may not use this file except in compliance with the
+ *     License. You may obtain a copy of the License at
  *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl.
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
+ *     Software distributed under the License is distributed on
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+ *     express or implied.  See the License for the specific
  *     language governing rights and limitations under the License.
  *
  *
@@ -19,7 +19,7 @@
  *
  *  2002-11-25	Sqlda.cpp
  *				Contributed by C. G. Alvarez
- *				Changes to support better handling of 
+ *				Changes to support better handling of
  *				NUMERIC and DECIMAL
  *
  *  2002-10-11	Sqlda.cpp
@@ -34,9 +34,9 @@
  *
  *  2002-08-02	Sqlda.cpp
  *				Contributed by C. G. Alvarez
- *				Change getColumnType to pass var->sqlscale to getSQLType.   
- *				Change getSQLTypeName to keep in sync with this. 
- *				The purpose is to allow return of DECIMAL as JDBC_DECIMAL 
+ *				Change getColumnType to pass var->sqlscale to getSQLType.
+ *				Change getSQLTypeName to keep in sync with this.
+ *				The purpose is to allow return of DECIMAL as JDBC_DECIMAL
  *				instead of JDBC_BIGINT.
  *
  *	2002-06-04	Sqlda.cpp
@@ -61,6 +61,7 @@
 #include "IscConnection.h"
 #include "IscStatement.h"
 #include "IscBlob.h"
+#include "MultibyteConvert.h"
 
 using namespace Firebird;
 
@@ -269,7 +270,7 @@ public:
 				countBlocks += 10;
 				listBlocks.resize( countBlocks );
 			}
-			
+
 			if ( listBlocks.at(curBlock).rows.size() == 0 )
 			{
 				listBlocks.at(curBlock) = { nMAXROWBLOCK, lenRow };
@@ -524,7 +525,7 @@ void Sqlda::mapSqlAttributes( IscStatement *stmt )
 			//arrays
 			if( stmt && var->sqltype == SQL_ARRAY ) {
 				var->array = new CAttrArray;
-				/* 
+				/*
 				* loadAttributes() raises an SQLError exc on empty relname / sqlname
 				* Empty names are common case for input parameters.
 				* But it seems to me, we have no need for var->array attributes for inputs.
@@ -676,7 +677,7 @@ void Sqlda::print()
 
 // Warning!
 // It's hack, for exclude system filed description
-// Return SQLDA for all system field has 31 length 
+// Return SQLDA for all system field has 31 length
 // and charsetId 3 (UNICODE_FSS) it's error!
 //
 //	if ( !(var->sqllen % getCharsetSize( var->sqlsubtype )) )
@@ -702,14 +703,14 @@ int Sqlda::getColumnDisplaySize(int index)
 		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_SHORT_LENGTH + 2,
 										MAX_DECIMAL_SHORT_LENGTH + 2,
 										MAX_SMALLINT_LENGTH + 1);
-		
+
 	case SQL_LONG:
 		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_LONG_LENGTH + 2,
 										MAX_DECIMAL_LONG_LENGTH + 2,
 										MAX_INT_LENGTH + 1);
 
 	case SQL_FLOAT:
-		return MAX_FLOAT_LENGTH + 4;			
+		return MAX_FLOAT_LENGTH + 4;
 
 	case SQL_D_FLOAT:
 	case SQL_DOUBLE:
@@ -722,7 +723,7 @@ int Sqlda::getColumnDisplaySize(int index)
 		return SET_INFO_FROM_SUBTYPE(	MAX_NUMERIC_LENGTH + 2,
 										MAX_DECIMAL_LENGTH + 2,
 										MAX_QUAD_LENGTH + 1);
-		
+
 	case SQL_ARRAY:
 		return Var(index)->array->arrOctetLength;
 //		return MAX_ARRAY_LENGTH;
@@ -798,11 +799,11 @@ int Sqlda::getPrecision(int index)
 										MAX_DECIMAL_LENGTH,
 										MAX_QUAD_LENGTH);
 
-	case SQL_ARRAY:	
+	case SQL_ARRAY:
 		return var->array->arrOctetLength;
 //		return MAX_ARRAY_LENGTH;
-	
-	case SQL_BLOB:		
+
+	case SQL_BLOB:
 		return MAX_BLOB_LENGTH;
 
 	case SQL_TYPE_TIME:
@@ -1017,16 +1018,16 @@ void Sqlda::setValue(int slot, Value * value, IscStatement	*stmt)
 
 	switch (var->sqltype)
 		{
-		case SQL_BLOB:	
+		case SQL_BLOB:
 			setBlob (var, value, stmt);
 			return;
-		case SQL_ARRAY:	
+		case SQL_ARRAY:
 			setArray (var, value, stmt);
 			return;
 		}
 
 	var->sqlscale = 0;
-	
+
 	if( value->type == Null ) {
 		setNull( index );
 		return;
@@ -1043,7 +1044,7 @@ void Sqlda::setValue(int slot, Value * value, IscStatement	*stmt)
 		{
 /*
 		case Null:
-			
+
 			var->sqltype |= 1;
 			*var->sqlind = sqlNull;
 			break;
@@ -1095,22 +1096,22 @@ void Sqlda::setValue(int slot, Value * value, IscStatement	*stmt)
 			var->sqllen = sizeof (ISC_DATE);
 			*(ISC_DATE*)dst_buf = IscStatement::getIscDate (value->data.date);
 			break;
-									
+
 		case TimeType:
 			var->sqltype = SQL_TYPE_TIME;
 			var->sqllen = sizeof (ISC_TIME);
 			*(ISC_TIME*)dst_buf = IscStatement::getIscTime (value->data.time);
 			break;
-									
+
 		case Timestamp:
 			var->sqltype = SQL_TIMESTAMP;
 			var->sqllen = sizeof (ISC_TIMESTAMP);
 			*(ISC_TIMESTAMP*)dst_buf = IscStatement::getIscTimeStamp (value->data.timestamp);
 			break;
-									
+
 		default:
 			NOT_YET_IMPLEMENTED;
-		}			
+		}
 
 }
 
@@ -1186,10 +1187,10 @@ void Sqlda::setBlob(CAttrSqlVar* var, Value * value, IscStatement *stmt)
 		break;
 
 	case Date:
-								
+
 	default:
 		NOT_YET_IMPLEMENTED;
-	}			
+	}
 
 	if ( length )
 	{

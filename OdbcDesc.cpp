@@ -1,14 +1,14 @@
 /*
- *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
+ *
+ *     The contents of this file are subject to the Initial
+ *     Developer's Public License Version 1.0 (the "License");
+ *     you may not use this file except in compliance with the
+ *     License. You may obtain a copy of the License at
  *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl.
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
+ *     Software distributed under the License is distributed on
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+ *     express or implied.  See the License for the specific
  *     language governing rights and limitations under the License.
  *
  *
@@ -112,7 +112,7 @@ void OdbcDesc::removeRecords()
 	headCount = 0;
 	recordSlots = 0;
 }
- 
+
 void OdbcDesc::releasePrepared()
 {
 	if (records)
@@ -125,7 +125,7 @@ void OdbcDesc::releasePrepared()
 			}
 	}
 }
- 
+
 void OdbcDesc::clearPrepared()
 {
 	if (records)
@@ -140,7 +140,7 @@ void OdbcDesc::clearPrepared()
 			}
 	}
 }
- 
+
 void OdbcDesc::updateDefinedIn()
 {
 	if (records)
@@ -156,7 +156,7 @@ void OdbcDesc::updateDefinedIn()
 		}
 	}
 }
- 
+
 void OdbcDesc::updateDefinedOut()
 {
 	if (records)
@@ -265,8 +265,6 @@ void OdbcDesc::defFromMetaDataIn(int recNumber, DescRecord * record)
 	record->unNamed = !record->name.IsEmpty() ? SQL_NAMED : SQL_UNNAMED;
 	record->unSigned = SQL_FALSE;
 	record->updaTable = SQL_ATTR_WRITE;
-	record->MbsToWcs = metaDataIn->getAdressMbsToWcs( recNumber );
-	record->WcsToMbs = metaDataIn->getAdressWcsToMbs( recNumber );
 	record->isDefined = true;
 
 	record->isBlobOrArray = metaDataIn->isBlobOrArray (recNumber);
@@ -308,8 +306,6 @@ void OdbcDesc::defFromMetaDataOut(int recNumber, DescRecord * record)
 	record->unNamed = !record->name.IsEmpty() ? SQL_NAMED : SQL_UNNAMED;
 	record->unSigned = SQL_FALSE;
 	record->updaTable = SQL_ATTR_WRITE;
-	record->MbsToWcs = metaDataOut->getAdressMbsToWcs( recNumber );
-	record->WcsToMbs = metaDataOut->getAdressWcsToMbs( recNumber );
 	record->isDefined = true;
 
 	metaDataOut->getSqlData(recNumber, record->dataBlobPtr, record->headSqlVarPtr);
@@ -632,15 +628,15 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 		case SQL_DESC_NUM_PREC_RADIX:
 			if (record && ptr)
 				*(SQLINTEGER*) ptr = record->numPrecRadix,
-				size = sizeof (SQLINTEGER);	
+				size = sizeof (SQLINTEGER);
 			break;
-			
+
 		case SQL_DESC_OCTET_LENGTH:
 			if (record && ptr)
 				*(SQLINTEGER*) ptr = record->octetLength,
-				size = sizeof (SQLINTEGER);	
+				size = sizeof (SQLINTEGER);
 			break;
-			
+
 		case SQL_DESC_OCTET_LENGTH_PTR:
 			switch(headType)
 			{
@@ -856,7 +852,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 		i=0;
 	sprintf(strTmp,"\tid %4i - %s : recNumber %i : value %i\n",fieldId,debSetDescField[i].name,
 								recNumber, value ? (intptr_t)value : 0);
-	OutputDebugString(strTmp); 
+	OutputDebugString(strTmp);
 #endif
 	clearErrors();
 	DescRecord *record = NULL;
@@ -1056,7 +1052,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 				{
 					record->octetLength = (intptr_t)value;
 					record->sizeColumnExtendedFetch = (intptr_t)value;
-					if ( !record->length ) 
+					if ( !record->length )
 						record->length = (intptr_t)value;
 				}
 				break;
@@ -1067,7 +1063,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 
 		case SQL_DESC_OCTET_LENGTH_PTR:
 			switch(headType)
-			{ 
+			{
 			case odtApplication:
 			case odtApplicationRow:
 			case odtApplicationParameter:
@@ -1078,7 +1074,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
 			}
 			break;
-			
+
 		case SQL_DESC_PARAMETER_TYPE:
 			if(headType == odtImplementationParameter)
 			{
@@ -1121,7 +1117,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 
 		case SQL_DESC_INDICATOR_PTR:
 			switch(headType)
-			{ 
+			{
 			case odtApplication:
 			case odtApplicationRow:
 			case odtApplicationParameter:
@@ -1142,7 +1138,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
 			break;
-		
+
 		case SQL_DESC_DATA_PTR:
 #pragma FB_COMPILER_MESSAGE("Consistency Checks ( help fn. SQLSetDescRec ) FIXME!")
 			switch(headType)
@@ -1151,7 +1147,7 @@ SQLRETURN OdbcDesc::sqlSetDescField(int recNumber, int fieldId, SQLPOINTER value
 			case odtApplicationRow:
 			case odtApplicationParameter:
 				if (record)
-				{	// help fn. SQLSetDescRec 
+				{	// help fn. SQLSetDescRec
 					record->dataPtr = value;
 					record->isDefined = true;
 					record->isPrepared = false;
@@ -1177,15 +1173,15 @@ void OdbcDesc::allocBookmarkField()
 	getDescRecord(0);
 }
 
-SQLRETURN OdbcDesc::sqlGetDescRec(	SQLSMALLINT recNumber, 
-									SQLCHAR *name, 
+SQLRETURN OdbcDesc::sqlGetDescRec(	SQLSMALLINT recNumber,
+									SQLCHAR *name,
 									SQLSMALLINT bufferLength,
-									SQLSMALLINT *stringLengthPtr, 
-									SQLSMALLINT *typePtr, 
-									SQLSMALLINT *subTypePtr, 
-									SQLLEN  *lengthPtr, 
-									SQLSMALLINT *precisionPtr, 
-									SQLSMALLINT *scalePtr, 
+									SQLSMALLINT *stringLengthPtr,
+									SQLSMALLINT *typePtr,
+									SQLSMALLINT *subTypePtr,
+									SQLLEN  *lengthPtr,
+									SQLSMALLINT *precisionPtr,
+									SQLSMALLINT *scalePtr,
 									SQLSMALLINT *nullablePtr)
 {
 	SQLRETURN rc;
@@ -1295,7 +1291,7 @@ int OdbcDesc::getConciseType(int type)
 
 	case JDBC_BOOLEAN:
 		return SQL_C_BIT;
-		
+
 	case JDBC_TINYINT:
 		return SQL_C_STINYINT;
 

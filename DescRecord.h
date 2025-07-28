@@ -1,14 +1,14 @@
 /*
- *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
+ *
+ *     The contents of this file are subject to the Initial
+ *     Developer's Public License Version 1.0 (the "License");
+ *     you may not use this file except in compliance with the
+ *     License. You may obtain a copy of the License at
  *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl.
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
+ *     Software distributed under the License is distributed on
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+ *     express or implied.  See the License for the specific
  *     language governing rights and limitations under the License.
  *
  *
@@ -45,10 +45,10 @@ public:
 	void freeLocalDataPtr();
     void beginBlobDataTransfer();
     void putBlobSegmentData (int length, const void *bytes);
-    void endBlobDataTransfer();	
+    void endBlobDataTransfer();
 
 	int getBufferLength()
-	{ 
+	{
 		return ( octetLength + 1 ) * headSqlVarPtr->getSqlMultiple();
 	}
 
@@ -58,7 +58,7 @@ public:
 	bool			isIndicatorSqlDa;
 	bool			isZeroColumn;
 	bool			isLocalDataPtr;  // use sqlPutData for set data_at_exec
-	char			*localDataPtr;		
+	char			*localDataPtr;
 	SQLSMALLINT		callType; // use sqlGetData
 
 	int				isBlobOrArray;
@@ -69,7 +69,7 @@ public:
 	int				currentFetched;
 	bool			startedReturnSQLData;
 	HeadSqlVar		*headSqlVarPtr;
-	Blob			*dataBlobPtr; // for blob or array 
+	Blob			*dataBlobPtr; // for blob or array
 
 	SQLSMALLINT		type;
 	SQLSMALLINT		datetimeIntervalCode;
@@ -104,8 +104,6 @@ public:
 	SQLLEN			*indicatorPtr;
 	SQLSMALLINT		unNamed;
 	SQLPOINTER		dataPtr;
-	WCSTOMBS		WcsToMbs;
-	MBSTOWCS		MbsToWcs;
 
 public:
 

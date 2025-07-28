@@ -3,20 +3,20 @@
 
 #ifdef _WINDOWS
 #include <windows.h>
+#include <filesystem>
 #endif
 #include <sstream>
 
-#include <filesystem>
 #include <algorithm>
 
 namespace IscDbcLibrary {
 
-typedef ISC_STATUS ISC_EXPORT create_database (ISC_STATUS ISC_FAR *, 
-					    short, 
-					    char ISC_FAR *, 
-					    isc_db_handle ISC_FAR *, 
-					    short, 
-					    char ISC_FAR *, 
+typedef ISC_STATUS ISC_EXPORT create_database (ISC_STATUS ISC_FAR *,
+					    short,
+					    char ISC_FAR *,
+					    isc_db_handle ISC_FAR *,
+					    short,
+					    char ISC_FAR *,
 					    short);
 
 typedef ISC_STATUS ISC_EXPORT array_gen_sdl(ISC_STATUS ISC_FAR*,
@@ -63,46 +63,46 @@ typedef ISC_STATUS ISC_EXPORT array_put_slice(ISC_STATUS ISC_FAR*,
 						void ISC_FAR*,
 						ISC_LONG ISC_FAR*);
 
-typedef ISC_STATUS ISC_EXPORT attach_database (ISC_STATUS ISC_FAR *, 
-					    short, 
-					    char ISC_FAR *, 
-					    isc_db_handle ISC_FAR *, 
-					    short, 
+typedef ISC_STATUS ISC_EXPORT attach_database (ISC_STATUS ISC_FAR *,
+					    short,
+					    char ISC_FAR *,
+					    isc_db_handle ISC_FAR *,
+					    short,
 					    char ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT detach_database (ISC_STATUS ISC_FAR *,  
+typedef ISC_STATUS  ISC_EXPORT detach_database (ISC_STATUS ISC_FAR *,
 					    isc_db_handle ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT drop_database (ISC_STATUS ISC_FAR *,  
+typedef ISC_STATUS  ISC_EXPORT drop_database (ISC_STATUS ISC_FAR *,
 					  isc_db_handle ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT database_info (ISC_STATUS ISC_FAR *, 
-					  isc_db_handle ISC_FAR *, 
-					  short, 
-					  char ISC_FAR *, 
-					  short, 
+typedef ISC_STATUS  ISC_EXPORT database_info (ISC_STATUS ISC_FAR *,
+					  isc_db_handle ISC_FAR *,
+					  short,
+					  char ISC_FAR *,
+					  short,
 					  char ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT dsql_execute_immediate (ISC_STATUS ISC_FAR *, 
-						   isc_db_handle ISC_FAR *, 
-						   isc_tr_handle ISC_FAR *, 
-						   unsigned short, 
-						   char ISC_FAR *, 
-						   unsigned short, 
+typedef ISC_STATUS  ISC_EXPORT dsql_execute_immediate (ISC_STATUS ISC_FAR *,
+						   isc_db_handle ISC_FAR *,
+						   isc_tr_handle ISC_FAR *,
+						   unsigned short,
+						   char ISC_FAR *,
+						   unsigned short,
 						   XSQLDA ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT open_blob2 (ISC_STATUS ISC_FAR *, 
-				       isc_db_handle ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT open_blob2 (ISC_STATUS ISC_FAR *,
+				       isc_db_handle ISC_FAR *,
 				       isc_tr_handle ISC_FAR *,
-				       isc_blob_handle ISC_FAR *, 
-				       ISC_QUAD ISC_FAR *, 
-				       short,  
+				       isc_blob_handle ISC_FAR *,
+				       ISC_QUAD ISC_FAR *,
+				       short,
 				       char ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT create_blob (ISC_STATUS ISC_FAR *, 
-					isc_db_handle ISC_FAR *, 
-					isc_tr_handle ISC_FAR *, 
-					isc_blob_handle ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT create_blob (ISC_STATUS ISC_FAR *,
+					isc_db_handle ISC_FAR *,
+					isc_tr_handle ISC_FAR *,
+					isc_blob_handle ISC_FAR *,
 					ISC_QUAD ISC_FAR *);
 
 typedef ISC_STATUS	ISC_EXPORT create_blob2(ISC_STATUS ISC_FAR*,
@@ -113,31 +113,31 @@ typedef ISC_STATUS	ISC_EXPORT create_blob2(ISC_STATUS ISC_FAR*,
 					short,
 					char ISC_FAR*);
 
-typedef ISC_STATUS  ISC_EXPORT close_blob (ISC_STATUS ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT close_blob (ISC_STATUS ISC_FAR *,
 				       isc_blob_handle ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT cancel_blob (ISC_STATUS ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT cancel_blob (ISC_STATUS ISC_FAR *,
 				        isc_blob_handle ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT get_segment (ISC_STATUS ISC_FAR *, 
-				        isc_blob_handle ISC_FAR *, 
-				        unsigned short ISC_FAR *, 
-				        unsigned short, 
+typedef ISC_STATUS  ISC_EXPORT get_segment (ISC_STATUS ISC_FAR *,
+				        isc_blob_handle ISC_FAR *,
+				        unsigned short ISC_FAR *,
+				        unsigned short,
 				        char ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT put_segment (ISC_STATUS ISC_FAR *, 
-					isc_blob_handle ISC_FAR *, 
-					unsigned short, 
+typedef ISC_STATUS  ISC_EXPORT put_segment (ISC_STATUS ISC_FAR *,
+					isc_blob_handle ISC_FAR *,
+					unsigned short,
 					char ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT blob_info (ISC_STATUS ISC_FAR *, 
-				      isc_blob_handle ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT blob_info (ISC_STATUS ISC_FAR *,
+				      isc_blob_handle ISC_FAR *,
 				      short,
- 				      char ISC_FAR *, 
-				      short, 
+ 				      char ISC_FAR *,
+				      short,
 				      char ISC_FAR *);
 
-typedef ISC_LONG    ISC_EXPORT vax_integer (char ISC_FAR *, 
+typedef ISC_LONG    ISC_EXPORT vax_integer (char ISC_FAR *,
 					short);
 
 typedef ISC_STATUS ISC_EXPORT_VARARG start_transaction(ISC_STATUS ISC_FAR*,
@@ -146,23 +146,23 @@ typedef ISC_STATUS ISC_EXPORT_VARARG start_transaction(ISC_STATUS ISC_FAR*,
 
 typedef ISC_LONG    ISC_EXPORT sqlcode (ISC_STATUS ISC_FAR *);
 
-typedef void        ISC_EXPORT sql_interprete (short, 
-					   char ISC_FAR *, 
+typedef void        ISC_EXPORT sql_interprete (short,
+					   char ISC_FAR *,
 					   short);
 
-typedef ISC_STATUS  ISC_EXPORT interprete (char ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT interprete (char ISC_FAR *,
 				       ISC_STATUS ISC_FAR * ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT que_events (ISC_STATUS ISC_FAR *, 
-				       isc_db_handle ISC_FAR *, 
-				       ISC_LONG ISC_FAR *, 
-				       short, 
-				       char ISC_FAR *, 
-				       isc_callback, 
+typedef ISC_STATUS  ISC_EXPORT que_events (ISC_STATUS ISC_FAR *,
+				       isc_db_handle ISC_FAR *,
+				       ISC_LONG ISC_FAR *,
+				       short,
+				       char ISC_FAR *,
+				       isc_callback,
 				       void ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT cancel_events (ISC_STATUS ISC_FAR *, 
-					  isc_db_handle ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT cancel_events (ISC_STATUS ISC_FAR *,
+					  isc_db_handle ISC_FAR *,
 					  ISC_LONG ISC_FAR *);
 
 typedef ISC_STATUS ISC_EXPORT wait_for_event(ISC_STATUS ISC_FAR *,
@@ -171,21 +171,21 @@ typedef ISC_STATUS ISC_EXPORT wait_for_event(ISC_STATUS ISC_FAR *,
 										 char *,
 										 char *);
 
-typedef ISC_STATUS  ISC_EXPORT start_multiple (ISC_STATUS ISC_FAR *, 
-					   isc_tr_handle ISC_FAR *, 
-					   short, 
+typedef ISC_STATUS  ISC_EXPORT start_multiple (ISC_STATUS ISC_FAR *,
+					   isc_tr_handle ISC_FAR *,
+					   short,
 					   void ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT commit_transaction (ISC_STATUS ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT commit_transaction (ISC_STATUS ISC_FAR *,
 					       isc_tr_handle ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT commit_retaining (ISC_STATUS ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT commit_retaining (ISC_STATUS ISC_FAR *,
 					     isc_tr_handle ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT rollback_transaction (ISC_STATUS ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT rollback_transaction (ISC_STATUS ISC_FAR *,
 						 isc_tr_handle ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT rollback_retaining (ISC_STATUS ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT rollback_retaining (ISC_STATUS ISC_FAR *,
 						 isc_tr_handle ISC_FAR *);
 
 typedef ISC_STATUS  ISC_EXPORT prepare_transaction2 (ISC_STATUS ISC_FAR *,
@@ -193,66 +193,66 @@ typedef ISC_STATUS  ISC_EXPORT prepare_transaction2 (ISC_STATUS ISC_FAR *,
 						unsigned short,
 						const unsigned char ISC_FAR * );
 
-typedef ISC_STATUS  ISC_EXPORT dsql_allocate_statement (ISC_STATUS ISC_FAR *, 
-						    isc_db_handle ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT dsql_allocate_statement (ISC_STATUS ISC_FAR *,
+						    isc_db_handle ISC_FAR *,
 						    isc_stmt_handle ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT dsql_describe (ISC_STATUS ISC_FAR *, 
-					  isc_stmt_handle ISC_FAR *, 
-					  unsigned short, 
+typedef ISC_STATUS  ISC_EXPORT dsql_describe (ISC_STATUS ISC_FAR *,
+					  isc_stmt_handle ISC_FAR *,
+					  unsigned short,
 					  XSQLDA ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT dsql_describe_bind (ISC_STATUS ISC_FAR *, 
-					       isc_stmt_handle ISC_FAR *, 
-					       unsigned short, 
+typedef ISC_STATUS  ISC_EXPORT dsql_describe_bind (ISC_STATUS ISC_FAR *,
+					       isc_stmt_handle ISC_FAR *,
+					       unsigned short,
 					       XSQLDA ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT dsql_execute (ISC_STATUS ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT dsql_execute (ISC_STATUS ISC_FAR *,
 					 isc_tr_handle ISC_FAR *,
-					 isc_stmt_handle ISC_FAR *, 
-					 unsigned short, 
+					 isc_stmt_handle ISC_FAR *,
+					 unsigned short,
 					 XSQLDA ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT dsql_execute2 (ISC_STATUS ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT dsql_execute2 (ISC_STATUS ISC_FAR *,
 					  isc_tr_handle ISC_FAR *,
-					  isc_stmt_handle ISC_FAR *, 
-					  unsigned short, 
+					  isc_stmt_handle ISC_FAR *,
+					  unsigned short,
 					  XSQLDA ISC_FAR *,
 					  XSQLDA ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT dsql_fetch (ISC_STATUS ISC_FAR *, 
-				       isc_stmt_handle ISC_FAR *, 
-				       unsigned short, 
+typedef ISC_STATUS  ISC_EXPORT dsql_fetch (ISC_STATUS ISC_FAR *,
+				       isc_stmt_handle ISC_FAR *,
+				       unsigned short,
 				       XSQLDA ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT dsql_free_statement (ISC_STATUS ISC_FAR *, 
-						isc_stmt_handle ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT dsql_free_statement (ISC_STATUS ISC_FAR *,
+						isc_stmt_handle ISC_FAR *,
 						unsigned short);
 
-typedef ISC_STATUS  ISC_EXPORT dsql_prepare (ISC_STATUS ISC_FAR *, 
-					 isc_tr_handle ISC_FAR *, 
-					 isc_stmt_handle ISC_FAR *, 
-					 unsigned short, 
-					 char ISC_FAR *, 
-					 unsigned short, 
+typedef ISC_STATUS  ISC_EXPORT dsql_prepare (ISC_STATUS ISC_FAR *,
+					 isc_tr_handle ISC_FAR *,
+					 isc_stmt_handle ISC_FAR *,
+					 unsigned short,
+					 char ISC_FAR *,
+					 unsigned short,
 				 	 XSQLDA ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT dsql_set_cursor_name (ISC_STATUS ISC_FAR *, 
-						 isc_stmt_handle ISC_FAR *, 
-						 char ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT dsql_set_cursor_name (ISC_STATUS ISC_FAR *,
+						 isc_stmt_handle ISC_FAR *,
+						 char ISC_FAR *,
 						 unsigned short);
 
-typedef ISC_STATUS  ISC_EXPORT dsql_sql_info (ISC_STATUS ISC_FAR *, 
-					  isc_stmt_handle ISC_FAR *, 
-					  short, 
-					  char ISC_FAR *, 
-					  short, 
+typedef ISC_STATUS  ISC_EXPORT dsql_sql_info (ISC_STATUS ISC_FAR *,
+					  isc_stmt_handle ISC_FAR *,
+					  short,
+					  char ISC_FAR *,
+					  short,
 					  char ISC_FAR *);
 
-typedef void        ISC_EXPORT decode_date (ISC_QUAD ISC_FAR *, 
+typedef void        ISC_EXPORT decode_date (ISC_QUAD ISC_FAR *,
 					void ISC_FAR *);
 
-typedef void        ISC_EXPORT encode_date (void ISC_FAR *, 
+typedef void        ISC_EXPORT encode_date (void ISC_FAR *,
 					ISC_QUAD ISC_FAR *);
 
 typedef int	ISC_EXPORT add_user (ISC_STATUS ISC_FAR *, USER_SEC_DATA *);
@@ -260,24 +260,24 @@ typedef int	ISC_EXPORT delete_user (ISC_STATUS ISC_FAR *, USER_SEC_DATA *);
 typedef int	ISC_EXPORT modify_user (ISC_STATUS ISC_FAR *, USER_SEC_DATA *);
 
 
-typedef ISC_STATUS  ISC_EXPORT service_attach (ISC_STATUS ISC_FAR *, 
-					   unsigned short, 
+typedef ISC_STATUS  ISC_EXPORT service_attach (ISC_STATUS ISC_FAR *,
+					   unsigned short,
 					   char ISC_FAR *,
-					   isc_svc_handle ISC_FAR *, 
-					   unsigned short, 
+					   isc_svc_handle ISC_FAR *,
+					   unsigned short,
 					   char ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT service_detach (ISC_STATUS ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT service_detach (ISC_STATUS ISC_FAR *,
 					   isc_svc_handle ISC_FAR *);
 
-typedef ISC_STATUS  ISC_EXPORT service_query (ISC_STATUS ISC_FAR *, 
+typedef ISC_STATUS  ISC_EXPORT service_query (ISC_STATUS ISC_FAR *,
 					  isc_svc_handle ISC_FAR *,
                       		          isc_resv_handle ISC_FAR *,
-					  unsigned short, 
-					  char ISC_FAR *, 
-					  unsigned short, 
-					  char ISC_FAR *, 
-					  unsigned short, 
+					  unsigned short,
+					  char ISC_FAR *,
+					  unsigned short,
+					  char ISC_FAR *,
+					  unsigned short,
 					  char ISC_FAR *);
 
 typedef ISC_STATUS ISC_EXPORT service_start (ISC_STATUS ISC_FAR *,
@@ -286,22 +286,22 @@ typedef ISC_STATUS ISC_EXPORT service_start (ISC_STATUS ISC_FAR *,
     					 unsigned short,
     					 char ISC_FAR*);
 
-typedef void        ISC_EXPORT decode_sql_date (ISC_DATE ISC_FAR *, 
+typedef void        ISC_EXPORT decode_sql_date (ISC_DATE ISC_FAR *,
 					void ISC_FAR *);
 
-typedef void        ISC_EXPORT decode_sql_time (ISC_TIME ISC_FAR *, 
+typedef void        ISC_EXPORT decode_sql_time (ISC_TIME ISC_FAR *,
 					void ISC_FAR *);
 
-typedef void        ISC_EXPORT decode_timestamp (ISC_TIMESTAMP ISC_FAR *, 
+typedef void        ISC_EXPORT decode_timestamp (ISC_TIMESTAMP ISC_FAR *,
 					void ISC_FAR *);
 
-typedef void        ISC_EXPORT encode_sql_date (void ISC_FAR *, 
+typedef void        ISC_EXPORT encode_sql_date (void ISC_FAR *,
 					ISC_DATE ISC_FAR *);
 
-typedef void        ISC_EXPORT encode_sql_time (void ISC_FAR *, 
+typedef void        ISC_EXPORT encode_sql_time (void ISC_FAR *,
 					ISC_TIME ISC_FAR *);
 
-typedef void        ISC_EXPORT encode_timestamp (void ISC_FAR *, 
+typedef void        ISC_EXPORT encode_timestamp (void ISC_FAR *,
 					ISC_TIMESTAMP ISC_FAR *);
 
 typedef void        ISC_EXPORT print_blr(char ISC_FAR*,
@@ -371,7 +371,7 @@ public:
 	void		*_Handle;
 #endif
 
-	int _CFbDllVersion; 		
+	int _CFbDllVersion;
 
 	// FbClient.Dll Entry Points
 	create_database*			_create_database;
