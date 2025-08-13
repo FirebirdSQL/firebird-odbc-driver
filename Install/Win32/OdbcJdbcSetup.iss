@@ -119,7 +119,7 @@ ArchitecturesInstallIn64BitMode=win64
 #if PlatformTarget == "x64"
 ArchitecturesAllowed=x64compatible
 #elif PlatformTarget == "ARM64"
-ArchitecturesAllowed=arm64
+ArchitecturesAllowed=arm64 x64compatible
 #elif PlatformTarget == "Win32"
 ArchitecturesAllowed=x86os
 #endif
