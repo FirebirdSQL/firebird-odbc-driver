@@ -41,7 +41,6 @@ public:
 	IscColumnsResultSet(IscDatabaseMetaData *metaData);
 	void initResultSet(IscStatement *stmt);
 private:
-	virtual bool getDefSource (int indexIn, int indexTarget);
 	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType &sqlType);
 	virtual void checkQuotes (IscSqlType &sqlType, JString stringVal);
 	virtual void adjustResults (IscSqlType &sqlType);	
@@ -49,6 +48,47 @@ private:
 	IscBlob blob;
 	CAttrArray arrAttr;
 	IscSqlType sqlType;
+
+	static constexpr int COLUMN_DEFAULT_TARGET = 13;
+	static constexpr int COLUMN_DEFAULT_SRC[]  = { 26, 20 };
+	static constexpr char DEFAULT_SIGNATURE[]  = "DEFAULT";
+
+	inline void setFieldDefault(bool removeQuotes = false)
+	{
+		sqlda->updateVarying(COLUMN_DEFAULT_TARGET, "NULL");
+
+		for (auto src_fld : COLUMN_DEFAULT_SRC)
+		{
+			if (!sqlda->isNull(src_fld))
+			{
+				auto* var = sqlda->Var(src_fld);
+				char buffer[1024];
+				int lenRead;
+
+				blob.directOpenBlob((char*)var->sqldata);
+				blob.directFetchBlob(buffer, sizeof(buffer) - 1, lenRead);
+				blob.directCloseBlob();
+
+				const char* first = buffer + (strncasecmp(buffer, DEFAULT_SIGNATURE, lenRead) ? 0 : sizeof(DEFAULT_SIGNATURE) - 1);
+				char* last = buffer + lenRead - 1;
+
+				while (*first == ' ') ++first;
+				while (last > first && *last == ' ') --last;
+
+				if (removeQuotes && *first == '\'' && last > first)
+				{
+					++first;
+					if (*last == '\'')
+						--last;
+				}
+
+				*(last + 1) = '\0';
+
+				sqlda->updateVarying(COLUMN_DEFAULT_TARGET, first);
+				break;
+			}
+		}
+	}
 };
 
 }; // end namespace IscDbcLibrary

@@ -266,43 +266,6 @@ bool IscColumnsResultSet::nextFetch()
 	return true;
 }
 
-bool IscColumnsResultSet::getDefSource (int indexIn, int indexTarget)
-{
-	if ( sqlda->isNull (indexIn) )
-	{
-		sqlda->updateVarying (indexTarget, "NULL");
-		return false;
-	}
-
-	//XSQLVAR *var = sqlda->Var(indexIn);
-	auto * var = sqlda->Var( indexIn );
-	char buffer[1024];
-	char * beg = buffer + 7; // sizeof("default")
-	char * end;
-	int lenRead;
-
-	blob.directOpenBlob ((char*)var->sqldata);
-	blob.directFetchBlob (buffer, 1024, lenRead);
-	blob.directCloseBlob();
-	
-	end = buffer + lenRead;
-
-	while ( *++beg == ' ' );
-	while ( *end == ' ' ) end--;
-
-	if ( *beg == '\'' && *(beg + 1) != '\'' )
-	{
-		++beg;
-		--end;
-	}
-
-	*end = '\0';
-	
-	sqlda->updateVarying (indexTarget, beg);
-
-	return true;
-}								
-
 void IscColumnsResultSet::setCharLen (int charLenInd, 
 								      int fldLenInd, 
 									  IscSqlType &sqlType)
@@ -415,8 +378,7 @@ void IscColumnsResultSet::adjustResults (IscSqlType &sqlType)
 	sqlda->updateShort (11, nullable);
 
 	// default source
-	if (!getDefSource (26, 13))
-		getDefSource (20, 13);
+	setFieldDefault();
 
 	switch (sqlType.type)
 		{
