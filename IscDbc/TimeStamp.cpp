@@ -65,9 +65,9 @@ int TimeStamp::getTimeString(int length, char * buffer)
 	decodeTime (nanos, time);
 
 	int len = (int)strftime (buffer, length, "%Y-%m-%d %H:%M:%S", time);
-	int nano = (nanos % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
+	int32_t nano = (nanos % ISC_TIME_SECONDS_PRECISION) * STD_TIME_SECONDS_PRECISION;
 	if( nano )
-		len+=sprintf(buffer+len,".%lu",nano);
+		len += sprintf(buffer+len, ".%" PRId32, nano);
 
 	return len;
 }

@@ -1515,7 +1515,7 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 
 	case infoShort:
 #ifdef DEBUG
-		sprintf (temp, "  %s (short) %d\n", item->name, value);
+		sprintf (temp, "  %s (short) %" PRId64 "\n", item->name, value);
 		OutputDebugString (temp);
 #endif
 		*((SQLUSMALLINT*) ptr) = (SQLUSMALLINT) value;
@@ -1525,7 +1525,7 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 
 	case infoLong:
 #ifdef DEBUG
-		sprintf (temp, "  %s (int) %d\n", item->name, value);
+		sprintf (temp, "  %s (int) %" PRId64 "\n", item->name, value);
 		OutputDebugString (temp);
 #endif
 		if ( maxLength == sizeof (SQLUSMALLINT) )

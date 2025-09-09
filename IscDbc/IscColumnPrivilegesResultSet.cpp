@@ -124,7 +124,7 @@ bool IscColumnPrivilegesResultSet::nextFetch()
 			break;
 	}
 
-	char * nullable = sqlda->getVarying (8, len1);
+	const char * nullable = sqlda->getVarying (8, len1);
 	if ( *nullable == '1' )
 		sqlda->updateVarying ( 8, "YES" );
 	else

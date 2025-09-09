@@ -101,12 +101,14 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 			&& sqlAllParam
 			&& !(tableNamePattern && *tableNamePattern) )
 		{
-			ptSql = "select distinct cast (NULL as varchar(7)) as table_cat,\n"	 // 1
-			        "cast (tbl.rdb$owner_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_schem,\n"	// 2
+			pt = ptSql;
+			addString(pt, "select distinct cast (NULL as varchar(7)) as table_cat,\n"	 // 1
+					"cast (tbl.rdb$owner_name as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_schem,\n"	// 2
 					"cast (NULL as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_name,\n"					// 3
 					"cast (NULL as varchar(13)) as table_type,\n"				 // 4
 					"cast (NULL as varchar(255)) as remarks\n"					 // 5
-				    "from rdb$relations tbl\n";
+					"from rdb$relations tbl\n");
+			*pt = '\0';
 			sqlAllParam = 2; // unique owners
 			break;
 		}
@@ -116,12 +118,14 @@ void IscTablesResultSet::getTables(const char * catalog, const char * schemaPatt
 			&& sqlAllParam == 2
 			&& !(tableNamePattern && *tableNamePattern) )
 		{
-			ptSql = "select cast (NULL as varchar(7)) as table_cat,\n"		// 1
-				    "cast (NULL as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_schem,\n"	// 2
+			pt = ptSql;
+			addString(pt, "select cast (NULL as varchar(7)) as table_cat,\n"		// 1
+					"cast (NULL as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_schem,\n"	// 2
 					"cast (NULL as varchar(" MACRO_TO_STR(MAX_META_IDENT_LEN) ")) as table_name,\n"		// 3
 					"cast ('SYSTEM TABLE' as varchar(13)) as table_type,\n"	// 4
 					"cast (NULL as varchar(255)) as remarks\n"				// 5
-					"from rdb$database tbl\n";
+					"from rdb$database tbl\n");
+			*pt = '\0';
 			sqlAllParam = 3; // unique table types
 			break;
 		}

@@ -46,8 +46,8 @@ void CAttrArray::loadAttributes ( IscStatement *stmt, const char * nameRelation,
 {
 	ISC_STATUS statusVector [20];
 	IscConnection * connection = stmt->connection;
-	isc_tr_handle transactionHandle = NULL;
-	isc_db_handle dbHandle = NULL;
+	isc_tr_handle transactionHandle = 0;
+	isc_db_handle dbHandle = 0;
 
 	if (!connection->GDS->_get_transaction_handle( statusVector, &transactionHandle, stmt->startTransaction() )
 	        &&
@@ -151,7 +151,7 @@ JString CAttrArray::getFbSqlType()
 {
 	char temp [30];
 	char name [80];
-	char * ch = temp;
+	const char * ch = temp;
 	char sqlscale = arrDesc.array_desc_scale;
 	unsigned short sqllen = arrDesc.array_desc_length;
 
@@ -245,16 +245,15 @@ JString CAttrArray::getFbSqlType()
 		ch = "*unknown type*";
 	}
 
-	int len = sprintf (name, "%s[", ch);
-	ch = name + len;
+	unsigned len = 0;
+	len += snprintf (name + len, sizeof(name) - len, "%s[", ch);
+
 	for(int i = 0; i < arrDesc.array_desc_dimensions; i++)
 	{
-		len = sprintf ( ch , "%d:%d,", arrDesc.array_desc_bounds[i].array_bound_lower
-									, arrDesc.array_desc_bounds[i].array_bound_upper);
-		ch += len;
+		len += snprintf (name + len, sizeof(name) - len, "%d:%d,",
+						arrDesc.array_desc_bounds[i].array_bound_lower, arrDesc.array_desc_bounds[i].array_bound_upper);
 	}
-	*(ch-1) = ']';
-	*ch = '\0';
+	len += snprintf (name + len, sizeof(name) - len, "]");
 
 	return name;
 }
@@ -372,16 +371,16 @@ void IscArray::getBytesFromArray()
 	IscConnection * connection = statement->connection;
 	ISC_LONG lenbuf = arrBufDataSize;
 
-	isc_tr_handle transactionHandle = NULL;
-	isc_db_handle dbHandle = NULL;
+	isc_tr_handle transactionHandle = 0;
+	isc_db_handle dbHandle = 0;
 
 	bool ret =
-	    connection->GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
-	        ||
-	    connection->GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
-	        ||
-	    connection->GDS->_array_get_slice(statusVector, &dbHandle, &transactionHandle,
-	        arrayId, &arrDesc, arrBufData, &lenbuf);
+		connection->GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
+			||
+		connection->GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
+			||
+		connection->GDS->_array_get_slice(statusVector, &dbHandle, &transactionHandle,
+			arrayId, &arrDesc, arrBufData, &lenbuf);
 
 	if ( ret )
 		THROW_ISC_EXCEPTION_LEGACY (connection, statusVector);
@@ -471,13 +470,13 @@ void IscArray::fetchArrayToString()
 			switch(arrTypeElement)
 			{
 			case blr_short :
-				len=sprintf(ptDst,"%i",*(short*)ptSrc);
+				len=sprintf(ptDst,"%" PRId16,*(int16_t*)ptSrc);
 				break;
 			case blr_long :
-				len=sprintf(ptDst,"%ld",*(int*)ptSrc);
+				len=sprintf(ptDst,"%" PRId32,*(int32_t*)ptSrc);
 				break;
 			case blr_int64 :
-				len=sprintf(ptDst,"%lld",*(__int64*)ptSrc);
+				len=sprintf(ptDst,"%" PRId64,*(int64_t*)ptSrc);
 				break;
 			case blr_float :
 				len=sprintf(ptDst,"%.4g",*(float*)ptSrc);
@@ -510,16 +509,16 @@ void IscArray::writeBlob(char * sqldata)
 	memset( arrayId, 0, sizeof ( ISC_QUAD ) );
 	ISC_LONG len = getSegmentLength(0);
 
-	isc_tr_handle transactionHandle = NULL;
-	isc_db_handle dbHandle = NULL;
+	isc_tr_handle transactionHandle = 0;
+	isc_db_handle dbHandle = 0;
 
 	bool ret =
-	    GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
-	        ||
-	    GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
-	        ||
-	    GDS->_array_put_slice ( statusVector, &dbHandle, &transactionHandle,
-	        arrayId, &arrDesc, (char*) Stream::getSegment(0), &len );
+		GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
+			||
+		GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
+			||
+		GDS->_array_put_slice ( statusVector, &dbHandle, &transactionHandle,
+			arrayId, &arrDesc, (char*) Stream::getSegment(0), &len );
 
 	if ( ret )
 		THROW_ISC_EXCEPTION_LEGACY (connection, statusVector);
@@ -534,16 +533,16 @@ void IscArray::writeBlob(char * sqldata, char *data, ISC_LONG length)
 	arrayId = (ISC_QUAD*)sqldata;
 	memset( arrayId, 0, sizeof ( ISC_QUAD ) );
 
-	isc_tr_handle transactionHandle = NULL;
-	isc_db_handle dbHandle = NULL;
+	isc_tr_handle transactionHandle = 0;
+	isc_db_handle dbHandle = 0;
 
 	bool ret =
-	    GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
-	        ||
-	    GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
-	        ||
-	    GDS->_array_put_slice ( statusVector, &dbHandle, &transactionHandle,
-	        arrayId, &arrDesc, data, &length );
+		GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
+			||
+		GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
+			||
+		GDS->_array_put_slice ( statusVector, &dbHandle, &transactionHandle,
+			arrayId, &arrDesc, data, &length );
 
 	if ( ret )
 		THROW_ISC_EXCEPTION_LEGACY (connection, statusVector);
@@ -715,16 +714,16 @@ void IscArray::writeStringHexToBlob(char * sqldata, char *data, int length)
 
 	ISC_LONG lenbuf = arrBufDataSize;
 
-	isc_tr_handle transactionHandle = NULL;
-	isc_db_handle dbHandle = NULL;
+	isc_tr_handle transactionHandle = 0;
+	isc_db_handle dbHandle = 0;
 
 	bool ret =
-	    GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
-	        ||
-	    GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
-	        ||
-	    GDS->_array_put_slice ( statusVector, &dbHandle, &transactionHandle,
-	        arrayId, &arrDesc, arrBufData, &lenbuf );
+		GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
+			||
+		GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
+			||
+		GDS->_array_put_slice ( statusVector, &dbHandle, &transactionHandle,
+			arrayId, &arrDesc, arrBufData, &lenbuf );
 
 	if ( ret )
 		THROW_ISC_EXCEPTION_LEGACY (connection, statusVector);
@@ -751,6 +750,9 @@ void IscArray::writeArray(Value * value)
 	case String:
 		convStringToArray ( value->data.string.string , (int)strlen( value->data.string.string ) );
 		break;
+
+	default:
+		break;
 	} // End switch (value->type)
 
 	ISC_STATUS statusVector [20];
@@ -759,16 +761,16 @@ void IscArray::writeArray(Value * value)
 
 	memset( arrayId, 0, sizeof ( ISC_QUAD ));
 
-	isc_tr_handle transactionHandle = NULL;
-	isc_db_handle dbHandle = NULL;
+	isc_tr_handle transactionHandle = 0;
+	isc_db_handle dbHandle = 0;
 
 	bool ret =
-	    connection->GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
-	        ||
-	    connection->GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
-	        ||
-	    connection->GDS->_array_put_slice( statusVector, &dbHandle, &transactionHandle,
-	        arrayId, &arrDesc, arrBufData, &lenbuf);
+		connection->GDS->_get_transaction_handle( statusVector, &transactionHandle, statement->startTransaction() )
+			||
+		connection->GDS->_get_database_handle( statusVector, &dbHandle, connection->databaseHandle )
+			||
+		connection->GDS->_array_put_slice( statusVector, &dbHandle, &transactionHandle,
+			arrayId, &arrDesc, arrBufData, &lenbuf);
 
 	if (ret || lenbuf != arrBufDataSize)
 		THROW_ISC_EXCEPTION_LEGACY (connection, statusVector);

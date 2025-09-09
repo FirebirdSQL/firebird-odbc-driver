@@ -151,7 +151,7 @@ namespace OdbcJdbcLibrary {
 
 using namespace IscDbcLibrary;
 
-void TraceOutput(char * msg, intptr_t val)
+void TraceOutput(const char * msg, intptr_t val)
 {
 	char buf[80];
 	sprintf( buf, "\t%s = %ld : %p\n", msg, val, (void*)val );
@@ -859,7 +859,7 @@ SQLRETURN OdbcStatement::sqlFetch()
 }
 
 #ifdef DEBUG
-char *strDebOrientFetch[]=
+const char *strDebOrientFetch[]=
 {
 	"",
 	"SQL_FETCH_NEXT",
@@ -1250,7 +1250,7 @@ SQLRETURN OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLULEN *
 }
 
 #ifdef DEBUG
-char *strDebOrientSetPos[]=
+const char *strDebOrientSetPos[]=
 {
 	"SQL_POSITION",
 	"SQL_REFRESH",
@@ -1496,12 +1496,12 @@ SQLRETURN OdbcStatement::sqlSetScrollOptions (SQLUSMALLINT fConcurrency, SQLLEN 
 		sqlSetStmtAttr(SQL_ATTR_CURSOR_TYPE, ptr, 0);
 	}
 
-	sqlSetStmtAttr(SQL_ATTR_CONCURRENCY, (SQLPOINTER)fConcurrency, 0);
+	sqlSetStmtAttr(SQL_ATTR_CONCURRENCY, (SQLPOINTER)(intptr_t)fConcurrency, 0);
 
 	if ( crowKeyset > 0 )
-		sqlSetStmtAttr(SQL_ATTR_KEYSET_SIZE, (SQLPOINTER)crowKeyset, 0);
+		sqlSetStmtAttr(SQL_ATTR_KEYSET_SIZE, (SQLPOINTER)(intptr_t)crowKeyset, 0);
 	else
-		sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)crowRowset, 0);
+		sqlSetStmtAttr(SQL_ROWSET_SIZE, (SQLPOINTER)(intptr_t)crowRowset, 0);
 
 	return sqlSuccess();
 }
@@ -3138,10 +3138,12 @@ SQLRETURN OdbcStatement::sqlPutData (SQLPOINTER value, SQLLEN valueSize)
 			binding->beginBlobDataTransfer();
 
 		if ( valueSize == SQL_NTS )
+		{
 			if ( binding->conciseType == SQL_C_WCHAR )
 				valueSize = (SQLINTEGER)wcslen( (wchar_t*)value ) * sizeof(wchar_t);
 			else // if ( binding->conciseType == SQL_C_CHAR )
 				valueSize = (SQLINTEGER)strlen( (char*)value );
+		}
 
 		if( valueSize )
 		{
@@ -3176,10 +3178,12 @@ SQLRETURN OdbcStatement::sqlPutData (SQLPOINTER value, SQLLEN valueSize)
 			binding->startedTransfer = true;
 
 		if ( valueSize == SQL_NTS )
+		{
 			if ( binding->conciseType == SQL_C_WCHAR )
 				valueSize = (SQLINTEGER)wcslen( (wchar_t*)value ) * sizeof(wchar_t);
 			else // if ( binding->conciseType == SQL_C_CHAR )
 				valueSize = (SQLINTEGER)strlen( (char*)value );
+		}
 
 		CBindColumn &bindParam = (*listBindIn)[ parameterNeedData - 1 ];
 		SQLPOINTER valueSave = binding->dataPtr;

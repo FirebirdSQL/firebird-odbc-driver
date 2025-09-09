@@ -86,7 +86,7 @@ typedef MList<CBindColumn,CBindColumnComparator> ListBindColumn;
 class OdbcDesc : public OdbcObject  
 {
 public:
-	inline DescRecord*	getDescRecord(int number, bool bCashe = true);
+	inline DescRecord*	getDescRecord(size_t number, bool bCashe = true);
 	SQLRETURN sqlGetDescField(int recNumber, int fieldId, SQLPOINTER value, int length, SQLINTEGER *lengthPtr);
 	SQLRETURN sqlSetDescField (int recNumber, int fieldId, SQLPOINTER value, int length);
 	SQLRETURN sqlGetDescRec(SQLSMALLINT recNumber, SQLCHAR *Name, SQLSMALLINT BufferLength, SQLSMALLINT *StringLengthPtr, 
@@ -132,22 +132,22 @@ public:
 	StatementMetaData	*metaDataIn;
 	StatementMetaData	*metaDataOut;
 	OdbcDescType		headType;
-	int					recordSlots;
+	size_t				recordSlots;
 	DescRecord			**records;
 
 	bool				bDefined;
 };
 
 inline
-DescRecord* OdbcDesc::getDescRecord(int number, bool bCashe)
+DescRecord* OdbcDesc::getDescRecord(size_t number, bool bCashe)
 {
 	if (number >= recordSlots)
 	{
-		int oldSlots = recordSlots;
+		size_t oldSlots = recordSlots;
 		DescRecord **oldRecords = records;
 		recordSlots = number + (bCashe ? 20 : 1);
 		records = new DescRecord* [recordSlots];
-		memset (records, 0, sizeof (DescRecord*) * recordSlots);
+		memset (records, 0, sizeof (DescRecord*) * (size_t)recordSlots);
 		if (oldSlots)
 		{
 			memcpy (records, oldRecords, sizeof (DescRecord*) * oldSlots);
@@ -168,6 +168,8 @@ DescRecord* OdbcDesc::getDescRecord(int number, bool bCashe)
 		case odtImplementationRow:
 		case odtImplementationParameter:
 			record->isIndicatorSqlDa = true;
+		default:
+			break;
 		}
 	}
 
