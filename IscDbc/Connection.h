@@ -1,14 +1,14 @@
 /*
- *  
- *     The contents of this file are subject to the Initial 
- *     Developer's Public License Version 1.0 (the "License"); 
- *     you may not use this file except in compliance with the 
- *     License. You may obtain a copy of the License at 
+ *
+ *     The contents of this file are subject to the Initial
+ *     Developer's Public License Version 1.0 (the "License");
+ *     you may not use this file except in compliance with the
+ *     License. You may obtain a copy of the License at
  *     http://www.ibphoenix.com/main.nfs?a=ibphoenix&page=ibp_idpl.
  *
- *     Software distributed under the License is distributed on 
- *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
- *     express or implied.  See the License for the specific 
+ *     Software distributed under the License is distributed on
+ *     an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+ *     express or implied.  See the License for the specific
  *     language governing rights and limitations under the License.
  *
  *
@@ -21,7 +21,7 @@
  *  2002-06-25	Connection.h
  *				Contributed by C. G. Alvarez
  *				declare getDatabaseServerName() in DatabaseMetaData
- *	
+ *
  *
  *	2002-06-04	Connection.h
  *				Contributed by Robert Milharcic
@@ -73,9 +73,6 @@ typedef unsigned __int64			UQUAD;
 #define GET_ENTRY_POINT(libraryHandle,nameProc)     GetProcAddress( libraryHandle, nameProc )
 #define CLOSE_SHARE_LIBLARY(libraryHandle)          FreeLibrary( libraryHandle )
 
-size_t _MbsToWcs( wchar_t *wcstr, const char *mbstr, size_t count );
-size_t _WcsToMbs( char *mbstr,  const wchar_t *wcstr, size_t count );
-
 #elif defined (__APPLE__)
 
 #define NAME_CLIENT_SHARE_LIBRARY					"libgds.dylib"
@@ -103,7 +100,7 @@ size_t _WcsToMbs( char *mbstr,  const wchar_t *wcstr, size_t count );
 
 #endif // ISC_TIME_SECONDS_PRECISION
 
-// Default standart size of fraction it's 9 number  
+// Default standart size of fraction it's 9 number
 // It's 9 = ISC_TIME_SECONDS_PRECISION * STD_TIME_SECONDS_PRECISION
 #define STD_TIME_SECONDS_PRECISION          100000L
 
@@ -128,8 +125,6 @@ enum tra_flags_vals {
 };
 
 typedef void (*callbackEvent)( void *interfaseUserEvents, short length, char *updated );
-typedef size_t (*WCSTOMBS)( char *mbstr,  const wchar_t *wcstr, size_t count );
-typedef size_t (*MBSTOWCS)( wchar_t *wcstr, const char *mbstr, size_t count );
 
 namespace IscDbcLibrary {
 
@@ -195,7 +190,7 @@ public:
 	virtual void		sqlEndTran(int operation) = 0;
 };
 
-class Connection  
+class Connection
 {
 public:
 //{{{ specification jdbc
@@ -250,8 +245,6 @@ public:
 	virtual int			getUseAppOdbcVersion () = 0;
 	virtual void		setUseAppOdbcVersion ( int appOdbcVersion ) = 0;
 	virtual int			getConnectionCharsetCode() = 0;
-	virtual WCSTOMBS	getConnectionWcsToMbs() = 0;
-	virtual MBSTOWCS	getConnectionMbsToWcs() = 0;
 
 	virtual void		addRef() = 0;
 	virtual int			release() = 0;
@@ -261,7 +254,7 @@ public:
 
 #define DATABASEMETADATA_VERSION	1
 
-class DatabaseMetaData 
+class DatabaseMetaData
 {
 public:
 //{{{ specification jdbc
@@ -455,7 +448,7 @@ public:
 
 #define STATEMENT_VERSION	1
 
-class Statement  
+class Statement
 {
 public:
 //{{{ specification jdbc
@@ -538,7 +531,7 @@ public:
 
 #define STATEMENTMETADATA_VERSION	1
 
-class StatementMetaData  
+class StatementMetaData
 {
 public:
 // specification jdbc
@@ -571,17 +564,15 @@ public:
 public:
 	virtual void		getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar *& ptHeadSqlVar) = 0;
 	virtual void		createBlobDataTransfer(int index, Blob *& ptDataBlob) = 0;
-	virtual WCSTOMBS	getAdressWcsToMbs( int index ) = 0;
-	virtual MBSTOWCS	getAdressMbsToWcs( int index ) = 0;
 
 	virtual int			objectVersion() = 0;
 };
 
 #define PREPAREDSTATEMENT_VERSION	1
 
-class PreparedStatement : public Statement  
+class PreparedStatement : public Statement
 {
-public: 
+public:
 //{{{ specification jdbc
 	virtual void		clearParameters() = 0;
 	virtual bool		execute() = 0;
@@ -627,7 +618,7 @@ public:
 
 #define RESULTSET_VERSION	1
 
-class ResultSet  
+class ResultSet
 {
 public:
 //{{{ specification jdbc
@@ -756,7 +747,7 @@ public:
 
 #define RESULTSETMETADATA_VERSION	1
 
-class ResultSetMetaData  
+class ResultSetMetaData
 {
 public:
 	virtual const char*	getTableName (int index) = 0;
@@ -785,7 +776,7 @@ public:
 
 #define RESULTLIST_VERSION		1
 
-class ResultList  
+class ResultList
 {
 public:
 	virtual const char*	getTableName() = 0;
@@ -840,9 +831,9 @@ public:
 	virtual bool		executeProcedure() = 0;
 	virtual void		rollbackLocal() = 0;
 	virtual void		commitLocal() = 0;
-	virtual StatementMetaData*	
+	virtual StatementMetaData*
 						getStatementMetaDataIPD() = 0;
-	virtual StatementMetaData*	
+	virtual StatementMetaData*
 						getStatementMetaDataIRD() = 0;
 	virtual int			getNumParams() = 0;
 	virtual void		drop() = 0;
