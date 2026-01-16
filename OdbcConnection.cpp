@@ -2113,12 +2113,12 @@ SQLRETURN OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int b
 		value = (autoCommit) ? SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF;
 		break;
 
-	case SQL_ATTR_ODBC_CURSORS: // SQL_ODBC_CURSORS   110
+	case SQL_ATTR_ODBC_CURSORS: // SQL_ODBC_CURSORS   110s
 		value = cursors;
 		break;
 
 	case SQL_ATTR_CONNECTION_DEAD:
-		value = SQL_CD_FALSE;
+		value = connection ? (connection->ping() ? SQL_CD_FALSE : SQL_CD_TRUE) : SQL_CD_TRUE;
 		break;
 
 	case SQL_ATTR_AUTO_IPD:			// 10001
