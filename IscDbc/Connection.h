@@ -233,7 +233,7 @@ public:
 	virtual PropertiesEvents* allocPropertiesEvents() = 0;
 	virtual UserEvents* prepareUserEvents( PropertiesEvents *context, callbackEvent astRoutine, void *userAppData = 0 ) = 0;
 	virtual InternalStatement* createInternalStatement() = 0;
-	virtual void		ping() = 0;
+	virtual bool		ping() = 0;
 	virtual int			hasRole (const char *schemaName, const char *roleName) = 0;
 	virtual void		sqlExecuteCreateDatabase(const char * sqlString) = 0;
 	virtual void		openDatabase (const char *database, Properties *context) = 0;

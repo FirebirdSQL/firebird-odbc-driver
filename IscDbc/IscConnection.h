@@ -126,7 +126,7 @@ public:
 	virtual void openDatabase (const char *dbName, Properties *properties);
 	virtual void createDatabase (const char * dbName, Properties *properties);
 	virtual void sqlExecuteCreateDatabase(const char * sqlString);
-	virtual void ping();
+	virtual bool ping();
 	virtual int getConnectionCharsetCode();
 	virtual WCSTOMBS getConnectionWcsToMbs();
 	virtual MBSTOWCS getConnectionMbsToWcs();

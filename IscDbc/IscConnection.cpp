@@ -1864,8 +1864,17 @@ int IscConnection::hasRole(const char * schemaName, const char * roleName)
 	return false;
 }
 
-void IscConnection::ping()
+bool IscConnection::ping()
 {
+	if (attachment)
+	{
+		IAttachment * Db = attachment->databaseHandle;
+		CheckStatusWrapper status(GDS->_status);
+		Db->ping(&status);
+		return (status.getState() & IStatus::STATE_ERRORS) == 0;
+	}
+
+	return false;
 }
 
 void IscConnection::sqlExecuteCreateDatabase(const char * sqlString)

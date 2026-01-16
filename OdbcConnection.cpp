@@ -2118,7 +2118,7 @@ SQLRETURN OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int b
 		break;
 
 	case SQL_ATTR_CONNECTION_DEAD:
-		value = SQL_CD_FALSE;
+		value = connection ? (connection->ping() ? SQL_CD_FALSE : SQL_CD_TRUE) : SQL_CD_TRUE;
 		break;
 
 	case SQL_ATTR_AUTO_IPD:			// 10001
