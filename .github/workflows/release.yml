@@ -1,0 +1,136 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+jobs:
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml
+
+  release:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Detect Prerelease
+        id: detect_prerelease
+        run: |
+          if [[ "${{ github.ref }}" =~ -[a-zA-Z0-9]+ ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Firebird ODBC Driver v${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: ${{ steps.detect_prerelease.outputs.is_prerelease }}
+          generate_release_notes: true
+
+  package-windows:
+    needs: [build-and-test, release]
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          installer
+          README.md
+
+    - name: Download Windows Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: windows-x64-binaries
+        path: artifacts
+
+    - name: Install WiX Toolset
+      run: dotnet tool install --global wix
+
+    - name: Build MSI Installer
+      shell: pwsh
+      run: |
+        $version = "${{ needs.release.outputs.version }}"
+        # MSI ProductVersion requires exactly 3 or 4 numeric parts — strip any prerelease suffix
+        $msiVersion = ($version -replace '-.*', '') + '.0'
+        $dllPath = Resolve-Path "artifacts/FirebirdODBC.dll"
+
+        wix build `
+          -d ProductVersion=$msiVersion `
+          -d DriverPath="$dllPath" `
+          -d Configuration=Release `
+          -arch x64 `
+          -o "firebird-odbc-driver-$version-win-x64.msi" `
+          installer/Product.wxs
+
+    - name: Package Windows ZIP
+      shell: pwsh
+      run: |
+        $version = "${{ needs.release.outputs.version }}"
+        $packageDir = "package-windows"
+        New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
+
+        Copy-Item "artifacts/FirebirdODBC.dll" -Destination $packageDir
+        Copy-Item "artifacts/FirebirdODBC.lib" -Destination $packageDir -ErrorAction SilentlyContinue
+        Copy-Item "README.md" -Destination $packageDir -ErrorAction SilentlyContinue
+
+        Compress-Archive -Path "$packageDir/*" `
+          -DestinationPath "firebird-odbc-driver-$version-win-x64.zip"
+
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          firebird-odbc-driver-${{ needs.release.outputs.version }}-win-x64.msi
+          firebird-odbc-driver-${{ needs.release.outputs.version }}-win-x64.zip
+
+  package-linux:
+    needs: [build-and-test, release]
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: README.md
+
+    - name: Download Linux Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-x64-binaries
+        path: artifacts
+
+    - name: Package Linux Build
+      run: |
+        version="${{ needs.release.outputs.version }}"
+        packageDir="package-linux"
+        mkdir -p "$packageDir"
+
+        cp artifacts/libOdbcFb.so "$packageDir/"
+
+        cp README.md "$packageDir/" 2>/dev/null || true
+
+        cat > "$packageDir/odbcinst.ini.sample" << 'EOF'
+        [Firebird ODBC Driver]
+        Description = Firebird ODBC Driver
+        Driver = /usr/local/lib/odbc/libOdbcFb.so
+        Setup = /usr/local/lib/odbc/libOdbcFb.so
+        FileUsage = 1
+        EOF
+
+        cd "$packageDir"
+        tar -czf "../firebird-odbc-driver-${version}-linux-x64.tar.gz" *
+
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          firebird-odbc-driver-${{ needs.release.outputs.version }}-linux-x64.tar.gz

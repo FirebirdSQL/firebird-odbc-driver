@@ -1,0 +1,80 @@
+# Firebird ODBC Driver — clang-format configuration
+#
+# This configuration matches the existing codebase style as closely as possible.
+# Apply to NEW or MODIFIED code only — do not reformat the entire codebase.
+#
+# Usage:
+#   clang-format -i <file>              # Format a specific file
+#   clang-format --dry-run <file>       # Preview changes without applying
+#
+# To exclude legacy files from formatting, add them to .clang-format-ignore.
+
+Language: Cpp
+BasedOnStyle: LLVM
+
+# Indentation: tabs (matching existing codebase)
+UseTab: ForIndentation
+TabWidth: 4
+IndentWidth: 4
+ContinuationIndentWidth: 4
+
+# Column limit: generous to match existing wide lines
+ColumnLimit: 140
+
+# Braces: Allman style for functions (next line), attach for control flow
+# The codebase is inconsistent; Allman is the dominant pattern for functions.
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterControlStatement: Never
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  BeforeCatch: false
+  BeforeElse: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+# Pointer/reference alignment: left (e.g., char* ptr)
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+# Spaces
+SpaceAfterCStyleCast: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceInEmptyBlock: false
+
+# Includes: keep existing order (do not sort automatically)
+SortIncludes: Never
+
+# Alignment
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignConsecutiveMacros: true
+AlignTrailingComments: true
+
+# Short forms: allow short if/loops on one line
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# Namespace indentation
+NamespaceIndentation: All
+
+# Other
+AccessModifierOffset: -4
+AllowAllParametersOfDeclarationOnNextLine: true
+BinPackArguments: true
+BinPackParameters: true
+FixNamespaceComments: false
+MaxEmptyLinesToKeep: 2
+ReflowComments: false

@@ -1,0 +1,117 @@
+name: Build and Test
+
+on:
+  push:
+  pull_request:
+  workflow_call:
+
+jobs:
+  build-and-test-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Cache CMake FetchContent
+      uses: actions/cache@v4
+      with:
+        path: build/_deps
+        key: fetchcontent-windows-${{ hashFiles('CMakeLists.txt', 'tests/CMakeLists.txt', 'cmake/FetchFirebirdHeaders.cmake') }}
+        restore-keys: fetchcontent-windows-
+
+    - name: Cache PowerShell Modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/Documents/PowerShell/Modules/PSFirebird
+          ~/Documents/PowerShell/Modules/InvokeBuild
+        key: psmodules-windows-${{ hashFiles('install-prerequisites.ps1') }}
+        restore-keys: psmodules-windows-
+
+    - name: Install Prerequisites
+      shell: pwsh
+      run: ./install-prerequisites.ps1
+        
+    - name: Build
+      shell: pwsh
+      run: Invoke-Build build -Configuration Release
+        
+    - name: Run Tests
+      shell: pwsh
+      run: |
+        # Add DLL directories to PATH so test can find them
+        $env:PATH = "${{github.workspace}}/build/Release;${{github.workspace}}/build/bin/Release;$env:PATH"
+        Invoke-Build test -Configuration Release
+        
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: windows-x64-binaries
+        path: |
+          ${{github.workspace}}/build/Release/*.dll
+          ${{github.workspace}}/build/Release/*.lib
+          ${{github.workspace}}/build/Release/*.pdb
+
+  build-and-test-linux:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y unixodbc unixodbc-dev odbcinst cmake g++
+        # PSFirebird needs to 'apt-get download' libncurses5/libtinfo5 packages.
+        # These don't exist in Ubuntu 24.04+ repos, so add Ubuntu 22.04 (jammy) as a fallback source.
+        if ! apt-cache show libncurses5 > /dev/null 2>&1; then
+          ARCH=$(dpkg --print-architecture)
+          echo "deb [arch=${ARCH}] http://archive.ubuntu.com/ubuntu/ jammy main universe" | sudo tee /etc/apt/sources.list.d/jammy.list
+          # For ARM64, use ports.ubuntu.com
+          if [ "$ARCH" = "arm64" ]; then
+            echo "deb [arch=${ARCH}] http://ports.ubuntu.com/ubuntu-ports/ jammy main universe" | sudo tee /etc/apt/sources.list.d/jammy.list
+          fi
+          sudo apt-get update
+        fi
+
+    - name: Cache CMake FetchContent
+      uses: actions/cache@v4
+      with:
+        path: build/_deps
+        key: fetchcontent-linux-${{ hashFiles('CMakeLists.txt', 'tests/CMakeLists.txt', 'cmake/FetchFirebirdHeaders.cmake') }}
+        restore-keys: fetchcontent-linux-
+
+    - name: Cache PowerShell Modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.local/share/powershell/Modules/PSFirebird
+          ~/.local/share/powershell/Modules/InvokeBuild
+        key: psmodules-linux-${{ hashFiles('install-prerequisites.ps1') }}
+        restore-keys: psmodules-linux-
+
+    - name: Install Prerequisites
+      shell: pwsh
+      run: ./install-prerequisites.ps1
+
+    - name: Build
+      shell: pwsh
+      run: Invoke-Build build -Configuration Release
+      
+    - name: Run Tests
+      shell: pwsh
+      run: Invoke-Build test -Configuration Release
+        
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: linux-x64-binaries
+        path: |
+          ${{github.workspace}}/build/*.so
+          ${{github.workspace}}/build/**/*.so

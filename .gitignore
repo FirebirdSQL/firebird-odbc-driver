@@ -11,3 +11,64 @@ Install/Win32/install_image/
 build_*.log
 OdbcJdbcSetup_*.iss
 .vs/*
+
+tmp/
+
+# CMake build directories
+build/
+Build/
+out/
+cmake-build-*/
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+_deps/
+install_manifest.txt
+
+# Additional Visual Studio
+*.vcxproj.user
+*.sdf
+*.opensdf
+
+# Compiled files
+*.o
+*.obj
+*.lo
+*.slo
+*.so
+*.so.*
+*.dylib
+*.dll
+*.a
+*.lib
+*.exe
+*.out
+*.pdb
+*.ilk
+*.exp
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test outputs
+Testing/
+tests/Testing/
+
+# Package outputs
+package-*/
+*.zip
+*.tar.gz
+*.deb
+*.rpm

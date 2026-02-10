@@ -1,0 +1,66 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+
+  <!-- Variables passed from the build: -->
+  <!-- $(ProductVersion) — e.g. 3.0.0.0 -->
+  <!-- $(DriverPath) — full path to FirebirdODBC.dll -->
+  <!-- $(Configuration) — Debug or Release -->
+
+  <?define DriverName = "Firebird ODBC Driver" ?>
+
+  <!-- For Debug builds, use a different driver name to allow side-by-side -->
+  <?if $(Configuration) = "Debug" ?>
+    <?undef DriverName ?>
+    <?define DriverName = "Firebird ODBC Driver (Debug)" ?>
+  <?endif?>
+
+  <Package
+    Name="$(DriverName)"
+    Manufacturer="Firebird Foundation"
+    Version="$(ProductVersion)"
+    UpgradeCode="A7F3E2B1-4C5D-6E7F-8A9B-0C1D2E3F4A5B"
+    Scope="perMachine"
+    Compressed="yes">
+
+    <MajorUpgrade
+      DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- The driver DLL -->
+    <StandardDirectory Id="System64Folder">
+      <Component Id="DriverDLL" Guid="B8F4E3C2-5D6E-7F8A-9B0C-1D2E3F4A5B6C">
+        <File Id="FirebirdODBCDll"
+              Source="$(DriverPath)"
+              Name="FirebirdODBC.dll"
+              KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <!-- ODBC Driver registration -->
+    <Component Id="OdbcDriverReg" Directory="System64Folder"
+               Guid="C9F5E4D3-6E7F-8A9B-0C1D-2E3F4A5B6C7D">
+      <RegistryKey Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\$(DriverName)">
+        <RegistryValue Name="Driver"           Type="string" Value="[System64Folder]FirebirdODBC.dll" />
+        <RegistryValue Name="Setup"            Type="string" Value="[System64Folder]FirebirdODBC.dll" />
+        <RegistryValue Name="APILevel"         Type="string" Value="1" />
+        <RegistryValue Name="ConnectFunctions" Type="string" Value="YYY" />
+        <RegistryValue Name="DriverODBCVer"    Type="string" Value="03.51" />
+        <RegistryValue Name="FileUsage"        Type="string" Value="0" />
+        <RegistryValue Name="SQLLevel"         Type="string" Value="1" />
+      </RegistryKey>
+      <RegistryValue Root="HKLM"
+                     Key="SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers"
+                     Name="$(DriverName)"
+                     Type="string"
+                     Value="Installed"
+                     KeyPath="yes" />
+    </Component>
+
+    <!-- Features -->
+    <Feature Id="DriverFeature" Title="$(DriverName)" Level="1">
+      <ComponentRef Id="DriverDLL" />
+      <ComponentRef Id="OdbcDriverReg" />
+    </Feature>
+
+  </Package>
+</Wix>
