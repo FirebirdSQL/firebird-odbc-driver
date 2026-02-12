@@ -3,8 +3,8 @@
 **Date**: February 9, 2026  
 **Status**: Authoritative reference for all known issues, improvements, and roadmap  
 **Benchmark**: PostgreSQL ODBC driver (psqlodbc) — 30+ years of development, 49 regression tests, battle-tested
-**Last Updated**: February 10, 2026  
-**Version**: 3.6
+**Last Updated**: February 11, 2026  
+**Version**: 3.8
 
 > This document consolidates all known issues and newly identified architectural deficiencies.
 > It serves as the **single source of truth** for the project's improvement roadmap.
@@ -1228,6 +1228,251 @@ After redistribution, delete `test_phase7_crusher_fixes.cpp` and `test_phase11_t
 
 ---
 
+### Phase 14: Adopt fb-cpp — Modern C++ Database Layer
+**Priority**: Medium  
+**Duration**: 12–16 weeks  
+**Goal**: Replace the legacy `src/IscDbc/` layer with the modern [fb-cpp](https://github.com/asfernandes/fb-cpp) library to eliminate ~15,000 lines of legacy code, gain RAII/type-safety, and leverage vcpkg for dependency management
+
+#### Background
+
+The `src/IscDbc/` directory contains a JDBC-like abstraction layer (~110 files, ~15,000 lines) that was created over 20 years ago. It wraps the Firebird OO API with classes like `IscConnection`, `IscStatement`, `IscResultSet`, `IscBlob`, etc. While Phases 5 and 9 modernized this layer significantly (smart pointers, `std::vector`, `IBatch`, unified error handling), the code remains:
+
+1. **Verbose** — Manual memory management patterns, explicit resource cleanup, hand-rolled date/time conversions
+2. **Fragile** — Multiple inheritance (`IscStatement` → `IscOdbcStatement` → `PreparedStatement`), intrusive pointers
+3. **Duplicated** — UTF-8 codecs in both `MultibyteConvert.cpp` and `Utf16Convert.cpp`, date/time helpers in multiple files
+4. **Hard to test** — The JDBC-like interfaces (`Connection`, `Statement`, `ResultSet`) add indirection that complicates unit testing
+
+The **fb-cpp** library (https://github.com/asfernandes/fb-cpp) is a modern C++20 wrapper around the Firebird OO API created by Adriano dos Santos Fernandes (Firebird core developer). It provides:
+
+- **RAII everywhere** — `Attachment`, `Transaction`, `Statement`, `Blob` have proper destructors
+- **Type-safe binding** — `statement.setInt32(0, value)`, `statement.getString(1)` with `std::optional` for NULLs
+- **Modern C++20** — `std::chrono` for dates, `std::span` for buffers, `std::optional` for nullables
+- **Boost.DLL** — Runtime loading of fbclient without hardcoded paths
+- **Boost.Multiprecision** — INT128 and DECFLOAT support via `BoostInt128`, `BoostDecFloat16`, `BoostDecFloat34`
+- **vcpkg integration** — `vcpkg.json` manifest with custom registry for Firebird headers
+
+#### Migration Strategy
+
+The migration will be **incremental, not big-bang**. Each task replaces one IscDbc class with fb-cpp equivalents while maintaining the existing ODBC API contracts.
+
+**Phase 14.1: Foundation — vcpkg Integration & Build System**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **14.1.1** | **Add vcpkg manifest** — Create `vcpkg.json` with `fb-cpp` dependency. Add `vcpkg-configuration.json` pointing to the `firebird-vcpkg-registry`. | Easy | ❌ |
+| **14.1.2** | **Update CMakeLists.txt for vcpkg** — Set `CMAKE_TOOLCHAIN_FILE` to vcpkg's toolchain. Use `find_package(fb-cpp CONFIG REQUIRED)`. Link `OdbcFb` against `fb-cpp::fb-cpp`. | Easy | ❌ |
+| **14.1.3** | **Remove `FetchFirebirdHeaders.cmake`** — vcpkg's `firebird` package provides headers. Delete the custom FetchContent logic. | Easy | ❌ |
+| **14.1.4** | **Add fb-cpp feature flags** — Enable `boost-dll` and `boost-multiprecision` features in `vcpkg.json` for runtime client loading and INT128/DECFLOAT support. | Easy | ❌ |
+| **14.1.5** | **Update CI workflows** — Add vcpkg bootstrap and cache steps. Use `vcpkg install` before CMake configure. | Medium | ❌ |
+| **14.1.6** | **Verify build** — Ensure the project builds with fb-cpp linked but not yet used. All 401 tests must pass. | Easy | ❌ |
+
+**Phase 14.2: Client & Attachment Migration**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **14.2.1** | **Create `FbClient` wrapper** — Singleton (or per-environment) `fbcpp::Client` instance. Replaces `CFbDll` for fbclient loading. | Medium | ❌ |
+| **14.2.2** | **Replace `Attachment` class** — `IscConnection` currently owns `Firebird::IAttachment*`. Replace with `std::unique_ptr<fbcpp::Attachment>`. Update `openDatabase()` to use `fbcpp::Attachment` constructor with `AttachmentOptions`. | Medium | ❌ |
+| **14.2.3** | **Replace `CFbDll::_array_*` calls** — fb-cpp doesn't wrap arrays. Keep minimal ISC array functions loaded separately (Firebird OO API doesn't expose `getSlice`/`putSlice`). | Hard | ❌ |
+| **14.2.4** | **Migrate `createDatabase()`** — Use `AttachmentOptions::setCreateDatabase(true)`. | Easy | ❌ |
+| **14.2.5** | **Migrate connection properties** — Map `CHARSET`, `UID`, `PWD`, `ROLE` to `AttachmentOptions` setters. | Easy | ❌ |
+| **14.2.6** | **Delete `Attachment.cpp`, `Attachment.h`** — After migration, remove the IscDbc versions. | Easy | ❌ |
+
+**Phase 14.3: Transaction Migration**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **14.3.1** | **Replace `InfoTransaction` with `fbcpp::Transaction`** — `IscConnection` manages transactions via `transactionInfo.transactionHandle`. Replace with `std::unique_ptr<fbcpp::Transaction>`. | Medium | ❌ |
+| **14.3.2** | **Map transaction isolation levels** — `TransactionIsolationLevel::READ_COMMITTED`, `SNAPSHOT`, `CONSISTENCY` map to Firebird TPB options. Use `TransactionOptions::setIsolationLevel()`. | Easy | ❌ |
+| **14.3.3** | **Migrate auto-commit** — Current code manually commits after each statement when `autoCommit=true`. fb-cpp requires explicit commits; keep the same pattern. | Easy | ❌ |
+| **14.3.4** | **Migrate savepoints** — fb-cpp doesn't expose savepoints. Keep the existing `SAVEPOINT`/`RELEASE SAVEPOINT`/`ROLLBACK TO SAVEPOINT` SQL execution via `Statement::execute()`. | Easy | ❌ |
+| **14.3.5** | **Delete `InfoTransaction`, TPB-building code** — After migration, remove ~200 lines of manual TPB construction. | Easy | ❌ |
+
+**Phase 14.4: Statement & ResultSet Migration**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **14.4.1** | **Replace `IscStatement`/`IscPreparedStatement` with `fbcpp::Statement`** — The most complex migration. fb-cpp's `Statement` combines prepare + execute + fetch. | Hard | ❌ |
+| **14.4.2** | **Migrate parameter binding** — Replace `Sqlda::setValue()` with `fbcpp::Statement::setInt32()`, `setString()`, etc. The ODBC layer still uses `OdbcConvert` for type coercion; the IscDbc layer just needs to pass values to fb-cpp. | Hard | ❌ |
+| **14.4.3** | **Migrate result fetching** — Replace `IscResultSet::nextFetch()` with `fbcpp::Statement::fetchNext()`. Map fb-cpp's `std::optional` returns to SQLDA null indicators. | Hard | ❌ |
+| **14.4.4** | **Migrate batch execution** — Use fb-cpp's `Batch` class (contributed by us — see [FB_CPP_PLAN.md](FB_CPP_PLAN.md) Phase 1). Replace existing raw `IBatch` code in `IscStatement` with `fbcpp::Batch`. | Medium | ❌ |
+| **14.4.5** | **Migrate scrollable cursors** — Use fb-cpp's `CursorType::SCROLLABLE` option (contributed by us — see [FB_CPP_PLAN.md](FB_CPP_PLAN.md) Phase 2). Map to existing OdbcStatement scroll methods. fb-cpp defaults to forward-only, matching our performance needs. | Medium | ❌ |
+| **14.4.6** | **Delete `IscStatement.cpp/.h`, `IscPreparedStatement.cpp/.h`, `IscCallableStatement.cpp/.h`, `IscResultSet.cpp/.h`, `Sqlda.cpp/.h`** — After migration, ~3,000 lines removed. | Easy | ❌ |
+
+**Phase 14.5: Blob Migration**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **14.5.1** | **Replace `IscBlob` with `fbcpp::Blob`** — fb-cpp's Blob class provides `read()`, `write()`, `getLength()`, `seek()`. | Medium | ❌ |
+| **14.5.2** | **Migrate BLOB read** — `IscBlob::getSegment()` → `fbcpp::Blob::read()` or `readSegment()`. | Easy | ❌ |
+| **14.5.3** | **Migrate BLOB write** — `IscBlob::putSegment()` → `fbcpp::Blob::write()` or `writeSegment()`. | Easy | ❌ |
+| **14.5.4** | **Delete `IscBlob.cpp/.h`, `BinaryBlob.cpp/.h`, `Blob.cpp/.h`** — After migration, ~600 lines removed. | Easy | ❌ |
+
+**Phase 14.6: Metadata & Events Migration**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **14.6.1** | **Migrate `IscDatabaseMetaData`** — This class uses `IAttachment` for catalog queries. Can remain as-is initially, using fb-cpp's `Attachment::getHandle()` for raw access. | Low | ❌ |
+| **14.6.2** | **Replace `IscUserEvents` with `fbcpp::EventListener`** — fb-cpp provides a modern event listener with background thread dispatch. | Medium | ❌ |
+| **14.6.3** | **Delete `IscUserEvents.cpp/.h`** — After migration, ~300 lines removed. | Easy | ❌ |
+
+**Phase 14.7: Error Handling & Utilities Migration**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **14.7.1** | **Migrate exception handling** — Replace `SQLException` with `fbcpp::DatabaseException`. Update all catch blocks. Extract error vectors for SQLSTATE mapping. | Medium | ❌ |
+| **14.7.2** | **Delete utility classes** — `DateTime.cpp/.h`, `TimeStamp.cpp/.h`, `SqlTime.cpp/.h` — fb-cpp uses `std::chrono`. | Easy | ❌ |
+| **14.7.3** | **Delete `Value.cpp/.h`, `Values.cpp/.h`** — fb-cpp's typed getters eliminate the need for a generic `Value` container. | Easy | ❌ |
+| **14.7.4** | **Delete `JString.cpp/.h`** — Replace remaining usages with `std::string`. | Easy | ❌ |
+
+**Phase 14.8: Final Cleanup**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **14.8.1** | **Delete remaining IscDbc files** — `EnvShare.cpp/.h`, `Error.cpp/.h`, `Parameter.cpp/.h`, etc. | Easy | ❌ |
+| **14.8.2** | **Remove `src/IscDbc/` directory** — All code now in fb-cpp or `src/`. | Easy | ❌ |
+| **14.8.3** | **Update CMakeLists.txt** — Remove `add_subdirectory(src/IscDbc)`. Update include paths. | Easy | ❌ |
+| **14.8.4** | **Update documentation** — README, AGENTS.md, this master plan. | Easy | ❌ |
+| **14.8.5** | **Run full test suite** — All 401 tests must pass. | Easy | ❌ |
+
+#### Code Reduction Estimate
+
+| Category | Before | After | Savings |
+|----------|--------|-------|---------|
+| `src/IscDbc/` files | ~110 files | 0 files | ~15,000 lines |
+| `LoadFbClientDll.cpp/.h` | ~600 lines | ~50 lines (array only) | ~550 lines |
+| Date/time utilities | ~400 lines | 0 (fb-cpp) | ~400 lines |
+| String utilities (JString) | ~300 lines | 0 (std::string) | ~300 lines |
+| **Total** | — | — | **~16,250 lines** |
+
+#### fb-cpp Gaps to Address
+
+Based on our review (see [FB_CPP_SUGGESTIONS.md](../FB_CPP_SUGGESTIONS.md)) and the author's response ([FB_CPP_REPLY.md](../FB_CPP_REPLY.md)), fb-cpp has the following gaps that we will **contribute back as PRs** (see [Docs/FB_CPP_PLAN.md](FB_CPP_PLAN.md)):
+
+1. **`IBatch` support** — Critical for array parameter binding. Author agreed to add it. We will contribute a `Batch` + `BatchCompletionState` class wrapping `IBatch`/`IBatchCompletionState`. **Must land before Phase 14.4.4.**
+2. **Error vector in `DatabaseException`** — Critical for SQLSTATE mapping. Author agreed ("should be copied from original status and exposed"). We will contribute `getErrors()`, `getSqlCode()`, `getErrorCode()` methods. **Must land before Phase 14.7.1.**
+3. **Scrollable cursor control** — Author agreed. We will contribute a `CursorType` enum to `StatementOptions`. **Must land before Phase 14.4.5.**
+4. **Move assignment** — Author agreed (`Statement` "should be movable"). We will contribute `operator=(Statement&&)` and `operator=(Attachment&&)`.
+5. **`Descriptor::alias`** — Author agreed ("could be added"). Small addition for ODBC `SQL_DESC_LABEL`.
+6. **Array support** — Firebird arrays require legacy ISC API (`isc_array_get_slice`). fb-cpp won't wrap these. Keep minimal ISC function pointers for this rare feature.
+
+Note: `Client::getUtil()` is already exposed (our suggestion #9 was withdrawn). `IResultSet` abstraction was also withdrawn — Firebird doesn't support multiple active result sets per statement.
+
+#### Success Criteria
+
+- [ ] `src/IscDbc/` directory deleted — all code migrated to fb-cpp or `src/`
+- [ ] `vcpkg.json` manifest manages fb-cpp, Firebird, and Boost dependencies
+- [ ] Build works on Windows (MSVC), Linux (GCC/Clang), macOS (Clang)
+- [ ] All 401 tests pass
+- [ ] ~16,000 lines of legacy code removed
+- [ ] Performance benchmarks show no regression (fetch throughput, batch insert)
+- [ ] CI builds use vcpkg caching for fast builds
+
+**Deliverable**: A dramatically simplified codebase where the ODBC layer talks directly to fb-cpp's modern C++ API, eliminating the 20-year-old JDBC-like abstraction layer.
+
+---
+
+### Phase 15: Adopt vcpkg for Dependency Management
+**Priority**: Medium (can be done independently or as part of Phase 14)  
+**Duration**: 2–3 weeks  
+**Goal**: Use vcpkg to manage ALL external dependencies (Firebird headers, Google Test, Google Benchmark, Boost), eliminating FetchContent/manual header management
+
+#### Background
+
+The project currently uses multiple dependency management approaches:
+
+1. **FetchContent** — Google Test, Google Benchmark, Firebird headers (via `FetchFirebirdHeaders.cmake`)
+2. **System packages** — ODBC SDK (Windows SDK or unixODBC-dev)
+3. **Submodules** — None currently, but common in C++ projects
+
+vcpkg is Microsoft's C++ package manager with:
+- **4,000+ packages** including all our dependencies
+- **Cross-platform** — Windows, Linux, macOS, with triplet-based configuration
+- **Binary caching** — GitHub Actions integration for fast CI builds
+- **Manifest mode** — `vcpkg.json` declares dependencies declaratively
+- **Registry support** — Custom registries for non-public packages (like Firebird)
+
+Adopting vcpkg provides:
+1. **Reproducible builds** — Exact versions pinned in `vcpkg.json`
+2. **Faster CI** — Binary caching avoids rebuilding dependencies
+3. **Simpler CMake** — `find_package()` instead of `FetchContent_Declare`
+4. **One-command setup** — `vcpkg install` gets all dependencies
+
+#### Tasks
+
+**Phase 15.1: vcpkg Bootstrap**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **15.1.1** | **Create `vcpkg.json` manifest** — Declare dependencies: `gtest`, `benchmark`, `fb-cpp` (from custom registry). | Easy | ❌ |
+| **15.1.2** | **Create `vcpkg-configuration.json`** — Configure baseline (vcpkg commit), custom registry for Firebird packages. | Easy | ❌ |
+| **15.1.3** | **Update `.gitignore`** — Add `vcpkg_installed/` (local install tree). | Easy | ❌ |
+| **15.1.4** | **Document vcpkg setup** — README section on `vcpkg install` vs. manual dependency management. | Easy | ❌ |
+
+**Phase 15.2: CMake Integration**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **15.2.1** | **Set `CMAKE_TOOLCHAIN_FILE`** — Point to `vcpkg/scripts/buildsystems/vcpkg.cmake`. Support both submodule and external vcpkg. | Easy | ❌ |
+| **15.2.2** | **Replace FetchContent for GTest** — Remove `FetchContent_Declare(googletest ...)`. Use `find_package(GTest CONFIG REQUIRED)`. | Easy | ❌ |
+| **15.2.3** | **Replace FetchContent for Benchmark** — Remove `FetchContent_Declare(benchmark ...)`. Use `find_package(benchmark CONFIG REQUIRED)`. | Easy | ❌ |
+| **15.2.4** | **Replace FetchFirebirdHeaders** — Remove `cmake/FetchFirebirdHeaders.cmake`. vcpkg's `firebird` package provides headers. | Easy | ❌ |
+| **15.2.5** | **Link against vcpkg targets** — `target_link_libraries(... GTest::gtest benchmark::benchmark fb-cpp::fb-cpp)`. | Easy | ❌ |
+
+**Phase 15.3: CI/CD Integration**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **15.3.1** | **Add vcpkg bootstrap to CI** — Clone vcpkg, run bootstrap script, set environment variables. | Easy | ❌ |
+| **15.3.2** | **Enable binary caching** — Set `VCPKG_BINARY_SOURCES` to GitHub Packages or Azure Artifacts. | Medium | ❌ |
+| **15.3.3** | **Cache vcpkg installed tree** — Use `actions/cache` with `vcpkg_installed/` as cache path. | Easy | ❌ |
+| **15.3.4** | **Update build scripts** — `firebird-odbc-driver.build.ps1`, `install-prerequisites.ps1` to use vcpkg. | Easy | ❌ |
+
+**Phase 15.4: Optional — vcpkg Submodule**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **15.4.1** | **Add vcpkg as git submodule** — `git submodule add https://github.com/microsoft/vcpkg.git`. Provides reproducible vcpkg version. | Easy | ❌ |
+| **15.4.2** | **CMake auto-bootstrap** — If vcpkg submodule exists but not bootstrapped, run bootstrap automatically. | Medium | ❌ |
+
+#### Dependency Manifest
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "firebird-odbc-driver",
+  "version-semver": "3.0.0",
+  "description": "Firebird ODBC Driver",
+  "dependencies": [
+    {
+      "name": "fb-cpp",
+      "features": ["boost-dll", "boost-multiprecision"]
+    },
+    {
+      "name": "gtest",
+      "host": true
+    },
+    {
+      "name": "benchmark",
+      "host": true
+    }
+  ]
+}
+```
+
+#### Success Criteria
+
+- [ ] `vcpkg.json` and `vcpkg-configuration.json` in repository root
+- [ ] `cmake/FetchFirebirdHeaders.cmake` deleted
+- [ ] No `FetchContent_Declare` calls in CMakeLists.txt
+- [ ] CI uses vcpkg binary caching (builds < 5 min with cache hit)
+- [ ] `vcpkg install` followed by `cmake --preset default` builds the project
+- [ ] All 401 tests pass
+- [ ] Documentation updated with vcpkg setup instructions
+
+**Deliverable**: A project that uses vcpkg for all C++ dependencies, with reproducible builds across platforms, fast CI via binary caching, and a single `vcpkg.json` as the source of truth for dependency versions.
+
+---
+
 ## 6. Success Criteria
 
 ### 6.2 Overall Quality Targets
@@ -1328,9 +1573,14 @@ A first-class ODBC driver should:
 - [Developing Connection-Pool Awareness in an ODBC Driver](https://learn.microsoft.com/en-us/sql/odbc/reference/develop-driver/developing-connection-pool-awareness-in-an-odbc-driver)
 - [Notification of Asynchronous Function Completion](https://learn.microsoft.com/en-us/sql/odbc/reference/develop-driver/notification-of-asynchronous-function-completion)
 - [SQLAsyncNotificationCallback Function](https://learn.microsoft.com/en-us/sql/odbc/reference/develop-driver/sqlasyncnotificationcallback-function)
+- [fb-cpp — Modern C++ Wrapper for Firebird](https://github.com/asfernandes/fb-cpp) — adopted in Phase 14
+- [fb-cpp Documentation](https://asfernandes.github.io/fb-cpp) — API reference
+- [fb-cpp Contribution Plan](FB_CPP_PLAN.md) — our PRs to fb-cpp (Batch, error vector, scrollable cursors, etc.)
+- [firebird-vcpkg-registry](https://github.com/asfernandes/firebird-vcpkg-registry) — vcpkg registry for Firebird packages
+- [vcpkg Documentation](https://learn.microsoft.com/en-us/vcpkg/) — C++ package manager
 
 
 ---
 
-*Document version: 3.6 — February 10, 2026*
+*Document version: 3.8 — February 11, 2026*
 *This is the single authoritative reference for all Firebird ODBC driver improvements.*
