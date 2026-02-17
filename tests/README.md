@@ -8,19 +8,22 @@ Google Test-based test suite for the Firebird ODBC driver. Tests the driver thro
 2. **Firebird ODBC Driver** — pre-built and registered as an ODBC data source (or referenced via a `Driver=` connection string)  
 3. **CMake** ≥ 3.14  
 4. **C++17 compiler** (MSVC 2022, GCC 9+, Clang 10+)
+5. **Google Test** — installed and discoverable via `find_package(GTest CONFIG REQUIRED)`
 
 ### Windows-specific
 
 - The driver DLL (built from `Builds/MsVc2022.win/OdbcFb.sln`) must be registered via `odbcconf` or the ODBC Data Source Administrator.
+- Google Test can be installed via [vcpkg](https://vcpkg.io/): `vcpkg install gtest:x64-windows`, then pass `-DCMAKE_TOOLCHAIN_FILE=.../vcpkg/scripts/buildsystems/vcpkg.cmake` to CMake. Or build from source and pass `-DCMAKE_PREFIX_PATH=<gtest-install-dir>`.
 
 ### Linux-specific
 
 - `unixODBC` development headers (`unixodbc-dev` / `unixODBC-devel`)  
 - The driver `.so` must be registered in `/etc/odbcinst.ini`
+- Google Test can be installed via your package manager: `apt install libgtest-dev` / `dnf install gtest-devel`
 
 ## Building the tests
 
-The test suite is a standalone CMake project. Google Test is fetched automatically via CMake `FetchContent`.
+The test suite is a standalone CMake project. Google Test and ODBC are found via `find_package()`.
 
 ```bash
 # From the repository root:
@@ -35,14 +38,14 @@ Set the `FIREBIRD_ODBC_CONNECTION` environment variable with a valid ODBC connec
 ### Windows (PowerShell)
 
 ```powershell
-$env:FIREBIRD_ODBC_CONNECTION = "Driver={Firebird/InterBase(r) driver};Dbname=localhost:C:\path\to\test.fdb;Uid=SYSDBA;Pwd=masterkey;"
+$env:FIREBIRD_ODBC_CONNECTION = "Driver={Firebird ODBC Driver};Dbname=localhost:C:\path\to\test.fdb;Uid=SYSDBA;Pwd=masterkey;"
 ctest --test-dir build-tests --output-on-failure -C Release
 ```
 
 ### Windows (cmd.exe)
 
 ```cmd
-set FIREBIRD_ODBC_CONNECTION=Driver={Firebird/InterBase(r) driver};Dbname=localhost:C:\path\to\test.fdb;Uid=SYSDBA;Pwd=masterkey;
+set FIREBIRD_ODBC_CONNECTION=Driver={Firebird ODBC Driver};Dbname=localhost:C:\path\to\test.fdb;Uid=SYSDBA;Pwd=masterkey;
 ctest --test-dir build-tests --output-on-failure -C Release
 ```
 
@@ -139,7 +142,7 @@ The `FIREBIRD_ODBC_CONNECTION` environment variable should contain a standard OD
 
 | Parameter | Example | Description |
 |-----------|---------|-------------|
-| `Driver` | `{Firebird/InterBase(r) driver}` | Registered driver name |
+| `Driver` | `{Firebird ODBC Driver}` | Registered driver name |
 | `Dbname` | `localhost:C:\data\test.fdb` | Server:path to database |
 | `Uid` | `SYSDBA` | Username |
 | `Pwd` | `masterkey` | Password |
@@ -148,7 +151,7 @@ The `FIREBIRD_ODBC_CONNECTION` environment variable should contain a standard OD
 
 ## Architecture
 
-- Tests link against the **ODBC Driver Manager** (`odbc32`/`odbccp32` on Windows, `libodbc` on Linux)
+- Tests link against the **ODBC Driver Manager** (`odbc32`/`odbccp32` on Windows, `libodbc` on Linux) via `find_package(ODBC REQUIRED)`
 - They do **not** link against the driver DLL directly (except `test_null_handles.cpp` which uses `LoadLibrary`)
 - The driver must be registered as an ODBC driver for the connection string to work
-- Google Test is fetched via CMake `FetchContent` (no pre-installation required)
+- Google Test is found via `find_package(GTest CONFIG REQUIRED)` — must be pre-installed

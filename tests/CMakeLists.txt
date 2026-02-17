@@ -8,11 +8,12 @@
 #     data source (or referenced via a Driver= connection string).
 #   - A Firebird database must be running and accessible.
 #   - The FIREBIRD_ODBC_CONNECTION environment variable must be set.
+#   - Google Test must be installed (e.g., via vcpkg: vcpkg install gtest)
 #
 # Build and run:
 #   cmake -B build-tests -S tests
 #   cmake --build build-tests --config Release
-#   set FIREBIRD_ODBC_CONNECTION=Driver={Firebird/InterBase(r) driver};Dbname=localhost:C:\path\to\test.fdb;Uid=SYSDBA;Pwd=masterkey;
+#   set FIREBIRD_ODBC_CONNECTION=Driver={Firebird ODBC Driver};Dbname=localhost:C:\path\to\test.fdb;Uid=SYSDBA;Pwd=masterkey;
 #   ctest --test-dir build-tests --output-on-failure
 
 cmake_minimum_required(VERSION 3.14)
@@ -22,20 +23,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ---------------------------------------------------------------------------
-# Fetch Google Test
+# Find Google Test
 # ---------------------------------------------------------------------------
-include(FetchContent)
+find_package(GTest CONFIG REQUIRED)
 
-FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.14.0
-)
-
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-FetchContent_MakeAvailable(googletest)
+# ---------------------------------------------------------------------------
+# Find ODBC
+# ---------------------------------------------------------------------------
+find_package(ODBC REQUIRED)
 
 # ---------------------------------------------------------------------------
 # Enable CTest
@@ -92,23 +87,7 @@ add_executable(firebird_odbc_tests
 # ---------------------------------------------------------------------------
 # Link against Google Test and the ODBC Driver Manager
 # ---------------------------------------------------------------------------
-target_link_libraries(firebird_odbc_tests PRIVATE gtest)
-
-if(WIN32)
-    target_link_libraries(firebird_odbc_tests PRIVATE odbc32 odbccp32)
-else()
-    find_package(PkgConfig)
-    if(PkgConfig_FOUND)
-        pkg_check_modules(ODBC IMPORTED_TARGET odbc)
-        if(ODBC_FOUND)
-            target_link_libraries(firebird_odbc_tests PRIVATE PkgConfig::ODBC)
-        else()
-            target_link_libraries(firebird_odbc_tests PRIVATE odbc)
-        endif()
-    else()
-        target_link_libraries(firebird_odbc_tests PRIVATE odbc)
-    endif()
-endif()
+target_link_libraries(firebird_odbc_tests PRIVATE GTest::gtest ODBC::ODBC)
 
 # ---------------------------------------------------------------------------
 # Discover tests for CTest
