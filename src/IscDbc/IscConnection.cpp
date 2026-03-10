@@ -263,25 +263,19 @@ void IscConnection::commit()
 		return;
 	}
 
-	// Use raw handle for commit to preserve full ISC status for SQLSTATE mapping.
-	// fb-cpp's DatabaseException loses the status vector (Phase 14.7 will fix this).
-	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
-		transaction_->getHandle()->commit( &status );
+		transaction_->commit();
 	}
-	catch( const FbException& error )
+	catch( const fbcpp::DatabaseException& e )
 	{
-		// Destroy the fb-cpp Transaction — destructor's rollback attempt
-		// will fail harmlessly since the transaction is in an error state.
+		// On commit failure, rollback
+		try { transaction_->rollback(); } catch (...) {}
 		transaction_.reset();
 		transactionPending_ = false;
-		THROW_ISC_EXCEPTION ( this, error.getStatus() );
+		throw SQLEXCEPTION( RUNTIME_ERROR, e.what() );
 	}
 
-	// Destroy the fb-cpp Transaction. The destructor will attempt rollback
-	// (since its state is still ACTIVE), which will fail harmlessly since
-	// we already committed. The handle reference is properly released.
 	transaction_.reset();
 	transactionPending_ = false;
 }
@@ -294,17 +288,15 @@ void IscConnection::rollback()
 		return;
 	}
 
-	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
-		transaction_->getHandle()->rollback( &status );
+		transaction_->rollback();
 	}
-	catch( const FbException& error )
+	catch( const fbcpp::DatabaseException& e )
 	{
-		// Force-destroy the fb-cpp Transaction to release the handle
 		transaction_.reset();
 		transactionPending_ = false;
-		THROW_ISC_EXCEPTION ( this, error.getStatus() );
+		throw SQLEXCEPTION( RUNTIME_ERROR, e.what() );
 	}
 
 	transaction_.reset();
@@ -316,14 +308,13 @@ void IscConnection::prepareTransaction()
 	if ( !transaction_ || !transaction_->isValid() )
 		return;
 
-	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
-		transaction_->getHandle()->prepare( &status, 0, nullptr );
+		transaction_->prepare();
 	}
-	catch( const FbException& error )
+	catch( const fbcpp::DatabaseException& e )
 	{
-		THROW_ISC_EXCEPTION ( this, error.getStatus() );
+		throw SQLEXCEPTION( RUNTIME_ERROR, e.what() );
 	}
 }
 
@@ -2599,15 +2590,14 @@ void IscConnection::commitRetaining()
 		return;
 	}
 
-	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
-		transaction_->getHandle()->commitRetaining( &status );
+		transaction_->commitRetaining();
 	}
-	catch( const FbException& error )
+	catch( const fbcpp::DatabaseException& e )
 	{
-		rollbackRetaining();
-		THROW_ISC_EXCEPTION ( this, error.getStatus() );
+		try { rollbackRetaining(); } catch (...) {}
+		throw SQLEXCEPTION( RUNTIME_ERROR, e.what() );
 	}
 	transactionPending_ = false;
 }
@@ -2620,16 +2610,15 @@ void IscConnection::rollbackRetaining()
 		return;
 	}
 
-	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
-		transaction_->getHandle()->rollbackRetaining( &status );
+		transaction_->rollbackRetaining();
 	}
-	catch( const FbException& error )
+	catch( const fbcpp::DatabaseException& e )
 	{
 		// If rollbackRetaining fails, do a full rollback
 		try { rollback(); } catch (...) {}
-		THROW_ISC_EXCEPTION ( this, error.getStatus() );
+		throw SQLEXCEPTION( RUNTIME_ERROR, e.what() );
 	}
 	transactionPending_ = false;
 }
