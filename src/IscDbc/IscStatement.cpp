@@ -87,7 +87,7 @@
 #include "IscStatement.h"
 #include "IscResultSet.h"
 #include "IscConnection.h"
-#include "Attachment.h"
+#include "FbClient.h"
 #include "IscBlob.h"
 #include "IscArray.h"
 
@@ -367,10 +367,10 @@ ITransaction* IscStatement::startTransaction()
 			}
 
 			if ( !(tr->transactionExtInit & TRA_nw) 
-				&& connection->attachment->isFirebirdVer2_0()
-				&& connection->attachment->getUseLockTimeoutWaitTransactions() )
+				&& connection->isVersionAtLeast(2, 0)
+				&& connection->getUseLockTimeoutWaitTransactions() )
 			{
-				tpb->insertInt(&status, isc_tpb_lock_timeout, connection->attachment->getUseLockTimeoutWaitTransactions() );
+				tpb->insertInt(&status, isc_tpb_lock_timeout, connection->getUseLockTimeoutWaitTransactions() );
 			}
 			
 			count = tpb->getBufferLength(&status);
@@ -384,7 +384,7 @@ ITransaction* IscStatement::startTransaction()
 		}
 
 		tr->transactionHandle =
-			connection->attachment->databaseHandle->startTransaction( &status, count, (const unsigned char*)tpbBuffer );
+			connection->databaseHandle->startTransaction( &status, count, (const unsigned char*)tpbBuffer );
 
 		if( tpb ) {
 			tpb->dispose();

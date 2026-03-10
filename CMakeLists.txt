@@ -1,4 +1,13 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.20)
+
+# Auto-detect vcpkg toolchain from environment
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    if(DEFINED ENV{VCPKG_ROOT})
+        set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+    elseif(DEFINED ENV{VCPKG_INSTALLATION_ROOT})
+        set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+    endif()
+endif()
 
 project(firebird-odbc-driver LANGUAGES CXX C)
 
@@ -19,8 +28,8 @@ configure_file(
     @ONLY
 )
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
+# Set C++ standard (C++20 required for fb-cpp)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -86,15 +95,14 @@ else()
     endif()
 endif()
 
-# Fetch Firebird public headers from GitHub (replaces vendored FBClient.Headers)
-include(cmake/FetchFirebirdHeaders.cmake)
+# Find fb-cpp (modern C++ wrapper for Firebird) — provides Firebird headers transitively
+find_package(fb-cpp CONFIG REQUIRED)
 
 # Include directories
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/IscDbc
     ${CMAKE_CURRENT_BINARY_DIR}/generated
-    ${FIREBIRD_INCLUDE_DIR}
 )
 
 # Add subdirectories

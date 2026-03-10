@@ -183,7 +183,7 @@ vsprintf (temp, stuff, args);
 setString (temp);
 }
 
-const char* JString::getString()
+const char* JString::getString() const
 {
 /**************************************
  *
@@ -199,7 +199,7 @@ const char* JString::getString()
 return (string) ? string : "";
 }
 
-JString::operator const char* ()
+JString::operator const char* () const
 {
 /**************************************
  *

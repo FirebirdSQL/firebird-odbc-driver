@@ -32,7 +32,7 @@
 #include "SQLError.h"
 #include "EnvShare.h"
 #include "IscConnection.h"
-#include "Attachment.h"
+#include "FbClient.h"
 
 using namespace Firebird;
 
@@ -116,7 +116,7 @@ void EnvShare::startTransaction()
 			transactionHandle = dtcBuilder->start( &status );
 
 			for ( i = 0; i < countConnection; i++ )
-				connections[i]->attachment->transactionHandle = transactionHandle;
+				connections[i]->twoPhaseTransactionHandle = transactionHandle;
 
 			dtcBuilder->dispose();
 			dtcBuilder = nullptr;

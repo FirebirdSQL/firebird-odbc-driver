@@ -20,6 +20,9 @@ Build/
 out/
 cmake-build-*/
 
+# vcpkg
+vcpkg_installed/
+
 # CMake files
 CMakeCache.txt
 CMakeFiles/

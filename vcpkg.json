@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "firebird-odbc-driver",
+  "version-semver": "3.0.0",
+  "description": "Firebird ODBC Driver — modern, cross-platform ODBC driver for Firebird SQL",
+  "homepage": "https://github.com/AsakuraFuworksFirebird/firebird-odbc-driver",
+  "license": "IDPL-1.0",
+  "supports": "(windows & !uwp) | linux",
+  "dependencies": [
+    {
+      "name": "fb-cpp",
+      "default-features": true
+    }
+  ],
+  "overrides": [
+    {
+      "name": "fb-cpp",
+      "version-semver": "0.0.2"
+    }
+  ]
+}

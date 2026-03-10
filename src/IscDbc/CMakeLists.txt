@@ -1,12 +1,12 @@
 # IscDbc library CMakeLists.txt
 
 set(ISCDBC_SOURCES
-    Attachment.cpp
     BinaryBlob.cpp
     Blob.cpp
     DateTime.cpp
     EnvShare.cpp
     extodbc.cpp
+    FbClient.cpp
     IscArray.cpp
     IscBlob.cpp
     IscCallableStatement.cpp
@@ -51,7 +51,6 @@ set(ISCDBC_SOURCES
 )
 
 set(ISCDBC_HEADERS
-    Attachment.h
     BinaryBlob.h
     BinToHexStr.h
     Blob.h
@@ -59,6 +58,7 @@ set(ISCDBC_HEADERS
     DateTime.h
     EnvShare.h
     Error.h
+    FbClient.h
     IscArray.h
     IscBlob.h
     IscCallableStatement.h
@@ -119,13 +119,17 @@ add_library(IscDbc STATIC ${ISCDBC_SOURCES} ${ISCDBC_HEADERS})
 target_include_directories(IscDbc PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/..
-    ${FIREBIRD_INCLUDE_DIR}
 )
+
+# Link fb-cpp (provides Firebird headers transitively via PUBLIC dependency)
+target_link_libraries(IscDbc PUBLIC fb-cpp::fb-cpp)
 
 # Platform-specific settings
 if(WIN32)
     target_compile_definitions(IscDbc PRIVATE WIN32 _WINDOWS)
     target_link_libraries(IscDbc PRIVATE ws2_32 advapi32)
+    # Legacy IscDbc code assigns string literals to char*; relax strict checking.
+    target_compile_options(IscDbc PRIVATE /Zc:strictStrings-)
 else()
     target_compile_definitions(IscDbc PRIVATE UNIX)
     target_link_libraries(IscDbc PRIVATE dl pthread)

@@ -26,12 +26,15 @@
 #define _ISCCONNECTION_H_
 
 #include <vector>
+#include <memory>
 #include "Connection.h"
-#include "JString.h"	// Added by ClassView
+#include "JString.h"
+#include "Mutex.h"
 
 namespace IscDbcLibrary {
 
 using namespace classJString;
+using namespace classMutex;
 
 class CNodeParamTransaction;
 
@@ -60,7 +63,6 @@ public:
 
 class IscStatement;
 class IscDatabaseMetaData;
-class Attachment;
 class IscUserEvents;
 
 class IscConnection final : public Connection  
@@ -155,9 +157,28 @@ public:
 	virtual bool isMsAccess() override { return GDS ? GDS->isMsAccess() : false; }
 	virtual void cancelOperation() override;
 
+	// Phase 14.2: Accessors for connection metadata (moved from Attachment)
+	bool isAdmin() const { return admin_; }
+	JString& getUserAccess() { return userAccess_; }
+	int getUserType() const { return userType_; }
+	int getUseSchemaIdentifier() const { return useSchemaIdentifier_; }
+	int getUseLockTimeoutWaitTransactions() const { return useLockTimeoutWaitTransactions_; }
+	bool isVersionAtLeast(int major, int minor = 0) const { return (majorFb_ > major) || (majorFb_ == major && minorFb_ >= minor); }
+	const JString& getDsn() const { return dsn_; }
+	const JString& getUserName() const { return userName_; }
+	const JString& getDatabaseProductName() const { return databaseProductName_; }
+	const JString& getServerVersion() const { return serverVersion_; }
+	int getPageSize() const { return pageSize_; }
+	bool getQuotedIdentifier() const { return quotedIdentifier_; }
+	bool getSensitiveIdentifier() const { return sensitiveIdentifier_; }
+	bool getAutoQuotedIdentifier() const { return autoQuotedIdentifier_; }
+	const JString& getDatabaseServerNameStr() const { return databaseServerName_; }
+
+	/// Access the FbClient wrapper (Phase 14.2.1)
+	CFbDll* getFbClient() { return GDS; }
+
 public:
 	CNodeParamTransaction *tmpParamTransaction;
-	Attachment		*attachment;
 	CFbDll			*GDS;
 	Firebird::IAttachment* databaseHandle;
 	InfoTransaction	transactionInfo;
@@ -167,6 +188,46 @@ public:
 	bool			shareConnected;
 	int				useAppOdbcVersion;
 	int				useCount;
+
+	// Phase 14.2: Two-phase transaction handle (was Attachment::transactionHandle)
+	Firebird::ITransaction* twoPhaseTransactionHandle;
+
+	// Phase 14.2: Attachment mutex (for thread-safe metadata access)
+	Mutex			attachmentMutex;
+
+private:
+	// Phase 14.2: Connection management helpers (inlined from Attachment)
+	void loadClientLibrary(Properties *properties);
+	void checkAdmin();
+
+	// Phase 14.2: Connection metadata (moved from Attachment class)
+	JString		dsn_;
+	JString		databaseName_;
+	JString		databaseServerName_;
+	JString		databaseNameFromServer_;
+	JString		userName_;
+	JString		userAccess_;
+	int			userType_ = 8;
+	JString		serverVersion_;
+	JString		databaseProductName_;
+	int			majorFb_ = 1;
+	int			minorFb_ = 0;
+	int			versionFb_ = 0;
+	int			charsetCode_ = 0;
+	int			pageSize_ = 0;
+	int			connectionTimeout_ = 0;
+	int			serverBaseLevel_ = 0;
+	int			databaseDialect_ = 1; // SQL_DIALECT_V5
+	int			useSchemaIdentifier_ = 0;
+	int			useLockTimeoutWaitTransactions_ = 0;
+	bool		quotedIdentifier_ = false;
+	bool		sensitiveIdentifier_ = false;
+	bool		autoQuotedIdentifier_ = false;
+	int			databaseAccess_ = 0;
+	int			transactionIsolation_ = 0;
+	bool		admin_ = true;
+	bool		isRoles_ = false;
+	bool		ownsConnection_ = false; // true if this IscConnection owns GDS/databaseHandle
 };
 
 }; // end namespace IscDbcLibrary

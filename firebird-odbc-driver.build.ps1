@@ -42,6 +42,8 @@ task clean {
 
 # Synopsis: Build the driver and tests (default task).
 task build {
+	# vcpkg toolchain auto-detected in CMakeLists.txt from VCPKG_ROOT env var.
+	# CMAKE_TOOLCHAIN_FILE can also be passed explicitly.
 	exec { cmake -B $BuildDir -S $BuildRoot -DCMAKE_BUILD_TYPE=$Configuration -DBUILD_TESTING=ON }
 
 	if ($IsWindowsOS) {

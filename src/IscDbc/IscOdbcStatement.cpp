@@ -29,7 +29,7 @@
 #include "SQLError.h"
 #include "IscResultSet.h"
 #include "IscConnection.h"
-#include "Attachment.h"
+#include "FbClient.h"
 #include "BinaryBlob.h"
 #include "Value.h"
 #include "IscStatementMetaData.h"
@@ -297,10 +297,10 @@ static constexpr unsigned short kBatchRowError   = 5;  // SQL_PARAM_ERROR
 bool IscOdbcStatement::isBatchSupported()
 {
 	// IBatch requires Firebird 4.0+ and a prepared statement
-	if (!statementHandle || !connection || !connection->attachment)
+	if (!statementHandle || !connection || !connection->isConnected())
 		return false;
 
-	return connection->attachment->isVersionAtLeast(4, 0);
+	return connection->isVersionAtLeast(4, 0);
 }
 
 void IscOdbcStatement::batchBegin()

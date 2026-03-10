@@ -47,6 +47,7 @@
 #include <time.h>
 #include <locale.h>
 #include <string.h>
+#include <sstream>
 #include "IscDbc.h"
 #include "EnvShare.h"
 #include "IscConnection.h"
@@ -60,7 +61,7 @@
 #include "IscDatabaseMetaData.h"
 #include "Parameters.h"
 #include "ParametersEvents.h"
-#include "Attachment.h"
+#include "FbClient.h"
 #include "Mlist.h"
 #include "../SetupAttributes.h"
 #include "MultibyteConvert.h"
@@ -104,8 +105,37 @@ IscConnection::IscConnection()
 IscConnection::IscConnection(IscConnection * source)
 {
 	init();
-	attachment = source->attachment;
-	attachment->addRef();
+	// Phase 14.2: Copy connection handle and metadata from source
+	databaseHandle = source->databaseHandle;
+	GDS = source->GDS;
+	// Copy all metadata from source
+	dsn_ = source->dsn_;
+	databaseName_ = source->databaseName_;
+	databaseServerName_ = source->databaseServerName_;
+	databaseNameFromServer_ = source->databaseNameFromServer_;
+	userName_ = source->userName_;
+	userAccess_ = source->userAccess_;
+	userType_ = source->userType_;
+	serverVersion_ = source->serverVersion_;
+	databaseProductName_ = source->databaseProductName_;
+	majorFb_ = source->majorFb_;
+	minorFb_ = source->minorFb_;
+	versionFb_ = source->versionFb_;
+	charsetCode_ = source->charsetCode_;
+	pageSize_ = source->pageSize_;
+	connectionTimeout_ = source->connectionTimeout_;
+	serverBaseLevel_ = source->serverBaseLevel_;
+	databaseDialect_ = source->databaseDialect_;
+	useSchemaIdentifier_ = source->useSchemaIdentifier_;
+	useLockTimeoutWaitTransactions_ = source->useLockTimeoutWaitTransactions_;
+	quotedIdentifier_ = source->quotedIdentifier_;
+	sensitiveIdentifier_ = source->sensitiveIdentifier_;
+	autoQuotedIdentifier_ = source->autoQuotedIdentifier_;
+	databaseAccess_ = source->databaseAccess_;
+	transactionIsolation_ = source->transactionIsolation_;
+	admin_ = source->admin_;
+	isRoles_ = source->isRoles_;
+	twoPhaseTransactionHandle = source->twoPhaseTransactionHandle;
 }
 
 void IscConnection::init()
@@ -113,10 +143,12 @@ void IscConnection::init()
 	useCount = 1;
 	metaData = NULL;
 	shareConnected = false;
-	attachment = NULL;
 	userEvents = NULL;
 	useAppOdbcVersion = 3; // SQL_OV_ODBC3
 	tmpParamTransaction = NULL;
+	twoPhaseTransactionHandle = nullptr;
+	GDS = NULL;
+	databaseHandle = NULL;
 }
 
 IscConnection::~IscConnection()
@@ -124,8 +156,30 @@ IscConnection::~IscConnection()
 	if (metaData)
 		delete metaData;
 
-	if (attachment)
-		attachment->release();
+	// Phase 14.2: Only detach if this connection owns the handle
+	// (cloned connections share GDS/databaseHandle but don't own them)
+	if ( ownsConnection_ )
+	{
+		if ( GDS && databaseHandle ) {
+			ThrowStatusWrapper status( GDS->_status );
+			try
+			{
+				databaseHandle->detach( &status );
+				databaseHandle = nullptr;
+			}
+			catch( ... )
+			{
+				if( databaseHandle ) databaseHandle->release();
+				databaseHandle = nullptr;
+			}
+		}
+
+		if( GDS )
+		{
+			delete GDS;
+			GDS = NULL;
+		}
+	}
 
 	delete tmpParamTransaction;
 
@@ -135,7 +189,7 @@ IscConnection::~IscConnection()
 
 bool IscConnection::isConnected()
 {
-	return attachment != NULL;
+	return databaseHandle != nullptr;
 }
 
 void IscConnection::close()
@@ -283,7 +337,7 @@ void IscConnection::cancelOperation()
 
 Firebird::IAttachment* IscConnection::getHandleDb()
 {	
-	return attachment->databaseHandle;
+	return databaseHandle;
 }
 
 Firebird::ITransaction* IscConnection::startTransaction()
@@ -292,14 +346,14 @@ Firebird::ITransaction* IscConnection::startTransaction()
 
 	if ( shareConnected )
 	{
-		if ( !attachment->transactionHandle )
+		if ( !twoPhaseTransactionHandle )
 		{
 			getEnvironmentShareInstance().startTransaction();
 			// ASSERT (!autoCommit)
 			tr.transactionPending = true;
 		}
 
-		return attachment->transactionHandle;
+		return twoPhaseTransactionHandle;
 	}
 
     if ( tr.transactionHandle )
@@ -343,14 +397,14 @@ Firebird::ITransaction* IscConnection::startTransaction()
 		}
 
 		if ( !(tr.transactionExtInit & TRA_nw)
-			&& attachment->isFirebirdVer2_0()
-			&& attachment->getUseLockTimeoutWaitTransactions() )
+			&& isVersionAtLeast(2, 0)
+			&& useLockTimeoutWaitTransactions_ )
 		{
-			tpb->insertInt(&status, isc_tpb_lock_timeout, attachment->getUseLockTimeoutWaitTransactions() );
+			tpb->insertInt(&status, isc_tpb_lock_timeout, useLockTimeoutWaitTransactions_ );
 		}
 
 		tr.transactionHandle =
-			attachment->databaseHandle->startTransaction(&status, tpb->getBufferLength(&status), tpb->getBuffer(&status));
+			databaseHandle->startTransaction(&status, tpb->getBufferLength(&status), tpb->getBuffer(&status));
 
 		tpb->dispose();
 		tpb = nullptr;
@@ -650,8 +704,8 @@ void IscConnection::parseReservingTable( char *& string, char *& tpbBuffer, shor
 	char *end;
 	char quote;
 	char delimiter = *metaData->getIdentifierQuoteString();
-	delimiter = delimiter == ' ' || attachment->databaseDialect < 3 ? 0 : delimiter;
-	bool autoQuoted = delimiter && attachment->autoQuotedIdentifier;
+	delimiter = delimiter == ' ' || databaseDialect_ < 3 ? 0 : delimiter;
+	bool autoQuoted = delimiter && autoQuotedIdentifier_;
 
 	while ( true )
 	{
@@ -926,7 +980,7 @@ int IscConnection::buildParamTransaction( char *& string, char boolDeclare )
 		{
 			tpb->insertTag( &status, isc_tpb_wait );
 
-			if ( node.lockTimeout && attachment->isFirebirdVer2_0() )
+			if ( node.lockTimeout && isVersionAtLeast(2, 0) )
 			{
 				// IXpbBuilder handles endianness for the lock_timeout integer
 				tpb->insertInt( &status, isc_tpb_lock_timeout, node.lockTimeout );
@@ -1336,10 +1390,10 @@ int IscConnection::getNativeSql (const char * inStatementText, int textLength1,
 	int statusBracket = 0;
 	char quote;
 	char delimiter = *metaData->getIdentifierQuoteString();
-	delimiter = delimiter == ' ' || attachment->databaseDialect < 3 ? 0 : delimiter;
+	delimiter = delimiter == ' ' || databaseDialect_ < 3 ? 0 : delimiter;
 
-	bool autoRemoveSchemaFromIdentifier = attachment->useSchemaIdentifier == 1;
-	bool autoQuoted = delimiter && attachment->autoQuotedIdentifier;
+	bool autoRemoveSchemaFromIdentifier = useSchemaIdentifier_ == 1;
+	bool autoQuoted = delimiter && autoQuotedIdentifier_;
 
 	// Schema removal + auto-quoting of mixed-case identifiers.
 	// Bracket-to-space conversion for "(SELECT ...) UNION (SELECT ...)" is intentional.
@@ -1595,17 +1649,17 @@ DatabaseMetaData* IscConnection::getMetaData()
 
 int IscConnection::getConnectionCharsetCode()
 {
-	return attachment->charsetCode;
+	return charsetCode_;
 }
 
 WCSTOMBS IscConnection::getConnectionWcsToMbs()
 {
-	return adressWcsToMbs( attachment->charsetCode );
+	return adressWcsToMbs( charsetCode_ );
 }
 
 MBSTOWCS IscConnection::getConnectionMbsToWcs()
 {
-	return adressMbsToWcs( attachment->charsetCode );
+	return adressMbsToWcs( charsetCode_ );
 }
 
 int IscConnection::hasRole(const char * schemaName, const char * roleName)
@@ -1617,11 +1671,10 @@ int IscConnection::hasRole(const char * schemaName, const char * roleName)
 
 bool IscConnection::ping()
 {
-	if (attachment)
+	if (databaseHandle)
 	{
-		IAttachment * Db = attachment->databaseHandle;
 		CheckStatusWrapper status(GDS->_status);
-		Db->ping(&status);
+		databaseHandle->ping(&status);
 		return (status.getState() & IStatus::STATE_ERRORS) == 0;
 	}
 
@@ -1647,26 +1700,122 @@ void IscConnection::sqlExecuteCreateDatabase(const char * sqlString)
 	}
 }
 
+// Helper: load the Firebird client library if not already loaded.
+void IscConnection::loadClientLibrary(Properties *properties)
+{
+	const char *clientDefault = NULL;
+	const char *client = properties->findValue ("client", NULL);
+
+	if ( !client || !*client )
+#if defined (_WINDOWS)
+		client = "gds32.dll",
+		clientDefault = "fbclient.dll";
+#elif defined (__APPLE__)
+		client = "libgds.dylib",
+		clientDefault = "libfbclient.dylib";
+#else
+		client = "libgds.so",
+		clientDefault = "libfbclient.so";
+#endif
+
+	GDS = new CFbDll();
+	if ( !GDS->LoadDll (client, clientDefault) )
+	{
+		JString text;
+		text.Format ("Unable to connect to data source: library '%s' failed to load", client);
+		throw SQLEXCEPTION( -904, 335544375l, text );
+	}
+}
+
+// Helper: check if user is admin.
+void IscConnection::checkAdmin()
+{
+	QUAD adm1 = (QUAD)71752869960019.0;
+	QUAD adm2 = (QUAD)107075219978611.0;
+	QUAD user = (QUAD)0;
+	memcpy((void *)&user,(const char *)userName_,6);
+
+	admin_ = user == adm1 || user == adm2;
+
+	if ( admin_ )
+	{
+		userAccess_ = "";
+		userType_ = 0;
+	}
+}
+
+static char databaseInfoItems [] = { 
+	isc_info_db_id,
+	isc_info_db_sql_dialect,
+	isc_info_base_level,
+	isc_info_ods_version,
+	isc_info_firebird_version,
+	isc_info_version, 
+	isc_info_page_size,
+	isc_info_user_names,
+	isc_info_end 
+};
+
 void IscConnection::createDatabase(const char * dbName, Properties * properties)
 {
 	try
 	{
-		attachment = new Attachment;
-		attachment->createDatabase( dbName, properties );
-		databaseHandle = attachment->databaseHandle;
-		GDS = attachment->GDS;
+		if ( !GDS )
+			loadClientLibrary( properties );
+
+		char sql[1024];
+		char *p = sql;
+
+		p += sprintf( p, "CREATE DATABASE \'%s\' ", dbName );
+
+		const char *dialect = properties->findValue ("dialect", NULL);
+
+		if ( dialect && *dialect == '1')
+			databaseDialect_ = SQL_DIALECT_V5;
+		else
+			databaseDialect_ = SQL_DIALECT_V6;
+
+		const char *user = properties->findValue ("user", NULL);
+
+		if (user && *user)
+			p += sprintf( p, "USER \'%s\' ", user );
+
+		const char *password = properties->findValue ("password", NULL);
+
+		if (password && *password)
+			p += sprintf( p, "PASSWORD \'%s\' ", password );
+
+		const char *pagesize = properties->findValue ("pagesize", NULL);
+
+		if (pagesize && *pagesize)
+			p += sprintf( p, "PAGE_SIZE %s ", pagesize );
+
+		const char *charset = properties->findValue ("charset", NULL);
+		if ( !charset )
+			charset = properties->findValue ("characterset", NULL);
+
+		if (charset && *charset)
+			p += sprintf( p, "DEFAULT CHARACTER SET %s ", charset );
+
+		*p = '\0';
+	
+		ThrowStatusWrapper status( GDS->_status );
+		databaseHandle =
+			GDS->_master->getUtilInterface()->executeCreateDatabase( &status, strlen(sql), sql, databaseDialect_, nullptr );
+		ownsConnection_ = true;
 	}
 	catch ( SQLException& exception )
 	{
-		delete attachment;
-		attachment = NULL;
 		GDS = NULL;
 		throw SQLEXCEPTION ( (SqlCode)exception.getSqlcode() , exception.getText() );
 	}
+	catch ( const FbException& error )
+	{
+		const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+	}
 	catch (...)
 	{
-		delete attachment;
-		attachment = NULL;
 		GDS = NULL;
 		throw;
 	}
@@ -1676,12 +1825,374 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 {
 	try
 	{
-		attachment = new Attachment;
-		attachment->openDatabase (dbName, properties);
-		databaseHandle = attachment->databaseHandle;
-		GDS = attachment->GDS;
+		if ( !GDS )
+			loadClientLibrary( properties );
 
-		if ( databaseHandle && !attachment->isRoles && !attachment->admin )
+		const char *dialect = properties->findValue ("dialect", NULL);
+
+		isRoles_ = false;
+		databaseName_ = dbName;
+		const char emptyStr[] = "";
+		std::stringstream dpb_config;
+
+		IUtil* utl = GDS->_master->getUtilInterface();
+		ThrowStatusWrapper throw_status( GDS->_status );
+		IXpbBuilder* dpb = nullptr;
+
+		try
+		{
+			dpb = utl->getXpbBuilder(&throw_status, IXpbBuilder::DPB, NULL, 0);
+
+			const char *user = properties->findValue ("user", NULL);
+
+			if (user && *user)
+			{
+				userName_ = user;
+				userAccess_ = user;
+				userType_ = 8;
+				dpb->insertString( &throw_status, isc_dpb_user_name, user );
+			}
+			else
+			{
+				dpb->insertString( &throw_status, isc_dpb_user_name, emptyStr );
+			}
+
+			const char *password = properties->findValue ("password", NULL);
+
+			if (password && *password)
+			{
+				dpb->insertString( &throw_status, isc_dpb_password, password );
+			}
+			else
+			{
+				dpb->insertString( &throw_status, isc_dpb_password, emptyStr );
+			}
+
+			const char *timeout = properties->findValue ("timeout", NULL);
+
+			if (timeout && *timeout)
+			{
+				connectionTimeout_ = atoi(timeout);
+				dpb->insertInt(&throw_status, isc_dpb_connect_timeout, connectionTimeout_);
+			}
+
+			const char *role = properties->findValue ("role", NULL);
+
+			if (role && *role)
+			{
+				userAccess_ = role;
+
+				char *ch = (char *)(const char *)userAccess_;
+				while ( (*ch = UPPER ( *ch )) )
+					++ch;
+
+				userType_ = 13;
+				isRoles_ = true;
+
+				dpb->insertString(&throw_status, isc_dpb_sql_role_name, role);
+			}
+
+			const char *charset = properties->findValue ("charset", NULL);
+			if ( !charset )
+				charset = properties->findValue ("characterset", NULL);
+
+			// Phase 12 (12.4.1): Default to UTF8 when no charset specified.
+			if (!charset || !*charset)
+				charset = "UTF8";
+
+			dpb->insertString(&throw_status, isc_dpb_lc_ctype, charset);
+			charsetCode_ = findCharsetsCode( charset );
+
+			const char *property = properties->findValue ("databaseAccess", NULL);
+
+			if ( property )
+				databaseAccess_ = (int)(*property - '0');
+			else
+				databaseAccess_ = 0;
+
+			const char* enable_compat_bind = properties->findValue("EnableCompatBind", "Y");
+			if( *enable_compat_bind == 'Y' )
+			{
+				const char* bind_cmd = properties->findValue("SetCompatBind", NULL);
+				dpb->insertString(&throw_status, isc_dpb_set_bind,
+					(bind_cmd && *bind_cmd) ? bind_cmd : "int128 to varchar;decfloat to legacy;time zone to legacy");
+			}
+
+			const char* enable_wire_compression = properties->findValue("EnableWireCompression", "N");
+			if (*enable_wire_compression == 'Y')
+			{
+				dpb_config << "WireCompression=true\n";
+			}
+
+			dpb->insertString(&throw_status, isc_dpb_config, dpb_config.str().c_str());
+		}
+		catch( const FbException& error )
+		{
+			if( dpb ) dpb->dispose();
+			const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+			throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+		}
+
+		CheckStatusWrapper check_status( GDS->_status );
+
+		databaseHandle =
+			GDS->_prov->attachDatabase( &check_status, dbName, dpb->getBufferLength(&check_status), dpb->getBuffer(&check_status) );
+
+		dpb->dispose();
+		dpb = nullptr;
+
+		if ( check_status.getState() & IStatus::STATE_ERRORS )
+		{
+			const ISC_STATUS * statusVector = check_status.getErrors();
+
+			if ( statusVector [1] == isc_io_error )
+			{
+				if ( databaseAccess_ == CREATE_DB )
+					createDatabase( dbName, properties );
+				else
+				{
+					JString text;
+					
+					switch ( statusVector [7] )
+					{
+					case isc_io_access_err:
+						text.Format ("File Database is used by another process");
+						break;
+
+					case isc_io_open_err:
+						text.Format ("File Database is not found");
+						break;
+
+					default:
+						text.Format ("Unavailable Database");
+						break;
+					}
+
+					throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], text );
+				}
+			}
+			else
+				throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( &check_status ) );
+		}
+		else if ( databaseAccess_ == DROP_DB )
+		{
+			try
+			{
+				ThrowStatusWrapper throw_st( GDS->_status );
+				databaseHandle->dropDatabase( &throw_st );
+			}
+			catch( const FbException& error )
+			{
+				const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+				throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+			}
+			return;
+		}
+
+		// Parse database info
+		char result [2048];
+		databaseDialect_ = SQL_DIALECT_V5;
+
+		databaseHandle->getInfo( &check_status, sizeof (databaseInfoItems),
+		                         (const unsigned char*)databaseInfoItems, sizeof (result), (unsigned char*)result );
+
+		if( ( check_status.getState() & IStatus::STATE_ERRORS ) == 0 )
+		{
+			for (auto p = result; p < result + sizeof (result) && *p != isc_info_end && *p != isc_info_truncated;)
+			{
+				char item = *p++;
+				int length = fb_vax_integer(p, 2);
+				p += 2;
+				switch (item)
+				{
+				case isc_info_db_id:
+					{
+						char * next = p + 2 + *( p + 1 );
+
+						databaseNameFromServer_.Format( "%.*s", *( p + 1 ), p + 2 );
+						databaseServerName_.Format( "%.*s", *next, next + 1 );
+					}
+					break;
+
+				case isc_info_db_sql_dialect:
+					databaseDialect_ = fb_vax_integer(p, length);
+					break;
+				
+				case isc_info_base_level:
+					serverBaseLevel_ = fb_vax_integer(p, length);
+					break;
+
+				case isc_info_user_names:
+					if ( userAccess_.IsEmpty() )
+					{
+						userName_ = JString ( p + 1, (int)*p );
+						userAccess_ = userName_;
+						userType_ = 8;
+					}
+					break;
+
+				case isc_info_firebird_version:
+					{
+						int level = 0;
+						char * start = p + 2;
+						char * beg = start;
+						char * end = beg + p [1];
+						
+						while ( beg < end )
+						{
+							if ( *beg >= '0' && *beg <= '9' )
+							{
+								switch ( ++level )
+								{
+								case 1:
+									majorFb_ = atoi(beg);
+									while( *++beg != '.' );
+									break;
+								case 2:
+									minorFb_ = atoi(beg);
+									while( *++beg != '.' );
+									break;
+								default:
+									versionFb_ = atoi(beg);
+									while( *beg >= '0' && *beg <= '9' || *beg == ' ')
+										beg++;
+									if ( *beg == '.' )
+										break;
+									beg = end;
+									break;
+								}
+							}
+							else
+								beg++;
+						}
+						databaseProductName_ = "Firebird";
+					}
+					break;
+
+				case isc_info_version:
+					{
+						JString productName;
+						int level = 0;
+						int major = 0, minor = 0, version = 0;
+						char * start = p + 2;
+						char * beg = start;
+						char * end = beg + p [1];
+						char * tmp = NULL;
+						
+						while ( beg < end )
+						{
+							if ( *beg >= '0' && *beg <= '9' )
+							{
+								switch ( ++level )
+								{
+								case 1:
+									tmp = beg;
+									major = atoi(beg);
+									while( *++beg != '.' );
+									break;
+								case 2:
+									minor = atoi(beg);
+									while( *++beg != '.' );
+									break;
+								default: // Firebird (##.##.##.####) and Yaffil(##.##.####)
+									version = atoi(beg);
+									while( *beg >= '0' && *beg <= '9' || *beg == ' ')
+										beg++;
+									if ( *beg == '.' )
+										break;
+									if ( beg < end )
+									{
+										productName = JString( beg, end - beg );
+
+										char *endBeg = beg;
+
+										while( *endBeg != ' ' )
+											endBeg++;
+
+										databaseProductName_ = JString( beg, endBeg - beg );
+									}
+									beg = end;
+									break;
+								}
+							}
+							else
+								beg++;
+						}
+						serverVersion_.Format( "%02d.%02d.%04d %.*s %s",major,minor,version, tmp ? tmp - start : 0, start, (const char*)productName );
+					}
+					break;
+
+				case isc_info_page_size:
+					pageSize_ = fb_vax_integer(p, length);
+					break;
+				}
+				p += length;
+			}
+		}
+		
+		if ( dialect && *dialect == '1')
+			databaseDialect_ = SQL_DIALECT_V5;
+		else
+			databaseDialect_ = SQL_DIALECT_V6;
+
+		const char* property = properties->findValue ("quoted", NULL);
+
+		if ( property && *property == 'Y')
+			quotedIdentifier_ = true;
+		else
+			quotedIdentifier_ = false;
+
+		property = properties->findValue ("sensitive", NULL);
+
+		if ( property && *property == 'Y')
+			sensitiveIdentifier_ = true;
+		else
+			sensitiveIdentifier_ = false;
+
+		property = properties->findValue ("autoQuoted", NULL);
+
+		if ( property && *property == 'Y')
+			autoQuotedIdentifier_ = true;
+		else
+			autoQuotedIdentifier_ = false;
+
+		property = properties->findValue ("useSchema", NULL);
+
+		if ( property )
+		{
+			switch ( *property )
+			{
+			case '1': // remove SCHEMA from SQL query
+				useSchemaIdentifier_ = 1;
+				break;
+
+			case '2': // use full SCHEMA
+				useSchemaIdentifier_ = 2;
+				break;
+
+			default:
+			case '0': // set null field SCHEMA
+				useSchemaIdentifier_ = 0;
+				break;
+			}
+		}
+		else
+			useSchemaIdentifier_ = 0;
+
+		property = properties->findValue ("useLockTimeout", NULL);
+
+		if (property && *property)
+			useLockTimeoutWaitTransactions_ = atoi(property);
+
+		property = properties->findValue ("dsn", NULL);
+
+		if (property && *property)
+			dsn_ = property;
+
+		checkAdmin();
+		ownsConnection_ = true;
+
+		if ( databaseHandle && !isRoles_ && !admin_ )
 		{
 			IscTablePrivilegesResultSet resultSet ( (IscDatabaseMetaData *)getMetaData() );
 			resultSet.allTablesAreSelectable = true;
@@ -1689,7 +2200,7 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 
 			if ( resultSet.getCountRowsStaticCursor() )
 			{
-				int len1 = (int)strlen( attachment->userName );
+				int len1 = (int)strlen( userName_ );
 				int len2;
 				char *beg = resultSet.sqlda->getVarying( 5, len2 );
 				char *end = beg + len2;
@@ -1703,22 +2214,20 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 					*(end+1) = '\0';
 				}
 
-				if( len1 == len2 && !strncmp( attachment->userName, beg, len1 ) )
-					attachment->admin = true;
+				if( len1 == len2 && !strncmp( userName_, beg, len1 ) )
+					admin_ = true;
 			}
 		}
 	}
 	catch ( SQLException& exception )
 	{
-		delete attachment;
-		attachment = NULL;
+		databaseHandle = NULL;
 		GDS = NULL;
 		throw SQLEXCEPTION ( (SqlCode)exception.getSqlcode(), exception.getFbcode(), exception.getText() );
 	}
 	catch (...)
 	{
-		delete attachment;
-		attachment = NULL;
+		databaseHandle = NULL;
 		GDS = NULL;
 		throw;
 	}
@@ -1734,7 +2243,7 @@ void IscConnection::deleteStatement(IscStatement * statement)
 
 JString IscConnection::getIscStatusText(Firebird::IStatus *status)
 {
-	return attachment->getIscStatusText(status);
+	return GDS->getIscStatusText(status);
 }
 
 int IscConnection::getInfoItem(char * buffer, int infoItem, int defaultValue)
@@ -1874,10 +2383,10 @@ void IscConnection::connectionFromEnvShare()
 
 JString IscConnection::getDatabaseServerName()
 {
-	if ( attachment->databaseServerName.IsEmpty() )
+	if ( databaseServerName_.IsEmpty() )
 		return getEnvironmentShareInstance().getDatabaseServerName();
 
-	return attachment->databaseServerName;
+	return databaseServerName_;
 }
 
 int	IscConnection::getDriverBuildKey()
@@ -1969,9 +2478,9 @@ void IscConnection::setSavepoint(const char* name)
 	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
-		attachment->databaseHandle->execute(
+		databaseHandle->execute(
 			&status, tr.transactionHandle,
-			0, sql, attachment->getDatabaseDialect(),
+			0, sql, databaseDialect_,
 			NULL, NULL, NULL, NULL );
 	}
 	catch( const FbException& error )
@@ -1992,9 +2501,9 @@ void IscConnection::releaseSavepoint(const char* name)
 	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
-		attachment->databaseHandle->execute(
+		databaseHandle->execute(
 			&status, tr.transactionHandle,
-			0, sql, attachment->getDatabaseDialect(),
+			0, sql, databaseDialect_,
 			NULL, NULL, NULL, NULL );
 	}
 	catch( const FbException& )
@@ -2016,9 +2525,9 @@ void IscConnection::rollbackSavepoint(const char* name)
 	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
-		attachment->databaseHandle->execute(
+		databaseHandle->execute(
 			&status, tr.transactionHandle,
-			0, sql, attachment->getDatabaseDialect(),
+			0, sql, databaseDialect_,
 			NULL, NULL, NULL, NULL );
 	}
 	catch( const FbException& error )
@@ -2029,17 +2538,17 @@ void IscConnection::rollbackSavepoint(const char* name)
 
 int IscConnection::getServerMajorVersion()
 {
-	return attachment ? attachment->getMajorVersion() : 0;
+	return databaseHandle ? majorFb_ : 0;
 }
 
 int IscConnection::getServerMinorVersion()
 {
-	return attachment ? attachment->getMinorVersion() : 0;
+	return databaseHandle ? minorFb_ : 0;
 }
 
 int IscConnection::getDatabaseDialect()
 {
-	return attachment->getDatabaseDialect();
+	return databaseDialect_;
 }
 
 void IscConnection::commitRetaining()

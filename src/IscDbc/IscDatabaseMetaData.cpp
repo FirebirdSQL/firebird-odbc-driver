@@ -47,7 +47,7 @@
 #include "../SetupAttributes.h"
 #include "IscDatabaseMetaData.h"
 #include "IscConnection.h"
-#include "Attachment.h"
+#include "FbClient.h"
 #include "SQLError.h"
 #include "IscResultSet.h"
 #include "IscTablesResultSet.h"
@@ -99,12 +99,12 @@ IscDatabaseMetaData::~IscDatabaseMetaData()
 
 void IscDatabaseMetaData::LockThread()
 {
-	connection->attachment->mutex.lock();
+	connection->attachmentMutex.lock();
 }
 
 void IscDatabaseMetaData::UnLockThread()
 {
-	connection->attachment->mutex.release();
+	connection->attachmentMutex.release();
 }
 
 short IscDatabaseMetaData::getSqlStrPageSizeBd(const void * info_buffer, int bufferLength,short *lengthPtr)
@@ -251,12 +251,12 @@ ResultSet* IscDatabaseMetaData::getUsers(const char * catalog, const char *userP
 
 bool IscDatabaseMetaData::allProceduresAreCallable()
 	{
-	return connection->attachment->isAdmin();
+	return connection->isAdmin();
 	}
 
 bool IscDatabaseMetaData::allTablesAreSelectable()
 	{
-	return connection->attachment->isAdmin();
+	return connection->isAdmin();
 	}
 
 const char* IscDatabaseMetaData::getURL()
@@ -267,22 +267,22 @@ const char* IscDatabaseMetaData::getURL()
 
 const char* IscDatabaseMetaData::getDSN()
 	{
-	return connection->attachment->dsn;
+	return connection->getDsn();
 	}
 
 const char* IscDatabaseMetaData::getUserName()
 	{
-	return connection->attachment->userName;
+	return connection->getUserName();
 	}
 
 const char* IscDatabaseMetaData::getUserAccess()
 	{
-	return connection->attachment->getUserAccess();
+	return connection->getUserAccess();
 	}
 
 const int IscDatabaseMetaData::getUserType()
 	{
-	return connection->attachment->getUserType();
+	return connection->getUserType();
 	}
 
 bool IscDatabaseMetaData::isReadOnly()
@@ -317,27 +317,27 @@ const char* IscDatabaseMetaData::getDatabaseServerName()
 
 const char* IscDatabaseMetaData::getDatabaseProductName()
 	{
-	return connection->attachment->databaseProductName;
+	return connection->getDatabaseProductName();
 	}
 
 const char* IscDatabaseMetaData::getDatabaseProductVersion()
 	{
-	return connection->attachment->serverVersion;
+	return connection->getServerVersion();
 	}
 
 int IscDatabaseMetaData::getDatabasePageSize()
 	{
-	return connection->attachment->pageSize;
+	return connection->getPageSize();
 	}
 
 const int IscDatabaseMetaData::getUseSchemaIdentifier()
 	{
-	return connection->attachment->getUseSchemaIdentifier();
+	return connection->getUseSchemaIdentifier();
 	}
 
 const int IscDatabaseMetaData::getUseLockTimeoutWaitTransactions()
 	{
-	return connection->attachment->getUseLockTimeoutWaitTransactions();
+	return connection->getUseLockTimeoutWaitTransactions();
 	}
 
 const char* IscDatabaseMetaData::getDriverName()
@@ -377,7 +377,7 @@ bool IscDatabaseMetaData::supportsMixedCaseIdentifiers()
 
 bool IscDatabaseMetaData::storesUpperCaseIdentifiers()
 	{
-	return !connection->attachment->sensitiveIdentifier;
+	return !connection->getSensitiveIdentifier();
 	}
 
 bool IscDatabaseMetaData::storesLowerCaseIdentifiers()
@@ -407,12 +407,12 @@ bool IscDatabaseMetaData::storesLowerCaseQuotedIdentifiers()
 
 bool IscDatabaseMetaData::storesMixedCaseQuotedIdentifiers()
 	{
-	return connection->attachment->databaseDialect < 3 || !connection->attachment->quotedIdentifier;
+	return connection->getDatabaseDialect() < 3 || !connection->getQuotedIdentifier();
 	}
 
 const char* IscDatabaseMetaData::getIdentifierQuoteString()
 	{
-	return connection->attachment->databaseDialect < 3 || !connection->attachment->quotedIdentifier ? " " : "\"";
+	return connection->getDatabaseDialect() < 3 || !connection->getQuotedIdentifier() ? " " : "\"";
 	}
 
 const char* IscDatabaseMetaData::getSQLKeywords()
@@ -662,7 +662,7 @@ bool IscDatabaseMetaData::supportsLimitedOuterJoins()
 
 const char* IscDatabaseMetaData::getSchemaTerm()
 	{
-	if ( !connection->attachment->getUseSchemaIdentifier() )
+	if ( !connection->getUseSchemaIdentifier() )
 		return "";
 	return "schema";
 	}

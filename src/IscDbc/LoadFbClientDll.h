@@ -1,6 +1,14 @@
 #ifndef __LOAD_FB_CLIENT_DLL__
 #define __LOAD_FB_CLIENT_DLL__
 
+// LoadFbClientDll.h — ISC API typedefs and backward-compatible CFbDll alias.
+//
+// Phase 14.2.1: The CFbDll class has been replaced by FbClient (in FbClient.h).
+// This header is kept for:
+//   1. ISC function pointer typedefs (used by IscArray, extodbc, etc.)
+//   2. fb_vax_integer inline helper
+//   3. Backward compatibility: `using CFbDll = FbClient;` so existing code compiles
+
 #ifdef _WINDOWS
 #include <windows.h>
 #endif
@@ -68,109 +76,10 @@ static inline ISC_LONG fb_vax_integer(const char* ptr, short length)
 	return value;
 }
 
-class CFbDll
-{
-private:
-	bool	_isMsAccess;
-	bool	detectMsAccess()
-	{
-#ifdef _WINDOWS
-		try
-		{
-			char buf[1024] = {};
-			auto n = GetModuleFileName(NULL, buf, sizeof(buf));
-			if (!n) return false;
-
-			std::filesystem::path fpath = std::string(buf, n);
-
-			{
-				std::stringstream ss;
-				ss << "Loaded from: " << fpath << "\n";
-				OutputDebugString(ss.str().c_str());
-			}
-
-			auto stem = fpath.stem().string();
-			auto extn = fpath.extension().string();
-			std::transform(stem.begin(), stem.end(), stem.begin(), [](unsigned char c) { return std::toupper(c); });
-			std::transform(extn.begin(), extn.end(), extn.begin(), [](unsigned char c) { return std::toupper(c); });
-
-			bool res = stem.find("MSACCESS") != std::string::npos && extn == ".EXE";
-			{
-				if (res) OutputDebugString("MS Access detected! Special patch will be applied.\n");
-			}
-			return res;
-		}
-		catch (...)
-		{
-			OutputDebugString("Unknown error in detectMsAccess().\n");
-			return false;
-		}
-
-#else
-		return false;
-#endif
-	}
-
-public:
-	CFbDll();
-	~CFbDll();
-
-	bool LoadDll(const char * client, const char * clientDef);
-	void Release(void);
-
-#ifdef _WINDOWS
-	HMODULE		_Handle;
-#else
-	void		*_Handle;
-#endif
-
-	int _CFbDllVersion; 		
-
-	// Active ISC function pointers (array, events, error, BLR only)
-	array_lookup_bounds*		_array_lookup_bounds;
-	array_get_slice*			_array_get_slice;
-	array_put_slice*			_array_put_slice;
-
-	sqlcode*					_sqlcode;
-
-	print_blr*					_print_blr;
-
-	/* OOAPI */
-	get_master_interface*		_get_master_interface;
-	get_transaction_handle*		_get_transaction_handle;
-	get_database_handle*		_get_database_handle;
-
-public:
-    Firebird::IMaster*		_master;
-	Firebird::IProvider*	_prov;
-	Firebird::IStatus*		_status;
-
-	/// Format error text from OO API IStatus (modern path).
-	inline classJString::JString getIscStatusText( Firebird::IStatus* status )
-	{
-		char text [4096];
-		_master->getUtilInterface()->formatStatus( text, sizeof(text), status );
-		return text;
-	}
-
-	/// Format error text from raw ISC_STATUS[] vector (Phase 9.7: unified path).
-	/// Creates a temporary IStatus, populates it from the legacy vector,
-	/// then uses IUtil::formatStatus() — no fb_interpret needed.
-	inline classJString::JString getIscStatusTextFromVector( const ISC_STATUS* statusVector )
-	{
-		Firebird::IStatus* tmpStatus = _master->getStatus();
-		tmpStatus->setErrors( statusVector );
-		char text [4096];
-		_master->getUtilInterface()->formatStatus( text, sizeof(text), tmpStatus );
-		tmpStatus->dispose();
-		return text;
-	}
-
-	inline ISC_LONG getSqlCode( const ISC_STATUS* ev ) { return this->_sqlcode( const_cast<ISC_STATUS*>( ev ) ); }
-
-	inline bool isMsAccess() { return _isMsAccess; }
-};
-
 }; // end namespace IscDbcLibrary
+
+// Phase 14.2.1: FbClient class definition (replaces CFbDll).
+// CFbDll is now a type alias for FbClient — see FbClient.h.
+#include "FbClient.h"
 
 #endif // __LOAD_FB_CLIENT_DLL__

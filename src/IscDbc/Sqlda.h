@@ -95,7 +95,7 @@ struct SqlProperties
 		sqllen{ 0 }
 	{}
 
-	inline bool operator==(const SqlProperties& other)
+	inline bool operator==(const SqlProperties& other) const
 	{
 		return
 			sqltype == other.sqltype &&
