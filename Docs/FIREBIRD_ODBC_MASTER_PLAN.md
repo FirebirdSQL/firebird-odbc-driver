@@ -1292,11 +1292,24 @@ The migration will be **incremental, not big-bang**. Each task replaces one IscD
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
 | **14.4.1** | **Replace `IscStatement`/`IscPreparedStatement` with `fbcpp::Statement`** — `IscStatement::prepareStatement()` now creates `fbcpp::Statement` for RAII lifecycle (dialect 3, fb-cpp transaction path). Raw API fallback for shared connections/dialect 1. `statementHandle` retained as cached raw pointer from `fbStatement_->getStatementHandle()`. `freeStatementHandle()` uses `fbStatement_.reset()`. Execute/fetch paths unchanged — continue using raw handles + Sqlda buffers for ODBC performance. | Hard | ✅ |
-| **14.4.2** | **Migrate parameter binding** — Replace `Sqlda::setValue()` with `fbcpp::Statement::setInt32()`, `setString()`, etc. **Blocked**: fb-cpp's typed setXXX writes to its own internal `inMessage` buffer, incompatible with the ODBC path's direct Sqlda buffer writes. Would require either duplicating the execute path (fbcpp vs raw) or rewriting OdbcConvert. Deferred until architectural decision on buffer management. | Hard | 🔧 Partial (lifecycle done, typed API deferred) |
-| **14.4.3** | **Migrate result fetching** — Replace `IscResultSet::nextFetch()` with `fbcpp::Statement::fetchNext()`. **Blocked**: Same buffer incompatibility — fbcpp fetchNext() reads into `outMessage`, but ODBC's `nextFetch()` with 64-row prefetch reads directly into Sqlda buffer. Switching to fbcpp would require per-row copy and lose prefetch optimization. | Hard | 🔧 Partial (lifecycle done, fetch path deferred) |
-| **14.4.4** | **Migrate batch execution** — Use fb-cpp's `Batch` class (contributed by us — see [FB_CPP_PLAN.md](FB_CPP_PLAN.md) Phase 1). Replace existing raw `IBatch` code in `IscStatement` with `fbcpp::Batch`. **Blocked**: `fbcpp::Batch` not in fb-cpp 0.0.2. | Medium | ❌ Blocked |
-| **14.4.5** | **Migrate scrollable cursors** — Use fb-cpp's `CursorType::SCROLLABLE` option (contributed by us — see [FB_CPP_PLAN.md](FB_CPP_PLAN.md) Phase 2). Map to existing OdbcStatement scroll methods. **Blocked**: `StatementOptions` in fb-cpp 0.0.2 has no cursor type control. | Medium | ❌ Blocked |
-| **14.4.6** | **Delete `IscStatement.cpp/.h`, `IscPreparedStatement.cpp/.h`, `IscCallableStatement.cpp/.h`, `IscResultSet.cpp/.h`, `Sqlda.cpp/.h`** — After migration, ~3,000 lines removed. **Blocked**: Depends on 14.4.2–14.4.5 completion. | Easy | ❌ Blocked |
+| **14.4.2** | **Migrate parameter binding to fbcpp buffer** — Redirect `OdbcConvert` write targets from `Sqlda.buffer` to `fbcpp::Statement::getInputMessage()`, then call `fbcpp::Statement::execute()` instead of raw `statementHandle->execute()`. No typed fbcpp setXXX needed — OdbcConvert already writes Firebird wire format and the buffer layout is identical. **Requires**: fb-cpp `getInputMessage()` (available in local source, pending vcpkg release). See Phase 14.4.7 for detailed steps. | Hard | ❌ |
+| **14.4.3** | **Migrate result fetching to fbcpp** — Replace `IscResultSet::nextFetch()` prefetch mechanism with one based on `fbcpp::Statement::fetchNext()`. **Requires**: fb-cpp `getOutputMessage()` accessor (REQ-2 in [FB_CPP_NEW_REQUISITES.md](../tmp/FB_CPP_NEW_REQUISITES.md)) OR `fetchNext(void*)` overload (REQ-3). Without these, fetched data is trapped in fb-cpp's private `outMessage`. See Phase 14.4.7 for detailed steps. | Hard | ❌ |
+| **14.4.4** | **Migrate batch execution** — Replace raw `IBatch` code in `IscOdbcStatement` with `fbcpp::Batch`. Batch class already exists in local fb-cpp source — blocked only by vcpkg package version. | Medium | ❌ Blocked (vcpkg) |
+| **14.4.5** | **Migrate scrollable cursors** — Use `fbcpp::CursorType::SCROLLABLE` and `StatementOptions::setCursorName()`. Already in local fb-cpp source — blocked only by vcpkg package version. | Medium | ❌ Blocked (vcpkg) |
+| **14.4.6** | **Delete legacy statement files** — `IscPreparedStatement.cpp/.h`, `IscCallableStatement.cpp/.h`. After 14.4.2–14.4.5, these become dead code. `IscStatement` and `IscResultSet` kept but simplified (thin wrappers around fbcpp). `Sqlda` eliminated when buffer migration complete. ~2,500 lines removed. | Easy | ❌ Blocked |
+
+**Phase 14.4.7: Buffer Migration Plan (our code changes)**
+
+The key architectural insight: fb-cpp's internal message buffers (`inMessage` / `outMessage`) use the **exact same binary layout** as our `Sqlda.buffer` — both are raw Firebird IMessageMetadata-described message buffers. The migration is NOT about switching to typed APIs (fbcpp's `setInt32()`/`getString()`), but about **eliminating duplicate buffers** by pointing our existing code at fbcpp's buffers instead of maintaining separate Sqlda ones.
+
+| Step | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **14.4.7.1** | **Eliminate Sqlda input buffer** — In `OdbcDesc::defFromMetaDataIn()`, point `record->dataPtr` and `record->indicatorPtr` at offsets within `fbcpp::Statement::getInputMessage()` instead of `Sqlda::buffer`. OdbcConvert writes the same Firebird wire format; only the target pointer changes. Then `IscStatement::execute()` calls `fbStatement_->execute(transaction)` instead of raw `statementHandle->execute()`. | Medium | ❌ |
+| **14.4.7.2** | **Eliminate Sqlda output buffer** — After fb-cpp adds `getOutputMessage()` (REQ-2), point output descriptor record pointers at offsets within the fbcpp output buffer. `OdbcConvert`'s read path is unchanged — it reads Firebird wire format from whatever pointer the descriptor points to. Prefetch copies from `getOutputMessage()` instead of `Sqlda.buffer`. | Medium | ❌ |
+| **14.4.7.3** | **Migrate N-row prefetch** — Option A: Use `fetchNext(void*)` overload (REQ-3) for zero-copy prefetch directly into the prefetch buffer. Option B: Use `fetchNext()` + `memcpy(dest, getOutputMessage().data(), rowSize)` per row. Both eliminate `IscResultSet` dependency on Sqlda. | Medium | ❌ |
+| **14.4.7.4** | **Migrate Sqlda metadata rebuild** — `Sqlda::checkAndRebuild()` handles parameter type overrides at execute time (e.g., app binds INT but column is VARCHAR). Migrate to use `IMetadataBuilder` on fbcpp's metadata + rebuild the input message. | Medium | ❌ |
+| **14.4.7.5** | **Delete Sqlda class** — After 14.4.7.1–14.4.7.4, `Sqlda.cpp/.h` and `IscHeadSqlVar.h` become dead code. `AlignedAllocator` may be retained for prefetch buffer alignment. | Easy | ❌ |
+| **14.4.7.6** | **Eliminate dialect fallback** — After fb-cpp adds dialect support in `StatementOptions` (REQ-1 in [FB_CPP_NEW_REQUISITES.md](../tmp/FB_CPP_NEW_REQUISITES.md)), remove the raw-API fallback branch in `IscStatement::prepareStatement()`. All databases (dialect 1 and 3) use fbcpp::Statement. | Easy | ❌ |
 
 **Phase 14.5: Blob Migration**
 
@@ -1346,16 +1359,27 @@ The migration will be **incremental, not big-bang**. Each task replaces one IscD
 
 #### fb-cpp Gaps to Address
 
-Based on our review (see [FB_CPP_SUGGESTIONS.md](../FB_CPP_SUGGESTIONS.md)) and the author's response ([FB_CPP_REPLY.md](../FB_CPP_REPLY.md)), fb-cpp has the following gaps that we will **contribute back as PRs** (see [Docs/FB_CPP_PLAN.md](FB_CPP_PLAN.md)):
+Based on our review (see [FB_CPP_SUGGESTIONS.md](../FB_CPP_SUGGESTIONS.md)) and the author's response ([FB_CPP_REPLY.md](../FB_CPP_REPLY.md)), plus new analysis in [FB_CPP_NEW_REQUISITES.md](../tmp/FB_CPP_NEW_REQUISITES.md):
 
-1. **`IBatch` support** — Critical for array parameter binding. Author agreed to add it. We will contribute a `Batch` + `BatchCompletionState` class wrapping `IBatch`/`IBatchCompletionState`. **Must land before Phase 14.4.4.**
-2. **Error vector in `DatabaseException`** — Critical for SQLSTATE mapping. Author agreed ("should be copied from original status and exposed"). We will contribute `getErrors()`, `getSqlCode()`, `getErrorCode()` methods. **Must land before Phase 14.7.1.**
-3. **Scrollable cursor control** — Author agreed. We will contribute a `CursorType` enum to `StatementOptions`. **Must land before Phase 14.4.5.**
-4. **Move assignment** — Author agreed (`Statement` "should be movable"). We will contribute `operator=(Statement&&)` and `operator=(Attachment&&)`.
-5. **`Descriptor::alias`** — Author agreed ("could be added"). Small addition for ODBC `SQL_DESC_LABEL`.
-6. **Array support** — Firebird arrays require legacy ISC API (`isc_array_get_slice`). fb-cpp won't wrap these. Keep minimal ISC function pointers for this rare feature.
+**Already contributed — pending vcpkg release:**
 
-Note: `Client::getUtil()` is already exposed (our suggestion #9 was withdrawn). `IResultSet` abstraction was also withdrawn — Firebird doesn't support multiple active result sets per statement.
+1. **`IBatch` support** — `Batch` + `BatchCompletionState` classes exist in local fb-cpp source. **Needed for Phase 14.4.4.**
+2. **Scrollable cursor control** — `CursorType` enum in `StatementOptions` exists in local source. **Needed for Phase 14.4.5.**
+3. **`Statement::getInputMessage()`** — Raw input buffer accessor exists in local source. **Needed for Phase 14.4.7.1.**
+4. **`StatementOptions::setCursorName()`** — Exists in local source. **Needed for Phase 14.4.5.**
+
+**New requisites — need to be contributed to fb-cpp:**
+
+5. **SQL dialect in `StatementOptions`** (REQ-1) — `Statement` hardcodes `SQL_DIALECT_CURRENT`. Need `setDialect()` for dialect 1 database support. Without this, the driver must maintain a raw-API fallback path. **Needed for Phase 14.4.7.6.**
+6. **`Statement::getOutputMessage()`** (REQ-2) — `outMessage` is private. The ODBC driver needs raw access to fetched result data for prefetch buffer integration and eliminating the duplicate Sqlda output buffer. **Needed for Phase 14.4.7.2.**
+7. **`Statement::fetchNext(void*)`** (REQ-3) — Optional performance optimization. Allows zero-copy prefetch into external buffer. If REQ-2 is accepted, this is nice-to-have. **For Phase 14.4.7.3.**
+
+**Previously agreed — need contribution:**
+
+8. **Error vector in `DatabaseException`** — For SQLSTATE mapping. Author agreed ("should be copied from original status and exposed"). We will contribute `getErrors()`, `getSqlCode()`, `getErrorCode()` methods. **Must land before Phase 14.7.1.**
+9. **Move assignment** — Author agreed (`Statement` "should be movable"). We will contribute `operator=(Statement&&)` and `operator=(Attachment&&)`.
+10. **`Descriptor::alias`** — Author agreed ("could be added"). Small addition for ODBC `SQL_DESC_LABEL`.
+11. **Array support** — Firebird arrays require legacy ISC API (`isc_array_get_slice`). fb-cpp won't wrap these. Keep minimal ISC function pointers for this rare feature.
 
 #### Success Criteria
 
