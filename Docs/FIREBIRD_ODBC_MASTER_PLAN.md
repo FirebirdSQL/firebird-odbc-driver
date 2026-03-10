@@ -1259,23 +1259,23 @@ The migration will be **incremental, not big-bang**. Each task replaces one IscD
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **14.1.1** | **Add vcpkg manifest** — Create `vcpkg.json` with `fb-cpp` dependency. Add `vcpkg-configuration.json` pointing to the `firebird-vcpkg-registry`. | Easy | ❌ |
-| **14.1.2** | **Update CMakeLists.txt for vcpkg** — Set `CMAKE_TOOLCHAIN_FILE` to vcpkg's toolchain. Use `find_package(fb-cpp CONFIG REQUIRED)`. Link `OdbcFb` against `fb-cpp::fb-cpp`. | Easy | ❌ |
-| **14.1.3** | **Remove `FetchFirebirdHeaders.cmake`** — vcpkg's `firebird` package provides headers. Delete the custom FetchContent logic. | Easy | ❌ |
-| **14.1.4** | **Add fb-cpp feature flags** — Enable `boost-dll` and `boost-multiprecision` features in `vcpkg.json` for runtime client loading and INT128/DECFLOAT support. | Easy | ❌ |
-| **14.1.5** | **Update CI workflows** — Add vcpkg bootstrap and cache steps. Use `vcpkg install` before CMake configure. | Medium | ❌ |
-| **14.1.6** | **Verify build** — Ensure the project builds with fb-cpp linked but not yet used. All 401 tests must pass. | Easy | ❌ |
+| **14.1.1** | **Add vcpkg manifest** — Create `vcpkg.json` with `fb-cpp` dependency. Add `vcpkg-configuration.json` pointing to the `firebird-vcpkg-registry`. | Easy | ✅ |
+| **14.1.2** | **Update CMakeLists.txt for vcpkg** — Set `CMAKE_TOOLCHAIN_FILE` to vcpkg's toolchain. Use `find_package(fb-cpp CONFIG REQUIRED)`. Link `OdbcFb` against `fb-cpp::fb-cpp`. | Easy | ✅ |
+| **14.1.3** | **Remove `FetchFirebirdHeaders.cmake`** — vcpkg's `firebird` package provides headers. Delete the custom FetchContent logic. | Easy | ✅ |
+| **14.1.4** | **Add fb-cpp feature flags** — Enable `boost-dll` and `boost-multiprecision` features in `vcpkg.json` for runtime client loading and INT128/DECFLOAT support. | Easy | ✅ |
+| **14.1.5** | **Update CI workflows** — Add vcpkg bootstrap and cache steps. Use `vcpkg install` before CMake configure. Also added cmd.exe AutoRun fix for Ninja/vcpkg compatibility. | Medium | ✅ |
+| **14.1.6** | **Verify build** — Ensure the project builds with fb-cpp linked but not yet used. All 401 tests must pass. | Easy | ✅ |
 
 **Phase 14.2: Client & Attachment Migration**
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **14.2.1** | **Create `FbClient` wrapper** — Singleton (or per-environment) `fbcpp::Client` instance. Replaces `CFbDll` for fbclient loading. | Medium | ❌ |
-| **14.2.2** | **Replace `Attachment` class** — `IscConnection` currently owns `Firebird::IAttachment*`. Replace with `std::unique_ptr<fbcpp::Attachment>`. Update `openDatabase()` to use `fbcpp::Attachment` constructor with `AttachmentOptions`. | Medium | ❌ |
+| **14.2.1** | **Create `FbClient` wrapper** — Singleton (per-environment) wrapper using `fbcpp::FbApiHandle`. Replaces `CFbDll` for fbclient loading. | Medium | ✅ |
+| **14.2.2** | **Replace `Attachment` class** — `IscConnection` now uses `fbcpp::FbApiHandle` to load fbclient and obtain `Firebird::IMaster*`. Connection/attachment still uses Firebird OO API directly (fb-cpp `Attachment` not used yet). | Medium | ✅ (partial) |
 | **14.2.3** | **Replace `CFbDll::_array_*` calls** — fb-cpp doesn't wrap arrays. Keep minimal ISC array functions loaded separately (Firebird OO API doesn't expose `getSlice`/`putSlice`). | Hard | ❌ |
 | **14.2.4** | **Migrate `createDatabase()`** — Use `AttachmentOptions::setCreateDatabase(true)`. | Easy | ❌ |
-| **14.2.5** | **Migrate connection properties** — Map `CHARSET`, `UID`, `PWD`, `ROLE` to `AttachmentOptions` setters. | Easy | ❌ |
-| **14.2.6** | **Delete `Attachment.cpp`, `Attachment.h`** — After migration, remove the IscDbc versions. | Easy | ❌ |
+| **14.2.5** | **Migrate connection properties** — Map `CHARSET`, `UID`, `PWD`, `ROLE` to `AttachmentOptions` setters. Connection options now routed through fb-cpp's provider/master handle. | Easy | ✅ (partial) |
+| **14.2.6** | **Delete `Attachment.cpp`, `Attachment.h`** — Already removed in Phase 13 dead-code cleanup. `LoadFbClientDll` refactored to thin wrapper delegating to `FbClient`. | Easy | ✅ |
 
 **Phase 14.3: Transaction Migration**
 
@@ -1360,12 +1360,12 @@ Note: `Client::getUtil()` is already exposed (our suggestion #9 was withdrawn). 
 #### Success Criteria
 
 - [ ] `src/IscDbc/` directory deleted — all code migrated to fb-cpp or `src/`
-- [ ] `vcpkg.json` manifest manages fb-cpp, Firebird, and Boost dependencies
+- [x] `vcpkg.json` manifest manages fb-cpp, Firebird, and Boost dependencies
 - [ ] Build works on Windows (MSVC), Linux (GCC/Clang), macOS (Clang)
-- [ ] All 401 tests pass
+- [x] All 401 tests pass (Phase 14.1 verified — fb-cpp linked, builds clean)
 - [ ] ~16,000 lines of legacy code removed
 - [ ] Performance benchmarks show no regression (fetch throughput, batch insert)
-- [ ] CI builds use vcpkg caching for fast builds
+- [x] CI builds use vcpkg caching for fast builds
 
 **Deliverable**: A dramatically simplified codebase where the ODBC layer talks directly to fb-cpp's modern C++ API, eliminating the 20-year-old JDBC-like abstraction layer.
 
@@ -1403,29 +1403,29 @@ Adopting vcpkg provides:
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **15.1.1** | **Create `vcpkg.json` manifest** — Declare dependencies: `gtest`, `benchmark`, `fb-cpp` (from custom registry). | Easy | ❌ |
-| **15.1.2** | **Create `vcpkg-configuration.json`** — Configure baseline (vcpkg commit), custom registry for Firebird packages. | Easy | ❌ |
-| **15.1.3** | **Update `.gitignore`** — Add `vcpkg_installed/` (local install tree). | Easy | ❌ |
+| **15.1.1** | **Create `vcpkg.json` manifest** — Declare dependencies: `gtest`, `benchmark`, `fb-cpp` (from custom registry). | Easy | ✅ |
+| **15.1.2** | **Create `vcpkg-configuration.json`** — Configure baseline (vcpkg commit), custom registry for Firebird packages. | Easy | ✅ |
+| **15.1.3** | **Update `.gitignore`** — Add `vcpkg_installed/` (local install tree). | Easy | ✅ |
 | **15.1.4** | **Document vcpkg setup** — README section on `vcpkg install` vs. manual dependency management. | Easy | ❌ |
 
 **Phase 15.2: CMake Integration**
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **15.2.1** | **Set `CMAKE_TOOLCHAIN_FILE`** — Point to `vcpkg/scripts/buildsystems/vcpkg.cmake`. Support both submodule and external vcpkg. | Easy | ❌ |
+| **15.2.1** | **Set `CMAKE_TOOLCHAIN_FILE`** — Point to `vcpkg/scripts/buildsystems/vcpkg.cmake`. Support both submodule and external vcpkg. | Easy | ✅ |
 | **15.2.2** | **Replace FetchContent for GTest** — Remove `FetchContent_Declare(googletest ...)`. Use `find_package(GTest CONFIG REQUIRED)`. | Easy | ❌ |
 | **15.2.3** | **Replace FetchContent for Benchmark** — Remove `FetchContent_Declare(benchmark ...)`. Use `find_package(benchmark CONFIG REQUIRED)`. | Easy | ❌ |
-| **15.2.4** | **Replace FetchFirebirdHeaders** — Remove `cmake/FetchFirebirdHeaders.cmake`. vcpkg's `firebird` package provides headers. | Easy | ❌ |
+| **15.2.4** | **Replace FetchFirebirdHeaders** — Remove `cmake/FetchFirebirdHeaders.cmake`. vcpkg's `firebird` package provides headers. | Easy | ✅ |
 | **15.2.5** | **Link against vcpkg targets** — `target_link_libraries(... GTest::gtest benchmark::benchmark fb-cpp::fb-cpp)`. | Easy | ❌ |
 
 **Phase 15.3: CI/CD Integration**
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **15.3.1** | **Add vcpkg bootstrap to CI** — Clone vcpkg, run bootstrap script, set environment variables. | Easy | ❌ |
-| **15.3.2** | **Enable binary caching** — Set `VCPKG_BINARY_SOURCES` to GitHub Packages or Azure Artifacts. | Medium | ❌ |
-| **15.3.3** | **Cache vcpkg installed tree** — Use `actions/cache` with `vcpkg_installed/` as cache path. | Easy | ❌ |
-| **15.3.4** | **Update build scripts** — `firebird-odbc-driver.build.ps1`, `install-prerequisites.ps1` to use vcpkg. | Easy | ❌ |
+| **15.3.1** | **Add vcpkg bootstrap to CI** — Set `VCPKG_ROOT`, use pre-installed vcpkg on CI runners. Added cmd.exe AutoRun fix for Ninja compatibility. | Easy | ✅ |
+| **15.3.2** | **Enable binary caching** — Set `VCPKG_BINARY_SOURCES` to GitHub Packages or Azure Artifacts. CI uses `actions/cache` for `VCPKG_DEFAULT_BINARY_CACHE`. | Medium | ✅ |
+| **15.3.3** | **Cache vcpkg installed tree** — Use `actions/cache` with vcpkg binary cache directory. | Easy | ✅ |
+| **15.3.4** | **Update build scripts** — `firebird-odbc-driver.build.ps1`, `install-prerequisites.ps1` updated for vcpkg. | Easy | ✅ |
 
 **Phase 15.4: Optional — vcpkg Submodule**
 
@@ -1461,12 +1461,12 @@ Adopting vcpkg provides:
 
 #### Success Criteria
 
-- [ ] `vcpkg.json` and `vcpkg-configuration.json` in repository root
-- [ ] `cmake/FetchFirebirdHeaders.cmake` deleted
-- [ ] No `FetchContent_Declare` calls in CMakeLists.txt
-- [ ] CI uses vcpkg binary caching (builds < 5 min with cache hit)
-- [ ] `vcpkg install` followed by `cmake --preset default` builds the project
-- [ ] All 401 tests pass
+- [x] `vcpkg.json` and `vcpkg-configuration.json` in repository root
+- [x] `cmake/FetchFirebirdHeaders.cmake` deleted
+- [ ] No `FetchContent_Declare` calls in CMakeLists.txt (GTest/Benchmark still use FetchContent)
+- [x] CI uses vcpkg binary caching (builds < 5 min with cache hit)
+- [x] `vcpkg install` followed by `cmake -B build` builds the project
+- [x] All 401 tests pass
 - [ ] Documentation updated with vcpkg setup instructions
 
 **Deliverable**: A project that uses vcpkg for all C++ dependencies, with reproducible builds across platforms, fast CI via binary caching, and a single `vcpkg.json` as the source of truth for dependency versions.
