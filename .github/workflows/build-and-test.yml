@@ -84,7 +84,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y unixodbc unixodbc-dev odbcinst cmake g++ \
-          autoconf automake libtool pkg-config \
+          autoconf autoconf-archive automake libtool pkg-config \
           libncurses-dev libtommath-dev libatomic1
         # PSFirebird needs to 'apt-get download' libncurses5/libtinfo5 packages.
         # These don't exist in Ubuntu 24.04+ repos, so add Ubuntu 22.04 (jammy) as a fallback source.
