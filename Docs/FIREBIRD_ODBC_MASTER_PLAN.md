@@ -3,8 +3,8 @@
 **Date**: February 9, 2026  
 **Status**: Authoritative reference for all known issues, improvements, and roadmap  
 **Benchmark**: PostgreSQL ODBC driver (psqlodbc) — 30+ years of development, 49 regression tests, battle-tested
-**Last Updated**: February 11, 2026  
-**Version**: 3.8
+**Last Updated**: March 10, 2026  
+**Version**: 3.9
 
 > This document consolidates all known issues and newly identified architectural deficiencies.
 > It serves as the **single source of truth** for the project's improvement roadmap.
@@ -1291,12 +1291,12 @@ The migration will be **incremental, not big-bang**. Each task replaces one IscD
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **14.4.1** | **Replace `IscStatement`/`IscPreparedStatement` with `fbcpp::Statement`** — The most complex migration. fb-cpp's `Statement` combines prepare + execute + fetch. | Hard | ❌ |
-| **14.4.2** | **Migrate parameter binding** — Replace `Sqlda::setValue()` with `fbcpp::Statement::setInt32()`, `setString()`, etc. The ODBC layer still uses `OdbcConvert` for type coercion; the IscDbc layer just needs to pass values to fb-cpp. | Hard | ❌ |
-| **14.4.3** | **Migrate result fetching** — Replace `IscResultSet::nextFetch()` with `fbcpp::Statement::fetchNext()`. Map fb-cpp's `std::optional` returns to SQLDA null indicators. | Hard | ❌ |
-| **14.4.4** | **Migrate batch execution** — Use fb-cpp's `Batch` class (contributed by us — see [FB_CPP_PLAN.md](FB_CPP_PLAN.md) Phase 1). Replace existing raw `IBatch` code in `IscStatement` with `fbcpp::Batch`. | Medium | ❌ |
-| **14.4.5** | **Migrate scrollable cursors** — Use fb-cpp's `CursorType::SCROLLABLE` option (contributed by us — see [FB_CPP_PLAN.md](FB_CPP_PLAN.md) Phase 2). Map to existing OdbcStatement scroll methods. fb-cpp defaults to forward-only, matching our performance needs. | Medium | ❌ |
-| **14.4.6** | **Delete `IscStatement.cpp/.h`, `IscPreparedStatement.cpp/.h`, `IscCallableStatement.cpp/.h`, `IscResultSet.cpp/.h`, `Sqlda.cpp/.h`** — After migration, ~3,000 lines removed. | Easy | ❌ |
+| **14.4.1** | **Replace `IscStatement`/`IscPreparedStatement` with `fbcpp::Statement`** — `IscStatement::prepareStatement()` now creates `fbcpp::Statement` for RAII lifecycle (dialect 3, fb-cpp transaction path). Raw API fallback for shared connections/dialect 1. `statementHandle` retained as cached raw pointer from `fbStatement_->getStatementHandle()`. `freeStatementHandle()` uses `fbStatement_.reset()`. Execute/fetch paths unchanged — continue using raw handles + Sqlda buffers for ODBC performance. | Hard | ✅ |
+| **14.4.2** | **Migrate parameter binding** — Replace `Sqlda::setValue()` with `fbcpp::Statement::setInt32()`, `setString()`, etc. **Blocked**: fb-cpp's typed setXXX writes to its own internal `inMessage` buffer, incompatible with the ODBC path's direct Sqlda buffer writes. Would require either duplicating the execute path (fbcpp vs raw) or rewriting OdbcConvert. Deferred until architectural decision on buffer management. | Hard | 🔧 Partial (lifecycle done, typed API deferred) |
+| **14.4.3** | **Migrate result fetching** — Replace `IscResultSet::nextFetch()` with `fbcpp::Statement::fetchNext()`. **Blocked**: Same buffer incompatibility — fbcpp fetchNext() reads into `outMessage`, but ODBC's `nextFetch()` with 64-row prefetch reads directly into Sqlda buffer. Switching to fbcpp would require per-row copy and lose prefetch optimization. | Hard | 🔧 Partial (lifecycle done, fetch path deferred) |
+| **14.4.4** | **Migrate batch execution** — Use fb-cpp's `Batch` class (contributed by us — see [FB_CPP_PLAN.md](FB_CPP_PLAN.md) Phase 1). Replace existing raw `IBatch` code in `IscStatement` with `fbcpp::Batch`. **Blocked**: `fbcpp::Batch` not in fb-cpp 0.0.2. | Medium | ❌ Blocked |
+| **14.4.5** | **Migrate scrollable cursors** — Use fb-cpp's `CursorType::SCROLLABLE` option (contributed by us — see [FB_CPP_PLAN.md](FB_CPP_PLAN.md) Phase 2). Map to existing OdbcStatement scroll methods. **Blocked**: `StatementOptions` in fb-cpp 0.0.2 has no cursor type control. | Medium | ❌ Blocked |
+| **14.4.6** | **Delete `IscStatement.cpp/.h`, `IscPreparedStatement.cpp/.h`, `IscCallableStatement.cpp/.h`, `IscResultSet.cpp/.h`, `Sqlda.cpp/.h`** — After migration, ~3,000 lines removed. **Blocked**: Depends on 14.4.2–14.4.5 completion. | Easy | ❌ Blocked |
 
 **Phase 14.5: Blob Migration**
 

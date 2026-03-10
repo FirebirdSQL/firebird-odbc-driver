@@ -25,9 +25,12 @@
 #if !defined(_ISCSTATEMENT_H_)
 #define _ISCSTATEMENT_H_
 
+#include <memory>
 #include <vector>
 #include "Connection.h"
 #include "Sqlda.h"
+
+namespace fbcpp { class Statement; }
 
 namespace IscDbcLibrary {
 
@@ -146,7 +149,18 @@ public:
 	int				numberColumns;
 	int				resultsCount;
 	int				resultsSequence;
+
+	/// Phase 14.4.1: fb-cpp Statement for RAII lifecycle management.
+	/// Owns the prepared statement handle. `statementHandle` below is a cached
+	/// raw pointer obtained from fbStatement_->getStatementHandle() for
+	/// efficient repeated access.
+	std::unique_ptr<fbcpp::Statement> fbStatement_;
+
+	/// Cached raw pointer from fbStatement_ (or raw prepare fallback).
+	/// Valid for the lifetime of fbStatement_. Do NOT free/release manually
+	/// when fbStatement_ is set — the unique_ptr destructor handles cleanup.
 	Firebird::IStatement* statementHandle;
+
 	InfoTransaction	transactionInfo;
 	Firebird::IResultSet* fbResultSet;
 	bool			transactionLocal;

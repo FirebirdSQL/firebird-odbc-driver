@@ -82,6 +82,11 @@
 #include <stdlib.h>
 #include <time.h>
 #include <algorithm>
+// Phase 14.4.1: Include fb-cpp BEFORE IscDbc.h because IscDbc.h defines
+// MAX/MIN macros that conflict with std::numeric_limits<T>::max() in fb-cpp.
+#include <fb-cpp/Statement.h>
+#include <fb-cpp/Exception.h>
+
 #include "IscDbc.h"
 #include "ListParamTransaction.h"
 #include "IscStatement.h"
@@ -606,28 +611,61 @@ void IscStatement::prepareStatement(const char * sqlString)
 {
 	clearResults();
 	sql = sqlString;
-	CFbDll * GDS = connection->GDS;
 
-	// Make sure we have a transaction started.  Allocate a statement.
-
+	// Ensure a transaction exists for SQL preparation.
 	ITransaction* transHandle = startTransaction();
-	ThrowStatusWrapper status( connection->GDS->_status );
-	try
+
+	// Phase 14.4.1: Use fbcpp::Statement for RAII when connection has fb-cpp
+	// transaction (the common case). Fall back to raw API for edge cases:
+	// shared/DTC connections or legacy dialect 1 databases.
+	const bool useFbcpp = connection->attachment_
+	                   && connection->transaction_
+	                   && connection->transaction_->isValid()
+	                   && connection->getDatabaseDialect() >= 3;
+
+	if (useFbcpp)
 	{
-		int dialect = connection->getDatabaseDialect();
+		try
+		{
+			fbStatement_ = std::make_unique<fbcpp::Statement>(
+				*connection->attachment_, *connection->transaction_,
+				std::string_view(sqlString));
 
-		statementHandle =
-			connection->databaseHandle->prepare( &status, transHandle, 0, sqlString, dialect, IStatement::PREPARE_PREFETCH_METADATA );
+			statementHandle = fbStatement_->getStatementHandle().get();
 
-		inputSqlda.allocBuffer( this, statementHandle->getInputMetadata( &status ) );
-		outputSqlda.allocBuffer( this, statementHandle->getOutputMetadata( &status ) );
+			ThrowStatusWrapper fbcppStatus( connection->GDS->_status );
+			inputSqlda.allocBuffer( this, statementHandle->getInputMetadata( &fbcppStatus ) );
+			outputSqlda.allocBuffer( this, statementHandle->getOutputMetadata( &fbcppStatus ) );
 
-		//OOAPI gives a 100% way to check whether stmt is selectable or not.
-		openCursor = ( statementHandle->getFlags(&status) & IStatement::FLAG_HAS_CURSOR );
+			openCursor = ( statementHandle->getFlags(&fbcppStatus) & IStatement::FLAG_HAS_CURSOR );
+		}
+		catch( const fbcpp::DatabaseException& e )
+		{
+			fbStatement_.reset();
+			statementHandle = nullptr;
+			throw SQLEXCEPTION( RUNTIME_ERROR, e.what() );
+		}
 	}
-	catch( const FbException& error )
+	else
 	{
-		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+		// Raw API fallback: shared connections / dialect 1
+		ThrowStatusWrapper status( connection->GDS->_status );
+		try
+		{
+			int dialect = connection->getDatabaseDialect();
+
+			statementHandle =
+				connection->databaseHandle->prepare( &status, transHandle, 0, sqlString, dialect, IStatement::PREPARE_PREFETCH_METADATA );
+
+			inputSqlda.allocBuffer( this, statementHandle->getInputMetadata( &status ) );
+			outputSqlda.allocBuffer( this, statementHandle->getOutputMetadata( &status ) );
+
+			openCursor = ( statementHandle->getFlags(&status) & IStatement::FLAG_HAS_CURSOR );
+		}
+		catch( const FbException& error )
+		{
+			THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+		}
 	}
 
 	typeStmt			= stmtPrepare;
@@ -1022,6 +1060,15 @@ void IscStatement::clearSelect()
 
 void IscStatement::freeStatementHandle()
 {
+	// Phase 14.4.1: If fbcpp::Statement owns the handle, let RAII clean up.
+	if ( fbStatement_ )
+	{
+		fbStatement_.reset();
+		statementHandle = nullptr;
+		return;
+	}
+
+	// Raw API fallback cleanup (shared connections / dialect 1)
 	if ( connection && statementHandle )
 	{
 		ThrowStatusWrapper status( connection->GDS->_status );
