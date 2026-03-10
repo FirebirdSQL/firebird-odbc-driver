@@ -506,7 +506,7 @@ int IscOdbcStatement::batchExecute(unsigned short* statusOut, int nRows)
 			if (transactionInfo.autoCommit)
 				commitLocal();
 		}
-		else if (connection->transactionInfo.autoCommit)
+		else if (connection->autoCommit_)
 			connection->commitAuto();
 	}
 	catch (const FbException& error)

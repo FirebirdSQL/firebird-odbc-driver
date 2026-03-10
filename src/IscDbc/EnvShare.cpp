@@ -153,7 +153,7 @@ void EnvShare::commit()
 		{
 			transactionHandle->commit( &status );
 			transactionHandle = nullptr;
-			connections[0]->transactionInfo.transactionPending = false;
+			connections[0]->transactionPending_ = false;
 		}
 		catch( const FbException& error )
 		{
@@ -174,7 +174,7 @@ void EnvShare::rollback()
 		{
 			transactionHandle->rollback( &status );
 			transactionHandle = nullptr;
-			connections[0]->transactionInfo.transactionPending = false;
+			connections[0]->transactionPending_ = false;
 		}
 		catch( const FbException& error )
 		{

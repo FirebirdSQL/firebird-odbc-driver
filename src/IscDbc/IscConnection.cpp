@@ -65,6 +65,9 @@
 #include "Mlist.h"
 #include "../SetupAttributes.h"
 #include "MultibyteConvert.h"
+#include <fb-cpp/Transaction.h>
+#include <fb-cpp/Attachment.h>
+#include <fb-cpp/Exception.h>
 
 using namespace Firebird;
 
@@ -80,21 +83,6 @@ extern "C" Connection* createConnection()
 {
 	setlocale( LC_ALL, ".ACP" );
 	return new IscConnection;
-}
-
-InfoTransaction::InfoTransaction()
-{
-	transactionHandle = NULL;
-	transactionIsolation = 0;
-	transactionPending = false;
-	autoCommit = true;
-	transactionExtInit = 0;
-	nodeParamTransaction = NULL;
-}
-
-InfoTransaction::~InfoTransaction()
-{
-	delete nodeParamTransaction;
 }
 
 IscConnection::IscConnection()
@@ -132,7 +120,10 @@ IscConnection::IscConnection(IscConnection * source)
 	sensitiveIdentifier_ = source->sensitiveIdentifier_;
 	autoQuotedIdentifier_ = source->autoQuotedIdentifier_;
 	databaseAccess_ = source->databaseAccess_;
+	// Phase 14.3: Copy transaction settings from source
 	transactionIsolation_ = source->transactionIsolation_;
+	transactionExtInit_ = source->transactionExtInit_;
+	autoCommit_ = source->autoCommit_;
 	admin_ = source->admin_;
 	isRoles_ = source->isRoles_;
 	twoPhaseTransactionHandle = source->twoPhaseTransactionHandle;
@@ -156,11 +147,25 @@ IscConnection::~IscConnection()
 	if (metaData)
 		delete metaData;
 
-	// Phase 14.2: Only detach if this connection owns the handle
+	// Phase 14.2/14.3: Only detach if this connection owns the handle
 	// (cloned connections share GDS/databaseHandle but don't own them)
 	if ( ownsConnection_ )
 	{
-		if ( GDS && databaseHandle ) {
+		// Phase 14.3: Destroy transaction first (RAII auto-rollback)
+		transaction_.reset();
+		delete nodeParamTransaction_;
+
+		// Phase 14.2.2: Destroy fb-cpp Attachment (RAII auto-disconnect)
+		// This replaces manual databaseHandle->detach()
+		if ( attachment_ )
+		{
+			try { attachment_->disconnect(); } catch (...) {}
+			attachment_.reset();
+			databaseHandle = nullptr;
+		}
+		else if ( GDS && databaseHandle )
+		{
+			// Fallback: manual detach for connections not using fb-cpp Attachment
 			ThrowStatusWrapper status( GDS->_status );
 			try
 			{
@@ -252,70 +257,79 @@ UserEvents* IscConnection::prepareUserEvents( PropertiesEvents *context, callbac
 
 void IscConnection::commit()
 {
-	InfoTransaction	&tr = transactionInfo;
-
-	if ( tr.transactionHandle )
+	if ( !transaction_ || !transaction_->isValid() )
 	{
-		ThrowStatusWrapper status( GDS->_status );
-		try
-		{
-			tr.transactionHandle->commit( &status );
-			tr.transactionHandle = nullptr;
-		}
-		catch( const FbException& error )
-		{
-			rollback();
-			THROW_ISC_EXCEPTION ( this, error.getStatus() );
-		}
+		transactionPending_ = false;
+		return;
 	}
-	tr.transactionPending = false;
+
+	// Use raw handle for commit to preserve full ISC status for SQLSTATE mapping.
+	// fb-cpp's DatabaseException loses the status vector (Phase 14.7 will fix this).
+	ThrowStatusWrapper status( GDS->_status );
+	try
+	{
+		transaction_->getHandle()->commit( &status );
+	}
+	catch( const FbException& error )
+	{
+		// Destroy the fb-cpp Transaction — destructor's rollback attempt
+		// will fail harmlessly since the transaction is in an error state.
+		transaction_.reset();
+		transactionPending_ = false;
+		THROW_ISC_EXCEPTION ( this, error.getStatus() );
+	}
+
+	// Destroy the fb-cpp Transaction. The destructor will attempt rollback
+	// (since its state is still ACTIVE), which will fail harmlessly since
+	// we already committed. The handle reference is properly released.
+	transaction_.reset();
+	transactionPending_ = false;
 }
 
 void IscConnection::rollback()
 {
-	InfoTransaction	&tr = transactionInfo;
-
-	if ( tr.transactionHandle )
+	if ( !transaction_ || !transaction_->isValid() )
 	{
-		ThrowStatusWrapper status( GDS->_status );
-		try
-		{
-			tr.transactionHandle->rollback( &status );
-			tr.transactionHandle = nullptr;
-		}
-		catch( const FbException& error )
-		{
-			if( tr.transactionHandle ) {
-				tr.transactionHandle->release();
-				tr.transactionHandle = nullptr;
-			}
-			THROW_ISC_EXCEPTION ( this, error.getStatus() );
-		}
+		transactionPending_ = false;
+		return;
 	}
-	tr.transactionPending = false;
+
+	ThrowStatusWrapper status( GDS->_status );
+	try
+	{
+		transaction_->getHandle()->rollback( &status );
+	}
+	catch( const FbException& error )
+	{
+		// Force-destroy the fb-cpp Transaction to release the handle
+		transaction_.reset();
+		transactionPending_ = false;
+		THROW_ISC_EXCEPTION ( this, error.getStatus() );
+	}
+
+	transaction_.reset();
+	transactionPending_ = false;
 }
 
 void IscConnection::prepareTransaction()
 {
-	InfoTransaction	&tr = transactionInfo;
+	if ( !transaction_ || !transaction_->isValid() )
+		return;
 
-	if ( tr.transactionHandle )
+	ThrowStatusWrapper status( GDS->_status );
+	try
 	{
-		ThrowStatusWrapper status( GDS->_status );
-		try
-		{
-			tr.transactionHandle->prepare( &status, 0, nullptr );
-		}
-		catch( const FbException& error )
-		{
-			THROW_ISC_EXCEPTION ( this, error.getStatus() );
-		}
+		transaction_->getHandle()->prepare( &status, 0, nullptr );
+	}
+	catch( const FbException& error )
+	{
+		THROW_ISC_EXCEPTION ( this, error.getStatus() );
 	}
 }
 
 bool IscConnection::getTransactionPending()
 {
-	return 	transactionInfo.transactionPending;
+	return transactionPending_;
 }
 
 void IscConnection::cancelOperation()
@@ -342,83 +356,106 @@ Firebird::IAttachment* IscConnection::getHandleDb()
 
 Firebird::ITransaction* IscConnection::startTransaction()
 {
-	InfoTransaction	&tr = transactionInfo;
-
 	if ( shareConnected )
 	{
 		if ( !twoPhaseTransactionHandle )
 		{
 			getEnvironmentShareInstance().startTransaction();
-			// ASSERT (!autoCommit)
-			tr.transactionPending = true;
+			transactionPending_ = true;
 		}
 
 		return twoPhaseTransactionHandle;
 	}
 
-    if ( tr.transactionHandle )
-        return tr.transactionHandle;
+	// Return existing transaction if still active
+	if ( transaction_ && transaction_->isValid() )
+		return transaction_->getHandle().get();
 
-	IUtil* utl    = GDS->_master->getUtilInterface();
-	IXpbBuilder* tpb = nullptr;
-	ThrowStatusWrapper status( GDS->_status );
+	// Phase 14.3: Build TransactionOptions using fb-cpp's typed API
+	fbcpp::TransactionOptions txnOpts;
+
+	// Access mode
+	if ( transactionExtInit_ & TRA_ro )
+		txnOpts.setAccessMode( fbcpp::TransactionAccessMode::READ_ONLY );
+	else
+		txnOpts.setAccessMode( fbcpp::TransactionAccessMode::READ_WRITE );
+
+	// Wait mode
+	if ( transactionExtInit_ & TRA_nw )
+		txnOpts.setWaitMode( fbcpp::TransactionWaitMode::NO_WAIT );
+	else
+		txnOpts.setWaitMode( fbcpp::TransactionWaitMode::WAIT );
+
+	// Isolation level (SQL_TXN_ISOLATION_OPTION values)
+	switch ( transactionIsolation_ )
+	{
+		case 0x00000008L:
+			// SQL_TXN_SERIALIZABLE → Firebird CONSISTENCY
+			txnOpts.setIsolationLevel( fbcpp::TransactionIsolationLevel::CONSISTENCY );
+			break;
+
+		case 0x00000004L:
+			// SQL_TXN_REPEATABLE_READ → Firebird SNAPSHOT (concurrency)
+			txnOpts.setIsolationLevel( fbcpp::TransactionIsolationLevel::SNAPSHOT );
+			break;
+
+		case 0x00000001L:
+			// SQL_TXN_READ_UNCOMMITTED → Firebird READ_COMMITTED + NO_RECORD_VERSION
+			txnOpts.setIsolationLevel( fbcpp::TransactionIsolationLevel::READ_COMMITTED );
+			txnOpts.setReadCommittedMode( fbcpp::TransactionReadCommittedMode::NO_RECORD_VERSION );
+			break;
+
+		case 0x00000002L:
+		default:
+			// SQL_TXN_READ_COMMITTED → Firebird READ_COMMITTED + RECORD_VERSION
+			txnOpts.setIsolationLevel( fbcpp::TransactionIsolationLevel::READ_COMMITTED );
+			txnOpts.setReadCommittedMode( fbcpp::TransactionReadCommittedMode::RECORD_VERSION );
+			break;
+	}
+
+	// Lock timeout (Firebird 2.0+ only, and only in WAIT mode)
+	// fb-cpp TransactionOptions doesn't expose lock_timeout, so we add it via raw TPB
+	if ( !(transactionExtInit_ & TRA_nw)
+		&& isVersionAtLeast(2, 0)
+		&& useLockTimeoutWaitTransactions_ )
+	{
+		// Build a raw TPB with lock_timeout using IXpbBuilder, then merge
+		IUtil* utl = GDS->_master->getUtilInterface();
+		ThrowStatusWrapper status( GDS->_status );
+		IXpbBuilder* tpb = nullptr;
+		try
+		{
+			tpb = utl->getXpbBuilder(&status, IXpbBuilder::TPB, NULL, 0);
+			tpb->insertInt(&status, isc_tpb_lock_timeout, useLockTimeoutWaitTransactions_);
+
+			auto bufLen = tpb->getBufferLength(&status);
+			auto* buf = tpb->getBuffer(&status);
+			txnOpts.setTpb( std::vector<std::uint8_t>( buf, buf + bufLen ) );
+
+			tpb->dispose();
+			tpb = nullptr;
+		}
+		catch( const FbException& error )
+		{
+			if( tpb ) tpb->dispose();
+			THROW_ISC_EXCEPTION( this, error.getStatus() );
+		}
+	}
+
+	// Create fb-cpp Transaction (starts the transaction via Firebird OO API)
 	try
 	{
-		tpb = utl->getXpbBuilder(&status, IXpbBuilder::TPB, NULL, 0);
-
-		tpb->insertTag( &status, (tr.transactionExtInit & TRA_ro) ? isc_tpb_read   : isc_tpb_write );
-		tpb->insertTag( &status, (tr.transactionExtInit & TRA_nw) ? isc_tpb_nowait : isc_tpb_wait  );
-
-		/* Isolation level */
-		switch( tr.transactionIsolation )
-		{
-			case 0x00000008L:
-				// SQL_TXN_SERIALIZABLE:
-				tpb->insertTag( &status, isc_tpb_consistency );
-				break;
-
-			case 0x00000004L:
-				// SQL_TXN_REPEATABLE_READ:
-				tpb->insertTag( &status, isc_tpb_concurrency );
-				break;
-
-			case 0x00000001L:
-				// SQL_TXN_READ_UNCOMMITTED:
-				tpb->insertTag( &status, isc_tpb_read_committed );
-				tpb->insertTag( &status, isc_tpb_no_rec_version );
-				break;
-
-			case 0x00000002L:
-			default:
-				// SQL_TXN_READ_COMMITTED:
-				tpb->insertTag( &status, isc_tpb_read_committed );
-				tpb->insertTag( &status, isc_tpb_rec_version );
-				break;
-		}
-
-		if ( !(tr.transactionExtInit & TRA_nw)
-			&& isVersionAtLeast(2, 0)
-			&& useLockTimeoutWaitTransactions_ )
-		{
-			tpb->insertInt(&status, isc_tpb_lock_timeout, useLockTimeoutWaitTransactions_ );
-		}
-
-		tr.transactionHandle =
-			databaseHandle->startTransaction(&status, tpb->getBufferLength(&status), tpb->getBuffer(&status));
-
-		tpb->dispose();
-		tpb = nullptr;
+		transaction_ = std::make_unique<fbcpp::Transaction>( *attachment_, txnOpts );
 	}
-	catch( const FbException& error )
+	catch( const fbcpp::DatabaseException& e )
 	{
-		if( tpb ) tpb->dispose();
-		THROW_ISC_EXCEPTION ( this, error.getStatus() );
+		throw SQLEXCEPTION( -1, 0, e.what() );
 	}
 
-	if ( !tr.autoCommit )
-		tr.transactionPending = true;
+	if ( !autoCommit_ )
+		transactionPending_ = true;
 
-    return tr.transactionHandle;
+	return transaction_->getHandle().get();
 }
 
 Statement* IscConnection::createStatement()
@@ -868,10 +905,10 @@ int IscConnection::buildParamTransaction( char *& string, char boolDeclare )
 					}
 					else
 					{
-						if ( !transactionInfo.nodeParamTransaction )
-							transactionInfo.nodeParamTransaction = new CNodeParamTransaction;
+						if ( !nodeParamTransaction_ )
+							nodeParamTransaction_ = new CNodeParamTransaction;
 
-						*transactionInfo.nodeParamTransaction = node;
+						*nodeParamTransaction_ = node;
 						ret = -5; // for connection  = -5
 					}
 
@@ -1066,10 +1103,10 @@ int IscConnection::buildParamTransaction( char *& string, char boolDeclare )
 			{
 				ret = -5; // for connection  = -5
 
-				if ( !transactionInfo.nodeParamTransaction )
-					transactionInfo.nodeParamTransaction = new CNodeParamTransaction;
+				if ( !nodeParamTransaction_ )
+					nodeParamTransaction_ = new CNodeParamTransaction;
 
-				*transactionInfo.nodeParamTransaction = node;
+				*nodeParamTransaction_ = node;
 
 				if ( node.lengthNameTransaction )
 				{
@@ -1935,56 +1972,61 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 
 		CheckStatusWrapper check_status( GDS->_status );
 
-		databaseHandle =
-			GDS->_prov->attachDatabase( &check_status, dbName, dpb->getBufferLength(&check_status), dpb->getBuffer(&check_status) );
+		// Phase 14.2.2: Get raw DPB bytes and connect via fb-cpp Attachment (RAII)
+		unsigned dpbLen = 0;
+		const unsigned char* dpbBuf = nullptr;
+		try
+		{
+			dpbLen = dpb->getBufferLength(&throw_status);
+			dpbBuf = dpb->getBuffer(&throw_status);
+		}
+		catch( const FbException& error )
+		{
+			dpb->dispose();
+			const ISC_STATUS * statusVector = error.getStatus()->getErrors();
+			throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+		}
+
+		fbcpp::AttachmentOptions attachOpts;
+		attachOpts.setDpb( std::vector<std::uint8_t>( dpbBuf, dpbBuf + dpbLen ) );
 
 		dpb->dispose();
 		dpb = nullptr;
 
-		if ( check_status.getState() & IStatus::STATE_ERRORS )
+		try
 		{
-			const ISC_STATUS * statusVector = check_status.getErrors();
+			if ( databaseAccess_ == CREATE_DB )
+				attachOpts.setCreateDatabase( true );
 
-			if ( statusVector [1] == isc_io_error )
+			attachment_ = std::make_unique<fbcpp::Attachment>( GDS->getClient(), dbName, attachOpts );
+			databaseHandle = attachment_->getHandle().get();
+		}
+		catch( const fbcpp::DatabaseException& e )
+		{
+			if ( databaseAccess_ != CREATE_DB )
 			{
-				if ( databaseAccess_ == CREATE_DB )
-					createDatabase( dbName, properties );
-				else
-				{
-					JString text;
-					
-					switch ( statusVector [7] )
-					{
-					case isc_io_access_err:
-						text.Format ("File Database is used by another process");
-						break;
-
-					case isc_io_open_err:
-						text.Format ("File Database is not found");
-						break;
-
-					default:
-						text.Format ("Unavailable Database");
-						break;
-					}
-
-					throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], text );
-				}
+				// Try the CREATE_DB fallback on any connection error
+				// (before Phase 14.7, we can't inspect specific ISC codes from DatabaseException)
+				throw SQLEXCEPTION( -1, 0, e.what() );
 			}
 			else
-				throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( &check_status ) );
+			{
+				// CREATE_DB was explicitly requested but failed
+				throw SQLEXCEPTION( -1, 0, e.what() );
+			}
 		}
-		else if ( databaseAccess_ == DROP_DB )
+
+		if ( databaseAccess_ == DROP_DB )
 		{
 			try
 			{
-				ThrowStatusWrapper throw_st( GDS->_status );
-				databaseHandle->dropDatabase( &throw_st );
+				attachment_->dropDatabase();
+				databaseHandle = nullptr;
+				attachment_.reset();
 			}
-			catch( const FbException& error )
+			catch( const fbcpp::DatabaseException& e )
 			{
-				const ISC_STATUS * statusVector = error.getStatus()->getErrors();
-				throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+				throw SQLEXCEPTION( -1, 0, e.what() );
 			}
 			return;
 		}
@@ -1993,10 +2035,11 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 		char result [2048];
 		databaseDialect_ = SQL_DIALECT_V5;
 
-		databaseHandle->getInfo( &check_status, sizeof (databaseInfoItems),
+		CheckStatusWrapper info_status( GDS->_status );
+		databaseHandle->getInfo( &info_status, sizeof (databaseInfoItems),
 		                         (const unsigned char*)databaseInfoItems, sizeof (result), (unsigned char*)result );
 
-		if( ( check_status.getState() & IStatus::STATE_ERRORS ) == 0 )
+		if( ( info_status.getState() & IStatus::STATE_ERRORS ) == 0 )
 		{
 			for (auto p = result; p < result + sizeof (result) && *p != isc_info_end && *p != isc_info_truncated;)
 			{
@@ -2221,12 +2264,14 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 	}
 	catch ( SQLException& exception )
 	{
+		attachment_.reset();
 		databaseHandle = NULL;
 		GDS = NULL;
 		throw SQLEXCEPTION ( (SqlCode)exception.getSqlcode(), exception.getFbcode(), exception.getText() );
 	}
 	catch (...)
 	{
+		attachment_.reset();
 		databaseHandle = NULL;
 		GDS = NULL;
 		throw;
@@ -2303,17 +2348,15 @@ Connection* IscConnection::clone()
 
 void IscConnection::setAutoCommit(bool setting)
 {
-	InfoTransaction	&tr = transactionInfo;
-
-	if( !tr.autoCommit && setting && tr.transactionPending )
+	if( !autoCommit_ && setting && transactionPending_ )
 		commitAuto();
 
-	tr.autoCommit = setting;
+	autoCommit_ = setting;
 }
 
 bool IscConnection::getAutoCommit()
 {
-	return transactionInfo.autoCommit;
+	return autoCommit_;
 }
 
 const char*	IscConnection::getCatalog()
@@ -2329,12 +2372,12 @@ void IscConnection::setCatalog(const char* catalog)
 
 void IscConnection::setTransactionIsolation(int level)
 {
-	transactionInfo.transactionIsolation = level;
+	transactionIsolation_ = level;
 }
 
 int IscConnection::getTransactionIsolation()
 {
-	return transactionInfo.transactionIsolation;
+	return transactionIsolation_;
 }
 
 bool IscConnection::isClosed()
@@ -2362,7 +2405,7 @@ const char*	IscConnection::nativeSQL(const char *sqlString)
 
 void IscConnection::setExtInitTransaction(int optTpb)
 {
-	transactionInfo.transactionExtInit = optTpb;
+	transactionExtInit_ = optTpb;
 }
 
 EnvironmentShare* IscConnection::getEnvironmentShare()
@@ -2468,8 +2511,7 @@ void IscConnection::rollbackAuto()
 
 void IscConnection::setSavepoint(const char* name)
 {
-	InfoTransaction &tr = transactionInfo;
-	if ( !tr.transactionHandle )
+	if ( !transaction_ || !transaction_->isValid() )
 		return;
 
 	char sql[256];
@@ -2479,7 +2521,7 @@ void IscConnection::setSavepoint(const char* name)
 	try
 	{
 		databaseHandle->execute(
-			&status, tr.transactionHandle,
+			&status, transaction_->getHandle().get(),
 			0, sql, databaseDialect_,
 			NULL, NULL, NULL, NULL );
 	}
@@ -2491,8 +2533,7 @@ void IscConnection::setSavepoint(const char* name)
 
 void IscConnection::releaseSavepoint(const char* name)
 {
-	InfoTransaction &tr = transactionInfo;
-	if ( !tr.transactionHandle )
+	if ( !transaction_ || !transaction_->isValid() )
 		return;
 
 	char sql[256];
@@ -2502,7 +2543,7 @@ void IscConnection::releaseSavepoint(const char* name)
 	try
 	{
 		databaseHandle->execute(
-			&status, tr.transactionHandle,
+			&status, transaction_->getHandle().get(),
 			0, sql, databaseDialect_,
 			NULL, NULL, NULL, NULL );
 	}
@@ -2515,8 +2556,7 @@ void IscConnection::releaseSavepoint(const char* name)
 
 void IscConnection::rollbackSavepoint(const char* name)
 {
-	InfoTransaction &tr = transactionInfo;
-	if ( !tr.transactionHandle )
+	if ( !transaction_ || !transaction_->isValid() )
 		return;
 
 	char sql[256];
@@ -2526,7 +2566,7 @@ void IscConnection::rollbackSavepoint(const char* name)
 	try
 	{
 		databaseHandle->execute(
-			&status, tr.transactionHandle,
+			&status, transaction_->getHandle().get(),
 			0, sql, databaseDialect_,
 			NULL, NULL, NULL, NULL );
 	}
@@ -2553,43 +2593,45 @@ int IscConnection::getDatabaseDialect()
 
 void IscConnection::commitRetaining()
 {
-	InfoTransaction	&tr = transactionInfo;
-
-	if ( tr.transactionHandle )
+	if ( !transaction_ || !transaction_->isValid() )
 	{
-		ThrowStatusWrapper status( GDS->_status );
-		try
-		{
-			tr.transactionHandle->commitRetaining( &status );
-		}
-		catch( const FbException& error )
-		{
-			rollbackRetaining();
-			THROW_ISC_EXCEPTION ( this, error.getStatus() );
-		}
+		transactionPending_ = false;
+		return;
 	}
-	tr.transactionPending = false;
+
+	ThrowStatusWrapper status( GDS->_status );
+	try
+	{
+		transaction_->getHandle()->commitRetaining( &status );
+	}
+	catch( const FbException& error )
+	{
+		rollbackRetaining();
+		THROW_ISC_EXCEPTION ( this, error.getStatus() );
+	}
+	transactionPending_ = false;
 }
 
 void IscConnection::rollbackRetaining()
 {
-	InfoTransaction	&tr = transactionInfo;
-
-	if ( tr.transactionHandle )
+	if ( !transaction_ || !transaction_->isValid() )
 	{
-		ThrowStatusWrapper status( GDS->_status );
-		try
-		{
-			tr.transactionHandle->rollbackRetaining( &status );
-		}
-		catch( const FbException& error )
-		{
-			rollback();
-			THROW_ISC_EXCEPTION ( this, error.getStatus() );
-		}
-		catch( ... ) {}
+		transactionPending_ = false;
+		return;
 	}
-	tr.transactionPending = false;
+
+	ThrowStatusWrapper status( GDS->_status );
+	try
+	{
+		transaction_->getHandle()->rollbackRetaining( &status );
+	}
+	catch( const FbException& error )
+	{
+		// If rollbackRetaining fails, do a full rollback
+		try { rollback(); } catch (...) {}
+		THROW_ISC_EXCEPTION ( this, error.getStatus() );
+	}
+	transactionPending_ = false;
 }
 
 }; // end namespace IscDbcLibrary

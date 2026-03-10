@@ -103,6 +103,25 @@ using namespace Firebird;
 namespace IscDbcLibrary {
 
 //////////////////////////////////////////////////////////////////////
+// InfoTransaction (Phase 14.3: moved from IscConnection.cpp)
+//////////////////////////////////////////////////////////////////////
+
+InfoTransaction::InfoTransaction()
+{
+	transactionHandle = NULL;
+	transactionIsolation = 0;
+	transactionPending = false;
+	autoCommit = true;
+	transactionExtInit = 0;
+	nodeParamTransaction = NULL;
+}
+
+InfoTransaction::~InfoTransaction()
+{
+	delete nodeParamTransaction;
+}
+
+//////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
@@ -229,7 +248,9 @@ void IscStatement::setActiveLocalParamTransaction()
 	}
 	else
 	{
-		transactionInfo.setParam( connection->transactionInfo );
+		transactionInfo.transactionIsolation = connection->transactionIsolation_;
+		transactionInfo.transactionExtInit = connection->transactionExtInit_;
+		transactionInfo.autoCommit = connection->autoCommit_;
 	}
 }
 
@@ -244,7 +265,9 @@ void IscStatement::delActiveLocalParamTransaction()
 		transactionInfo.nodeParamTransaction = NULL;
 	}
 
-	transactionInfo.setParam( connection->transactionInfo );
+	transactionInfo.transactionIsolation = connection->transactionIsolation_;
+	transactionInfo.transactionExtInit = connection->transactionExtInit_;
+	transactionInfo.autoCommit = connection->autoCommit_;
 }
 
 void IscStatement::declareLocalParamTransaction()
@@ -284,45 +307,32 @@ ITransaction* IscStatement::startTransaction()
 	if ( connection->shareConnected )
 		return connection->startTransaction();
 
-	InfoTransaction	*tr = transactionLocal ? &transactionInfo : &connection->transactionInfo;
+	// Determine whether to use local or connection-level transaction
+	bool useLocal = transactionLocal;
 
 	if ( !statementHandle && transactionStatusChange )
 	{
-		if ( transactionStatusChangingToLocal )
-		{
-			tr = &transactionInfo;
-			transactionLocal = true;
-		}
-		else
-		{
-			tr = &connection->transactionInfo;
-			transactionLocal = false;
-		}
-
+		useLocal = transactionStatusChangingToLocal;
+		transactionLocal = useLocal;
 		transactionStatusChange = false;
 	}
-
-    if ( tr->transactionHandle )
-        return tr->transactionHandle;
-
-	if ( transactionStatusChange )
+	else if ( transactionStatusChange )
 	{
-		if ( transactionStatusChangingToLocal )
-		{
-			tr = &transactionInfo;
-			transactionLocal = true;
-		}
-		else
-		{
-			tr = &connection->transactionInfo;
-			transactionLocal = false;
-		}
-
+		useLocal = transactionStatusChangingToLocal;
+		transactionLocal = useLocal;
 		transactionStatusChange = false;
-
-		if ( tr->transactionHandle )
-			return tr->transactionHandle;
 	}
+
+	// Phase 14.3: For connection-level transactions, delegate to IscConnection
+	// which now uses fbcpp::Transaction with TransactionOptions.
+	if ( !useLocal )
+		return connection->startTransaction();
+
+	// Local (statement-scoped) transaction: use statement's own transactionInfo
+	InfoTransaction &tr = transactionInfo;
+
+    if ( tr.transactionHandle )
+        return tr.transactionHandle;
 
 	IUtil* utl    = connection->GDS->_master->getUtilInterface();
 	IXpbBuilder* tpb = nullptr;
@@ -332,15 +342,15 @@ ITransaction* IscStatement::startTransaction()
 		char *tpbBuffer;
 		int count;
 
-		if ( !tr->nodeParamTransaction )
+		if ( !tr.nodeParamTransaction )
 		{
 			tpb = utl->getXpbBuilder(&status, IXpbBuilder::TPB, NULL, 0);
 
-			tpb->insertTag( &status, (tr->transactionExtInit & TRA_ro) ? isc_tpb_read   : isc_tpb_write );
-			tpb->insertTag( &status, (tr->transactionExtInit & TRA_nw) ? isc_tpb_nowait : isc_tpb_wait  );
+			tpb->insertTag( &status, (tr.transactionExtInit & TRA_ro) ? isc_tpb_read   : isc_tpb_write );
+			tpb->insertTag( &status, (tr.transactionExtInit & TRA_nw) ? isc_tpb_nowait : isc_tpb_wait  );
 
 			/* Isolation level */
-			switch( tr->transactionIsolation )
+			switch( tr.transactionIsolation )
 			{
 				case 0x00000008L:
 					// SQL_TXN_SERIALIZABLE:
@@ -366,7 +376,7 @@ ITransaction* IscStatement::startTransaction()
 					break;
 			}
 
-			if ( !(tr->transactionExtInit & TRA_nw) 
+			if ( !(tr.transactionExtInit & TRA_nw) 
 				&& connection->isVersionAtLeast(2, 0)
 				&& connection->getUseLockTimeoutWaitTransactions() )
 			{
@@ -378,12 +388,12 @@ ITransaction* IscStatement::startTransaction()
 		}
 		else
 		{
-			tpbBuffer = tr->nodeParamTransaction->tpbBuffer;
-			count = tr->nodeParamTransaction->lengthTpbBuffer;
-			tr->autoCommit = tr->nodeParamTransaction->autoCommit;
+			tpbBuffer = tr.nodeParamTransaction->tpbBuffer;
+			count = tr.nodeParamTransaction->lengthTpbBuffer;
+			tr.autoCommit = tr.nodeParamTransaction->autoCommit;
 		}
 
-		tr->transactionHandle =
+		tr.transactionHandle =
 			connection->databaseHandle->startTransaction( &status, count, (const unsigned char*)tpbBuffer );
 
 		if( tpb ) {
@@ -397,10 +407,10 @@ ITransaction* IscStatement::startTransaction()
 		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
 	}
 
-	if ( !tr->autoCommit )
-		tr->transactionPending = true;
+	if ( !tr.autoCommit )
+		tr.transactionPending = true;
 
-    return tr->transactionHandle;
+    return tr.transactionHandle;
 }
 
 IscResultSet* IscStatement::createResultSet()
@@ -425,7 +435,7 @@ void IscStatement::close()
 			if ( transactionInfo.autoCommit )
 				commitLocal();
 		}
-		else if ( connection->transactionInfo.autoCommit )
+		else if ( connection->autoCommit_ )
 			connection->commitAuto();
 	}
 }
@@ -586,7 +596,7 @@ void IscStatement::deleteResultSet(IscResultSet * resultSet)
 				if ( transactionInfo.autoCommit )
 					commitLocal();
 			}
-			else if ( connection->transactionInfo.autoCommit )
+			else if ( connection->autoCommit_ )
 				connection->commitAuto();
 		}
 	}
@@ -649,12 +659,12 @@ void IscStatement::prepareStatement(const char * sqlString)
 
 bool IscStatement::execute()
 {
-	if ( isActiveSelect() && connection->transactionInfo.autoCommit && resultSets.empty() )
+	if ( isActiveSelect() && connection->autoCommit_ && resultSets.empty() )
 		clearSelect();
 
 	// Use savepoints for statement-level error isolation when auto-commit is OFF
-	const bool useSavepoint = !connection->transactionInfo.autoCommit
-	                          && connection->transactionInfo.transactionHandle;
+	const bool useSavepoint = !connection->autoCommit_
+	                          && connection->getTransactionHandle();
 	const char* svpName = "FBODBC_SVP";
 
 	ThrowStatusWrapper status( connection->GDS->_status );
@@ -688,7 +698,7 @@ bool IscStatement::execute()
 	{
 		if ( useSavepoint )
 			connection->rollbackSavepoint(svpName);
-		else if ( connection->transactionInfo.autoCommit )
+		else if ( connection->autoCommit_ )
 			connection->rollbackAuto();
 		clearSelect();
 		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
@@ -714,7 +724,7 @@ bool IscStatement::execute()
 				if ( transactionInfo.autoCommit )
 					commitLocal();
 			}
-			else if ( connection->transactionInfo.autoCommit )
+			else if ( connection->autoCommit_ )
 				connection->commitAuto();
 			freeStatementHandle();
 		}
@@ -738,7 +748,7 @@ bool IscStatement::execute()
 			if ( transactionInfo.autoCommit )
 				commitLocal();
 		}
-		else if ( connection->transactionInfo.autoCommit )
+		else if ( connection->autoCommit_ )
 			connection->commitAuto();
 		break;
 	}
@@ -749,8 +759,8 @@ bool IscStatement::execute()
 bool IscStatement::executeProcedure()
 {
 	// Use savepoints for statement-level error isolation when auto-commit is OFF
-	const bool useSavepoint = !connection->transactionInfo.autoCommit
-	                          && connection->transactionInfo.transactionHandle;
+	const bool useSavepoint = !connection->autoCommit_
+	                          && connection->getTransactionHandle();
 	const char* svpName = "FBODBC_SVP";
 
 	ThrowStatusWrapper status( connection->GDS->_status );
@@ -777,7 +787,7 @@ bool IscStatement::executeProcedure()
 	{
 		if ( useSavepoint )
 			connection->rollbackSavepoint(svpName);
-		else if ( connection->transactionInfo.autoCommit )
+		else if ( connection->autoCommit_ )
 			connection->rollbackAuto();
 		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
 	}
@@ -1004,7 +1014,7 @@ void IscStatement::clearSelect()
 			if ( transactionInfo.autoCommit )
 				commitLocal();
 		}
-		else if ( connection->transactionInfo.autoCommit )
+		else if ( connection->autoCommit_ )
 			connection->commitAuto();
 		freeStatementHandle();
 	}

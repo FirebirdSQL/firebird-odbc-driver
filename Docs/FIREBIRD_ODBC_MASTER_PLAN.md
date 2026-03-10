@@ -1271,9 +1271,9 @@ The migration will be **incremental, not big-bang**. Each task replaces one IscD
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
 | **14.2.1** | **Create `FbClient` wrapper** — Singleton (per-environment) wrapper using `fbcpp::FbApiHandle`. Replaces `CFbDll` for fbclient loading. | Medium | ✅ |
-| **14.2.2** | **Replace `Attachment` class** — `IscConnection` now uses `fbcpp::FbApiHandle` to load fbclient and obtain `Firebird::IMaster*`. Connection/attachment still uses Firebird OO API directly (fb-cpp `Attachment` not used yet). | Medium | ✅ (partial) |
+| **14.2.2** | **Replace `Attachment` class** — `IscConnection::openDatabase()` now creates `fbcpp::Attachment` (RAII) and keeps `databaseHandle` as cached raw pointer. Destructor auto-disconnects via fb-cpp. | Medium | ✅ |
 | **14.2.3** | **Replace `CFbDll::_array_*` calls** — fb-cpp doesn't wrap arrays. Keep minimal ISC array functions loaded separately (Firebird OO API doesn't expose `getSlice`/`putSlice`). | Hard | ❌ |
-| **14.2.4** | **Migrate `createDatabase()`** — Use `AttachmentOptions::setCreateDatabase(true)`. | Easy | ❌ |
+| **14.2.4** | **Migrate `createDatabase()`** — Uses `AttachmentOptions::setCreateDatabase(true)` via fb-cpp Attachment. | Easy | ✅ |
 | **14.2.5** | **Migrate connection properties** — Map `CHARSET`, `UID`, `PWD`, `ROLE` to `AttachmentOptions` setters. Connection options now routed through fb-cpp's provider/master handle. | Easy | ✅ (partial) |
 | **14.2.6** | **Delete `Attachment.cpp`, `Attachment.h`** — Already removed in Phase 13 dead-code cleanup. `LoadFbClientDll` refactored to thin wrapper delegating to `FbClient`. | Easy | ✅ |
 
@@ -1281,11 +1281,11 @@ The migration will be **incremental, not big-bang**. Each task replaces one IscD
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **14.3.1** | **Replace `InfoTransaction` with `fbcpp::Transaction`** — `IscConnection` manages transactions via `transactionInfo.transactionHandle`. Replace with `std::unique_ptr<fbcpp::Transaction>`. | Medium | ❌ |
-| **14.3.2** | **Map transaction isolation levels** — `TransactionIsolationLevel::READ_COMMITTED`, `SNAPSHOT`, `CONSISTENCY` map to Firebird TPB options. Use `TransactionOptions::setIsolationLevel()`. | Easy | ❌ |
-| **14.3.3** | **Migrate auto-commit** — Current code manually commits after each statement when `autoCommit=true`. fb-cpp requires explicit commits; keep the same pattern. | Easy | ❌ |
-| **14.3.4** | **Migrate savepoints** — fb-cpp doesn't expose savepoints. Keep the existing `SAVEPOINT`/`RELEASE SAVEPOINT`/`ROLLBACK TO SAVEPOINT` SQL execution via `Statement::execute()`. | Easy | ❌ |
-| **14.3.5** | **Delete `InfoTransaction`, TPB-building code** — After migration, remove ~200 lines of manual TPB construction. | Easy | ❌ |
+| **14.3.1** | **Replace `InfoTransaction` with `fbcpp::Transaction`** — `IscConnection` manages connection-level transactions via `std::unique_ptr<fbcpp::Transaction>`. Statement-local transactions still use `InfoTransaction` (moved to IscStatement.h). | Medium | ✅ |
+| **14.3.2** | **Map transaction isolation levels** — `TransactionOptions::setIsolationLevel()` maps SQL_TXN_* values to `CONSISTENCY`, `SNAPSHOT`, `READ_COMMITTED`. Uses `setReadCommittedMode()` for record version control. | Easy | ✅ |
+| **14.3.3** | **Migrate auto-commit** — Pattern preserved: `autoCommit_` flag on IscConnection controls commitAuto()/rollbackAuto() after statement execution. fb-cpp Transaction is destroyed on commit/rollback (RAII). | Easy | ✅ |
+| **14.3.4** | **Migrate savepoints** — fb-cpp doesn't expose savepoints. Kept existing SQL execution via raw `IAttachment::execute()` using `transaction_->getHandle()`. | Easy | ✅ |
+| **14.3.5** | **Delete `InfoTransaction` from IscConnection, TPB-building code** — `InfoTransaction` removed from IscConnection (moved to IscStatement for statement-local transactions). Connection TPB construction replaced with `fbcpp::TransactionOptions`. ~100 lines removed. | Easy | ✅ |
 
 **Phase 14.4: Statement & ResultSet Migration**
 

@@ -30,6 +30,8 @@
 #include "Connection.h"
 #include "JString.h"
 #include "Mutex.h"
+#include <fb-cpp/Attachment.h>
+#include <fb-cpp/Transaction.h>
 
 namespace IscDbcLibrary {
 
@@ -37,29 +39,6 @@ using namespace classJString;
 using namespace classMutex;
 
 class CNodeParamTransaction;
-
-class InfoTransaction
-{
-public:
-	InfoTransaction();
-	~InfoTransaction();
-
-	void setParam( const InfoTransaction &src )
-	{ 
-		transactionIsolation = src.transactionIsolation;
-		transactionExtInit = src.transactionExtInit;
-		autoCommit = src.autoCommit;
-	}
-
-public:
-	Firebird::ITransaction*	transactionHandle;
-	int				transactionIsolation;
-	int				transactionExtInit;
-	bool			autoCommit;
-	bool			transactionPending;
-
-	CNodeParamTransaction *nodeParamTransaction;
-};
 
 class IscStatement;
 class IscDatabaseMetaData;
@@ -177,11 +156,16 @@ public:
 	/// Access the FbClient wrapper (Phase 14.2.1)
 	CFbDll* getFbClient() { return GDS; }
 
+	/// Phase 14.3: Check if connection has an active transaction handle
+	Firebird::ITransaction* getTransactionHandle()
+	{
+		return (transaction_ && transaction_->isValid()) ? transaction_->getHandle().get() : nullptr;
+	}
+
 public:
 	CNodeParamTransaction *tmpParamTransaction;
 	CFbDll			*GDS;
 	Firebird::IAttachment* databaseHandle;
-	InfoTransaction	transactionInfo;
 	std::vector<IscStatement*>	statements;
 	IscDatabaseMetaData	*metaData;
 	IscUserEvents	*userEvents;
@@ -194,6 +178,17 @@ public:
 
 	// Phase 14.2: Attachment mutex (for thread-safe metadata access)
 	Mutex			attachmentMutex;
+
+	// Phase 14.2.2: fb-cpp Attachment for RAII connection lifecycle
+	std::unique_ptr<fbcpp::Attachment> attachment_;
+
+	// Phase 14.3: fb-cpp Transaction for RAII transaction lifecycle
+	std::unique_ptr<fbcpp::Transaction> transaction_;
+	int				transactionIsolation_ = 0x00000002L; // SQL_TXN_READ_COMMITTED
+	int				transactionExtInit_ = 0;
+	bool			autoCommit_ = true;
+	bool			transactionPending_ = false;
+	CNodeParamTransaction *nodeParamTransaction_ = nullptr;
 
 private:
 	// Phase 14.2: Connection management helpers (inlined from Attachment)
@@ -224,7 +219,6 @@ private:
 	bool		sensitiveIdentifier_ = false;
 	bool		autoQuotedIdentifier_ = false;
 	int			databaseAccess_ = 0;
-	int			transactionIsolation_ = 0;
 	bool		admin_ = true;
 	bool		isRoles_ = false;
 	bool		ownsConnection_ = false; // true if this IscConnection owns GDS/databaseHandle

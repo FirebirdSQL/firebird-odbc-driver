@@ -31,6 +31,35 @@
 
 namespace IscDbcLibrary {
 
+class CNodeParamTransaction;
+
+/// Statement-level transaction info for local (statement-scoped) transactions.
+/// Phase 14.3: Moved from IscConnection.h — no longer used by IscConnection
+/// (which now uses fbcpp::Transaction), but still needed by IscStatement
+/// for statement-local transactions.
+class InfoTransaction
+{
+public:
+	InfoTransaction();
+	~InfoTransaction();
+
+	void setParam( const InfoTransaction &src )
+	{ 
+		transactionIsolation = src.transactionIsolation;
+		transactionExtInit = src.transactionExtInit;
+		autoCommit = src.autoCommit;
+	}
+
+public:
+	Firebird::ITransaction*	transactionHandle;
+	int				transactionIsolation;
+	int				transactionExtInit;
+	bool			autoCommit;
+	bool			transactionPending;
+
+	CNodeParamTransaction *nodeParamTransaction;
+};
+
 class IscConnection;
 class IscResultSet;
 
