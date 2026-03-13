@@ -2888,7 +2888,7 @@ SQLRETURN OdbcStatement::executeStatementParamArray()
 	while ( rowNumberParamArray < nCountRow )
 	{
 		if ( arrayColumnWiseBinding )
-			bindOffsetIndColumnWiseBinding = ( bindOffsetPtrTmp + rowNumberParamArray ) * sizeof ( SQLINTEGER );
+			bindOffsetIndColumnWiseBinding = ( bindOffsetPtrTmp + rowNumberParamArray ) * sizeof ( SQLLEN );
 
 		if ( (ret = inputParam( arrayColumnWiseBinding ), ret) && ret != SQL_SUCCESS_WITH_INFO )
 		{
