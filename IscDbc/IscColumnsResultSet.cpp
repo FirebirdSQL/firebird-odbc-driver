@@ -221,9 +221,9 @@ bool IscColumnsResultSet::nextFetch()
 	if ( array )
 	{
 		int len;
-		char * relation_name = sqlda->getVarying ( 3, len);
+		char * relation_name = (char*)sqlda->getVarying ( 3, len);
 		relation_name[len] = '\0';
-		char * field_name = sqlda->getVarying ( 4, len);
+		char * field_name = (char*)sqlda->getVarying ( 4, len);
 		field_name[len] = '\0';
 
 		arrAttr.loadAttributes ( statement, relation_name, field_name, sqlType.subType );
