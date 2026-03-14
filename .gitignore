@@ -11,3 +11,32 @@ Install/Win32/install_image/
 build_*.log
 OdbcJdbcSetup_*.iss
 .vs/*
+
+# CMake
+build/
+build-*/
+Build/
+out/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+_deps/
+install_manifest.txt
+Testing/
+tests/Testing/
+
+# Build artifacts
+*.o
+*.obj
+*.dll
+*.lib
+*.exe
+*.pdb
+*.ilk
+*.exp
+
+# IDE
+.idea/
+.vscode/
