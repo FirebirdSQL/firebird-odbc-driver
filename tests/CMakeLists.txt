@@ -1,31 +1,40 @@
 # Firebird ODBC Driver — Test Suite
 #
-# Standalone CMake project for the Google Test-based test suite.
 # Tests the driver through the standard ODBC API (via the Driver Manager).
 #
-# Prerequisites:
-#   - The Firebird ODBC driver must be pre-built and registered as an ODBC
-#     data source (or referenced via a Driver= connection string).
-#   - A Firebird database must be running and accessible.
-#   - The FIREBIRD_ODBC_CONNECTION environment variable must be set.
-#   - Google Test must be installed (e.g., via vcpkg: vcpkg install gtest)
+# This file is included from the root CMakeLists.txt via add_subdirectory().
+# It can also be built standalone for quick iteration:
 #
-# Build and run:
-#   cmake -B build-tests -S tests
+#   cmake -B build-tests -S tests -DCMAKE_PREFIX_PATH=<vcpkg-root>/installed/x64-windows
 #   cmake --build build-tests --config Release
-#   set FIREBIRD_ODBC_CONNECTION=Driver={Firebird ODBC Driver};Dbname=localhost:C:\path\to\test.fdb;Uid=SYSDBA;Pwd=masterkey;
+#   set FIREBIRD_ODBC_CONNECTION=Driver={Firebird ODBC Driver};...
 #   ctest --test-dir build-tests --output-on-failure
 
-cmake_minimum_required(VERSION 3.14)
-project(FirebirdOdbcTests LANGUAGES CXX)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# When built standalone (no parent project), set up the project and standards.
+if(NOT CMAKE_PROJECT_NAME OR CMAKE_PROJECT_NAME STREQUAL "FirebirdOdbcTests")
+    cmake_minimum_required(VERSION 3.14)
+    project(FirebirdOdbcTests LANGUAGES CXX)
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 
 # ---------------------------------------------------------------------------
-# Find Google Test
+# Google Test — prefer FetchContent (integrated build), fall back to find_package
 # ---------------------------------------------------------------------------
-find_package(GTest CONFIG REQUIRED)
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+# Prevent GTest from overriding parent project settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+# Build GTest as a static library (the test exe doesn't need a separate DLL)
+set(BUILD_SHARED_LIBS_SAVED ${BUILD_SHARED_LIBS})
+set(BUILD_SHARED_LIBS OFF)
+FetchContent_MakeAvailable(googletest)
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVED})
 
 # ---------------------------------------------------------------------------
 # Find ODBC
@@ -36,7 +45,9 @@ find_package(ODBC REQUIRED)
 # Enable CTest
 # ---------------------------------------------------------------------------
 include(GoogleTest)
-enable_testing()
+if(NOT CMAKE_PROJECT_NAME OR CMAKE_PROJECT_NAME STREQUAL "FirebirdOdbcTests")
+    enable_testing()
+endif()
 
 # ---------------------------------------------------------------------------
 # Test executable
@@ -87,7 +98,7 @@ add_executable(firebird_odbc_tests
 # ---------------------------------------------------------------------------
 # Link against Google Test and the ODBC Driver Manager
 # ---------------------------------------------------------------------------
-target_link_libraries(firebird_odbc_tests PRIVATE GTest::gtest ODBC::ODBC)
+target_link_libraries(firebird_odbc_tests PRIVATE gtest ODBC::ODBC)
 
 # ---------------------------------------------------------------------------
 # Discover tests for CTest

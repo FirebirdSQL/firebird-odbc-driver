@@ -31,7 +31,7 @@
 
 #include "OdbcDesc.h"
 #include "IscDbc/JString.h"
-#include "Headers/OdbcUserEvents.h"
+#include "OdbcUserEvents.h"
 
 namespace OdbcJdbcLibrary {
 
