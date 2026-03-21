@@ -2,6 +2,8 @@ name: Linux
 
 on:
   push:
+    branches: [ "master", "new-build-system", "new-build-system-no-pr" ]
+  pull_request:
     branches: [ "master" ]
 
 permissions:
@@ -18,16 +20,17 @@ jobs:
     - name: Install UnixODBC package
       run: sudo apt-get install -y unixodbc unixodbc-dev
 
-    - name: Go to build folder & make
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: |
-        cd Builds/Gcc.lin
-        cp makefile.linux makefile
-        make
-    
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Run tests (no database — all tests skip)
+      run: ctest --test-dir build --output-on-failure
+
     - uses: actions/upload-artifact@v4
       with:
-          name: linux_libs
+          name: linux_x64_libs
           path: |
-            ./Builds/Gcc.lin/Release_*
-            !./Builds/Gcc.lin/Release_*/obj
+            ./build/libOdbcFb.so

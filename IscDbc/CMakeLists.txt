@@ -1,4 +1,6 @@
-# IscDbc — Firebird database connectivity library (static)
+# IscDbc — Firebird database connectivity library (object library)
+# Built as OBJECT to avoid an unnecessary intermediate static archive.
+# Object files are consumed directly by the main OdbcFb target.
 
 set(ISCDBC_SOURCES
     Attachment.cpp
@@ -54,8 +56,8 @@ set(ISCDBC_SOURCES
     Values.cpp
 )
 
-# Create IscDbc static library
-add_library(IscDbc STATIC ${ISCDBC_SOURCES})
+# Create IscDbc object library
+add_library(IscDbc OBJECT ${ISCDBC_SOURCES})
 
 # Include directories
 target_include_directories(IscDbc PUBLIC
@@ -63,12 +65,3 @@ target_include_directories(IscDbc PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..
     ${FIREBIRD_INCLUDE_DIR}
 )
-
-# Platform-specific settings
-if(WIN32)
-    target_compile_definitions(IscDbc PRIVATE WIN32 _WINDOWS)
-    target_link_libraries(IscDbc PRIVATE ws2_32 advapi32)
-else()
-    target_compile_definitions(IscDbc PRIVATE UNIX)
-    target_link_libraries(IscDbc PRIVATE dl pthread)
-endif()
