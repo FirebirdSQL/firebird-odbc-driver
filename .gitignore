@@ -40,3 +40,4 @@ tests/Testing/
 # IDE
 .idea/
 .vscode/
+CMakeUserPresets.json
