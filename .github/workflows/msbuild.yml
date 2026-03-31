@@ -7,6 +7,8 @@ name: MSBuild
 
 on:
   push:
+    branches: [ "master", "new-build-system", "new-build-system-no-pr" ]
+  pull_request:
     branches: [ "master" ]
 
 env:
@@ -42,6 +44,10 @@ jobs:
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Fetch Firebird headers (required by .vcxproj include paths)
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: cmake -B build -DBUILD_TESTING=OFF
 
     - name: Stub
       working-directory: ${{env.GITHUB_WORKSPACE}}
