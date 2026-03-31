@@ -1,0 +1,52 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+          - os: ubuntu-22.04
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git-tag-based versioning
+
+      - name: Install prerequisites
+        shell: pwsh
+        run: ./install-prerequisites.ps1
+
+      - name: Install unixODBC (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y unixodbc unixodbc-dev
+
+      - name: Build, install and test
+        shell: pwsh
+        run: Invoke-Build test -Configuration Release -File ./firebird-odbc-driver.build.ps1
+
+      - name: Upload driver (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: FirebirdODBC-windows-x64
+          path: build/Release/FirebirdODBC.dll
+
+      - name: Upload driver (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: FirebirdODBC-linux-x64
+          path: build/libOdbcFb.so
