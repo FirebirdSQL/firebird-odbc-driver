@@ -18,8 +18,8 @@ All the new features and fixes are documented here -
 
 The latest build artifacts:
 * [Windows installation package](https://github.com/user-attachments/files/19207749/win_installers.zip) [![MSBuild](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/msbuild.yml/badge.svg)](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/msbuild.yml)
-* [Linux x86-64](https://github.com/user-attachments/files/19207739/linux_libs.zip) [![Linux](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/linux.yml/badge.svg)](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/linux.yml)
-* [Linux_ARM64](https://github.com/user-attachments/files/19210460/linux_arm64_libs.zip) [![RaspberryPI](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/rpi_arm64.yml/badge.svg)](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/rpi_arm64.yml)
+
+[![Build and Test](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/FirebirdSQL/firebird-odbc-driver/actions/workflows/build-and-test.yml)
 
 You can also download the lastest & archive build packages here: https://github.com/FirebirdSQL/firebird-odbc-driver/wiki
 
@@ -108,21 +108,53 @@ Identifier handling options:
 
 ## Build from sources
 
-### Linux
-* Clone the git repository into your working copy folder
-* Make sure you have Unix ODBC dev package installed. If not - install it (for example: `sudo apt install unixodbc-dev` for Ubuntu)
-* Move to Builds/Gcc.lin
-* Rename makefile.linux -> makefile
-* Set the DEBUG var if you need a Debug build instead of Release (by default)
-* Run `make`
-* Your libraries are in ./Release_<arch> or ./Debug_<arch> folder.
+### Prerequisites
 
-### Windows
-* Clone the git repository into your working copy folder
-* Open `<working copy folder>`/Builds/MsVc2022.win/OdbcFb.sln with MS Visual Studio (VS2022 or later)
-* Select your desired arch & build mode (debug|release)
-* Build the project
-* Copy the built library (`<working copy folder>`\Builds\MsVc2022.win\\`arch`\\`build_mode`\FirebirdODBC.dll) to `<Windows>`\System32 (x64 arch) or `<Windows>`\SysWOW64 (Win32 arch)
+Install [PowerShell](https://github.com/PowerShell/PowerShell) (v7+), then run:
+
+```powershell
+./install-prerequisites.ps1
+```
+
+This installs the required PowerShell modules ([InvokeBuild](https://github.com/nightroman/Invoke-Build) and [PSFirebird](https://github.com/fdcastel/PSFirebird)).
+
+On Linux, you also need the unixODBC development package:
+
+```bash
+sudo apt-get install unixodbc unixodbc-dev
+```
+
+### Building
+
+```powershell
+Invoke-Build build -Configuration Release
+```
+
+This runs CMake to configure and build the driver. The output is:
+- **Windows**: `build/Release/FirebirdODBC.dll`
+- **Linux**: `build/libOdbcFb.so`
+
+### Testing
+
+```powershell
+Invoke-Build test -Configuration Release
+```
+
+This will build the driver, download Firebird 5.0, create test databases, register the ODBC driver, and run the full test suite with multiple charset configurations.
+
+### Available tasks
+
+| Task | Description |
+|------|-------------|
+| `build` | Build the driver and tests (default) |
+| `test` | Build, install driver, create test databases, run tests |
+| `install` | Register the ODBC driver on the system |
+| `uninstall` | Unregister the ODBC driver |
+| `clean` | Remove the build directory |
+
+### Alternative: Visual Studio
+
+You can also open `Builds/MsVc2022.win/OdbcFb.sln` with Visual Studio 2022 or later. Run `cmake -B build` first to fetch the required Firebird headers.
 
 ## Development & Feedback
 
