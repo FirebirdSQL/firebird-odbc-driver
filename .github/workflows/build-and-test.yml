@@ -13,7 +13,7 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
 
@@ -22,14 +22,14 @@ jobs:
       run: New-Item -ItemType Directory -Path "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}" -Force | Out-Null
 
     - name: Cache vcpkg packages
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
         key: vcpkg-windows-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
         restore-keys: vcpkg-windows-
 
     - name: Cache PowerShell Modules
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           ~/Documents/PowerShell/Modules/PSFirebird
@@ -45,14 +45,21 @@ jobs:
         Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Command Processor' -Name 'AutoRun' -ErrorAction SilentlyContinue
         Remove-ItemProperty -Path 'HKLM:\Software\Microsoft\Command Processor' -Name 'AutoRun' -ErrorAction SilentlyContinue
 
+    - name: Update vcpkg
+      shell: pwsh
+      run: |
+        $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
+        Push-Location $vcpkgRoot
+        git pull --quiet
+        if ($IsWindows) { & ./bootstrap-vcpkg.bat -disableMetrics } else { & ./bootstrap-vcpkg.sh -disableMetrics }
+        Pop-Location
+
     - name: Install Prerequisites
       shell: pwsh
       run: ./install-prerequisites.ps1
         
     - name: Build
       shell: pwsh
-      env:
-        VCPKG_ROOT: C:\vcpkg
       run: Invoke-Build build -Configuration Release
         
     - name: Run Tests
@@ -63,7 +70,7 @@ jobs:
         Invoke-Build test -Configuration Release
         
     - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: success()
       with:
         name: windows-x64-binaries
@@ -76,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
     
@@ -101,15 +108,21 @@ jobs:
     - name: Create vcpkg binary cache directory
       run: mkdir -p "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}"
 
+    - name: Update vcpkg
+      run: |
+        cd "$VCPKG_INSTALLATION_ROOT"
+        git pull --quiet
+        ./bootstrap-vcpkg.sh -disableMetrics
+
     - name: Cache vcpkg packages
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
         key: vcpkg-linux-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
         restore-keys: vcpkg-linux-
 
     - name: Cache PowerShell Modules
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           ~/.local/share/powershell/Modules/PSFirebird
@@ -123,8 +136,6 @@ jobs:
 
     - name: Build
       shell: pwsh
-      env:
-        VCPKG_ROOT: /usr/local/share/vcpkg
       run: Invoke-Build build -Configuration Release
       
     - name: Run Tests
@@ -132,7 +143,7 @@ jobs:
       run: Invoke-Build test -Configuration Release
         
     - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: success()
       with:
         name: linux-x64-binaries
