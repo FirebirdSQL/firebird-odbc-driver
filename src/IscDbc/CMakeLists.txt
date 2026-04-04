@@ -9,7 +9,6 @@ set(ISCDBC_SOURCES
     FbClient.cpp
     IscArray.cpp
     IscBlob.cpp
-    IscCallableStatement.cpp
     IscColumnKeyInfo.cpp
     IscColumnPrivilegesResultSet.cpp
     IscColumnsResultSet.cpp
@@ -61,7 +60,6 @@ set(ISCDBC_HEADERS
     FbClient.h
     IscArray.h
     IscBlob.h
-    IscCallableStatement.h
     IscColumnKeyInfo.h
     IscColumnPrivilegesResultSet.h
     IscColumnsResultSet.h

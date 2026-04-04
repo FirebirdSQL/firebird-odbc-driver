@@ -898,6 +898,9 @@ SQLRETURN OdbcStatement::sqlFetch()
 			rebindColumn();
 			convert->setBindOffsetPtrFrom(sqldataOutOffsetPtr, NULL);
 			isFetchStaticCursor = isStaticCursor();
+			// Phase 14.4.7.2b: Ensure IRD pointers track current sqlvar
+			// (may have changed after output remap or static cursor init).
+			implementationRowDescriptor->refreshIrdPointers();
 		}
 
 		if ( isFetchStaticCursor )
@@ -1253,6 +1256,8 @@ SQLRETURN OdbcStatement::sqlFetchScroll(int orientation, int offset)
 		schemaFetchData = getSchemaFetchData();
 		convert->setBindOffsetPtrFrom(sqldataOutOffsetPtr, NULL);
 		isFetchStaticCursor = isStaticCursor();
+		// Phase 14.4.7.2b: Ensure IRD pointers track current sqlvar.
+		implementationRowDescriptor->refreshIrdPointers();
 	}
 
 	if( cursorType == SQL_CURSOR_FORWARD_ONLY && orientation != SQL_FETCH_NEXT )
@@ -1292,6 +1297,8 @@ SQLRETURN OdbcStatement::sqlExtendedFetch(int orientation, int offset, SQLULEN *
 		schemaFetchData = getSchemaFetchData();
 		convert->setBindOffsetPtrFrom(sqldataOutOffsetPtr, NULL);
 		isFetchStaticCursor = isStaticCursor();
+		// Phase 14.4.7.2b: Ensure IRD pointers track current sqlvar.
+		implementationRowDescriptor->refreshIrdPointers();
 	}
 
 	implementationRowDescriptor->headRowsProcessedPtr = rowCountPointer;
@@ -3053,6 +3060,9 @@ SQLRETURN OdbcStatement::executeStatement()
 	if ( statement->isActiveSelect() && isStaticCursor() )
 	{
 		resultSet->readStaticCursor(); 
+		// Phase 14.4.7.2c: Static cursor init restores internal buffer and
+		// changes sqlvar pointers — refresh IRD so cached dataPtr stays current.
+		implementationRowDescriptor->refreshIrdPointers();
 		setCursorRowCount(resultSet->getCountRowsStaticCursor());
 		setDiagRowCount(-1);	// Not meaningful for SELECTs
 	}

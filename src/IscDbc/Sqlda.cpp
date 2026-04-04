@@ -584,6 +584,19 @@ Sqlda::buffer_t& Sqlda::initStaticCursor(IscStatement *stmt)
 	if ( dataStaticCursor )
 		delete 	dataStaticCursor;
 
+	// Phase 14.4.7.2c: If the output sqlvar was remapped to an external buffer
+	// (e.g., fbcpp::outMessage), the internal buffer was released.  Static
+	// cursor needs the internal buffer for row staging, so re-allocate it and
+	// restore sqlvar pointers to the internal buffer.
+	if (externalBuffer_)
+	{
+		buffer.resize(lengthBufferRows);
+		for (auto& var : sqlvar)
+			var.assignBuffer(buffer);
+		externalBuffer_ = nullptr;
+		externalBufferSize_ = 0;
+	}
+
 	dataStaticCursor = new CDataStaticCursor( stmt, buffer, sqlvar, columnsCount, lengthBufferRows );
 	return *dataStaticCursor->itCurrentRow;
 }

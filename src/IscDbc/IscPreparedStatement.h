@@ -32,6 +32,9 @@
 #include "Connection.h"
 #include "IscStatement.h"
 #include "Values.h"
+#include "DateTime.h"
+#include "SqlTime.h"
+#include "TimeStamp.h"
 
 namespace IscDbcLibrary {
 
@@ -40,7 +43,7 @@ class IscStatementMetaData;
 class BinaryBlob;
 class AsciiBlob;
 
-class IscPreparedStatement : public IscStatement, public PreparedStatement
+class IscPreparedStatement : public IscStatement, public CallableStatement
 {
 public:
 // {{{specification jdbc
@@ -144,6 +147,35 @@ public:
 	AsciiBlob			*segmentClob;
 
 	virtual int			objectVersion();
+
+// Phase 14.4.6a: CallableStatement interface (merged from IscCallableStatement).
+// OUT parameter retrieval for EXECUTE PROCEDURE with RETURNING_VALUES.
+	virtual bool		getBoolean(int parameterIndex);
+	virtual char		getByte(int parameterIndex);
+	virtual DateTime	getDate(int parameterIndex);
+	virtual double		getDouble(int parameterIndex);
+	virtual float		getFloat(int parameterIndex);
+	virtual int			getInt(int parameterIndex);
+	virtual QUAD		getLong(int parameterIndex);
+	virtual short		getShort(int parameterIndex);
+	virtual const char* getString(int parameterIndex);
+	virtual SqlTime		getTime(int parameterIndex);
+	virtual TimeStamp	getTimestamp(int parameterIndex);
+	virtual void		registerOutParameter(int parameterIndex, int sqlType);
+	virtual void		registerOutParameter(int parameterIndex, int sqlType, int scale);
+	virtual bool		wasNull();
+	virtual Blob*		getBlob(int parameterIndex);
+
+	bool				executeCallable();
+	void				prepareCall(const char* originalSql);
+	Value*				getValue(int index);
+
+	static void			getToken(const char** ptr, char* token);
+	static const char*	rewriteSql(const char* originalSql, char* buffer, int length);
+
+	Values				callableValues_;
+	bool				valueWasNull_ = false;
+	int					minOutputVariable_ = 0;
 };
 
 }; // end namespace IscDbcLibrary

@@ -192,6 +192,27 @@ void OdbcDesc::clearDefined()
 	bDefined = false;
 }
 
+// Phase 14.4.7.2a: Re-read dataPtr / indicatorPtr from headSqlVarPtr for all
+// IRD records.  headSqlVarPtr->getSqlData() always returns the *current*
+// sqlvar->sqldata pointer, even after remapToExternalBuffer() or
+// initStaticCursor() change where the buffer lives.  Calling this once at
+// the start of each fetch cycle keeps the cached IRD pointers in sync.
+void OdbcDesc::refreshIrdPointers()
+{
+	if (!records)
+		return;
+
+	for (int i = 1; i <= headCount; ++i)
+	{
+		DescRecord* record = records[i];
+		if (record && record->headSqlVarPtr)
+		{
+			record->dataPtr      = (SQLPOINTER)record->headSqlVarPtr->getSqlData();
+			record->indicatorPtr = (SQLLEN*)record->headSqlVarPtr->getSqlInd();
+		}
+	}
+}
+
 SQLRETURN OdbcDesc::operator =(OdbcDesc &sour)
 {
 	if( headType == odtImplementationRow )

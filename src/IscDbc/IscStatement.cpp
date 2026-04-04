@@ -647,11 +647,16 @@ void IscStatement::prepareStatement(const char * sqlString)
 				inputSqlda.remapToExternalBuffer(
 					reinterpret_cast<char*>(inMsg.data()), inMsg.size());
 
-			// Note: Output sqlvar is NOT remapped to fbcpp::outMessage.
-			// The IRD records cache dataPtr at defFromMetaDataOut() time,
-			// and remapping would desynchronize them when static cursors
-			// call initStaticCursor() (which re-allocates the internal buffer).
-			// The output Sqlda::buffer is the stable target for all fetch paths.
+			// Phase 14.4.7.2b: Remap output sqlvar pointers to fbcpp's outMessage
+			// buffer, eliminating the duplicate Sqlda::buffer for output columns.
+			// IRD records cache dataPtr at defFromMetaDataOut() time (which runs
+			// after this), so they will pick up the external buffer pointers.
+			// Static cursors re-allocate the internal buffer in initStaticCursor()
+			// and refreshIrdPointers() is called to resync (14.4.7.2c).
+			auto& outMsg = fbStatement_->getOutputMessage();
+			if (!outMsg.empty())
+				outputSqlda.remapToExternalBuffer(
+					reinterpret_cast<char*>(outMsg.data()), outMsg.size());
 
 			openCursor = ( statementHandle->getFlags(&fbcppStatus) & IStatement::FLAG_HAS_CURSOR );
 		}
@@ -839,7 +844,7 @@ bool IscStatement::executeProcedure()
 
 		statementHandle->execute( &status, transHandle,
 		                          _imeta, _ibufPtr,
-		                          outputSqlda.meta, outputSqlda.buffer.data() );
+		                          outputSqlda.meta, outputSqlda.activeBufferData() );
 
 		if ( useSavepoint )
 			connection->releaseSavepoint(svpName);

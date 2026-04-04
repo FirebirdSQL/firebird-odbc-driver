@@ -98,7 +98,9 @@ void IscResultSet::initResultSet(IscStatement *iscStatement)
 		}
 
 		// 10.5.1: Initialize N-row prefetch buffer.
-		prefetchRowSize = static_cast<int>(sqlda->buffer.size());
+		// Use lengthBufferRows (metadata-derived size) instead of buffer.size()
+		// because the output buffer may be externally mapped (Phase 14.4.7.2b).
+		prefetchRowSize = sqlda->lengthBufferRows;
 		if (prefetchRowSize > 0)
 			prefetchBuffer.resize(static_cast<size_t>(kPrefetchRows) * prefetchRowSize);
 		prefetchCount = 0;
@@ -125,7 +127,7 @@ bool IscResultSet::nextFetch()
 		// Return next buffered row if available.
 		if (prefetchIndex < prefetchCount)
 		{
-			memcpy(sqlda->buffer.data(),
+			memcpy(sqlda->activeBufferData(),
 				   prefetchBuffer.data() + static_cast<size_t>(prefetchIndex) * prefetchRowSize,
 				   prefetchRowSize);
 			++prefetchIndex;
@@ -170,8 +172,8 @@ bool IscResultSet::nextFetch()
 			return false;
 		}
 
-		// Copy first row of the new batch into the sqlda buffer.
-		memcpy(sqlda->buffer.data(), prefetchBuffer.data(), prefetchRowSize);
+		// Copy first row of the new batch into the active sqlda buffer.
+		memcpy(sqlda->activeBufferData(), prefetchBuffer.data(), prefetchRowSize);
 		prefetchIndex = 1;
 		return true;
 	}
@@ -180,7 +182,7 @@ bool IscResultSet::nextFetch()
 	ThrowStatusWrapper status( statement->connection->GDS->_status );
 	try
 	{
-		auto fetch_stat = statement->fbResultSet->fetchNext( &status, sqlda->buffer.data() );
+		auto fetch_stat = statement->fbResultSet->fetchNext( &status, sqlda->activeBufferData() );
 
 		if( fetch_stat == IStatus::RESULT_NO_DATA ) {
 			close();
@@ -206,7 +208,7 @@ bool IscResultSet::next()
 	ThrowStatusWrapper status( statement->connection->GDS->_status );
 	try
 	{
-		auto fetch_stat = statement->fbResultSet->fetchNext( &status, sqlda->buffer.data() );
+		auto fetch_stat = statement->fbResultSet->fetchNext( &status, sqlda->activeBufferData() );
 
 		if( fetch_stat == IStatus::RESULT_NO_DATA ) {
 			close();
@@ -288,7 +290,7 @@ bool IscResultSet::readStaticCursor()
 		while( true )
 		{
 			sqlda->restoreOrgAdressFieldsStaticCursor(); //need to restore pointers to sqlda buffer
-			auto fetch_stat = statement->fbResultSet->fetchNext( &status, sqlda->buffer.data() );
+			auto fetch_stat = statement->fbResultSet->fetchNext( &status, sqlda->activeBufferData() );
 			if( fetch_stat == IStatus::RESULT_NO_DATA ) break;
 			sqlda->addRowSqldaInBufferStaticCursor();
 		}

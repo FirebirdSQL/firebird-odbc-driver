@@ -57,7 +57,7 @@
 #include <algorithm>
 #include "IscOdbcStatement.h"
 #include "IscUserEvents.h"
-#include "IscCallableStatement.h"
+#include "IscPreparedStatement.h"
 #include "IscDatabaseMetaData.h"
 #include "Parameters.h"
 #include "ParametersEvents.h"
@@ -2446,12 +2446,13 @@ int IscConnection::release()
 
 CallableStatement* IscConnection::prepareCall(const char * sqlString)
 {
-	IscCallableStatement *statement = NULL;
+	// Phase 14.4.6a: IscCallableStatement merged into IscPreparedStatement.
+	IscPreparedStatement *statement = NULL;
 
 	try
 		{
-		statement = new IscCallableStatement (this);
-		statement->prepare (sqlString);
+		statement = new IscPreparedStatement (this);
+		statement->prepareCall (sqlString);
 		}
 	catch (...)
 		{

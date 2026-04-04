@@ -37,6 +37,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <stdlib.h>
+#include <string.h>
 #include "IscDbc.h"
 #include "IscPreparedStatement.h"
 #include "SQLError.h"
@@ -45,6 +46,8 @@
 #include "BinaryBlob.h"
 #include "Value.h"
 #include "IscStatementMetaData.h"
+
+using namespace Firebird;
 
 namespace IscDbcLibrary {
 
@@ -319,6 +322,167 @@ void IscPreparedStatement::setArray(int index, Blob * value)
 int IscPreparedStatement::objectVersion()
 {
 	return PREPAREDSTATEMENT_VERSION;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Phase 14.4.6a: CallableStatement implementation (merged from IscCallableStatement).
+//////////////////////////////////////////////////////////////////////
+
+// Character classification table for SQL rewriting (escape syntax).
+// Global — also used by IscConnection.cpp, IscArray.cpp via extern.
+char charTable[256] = {0};
+static int initCharTable()
+{
+	const char* p;
+	for (p = " ;\t\r\n"; *p; ++p) charTable[(unsigned char)*p] = WHITE;
+	for (p = "?=(),{}"; *p; ++p) charTable[(unsigned char)*p] = PUNCT;
+	for (int n = 'a'; n <= 'z'; ++n) charTable[n] = LETTER | IDENT;
+	for (int n = 'A'; n <= 'Z'; ++n) charTable[n] = LETTER | IDENT;
+	for (int n = '0'; n <= '9'; ++n) charTable[n] = DIGIT | IDENT;
+	charTable[(unsigned char)'\''] = QUOTE;
+	charTable[(unsigned char)'"'] = QUOTE;
+	charTable[(unsigned char)'_'] = IDENT;
+	charTable[(unsigned char)'$'] = IDENT;
+	return 0;
+}
+static int charTableInit_ = initCharTable();
+
+bool IscPreparedStatement::executeCallable()
+{
+	callableValues_.alloc(numberColumns);
+	int numberParameters = inputSqlda.getColumnCount();
+	ITransaction* transHandle = startTransaction();
+
+	for (int n = 0; n < numberParameters; ++n)
+		inputSqlda.setValue(n, parameters.values + n, this);
+
+	ThrowStatusWrapper status(connection->GDS->_status);
+	try
+	{
+		inputSqlda.checkAndRebuild();
+		auto* _imeta = inputSqlda.useExecBufferMeta ? inputSqlda.execMeta : inputSqlda.meta;
+		auto* _ibufPtr = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer.data()
+		                                              : inputSqlda.activeBufferData();
+
+		statementHandle->execute(&status, transHandle, _imeta, _ibufPtr,
+		                         outputSqlda.meta, outputSqlda.activeBufferData());
+	}
+	catch (const FbException& error)
+	{
+		THROW_ISC_EXCEPTION(connection, error.getStatus());
+	}
+
+	resultsCount = 1;
+	resultsSequence = 0;
+	getUpdateCounts();
+
+	Value* value = callableValues_.values;
+	for (int n = 0; n < numberColumns; ++n, ++value)
+		setValue(value, n + 1, outputSqlda);
+
+	return numberColumns > 0;
+}
+
+void IscPreparedStatement::prepareCall(const char* originalSql)
+{
+	char buffer[1024];
+	const char* sql = rewriteSql(originalSql, buffer, sizeof(buffer));
+	prepare(sql);
+}
+
+const char* IscPreparedStatement::rewriteSql(const char* originalSql, char* buffer, int length)
+{
+	const char* p = originalSql;
+	char token[256];
+	getToken(&p, token);
+
+	if (token[0] != '{')
+		return originalSql;
+
+	getToken(&p, token);
+
+	if (strcasecmp(token, "call") != 0)
+		throw SQLEXCEPTION(SYNTAX_ERROR, "unsupported form of procedure call");
+
+	char* q = buffer;
+	strcpy(q, "execute procedure ");
+	while (*q) ++q;
+
+	while (*p)
+	{
+		getToken(&p, q);
+		if (*q == '}')
+			break;
+		while (*q) ++q;
+	}
+
+	*q = 0;
+	return buffer;
+}
+
+void IscPreparedStatement::getToken(const char** ptr, char* token)
+{
+	const char* p = *ptr;
+	SKIP_WHITE(p);
+	char* q = token;
+
+	if (*p)
+	{
+		char c = charTable[(unsigned char)*p];
+		*q++ = *p++;
+		if (c & IDENT)
+			while (charTable[(unsigned char)*p] & IDENT)
+				*q++ = *p++;
+		else if (c & QUOTE)
+		{
+			char quote = p[-1];
+			while (*p && (*p != quote || q[-1] == '\\'))
+				*q++ = *p++;
+			if (*p)
+				*q++ = *p++;
+		}
+	}
+
+	*q = 0;
+	*ptr = p;
+}
+
+bool IscPreparedStatement::getBoolean(int id)  { return getValue(id)->getBoolean(); }
+short IscPreparedStatement::getShort(int id)    { return getValue(id)->getShort(); }
+char IscPreparedStatement::getByte(int id)      { return getValue(id)->getByte(); }
+int IscPreparedStatement::getInt(int id)        { return getValue(id)->getLong(); }
+QUAD IscPreparedStatement::getLong(int id)      { return getValue(id)->getQuad(); }
+float IscPreparedStatement::getFloat(int id)    { return getValue(id)->getFloat(); }
+double IscPreparedStatement::getDouble(int id)  { return getValue(id)->getDouble(); }
+Blob* IscPreparedStatement::getBlob(int id)     { return getValue(id)->getBlob(); }
+SqlTime IscPreparedStatement::getTime(int id)   { return getValue(id)->getTime(); }
+DateTime IscPreparedStatement::getDate(int id)  { return getValue(id)->getDate(); }
+TimeStamp IscPreparedStatement::getTimestamp(int id) { return getValue(id)->getTimestamp(); }
+const char* IscPreparedStatement::getString(int id)  { return getValue(id)->getString(); }
+
+bool IscPreparedStatement::wasNull()
+{
+	return valueWasNull_;
+}
+
+Value* IscPreparedStatement::getValue(int index)
+{
+	if (index < minOutputVariable_ || index >= minOutputVariable_ + numberColumns)
+		throw SQLEXCEPTION(RUNTIME_ERROR, "invalid column index for procedure call");
+
+	Value* value = callableValues_.values + index - minOutputVariable_;
+	valueWasNull_ = value->type == Null;
+	return value;
+}
+
+void IscPreparedStatement::registerOutParameter(int parameterIndex, int sqlType)
+{
+	minOutputVariable_ = (minOutputVariable_ == 0) ? parameterIndex : MIN(minOutputVariable_, parameterIndex);
+}
+
+void IscPreparedStatement::registerOutParameter(int parameterIndex, int sqlType, int scale)
+{
+	minOutputVariable_ = (minOutputVariable_ == 0) ? parameterIndex : MIN(minOutputVariable_, parameterIndex);
 }
 
 }; // end namespace IscDbcLibrary

@@ -110,6 +110,7 @@ public:
 	void updateDefinedIn();
 	void updateDefinedOut();
 	void clearDefined();
+	void refreshIrdPointers();
 	void releasePrepared();
 	void clearPrepared();
 	void removeRecords();
