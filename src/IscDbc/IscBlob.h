@@ -19,6 +19,7 @@
  */
 
 // IscBlob.h: interface for the IscBlob class.
+// Phase 14.5: Migrated from raw Firebird::IBlob* to fbcpp::Blob (RAII).
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -27,6 +28,9 @@
 
 #include "BinaryBlob.h"
 #include "Connection.h"
+#include <memory>
+
+namespace fbcpp { class Blob; }
 
 namespace IscDbcLibrary {
 
@@ -64,7 +68,8 @@ public:
 
 	IscStatement	*statement;
 	ISC_QUAD		blobId;
-	Firebird::IBlob* directBlobHandle;
+	/// Phase 14.5: RAII blob handle (replaces raw Firebird::IBlob* directBlobHandle)
+	std::unique_ptr<fbcpp::Blob> directBlobHandle_;
 	bool			fetched;
 	bool			directBlob;
 };

@@ -19,6 +19,7 @@
  */
 
 // IscBlob.cpp: implementation of the IscBlob class.
+// Phase 14.5: Migrated from raw Firebird::IBlob* to fbcpp::Blob (RAII).
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -26,14 +27,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <span>
 
 #include "IscDbc.h"
 #include "Connection.h"
 #include "IscBlob.h"
-#include "IscResultSet.h"
 #include "IscConnection.h"
 #include "IscStatement.h"
 #include "SQLError.h"
+#include <fb-cpp/Blob.h>
 
 extern short conwBinToHexStr[];
 
@@ -49,7 +51,6 @@ IscBlob::IscBlob()
 {
 	statement = NULL;
 	memset(&blobId,0,sizeof(ISC_QUAD));
-	directBlobHandle = NULL;
 	fetched = false;
 	directBlob = false;
 	offset = 0;
@@ -119,35 +120,32 @@ int IscBlob::getSegment(int offset, int length, void * address)
 void IscBlob::fetchBlob()
 {
 	IscConnection * connection = statement->connection;
-	ITransaction* transactionHandle = statement->startTransaction();
-	IBlob* blobHandle = nullptr;
 
-	ThrowStatusWrapper status( connection->GDS->_status );
+	// Ensure transaction is active (creates one if needed)
+	statement->startTransaction();
+
+	fbcpp::BlobId fbBlobId;
+	fbBlobId.id = blobId;
+
 	try
 	{
-		blobHandle = connection->databaseHandle->openBlob( &status, transactionHandle, &blobId, 0, NULL );
+		fbcpp::Blob blob(*connection->attachment_, *connection->transaction_, fbBlobId);
 
 		char buffer [DEFAULT_BLOB_BUFFER_LENGTH];
-		unsigned int length;
 
 		for (;;)
 		{
-			auto res = blobHandle->getSegment( &status, sizeof (buffer), buffer, &length );
-
-			const bool keep_reading = ( res == IStatus::RESULT_OK || res == IStatus::RESULT_SEGMENT );
-			if( !keep_reading ) break;
-
-			putSegment (length, buffer, true);
+			unsigned bytesRead = blob.readSegment(std::span<char>(buffer, sizeof(buffer)));
+			if (bytesRead == 0) break;
+			putSegment (bytesRead, buffer, true);
 		}
 
-		blobHandle->close( &status );
-		blobHandle = nullptr;
+		blob.close();
 		fetched = true;
 	}
-	catch( const FbException& error )
+	catch( const fbcpp::DatabaseException& error )
 	{
-		if( blobHandle ) blobHandle->release();
-		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
 	}
 }
 
@@ -178,72 +176,61 @@ void* IscBlob::getSegment(int pos)
 void IscBlob::writeBlob(char * sqldata)
 {
 	IscConnection * connection = statement->connection;
-	CFbDll * GDS = connection->GDS;
-	IBlob* blobHandle = nullptr;
-	ITransaction* transactionHandle = statement->startTransaction();
+	statement->startTransaction();
 
-	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
-		blobHandle = connection->databaseHandle->createBlob( &status, transactionHandle, (ISC_QUAD*)sqldata, 0, NULL );
+		fbcpp::Blob blob(*connection->attachment_, *connection->transaction_);
 
 		for ( int len, offset = 0; len = getSegmentLength (offset); offset += len )
 		{
-			blobHandle->putSegment( &status, len, (char*) getSegment (offset) );
+			blob.writeSegment(std::span<const char>((const char*)getSegment(offset), len));
 		}
 
-		blobHandle->close( &status );
-		blobHandle = nullptr;
+		*(ISC_QUAD*)sqldata = blob.getId().id;
+		blob.close();
 	}
-	catch( const FbException& error )
+	catch( const fbcpp::DatabaseException& error )
 	{
-		if( blobHandle ) blobHandle->release();
-		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
 	}
 }
 
 void IscBlob::writeStreamHexToBlob(char * sqldata)
 {
 	IscConnection * connection = statement->connection;
-	CFbDll * GDS = connection->GDS;
-	IBlob* blobHandle = NULL;
-	ITransaction* transactionHandle = statement->startTransaction();
+	statement->startTransaction();
 
-	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
-		blobHandle = connection->databaseHandle->createBlob( &status, transactionHandle, (ISC_QUAD*)sqldata, 0, NULL );
+		fbcpp::Blob blob(*connection->attachment_, *connection->transaction_);
 
 		for ( int len, offset = 0; len = getSegmentLength (offset); offset += len )
 		{
-			blobHandle->putSegment( &status, len/2, convStrHexToBinary ( (char*)getSegment (offset), len ) );
+			blob.writeSegment(std::span<const char>(convStrHexToBinary((char*)getSegment(offset), len), len / 2));
 		}
 
-		blobHandle->close( &status );
-		blobHandle = nullptr;
+		*(ISC_QUAD*)sqldata = blob.getId().id;
+		blob.close();
 	}
-	catch( const FbException& error )
+	catch( const fbcpp::DatabaseException& error )
 	{
-		if( blobHandle ) blobHandle->release();
-		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
 	}
 }
 
 void IscBlob::writeBlob(char * sqldata, char *data, int length)
 {
 	IscConnection * connection = statement->connection;
-	CFbDll * GDS = connection->GDS;
-	IBlob* blobHandle = nullptr;
-	ITransaction* transactionHandle = statement->startTransaction();
+	statement->startTransaction();
 
-	ThrowStatusWrapper status( GDS->_status );
 	try
 	{
-		blobHandle = connection->databaseHandle->createBlob( &status, transactionHandle, (ISC_QUAD*)sqldata, 0, NULL );
+		fbcpp::Blob blob(*connection->attachment_, *connection->transaction_);
 
 		for ( int len, offset = 0; len = getSegmentLength (offset); offset += len )
 		{
-			blobHandle->putSegment( &status, len/2, convStrHexToBinary ( (char*)getSegment (offset), len ) );
+			blob.writeSegment(std::span<const char>(convStrHexToBinary((char*)getSegment(offset), len), len / 2));
 		}
 
 		if ( length )
@@ -252,23 +239,23 @@ void IscBlob::writeBlob(char * sqldata, char *data, int length)
 
 			while ( length > post )
 			{
-				blobHandle->putSegment( &status, post, data );
+				blob.writeSegment(std::span<const char>(data, post));
 				data += post;
 				length -= post;
 			}
 
 			if ( length > 0 )
 			{
-				blobHandle->putSegment( &status, (unsigned short)length, data );
+				blob.writeSegment(std::span<const char>(data, length));
 			}
 		}
 
-		blobHandle->close( &status );
-		blobHandle = nullptr;
+		*(ISC_QUAD*)sqldata = blob.getId().id;
+		blob.close();
 	}
-	catch( const FbException& error ) {
-		if( blobHandle ) blobHandle->release();
-		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+	catch( const fbcpp::DatabaseException& error )
+	{
+		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
 	}
 }
 
@@ -286,85 +273,60 @@ void  IscBlob::writeStringHexToBlob(char * sqldata, char *data, int length)
 //
 // Block direct operations reading SQLGetData
 //
-extern signed int getVaxInteger(const unsigned char * ptr, signed short length);
 
 void IscBlob::directOpenBlob( char * sqldata )
 {
 	IscConnection * connection = statement->connection;
-	CFbDll * GDS = connection->GDS;
 	fetched = false;
+	statement->startTransaction();
 
-	ThrowStatusWrapper status( GDS->_status );
+	// Close any previously open direct blob
+	directBlobHandle_.reset();
 
-	if ( directBlobHandle )
-		try
-		{
-			directBlobHandle->close( &status );
-			directBlobHandle = nullptr;
-		}
-		catch( ... ) {
-			if( directBlobHandle ) directBlobHandle->release();
-		}
-
-	ITransaction* transactionHandle = statement->startTransaction();
+	fbcpp::BlobId fbBlobId;
+	fbBlobId.id = *(ISC_QUAD*)sqldata;
 
 	try
 	{
-		directBlobHandle = connection->databaseHandle->openBlob( &status, transactionHandle, (ISC_QUAD*) sqldata, 0, NULL );
+		directBlobHandle_ = std::make_unique<fbcpp::Blob>(
+			*connection->attachment_, *connection->transaction_, fbBlobId);
 
-		const char blob_info[] = { isc_info_blob_total_length };
-		unsigned char buffer[64];
-
-		directBlobHandle->getInfo( &status, sizeof(blob_info), (const unsigned char*)blob_info, sizeof(buffer), (unsigned char*)buffer );
-
-		unsigned char * p = buffer;
-
-		if ( *p++ == isc_info_blob_total_length )
-			directLength = getVaxInteger(p+2, (short)getVaxInteger(p, 2));
-		else
-			directLength = 0;
+		directLength = directBlobHandle_->getLength();
 		directBlob = true;
 		offset = 0;
 	}
-	catch( const FbException& error )
+	catch( const fbcpp::DatabaseException& error )
 	{
-		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
 	}
 }
 
 bool IscBlob::directFetchBlob( char * bufData, int lenData, int &lenRead )
 {
-	unsigned length;
 	bool bEndData = false;
 
 	if ( lenData )
 	{
-		IscConnection * connection = statement->connection;
-		CFbDll * GDS = connection->GDS;
-		int post = lenData > DEFAULT_BLOB_BUFFER_LENGTH ? DEFAULT_BLOB_BUFFER_LENGTH : lenData;
 		char *data = bufData;
-		ThrowStatusWrapper status( GDS->_status );
 
 		try
 		{
-			while ( lenData )
+			while ( lenData > 0 )
 			{
-				auto res = directBlobHandle->getSegment( &status, post, data, &length );
-				const bool keep_reading = ( res == IStatus::RESULT_OK || res == IStatus::RESULT_SEGMENT );
-				if( !keep_reading ) break;
+				int chunkSize = lenData > DEFAULT_BLOB_BUFFER_LENGTH ? DEFAULT_BLOB_BUFFER_LENGTH : lenData;
+				unsigned bytesRead = directBlobHandle_->read(std::span<char>(data, chunkSize));
+				if (bytesRead == 0) break;
 
-				data += length;
-				lenData -= length;
-				if ( lenData < post )
-					post = lenData;
+				data += bytesRead;
+				lenData -= bytesRead;
 			}
 
-			lenRead = data - bufData;
+			lenRead = static_cast<int>(data - bufData);
 			offset += lenRead;
 		}
-		catch( const FbException& error )
+		catch( const fbcpp::DatabaseException& error )
 		{
-			THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+			throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
 		}
 	}
 	return bEndData;
@@ -377,19 +339,15 @@ bool IscBlob::directGetSegmentToHexStr( char * bufData, int lenData, int &lenRea
 
 	if ( lenData )
 	{
-		IscConnection * connection = statement->connection;
-		CFbDll * GDS = connection->GDS;
 		int post = lenData > DEFAULT_BLOB_BUFFER_LENGTH ? DEFAULT_BLOB_BUFFER_LENGTH : lenData;
 		char *data = bufData;
-		ThrowStatusWrapper status( GDS->_status );
 
 		try
 		{
 			while ( lenData )
 			{
-				auto res = directBlobHandle->getSegment( &status, post, data, &length );
-				const bool keep_reading = ( res == IStatus::RESULT_OK || res == IStatus::RESULT_SEGMENT );
-				if( !keep_reading ) break;
+				length = directBlobHandle_->readSegment(std::span<char>(data, post));
+				if (length == 0) break;
 
 				short *address = (short*)data + length - 1;
 				unsigned char *end = (unsigned char *)data + length - 1;
@@ -403,12 +361,12 @@ bool IscBlob::directGetSegmentToHexStr( char * bufData, int lenData, int &lenRea
 					*address-- = conwBinToHexStr[*end--];
 			}
 
-			lenRead = data - bufData;
+			lenRead = static_cast<int>(data - bufData);
 			offset += lenRead;
 		}
-		catch( const FbException& error )
+		catch( const fbcpp::DatabaseException& error )
 		{
-			THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+			throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
 		}
 	}
 	return bEndData;
@@ -416,22 +374,7 @@ bool IscBlob::directGetSegmentToHexStr( char * bufData, int lenData, int &lenRea
 
 void IscBlob::directCloseBlob()
 {
-	if ( directBlobHandle )
-	{
-		ThrowStatusWrapper status( statement->connection->GDS->_status );
-		try
-		{
-			directBlobHandle->close( &status );
-			directBlobHandle = nullptr;
-		}
-		catch( ... )
-		{
-			if( directBlobHandle ) {
-				directBlobHandle->release();
-				directBlobHandle = nullptr;
-			}
-		}
-	}
+	directBlobHandle_.reset();
 	fetched = true;
 	directBlob = false;
 }
@@ -442,60 +385,45 @@ void IscBlob::directCloseBlob()
 void IscBlob::directCreateBlob( char * sqldata )
 {
 	IscConnection * connection = statement->connection;
-	CFbDll * GDS = connection->GDS;
-	ThrowStatusWrapper status( GDS->_status );
+	statement->startTransaction();
 
-	if ( directBlobHandle )
-		try
-		{
-			directBlobHandle->close( &status );
-			directBlobHandle = nullptr;
-		}
-		catch( ... )
-		{
-			if( directBlobHandle ) {
-				directBlobHandle->release();
-				directBlobHandle = nullptr;
-			}
-		}
-
-	ITransaction* transactionHandle = statement->startTransaction();
+	// Close any previously open direct blob
+	directBlobHandle_.reset();
 
 	try
 	{
-		directBlobHandle = connection->databaseHandle->createBlob( &status, transactionHandle, (ISC_QUAD*) sqldata, 0, NULL);
+		directBlobHandle_ = std::make_unique<fbcpp::Blob>(
+			*connection->attachment_, *connection->transaction_);
+
+		*(ISC_QUAD*)sqldata = directBlobHandle_->getId().id;
 	}
-	catch( const FbException& error )
+	catch( const fbcpp::DatabaseException& error )
 	{
-		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
 	}
 }
 
 void IscBlob::directWriteBlob( char *data, int length )
 {
-	IscConnection * connection = statement->connection;
-	CFbDll * GDS = connection->GDS;
-	ThrowStatusWrapper status( GDS->_status );
-
 	int post = DEFAULT_BLOB_BUFFER_LENGTH;
 
 	try
 	{
 		while ( length > post )
 		{
-			directBlobHandle->putSegment( &status, post, data );
+			directBlobHandle_->writeSegment(std::span<const char>(data, post));
 			data += post;
 			length -= post;
 		}
 
 		if ( length > 0 )
 		{
-			directBlobHandle->putSegment( &status, (unsigned short)length, data );
+			directBlobHandle_->writeSegment(std::span<const char>(data, length));
 		}
 	}
-	catch( const FbException& error )
+	catch( const fbcpp::DatabaseException& error )
 	{
-		THROW_ISC_EXCEPTION ( connection, error.getStatus() );
+		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
 	}
 }
 

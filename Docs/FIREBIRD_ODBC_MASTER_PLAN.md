@@ -4,7 +4,7 @@
 **Status**: Authoritative reference for all known issues, improvements, and roadmap  
 **Benchmark**: PostgreSQL ODBC driver (psqlodbc) — 30+ years of development, 49 regression tests, battle-tested
 **Last Updated**: April 4, 2026  
-**Version**: 4.1
+**Version**: 4.2
 
 > This document consolidates all known issues and newly identified architectural deficiencies.
 > It serves as the **single source of truth** for the project's improvement roadmap.
@@ -310,37 +310,37 @@ The key architectural insight: fb-cpp's internal message buffers (`inMessage` / 
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **14.5.1** | **Replace `IscBlob` with `fbcpp::Blob`** — fb-cpp's Blob class provides `read()`, `write()`, `getLength()`, `seek()`. | Medium | ❌ |
-| **14.5.2** | **Migrate BLOB read** — `IscBlob::getSegment()` → `fbcpp::Blob::read()` or `readSegment()`. | Easy | ❌ |
-| **14.5.3** | **Migrate BLOB write** — `IscBlob::putSegment()` → `fbcpp::Blob::write()` or `writeSegment()`. | Easy | ❌ |
-| **14.5.4** | **Delete `IscBlob.cpp/.h`, `BinaryBlob.cpp/.h`, `Blob.cpp/.h`** — After migration, ~600 lines removed. | Easy | ❌ |
+| **14.5.1** | **Replace `IscBlob` internals with `fbcpp::Blob`** — `IscBlob::fetchBlob()`, `writeBlob()`, and direct blob operations now use `fbcpp::Blob` instead of raw `Firebird::IBlob*`. RAII lifecycle via `std::unique_ptr<fbcpp::Blob>` replaces manual `close()/release()` error handling. `BlobId` conversion bridges ISC_QUAD ↔ `fbcpp::BlobId`. | Medium | ✅ |
+| **14.5.2** | **Migrate BLOB read** — `IscBlob::fetchBlob()` uses `fbcpp::Blob(attachment, transaction, blobId)` + `readSegment()`. `directOpenBlob()` uses `fbcpp::Blob::getLength()` instead of manual `isc_info_blob_total_length` parsing. `directFetchBlob()` uses `fbcpp::Blob::read()`. | Easy | ✅ |
+| **14.5.3** | **Migrate BLOB write** — `writeBlob()`, `writeStreamHexToBlob()`, `directCreateBlob()`, `directWriteBlob()` all use `fbcpp::Blob(attachment, transaction)` + `writeSegment()`. Blob ID extracted via `getId().id`. | Easy | ✅ |
+| **14.5.4** | **Delete `IscBlob.cpp/.h`, `BinaryBlob.cpp/.h`, `Blob.cpp/.h`** — **DEFERRED**: `Blob.h` abstract interface is used by the ODBC layer (`OdbcConvert.cpp` references `Blob*` through `DescRecord::dataBlobPtr`). `BinaryBlob` is the Stream-based buffer used for caching blob data in memory. Cannot delete without refactoring the ODBC conversion pipeline. | Hard | ❌ |
 
 **Phase 14.6: Metadata & Events Migration**
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **14.6.1** | **Migrate `IscDatabaseMetaData`** — This class uses `IAttachment` for catalog queries. Can remain as-is initially, using fb-cpp's `Attachment::getHandle()` for raw access. | Low | ❌ |
-| **14.6.2** | **Replace `IscUserEvents` with `fbcpp::EventListener`** — fb-cpp provides a modern event listener with background thread dispatch. | Medium | ❌ |
-| **14.6.3** | **Delete `IscUserEvents.cpp/.h`** — After migration, ~300 lines removed. | Easy | ❌ |
+| **14.6.1** | **Migrate `IscDatabaseMetaData`** — This class uses `IAttachment` for catalog queries. Remains as-is, using fb-cpp's `Attachment::getHandle()` for raw access. Low priority — catalog queries are infrequent. | Low | ✅ (deferred — uses raw handle) |
+| **14.6.2** | **Replace `IscUserEvents` internals with `fbcpp::EventListener`** — `IscUserEvents` now creates `fbcpp::EventListener` with RAII lifecycle. Event names collected from `ParametersEvents` linked list. `onEventFired()` callback bridges `fbcpp::EventCount` vector to legacy `ParameterEvent` count/changed fields. Manual event buffer management, `initEventBlock()`, `vaxInteger()`, `eventCounts()` parsing, and `FbEventCallback` OO API bridge class all removed. `queEvents()` simplified — fbcpp auto-re-queues. Thread-safe via `std::mutex`. | Medium | ✅ |
+| **14.6.3** | **Delete `IscUserEvents.cpp/.h`** — **NOT APPLICABLE**: `IscUserEvents` retained as thin wrapper around `fbcpp::EventListener`, implementing the `UserEvents` interface consumed by `OdbcConnection`. Internal complexity reduced from ~250 lines to ~100 lines. | — | ✅ (kept as adapter) |
 
 **Phase 14.7: Error Handling & Utilities Migration**
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **14.7.1** | **Migrate exception handling** — Replace `SQLException` with `fbcpp::DatabaseException`. Update all catch blocks. Extract error vectors for SQLSTATE mapping. | Medium | ❌ |
-| **14.7.2** | **Delete utility classes** — `DateTime.cpp/.h`, `TimeStamp.cpp/.h`, `SqlTime.cpp/.h` — fb-cpp uses `std::chrono`. | Easy | ❌ |
-| **14.7.3** | **Delete `Value.cpp/.h`, `Values.cpp/.h`** — fb-cpp's typed getters eliminate the need for a generic `Value` container. | Easy | ❌ |
-| **14.7.4** | **Delete `JString.cpp/.h`** — Replace remaining usages with `std::string`. | Easy | ❌ |
+| **14.7.1** | **Migrate exception handling** — **DEFERRED**: `SQLException`/`SQLError` hierarchy is deeply embedded (67 catch blocks across ODBC layer, 100+ throw sites in IscDbc). Replacing with `fbcpp::DatabaseException` would require rewriting all catch blocks and the `OdbcObject::postError(SQLException&)` bridge. New fb-cpp code catches `fbcpp::DatabaseException` locally and re-throws as `SQLError` for compatibility. `fbcpp::DatabaseException::getSqlState()` available for future SQLSTATE enrichment. | Hard | ❌ (deferred) |
+| **14.7.2** | **Delete utility classes** — **DEFERRED**: `DateTime`, `TimeStamp`, `SqlTime` are critical to the data retrieval pipeline (used by `Value`, `IscResultSet`, `IscPreparedStatement`). Cannot delete without replacing the `Value` abstraction. | Hard | ❌ (deferred) |
+| **14.7.3** | **Delete `Value.cpp/.h`, `Values.cpp/.h`** — **DEFERRED**: `Value` is the central abstraction for SQLda column/parameter data (20+ callers across 11 files). Would require redesigning the entire fetch pipeline. | Hard | ❌ (deferred) |
+| **14.7.4** | **Delete `JString.cpp/.h`** — **DEFERRED**: 50+ direct usages across both ODBC and IscDbc layers, 11 member fields in DescRecord alone. Gradual replacement with `std::string`/`OdbcString` underway (Phase 12). | Hard | ❌ (deferred) |
 
 **Phase 14.8: Final Cleanup**
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **14.8.1** | **Delete remaining IscDbc files** — `EnvShare.cpp/.h`, `Error.cpp/.h`, `Parameter.cpp/.h`, etc. | Easy | ❌ |
-| **14.8.2** | **Remove `src/IscDbc/` directory** — All code now in fb-cpp or `src/`. | Easy | ❌ |
-| **14.8.3** | **Update CMakeLists.txt** — Remove `add_subdirectory(src/IscDbc)`. Update include paths. | Easy | ❌ |
-| **14.8.4** | **Update documentation** — README, AGENTS.md, this master plan. | Easy | ❌ |
-| **14.8.5** | **Run full test suite** — All 401 tests must pass. | Easy | ❌ |
+| **14.8.1** | **Delete remaining IscDbc files** — **DEFERRED**: Most IscDbc files still in active use. Legacy `Attachment.h/.cpp` is dead code (not in CMakeLists.txt) and can be deleted when convenient. | Easy | ❌ (deferred) |
+| **14.8.2** | **Remove `src/IscDbc/` directory** — **DEFERRED**: Requires completion of Phases 14.7.1–14.7.4 first. | Hard | ❌ (deferred) |
+| **14.8.3** | **Update CMakeLists.txt** — No changes needed currently. IscDbc still built as static library. | — | ✅ |
+| **14.8.4** | **Update documentation** — Master plan updated to reflect Phase 14.5–14.8 status. | Easy | ✅ |
+| **14.8.5** | **Run full test suite** — All 401 tests pass on both Debug and Release builds. | Easy | ✅ |
 
 #### Code Reduction Estimate
 
