@@ -735,7 +735,7 @@ bool IscStatement::execute()
 		if ( useSavepoint )
 			connection->setSavepoint(svpName);
 
-		inputSqlda.checkAndRebuild();
+		sqlda_check_and_rebuild(inputSqlda);
 		auto* _imeta = inputSqlda.useExecBufferMeta ? inputSqlda.execMeta   : inputSqlda.meta;
 		// Phase 14.4.7.1: Use active buffer (external fbcpp::inMessage or internal).
 		auto* _ibufPtr = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer.data()
@@ -836,7 +836,7 @@ bool IscStatement::executeProcedure()
 		if ( useSavepoint )
 			connection->setSavepoint(svpName);
 
-		inputSqlda.checkAndRebuild();
+		sqlda_check_and_rebuild(inputSqlda);
 		auto* _imeta = inputSqlda.useExecBufferMeta ? inputSqlda.execMeta   : inputSqlda.meta;
 		// Phase 14.4.7.1: Use active buffer (external fbcpp::inMessage or internal).
 		auto* _ibufPtr = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer.data()

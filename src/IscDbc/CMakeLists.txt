@@ -3,6 +3,7 @@
 set(ISCDBC_SOURCES
     BinaryBlob.cpp
     Blob.cpp
+    CDataStaticCursor.cpp
     DateTime.cpp
     EnvShare.cpp
     extodbc.cpp
@@ -40,6 +41,7 @@ set(ISCDBC_SOURCES
     Parameters.cpp
     ParametersEvents.cpp
     Sqlda.cpp
+    SqldaMetadata.cpp
     SQLError.cpp
     SqlTime.cpp
     Stream.cpp
@@ -53,6 +55,8 @@ set(ISCDBC_HEADERS
     BinaryBlob.h
     BinToHexStr.h
     Blob.h
+    CAttrSqlVar.h
+    CDataStaticCursor.h
     Connection.h
     DateTime.h
     EnvShare.h
@@ -98,6 +102,7 @@ set(ISCDBC_HEADERS
     ParametersEvents.h
     Properties.h
     Sqlda.h
+    SqldaMetadata.h
     SQLError.h
     SQLException.h
     SqlTime.h

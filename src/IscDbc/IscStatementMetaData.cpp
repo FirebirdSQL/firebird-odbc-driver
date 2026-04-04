@@ -30,6 +30,7 @@
 #include "IscStatementMetaData.h"
 #include "IscColumnKeyInfo.h"
 #include "Sqlda.h"
+#include "SqldaMetadata.h"
 #include "MultibyteConvert.h"
 
 namespace IscDbcLibrary {
@@ -51,47 +52,55 @@ int IscStatementMetaData::getColumnCount()
 
 int IscStatementMetaData::getColumnType(int index, int &realSqlType)
 {
-	return sqlda->getColumnType (index, realSqlType);
+	return sqlda_get_sql_type(sqlda->Var(index), realSqlType);
 }
 
 int IscStatementMetaData::getPrecision(int index)
 {
-	return sqlda->getPrecision (index);
+	return sqlda_get_precision(sqlda->Var(index));
 }
 
 int IscStatementMetaData::getNumPrecRadix(int index)
 {
-	return sqlda->getNumPrecRadix (index);
+	return sqlda_get_num_prec_radix(sqlda->Var(index));
 }
 
 int IscStatementMetaData::getScale(int index)
 {
-	return -sqlda->getScale (index);
+	auto* var = sqlda->Var(index);
+	switch (var->sqltype)
+	{
+	case SQL_TIMESTAMP:
+	case SQL_TYPE_TIME:
+		return -ISC_TIME_SECONDS_PRECISION_SCALE;
+	}
+	return -var->sqlscale;
 }
 
 bool IscStatementMetaData::isNullable(int index)
 {
-	return sqlda->isNullable (index);
+	return sqlda->Var(index)->isNullable;
 }
 
 int IscStatementMetaData::getColumnDisplaySize(int index)
 {
-	return sqlda->getColumnDisplaySize(index);
+	return sqlda_get_column_display_size(sqlda->effectiveVarProperties(index), sqlda->Var(index));
 }
 
 const char* IscStatementMetaData::getColumnLabel(int index)
 {
-	return sqlda->getColumnLabel(index);
+	auto* var = sqlda->Var(index);
+	return (var->aliasname && *var->aliasname) ? var->aliasname : var->sqlname;
 }
 
 const char* IscStatementMetaData::getSqlTypeName(int index)
 {
-	return sqlda->getColumnTypeName(index);
+	return sqlda_get_sql_type_name(sqlda->Var(index));
 }
 
 const char* IscStatementMetaData::getColumnName(int index)
 {
-	return sqlda->getColumnName(index);
+	return sqlda->Var(index)->sqlname;
 }
 
 const char* IscStatementMetaData::getTableName(int index)
@@ -101,7 +110,7 @@ const char* IscStatementMetaData::getTableName(int index)
 
 const char* IscStatementMetaData::getColumnTypeName(int index)
 {
-	return sqlda->getColumnTypeName(index);
+	return sqlda_get_sql_type_name(sqlda->Var(index));
 }
 
 bool IscStatementMetaData::isSigned(int index)
@@ -142,7 +151,7 @@ bool IscStatementMetaData::isAutoIncrement(int index)
 bool IscStatementMetaData::isSearchable(int index)
 {
 	int realSqlType;
-	int type = sqlda->getColumnType (index, realSqlType);
+	int type = sqlda_get_sql_type(sqlda->Var(index), realSqlType);
 
 	return type != JDBC_LONGVARCHAR && type != JDBC_LONGVARBINARY;
 }
@@ -156,7 +165,7 @@ bool IscStatementMetaData::isColumnPrimaryKey( int index )
 {
 	IscColumnKeyInfo keyInfo( (IscDatabaseMetaData*)statement->connection->getMetaData() );
 
-	return keyInfo.getColumnKeyInfo( sqlda->getTableName( index ), sqlda->getColumnName( index ) );
+	return keyInfo.getColumnKeyInfo( sqlda->getTableName( index ), sqlda->Var( index )->sqlname );
 }
 
 const char* IscStatementMetaData::getSchemaName(int index)
@@ -183,7 +192,7 @@ void IscStatementMetaData::createBlobDataTransfer(int index, Blob *& ptDataBlob)
 		if ( isRet == SQL_BLOB )
 		{
 			IscBlob * pt = new IscBlob;
-			pt->setType(sqlda->getSubType(index));
+			pt->setType(sqlda->Var(index)->sqlsubtype);
 			pt->setMinSegment( DEFAULT_BLOB_BUFFER_LENGTH );
 			pt->setConsecutiveRead( true );
 			pt->statement = statement;
@@ -191,7 +200,6 @@ void IscStatementMetaData::createBlobDataTransfer(int index, Blob *& ptDataBlob)
 		}
 		else // if ( isRet == SQL_ARRAY )
 		{
-			//IscArray * pt = new IscArray(statement, sqlda->Var(index));
 			IscArray * pt = new IscArray(statement, sqlda->Var( index ));
 			ptDataBlob = pt;
 		}
@@ -212,13 +220,13 @@ void IscStatementMetaData::getSqlData(int index, Blob *& ptDataBlob, HeadSqlVar 
 
 WCSTOMBS IscStatementMetaData::getAdressWcsToMbs( int index )
 {
-	int charsetCode = isBlobOrArray( index ) ? statement->connection->getConnectionCharsetCode() : sqlda->getSubType( index ) & 0xff;
+	int charsetCode = isBlobOrArray( index ) ? statement->connection->getConnectionCharsetCode() : sqlda->Var( index )->sqlsubtype & 0xff;
 	return adressWcsToMbs( charsetCode );
 }
 
 MBSTOWCS IscStatementMetaData::getAdressMbsToWcs( int index )
 {
-	int charsetCode = isBlobOrArray( index ) ? statement->connection->getConnectionCharsetCode() : sqlda->getSubType( index ) & 0xff;
+	int charsetCode = isBlobOrArray( index ) ? statement->connection->getConnectionCharsetCode() : sqlda->Var( index )->sqlsubtype & 0xff;
 	return adressMbsToWcs( charsetCode );
 }
 

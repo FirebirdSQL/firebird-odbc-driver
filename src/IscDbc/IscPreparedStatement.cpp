@@ -359,7 +359,7 @@ bool IscPreparedStatement::executeCallable()
 	ThrowStatusWrapper status(connection->GDS->_status);
 	try
 	{
-		inputSqlda.checkAndRebuild();
+		sqlda_check_and_rebuild(inputSqlda);
 		auto* _imeta = inputSqlda.useExecBufferMeta ? inputSqlda.execMeta : inputSqlda.meta;
 		auto* _ibufPtr = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer.data()
 		                                              : inputSqlda.activeBufferData();

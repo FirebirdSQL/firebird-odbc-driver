@@ -18,297 +18,210 @@
  *  All Rights Reserved.
  */
 
-// Sqlda.h: interface for the Sqlda class.
+// Sqlda.h: Sqlda data container and free-function interface.
 //
+// Phase 14.4.7.5c: CAttrSqlVar/SqlProperties/AlignedAllocator extracted
+// to CAttrSqlVar.h. All methods converted to free functions except trivial
+// inline accessors.
 //////////////////////////////////////////////////////////////////////
 
 #if !defined(_SQLDA_H_INCLUDED_)
 #define _SQLDA_H_INCLUDED_
 
-#include <vector>
-#include <memory>
-#include <cstddef>
-#include "IscArray.h"
+#include "CAttrSqlVar.h"
 #include <sqltypes.h>
 
 namespace IscDbcLibrary {
 
-/// Allocator that aligns memory to cache-line boundaries (64 bytes).
-/// Used for Sqlda::buffer to improve prefetch efficiency during fetch loops.
-template <typename T, std::size_t Alignment = 64>
-struct AlignedAllocator {
-    using value_type = T;
-
-    AlignedAllocator() noexcept = default;
-    template <typename U> AlignedAllocator(const AlignedAllocator<U, Alignment>&) noexcept {}
-
-    T* allocate(std::size_t n) {
-        void* ptr = nullptr;
-        std::size_t bytes = n * sizeof(T);
-#ifdef _WIN32
-        ptr = _aligned_malloc(bytes, Alignment);
-        if (!ptr) throw std::bad_alloc();
-#else
-        if (posix_memalign(&ptr, Alignment, bytes)) throw std::bad_alloc();
-#endif
-        return static_cast<T*>(ptr);
-    }
-
-    void deallocate(T* ptr, std::size_t) noexcept {
-#ifdef _WIN32
-        _aligned_free(ptr);
-#else
-        free(ptr);
-#endif
-    }
-
-    template <typename U> struct rebind { using other = AlignedAllocator<U, Alignment>; };
-    template <typename U> bool operator==(const AlignedAllocator<U, Alignment>&) const noexcept { return true; }
-    template <typename U> bool operator!=(const AlignedAllocator<U, Alignment>&) const noexcept { return false; }
-};
-
-struct SqlProperties
-{
-	unsigned		offsetData;
-	unsigned		offsetNull;
-	bool			isNullable;
-	const char*		sqlname;
-	const char*		relname;
-	const char*		aliasname;
-	short			sqltype;			/* datatype of field */
-	short			sqlscale;			/* scale factor */
-	short			sqlsubtype;			/* datatype subtype - BLOBs & Text types only */
-	unsigned		sqlcharset;
-	unsigned		sqllen;				/* length of data area */
-
-	inline SqlProperties() :
-		offsetData{ 0 },
-		offsetNull{ 0 },
-		isNullable{ false },
-		sqlname{ nullptr },
-		relname{ nullptr },
-		aliasname{ nullptr },
-		sqltype{ 0 },
-		sqlscale{ 0 },
-		sqlsubtype{ 0 },
-		sqlcharset{ 0 },
-		sqllen{ 0 }
-	{}
-
-	inline bool operator==(const SqlProperties& other) const
-	{
-		return
-			sqltype == other.sqltype &&
-			sqlscale == other.sqlscale &&
-			sqlsubtype == other.sqlsubtype &&
-			sqllen == other.sqllen;
-	}
-};
-
-class CAttrSqlVar : public SqlProperties
-{
-public:
-	CAttrSqlVar() :
-		SqlProperties{},
-
-		sqldata{ nullptr },
-		sqlind{ nullptr },
-
-		eff_sqldata{ nullptr }, eff_sqlind{ nullptr },
-
-		array{ nullptr },
-		index{ 0 },
-		replaceForParamArray{ false }
-	{}
-
-	~CAttrSqlVar()	
-	{ 
-		if ( array ) 
-			delete array; 
-	}
-
-	using buffer_t = std::vector<char, AlignedAllocator<char, 64>>;
-
-private:
-	inline void bindProperties( Firebird::ThrowStatusWrapper& status, Firebird::IMessageMetadata* _meta, unsigned _index ) {
-		index = _index;
-		//
-		offsetData = _meta->getOffset    ( &status, index );
-		offsetNull = _meta->getNullOffset( &status, index );
-		isNullable = _meta->isNullable   ( &status, index );
-		sqlname    = _meta->getField     ( &status, index );
-		relname    = _meta->getRelation  ( &status, index );
-		aliasname  = _meta->getAlias     ( &status, index );
-		//attention - ooapi may return type+bit if getType() is called from IMetadataBuilder!
-		sqltype    = _meta->getType      ( &status, index ) & ~1;
-		//
-		sqlscale   = _meta->getScale     ( &status, index );
-		sqlsubtype = _meta->getSubType   ( &status, index );
-		sqlcharset = _meta->getCharSet   ( &status, index );
-		sqllen     = _meta->getLength    ( &status, index );
-
-		//OOAPI provides subtype & charset separately
-		if (sqltype == SQL_TEXT || sqltype == SQL_VARYING)
-		{
-			sqlsubtype = sqlcharset;
-		}
-		//
-		++index; //to make it 1-based)
-
-		orgSqlProperties = *this; // save original props
-		lastSqlProperties = *this;
-	}
-
-public:
-	inline void assign(Firebird::ThrowStatusWrapper& status, Firebird::IMessageMetadata* _meta, buffer_t& _buffer, unsigned _index)
-	{
-		bindProperties( status, _meta, _index );
-		assignBuffer( _buffer );
-	}
-
-	inline void assignBuffer(buffer_t& buffer ) {
-		eff_sqldata = sqldata = &buffer.at( offsetData );
-		eff_sqlind  = sqlind  = (short*)&buffer.at( offsetNull );
-	}
-
-	/// Phase 14.4.7.1: Assign sqlvar pointers into a raw external buffer.
-	inline void assignBuffer(char* buf, [[maybe_unused]] size_t bufSize) {
-		eff_sqldata = sqldata = buf + offsetData;
-		eff_sqlind  = sqlind  = (short*)(buf + offsetNull);
-	}
-
-	inline bool propertiesOverriden() {
-		return !( *this == lastSqlProperties);
-	}
-
-	char*           sqldata;
-	short*          sqlind;
-	char*			eff_sqldata;
-	short*			eff_sqlind;
-	CAttrArray		*array;
-	unsigned		index;				// 1-based parameter index
-
-	bool			replaceForParamArray;
-	SqlProperties	orgSqlProperties;	// original properties after prepare
-	SqlProperties	lastSqlProperties;	// last used properties after prev exec
-};
-
 class Value;
 class IscConnection;
+class IscStatement;
 class CDataStaticCursor;
 
-class Sqlda
+/// Sqlda — Firebird message buffer container for input parameters or output columns.
+/// After Phase 14.4.7.5c this is a plain data struct; all behavior lives in free functions.
+struct Sqlda
 {
-public:
-	using buffer_t = std::vector<char, AlignedAllocator<char, 64>>;
+	using buffer_t = CAttrSqlVar::buffer_t;
+	using orgsqlvar_t = std::vector<CAttrSqlVar>;
 
 	enum e_sqlda_dir {
 		SQLDA_INPUT,
 		SQLDA_OUTPUT,
 	};
 
-protected:
-	buffer_t& initStaticCursor(IscStatement* stmt);
-	buffer_t& addRowSqldaInBufferStaticCursor();
-	void restoreOrgAdressFieldsStaticCursor();
-	e_sqlda_dir SqldaDir;
-
-public:
-	const char* getOwnerName(int index);
-	int findColumn(const char* columnName);
-	void setBlob(CAttrSqlVar* var, Value* value, IscStatement* stmt);
-	void setArray(CAttrSqlVar* var, Value* value, IscStatement* stmt);
-	void setValue(int slot, Value* value, IscStatement* stmt);
-	const char* getTableName(int index);
-	int getSqlType(CAttrSqlVar* var, int& realSqlType);
-	const char* getSqlTypeName(CAttrSqlVar* var);
-	bool isNullable(int index);
-	int getScale(int index);
-	int getPrecision(int index);
-	int getNumPrecRadix(int index);
-	const char* getColumnLabel(int index);
-	const char* getColumnName(int index);
-	int getColumnDisplaySize(int index);
-	short getSubType(int index);
-	int getColumnType(int index, int& realSqlType);
-	const char* getColumnTypeName(int index);
-	void print();
-	bool setCurrentRowInBufferStaticCursor(int nRow);
-	void getAdressFieldFromCurrentRowInBufferStaticCursor(int column, char*& sqldata, short*& sqlind);
-	void copyNextSqldaInBufferStaticCursor();
-	void copyNextSqldaFromBufferStaticCursor();
-	void saveCurrentSqldaToBuffer();
-	void restoreBufferToCurrentSqlda();
-	int getCountRowsStaticCursor();
-	int getColumnCount();
-	void init();
-	void remove();
-	void allocBuffer(IscStatement* stmt, Firebird::IMessageMetadata* msgMetadata);
-
-	/// Phase 14.4.7.1: Remap sqlvar pointers from the internal buffer to an
-	/// external buffer (e.g., fbcpp::Statement::getInputMessage()). Both buffers
-	/// share the same IMessageMetadata layout, so the offsets are identical.
-	/// The internal Sqlda::buffer is released to save memory.
-	void remapToExternalBuffer(char* externalBuf, size_t externalBufSize);
-
-	void mapSqlAttributes(IscStatement* stmt);
-	void deleteSqlda();
-	void clearSqlda();
-	CAttrSqlVar* Var(int index) { return &sqlvar.at(index - 1); }
-	const SqlProperties* orgVarSqlProperties(int index) { return &sqlvar.at(index - 1).orgSqlProperties; }
-
 	Sqlda(IscConnection* conn, e_sqlda_dir dir);
 	~Sqlda();
 
-	int isBlobOrArray(int index);
-	bool isNull(int index);
-	void setNull(int index);
-	void setNotNull(int index);
+	// Trivial inline accessors
+	CAttrSqlVar* Var(int index) { return &sqlvar.at(index - 1); }
+	const SqlProperties* orgVarSqlProperties(int index) { return &sqlvar.at(index - 1).orgSqlProperties; }
 
-	bool getBoolean(int index);
-	short getShort(int index);
-	int getInt(int index);
-	char* getText(int index, int& len);
-	char* getVarying(int index, int& len);
+	const SqlProperties* effectiveVarProperties(int index) {
+		return (SqldaDir == SQLDA_INPUT) ? orgVarSqlProperties(index) : Var(index);
+	}
 
-	void updateBoolean(int index, bool value);
-	void updateShort(int index, short value);
-	void updateInt(int index, int value);
-	void updateText(int index, const char* value);
-	void updateVarying(int index, const char* dst);
+	int getColumnCount() const { return columnsCount; }
 
-	CDataStaticCursor* dataStaticCursor;
-	int			lengthBufferRows;
-
-	IscConnection* connection;
-	Firebird::IMessageMetadata* meta, * execMeta;
-	buffer_t buffer, execBuffer;
-	bool useExecBufferMeta;	//flag, if true - use execMeta/execBuffer instead of meta/buffer
-
-	/// Phase 14.4.7.1: External buffer support.
-	/// When non-null, sqlvar pointers target this external buffer
-	/// and the internal Sqlda::buffer is empty.
-	char* externalBuffer_ = nullptr;
-	size_t externalBufferSize_ = 0;
-
-	/// Returns the active input buffer data pointer (external if mapped, otherwise internal).
 	char* activeBufferData() { return externalBuffer_ ? externalBuffer_ : buffer.data(); }
 	size_t activeBufferSize() const { return externalBuffer_ ? externalBufferSize_ : buffer.size(); }
 
-	using orgsqlvar_t = std::vector<CAttrSqlVar>;
-	orgsqlvar_t sqlvar;
-
-	unsigned columnsCount;
-
-	friend class IscResultSet;
-
-	inline bool isExternalOverriden() {
+	bool isExternalOverriden() {
 		for (auto& var : sqlvar) if (var.propertiesOverriden()) return true;
 		return false;
 	}
 
-	bool checkAndRebuild();
+	// Data members
+	e_sqlda_dir SqldaDir;
+	IscConnection* connection;
+	CDataStaticCursor* dataStaticCursor;
+	Firebird::IMessageMetadata* meta;
+	Firebird::IMessageMetadata* execMeta;
+	buffer_t buffer;
+	buffer_t execBuffer;
+	bool useExecBufferMeta;
+	int	lengthBufferRows;
+	char* externalBuffer_;
+	size_t externalBufferSize_;
+	orgsqlvar_t sqlvar;
+	unsigned columnsCount;
+
+	// ─── Inline wrappers (defined after free-function declarations) ──
+	inline void clearSqlda();
+	inline void deleteSqlda();
+	inline void allocBuffer(IscStatement* st, Firebird::IMessageMetadata* m);
+	inline void remapToExternalBuffer(char* b, size_t sz);
+
+	inline buffer_t& initStaticCursor(IscStatement* st);
+	inline buffer_t& addRowSqldaInBufferStaticCursor();
+	inline void restoreOrgAdressFieldsStaticCursor();
+	inline bool setCurrentRowInBufferStaticCursor(int r);
+	inline void getAdressFieldFromCurrentRowInBufferStaticCursor(int c, char*& d, short*& i);
+	inline void copyNextSqldaInBufferStaticCursor();
+	inline void copyNextSqldaFromBufferStaticCursor();
+	inline void saveCurrentSqldaToBuffer();
+	inline void restoreBufferToCurrentSqlda();
+	inline int  getCountRowsStaticCursor();
+
+	inline void setValue(int slot, Value* v, IscStatement* st);
+	inline int  findColumn(const char* name);
+	inline const char* getTableName(int idx);
+	inline const char* getOwnerName(int idx);
+	inline int  isBlobOrArray(int idx);
+	inline bool isNull(int idx);
+	inline void setNull(int idx);
+	inline void setNotNull(int idx);
+
+	inline bool  getBoolean(int idx);
+	inline short getShort(int idx);
+	inline int   getInt(int idx);
+	inline char* getText(int idx, int& len);
+	inline char* getVarying(int idx, int& len);
+
+	inline void updateBoolean(int idx, bool v);
+	inline void updateShort(int idx, short v);
+	inline void updateInt(int idx, int v);
+	inline void updateText(int idx, const char* v);
+	inline void updateVarying(int idx, const char* v);
+
+	inline void print();
 };
+
+// ─── Lifecycle free functions ────────────────────────────────────────
+void sqlda_init(Sqlda& s);
+void sqlda_remove(Sqlda& s);
+void sqlda_clear(Sqlda& s);
+void sqlda_delete(Sqlda& s);
+
+// ─── Buffer management free functions ────────────────────────────────
+void sqlda_alloc_buffer(Sqlda& s, IscStatement* stmt, Firebird::IMessageMetadata* msgMetadata);
+void sqlda_remap_to_external_buffer(Sqlda& s, char* externalBuf, size_t externalBufSize);
+void sqlda_map_sql_attributes(Sqlda& s, IscStatement* stmt);
+
+// ─── Static cursor free functions ────────────────────────────────────
+Sqlda::buffer_t& sqlda_init_static_cursor(Sqlda& s, IscStatement* stmt);
+Sqlda::buffer_t& sqlda_add_row_static_cursor(Sqlda& s);
+void sqlda_restore_org_address_fields_static_cursor(Sqlda& s);
+bool sqlda_set_current_row_static_cursor(Sqlda& s, int nRow);
+void sqlda_get_address_field_static_cursor(Sqlda& s, int column, char*& sqldata, short*& sqlind);
+void sqlda_copy_next_in_buffer_static_cursor(Sqlda& s);
+void sqlda_copy_next_from_buffer_static_cursor(Sqlda& s);
+void sqlda_save_current_to_buffer(Sqlda& s);
+void sqlda_restore_buffer_to_current(Sqlda& s);
+int sqlda_get_count_rows_static_cursor(Sqlda& s);
+
+// ─── Data access free functions ──────────────────────────────────────
+void sqlda_set_value(Sqlda& s, int slot, Value* value, IscStatement* stmt);
+void sqlda_set_blob(Sqlda& s, CAttrSqlVar* var, Value* value, IscStatement* stmt);
+void sqlda_set_array(Sqlda& s, CAttrSqlVar* var, Value* value, IscStatement* stmt);
+
+int sqlda_find_column(Sqlda& s, const char* columnName);
+const char* sqlda_get_table_name(Sqlda& s, int index);
+const char* sqlda_get_owner_name(Sqlda& s, int index);
+int sqlda_is_blob_or_array(Sqlda& s, int index);
+bool sqlda_is_null(Sqlda& s, int index);
+void sqlda_set_null(Sqlda& s, int index);
+void sqlda_set_not_null(Sqlda& s, int index);
+
+bool sqlda_get_boolean(Sqlda& s, int index);
+short sqlda_get_short(Sqlda& s, int index);
+int sqlda_get_int(Sqlda& s, int index);
+char* sqlda_get_text(Sqlda& s, int index, int& len);
+char* sqlda_get_varying(Sqlda& s, int index, int& len);
+
+void sqlda_update_boolean(Sqlda& s, int index, bool value);
+void sqlda_update_short(Sqlda& s, int index, short value);
+void sqlda_update_int(Sqlda& s, int index, int value);
+void sqlda_update_text(Sqlda& s, int index, const char* value);
+void sqlda_update_varying(Sqlda& s, int index, const char* dst);
+
+void sqlda_print(Sqlda& s);
+
+/// Phase 14.4.7.5d: Free function for metadata rebuild before parameter execution.
+bool sqlda_check_and_rebuild(Sqlda& sqlda);
+
+// ─── Inline wrapper definitions ──────────────────────────────────────
+// Thin forwarders for backward-compatible call sites.
+// New code should prefer calling the sqlda_*() free functions directly.
+
+inline void Sqlda::clearSqlda()                            { sqlda_clear(*this); }
+inline void Sqlda::deleteSqlda()                           { sqlda_delete(*this); }
+inline void Sqlda::allocBuffer(IscStatement* st, Firebird::IMessageMetadata* m) { sqlda_alloc_buffer(*this, st, m); }
+inline void Sqlda::remapToExternalBuffer(char* b, size_t sz) { sqlda_remap_to_external_buffer(*this, b, sz); }
+
+inline Sqlda::buffer_t& Sqlda::initStaticCursor(IscStatement* st) { return sqlda_init_static_cursor(*this, st); }
+inline Sqlda::buffer_t& Sqlda::addRowSqldaInBufferStaticCursor()  { return sqlda_add_row_static_cursor(*this); }
+inline void Sqlda::restoreOrgAdressFieldsStaticCursor()    { sqlda_restore_org_address_fields_static_cursor(*this); }
+inline bool Sqlda::setCurrentRowInBufferStaticCursor(int r){ return sqlda_set_current_row_static_cursor(*this, r); }
+inline void Sqlda::getAdressFieldFromCurrentRowInBufferStaticCursor(int c, char*& d, short*& i) { sqlda_get_address_field_static_cursor(*this, c, d, i); }
+inline void Sqlda::copyNextSqldaInBufferStaticCursor()     { sqlda_copy_next_in_buffer_static_cursor(*this); }
+inline void Sqlda::copyNextSqldaFromBufferStaticCursor()   { sqlda_copy_next_from_buffer_static_cursor(*this); }
+inline void Sqlda::saveCurrentSqldaToBuffer()              { sqlda_save_current_to_buffer(*this); }
+inline void Sqlda::restoreBufferToCurrentSqlda()           { sqlda_restore_buffer_to_current(*this); }
+inline int  Sqlda::getCountRowsStaticCursor()              { return sqlda_get_count_rows_static_cursor(*this); }
+
+inline void Sqlda::setValue(int slot, Value* v, IscStatement* st) { sqlda_set_value(*this, slot, v, st); }
+inline int  Sqlda::findColumn(const char* name)            { return sqlda_find_column(*this, name); }
+inline const char* Sqlda::getTableName(int idx)            { return sqlda_get_table_name(*this, idx); }
+inline const char* Sqlda::getOwnerName(int idx)            { return sqlda_get_owner_name(*this, idx); }
+inline int  Sqlda::isBlobOrArray(int idx)                  { return sqlda_is_blob_or_array(*this, idx); }
+inline bool Sqlda::isNull(int idx)                         { return sqlda_is_null(*this, idx); }
+inline void Sqlda::setNull(int idx)                        { sqlda_set_null(*this, idx); }
+inline void Sqlda::setNotNull(int idx)                     { sqlda_set_not_null(*this, idx); }
+
+inline bool  Sqlda::getBoolean(int idx)                    { return sqlda_get_boolean(*this, idx); }
+inline short Sqlda::getShort(int idx)                      { return sqlda_get_short(*this, idx); }
+inline int   Sqlda::getInt(int idx)                        { return sqlda_get_int(*this, idx); }
+inline char* Sqlda::getText(int idx, int& len)             { return sqlda_get_text(*this, idx, len); }
+inline char* Sqlda::getVarying(int idx, int& len)          { return sqlda_get_varying(*this, idx, len); }
+
+inline void Sqlda::updateBoolean(int idx, bool v)          { sqlda_update_boolean(*this, idx, v); }
+inline void Sqlda::updateShort(int idx, short v)           { sqlda_update_short(*this, idx, v); }
+inline void Sqlda::updateInt(int idx, int v)               { sqlda_update_int(*this, idx, v); }
+inline void Sqlda::updateText(int idx, const char* v)      { sqlda_update_text(*this, idx, v); }
+inline void Sqlda::updateVarying(int idx, const char* v)   { sqlda_update_varying(*this, idx, v); }
+
+inline void Sqlda::print()                                 { sqlda_print(*this); }
 
 }; // end namespace IscDbcLibrary
 
