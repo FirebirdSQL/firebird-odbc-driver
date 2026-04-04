@@ -50,7 +50,8 @@ jobs:
       run: |
         $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
         Push-Location $vcpkgRoot
-        git pull --quiet
+        git fetch --quiet origin
+        git reset --hard origin/master --quiet
         if ($IsWindows) { & ./bootstrap-vcpkg.bat -disableMetrics } else { & ./bootstrap-vcpkg.sh -disableMetrics }
         Pop-Location
 
@@ -111,7 +112,8 @@ jobs:
     - name: Update vcpkg
       run: |
         cd "$VCPKG_INSTALLATION_ROOT"
-        git pull --quiet
+        git fetch --quiet origin
+        git reset --hard origin/master --quiet
         ./bootstrap-vcpkg.sh -disableMetrics
 
     - name: Cache vcpkg packages
