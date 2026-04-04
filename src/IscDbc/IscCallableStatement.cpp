@@ -107,9 +107,11 @@ bool IscCallableStatement::execute()
 	{
 		inputSqlda.checkAndRebuild();
 		auto* _imeta = inputSqlda.useExecBufferMeta ? inputSqlda.execMeta   : inputSqlda.meta;
-		auto& _ibuf  = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer : inputSqlda.buffer;
+		// Phase 14.4.7.1: Use active buffer (external fbcpp::inMessage or internal).
+		auto* _ibufPtr = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer.data()
+		                                              : inputSqlda.activeBufferData();
 
-		statementHandle->execute( &status, transHandle, _imeta, _ibuf.data(),
+		statementHandle->execute( &status, transHandle, _imeta, _ibufPtr,
 		                                                outputSqlda.meta, outputSqlda.buffer.data() );
 	}
 	catch( const FbException& error )

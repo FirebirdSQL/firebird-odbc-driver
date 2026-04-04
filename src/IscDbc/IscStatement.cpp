@@ -639,6 +639,20 @@ void IscStatement::prepareStatement(const char * sqlString)
 			inputSqlda.allocBuffer( this, statementHandle->getInputMetadata( &fbcppStatus ) );
 			outputSqlda.allocBuffer( this, statementHandle->getOutputMetadata( &fbcppStatus ) );
 
+			// Phase 14.4.7.1: Remap input sqlvar pointers to fbcpp's inMessage
+			// buffer, eliminating the duplicate Sqlda::buffer for input parameters.
+			// Both buffers share the same IMessageMetadata layout.
+			auto& inMsg = fbStatement_->getInputMessage();
+			if (!inMsg.empty())
+				inputSqlda.remapToExternalBuffer(
+					reinterpret_cast<char*>(inMsg.data()), inMsg.size());
+
+			// Note: Output sqlvar is NOT remapped to fbcpp::outMessage.
+			// The IRD records cache dataPtr at defFromMetaDataOut() time,
+			// and remapping would desynchronize them when static cursors
+			// call initStaticCursor() (which re-allocates the internal buffer).
+			// The output Sqlda::buffer is the stable target for all fetch paths.
+
 			openCursor = ( statementHandle->getFlags(&fbcppStatus) & IStatement::FLAG_HAS_CURSOR );
 		}
 		catch( const fbcpp::DatabaseException& e )
@@ -718,11 +732,13 @@ bool IscStatement::execute()
 
 		inputSqlda.checkAndRebuild();
 		auto* _imeta = inputSqlda.useExecBufferMeta ? inputSqlda.execMeta   : inputSqlda.meta;
-		auto& _ibuf  = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer : inputSqlda.buffer;
+		// Phase 14.4.7.1: Use active buffer (external fbcpp::inMessage or internal).
+		auto* _ibufPtr = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer.data()
+		                                              : inputSqlda.activeBufferData();
 
 		if( openCursor == false )
 		{
-			statementHandle->execute( &status, transHandle, _imeta, _ibuf.data(), NULL, NULL);
+			statementHandle->execute( &status, transHandle, _imeta, _ibufPtr, NULL, NULL);
 		}
 		else
 		{
@@ -730,7 +746,7 @@ bool IscStatement::execute()
 				? IStatement::CURSOR_TYPE_SCROLLABLE
 				: 0;
 			fbResultSet = statementHandle->openCursor( &status, transHandle,
-			                                           _imeta, _ibuf.data(),
+			                                           _imeta, _ibufPtr,
 			                                           outputSqlda.meta, cursorFlags );
 		}
 
@@ -817,10 +833,12 @@ bool IscStatement::executeProcedure()
 
 		inputSqlda.checkAndRebuild();
 		auto* _imeta = inputSqlda.useExecBufferMeta ? inputSqlda.execMeta   : inputSqlda.meta;
-		auto& _ibuf  = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer : inputSqlda.buffer;
+		// Phase 14.4.7.1: Use active buffer (external fbcpp::inMessage or internal).
+		auto* _ibufPtr = inputSqlda.useExecBufferMeta ? inputSqlda.execBuffer.data()
+		                                              : inputSqlda.activeBufferData();
 
 		statementHandle->execute( &status, transHandle,
-		                          _imeta, _ibuf.data(),
+		                          _imeta, _ibufPtr,
 		                          outputSqlda.meta, outputSqlda.buffer.data() );
 
 		if ( useSavepoint )

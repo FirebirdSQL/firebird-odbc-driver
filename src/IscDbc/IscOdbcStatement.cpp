@@ -361,12 +361,12 @@ void IscOdbcStatement::batchAdd()
 		}
 
 		// Assemble a contiguous message buffer using the original meta layout.
-		// (Same buffer-assembly logic as before — OdbcConvert may redirect sqldata
-		// pointers and change types, so we must put data back in original format.)
+		// Phase 14.4.7.1: Use active buffer (external fbcpp::inMessage or internal).
+		char* activeBuf = inputSqlda.activeBufferData();
 		for (const auto& var : inputSqlda.sqlvar)
 		{
-			char* bufDest = &inputSqlda.buffer.at(var.offsetData);
-			short* indDest = (short*)&inputSqlda.buffer.at(var.offsetNull);
+			char* bufDest = activeBuf + var.offsetData;
+			short* indDest = (short*)(activeBuf + var.offsetNull);
 
 			*indDest = *var.sqlind;
 
@@ -406,11 +406,11 @@ void IscOdbcStatement::batchAdd()
 				if (origType != SQL_BLOB)
 					continue;
 
-				short* indDest = (short*)&inputSqlda.buffer.at(var.offsetNull);
+				short* indDest = (short*)(activeBuf + var.offsetNull);
 				if (*indDest == -1)
 					continue;
 
-				ISC_QUAD* blobIdInBuf = (ISC_QUAD*)&inputSqlda.buffer.at(var.offsetData);
+				ISC_QUAD* blobIdInBuf = (ISC_QUAD*)(activeBuf + var.offsetData);
 				fbcpp::BlobId existingId;
 				existingId.id = *blobIdInBuf;
 
@@ -419,7 +419,7 @@ void IscOdbcStatement::batchAdd()
 			}
 		}
 
-		batch_->add(1, inputSqlda.buffer.data());
+		batch_->add(1, activeBuf);
 		++batchRowCount_;
 	}
 	catch (const fbcpp::DatabaseException& e)

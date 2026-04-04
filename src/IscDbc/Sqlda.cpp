@@ -348,6 +348,8 @@ void Sqlda::deleteSqlda()
 	sqlvar.clear();
 	buffer.clear();
 	execBuffer.clear();
+	externalBuffer_ = nullptr;
+	externalBufferSize_ = 0;
 
 	if( meta ) {
 		meta->release();
@@ -389,6 +391,26 @@ void Sqlda::allocBuffer ( IscStatement *stmt, IMessageMetadata* msgMetadata )
 
 	buffer.resize( lengthBufferRows );
 	mapSqlAttributes( stmt );
+
+	// Reset external buffer state on fresh allocBuffer
+	externalBuffer_ = nullptr;
+	externalBufferSize_ = 0;
+}
+
+void Sqlda::remapToExternalBuffer(char* externalBuf, size_t externalBufSize)
+{
+	if (!externalBuf || externalBufSize < static_cast<size_t>(lengthBufferRows))
+		throw SQLEXCEPTION(RUNTIME_ERROR, "Sqlda::remapToExternalBuffer(): invalid external buffer");
+
+	externalBuffer_ = externalBuf;
+	externalBufferSize_ = externalBufSize;
+
+	for (auto& var : sqlvar)
+		var.assignBuffer(externalBuffer_, externalBufferSize_);
+
+	// Release the internal buffer — all sqlvar now point to the external one.
+	buffer.clear();
+	buffer.shrink_to_fit();
 }
 
 /*

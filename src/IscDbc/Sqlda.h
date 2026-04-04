@@ -171,6 +171,12 @@ public:
 		eff_sqlind  = sqlind  = (short*)&buffer.at( offsetNull );
 	}
 
+	/// Phase 14.4.7.1: Assign sqlvar pointers into a raw external buffer.
+	inline void assignBuffer(char* buf, [[maybe_unused]] size_t bufSize) {
+		eff_sqldata = sqldata = buf + offsetData;
+		eff_sqlind  = sqlind  = (short*)(buf + offsetNull);
+	}
+
 	inline bool propertiesOverriden() {
 		return !( *this == lastSqlProperties);
 	}
@@ -238,6 +244,13 @@ public:
 	void init();
 	void remove();
 	void allocBuffer(IscStatement* stmt, Firebird::IMessageMetadata* msgMetadata);
+
+	/// Phase 14.4.7.1: Remap sqlvar pointers from the internal buffer to an
+	/// external buffer (e.g., fbcpp::Statement::getInputMessage()). Both buffers
+	/// share the same IMessageMetadata layout, so the offsets are identical.
+	/// The internal Sqlda::buffer is released to save memory.
+	void remapToExternalBuffer(char* externalBuf, size_t externalBufSize);
+
 	void mapSqlAttributes(IscStatement* stmt);
 	void deleteSqlda();
 	void clearSqlda();
@@ -271,6 +284,16 @@ public:
 	Firebird::IMessageMetadata* meta, * execMeta;
 	buffer_t buffer, execBuffer;
 	bool useExecBufferMeta;	//flag, if true - use execMeta/execBuffer instead of meta/buffer
+
+	/// Phase 14.4.7.1: External buffer support.
+	/// When non-null, sqlvar pointers target this external buffer
+	/// and the internal Sqlda::buffer is empty.
+	char* externalBuffer_ = nullptr;
+	size_t externalBufferSize_ = 0;
+
+	/// Returns the active input buffer data pointer (external if mapped, otherwise internal).
+	char* activeBufferData() { return externalBuffer_ ? externalBuffer_ : buffer.data(); }
+	size_t activeBufferSize() const { return externalBuffer_ ? externalBufferSize_ : buffer.size(); }
 
 	using orgsqlvar_t = std::vector<CAttrSqlVar>;
 	orgsqlvar_t sqlvar;
