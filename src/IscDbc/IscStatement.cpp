@@ -615,21 +615,23 @@ void IscStatement::prepareStatement(const char * sqlString)
 	// Ensure a transaction exists for SQL preparation.
 	ITransaction* transHandle = startTransaction();
 
-	// Phase 14.4.1: Use fbcpp::Statement for RAII when connection has fb-cpp
-	// transaction (the common case). Fall back to raw API for edge cases:
-	// shared/DTC connections or legacy dialect 1 databases.
+	// Phase 14.4.1/14.4.7.6: Use fbcpp::Statement for RAII when connection has
+	// fb-cpp attachment+transaction (the common case). Fall back to raw API only
+	// for shared/DTC connections that don't use fb-cpp transaction management.
 	const bool useFbcpp = connection->attachment_
 	                   && connection->transaction_
-	                   && connection->transaction_->isValid()
-	                   && connection->getDatabaseDialect() >= 3;
+	                   && connection->transaction_->isValid();
 
 	if (useFbcpp)
 	{
 		try
 		{
+			fbcpp::StatementOptions opts;
+			opts.setDialect( connection->getDatabaseDialect() );
+
 			fbStatement_ = std::make_unique<fbcpp::Statement>(
 				*connection->attachment_, *connection->transaction_,
-				std::string_view(sqlString));
+				std::string_view(sqlString), opts);
 
 			statementHandle = fbStatement_->getStatementHandle().get();
 
@@ -648,7 +650,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 	}
 	else
 	{
-		// Raw API fallback: shared connections / dialect 1
+		// Raw API fallback: shared/DTC connections without fb-cpp transaction
 		ThrowStatusWrapper status( connection->GDS->_status );
 		try
 		{
@@ -724,9 +726,12 @@ bool IscStatement::execute()
 		}
 		else
 		{
+			unsigned cursorFlags = scrollable_
+				? IStatement::CURSOR_TYPE_SCROLLABLE
+				: 0;
 			fbResultSet = statementHandle->openCursor( &status, transHandle,
 			                                           _imeta, _ibuf.data(),
-			                                           outputSqlda.meta, 0 );
+			                                           outputSqlda.meta, cursorFlags );
 		}
 
 		if ( useSavepoint )
@@ -1068,7 +1073,7 @@ void IscStatement::freeStatementHandle()
 		return;
 	}
 
-	// Raw API fallback cleanup (shared connections / dialect 1)
+	// Raw API fallback cleanup (shared/DTC connections)
 	if ( connection && statementHandle )
 	{
 		ThrowStatusWrapper status( connection->GDS->_status );

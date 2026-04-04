@@ -901,6 +901,10 @@ public:
 	virtual int			batchExecute(unsigned short* statusOut, int nRows) { return 0; }
 	// Cancel/release the batch without executing.
 	virtual void		batchCancel() {}
+
+	// Phase 14.4.5: Scrollable cursor type.
+	// Set before execute to request a scrollable cursor from the server.
+	virtual void		setScrollable(bool scrollable) { (void)scrollable; }
 };
 
 class PropertiesEvents

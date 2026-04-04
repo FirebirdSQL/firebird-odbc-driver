@@ -173,6 +173,7 @@ public:
 	int				summaryUpdateCount;
 	int				typeStmt;
 	bool			openCursor;
+	bool			scrollable_ = false;	///< Phase 14.4.5: True when ODBC requests a scrollable cursor
 };
 
 }; // end namespace IscDbcLibrary

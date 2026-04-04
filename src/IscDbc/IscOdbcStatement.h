@@ -29,6 +29,8 @@
 #include "Connection.h"
 #include "IscStatement.h"
 
+namespace fbcpp { class Batch; }
+
 namespace IscDbcLibrary {
 
 class IscConnection;
@@ -108,18 +110,21 @@ public:
 	virtual void		executeMetaDataQuery();
 	void				getInputParameters();
 
-	// Batch execution (IBatch API, FB4+). Phase 9.1.
+	// Batch execution (fbcpp::Batch, FB4+). Phase 9.1 / 14.4.4.
 	bool				isBatchSupported() override;
 	void				batchBegin() override;
 	void				batchAdd() override;
 	int					batchExecute(unsigned short* statusOut, int nRows) override;
 	void				batchCancel() override;
 
+	// Phase 14.4.5: Scrollable cursor support.
+	void				setScrollable(bool scrollable) override { scrollable_ = scrollable; }
+
 	IscStatementMetaData	*statementMetaDataIPD;
 	IscStatementMetaData	*statementMetaDataIRD;
 
 private:
-	Firebird::IBatch*		batch_ = nullptr;
+	std::unique_ptr<fbcpp::Batch>	batch_;
 	int						batchRowCount_ = 0;
 	bool					batchHasBlobs_ = false;	///< True when input meta has BLOB columns (Phase 9.2)
 };

@@ -24,6 +24,11 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <stdlib.h>
+// Phase 14.4.4: Include fb-cpp BEFORE IscDbc.h to avoid MAX/MIN macro conflicts.
+#include <fb-cpp/Batch.h>
+#include <fb-cpp/Blob.h>
+#include <fb-cpp/Exception.h>
+
 #include "IscDbc.h"
 #include "IscOdbcStatement.h"
 #include "SQLError.h"
@@ -287,7 +292,7 @@ int IscOdbcStatement::objectVersion()
 }
 
 // ============================================================
-// Batch execution (IBatch API, FB4+). Phase 9.1.
+// Batch execution (fbcpp::Batch, FB4+). Phase 9.1 / 14.4.4.
 // ============================================================
 
 // Batch row status constants (matching ODBC SQL_PARAM_* values from SQLEXT.H)
@@ -313,15 +318,12 @@ void IscOdbcStatement::batchBegin()
 	// Don't create the batch yet — we need to wait until after the first
 	// inputParam() call, which may override metadata via setTypeVarying(),
 	// setSqlLen(), etc. The batch will be lazily created in batchAdd().
-	ThrowStatusWrapper status(connection->GDS->_status);
 	try
 	{
 		startTransaction();
 		batchRowCount_ = 0;
 
 		// Phase 9.2: Detect if any input parameter is a BLOB.
-		// If so, we'll enable BLOB_ID_ENGINE policy in the batch BPB
-		// and use registerBlob() for each BLOB value.
 		batchHasBlobs_ = false;
 		for (const auto& var : inputSqlda.sqlvar)
 		{
@@ -340,49 +342,35 @@ void IscOdbcStatement::batchBegin()
 
 void IscOdbcStatement::batchAdd()
 {
-	ThrowStatusWrapper status(connection->GDS->_status);
 	try
 	{
 		// Lazily create the batch on first add().
-		// Use the original metadata (meta) which has the maximum column sizes.
 		if (!batch_)
 		{
-			IUtil* utl = connection->GDS->_master->getUtilInterface();
-			IXpbBuilder* bpb = utl->getXpbBuilder(&status, IXpbBuilder::BATCH, NULL, 0);
+			if (!fbStatement_ || !connection->transaction_ || !connection->transaction_->isValid())
+				throw SQLEXCEPTION(RUNTIME_ERROR, "Batch requires fb-cpp Statement and Transaction");
 
-			bpb->insertTag(&status, IBatch::TAG_RECORD_COUNTS);
-			bpb->insertTag(&status, IBatch::TAG_MULTIERROR);
-			bpb->insertTag(&status, IBatch::TAG_DETAILED_ERRORS);
-
-			// Phase 9.2: Enable inline BLOB support when metadata has BLOB columns.
-			// BLOB_ID_ENGINE lets the batch engine assign internal blob IDs;
-			// we use registerBlob() to map existing server-side blob IDs.
+			fbcpp::BatchOptions opts;
+			opts.setRecordCounts(true);
+			opts.setMultiError(true);
 			if (batchHasBlobs_)
-				bpb->insertInt(&status, IBatch::TAG_BLOB_POLICY, IBatch::BLOB_ID_ENGINE);
+				opts.setBlobPolicy(fbcpp::BlobPolicy::ID_ENGINE);
 
-			batch_ = statementHandle->createBatch(&status, inputSqlda.meta,
-				bpb->getBufferLength(&status), bpb->getBuffer(&status));
-
-			bpb->dispose();
+			batch_ = std::make_unique<fbcpp::Batch>(
+				*fbStatement_, *connection->transaction_, opts);
 		}
 
 		// Assemble a contiguous message buffer using the original meta layout.
-		// The ODBC conversion functions may:
-		// 1. Redirect sqldata to point at app buffers (via setSqlData)
-		// 2. Change sqltype (e.g., SQL_VARYING → SQL_TEXT for array params)
-		// 3. Change sqllen to the actual data length
-		//
-		// We must put data back into buffer in the ORIGINAL meta format,
-		// since that's what the batch was created with.
+		// (Same buffer-assembly logic as before — OdbcConvert may redirect sqldata
+		// pointers and change types, so we must put data back in original format.)
 		for (const auto& var : inputSqlda.sqlvar)
 		{
 			char* bufDest = &inputSqlda.buffer.at(var.offsetData);
 			short* indDest = (short*)&inputSqlda.buffer.at(var.offsetNull);
 
-			// Copy null indicator
 			*indDest = *var.sqlind;
 
-			if (*var.sqlind == -1) // null — no data to copy
+			if (*var.sqlind == -1)
 				continue;
 
 			unsigned origType = var.orgSqlProperties.sqltype;
@@ -390,10 +378,6 @@ void IscOdbcStatement::batchAdd()
 
 			if (curType == SQL_TEXT && origType == SQL_VARYING)
 			{
-				// Conversion changed type from SQL_VARYING to SQL_TEXT.
-				// sqldata points to raw string data (no length prefix).
-				// sqllen has the actual string length.
-				// Write it back as SQL_VARYING: 2-byte length + data.
 				unsigned short actualLen = (unsigned short)var.sqllen;
 				*(unsigned short*)bufDest = actualLen;
 				if (actualLen > 0)
@@ -401,26 +385,19 @@ void IscOdbcStatement::batchAdd()
 			}
 			else if (var.sqldata != bufDest)
 			{
-				// sqldata was redirected — copy data back into buffer.
 				if (origType == SQL_VARYING)
 				{
-					// Copy 2-byte length prefix + actual data
 					unsigned short actualLen = *(unsigned short*)var.sqldata;
 					memcpy(bufDest, var.sqldata, 2 + actualLen);
 				}
 				else
 				{
-					// Fixed-length: copy original length worth of data
 					memcpy(bufDest, var.sqldata, var.orgSqlProperties.sqllen);
 				}
 			}
-			// else: sqldata points into buffer already — data is in place
 		}
 
 		// Phase 9.2: Register existing server-side BLOBs with the batch.
-		// For each non-null BLOB column, the conversion functions have already
-		// created a server-side blob and placed its ISC_QUAD blob ID in the buffer.
-		// We call registerBlob() to map that existing blob ID to a batch-internal ID.
 		if (batchHasBlobs_)
 		{
 			for (const auto& var : inputSqlda.sqlvar)
@@ -430,23 +407,24 @@ void IscOdbcStatement::batchAdd()
 					continue;
 
 				short* indDest = (short*)&inputSqlda.buffer.at(var.offsetNull);
-				if (*indDest == -1) // null — skip
+				if (*indDest == -1)
 					continue;
 
 				ISC_QUAD* blobIdInBuf = (ISC_QUAD*)&inputSqlda.buffer.at(var.offsetData);
-				ISC_QUAD existingId = *blobIdInBuf;
-				ISC_QUAD batchId = {0, 0};
+				fbcpp::BlobId existingId;
+				existingId.id = *blobIdInBuf;
 
-				// registerBlob maps the existing server-side blob to a batch-internal ID
-				batch_->registerBlob(&status, &existingId, &batchId);
-
-				// Replace the blob ID in the message buffer with the batch-internal one
-				*blobIdInBuf = batchId;
+				fbcpp::BlobId batchId = batch_->registerBlob(existingId);
+				*blobIdInBuf = batchId.id;
 			}
 		}
 
-		batch_->add(&status, 1, inputSqlda.buffer.data());
+		batch_->add(1, inputSqlda.buffer.data());
 		++batchRowCount_;
+	}
+	catch (const fbcpp::DatabaseException& e)
+	{
+		throw SQLEXCEPTION(RUNTIME_ERROR, e.what());
 	}
 	catch (const FbException& error)
 	{
@@ -459,22 +437,18 @@ int IscOdbcStatement::batchExecute(unsigned short* statusOut, int nRows)
 	if (!batch_)
 		throw SQLEXCEPTION(RUNTIME_ERROR, "IscOdbcStatement::batchExecute(): batch not started");
 
-	ThrowStatusWrapper status(connection->GDS->_status);
-	IBatchCompletionState* cs = nullptr;
 	int totalAffected = 0;
 
 	try
 	{
-		ITransaction* transHandle = startTransaction();
-		cs = batch_->execute(&status, transHandle);
-
-		unsigned batchSize = cs->getSize(&status);
+		auto cs = batch_->execute();
+		unsigned batchSize = cs.getSize();
 
 		for (unsigned i = 0; i < batchSize && static_cast<int>(i) < nRows; ++i)
 		{
-			int state = cs->getState(&status, i);
+			int state = cs.getState(i);
 
-			if (state == IBatchCompletionState::EXECUTE_FAILED)
+			if (state == fbcpp::BatchCompletionState::EXECUTE_FAILED)
 			{
 				if (statusOut)
 					statusOut[i] = kBatchRowError;
@@ -484,23 +458,20 @@ int IscOdbcStatement::batchExecute(unsigned short* statusOut, int nRows)
 				if (statusOut)
 					statusOut[i] = kBatchRowSuccess;
 
-				// state >= 0 means row count for that statement
 				if (state > 0)
 					totalAffected += state;
-				else if (state == IBatchCompletionState::SUCCESS_NO_INFO)
-					totalAffected += 1; // assume 1 row affected
+				else if (state == fbcpp::BatchCompletionState::SUCCESS_NO_INFO)
+					totalAffected += 1;
 			}
 		}
 
-		cs->dispose();
-		cs = nullptr;
+		// cs goes out of scope here — RAII cleanup of BatchCompletionState
 
-		// Clean up the batch object
-		batch_->close(&status);
-		batch_ = nullptr;
+		// Clean up the batch object — RAII via unique_ptr
+		batch_.reset();
 		batchRowCount_ = 0;
 
-		// Handle auto-commit (same as IscStatement::execute() does for DML)
+		// Handle auto-commit
 		if (transactionLocal)
 		{
 			if (transactionInfo.autoCommit)
@@ -509,19 +480,15 @@ int IscOdbcStatement::batchExecute(unsigned short* statusOut, int nRows)
 		else if (connection->autoCommit_)
 			connection->commitAuto();
 	}
+	catch (const fbcpp::DatabaseException& e)
+	{
+		batch_.reset();
+		batchRowCount_ = 0;
+		throw SQLEXCEPTION(RUNTIME_ERROR, e.what());
+	}
 	catch (const FbException& error)
 	{
-		if (cs) cs->dispose();
-		if (batch_)
-		{
-			try
-			{
-				ThrowStatusWrapper cancelStatus(connection->GDS->_status);
-				batch_->cancel(&cancelStatus);
-			}
-			catch (...) {}
-		}
-		batch_ = nullptr;
+		batch_.reset();
 		batchRowCount_ = 0;
 		THROW_ISC_EXCEPTION(connection, error.getStatus());
 	}
@@ -535,14 +502,13 @@ void IscOdbcStatement::batchCancel()
 	{
 		try
 		{
-			ThrowStatusWrapper status(connection->GDS->_status);
-			batch_->cancel(&status);
+			batch_->cancel();
 		}
 		catch (...)
 		{
 			// Ignore errors during cancel
 		}
-		batch_ = nullptr;
+		batch_.reset();
 		batchRowCount_ = 0;
 	}
 }

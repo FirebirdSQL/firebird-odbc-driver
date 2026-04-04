@@ -15,7 +15,7 @@
   "overrides": [
     {
       "name": "fb-cpp",
-      "version-semver": "0.0.2"
+      "version-semver": "0.0.4"
     }
   ]
 }

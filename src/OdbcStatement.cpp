@@ -3038,6 +3038,10 @@ SQLRETURN OdbcStatement::executeStatement()
 	if ( (ret = inputParam(), ret) && ret != SQL_SUCCESS_WITH_INFO )
 		return ret;
 
+	// Phase 14.4.5: Propagate scrollable cursor request to the statement layer
+	// so openCursor() uses CURSOR_TYPE_SCROLLABLE when needed.
+	statement->setScrollable( cursorScrollable == SQL_SCROLLABLE );
+
 	statement->executeStatement();
 
 	if ( statement->isActiveSelectForUpdate() || setPreCursorName )
