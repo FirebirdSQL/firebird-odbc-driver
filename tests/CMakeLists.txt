@@ -77,9 +77,12 @@ endif()
 # Discover individual Google Test cases so CTest runs each one separately.
 # Use PRE_TEST discovery mode so the test binary is only executed at ctest time
 # (not at build time), avoiding DLL-not-found errors during the build step.
+# PROPERTIES TIMEOUT sets a per-test watchdog: any single test that hangs longer
+# than 60 seconds is killed and reported as failed rather than blocking CI forever.
 gtest_discover_tests(firebird_odbc_tests
     DISCOVERY_TIMEOUT 30
     DISCOVERY_MODE PRE_TEST
+    PROPERTIES TIMEOUT 60
 )
 
 # Copy the driver DLL next to the test executable so LoadLibrary finds it
