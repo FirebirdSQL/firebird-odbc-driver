@@ -1,13 +1,13 @@
-# IscDbc library CMakeLists.txt
+# Core driver library (formerly IscDbc)
 
 set(ISCDBC_SOURCES
     BinaryBlob.cpp
     Blob.cpp
     CDataStaticCursor.cpp
-    DateTime.cpp
     EnvShare.cpp
     extodbc.cpp
     FbClient.cpp
+    FbDateConvert.cpp
     IscArray.cpp
     IscBlob.cpp
     IscColumnKeyInfo.cpp
@@ -32,7 +32,6 @@ set(ISCDBC_SOURCES
     IscTablePrivilegesResultSet.cpp
     IscTablesResultSet.cpp
     IscUserEvents.cpp
-    JString.cpp
     LoadFbClientDll.cpp
     MultibyteConvert.cpp
     Mutex.cpp
@@ -43,9 +42,7 @@ set(ISCDBC_SOURCES
     Sqlda.cpp
     SqldaMetadata.cpp
     SQLError.cpp
-    SqlTime.cpp
     Stream.cpp
-    TimeStamp.cpp
     TypesResultSet.cpp
     Value.cpp
     Values.cpp
@@ -58,7 +55,6 @@ set(ISCDBC_HEADERS
     CAttrSqlVar.h
     CDataStaticCursor.h
     Connection.h
-    DateTime.h
     EnvShare.h
     Error.h
     FbClient.h
@@ -89,7 +85,6 @@ set(ISCDBC_HEADERS
     IscTablesResultSet.h
     IscUserEvents.h
     JavaType.h
-    JString.h
     FbDateConvert.h
     ListParamTransaction.h
     LoadFbClientDll.h
@@ -105,9 +100,7 @@ set(ISCDBC_HEADERS
     SqldaMetadata.h
     SQLError.h
     SQLException.h
-    SqlTime.h
     Stream.h
-    TimeStamp.h
     Types.h
     TypesResultSet.h
     Value.h

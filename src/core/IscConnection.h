@@ -29,14 +29,12 @@
 #include <memory>
 #include <string>
 #include "Connection.h"
-#include "JString.h"
 #include "Mutex.h"
 #include <fb-cpp/Attachment.h>
 #include <fb-cpp/Transaction.h>
 
 namespace IscDbcLibrary {
 
-using namespace classJString;
 using namespace classMutex;
 
 class CNodeParamTransaction;
@@ -100,9 +98,9 @@ public:
 	virtual Connection* clone();
 	virtual int objectVersion();
 	virtual Properties* allocProperties();
-	JString getInfoString (char *buffer, int item, const char *defaultString);
+	std::string getInfoString (char *buffer, int item, const char *defaultString);
 	int getInfoItem (char *buffer, int item, int defaultValue);
-	JString getIscStatusText (Firebird::IStatus *status);
+	std::string getIscStatusText (Firebird::IStatus *status);
 	bool removeSchemaFromSQL( char *strSql, int lenSql, char *strSqlOut, int &lenSqlOut );
 	virtual int getNativeSql (const char * inStatementText, int textLength1,
 								char * outStatementText, int bufferLength,

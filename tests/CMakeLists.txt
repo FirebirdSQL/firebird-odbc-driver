@@ -76,7 +76,7 @@ target_link_libraries(firebird_odbc_tests
 # Include directories
 target_include_directories(firebird_odbc_tests PRIVATE
     ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/src/IscDbc
+    ${CMAKE_SOURCE_DIR}/src/core
 )
 
 # Platform-specific settings
@@ -133,7 +133,7 @@ target_link_libraries(firebird_odbc_bench PRIVATE benchmark::benchmark OdbcFb Is
 
 target_include_directories(firebird_odbc_bench PRIVATE
     ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/src/IscDbc
+    ${CMAKE_SOURCE_DIR}/src/core
 )
 
 if(WIN32)

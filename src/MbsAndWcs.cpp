@@ -22,7 +22,7 @@
 #include <windows.h>
 #include <stdio.h>
 
-#include "IscDbc/Connection.h"
+#include "core/Connection.h"
 
 extern UINT codePage; // from Main.cpp
 

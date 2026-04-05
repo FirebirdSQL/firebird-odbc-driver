@@ -57,15 +57,19 @@ void CConnectDialog::UpdateData(HWND hDlg, BOOL bSaveAndValidate)
 {
 	if ( bSaveAndValidate )
 	{
-		GetDlgItemText(hDlg, IDC_USER, m_user.getBuffer(256), 256);
-		GetDlgItemText(hDlg, IDC_PASSWORD, m_password.getBuffer(256), 256);
-		GetDlgItemText(hDlg, IDC_ROLE, m_role.getBuffer(256), 256);
+		char buf[256];
+		GetDlgItemText(hDlg, IDC_USER, buf, 256);
+		m_user = buf;
+		GetDlgItemText(hDlg, IDC_PASSWORD, buf, 256);
+		m_password = buf;
+		GetDlgItemText(hDlg, IDC_ROLE, buf, 256);
+		m_role = buf;
 	}
 	else
 	{
-		SetDlgItemText(hDlg, IDC_USER, (const char *)m_user);
-		SetDlgItemText(hDlg, IDC_PASSWORD, (const char *)m_password);
-		SetDlgItemText(hDlg, IDC_ROLE, (const char *)m_role);
+		SetDlgItemText(hDlg, IDC_USER, m_user.c_str());
+		SetDlgItemText(hDlg, IDC_PASSWORD, m_password.c_str());
+		SetDlgItemText(hDlg, IDC_ROLE, m_role.c_str());
 	}
 }
 

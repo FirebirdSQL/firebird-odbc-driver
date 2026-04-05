@@ -29,9 +29,7 @@
 #include <memory>
 #include "Connection.h"
 #include "Values.h"
-#include "DateTime.h"	// Added by ClassView
-#include "SqlTime.h"
-#include "TimeStamp.h"	// Added by ClassView
+#include "FbDateConvert.h"
 #include "IscStatementMetaData.h"
 #include "IscBlob.h"
 #include "Sqlda.h"

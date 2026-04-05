@@ -31,8 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <firebird/Interface.h>
-#include <firebird/Message.h>
-#include "JString.h"
 #include "LoadFbClientDll.h"
 
 #ifndef SQL_BOOLEAN
@@ -53,9 +51,9 @@
 
 #define THROW_ISC_EXCEPTION(connection, status)\
 const ISC_STATUS * statusVector = status->getErrors();\
-throw SQLEXCEPTION ( connection->GDS->getSqlCode( statusVector ), statusVector [1], connection->getIscStatusText (status))
+throw SQLEXCEPTION ( connection->GDS->getSqlCode( statusVector ), statusVector [1], connection->getIscStatusText (status).c_str())
 
-#define THROW_ISC_EXCEPTION_LEGACY(connection, statusVector) throw SQLEXCEPTION ( connection->GDS->getSqlCode( statusVector ), statusVector [1], connection->GDS->getIscStatusTextFromVector (statusVector))
+#define THROW_ISC_EXCEPTION_LEGACY(connection, statusVector) throw SQLEXCEPTION ( connection->GDS->getSqlCode( statusVector ), statusVector [1], connection->GDS->getIscStatusTextFromVector (statusVector).c_str())
 
 #define OFFSET(type,fld)	(size_t)&(((type*)0)->fld)
 #define MAX(a,b)			((a > b) ? a : b)

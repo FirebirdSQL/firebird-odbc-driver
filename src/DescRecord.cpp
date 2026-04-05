@@ -26,8 +26,8 @@
 #include <string.h>
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
-#include "IscDbc/Connection.h"
-#include "IscDbc/MultibyteConvert.h"
+#include "core/Connection.h"
+#include "core/MultibyteConvert.h"
 #include "OdbcDesc.h"
 #include "DescRecord.h"
 

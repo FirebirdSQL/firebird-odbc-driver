@@ -36,13 +36,13 @@
 #include "OdbcStatement.h"
 #include "OdbcConnection.h"
 #include "OdbcError.h"
-#include "IscDbc/Connection.h"
+#include "core/Connection.h"
 #include "DescRecord.h"
-#include "IscDbc/SQLException.h"
+#include "core/SQLException.h"
 
 #include "TemplateConvert.h"
 #include "Utf16Convert.h"
-#include "IscDbc/FbDateConvert.h"
+#include "core/FbDateConvert.h"
 
 using namespace IscDbcLibrary;
 

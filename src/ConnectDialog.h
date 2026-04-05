@@ -26,9 +26,7 @@
 // ConnectDialog.h : header file
 //
 #include "resource.h"
-#include "IscDbc/JString.h"
-
-using namespace classJString;
+#include <string>
 
 namespace OdbcJdbcLibrary {
 
@@ -44,9 +42,9 @@ public:
 
 // Dialog Data
 	enum { IDD = IDD_CON_PROPERTIES };
-	JString	m_user;
-	JString	m_password;
-	JString	m_role;
+	std::string	m_user;
+	std::string	m_password;
+	std::string	m_role;
 
 public:
 	intptr_t DoModal();

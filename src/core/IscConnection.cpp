@@ -1724,7 +1724,7 @@ void IscConnection::sqlExecuteCreateDatabase(const char * sqlString)
 	{
 		if( newdb ) newdb->release();
 		const ISC_STATUS * statusVector = error.getStatus()->getErrors();
-		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ).c_str() );
 	}
 }
 
@@ -1840,7 +1840,7 @@ void IscConnection::createDatabase(const char * dbName, Properties * properties)
 	catch ( const FbException& error )
 	{
 		const ISC_STATUS * statusVector = error.getStatus()->getErrors();
-		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+		throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ).c_str() );
 	}
 	catch (...)
 	{
@@ -1957,7 +1957,7 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 		{
 			if( dpb ) dpb->dispose();
 			const ISC_STATUS * statusVector = error.getStatus()->getErrors();
-			throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+			throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ).c_str() );
 		}
 
 		CheckStatusWrapper check_status( GDS->_status );
@@ -1974,7 +1974,7 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 		{
 			dpb->dispose();
 			const ISC_STATUS * statusVector = error.getStatus()->getErrors();
-			throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ) );
+			throw SQLEXCEPTION ( GDS->getSqlCode( statusVector ), statusVector [1], getIscStatusText( error.getStatus() ).c_str() );
 		}
 
 		fbcpp::AttachmentOptions attachOpts;
@@ -2278,7 +2278,7 @@ void IscConnection::deleteStatement(IscStatement * statement)
 }
 
 
-JString IscConnection::getIscStatusText(Firebird::IStatus *status)
+std::string IscConnection::getIscStatusText(Firebird::IStatus *status)
 {
 	return GDS->getIscStatusText(status);
 }
@@ -2298,7 +2298,7 @@ int IscConnection::getInfoItem(char * buffer, int infoItem, int defaultValue)
 	return defaultValue;			
 }
 
-JString IscConnection::getInfoString(char * buffer, int infoItem, const char * defaultString)
+std::string IscConnection::getInfoString(char * buffer, int infoItem, const char * defaultString)
 {
 	for (char *p = buffer; *p != isc_info_end;)
 		{
@@ -2306,7 +2306,7 @@ JString IscConnection::getInfoString(char * buffer, int infoItem, const char * d
 		int length = fb_vax_integer(p, 2);
 		p += 2;
 		if (item == infoItem)
-			return JString (p, length);
+			return std::string (p, length);
 		p += length;
 		}
 

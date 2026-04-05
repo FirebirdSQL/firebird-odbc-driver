@@ -26,8 +26,8 @@
 #define _ODBCENV_H_
 
 #include "OdbcObject.h"
-#include "IscDbc/Connection.h"
-#include "IscDbc/Mutex.h"
+#include "core/Connection.h"
+#include "core/Mutex.h"
 
 namespace OdbcJdbcLibrary {
 

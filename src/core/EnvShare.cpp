@@ -125,7 +125,7 @@ void EnvShare::startTransaction()
 		{
 			if( dtcBuilder ) dtcBuilder->dispose();
 			const ISC_STATUS * statusVector = error.getStatus()->getErrors();
-			throw SQLEXCEPTION( GDS->getSqlCode( statusVector ), statusVector [1], GDS->getIscStatusText( error.getStatus() ) );
+			throw SQLEXCEPTION( GDS->getSqlCode( statusVector ), statusVector [1], GDS->getIscStatusText( error.getStatus() ).c_str() );
 		}
 	}
 }
@@ -159,7 +159,7 @@ void EnvShare::commit()
 		{
 			rollback();
 			const ISC_STATUS * statusVector = error.getStatus()->getErrors();
-			throw SQLEXCEPTION( GDS->getSqlCode( statusVector ), statusVector [1], GDS->getIscStatusText( error.getStatus() ) );
+			throw SQLEXCEPTION( GDS->getSqlCode( statusVector ), statusVector [1], GDS->getIscStatusText( error.getStatus() ).c_str() );
 		}
 	}
 }
@@ -183,7 +183,7 @@ void EnvShare::rollback()
 				transactionHandle = nullptr;
 			}
 			const ISC_STATUS * statusVector = error.getStatus()->getErrors();
-			throw SQLEXCEPTION( GDS->getSqlCode( statusVector ), statusVector [1], GDS->getIscStatusText( error.getStatus() ) );
+			throw SQLEXCEPTION( GDS->getSqlCode( statusVector ), statusVector [1], GDS->getIscStatusText( error.getStatus() ).c_str() );
 		}
 	}
 }

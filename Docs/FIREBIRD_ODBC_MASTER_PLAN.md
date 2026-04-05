@@ -327,19 +327,19 @@ The key architectural insight: fb-cpp's internal message buffers (`inMessage` / 
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **14.7.1** | **Enrich error bridging** — Add `SQLError::fromDatabaseException(const fbcpp::DatabaseException&)` factory that preserves `getErrorCode()` as fbcode, `getSqlState()` for ODBC SQLSTATE mapping, and `what()` as text. Update ~20 catch sites in IscBlob, IscConnection, IscStatement, IscUserEvents, IscOdbcStatement to use `SQLError::fromDatabaseException()` instead of discarding error info. See [UNBLOCK_14.7.md](../tmp/UNBLOCK_14.7.md), Approach A. | Medium | ❌ |
-| **14.7.2** | **Replace date/time types with fb-cpp** — Change `Value.h` union members from `DateTime`/`TimeStamp`/`SqlTime` to `fbcpp::OpaqueDate`/`OpaqueTimestamp`/`OpaqueTime`. Update `Value.cpp` conversions to use `fbcpp::CalendarConverter`. Update Sqlda.cpp and IscPreparedStatement.cpp accessors. Delete `DateTime.cpp/.h`, `TimeStamp.cpp/.h`, `SqlTime.cpp/.h` (~400 lines removed). | Medium | ❌ |
+| **14.7.1** | **Enrich error bridging** — Add `SQLError::fromDatabaseException(const fbcpp::DatabaseException&)` factory that preserves `getErrorCode()` as fbcode, `getSqlState()` for ODBC SQLSTATE mapping, and `what()` as text. Update ~20 catch sites in IscBlob, IscConnection, IscStatement, IscUserEvents, IscOdbcStatement to use `SQLError::fromDatabaseException()` instead of discarding error info. See [UNBLOCK_14.7.md](../tmp/UNBLOCK_14.7.md), Approach A. | Medium | ✅ |
+| **14.7.2** | **Replace date/time types** — Consolidated `DateTime`, `SqlTime`, `TimeStamp` into `FbDateConvert.h` as lightweight POD structs wrapping ISC_DATE/ISC_TIME/ISC_TIMESTAMP. Moved string conversion logic to `FbDateConvert.cpp`. Deleted `DateTime.cpp/.h`, `TimeStamp.cpp/.h`, `SqlTime.cpp/.h` (~400 lines removed). | Medium | ✅ |
 | **14.7.3** | **Value/Values retained as driver architecture** — `Value` is the ODBC driver's discriminated union for column data (equivalent to psqlodbc's `TupleField`). Has no Firebird API references. After 14.7.2 updates its date/time union members to fb-cpp types, Value is fully modernized. No deletion needed. | — | ✅ (resolved) |
-| **14.7.4a** | **JString Phase 1: IscDbc internals** — Replace `JString` with `std::string` in `IscConnection.h` (9 fields), `IscStatement.h` (1), `SQLError.h` (2), `EnvShare.h` (1). Fix `getText()` → `.c_str()`, `IsEmpty()` → `.empty()`, implicit `const char*` → explicit `.c_str()`. ~13 fields + compile fixes. | Easy | ❌ |
-| **14.7.4b** | **JString Phase 2: ODBC layer** — Replace `JString` with `std::string` in `OdbcConnection.h` (18 fields), `OdbcStatement.h` (2), `OdbcError.h` (1). ~21 fields + compile fixes. | Medium | ❌ |
-| **14.7.4c** | **JString Phase 3: Descriptors & dialogs** — Replace `JString` with `std::string` in `DescRecord.h` (13 fields), `ConnectDialog.h` (3). Delete `JString.cpp/.h` after all usages gone. ~16 fields. | Medium | ❌ |
+| **14.7.4a** | **JString Phase 1: IscDbc internals** — Replace `JString` with `std::string` in `IscConnection.h` (9 fields), `IscStatement.h` (1), `SQLError.h` (2), `EnvShare.h` (1). Fix `getText()` → `.c_str()`, `IsEmpty()` → `.empty()`, implicit `const char*` → explicit `.c_str()`. ~13 fields + compile fixes. | Easy | ✅ |
+| **14.7.4b** | **JString Phase 2: ODBC layer** — Replace `JString` with `std::string` in `OdbcConnection.h` (18 fields), `OdbcStatement.h` (2), `OdbcError.h` (1). ~21 fields + compile fixes. | Medium | ✅ |
+| **14.7.4c** | **JString Phase 3: Descriptors, dialogs & cleanup** — Replace `JString` with `std::string` in `DescRecord.h` (13 fields), `ConnectDialog.h` (3). Remove remaining JString references from `FbClient.h`, `IscArray.h/.cpp`, `IscColumnsResultSet.h/.cpp`, `IscMetaDataResultSet.h`, `IscDbc.h`. Delete `JString.cpp/.h`. | Medium | ✅ |
 
 **Phase 14.8: Final Cleanup**
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **14.8.1** | **Delete dead code** — Remove `Attachment.h/.cpp` (dead since Phase 14.2, not in CMakeLists.txt). Audit for other unreferenced files. | Easy | ❌ |
-| **14.8.2** | **Rename `src/IscDbc/` to `src/core/`** — After Phase 14.7, IscDbc has zero raw Firebird API calls. Rename directory to reflect its role as the driver's core layer. Update CMakeLists.txt include paths and target name. | Easy | ❌ |
+| **14.8.1** | **Delete dead code** — Removed `Attachment.h/.cpp` (dead since Phase 14.2), `Error.cpp`, `IscCallableStatement.cpp` (not in CMakeLists.txt), `JString.h/.cpp` (replaced by `std::string`), `DateTime.h/.cpp`, `SqlTime.h/.cpp`, `TimeStamp.h/.cpp` (consolidated into `FbDateConvert.h`). Total ~2,100 lines removed. | Easy | ✅ |
+| **14.8.2** | **Rename `src/IscDbc/` to `src/core/`** — Renamed directory, updated all `#include "IscDbc/..."` → `#include "core/..."` (22 includes), updated `CMakeLists.txt` `add_subdirectory` and `include_directories`. CMake target name kept as `IscDbc` for backward compatibility. | Easy | ✅ |
 | **14.8.3** | **Update CMakeLists.txt** — No changes needed currently. IscDbc still built as static library. | — | ✅ |
 | **14.8.4** | **Update documentation** — Master plan updated to reflect Phase 14.5–14.8 status. | Easy | ✅ |
 | **14.8.5** | **Run full test suite** — All 401 tests pass on both Debug and Release builds. | Easy | ✅ |
@@ -379,14 +379,14 @@ Based on our review (see [FB_CPP_SUGGESTIONS.md](../FB_CPP_SUGGESTIONS.md)), the
 
 #### Success Criteria
 
-- [ ] Zero raw Firebird API calls in `src/IscDbc/` — all routed through fb-cpp
+- [ ] Zero raw Firebird API calls in `src/core/` — all routed through fb-cpp
 - [x] `vcpkg.json` manifest manages fb-cpp, Firebird, and Boost dependencies
 - [ ] Build works on Windows (MSVC), Linux (GCC/Clang), macOS (Clang)
 - [x] All 401 tests pass (Phase 14.1 verified — fb-cpp linked, builds clean)
-- [ ] ~1,800 lines of utility/dead code removed
-- [ ] JString replaced with `std::string` across all headers
-- [ ] DateTime/TimeStamp/SqlTime replaced with fb-cpp opaque types in Value union
-- [ ] `src/IscDbc/` renamed to `src/core/` to reflect actual role
+- [x] ~2,600 lines of utility/dead code removed (479 added, 2,604 deleted in Phase 14.7-14.8)
+- [x] JString replaced with `std::string` across all headers
+- [x] DateTime/TimeStamp/SqlTime consolidated into `FbDateConvert.h` POD structs wrapping ISC types
+- [x] `src/IscDbc/` renamed to `src/core/` to reflect actual role
 - [ ] Performance benchmarks show no regression (fetch throughput, batch insert)
 - [x] CI builds use vcpkg caching for fast builds
 

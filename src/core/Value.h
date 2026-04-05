@@ -29,11 +29,10 @@
 #define _VALUE_H_INCLUDED_
 
 #include "Types.h"
-#include "TimeStamp.h"
+#include "FbDateConvert.h"
 #include "Stream.h"
 
 #include "Blob.h"
-#include "DateTime.h"	// Added by ClassView
 
 namespace IscDbcLibrary {
 

@@ -44,7 +44,7 @@ public:
 	void			loadAttributes ( IscStatement *stmt, const char * nameRelation, const char * nameFields, int sqlsubtype );
 	int				getPrecisionInternal();
 	int				getBufferLength();
-	JString			getFbSqlType();
+	std::string		getFbSqlType();
 
 public:
 	ISC_ARRAY_DESC	arrDesc;

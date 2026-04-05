@@ -30,8 +30,8 @@
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "IscDbc/Connection.h"
-#include "IscDbc/SQLException.h"
+#include "core/Connection.h"
+#include "core/SQLException.h"
 #include "OdbcJdbc.h"
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"

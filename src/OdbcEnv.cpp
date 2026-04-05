@@ -36,7 +36,7 @@
 #include "OdbcJdbc.h"
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
-#include "IscDbc/SQLException.h"
+#include "core/SQLException.h"
 #include <odbcinst.h>
 #ifndef _WINDOWS
 #include <dlfcn.h>

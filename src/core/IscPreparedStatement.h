@@ -32,9 +32,7 @@
 #include "Connection.h"
 #include "IscStatement.h"
 #include "Values.h"
-#include "DateTime.h"
-#include "SqlTime.h"
-#include "TimeStamp.h"
+#include "FbDateConvert.h"
 
 namespace IscDbcLibrary {
 

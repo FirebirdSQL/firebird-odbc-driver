@@ -31,7 +31,7 @@
 #include "SafeEnvThread.h"
 #include "Main.h"
 #include "Utf16Convert.h"
-#include "IscDbc/MultibyteConvert.h"
+#include "core/MultibyteConvert.h"
 
 #define GETCONNECT_STMT( hStmt ) (((OdbcStatement*)hStmt)->connection)
 #define GETCONNECT_DESC( hDesc ) (((OdbcDesc*)hDesc)->connection)

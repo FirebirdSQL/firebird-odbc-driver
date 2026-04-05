@@ -101,12 +101,12 @@ find_package(fb-cpp CONFIG REQUIRED)
 # Include directories
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/IscDbc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core
     ${CMAKE_CURRENT_BINARY_DIR}/generated
 )
 
 # Add subdirectories
-add_subdirectory(src/IscDbc)
+add_subdirectory(src/core)
 
 # Windows resource file for version info
 if(WIN32)

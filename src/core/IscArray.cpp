@@ -147,7 +147,7 @@ int	CAttrArray::getBufferLength()
 //	return arrDesc.array_desc_length * arrCountElement;
 }
 
-JString CAttrArray::getFbSqlType()
+std::string CAttrArray::getFbSqlType()
 {
 	char temp [30];
 	char name [80];

@@ -93,7 +93,7 @@
 #include <sqlext.h>
 #include <sqlucode.h>
 #include "SetupAttributes.h"
-#include "IscDbc/JavaType.h"
+#include "core/JavaType.h"
 
 #ifndef _WINDOWS
 #if (SIZEOF_LONG == 4)

@@ -12,41 +12,40 @@
  *     language governing rights and limitations under the License.
  *
  *
- *  The Original Code was created by Jame6s A. Starkey for IBPhoenix.
+ *  The Original Code was created by James A. Starkey for IBPhoenix.
  *
  *  Copyright (c) 1999, 2000, 2001 James A. Starkey
  *  All Rights Reserved.
  */
 
-// DateTime.h: interface for the DateTime class.
+// IscMetaDataResultSet.h: interface for the IscMetaDataResultSet class.
 //
 //////////////////////////////////////////////////////////////////////
 
+#if !defined(_ISCMETADATARESULTSET_H_)
+#define _ISCMETADATARESULTSET_H_
 
-#if !defined(_DATETIME_H_)
-#define _DATETIME_H_
+#include "IscResultSet.h"
 
 namespace IscDbcLibrary {
 
-class DateTime  
+class IscDatabaseMetaData;
+
+class IscMetaDataResultSet : public IscResultSet  
 {
 public:
-	int getString (int length, char *buffer);
-	int getString (const char * format, int length, char * buffer);
-	double getDouble();
-	static int getNow();
-	static int getToday();
-	static DateTime conversionError();
-	static bool match (const char *str1, const char *str2);
-	static int lookup (const char *string, const char **table);
-	static DateTime convert (const char *string, int length);
-	static signed int decodeDate (signed int nday, struct tm *times);
-	static signed int encodeDate (struct tm *times);
-	static signed int yday (struct tm	*times);
+	void expandPattern(char *& stringOut, const char *prefix, const char * string, const char * pattern);
+	void addString(char *& stringOut, const char * string, int length = 0);
+	void convertBlobToString( int indSrc, int indDst );
+	bool isWildcarded (const char *pattern);
+	virtual void prepareStatement (const char *sql);
+	virtual bool next();
 
-	signed int date;
+	IscMetaDataResultSet(IscDatabaseMetaData *meta);
+
+	IscDatabaseMetaData		*metaData;
 };
 
 }; // end namespace IscDbcLibrary
 
-#endif // !defined(_DATETIME_H_)
+#endif // !defined(_ISCMETADATARESULTSET_H_)

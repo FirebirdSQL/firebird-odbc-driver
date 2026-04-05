@@ -10,6 +10,7 @@
 #include "LoadFbClientDll.h"
 #include <fb-cpp/Client.h>
 #include <memory>
+#include <string>
 
 namespace IscDbcLibrary {
 
@@ -104,7 +105,7 @@ public:
 	Firebird::IStatus*		_status;
 
 	/// Format error text from OO API IStatus (modern path).
-	inline classJString::JString getIscStatusText( Firebird::IStatus* status )
+	inline std::string getIscStatusText( Firebird::IStatus* status )
 	{
 		char text [4096];
 		_master->getUtilInterface()->formatStatus( text, sizeof(text), status );
@@ -112,7 +113,7 @@ public:
 	}
 
 	/// Format error text from raw ISC_STATUS[] vector (Phase 9.7: unified path).
-	inline classJString::JString getIscStatusTextFromVector( const ISC_STATUS* statusVector )
+	inline std::string getIscStatusTextFromVector( const ISC_STATUS* statusVector )
 	{
 		Firebird::IStatus* tmpStatus = _master->getStatus();
 		tmpStatus->setErrors( statusVector );

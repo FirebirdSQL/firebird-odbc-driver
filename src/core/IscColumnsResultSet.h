@@ -42,7 +42,7 @@ public:
 	void initResultSet(IscStatement *stmt);
 private:
 	virtual void setCharLen (int charLenInd, int fldLenInd, IscSqlType &sqlType);
-	virtual void checkQuotes (IscSqlType &sqlType, JString stringVal);
+	virtual void checkQuotes (IscSqlType &sqlType, std::string stringVal);
 	virtual void adjustResults (IscSqlType &sqlType);	
 
 	IscBlob blob;

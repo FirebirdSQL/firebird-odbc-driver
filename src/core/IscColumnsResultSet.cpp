@@ -52,7 +52,6 @@
 #include "IscPreparedStatement.h"
 #include "IscBlob.h"
 #include "IscSqlType.h"
-#include "JString.h"
 
 #define TYPE_NAME	6
 #define DEF_VAL		13
@@ -228,7 +227,7 @@ bool IscColumnsResultSet::nextFetch()
 
 		arrAttr.loadAttributes ( statement, relation_name, field_name, sqlType.subType );
 
-		sqlda->updateVarying (6, arrAttr.getFbSqlType());
+		sqlda->updateVarying (6, arrAttr.getFbSqlType().c_str());
 		sqlda->updateInt (7, arrAttr.arrOctetLength );
 		sqlda->updateInt (8, arrAttr.getBufferLength());
 
@@ -291,13 +290,13 @@ void IscColumnsResultSet::setCharLen (int charLenInd,
 		sqlda->updateInt (charLenInd, charLen);
 }
 
-void IscColumnsResultSet::checkQuotes (IscSqlType &sqlType, JString stringVal)
+void IscColumnsResultSet::checkQuotes (IscSqlType &sqlType, std::string stringVal)
 {
 	// Revolting ODBC wants the default value quoted unless its a 
 	// number or a pseudo-literal
 	
-	JString	string = stringVal;
-	string.upcase (string);
+	std::string upper = stringVal;
+	for (auto& c : upper) c = (char)toupper((unsigned char)c);
 
 	switch (sqlType.type)
 		{
@@ -307,29 +306,29 @@ void IscColumnsResultSet::checkQuotes (IscSqlType &sqlType, JString stringVal)
 		case JDBC_SQL_TIME:
 		case JDBC_TIMESTAMP:
 		case JDBC_SQL_TIMESTAMP:
-			if (string == "CURRENT DATE" ||
-				string == "CURRENT TIME" ||
-				string == "CURRENT TIMESTAMP" ||
-				string == "CURRENT ROLE")
+			if (upper == "CURRENT DATE" ||
+				upper == "CURRENT TIME" ||
+				upper == "CURRENT TIMESTAMP" ||
+				upper == "CURRENT ROLE")
 				{
-				stringVal = string;
+				stringVal = upper;
 				return;
 				}
 		case JDBC_CHAR:
 		case JDBC_VARCHAR:
-			if (string == "USER")
+			if (upper == "USER")
 			{
-				stringVal = string;
+				stringVal = upper;
 				return;
 			}
 	}
-	stringVal.Format ("\'%s\'", (const char *) stringVal);
+	stringVal = "'" + stringVal + "'";
 	return;
 }
 
 void IscColumnsResultSet::adjustResults (IscSqlType &sqlType)
 {
-	// Data source–dependent data type name
+	// Data sourceï¿½dependent data type name
 	switch (sqlType.type)
 	{
 	case JDBC_LONGVARCHAR:

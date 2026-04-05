@@ -30,7 +30,7 @@
 #include "OdbcStatement.h"
 #include "OdbcObject.h"
 #include "OdbcError.h"
-#include "IscDbc/SQLException.h"
+#include "core/SQLException.h"
 
 namespace OdbcJdbcLibrary {
 

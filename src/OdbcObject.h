@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 #include "OdbcJdbc.h"
-#include "IscDbc/SQLException.h"
+#include "core/SQLException.h"
 
 namespace OdbcJdbcLibrary {
 

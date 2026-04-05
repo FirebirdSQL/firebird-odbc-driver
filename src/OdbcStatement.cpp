@@ -136,8 +136,8 @@
 #include <condition_variable>
 #include <thread>
 #include <chrono>
-#include "IscDbc/Connection.h"
-#include "IscDbc/SQLException.h"
+#include "core/Connection.h"
+#include "core/SQLException.h"
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
 #include "OdbcStatement.h"

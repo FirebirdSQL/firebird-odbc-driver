@@ -84,9 +84,9 @@
 #include "OdbcEnv.h"
 #include "OdbcConnection.h"
 #include <odbcinst.h>
-#include "IscDbc/Connection.h"
-#include "IscDbc/SQLException.h"
-#include "IscDbc/MultibyteConvert.h"
+#include "core/Connection.h"
+#include "core/SQLException.h"
+#include "core/MultibyteConvert.h"
 #include "OdbcStatement.h"
 #include "OdbcDesc.h"
 #include "ConnectDialog.h"
@@ -755,9 +755,9 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 		&& ( account.empty() || password.empty() ) )
 	{
 		CConnectDialog dlg;
-		dlg.m_user = account.c_str();
-		dlg.m_password = password.c_str();
-		dlg.m_role = role.c_str();
+		dlg.m_user = account;
+		dlg.m_password = password;
+		dlg.m_role = role;
 
 		if ( IDOK != dlg.DoModal() )
 		{
@@ -765,9 +765,9 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 			return SQL_ERROR;
 		}
 
-		account = (const char*)dlg.m_user;
-		password = (const char*)dlg.m_password;
-		role = (const char*)dlg.m_role;
+		account = dlg.m_user;
+		password = dlg.m_password;
+		role = dlg.m_role;
 	}
 #endif // _WINDOWS
 
