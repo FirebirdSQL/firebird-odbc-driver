@@ -320,46 +320,48 @@ TEST_F(ConcurrentConnectionTest, ConnectionIsolation) {
     ASSERT_TRUE(conn1.connect());
     ASSERT_TRUE(conn2.connect());
 
-    // Turn off autocommit on conn1
-    SQLSetConnectAttr(conn1.hDbc, SQL_ATTR_AUTOCOMMIT,
-        (SQLPOINTER)SQL_AUTOCOMMIT_OFF, 0);
-
-    // Create table on conn1 (committed by auto-commit being off, need explicit commit)
+    // Create temp table via conn1 (autocommit ON — each DDL/DML commits immediately)
     SQLExecDirect(conn1.hStmt, (SQLCHAR*)"DROP TABLE T_CONCURRENT_TEST", SQL_NTS);
-    SQLEndTran(SQL_HANDLE_DBC, conn1.hDbc, SQL_COMMIT);
     SQLFreeStmt(conn1.hStmt, SQL_CLOSE);
-
     SQLRETURN ret = SQLExecDirect(conn1.hStmt,
         (SQLCHAR*)"CREATE TABLE T_CONCURRENT_TEST (ID INTEGER)", SQL_NTS);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << GetOdbcError(SQL_HANDLE_STMT, conn1.hStmt);
-    SQLEndTran(SQL_HANDLE_DBC, conn1.hDbc, SQL_COMMIT);
-    SQLFreeHandle(SQL_HANDLE_STMT, conn1.hStmt);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_STMT, conn1.hStmt);
+    SQLFreeStmt(conn1.hStmt, SQL_CLOSE);
 
-    // Insert uncommitted row on conn1
-    SQLAllocHandle(SQL_HANDLE_STMT, conn1.hDbc, &conn1.hStmt);
-    ret = SQLExecDirect(conn1.hStmt,
-        (SQLCHAR*)"INSERT INTO T_CONCURRENT_TEST VALUES (42)", SQL_NTS);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-    // Do NOT commit
-
-    // conn2 should not see the uncommitted row
+    // conn2: turn off autocommit to start a long-running snapshot transaction.
+    // The snapshot is established at transaction start (before conn1's INSERT).
+    SQLSetConnectAttr(conn2.hDbc, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_OFF, 0);
     ret = SQLExecDirect(conn2.hStmt,
         (SQLCHAR*)"SELECT COUNT(*) FROM T_CONCURRENT_TEST", SQL_NTS);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << GetOdbcError(SQL_HANDLE_STMT, conn2.hStmt);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_STMT, conn2.hStmt);
     SQLFetch(conn2.hStmt);
     SQLINTEGER count = -1;
     SQLLEN ind = 0;
     SQLGetData(conn2.hStmt, 1, SQL_C_SLONG, &count, 0, &ind);
-    EXPECT_EQ(count, 0) << "Uncommitted row should not be visible to other connections";
+    EXPECT_EQ(count, 0) << "Table should start empty";
+    SQLFreeStmt(conn2.hStmt, SQL_CLOSE);
+
+    // conn1: INSERT and COMMIT (autocommit ON — commits automatically)
+    ret = SQLExecDirect(conn1.hStmt,
+        (SQLCHAR*)"INSERT INTO T_CONCURRENT_TEST VALUES (42)", SQL_NTS);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_STMT, conn1.hStmt);
+    SQLFreeStmt(conn1.hStmt, SQL_CLOSE);
+
+    // conn2 (still in its snapshot transaction) must NOT see the row conn1 committed.
+    // No concurrent write is open, so this SELECT cannot block — it just uses conn2's
+    // existing snapshot, which predates conn1's INSERT.
+    ret = SQLExecDirect(conn2.hStmt,
+        (SQLCHAR*)"SELECT COUNT(*) FROM T_CONCURRENT_TEST", SQL_NTS);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_STMT, conn2.hStmt);
+    SQLFetch(conn2.hStmt);
+    count = -1;
+    SQLGetData(conn2.hStmt, 1, SQL_C_SLONG, &count, 0, &ind);
+    EXPECT_EQ(count, 0) << "Snapshot isolation: conn2 must not see conn1's committed INSERT";
+    SQLFreeStmt(conn2.hStmt, SQL_CLOSE);
 
     // Cleanup
-    SQLEndTran(SQL_HANDLE_DBC, conn1.hDbc, SQL_ROLLBACK);
-    SQLFreeHandle(SQL_HANDLE_STMT, conn1.hStmt);
-    SQLAllocHandle(SQL_HANDLE_STMT, conn1.hDbc, &conn1.hStmt);
+    SQLEndTran(SQL_HANDLE_DBC, conn2.hDbc, SQL_COMMIT);  // close conn2's snapshot
     SQLExecDirect(conn1.hStmt, (SQLCHAR*)"DROP TABLE T_CONCURRENT_TEST", SQL_NTS);
-    SQLEndTran(SQL_HANDLE_DBC, conn1.hDbc, SQL_COMMIT);
 
     conn2.disconnect();
     conn1.disconnect();
