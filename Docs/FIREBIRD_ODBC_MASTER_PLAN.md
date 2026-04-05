@@ -506,6 +506,153 @@ Adopting vcpkg provides:
 
 ---
 
+### Phase 16: Test Suite Improvements
+**Priority**: Medium
+**Goal**: Eliminate duplication, improve reliability, expand coverage, integrate benchmarks into CI
+
+#### 16.1 Current Test Suite Assessment
+
+**Inventory**: 34 test files, ~401 test cases, 1 benchmark file (`bench_fetch.cpp`)
+
+| Area | Files | Tests | Quality |
+|------|-------|-------|---------|
+| Connection & options | `test_connection`, `test_connect_options`, `test_conn_settings` | ~68 | Excellent |
+| Data types & conversions | `test_data_types`, `test_result_conversions`, `test_param_conversions` | ~82 | Very good, but repetitive |
+| Binding & parameters | `test_bindcol`, `test_bind_cycle`, `test_array_binding`, `test_data_at_execution` | ~33 | Excellent |
+| Cursors | `test_cursor`, `test_cursors`, `test_cursor_name`, `test_cursor_commit`, `test_scrollable_cursor` | ~39 | Good |
+| Descriptors | `test_descriptor`, `test_descrec` | ~19 | Good, but duplicated |
+| Errors & diagnostics | `test_errors` | ~11 | Excellent |
+| Catalog functions | `test_catalogfunctions` | ~30 | Very good |
+| BLOB handling | `test_blob` | 3 | Adequate |
+| ODBC compliance | `test_odbc38_compliance`, `test_null_handles` | ~60 | Excellent |
+| Unicode/WCHAR | `test_wchar`, `test_odbc_string` | ~35 | Good |
+| Statement handles | `test_stmthandles`, `test_multi_statement`, `test_prepare` | ~14 | Good |
+| Regression bundles | `test_phase7_crusher_fixes`, `test_phase11_typeinfo_timeout_pool` | ~40 | Good, but duplicated |
+| Misc | `test_escape_sequences`, `test_guid_and_binary`, `test_savepoint`, `test_server_version` | ~21 | Good |
+
+**Strengths**:
+- Comprehensive ODBC API coverage (connection, statement, descriptor, catalog)
+- Effective crash regression tests (OC-1 through OC-5)
+- Good use of RAII (`TempTable`, `OdbcConnectedTest` fixture)
+- Array binding stress test (1000 rows)
+- Scrollable cursor operations thoroughly tested
+- Version-aware skipping for FB4+ features
+
+**Weaknesses** (see tasks below):
+- Duplicate tests across files
+- Conversion tests are repetitive and could be parameterized
+- Some magic numbers and hardcoded values
+- One timing-sensitive test (thread cancel with 200ms sleep)
+- `test_connection.cpp` doesn't use `TempTable` RAII
+- No benchmarks in CI
+
+#### 16.2 Tasks
+
+**Phase 16.2.1: Eliminate duplicate tests**
+
+| Duplicate | Found In | Also In | Resolution |
+|-----------|----------|---------|------------|
+| `CopyDescCrashTest` (OC-1) | `test_descriptor.cpp` | `test_phase7_crusher_fixes.cpp` | Keep in `test_descriptor.cpp`, remove from phase7 |
+| `DiagRowCountTest` (OC-2) | `test_errors.cpp` | `test_phase7_crusher_fixes.cpp` | Keep in `test_errors.cpp`, remove from phase7 |
+| `TypeInfoTest` overlap | `test_server_version.cpp` | `test_phase11_typeinfo_timeout_pool.cpp` | Consolidate into `test_catalogfunctions.cpp` |
+
+After deduplication, `test_phase7_crusher_fixes.cpp` retains only OC-3 (CONNECTION_TIMEOUT), OC-4 (ASYNC_ENABLE), and OC-5 (truncation). Rename to `test_connection_attrs.cpp`. Similarly, `test_phase11_typeinfo_timeout_pool.cpp` retains only QueryTimeoutTest, AsyncModeTest, ConnectionResetTest. Rename to `test_query_timeout.cpp`.
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **16.2.1** | **Remove duplicate tests** — Deduplicate CopyDescCrashTest, DiagRowCountTest, TypeInfoTest across files. Move surviving tests to their natural home files. | Easy | ❌ |
+| **16.2.2** | **Rename phase-numbered test files** — `test_phase7_crusher_fixes.cpp` → `test_connection_attrs.cpp`, `test_phase11_typeinfo_timeout_pool.cpp` → `test_query_timeout.cpp`. Phase numbers are meaningless after completion. | Easy | ❌ |
+| **16.2.3** | **Parameterize conversion tests** — `test_result_conversions.cpp` (47 tests) and `test_param_conversions.cpp` (15 tests) follow identical patterns. Convert to `TEST_P()` with value-parameterized test suites. Reduces ~800 lines to ~200. | Medium | ❌ |
+| **16.2.4** | **Extract test constants** — Move magic numbers to named constants in `test_helpers.h`: `kDefaultBufferSize = 1024`, `kMaxVarcharLen = 256`, `kStressRowCount = 1000`, etc. | Easy | ❌ |
+| **16.2.5** | **Fix `test_connection.cpp`** — Use `OdbcConnectedTest` fixture instead of manual handle management. | Easy | ❌ |
+| **16.2.6** | **Add `ASSERT_ODBC_SUCCESS` macro** — Replace verbose `ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(...)` with `ASSERT_ODBC_SUCCESS(ret, handle_type, handle)`. Reduces boilerplate significantly. | Easy | ❌ |
+| **16.2.7** | **Stabilize timing-sensitive tests** — `QueryTimeoutTest.CancelFromAnotherThread` uses `std::this_thread::sleep_for(200ms)`. Replace with a condition variable or retry-with-backoff pattern. | Easy | ❌ |
+
+**Phase 16.3: Coverage expansion**
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **16.3.1** | **Test BLOB edge cases** — Only 3 BLOB tests exist. Add: empty blob, binary blob round-trip, large blob (>1MB) with chunked GetData, blob parameter via SQLPutData streaming. | Easy | ❌ |
+| **16.3.2** | **Test error recovery paths** — Add tests for: connection lost during fetch, statement re-use after error, descriptor state after failed execute. | Medium | ❌ |
+| **16.3.3** | **Test concurrent connections** — Multiple `OdbcConnectedTest` instances with separate `SQLHENV` handles operating on different tables. Validates thread safety at the environment level. | Medium | ❌ |
+| **16.3.4** | **Test SQLGetInfo completeness** — Systematically verify all driver-reported `SQLGetInfo` values against ODBC spec. Currently only ~10 info types are tested. | Easy | ❌ |
+
+---
+
+### Phase 17: CI Performance Benchmarks
+**Priority**: Medium
+**Goal**: Run benchmarks in CI and detect performance regressions automatically
+
+#### 17.1 Current State
+
+The benchmark infrastructure is already in place:
+- `bench_fetch.cpp` — 6 benchmarks using Google Benchmark (fetch INT/VARCHAR/BLOB, batch insert, W-API overhead, lock overhead)
+- `firebird_odbc_bench` executable built by CMake
+- `Invoke-Build benchmark` task runs benchmarks locally with JSON output
+- Historical results documented in [PERFORMANCE_RESULTS.md](PERFORMANCE_RESULTS.md)
+
+**What's missing**: CI doesn't run benchmarks, no regression detection, no result tracking.
+
+#### 17.2 Approach: `benchmark-action`
+
+Use [github-action-benchmark](https://github.com/benchmark-action/github-action-benchmark), which natively supports Google Benchmark JSON output.
+
+**How it works**:
+1. CI runs `firebird_odbc_bench --benchmark_out=results.json --benchmark_out_format=json`
+2. `benchmark-action` parses JSON, compares against baseline stored in `gh-pages` branch
+3. If any benchmark regresses beyond threshold (e.g., >15%), the action comments on the PR or fails the build
+4. Results are published to a GitHub Pages dashboard
+
+**Why 15% threshold**: CI runners have ~5-10% variance between runs. A 15% threshold avoids false positives while catching real regressions. The embedded Firebird path has very consistent timing (no network jitter), so this is achievable.
+
+#### 17.3 Tasks
+
+| Task | Description | Complexity | Status |
+|------|-------------|------------|--------|
+| **17.3.1** | **Add benchmark CI step** — Add a `benchmark` job to `build-and-test.yml` that runs `firebird_odbc_bench` in Release mode after tests pass. Output JSON to `tmp/benchmark_results.json`. | Easy | ❌ |
+| **17.3.2** | **Integrate benchmark-action** — Add `benchmark-action/github-action-benchmark@v1` step. Configure: `tool: googlecpp`, `output-file-path: tmp/benchmark_results.json`, `alert-threshold: "115%"`, `fail-on-alert: true` for PRs. | Easy | ❌ |
+| **17.3.3** | **Set up GitHub Pages dashboard** — Enable `gh-pages` branch for benchmark history. The action auto-commits results and generates a time-series chart. | Easy | ❌ |
+| **17.3.4** | **Add batch insert benchmark** — The existing `BM_InsertInt10` uses row-by-row `SQLExecute`. Add `BM_BatchInsertInt10` using `SQLSetStmtAttr(SQL_ATTR_PARAMSET_SIZE)` array binding for a fair batch comparison. | Easy | ❌ |
+| **17.3.5** | **Add scrollable cursor benchmark** — New `BM_ScrollableFetch` benchmark that opens a static cursor and measures `SQLFetchScroll(SQL_FETCH_ABSOLUTE)` random-access latency vs sequential fetch. This validates Phase 14.4.5 scrollable cursor migration. | Easy | ❌ |
+| **17.3.6** | **Document benchmark workflow** — Update `PERFORMANCE_RESULTS.md` with instructions for running benchmarks locally (`Invoke-Build benchmark`) and interpreting CI results. | Easy | ❌ |
+
+#### 17.4 Proposed CI Workflow Addition
+
+```yaml
+  benchmark:
+    needs: build-and-test-windows
+    runs-on: windows-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/phase-14.4-statement-migration'
+    steps:
+    - uses: actions/checkout@v6
+    - # ... same build setup as build-and-test-windows ...
+    - name: Run Benchmarks
+      shell: pwsh
+      run: |
+        $env:PATH = "${{github.workspace}}/build/Release;${{github.workspace}}/build/bin/Release;$env:PATH"
+        Invoke-Build benchmark -Configuration Release
+    - name: Store Benchmark Results
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        tool: 'googlecpp'
+        output-file-path: tmp/benchmark_results.json
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
+        alert-threshold: '115%'
+        comment-on-alert: true
+        fail-on-alert: true
+        benchmark-data-dir-path: 'dev/bench'
+```
+
+**Key design decisions**:
+- Benchmarks run only on push to the main development branch (not on every PR) to avoid CI cost
+- Windows-only (matches the historical baseline in `PERFORMANCE_RESULTS.md`)
+- Release build (benchmarks in Debug are meaningless)
+- The `fail-on-alert` flag blocks PRs that regress performance by >15%
+- Results auto-pushed to `gh-pages` branch for history tracking
+
+---
+
 ## 6. Success Criteria
 
 ### 6.2 Overall Quality Targets
@@ -615,5 +762,5 @@ A first-class ODBC driver should:
 
 ---
 
-*Document version: 3.8 — February 11, 2026*
+*Document version: 3.9 — April 5, 2026*
 *This is the single authoritative reference for all Firebird ODBC driver improvements.*
