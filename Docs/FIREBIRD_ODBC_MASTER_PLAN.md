@@ -439,17 +439,17 @@ Adopting vcpkg provides:
 | **15.1.1** | **Create `vcpkg.json` manifest** — Declare dependencies: `gtest`, `benchmark`, `fb-cpp` (from custom registry). | Easy | ✅ |
 | **15.1.2** | **Create `vcpkg-configuration.json`** — Configure baseline (vcpkg commit), custom registry for Firebird packages. | Easy | ✅ |
 | **15.1.3** | **Update `.gitignore`** — Add `vcpkg_installed/` (local install tree). | Easy | ✅ |
-| **15.1.4** | **Document vcpkg setup** — README section on `vcpkg install` vs. manual dependency management. | Easy | ❌ |
+| **15.1.4** | **Document vcpkg setup** — README section on `vcpkg install` vs. manual dependency management. | Easy | ✅ |
 
 **Phase 15.2: CMake Integration**
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
 | **15.2.1** | **Set `CMAKE_TOOLCHAIN_FILE`** — Point to `vcpkg/scripts/buildsystems/vcpkg.cmake`. Support both submodule and external vcpkg. | Easy | ✅ |
-| **15.2.2** | **Replace FetchContent for GTest** — Remove `FetchContent_Declare(googletest ...)`. Use `find_package(GTest CONFIG REQUIRED)`. | Easy | ❌ |
-| **15.2.3** | **Replace FetchContent for Benchmark** — Remove `FetchContent_Declare(benchmark ...)`. Use `find_package(benchmark CONFIG REQUIRED)`. | Easy | ❌ |
+| **15.2.2** | **Replace FetchContent for GTest** — Remove `FetchContent_Declare(googletest ...)`. Use `find_package(GTest CONFIG REQUIRED)`. | Easy | ✅ |
+| **15.2.3** | **Replace FetchContent for Benchmark** — Remove `FetchContent_Declare(benchmark ...)`. Use `find_package(benchmark CONFIG REQUIRED)`. | Easy | ✅ |
 | **15.2.4** | **Replace FetchFirebirdHeaders** — Remove `cmake/FetchFirebirdHeaders.cmake`. vcpkg's `firebird` package provides headers. | Easy | ✅ |
-| **15.2.5** | **Link against vcpkg targets** — `target_link_libraries(... GTest::gtest benchmark::benchmark fb-cpp::fb-cpp)`. | Easy | ❌ |
+| **15.2.5** | **Link against vcpkg targets** — `target_link_libraries(... GTest::gtest benchmark::benchmark fb-cpp::fb-cpp)`. | Easy | ✅ |
 
 **Phase 15.3: CI/CD Integration**
 
@@ -496,11 +496,11 @@ Adopting vcpkg provides:
 
 - [x] `vcpkg.json` and `vcpkg-configuration.json` in repository root
 - [x] `cmake/FetchFirebirdHeaders.cmake` deleted
-- [ ] No `FetchContent_Declare` calls in CMakeLists.txt (GTest/Benchmark still use FetchContent)
+- [x] No `FetchContent_Declare` calls in CMakeLists.txt
 - [x] CI uses vcpkg binary caching (builds < 5 min with cache hit)
 - [x] `vcpkg install` followed by `cmake -B build` builds the project
 - [x] All 401 tests pass
-- [ ] Documentation updated with vcpkg setup instructions
+- [x] Documentation updated with vcpkg setup instructions
 
 **Deliverable**: A project that uses vcpkg for all C++ dependencies, with reproducible builds across platforms, fast CI via binary caching, and a single `vcpkg.json` as the source of truth for dependency versions.
 

@@ -10,7 +10,9 @@
     {
       "name": "fb-cpp",
       "default-features": true
-    }
+    },
+    "gtest",
+    "benchmark"
   ],
   "overrides": [
     {

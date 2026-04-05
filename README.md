@@ -84,12 +84,38 @@ The `CHARSET` parameter controls what character encoding Firebird uses when send
 | Requirement | Version |
 |-------------|---------|
 | C++ compiler | C++17 capable (MSVC 2019+, GCC 7+, Clang 5+) |
-| CMake | 3.15 or later |
+| CMake | 3.20 or later |
 | PowerShell | 7.0 or later |
+| [vcpkg](https://github.com/microsoft/vcpkg) | Latest |
 | [Invoke-Build](https://github.com/nightroman/Invoke-Build) | Any |
 | ODBC headers | Windows SDK (included) or unixODBC-dev (Linux) |
 
-No Firebird installation is needed to build — the Firebird client headers are included in the repository (`FBClient.Headers/`). At runtime, the driver loads `fbclient.dll` / `libfbclient.so` dynamically.
+### vcpkg Setup
+
+All C++ dependencies (Firebird client headers, Google Test, Google Benchmark) are managed by [vcpkg](https://github.com/microsoft/vcpkg) via the manifest files `vcpkg.json` and `vcpkg-configuration.json`.
+
+**Install vcpkg** (if not already installed):
+
+```bash
+# Clone vcpkg (one-time)
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg && bootstrap-vcpkg.bat   # Windows
+cd vcpkg && ./bootstrap-vcpkg.sh  # Linux/macOS
+```
+
+**Set the `VCPKG_ROOT` environment variable** to point to your vcpkg installation:
+
+```powershell
+# PowerShell (Windows)
+$env:VCPKG_ROOT = "C:\path\to\vcpkg"
+
+# Bash (Linux/macOS)
+export VCPKG_ROOT=/path/to/vcpkg
+```
+
+CMake automatically picks up the vcpkg toolchain from `VCPKG_ROOT`. Dependencies are installed automatically during the first build via vcpkg manifest mode — no manual `vcpkg install` is needed.
+
+> **Note**: The first build takes longer (~10–15 minutes on Windows) as vcpkg downloads and builds dependencies. Subsequent builds use the binary cache and are much faster.
 
 Install Invoke-Build (one-time):
 
@@ -137,7 +163,7 @@ Invoke-Build clean
 
 ## Running the Tests
 
-Tests use [Google Test](https://github.com/google/googletest/) and are fetched automatically via CMake.
+Tests use [Google Test](https://github.com/google/googletest/) and are managed via vcpkg.
 
 ### Without a database (unit tests only)
 
