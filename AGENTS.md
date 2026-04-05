@@ -4,6 +4,8 @@
 
 Build, test, commit, push, and monitor CI workflow after each task. Fix failures and repeat until successful.
 
+Use the `gh` command with non-interactive switches to check the CI workflows and logs.
+
 ## Test Database Connection
 
 Firebird 5.0 database available in dev and CI. Use `FIREBIRD_ODBC_CONNECTION` environment variable:
