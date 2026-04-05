@@ -464,8 +464,8 @@ Adopting vcpkg provides:
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **15.4.1** | **Add vcpkg as git submodule** — `git submodule add https://github.com/microsoft/vcpkg.git`. Provides reproducible vcpkg version. | Easy | ❌ |
-| **15.4.2** | **CMake auto-bootstrap** — If vcpkg submodule exists but not bootstrapped, run bootstrap automatically. | Medium | ❌ |
+| **15.4.1** | **Add vcpkg as git submodule** — `git submodule add https://github.com/microsoft/vcpkg.git`. Provides reproducible vcpkg version. Pinned to `2026.03.18` (commit `c3867e71`) with `shallow = true`. | Easy | ✅ |
+| **15.4.2** | **CMake auto-bootstrap** — If vcpkg submodule exists but not bootstrapped, run bootstrap automatically. | Medium | ✅ |
 
 #### Dependency Manifest
 
@@ -501,6 +501,8 @@ Adopting vcpkg provides:
 - [x] `vcpkg install` followed by `cmake -B build` builds the project
 - [x] All 401 tests pass
 - [x] Documentation updated with vcpkg setup instructions
+- [x] vcpkg pinned as submodule at `2026.03.18` (parallel execution support)
+- [x] CMake auto-bootstraps submodule on first configure
 
 **Deliverable**: A project that uses vcpkg for all C++ dependencies, with reproducible builds across platforms, fast CI via binary caching, and a single `vcpkg.json` as the source of truth for dependency versions.
 

@@ -7,6 +7,7 @@ on:
 
 env:
   VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
 
 jobs:
   build-and-test-windows:
@@ -16,6 +17,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
+        submodules: false
 
     - name: Create vcpkg binary cache directory
       shell: pwsh
@@ -25,8 +27,15 @@ jobs:
       uses: actions/cache@v5
       with:
         path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-        key: vcpkg-windows-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+        key: vcpkg-windows-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.gitmodules') }}
         restore-keys: vcpkg-windows-
+
+    - name: Cache vcpkg submodule
+      id: cache-vcpkg-submodule-win
+      uses: actions/cache@v5
+      with:
+        path: vcpkg
+        key: vcpkg-submodule-windows-${{ hashFiles('.gitmodules') }}
 
     - name: Cache PowerShell Modules
       uses: actions/cache@v5
@@ -45,15 +54,15 @@ jobs:
         Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Command Processor' -Name 'AutoRun' -ErrorAction SilentlyContinue
         Remove-ItemProperty -Path 'HKLM:\Software\Microsoft\Command Processor' -Name 'AutoRun' -ErrorAction SilentlyContinue
 
-    - name: Update vcpkg
+    - name: Initialize vcpkg submodule
+      if: steps.cache-vcpkg-submodule-win.outputs.cache-hit != 'true'
+      run: git submodule update --init vcpkg
+
+    - name: Bootstrap vcpkg
       shell: pwsh
       run: |
-        $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
-        Push-Location $vcpkgRoot
-        git fetch --quiet origin
-        git reset --hard origin/master --quiet
-        if ($IsWindows) { & ./bootstrap-vcpkg.bat -disableMetrics } else { & ./bootstrap-vcpkg.sh -disableMetrics }
-        Pop-Location
+        if ($IsWindows) { & ./vcpkg/bootstrap-vcpkg.bat -disableMetrics }
+        else { & ./vcpkg/bootstrap-vcpkg.sh -disableMetrics }
 
     - name: Install Prerequisites
       shell: pwsh
@@ -87,6 +96,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
+        submodules: false
     
     - name: Install Dependencies
       run: |
@@ -109,19 +119,23 @@ jobs:
     - name: Create vcpkg binary cache directory
       run: mkdir -p "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}"
 
-    - name: Update vcpkg
-      run: |
-        cd "$VCPKG_INSTALLATION_ROOT"
-        git fetch --quiet origin
-        git reset --hard origin/master --quiet
-        ./bootstrap-vcpkg.sh -disableMetrics
-
     - name: Cache vcpkg packages
       uses: actions/cache@v5
       with:
         path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-        key: vcpkg-linux-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+        key: vcpkg-linux-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.gitmodules') }}
         restore-keys: vcpkg-linux-
+
+    - name: Cache vcpkg submodule
+      id: cache-vcpkg-submodule-linux
+      uses: actions/cache@v5
+      with:
+        path: vcpkg
+        key: vcpkg-submodule-linux-${{ hashFiles('.gitmodules') }}
+
+    - name: Initialize vcpkg submodule
+      if: steps.cache-vcpkg-submodule-linux.outputs.cache-hit != 'true'
+      run: git submodule update --init vcpkg
 
     - name: Cache PowerShell Modules
       uses: actions/cache@v5
@@ -131,6 +145,9 @@ jobs:
           ~/.local/share/powershell/Modules/InvokeBuild
         key: psmodules-linux-${{ hashFiles('install-prerequisites.ps1') }}
         restore-keys: psmodules-linux-
+
+    - name: Bootstrap vcpkg
+      run: ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
     - name: Install Prerequisites
       shell: pwsh

@@ -1,8 +1,33 @@
 cmake_minimum_required(VERSION 3.20)
 
-# Auto-detect vcpkg toolchain from environment
+# Auto-bootstrap vcpkg submodule if present but not yet bootstrapped
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+    if(CMAKE_HOST_WIN32)
+        set(_vcpkg_exe "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/vcpkg.exe")
+        set(_vcpkg_bootstrap "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.bat")
+    else()
+        set(_vcpkg_exe "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/vcpkg")
+        set(_vcpkg_bootstrap "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/bootstrap-vcpkg.sh")
+    endif()
+    if(NOT EXISTS "${_vcpkg_exe}")
+        message(STATUS "Bootstrapping vcpkg submodule...")
+        execute_process(
+            COMMAND "${_vcpkg_bootstrap}" -disableMetrics
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg"
+            RESULT_VARIABLE _vcpkg_bootstrap_result
+        )
+        if(NOT _vcpkg_bootstrap_result EQUAL 0)
+            message(FATAL_ERROR "vcpkg bootstrap failed (exit code ${_vcpkg_bootstrap_result})")
+        endif()
+        message(STATUS "vcpkg bootstrap complete")
+    endif()
+endif()
+
+# Auto-detect vcpkg toolchain: submodule first, then environment
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-    if(DEFINED ENV{VCPKG_ROOT})
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+    elseif(DEFINED ENV{VCPKG_ROOT})
         set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
     elseif(DEFINED ENV{VCPKG_INSTALLATION_ROOT})
         set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
