@@ -87,30 +87,33 @@ int IscStatementMetaData::getColumnDisplaySize(int index)
 	return sqlda_get_column_display_size(sqlda->effectiveVarProperties(index), sqlda->Var(index));
 }
 
+// Helper: return "" instead of nullptr (std::string(nullptr) is UB)
+static inline const char* safe_str(const char* s) { return s ? s : ""; }
+
 const char* IscStatementMetaData::getColumnLabel(int index)
 {
 	auto* var = sqlda->Var(index);
-	return (var->aliasname && *var->aliasname) ? var->aliasname : var->sqlname;
+	return safe_str((var->aliasname && *var->aliasname) ? var->aliasname : var->sqlname);
 }
 
 const char* IscStatementMetaData::getSqlTypeName(int index)
 {
-	return sqlda_get_sql_type_name(sqlda->Var(index));
+	return safe_str(sqlda_get_sql_type_name(sqlda->Var(index)));
 }
 
 const char* IscStatementMetaData::getColumnName(int index)
 {
-	return sqlda->Var(index)->sqlname;
+	return safe_str(sqlda->Var(index)->sqlname);
 }
 
 const char* IscStatementMetaData::getTableName(int index)
 {
-	return sqlda->getTableName(index);
+	return safe_str(sqlda->getTableName(index));
 }
 
 const char* IscStatementMetaData::getColumnTypeName(int index)
 {
-	return sqlda_get_sql_type_name(sqlda->Var(index));
+	return safe_str(sqlda_get_sql_type_name(sqlda->Var(index)));
 }
 
 bool IscStatementMetaData::isSigned(int index)
