@@ -2,6 +2,9 @@ name: Build and Test
 
 on:
   push:
+    # Run only on branches, not tags, since release.yml handles tags. This ensures we don't run redundant builds for release tags.
+    branches:
+      - '**'
   pull_request:
   workflow_call:
 
