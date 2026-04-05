@@ -28,6 +28,7 @@
 
 #include "OdbcConvert.h"
 #include "OdbcString.h"
+#include <string>
 
 namespace OdbcJdbcLibrary {
 
@@ -80,30 +81,30 @@ public:
 	SQLSMALLINT		datetimeIntervalCode;
 	SQLSMALLINT		conciseType;
 	SQLINTEGER		autoUniqueValue;
-	JString			baseColumnName;
-	JString			baseTableName;
+	std::string		baseColumnName;
+	std::string		baseTableName;
 	SQLINTEGER		caseSensitive;
-	JString			catalogName;
+	std::string		catalogName;
 	SQLINTEGER		datetimeIntervalPrecision;
 	SQLINTEGER		displaySize;
 	SQLSMALLINT		fixedPrecScale;
 	SQLINTEGER		numPrecRadix;
-	JString			label;
+	std::string		label;
 	SQLINTEGER		length;
-	JString			literalPrefix;
-	JString			literalSuffix;
-	JString			localTypeName;
-	JString			name;
+	std::string		literalPrefix;
+	std::string		literalSuffix;
+	std::string		localTypeName;
+	std::string		name;
 	SQLSMALLINT		nullable;
 	SQLINTEGER		octetLength;
 	SQLLEN			*octetLengthPtr;
 	SQLSMALLINT		parameterType;
 	SQLSMALLINT		precision;
 	SQLSMALLINT		scale;
-	JString			schemaName;
+	std::string		schemaName;
 	SQLSMALLINT		searchable;
-	JString			tableName;
-	JString			typeName;
+	std::string		tableName;
+	std::string		typeName;
 	SQLSMALLINT		unSigned;
 	SQLSMALLINT		updaTable;
 	SQLLEN			*indicatorPtr;

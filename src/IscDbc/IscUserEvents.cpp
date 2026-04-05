@@ -127,7 +127,7 @@ void IscUserEvents::queEvents( void * interfase )
 	}
 	catch (const fbcpp::DatabaseException& error)
 	{
-		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
+		throw SQLError::fromDatabaseException(error);
 	}
 }
 

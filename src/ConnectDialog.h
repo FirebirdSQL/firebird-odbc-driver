@@ -26,6 +26,9 @@
 // ConnectDialog.h : header file
 //
 #include "resource.h"
+#include "IscDbc/JString.h"
+
+using namespace classJString;
 
 namespace OdbcJdbcLibrary {
 

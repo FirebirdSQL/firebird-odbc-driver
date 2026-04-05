@@ -292,7 +292,7 @@ void OdbcDesc::defFromMetaDataIn(int recNumber, DescRecord * record)
 	record->type = metaDataIn->getColumnType(recNumber, realSqlType);
 	record->conciseType = getConciseType(realSqlType);
 	record->typeName = metaDataIn->getColumnTypeName(recNumber);
-	record->unNamed = !record->name.IsEmpty() ? SQL_NAMED : SQL_UNNAMED;
+	record->unNamed = !record->name.empty() ? SQL_NAMED : SQL_UNNAMED;
 	record->unSigned = SQL_FALSE;
 	record->updaTable = SQL_ATTR_WRITE;
 	record->MbsToWcs = metaDataIn->getAdressMbsToWcs( recNumber );
@@ -306,17 +306,17 @@ void OdbcDesc::defFromMetaDataIn(int recNumber, DescRecord * record)
 	record->indicatorPtr = (SQLLEN*)record->headSqlVarPtr->getSqlInd();
 
 	// Phase 12.2.3: Cache UTF-16 copies for zero-conversion W-API output
-	record->wBaseColumnName = OdbcString::from_utf8(record->baseColumnName.getString());
-	record->wBaseTableName  = OdbcString::from_utf8(record->baseTableName.getString());
-	record->wCatalogName    = OdbcString::from_utf8(record->catalogName.getString());
-	record->wLabel          = OdbcString::from_utf8(record->label.getString());
-	record->wLiteralPrefix  = OdbcString::from_utf8(record->literalPrefix.getString());
-	record->wLiteralSuffix  = OdbcString::from_utf8(record->literalSuffix.getString());
-	record->wLocalTypeName  = OdbcString::from_utf8(record->localTypeName.getString());
-	record->wName           = OdbcString::from_utf8(record->name.getString());
-	record->wSchemaName     = OdbcString::from_utf8(record->schemaName.getString());
-	record->wTableName      = OdbcString::from_utf8(record->tableName.getString());
-	record->wTypeName       = OdbcString::from_utf8(record->typeName.getString());
+	record->wBaseColumnName = OdbcString::from_utf8(record->baseColumnName.c_str());
+	record->wBaseTableName  = OdbcString::from_utf8(record->baseTableName.c_str());
+	record->wCatalogName    = OdbcString::from_utf8(record->catalogName.c_str());
+	record->wLabel          = OdbcString::from_utf8(record->label.c_str());
+	record->wLiteralPrefix  = OdbcString::from_utf8(record->literalPrefix.c_str());
+	record->wLiteralSuffix  = OdbcString::from_utf8(record->literalSuffix.c_str());
+	record->wLocalTypeName  = OdbcString::from_utf8(record->localTypeName.c_str());
+	record->wName           = OdbcString::from_utf8(record->name.c_str());
+	record->wSchemaName     = OdbcString::from_utf8(record->schemaName.c_str());
+	record->wTableName      = OdbcString::from_utf8(record->tableName.c_str());
+	record->wTypeName       = OdbcString::from_utf8(record->typeName.c_str());
 }
 
 void OdbcDesc::defFromMetaDataOut(int recNumber, DescRecord * record)
@@ -348,7 +348,7 @@ void OdbcDesc::defFromMetaDataOut(int recNumber, DescRecord * record)
 	record->type = metaDataOut->getColumnType(recNumber, realSqlType);
 	record->conciseType = getConciseType(realSqlType);
 	record->typeName = metaDataOut->getColumnTypeName(recNumber);
-	record->unNamed = !record->name.IsEmpty() ? SQL_NAMED : SQL_UNNAMED;
+	record->unNamed = !record->name.empty() ? SQL_NAMED : SQL_UNNAMED;
 	record->unSigned = SQL_FALSE;
 	record->updaTable = SQL_ATTR_WRITE;
 	record->MbsToWcs = metaDataOut->getAdressMbsToWcs( recNumber );
@@ -360,17 +360,17 @@ void OdbcDesc::defFromMetaDataOut(int recNumber, DescRecord * record)
 	record->indicatorPtr = (SQLLEN*)record->headSqlVarPtr->getSqlInd();
 
 	// Phase 12.2.3: Cache UTF-16 copies for zero-conversion W-API output
-	record->wBaseColumnName = OdbcString::from_utf8(record->baseColumnName.getString());
-	record->wBaseTableName  = OdbcString::from_utf8(record->baseTableName.getString());
-	record->wCatalogName    = OdbcString::from_utf8(record->catalogName.getString());
-	record->wLabel          = OdbcString::from_utf8(record->label.getString());
-	record->wLiteralPrefix  = OdbcString::from_utf8(record->literalPrefix.getString());
-	record->wLiteralSuffix  = OdbcString::from_utf8(record->literalSuffix.getString());
-	record->wLocalTypeName  = OdbcString::from_utf8(record->localTypeName.getString());
-	record->wName           = OdbcString::from_utf8(record->name.getString());
-	record->wSchemaName     = OdbcString::from_utf8(record->schemaName.getString());
-	record->wTableName      = OdbcString::from_utf8(record->tableName.getString());
-	record->wTypeName       = OdbcString::from_utf8(record->typeName.getString());
+	record->wBaseColumnName = OdbcString::from_utf8(record->baseColumnName.c_str());
+	record->wBaseTableName  = OdbcString::from_utf8(record->baseTableName.c_str());
+	record->wCatalogName    = OdbcString::from_utf8(record->catalogName.c_str());
+	record->wLabel          = OdbcString::from_utf8(record->label.c_str());
+	record->wLiteralPrefix  = OdbcString::from_utf8(record->literalPrefix.c_str());
+	record->wLiteralSuffix  = OdbcString::from_utf8(record->literalSuffix.c_str());
+	record->wLocalTypeName  = OdbcString::from_utf8(record->localTypeName.c_str());
+	record->wName           = OdbcString::from_utf8(record->name.c_str());
+	record->wSchemaName     = OdbcString::from_utf8(record->schemaName.c_str());
+	record->wTableName      = OdbcString::from_utf8(record->tableName.c_str());
+	record->wTypeName       = OdbcString::from_utf8(record->typeName.c_str());
 }
 
 OdbcConnection* OdbcDesc::getConnection()
@@ -541,7 +541,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			if(headType ==  odtImplementationRow)
 			{
 				if (record)
-					string = (SQLCHAR*)record->baseColumnName.getString();
+					string = (SQLCHAR*)record->baseColumnName.c_str();
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -551,7 +551,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			if(headType ==  odtImplementationRow)
 			{
 				if (record)
-					string = (SQLCHAR*)record->baseTableName.getString();
+					string = (SQLCHAR*)record->baseTableName.c_str();
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -575,7 +575,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			if(headType ==  odtImplementationRow)
 			{
 				if (record)
-					string = (SQLCHAR*)record->catalogName.getString();
+					string = (SQLCHAR*)record->catalogName.c_str();
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -616,7 +616,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			if(headType ==  odtImplementationRow)
 			{
 				if (record)
-					string = (SQLCHAR*)record->label.getString();
+					string = (SQLCHAR*)record->label.c_str();
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -626,7 +626,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			if(headType ==  odtImplementationRow)
 			{
 				if (record)
-					string = (SQLCHAR*)record->literalPrefix.getString();
+					string = (SQLCHAR*)record->literalPrefix.c_str();
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -636,7 +636,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			if(headType ==  odtImplementationRow)
 			{
 				if (record)
-					string = (SQLCHAR*)record->literalSuffix.getString();
+					string = (SQLCHAR*)record->literalSuffix.c_str();
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -646,7 +646,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			if(headType ==  odtImplementationRow)
 			{
 				if (record)
-					string = (SQLCHAR*)record->localTypeName.getString();
+					string = (SQLCHAR*)record->localTypeName.c_str();
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -664,7 +664,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			case odtImplementationRow:
 			case odtImplementationParameter:
 				if (record)
-					string = (SQLCHAR*)record->name.getString();
+					string = (SQLCHAR*)record->name.c_str();
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -739,7 +739,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			if(headType ==  odtImplementationRow)
 			{
 				if (record)
-					string = (SQLCHAR*)record->schemaName.getString();
+					string = (SQLCHAR*)record->schemaName.c_str();
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -760,7 +760,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			if(headType ==  odtImplementationRow)
 			{
 				if (record)
-					string = (SQLCHAR*)record->tableName.getString();
+					string = (SQLCHAR*)record->tableName.c_str();
 			}
 			else
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -772,7 +772,7 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			case odtImplementationRow:
 			case odtImplementationParameter:
 				if (record)
-					string = (SQLCHAR*)record->typeName.getString();
+					string = (SQLCHAR*)record->typeName.c_str();
 				break;
 			default:
 				return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
@@ -1414,7 +1414,7 @@ SQLRETURN OdbcDesc::sqlGetDescRec(	SQLSMALLINT recNumber,
 
 	try
 	{
-		rc = returnStringInfo (name, bufferLength,stringLengthPtr,record->name.getString());
+		rc = returnStringInfo (name, bufferLength,stringLengthPtr,record->name.c_str());
 		if( rc )
 			return rc;
 

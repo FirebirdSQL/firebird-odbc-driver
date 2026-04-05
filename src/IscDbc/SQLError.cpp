@@ -24,6 +24,7 @@
 #include "IscDbc.h"
 #include "SQLError.h"
 #include "Stream.h"
+#include <fb-cpp/Exception.h>
 
 #ifdef _WINDOWS
 #define vsnprintf	_vsnprintf
@@ -36,9 +37,19 @@ static char THIS_FILE[]=__FILE__;
 
 namespace IscDbcLibrary {
 
-using namespace classJString;
 
 
+SQLError SQLError::fromDatabaseException(const fbcpp::DatabaseException& ex)
+{
+	return fromDatabaseException(RUNTIME_ERROR, ex);
+}
+
+SQLError SQLError::fromDatabaseException(SqlCode fallbackCode, const fbcpp::DatabaseException& ex)
+{
+	auto errorCode = static_cast<__int64>(ex.getErrorCode());
+	return SQLError(static_cast<int>(fallbackCode), errorCode, ex.what());
+}
+
 SQLError::SQLError (SqlCode code, const char *txt, ...)
 {
 /**************************************
@@ -55,7 +66,7 @@ SQLError::SQLError (SqlCode code, const char *txt, ...)
 	va_start	(args, txt);
 	char		temp [1024];
 
-	stackTrace = NULL;
+	stackTrace.clear();
 	useCount = 0;
 
 	if (vsnprintf (temp, sizeof (temp) - 1, txt, args) < 0)
@@ -84,10 +95,8 @@ SQLError::SQLError(Stream * trace, SqlCode code, const char * txt, ...)
 
 	useCount = 0;
 	int length = trace->getLength();
-	char *buffer = stackTrace.getBuffer (length + 1);
-	trace->getSegment (0, length, buffer);
-	buffer [length] = 0;
-	stackTrace.releaseBuffer();
+	stackTrace.resize(length);
+	trace->getSegment (0, length, stackTrace.data());
 
 	if (vsnprintf (temp, sizeof (temp) - 1, txt, args) < 0)
 		temp [sizeof (temp) - 1] = 0;
@@ -157,7 +166,7 @@ const char *SQLError::getText ()
  *
  **************************************/
 
-return text;
+return text.c_str();
 }
 
 SQLError::operator const char* ()
@@ -183,7 +192,7 @@ SQLError::SQLError( int code, __int64 codefb, const char * txt, ...)
 	char		temp [1024];
 
 	useCount = 0;
-	stackTrace = NULL;
+	stackTrace.clear();
 
 	if (vsnprintf (temp, sizeof (temp) - 1, txt, args) < 0)
 		temp [sizeof (temp) - 1] = 0;
@@ -195,7 +204,7 @@ SQLError::SQLError( int code, __int64 codefb, const char * txt, ...)
 
 const char* SQLError::getTrace()
 {
-	return stackTrace;
+	return stackTrace.c_str();
 }
 
 void SQLError::addRef()

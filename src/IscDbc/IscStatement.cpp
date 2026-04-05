@@ -664,7 +664,7 @@ void IscStatement::prepareStatement(const char * sqlString)
 		{
 			fbStatement_.reset();
 			statementHandle = nullptr;
-			throw SQLEXCEPTION( RUNTIME_ERROR, e.what() );
+			throw SQLError::fromDatabaseException(e);
 		}
 	}
 	else

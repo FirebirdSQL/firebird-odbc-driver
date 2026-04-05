@@ -32,6 +32,7 @@
 #define _ODBCSTATEMENT_H_
 
 #include "OdbcObject.h"
+#include <string>
 #include <mutex>
 #include <condition_variable>
 #include <thread>
@@ -39,7 +40,6 @@
 
 namespace OdbcJdbcLibrary {
 
-using namespace classJString;
 using namespace IscDbcLibrary;
 
 class OdbcConnection;
@@ -180,8 +180,8 @@ public:
 	bool				cancel;
 	int					countFetched;
 	enFetchType			enFetch;
-	JString				cursorName;
-	JString				sqlPrepareString;
+	std::string			cursorName;
+	std::string			sqlPrepareString;
 	bool				setPreCursorName;
 	bool				isResultSetFromSystemCatalog;
 	bool				isFetchStaticCursor;

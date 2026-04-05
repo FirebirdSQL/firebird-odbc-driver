@@ -29,8 +29,9 @@
 #include <inttypes.h>
 #endif
 
+#include <string>
+#include <string_view>
 #include "OdbcDesc.h"
-#include "IscDbc/JString.h"
 #include "OdbcUserEvents.h"
 
 namespace OdbcJdbcLibrary {
@@ -66,12 +67,12 @@ public:
 	SQLRETURN sqlConnect (const SQLCHAR *dsn, int dsnLength, SQLCHAR*UID,int uidLength,SQLCHAR*password,int passwordLength);
 	DatabaseMetaData* getMetaData();
 	virtual SQLRETURN allocHandle (int handleType, SQLHANDLE *outputHandle);
-	char* appendString (char *ptr, const char *string);
+	char* appendString (char *ptr, std::string_view str);
 	SQLRETURN sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMALLINT maxLength, SQLSMALLINT * actualLength );
 	SQLRETURN sqlDisconnect();
 	SQLRETURN sqlGetFunctions (SQLUSMALLINT functionId, SQLUSMALLINT *supportedPtr);
-	JString readAttribute (const char *attribute);
-	JString readAttributeFileDSN (const char * attribute);
+	std::string readAttribute (const char *attribute);
+	std::string readAttributeFileDSN (const char * attribute);
 	void writeAttributeFileDSN (const char * attribute, const char * value);
 	SQLRETURN sqlDriverConnect (SQLHWND hWnd, 
 						   const SQLCHAR *connectString, int connectStringLength, 
@@ -104,28 +105,28 @@ public:
 	bool		connected;
 	bool		safeThread;
 	int			connectionTimeout;
-	JString		dsn;
-	JString		description;
-	JString		filedsn;
-	JString		savedsn;
-	JString		databaseName;
-	JString		databaseServerName;
+	std::string	dsn;
+	std::string	description;
+	std::string	filedsn;
+	std::string	savedsn;
+	std::string	databaseName;
+	std::string	databaseServerName;
 	int			databaseAccess;
-	JString		client;
-	JString		account;
-	JString		password;
-	JString		role;
-	JString		charset;
-	JString		jdbcDriver;
-	JString		pageSize;
-	JString		setCompatBindStr;
-	JString		connSettings;
+	std::string	client;
+	std::string	account;
+	std::string	password;
+	std::string	role;
+	std::string	charset;
+	std::string	jdbcDriver;
+	std::string	pageSize;
+	std::string	setCompatBindStr;
+	std::string	connSettings;
 	bool		enableCompatBind;
 	bool		enableWireCompression;
 	int			optTpb;
 	int			defOptions;
-	JString		useSchemaIdentifier;
-	JString		useLockTimeoutWaitTransactions;
+	std::string	useSchemaIdentifier;
+	std::string	useLockTimeoutWaitTransactions;
 	bool		quotedIdentifier;
 	bool		sensitiveIdentifier;
 	bool		autoQuotedIdentifier;

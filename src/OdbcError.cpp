@@ -49,7 +49,6 @@ static inline unsigned CALC_HASH(const char* pt)
 
 namespace OdbcJdbcLibrary {
 
-using namespace classJString;
 
 struct ListErrorLinks
 {
@@ -487,7 +486,7 @@ public:
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-OdbcError::OdbcError(int code, const char *state, JString errorMsg)
+OdbcError::OdbcError(int code, const char *state, const std::string& errorMsg)
 {
 	msg = LABEL_ODBC;
 	nativeCode = code;
@@ -513,7 +512,7 @@ OdbcError::OdbcError(int code, const char *state, JString errorMsg)
 	columnNumber = 0;
 }
 
-OdbcError::OdbcError(int code, int fbcode, const char *state, JString errorMsg)
+OdbcError::OdbcError(int code, int fbcode, const char *state, const std::string& errorMsg)
 {
 	msg = LABEL_ODBC;
 	nativeCode = code;
@@ -577,7 +576,7 @@ SQLRETURN OdbcError::sqlGetDiagRec(UCHAR * stateBuffer, SQLINTEGER * nativeCodeP
 		*nativeCodePtr = nativeCode;
 
 	--msgBufferLength;
-	int length = (int)strlen (msg);
+	int length = (int)msg.length();
 
 	if (msgLength)
 		*msgLength = length;
@@ -587,12 +586,12 @@ SQLRETURN OdbcError::sqlGetDiagRec(UCHAR * stateBuffer, SQLINTEGER * nativeCodeP
 
 	if (length <= msgBufferLength)
 		{
-		strcpy ((char*) msgBuffer, msg);
+		strcpy ((char*) msgBuffer, msg.c_str());
 		msgBuffer [length] = 0;
 		}
 	else
 		{
-		memcpy (msgBuffer, msg, msgBufferLength);
+		memcpy (msgBuffer, msg.c_str(), msgBufferLength);
 		msgBuffer [msgBufferLength] = 0;
 		return SQL_SUCCESS_WITH_INFO;
 		}
@@ -617,7 +616,7 @@ SQLRETURN OdbcError::sqlGetDiagRecW(SQLWCHAR * stateBuffer, SQLINTEGER * nativeC
 		*nativeCodePtr = nativeCode;
 
 	// Convert message from UTF-8 to UTF-16
-	const char *msgUtf8 = (const char*)msg;
+	const char *msgUtf8 = msg.c_str();
 	int utf8Len = (int)strlen(msgUtf8);
 
 	// Calculate the full UTF-16 length (in SQLWCHAR units)
@@ -678,7 +677,7 @@ SQLRETURN OdbcError::sqlGetDiagFieldW(int diagId, SQLPOINTER ptr, int msgBufferL
 
 		case SQL_DIAG_CONNECTION_NAME:
 			if ( connection )
-				string = connection->dsn;
+				string = connection->dsn.c_str();
 			else
 				string = "";
 			break;
@@ -691,7 +690,7 @@ SQLRETURN OdbcError::sqlGetDiagFieldW(int diagId, SQLPOINTER ptr, int msgBufferL
 			break;
 
 		case SQL_DIAG_MESSAGE_TEXT:
-			string = msg;
+			string = msg.c_str();
 			break;
 
 		case SQL_DIAG_NATIVE:
@@ -774,7 +773,7 @@ SQLRETURN OdbcError::sqlGetDiagField(int diagId, SQLPOINTER ptr, int msgBufferLe
 
 		case SQL_DIAG_CONNECTION_NAME:
 			if ( connection )
-				string = connection->dsn;
+				string = connection->dsn.c_str();
 			else
 				string = "";
 			break;
@@ -787,7 +786,7 @@ SQLRETURN OdbcError::sqlGetDiagField(int diagId, SQLPOINTER ptr, int msgBufferLe
 			break;
 		
 		case SQL_DIAG_MESSAGE_TEXT:
-			string = msg;
+			string = msg.c_str();
 			break;
 		
 		case SQL_DIAG_NATIVE:

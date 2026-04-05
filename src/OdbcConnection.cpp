@@ -325,7 +325,7 @@ OdbcConnection::OdbcConnection(OdbcEnv *parent)
 	userEventsInterfase	= NULL;
 	charsetCode			= 0; // NONE
 	enableCompatBind    = true;
-	setCompatBindStr    = NULL;
+	setCompatBindStr.clear();
 	enableWireCompression = false;
 
 #ifdef _WINDOWS
@@ -551,7 +551,7 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 
 	int length = stringLength (connectString, connectStringLength);
 	const char *end = (const char*) connectString + length;
-	JString driver = DRIVER_FULL_NAME;
+	std::string driver = DRIVER_FULL_NAME;
 
 	for (const char *p = (const char*) connectString; p < end;)
 	{
@@ -723,13 +723,13 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 
 	*r = '\0';
 
-	if (!dsn.IsEmpty())
+	if (!dsn.empty())
 	{
 		r = appendString (r, SETUP_DSN"=");
 		r = appendString (r, dsn);
 	}
 
-	if (!driver.IsEmpty())
+	if (!driver.empty())
 	{
 		if ( r > returnString )
 			r = appendString (r, ";" SETUP_DRIVER"=");
@@ -738,13 +738,13 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 		r = appendString (r, driver);
 	}
 
-	if (!databaseName.IsEmpty())
+	if (!databaseName.empty())
 	{
 		r = appendString (r, ";" SETUP_DBNAME"=");
 		r = appendString (r, databaseName);
 	}
 
-	if (!charset.IsEmpty())
+	if (!charset.empty())
 	{
 		r = appendString (r, ";" KEY_DSN_CHARSET"=");
 		r = appendString (r, charset);
@@ -752,12 +752,12 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 
 #ifdef _WINDOWS
 	if ( driverCompletion != SQL_DRIVER_NOPROMPT 
-		&& ( account.IsEmpty() || password.IsEmpty() ) )
+		&& ( account.empty() || password.empty() ) )
 	{
 		CConnectDialog dlg;
-		dlg.m_user = account;
-		dlg.m_password = password;
-		dlg.m_role = role;
+		dlg.m_user = account.c_str();
+		dlg.m_password = password.c_str();
+		dlg.m_role = role.c_str();
 
 		if ( IDOK != dlg.DoModal() )
 		{
@@ -765,13 +765,13 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 			return SQL_ERROR;
 		}
 
-		account = dlg.m_user;
-		password = dlg.m_password;
-		role = dlg.m_role;
+		account = (const char*)dlg.m_user;
+		password = (const char*)dlg.m_password;
+		role = (const char*)dlg.m_role;
 	}
 #endif // _WINDOWS
 
-	SQLRETURN ret = connect (jdbcDriver, databaseName, account, password, role, charset);
+	SQLRETURN ret = connect (jdbcDriver.c_str(), databaseName.c_str(), account.c_str(), password.c_str(), role.c_str(), charset.c_str());
 
 	if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
 		return ret;
@@ -781,7 +781,7 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 
 	if ( outConnectBuffer && connectBufferLength )
 	{
-		if (!password.IsEmpty())
+		if (!password.empty())
 		{
 			r = appendString (r, ";" KEY_DSN_PWD"=");
 
@@ -789,32 +789,32 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 			{
 				char buffer[256];
 				CSecurityPassword security;
-				security.encode( (char*)(const char *)password, buffer );
+				security.encode( (char*)password.c_str(), buffer );
 				r = appendString (r, buffer);
 			}
 			else
 				r = appendString (r, password);
 		}
 
-		if (!account.IsEmpty())
+		if (!account.empty())
 		{
 			r = appendString (r, ";" KEY_DSN_UID"=");
 			r = appendString (r, account);
 		}
 
-		if (!role.IsEmpty())
+		if (!role.empty())
 		{
 			r = appendString (r, ";" SETUP_ROLE"=");
 			r = appendString (r, role);
 		}
 
-		if (!client.IsEmpty())
+		if (!client.empty())
 		{
 			r = appendString (r, ";" SETUP_CLIENT"=");
 			r = appendString (r, client);
 		}
 
-		if (!filedsn.IsEmpty())
+		if (!filedsn.empty())
 		{
 			r = appendString (r, ";" KEY_FILEDSN"=");
 			r = appendString (r, filedsn);
@@ -827,7 +827,7 @@ SQLRETURN OdbcConnection::sqlDriverConnect(SQLHWND hWnd, const SQLCHAR * connect
 			postError ("01004", "String data, right truncated");
 	}
 
-	if (!savedsn.IsEmpty())
+	if (!savedsn.empty())
 		saveConnectParameters();
 
 	return sqlSuccess();
@@ -848,7 +848,7 @@ SQLRETURN OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMAL
 
 	int length = stringLength (inConnectionString, stringLength1);
 	const char *end = (const char*) inConnectionString + length;
-	JString driver = DRIVER_FULL_NAME;
+	std::string driver = DRIVER_FULL_NAME;
 
 	levelBrowseConnect = 0;
 
@@ -940,25 +940,25 @@ SQLRETURN OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMAL
 	{
 	case 1:
 		r = appendString (r, "*ROLE=");
-		if (!role.IsEmpty())
+		if (!role.empty())
 			r = appendString (r, role);
 		else
 			r = appendString (r, "?");
 
 		r = appendString (r, "*CHARSET=");
-		if (!charset.IsEmpty())
+		if (!charset.empty())
 			r = appendString (r, charset);
 		else
 			r = appendString (r, "?");
 
 		r = appendString (r, ";UID=");
-		if (!account.IsEmpty())
+		if (!account.empty())
 			r = appendString (r, account);
 		else
 			r = appendString (r, "?");
 
 		r = appendString (r, ";PWD=");
-		if (!password.IsEmpty())
+		if (!password.empty())
 			r = appendString (r, password);
 		else
 			r = appendString (r, "?");
@@ -967,50 +967,50 @@ SQLRETURN OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMAL
 
 	case 2:
 		r = appendString (r, "DBNAME=");
-		if (!databaseName.IsEmpty())
+		if (!databaseName.empty())
 			r = appendString (r, databaseName);
 		else
 			r = appendString (r, "?");
 		break;
 
 	case 3:
-		if (!dsn.IsEmpty())
+		if (!dsn.empty())
 		{
 			r = appendString (r, "DSN=");
 			r = appendString (r, dsn);
 		}
 
-		if (!driver.IsEmpty())
+		if (!driver.empty())
 		{
 			r = appendString (r, ";DRIVER=");
 			r = appendString (r, driver);
 		}
 
-		if (!role.IsEmpty())
+		if (!role.empty())
 		{
 			r = appendString (r, ";ROLE=");
 			r = appendString (r, role);
 		}
 
-		if (!charset.IsEmpty())
+		if (!charset.empty())
 		{
 			r = appendString (r, ";CHARSET=");
 			r = appendString (r, charset);
 		}
 
-		if (!account.IsEmpty())
+		if (!account.empty())
 		{
 			r = appendString (r, ";UID=");
 			r = appendString (r, account);
 		}
 
-		if (!password.IsEmpty())
+		if (!password.empty())
 		{
 			r = appendString (r, ";PWD=");
 			r = appendString (r, password);
 		}
 
-		if (!databaseName.IsEmpty())
+		if (!databaseName.empty())
 		{
 			r = appendString (r, ";DBNAME=");
 			r = appendString (r, databaseName);
@@ -1028,7 +1028,7 @@ SQLRETURN OdbcConnection::sqlBrowseConnect(SQLCHAR * inConnectionString, SQLSMAL
 		return SQL_NEED_DATA;
 	else
 	{
-		SQLRETURN ret = connect (jdbcDriver, databaseName, account, password, role, charset);
+		SQLRETURN ret = connect (jdbcDriver.c_str(), databaseName.c_str(), account.c_str(), password.c_str(), role.c_str(), charset.c_str());
 
 		if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
 			return ret;
@@ -1051,21 +1051,25 @@ SQLRETURN OdbcConnection::sqlNativeSql( SQLCHAR * inStatementText, SQLINTEGER te
 	else if ( textLength1 < 0 )
 		return sqlReturn( SQL_ERROR, "HY090", "Invalid string or buffer length" );
 
-	JString tempNative;
+	std::string tempNative;
 	int textLength = textLength1 + 4096;
 	const char * outText;
 	SQLRETURN ret = SQL_SUCCESS;
 
 	try
 	{
+		tempNative.resize(textLength);
 		if ( !connection->getNativeSql( (const char *)inStatementText, textLength1, 
-							tempNative.getBuffer ( textLength ), textLength, &textLength ) )
+							tempNative.data(), textLength, &textLength ) )
 		{
 			textLength = textLength1;
 			outText = (const char *)inStatementText;
 		}
 		else
-			outText = (const char *)tempNative;
+		{
+			tempNative.resize(textLength);
+			outText = tempNative.c_str();
+		}
 
 	}
 	catch ( SQLException &exception )
@@ -1093,34 +1097,34 @@ SQLRETURN OdbcConnection::sqlNativeSql( SQLCHAR * inStatementText, SQLINTEGER te
 	return ret;
 }
 
-JString OdbcConnection::readAttribute(const char * attribute)
+std::string OdbcConnection::readAttribute(const char * attribute)
 {
 	char buffer [256];
 
-	int ret = SQLGetPrivateProfileString (dsn, attribute, "", buffer, sizeof (buffer), env->getOdbcIniFileName());
+	int ret = SQLGetPrivateProfileString (dsn.c_str(), attribute, "", buffer, sizeof (buffer), env->getOdbcIniFileName());
 	if (ret < 0) ret = 0;
 
-	return JString (buffer, ret);
+	return std::string (buffer, ret);
 }
 
-JString OdbcConnection::readAttributeFileDSN(const char * attribute)
+std::string OdbcConnection::readAttributeFileDSN(const char * attribute)
 {
 	char buffer [256];
 	unsigned short ret;
 
-	if ( SQLReadFileDSN (filedsn, "ODBC", attribute, buffer, sizeof (buffer), &ret) )
-		return JString (buffer, ret);
+	if ( SQLReadFileDSN (filedsn.c_str(), "ODBC", attribute, buffer, sizeof (buffer), &ret) )
+		return std::string (buffer, ret);
 
-	return JString ("", 0);
+	return std::string ();
 }
 
 void OdbcConnection::writeAttributeFileDSN(const char * attribute, const char * value)
 {
 #ifdef _IODBCUNIX_H
 	// note: (char*)value - only for iODBC from Linux
-	SQLWriteFileDSN (savedsn, "ODBC", attribute, (char*)value);
+	SQLWriteFileDSN (savedsn.c_str(), "ODBC", attribute, (char*)value);
 #else
-	SQLWriteFileDSN (savedsn, "ODBC", attribute, value);
+	SQLWriteFileDSN (savedsn.c_str(), "ODBC", attribute, value);
 #endif
 }
 
@@ -1258,7 +1262,7 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 		break;
 
 	case SQL_DATABASE_NAME:
-		string = databaseName;
+		string = databaseName.c_str();
 		break;
 
 	case SQL_CATALOG_LOCATION:
@@ -1313,13 +1317,13 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 		break;
 
 	case SQL_SERVER_NAME:
-		if ( databaseServerName.IsEmpty() )
+		if ( databaseServerName.empty() )
 			databaseServerName = metaData->getDatabaseServerName();
-		string = databaseServerName;
+		string = databaseServerName.c_str();
 		break;
 
 	case SQL_DATA_SOURCE_NAME:
-		string = dsn;
+		string = dsn.c_str();
 		break;
 
 	case SQL_DATA_SOURCE_READ_ONLY:
@@ -1351,7 +1355,7 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 		break;
 
 	case SQL_USER_NAME:
-		string = account;
+		string = account.c_str();
 		break;
 
 	case SQL_SCHEMA_TERM:
@@ -1599,10 +1603,10 @@ SQLRETURN OdbcConnection::sqlGetInfo( SQLUSMALLINT type, SQLPOINTER ptr, SQLSMAL
 	return sqlSuccess();
 }
 
-char* OdbcConnection::appendString(char * ptr, const char * string)
+char* OdbcConnection::appendString(char * ptr, std::string_view str)
 {
-	while (*string)
-		*ptr++ = *string++;
+	for (char ch : str)
+		*ptr++ = ch;
 
 	return ptr;
 }
@@ -1662,7 +1666,7 @@ SQLRETURN OdbcConnection::sqlConnect(const SQLCHAR *dataSetName, int dsnLength, 
 	role = "";
 	charset = "";
 	expandConnectParameters();
-	SQLRETURN ret = connect (jdbcDriver, databaseName, account, password, role, charset);
+	SQLRETURN ret = connect (jdbcDriver.c_str(), databaseName.c_str(), account.c_str(), password.c_str(), role.c_str(), charset.c_str());
 
 	if (ret != SQL_SUCCESS)
 		return ret;
@@ -1687,9 +1691,9 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 			connection = NULL;
 			env->envShare = NULL;
 
-			JString text;
-			text.Format( " Unable to load %s Library : can't find ver. %s ", sharedLibrary, DRIVER_VERSION );
-			return sqlReturn( SQL_ERROR, "HY000", text );
+			char textBuf[512];
+			snprintf(textBuf, sizeof(textBuf), " Unable to load %s Library : can't find ver. %s ", sharedLibrary, DRIVER_VERSION );
+			return sqlReturn( SQL_ERROR, "HY000", textBuf );
 		}
 
 		properties = connection->allocProperties();
@@ -1701,10 +1705,10 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 			properties->putValue ("role", role);
 		if (charset)
 			properties->putValue ("charset", charset);
-		if (client)
-			properties->putValue ("client", client);
-		if (dsn)
-			properties->putValue ("dsn", dsn);
+		if (!client.empty())
+			properties->putValue ("client", client.c_str());
+		if (!dsn.empty())
+			properties->putValue ("dsn", dsn.c_str());
 
 		properties->putValue ("dialect", dialect3 ? "3" : "1");
 
@@ -1717,14 +1721,14 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 								: databaseAccess == DROP_DB ? "2" 
 								: "0");
 
-		if (useSchemaIdentifier)
-			properties->putValue ("useSchema", useSchemaIdentifier);
+		if (!useSchemaIdentifier.empty())
+			properties->putValue ("useSchema", useSchemaIdentifier.c_str());
 
-		if (useLockTimeoutWaitTransactions)
-			properties->putValue ("useLockTimeout", useLockTimeoutWaitTransactions);
+		if (!useLockTimeoutWaitTransactions.empty())
+			properties->putValue ("useLockTimeout", useLockTimeoutWaitTransactions.c_str());
 
-		if (pageSize)
-			properties->putValue ("pagesize", pageSize);
+		if (!pageSize.empty())
+			properties->putValue ("pagesize", pageSize.c_str());
 
 		if (connectionTimeout)
 		{
@@ -1735,8 +1739,8 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 
 		properties->putValue("EnableCompatBind", enableCompatBind ? "Y" : "N");
 
-		if (enableCompatBind && setCompatBindStr)
-			properties->putValue("SetCompatBind", setCompatBindStr);
+		if (enableCompatBind && !setCompatBindStr.empty())
+			properties->putValue("SetCompatBind", setCompatBindStr.c_str());
 
 		properties->putValue("EnableWireCompression", enableWireCompression ? "Y" : "N");
 
@@ -1746,12 +1750,12 @@ SQLRETURN OdbcConnection::connect(const char *sharedLibrary, const char * databa
 		env->envShare = connection->getEnvironmentShare();
 
 		// Execute ConnSettings SQL statements if specified
-		if (connSettings && !connSettings.IsEmpty())
+		if (!connSettings.empty())
 		{
 			try
 			{
 				// Split by semicolons and execute each statement
-				const char* csql = connSettings;
+				const char* csql = connSettings.c_str();
 				std::string current;
 				for (const char* p = csql; ; ++p)
 				{
@@ -1881,69 +1885,69 @@ void OdbcConnection::statementDeleted(OdbcStatement * statement)
 
 void OdbcConnection::expandConnectParameters()
 {
-	if (!dsn.IsEmpty())
+	if (!dsn.empty())
 	{
-		JString options;
+		std::string options;
 
-		if (description.IsEmpty())
+		if (description.empty())
 			description = readAttribute (SETUP_DESCRIPTION);
 
 		if (!(defOptions & DEF_COMPATMODE))
 		{
 			options = readAttribute(SETUP_ENABLE_COMPAT_BIND);
 
-			if (*(const char*)options == 'N')
+			if ((!options.empty() ? options[0] : 0) == 'N')
 				enableCompatBind = false;
 		}
 
-		if (setCompatBindStr.IsEmpty())
+		if (setCompatBindStr.empty())
 			setCompatBindStr = readAttribute (SETUP_SET_COMPAT_BIND);
 
 		if (!(defOptions & DEF_WIRECOMPRESSION))
 		{
 			options = readAttribute(SETUP_ENABLE_WIRECOMPRESSION);
 
-			if (*(const char*)options == 'Y')
+			if ((!options.empty() ? options[0] : 0) == 'Y')
 				enableWireCompression = true;
 		}
 
-		if (databaseName.IsEmpty())
+		if (databaseName.empty())
 			databaseName = readAttribute (SETUP_DBNAME);
 
-		if (client.IsEmpty())
+		if (client.empty())
 			client = readAttribute (SETUP_CLIENT);
 
-		if (account.IsEmpty())
+		if (account.empty())
 			account = readAttribute (SETUP_USER);
 
-		if (password.IsEmpty())
+		if (password.empty())
 		{
-			JString pass = readAttribute (SETUP_PASSWORD);
+			std::string pass = readAttribute (SETUP_PASSWORD);
 			if ( pass.length() > 40 )
 			{
 				char buffer[256];
 				CSecurityPassword security;
-				security.decode( (char*)(const char *)pass, buffer );
+				security.decode( pass.data(), buffer );
 				password = buffer;
 			}
 			else
 				password = pass;
 		}
 
-		if (jdbcDriver.IsEmpty())
+		if (jdbcDriver.empty())
 			jdbcDriver = readAttribute (SETUP_JDBC_DRIVER);
 
-		if (role.IsEmpty())
+		if (role.empty())
 			role = readAttribute(SETUP_ROLE);
 
-		if (charset.IsEmpty())
+		if (charset.empty())
 			charset = readAttribute(SETUP_CHARSET);
 
 		if ( !(defOptions & DEF_READONLY_TPB) )
 		{
 			options = readAttribute(SETUP_READONLY_TPB);
 
-			if(*(const char *)options == 'Y')
+			if((!options.empty() ? options[0] : 0) == 'Y')
 				optTpb |=TRA_ro;
 		}
 
@@ -1951,7 +1955,7 @@ void OdbcConnection::expandConnectParameters()
 		{
 			options = readAttribute(SETUP_NOWAIT_TPB);
 
-			if(*(const char *)options == 'Y')
+			if((!options.empty() ? options[0] : 0) == 'Y')
 				optTpb |=TRA_nw;
 		}
 
@@ -1959,21 +1963,21 @@ void OdbcConnection::expandConnectParameters()
 		{
 			options = readAttribute(SETUP_DIALECT);
 
-			if(*(const char *)options == '1')
+			if((!options.empty() ? options[0] : 0) == '1')
 				dialect3 = false;
 		}
 
-		if (useSchemaIdentifier.IsEmpty())
+		if (useSchemaIdentifier.empty())
 			useSchemaIdentifier = readAttribute(SETUP_USESCHEMA);
 
-		if (useLockTimeoutWaitTransactions.IsEmpty())
+		if (useLockTimeoutWaitTransactions.empty())
 			useLockTimeoutWaitTransactions = readAttribute(SETUP_LOCKTIMEOUT);
 
 		if ( !(defOptions & DEF_SAFETHREAD) )
 		{
 			options = readAttribute(SETUP_SAFETHREAD);
 
-			if(*(const char *)options == 'N')
+			if((!options.empty() ? options[0] : 0) == 'N')
 				safeThread = false;
 		}
 
@@ -1981,7 +1985,7 @@ void OdbcConnection::expandConnectParameters()
 		{
 			options = readAttribute(SETUP_QUOTED);
 
-			if(*(const char *)options == 'N')
+			if((!options.empty() ? options[0] : 0) == 'N')
 				quotedIdentifier = false;
 		}
 
@@ -1989,7 +1993,7 @@ void OdbcConnection::expandConnectParameters()
 		{
 			options = readAttribute(SETUP_SENSITIVE);
 
-			if(*(const char *)options == 'Y')
+			if((!options.empty() ? options[0] : 0) == 'Y')
 				sensitiveIdentifier = true;
 		}
 
@@ -1997,73 +2001,73 @@ void OdbcConnection::expandConnectParameters()
 		{
 			options = readAttribute(SETUP_AUTOQUOTED);
 
-			if(*(const char *)options == 'Y')
+			if((!options.empty() ? options[0] : 0) == 'Y')
 				autoQuotedIdentifier = true;
 		}
 	}
-	else if (!filedsn.IsEmpty())
+	else if (!filedsn.empty())
 	{
-		JString options;
+		std::string options;
 
-		if (description.IsEmpty())
+		if (description.empty())
 			description = readAttributeFileDSN (SETUP_DESCRIPTION);
 
 		if (!(defOptions & DEF_COMPATMODE))
 		{
 			options = readAttributeFileDSN (SETUP_ENABLE_COMPAT_BIND);
 
-			if (*(const char*)options == 'N')
+			if ((!options.empty() ? options[0] : 0) == 'N')
 				enableCompatBind = false;
 		}
 
-		if (setCompatBindStr.IsEmpty())
+		if (setCompatBindStr.empty())
 			setCompatBindStr = readAttributeFileDSN (SETUP_SET_COMPAT_BIND);
 
 		if (!(defOptions & DEF_WIRECOMPRESSION))
 		{
 			options = readAttributeFileDSN(SETUP_ENABLE_WIRECOMPRESSION);
 
-			if (*(const char*)options == 'Y')
+			if ((!options.empty() ? options[0] : 0) == 'Y')
 				enableWireCompression = true;
 		}
 
-		if (databaseName.IsEmpty())
+		if (databaseName.empty())
 			databaseName = readAttributeFileDSN (SETUP_DBNAME);
 
-		if (client.IsEmpty())
+		if (client.empty())
 			client = readAttributeFileDSN (SETUP_CLIENT);
 
-		if (account.IsEmpty())
+		if (account.empty())
 			account = readAttributeFileDSN (SETUP_USER);
 
-		if (password.IsEmpty())
+		if (password.empty())
 		{
-			JString pass = readAttributeFileDSN (SETUP_PASSWORD);
+			std::string pass = readAttributeFileDSN (SETUP_PASSWORD);
 			if ( pass.length() > 40 )
 			{
 				char buffer[256];
 				CSecurityPassword security;
-				security.decode( (char*)(const char *)pass, buffer );
+				security.decode( pass.data(), buffer );
 				password = buffer;
 			}
 			else
 				password = pass;
 		}
 
-		if (jdbcDriver.IsEmpty())
+		if (jdbcDriver.empty())
 			jdbcDriver = readAttributeFileDSN (SETUP_JDBC_DRIVER);
 
-		if (role.IsEmpty())
+		if (role.empty())
 			role = readAttributeFileDSN (SETUP_ROLE);
 
-		if (charset.IsEmpty())
+		if (charset.empty())
 			charset = readAttributeFileDSN (SETUP_CHARSET);
 
 		if ( !(defOptions & DEF_READONLY_TPB) )
 		{
 			options = readAttributeFileDSN (SETUP_READONLY_TPB);
 
-			if(*(const char *)options == 'Y')
+			if((!options.empty() ? options[0] : 0) == 'Y')
 				optTpb |=TRA_ro;
 		}
 
@@ -2071,7 +2075,7 @@ void OdbcConnection::expandConnectParameters()
 		{
 			options = readAttributeFileDSN (SETUP_NOWAIT_TPB);
 
-			if(*(const char *)options == 'Y')
+			if((!options.empty() ? options[0] : 0) == 'Y')
 				optTpb |=TRA_nw;
 		}
 
@@ -2079,21 +2083,21 @@ void OdbcConnection::expandConnectParameters()
 		{
 			options = readAttributeFileDSN (SETUP_DIALECT);
 
-			if(*(const char *)options == '1')
+			if((!options.empty() ? options[0] : 0) == '1')
 				dialect3 = false;
 		}
 
-		if (useSchemaIdentifier.IsEmpty())
+		if (useSchemaIdentifier.empty())
 			useSchemaIdentifier = readAttributeFileDSN (SETUP_USESCHEMA);
 
-		if (useLockTimeoutWaitTransactions.IsEmpty())
+		if (useLockTimeoutWaitTransactions.empty())
 			useLockTimeoutWaitTransactions = readAttributeFileDSN (SETUP_LOCKTIMEOUT);
 
 		if ( !(defOptions & DEF_SAFETHREAD) )
 		{
 			options = readAttribute(SETUP_SAFETHREAD);
 
-			if(*(const char *)options == 'N')
+			if((!options.empty() ? options[0] : 0) == 'N')
 				safeThread = false;
 		}
 
@@ -2101,7 +2105,7 @@ void OdbcConnection::expandConnectParameters()
 		{
 			options = readAttributeFileDSN (SETUP_QUOTED);
 
-			if(*(const char *)options == 'N')
+			if((!options.empty() ? options[0] : 0) == 'N')
 				quotedIdentifier = false;
 		}
 
@@ -2109,7 +2113,7 @@ void OdbcConnection::expandConnectParameters()
 		{
 			options = readAttribute(SETUP_SENSITIVE);
 
-			if(*(const char *)options == 'Y')
+			if((!options.empty() ? options[0] : 0) == 'Y')
 				sensitiveIdentifier = true;
 		}
 
@@ -2117,48 +2121,48 @@ void OdbcConnection::expandConnectParameters()
 		{
 			options = readAttribute(SETUP_AUTOQUOTED);
 
-			if(*(const char *)options == 'Y')
+			if((!options.empty() ? options[0] : 0) == 'Y')
 				autoQuotedIdentifier = true;
 		}
 
-		if (dsn.IsEmpty())
+		if (dsn.empty())
 		{
 			dsn = readAttributeFileDSN (SETUP_DSN);
-			if (!dsn.IsEmpty())
+			if (!dsn.empty())
 				expandConnectParameters();
 		}
 	}
 
-	if (jdbcDriver.IsEmpty())
+	if (jdbcDriver.empty())
 		jdbcDriver = DEFAULT_DRIVER;
 }
 
 void OdbcConnection::saveConnectParameters()
 {
 	writeAttributeFileDSN (SETUP_DRIVER, DRIVER_FULL_NAME);
-	writeAttributeFileDSN (SETUP_DESCRIPTION, description);
-	writeAttributeFileDSN (SETUP_DBNAME, databaseName);
-	writeAttributeFileDSN (SETUP_CLIENT, client);
-	writeAttributeFileDSN (SETUP_USER, account);
-	writeAttributeFileDSN (SETUP_ROLE, role);
-	writeAttributeFileDSN (SETUP_CHARSET, charset);
-	writeAttributeFileDSN (SETUP_JDBC_DRIVER, jdbcDriver);
+	writeAttributeFileDSN (SETUP_DESCRIPTION, description.c_str());
+	writeAttributeFileDSN (SETUP_DBNAME, databaseName.c_str());
+	writeAttributeFileDSN (SETUP_CLIENT, client.c_str());
+	writeAttributeFileDSN (SETUP_USER, account.c_str());
+	writeAttributeFileDSN (SETUP_ROLE, role.c_str());
+	writeAttributeFileDSN (SETUP_CHARSET, charset.c_str());
+	writeAttributeFileDSN (SETUP_JDBC_DRIVER, jdbcDriver.c_str());
 	writeAttributeFileDSN (SETUP_READONLY_TPB, (optTpb & TRA_ro) ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_NOWAIT_TPB, (optTpb & TRA_nw) ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_DIALECT, dialect3 ? "3" : "1");
 	writeAttributeFileDSN (SETUP_QUOTED, quotedIdentifier ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_SENSITIVE, sensitiveIdentifier ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_AUTOQUOTED, autoQuotedIdentifier ? "Y" : "N");
-	writeAttributeFileDSN (SETUP_USESCHEMA, useSchemaIdentifier);
-	writeAttributeFileDSN (SETUP_LOCKTIMEOUT, useLockTimeoutWaitTransactions);
+	writeAttributeFileDSN (SETUP_USESCHEMA, useSchemaIdentifier.c_str());
+	writeAttributeFileDSN (SETUP_LOCKTIMEOUT, useLockTimeoutWaitTransactions.c_str());
 	writeAttributeFileDSN (SETUP_SAFETHREAD, safeThread ? "Y" : "N");
 	writeAttributeFileDSN (SETUP_ENABLE_COMPAT_BIND, enableCompatBind ? "Y" : "N");
-	writeAttributeFileDSN (SETUP_SET_COMPAT_BIND, setCompatBindStr);
+	writeAttributeFileDSN (SETUP_SET_COMPAT_BIND, setCompatBindStr.c_str());
 	writeAttributeFileDSN (SETUP_ENABLE_WIRECOMPRESSION, enableWireCompression ? "Y" : "N");
 
 	char buffer[256];
 	CSecurityPassword security;
-	security.encode( (char*)(const char *)password, buffer );
+	security.encode( (char*)password.c_str(), buffer );
 	writeAttributeFileDSN (SETUP_PASSWORD, buffer);
 }
 
@@ -2228,7 +2232,7 @@ SQLRETURN OdbcConnection::sqlGetConnectAttr(int attribute, SQLPOINTER ptr, int b
 		break;
 
 	case SQL_ATTR_CURRENT_CATALOG:
-		string = databaseName;
+		string = databaseName.c_str();
 		break;
 
 	case SQL_OPT_TRACE:				//   104

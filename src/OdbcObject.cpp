@@ -261,7 +261,7 @@ const char * OdbcObject::getString(char * * temp, const UCHAR * string, int leng
 	return ret;	
 }
 
-OdbcError* OdbcObject::postError(const char * state, JString msg)
+OdbcError* OdbcObject::postError(const char * state, const std::string& msg)
 {
 	return postError (new OdbcError (0, state, msg));
 }

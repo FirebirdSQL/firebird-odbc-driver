@@ -164,7 +164,7 @@ StatementMetaData* IscOdbcStatement::getStatementMetaDataIRD()
 // 
 int IscOdbcStatement::replacementArrayParamForStmtUpdate( char *& tempSql, int *& labelParamArray )
 {
-	const char *strSql = sql, *ch;
+	const char *strSql = sql.c_str(), *ch;
 	int numberColumns = inputSqlda.columnsCount;
 	int *offsetParam = NULL;
 	int *offsetNameParam = NULL;
@@ -424,7 +424,7 @@ void IscOdbcStatement::batchAdd()
 	}
 	catch (const fbcpp::DatabaseException& e)
 	{
-		throw SQLEXCEPTION(RUNTIME_ERROR, e.what());
+		throw SQLError::fromDatabaseException(e);
 	}
 	catch (const FbException& error)
 	{
@@ -484,7 +484,7 @@ int IscOdbcStatement::batchExecute(unsigned short* statusOut, int nRows)
 	{
 		batch_.reset();
 		batchRowCount_ = 0;
-		throw SQLEXCEPTION(RUNTIME_ERROR, e.what());
+		throw SQLError::fromDatabaseException(e);
 	}
 	catch (const FbException& error)
 	{

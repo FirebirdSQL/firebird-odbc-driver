@@ -145,7 +145,7 @@ void IscBlob::fetchBlob()
 	}
 	catch( const fbcpp::DatabaseException& error )
 	{
-		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
+		throw SQLError::fromDatabaseException(error);
 	}
 }
 
@@ -192,7 +192,7 @@ void IscBlob::writeBlob(char * sqldata)
 	}
 	catch( const fbcpp::DatabaseException& error )
 	{
-		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
+		throw SQLError::fromDatabaseException(error);
 	}
 }
 
@@ -215,7 +215,7 @@ void IscBlob::writeStreamHexToBlob(char * sqldata)
 	}
 	catch( const fbcpp::DatabaseException& error )
 	{
-		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
+		throw SQLError::fromDatabaseException(error);
 	}
 }
 
@@ -255,7 +255,7 @@ void IscBlob::writeBlob(char * sqldata, char *data, int length)
 	}
 	catch( const fbcpp::DatabaseException& error )
 	{
-		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
+		throw SQLError::fromDatabaseException(error);
 	}
 }
 
@@ -297,7 +297,7 @@ void IscBlob::directOpenBlob( char * sqldata )
 	}
 	catch( const fbcpp::DatabaseException& error )
 	{
-		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
+		throw SQLError::fromDatabaseException(error);
 	}
 }
 
@@ -326,7 +326,7 @@ bool IscBlob::directFetchBlob( char * bufData, int lenData, int &lenRead )
 		}
 		catch( const fbcpp::DatabaseException& error )
 		{
-			throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
+			throw SQLError::fromDatabaseException(error);
 		}
 	}
 	return bEndData;
@@ -366,7 +366,7 @@ bool IscBlob::directGetSegmentToHexStr( char * bufData, int lenData, int &lenRea
 		}
 		catch( const fbcpp::DatabaseException& error )
 		{
-			throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
+			throw SQLError::fromDatabaseException(error);
 		}
 	}
 	return bEndData;
@@ -399,7 +399,7 @@ void IscBlob::directCreateBlob( char * sqldata )
 	}
 	catch( const fbcpp::DatabaseException& error )
 	{
-		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
+		throw SQLError::fromDatabaseException(error);
 	}
 }
 
@@ -423,7 +423,7 @@ void IscBlob::directWriteBlob( char *data, int length )
 	}
 	catch( const fbcpp::DatabaseException& error )
 	{
-		throw SQLEXCEPTION(RUNTIME_ERROR, error.what());
+		throw SQLError::fromDatabaseException(error);
 	}
 }
 

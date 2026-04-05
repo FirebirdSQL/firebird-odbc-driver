@@ -267,17 +267,17 @@ const char* IscDatabaseMetaData::getURL()
 
 const char* IscDatabaseMetaData::getDSN()
 	{
-	return connection->getDsn();
+	return connection->getDsn().c_str();
 	}
 
 const char* IscDatabaseMetaData::getUserName()
 	{
-	return connection->getUserName();
+	return connection->getUserName().c_str();
 	}
 
 const char* IscDatabaseMetaData::getUserAccess()
 	{
-	return connection->getUserAccess();
+	return connection->getUserAccess().c_str();
 	}
 
 const int IscDatabaseMetaData::getUserType()
@@ -317,12 +317,12 @@ const char* IscDatabaseMetaData::getDatabaseServerName()
 
 const char* IscDatabaseMetaData::getDatabaseProductName()
 	{
-	return connection->getDatabaseProductName();
+	return connection->getDatabaseProductName().c_str();
 	}
 
 const char* IscDatabaseMetaData::getDatabaseProductVersion()
 	{
-	return connection->getServerVersion();
+	return connection->getServerVersion().c_str();
 	}
 
 int IscDatabaseMetaData::getDatabasePageSize()

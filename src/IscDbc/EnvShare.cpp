@@ -213,19 +213,22 @@ bool EnvShare::findParamTransactionFromList( CNodeParamTransaction &par )
 	return true;
 }
 
-JString EnvShare::getDatabaseServerName()
+const char* EnvShare::getDatabaseServerName()
 {
-	if ( databaseServerName.IsEmpty() )
+	if ( databaseServerName.empty() )
 	{
 		ULONG nSize = 256;
+		char buf[256];
 #ifdef _WINDOWS
-		GetComputerName( databaseServerName.getBuffer( nSize ), &nSize );
+		GetComputerName( buf, &nSize );
 #else
-		gethostname( databaseServerName.getBuffer( nSize ), nSize );
+		gethostname( buf, nSize );
+		buf[nSize - 1] = '\0';
 #endif
+		databaseServerName = buf;
 	}
 
-	return databaseServerName;
+	return databaseServerName.c_str();
 }
 
 }; // end namespace IscDbcLibrary

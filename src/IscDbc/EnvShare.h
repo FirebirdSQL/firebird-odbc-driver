@@ -26,6 +26,7 @@
 #if !defined(_EnvShare_H_)
 #define _EnvShare_H_
 
+#include <string>
 #include <string.h>
 #include "Connection.h"
 #include "ListParamTransaction.h"
@@ -58,7 +59,7 @@ public:
 
 	void	addParamTransactionToList( CNodeParamTransaction &par );
 	bool	findParamTransactionFromList( CNodeParamTransaction &par );
-	JString getDatabaseServerName();
+	const char* getDatabaseServerName();
 
 public:
 	IscConnection	*connections[MAX_COUNT_DBC_SHARE];
@@ -66,7 +67,7 @@ public:
 	Firebird::ITransaction*	transactionHandle;
 
 	ListParamTransaction *listTransaction;
-	JString			databaseServerName;
+	std::string		databaseServerName;
 };
 
 /// Returns the singleton EnvShare instance (construct-on-first-use).

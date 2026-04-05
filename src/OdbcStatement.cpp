@@ -206,7 +206,9 @@ OdbcStatement::OdbcStatement(OdbcConnection *connect, int statementNumber)
 	isFetchStaticCursor = false;
 	currency = SQL_CONCUR_READ_ONLY;
 	cursorType = SQL_CURSOR_FORWARD_ONLY;
-	cursorName.Format ("SQL_CUR%d", statementNumber);
+	char curBuf[32];
+	snprintf(curBuf, sizeof(curBuf), "SQL_CUR%d", statementNumber);
+	cursorName = curBuf;
 	setPreCursorName = false;
 	cursorScrollable = SQL_NONSCROLLABLE;
 	asyncEnable = false;
@@ -424,13 +426,13 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 	clearErrors();
 	releaseStatement();
 	int retNativeSQL = 0;
-	JString temp, tempNative;
+	std::string temp, tempNative;
 	const char *string = (const char*) sql;
 
 	if (sqlLength != SQL_NTS)
 	{
-		temp = JString ((const char*) sql, sqlLength);
-		string = temp;
+		temp.assign((const char*) sql, sqlLength);
+		string = temp.c_str();
 	}
 
 #ifdef DEBUG
@@ -447,13 +449,15 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 		{
 			int lenstrSQL = (int)strlen(string);
 			int lennewstrSQL = lenstrSQL + 4096;
-			
-			retNativeSQL = connection->connection->getNativeSql( string, lenstrSQL, tempNative. getBuffer( lennewstrSQL ), lennewstrSQL, &lenstrSQL );
+			tempNative.resize(lennewstrSQL);
+
+			retNativeSQL = connection->connection->getNativeSql( string, lenstrSQL, tempNative.data(), lennewstrSQL, &lenstrSQL );
 
 			if ( retNativeSQL > 0 )
 			{
 				retNativeSQL = 0;
-				string = tempNative;
+				tempNative.resize(lenstrSQL);
+				string = tempNative.c_str();
 			}
 		}
 
@@ -714,11 +718,11 @@ SQLRETURN OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targe
 			
 		default:
 			{
-			JString msg;
-			msg.Format ("Invalid application buffer type (%d)", targetType);
-			LOG_MSG ((const char*) msg);
+			char msgBuf[128];
+			snprintf(msgBuf, sizeof(msgBuf), "Invalid application buffer type (%d)", targetType);
+			LOG_MSG (msgBuf);
 			LOG_MSG ("\n");
-			return sqlReturn( SQL_ERROR, "HY003", (const char*)msg );
+			return sqlReturn( SQL_ERROR, "HY003", msgBuf );
 			}
 		}
 
@@ -1376,7 +1380,7 @@ SQLRETURN OdbcStatement::sqlBulkOperations( int operation )
 		case SQL_ADD:
 			if ( !bulkInsert )
 			{
-				JString	sqlInsertString;
+				std::string	sqlInsertString;
 				int column;
 				int count;
 				OdbcDesc *& ird = implementationRowDescriptor;
@@ -1425,22 +1429,22 @@ SQLRETURN OdbcStatement::sqlBulkOperations( int operation )
 
 				sqlInsertString += ")";
 
-				JString	sqlTransactionString =
+				std::string	sqlTransactionString =
 						 "DECLARE TRANSACTION LOCAL\n"
 						 "READ WRITE\n"
 						 "ISOLATION LEVEL\n"
 						 "READ COMMITTED NO RECORD_VERSION NO WAIT\n";
 								
-				ret = bulkInsert->sqlExecDirect( (SQLCHAR*)(const char*)sqlTransactionString,
-												sqlTransactionString.length() );
+				ret = bulkInsert->sqlExecDirect( (SQLCHAR*)sqlTransactionString.c_str(),
+												(int)sqlTransactionString.length() );
 				if ( !SQL_SUCCEEDED( ret ) )
 					return ret;
 
 				if ( connection->autoCommit )
 					bulkInsert->statement->switchTransaction( true );
 
-				ret = bulkInsert->sqlPrepare( (SQLCHAR*)(const char*)sqlInsertString,
-											  sqlInsertString.length() );
+				ret = bulkInsert->sqlPrepare( (SQLCHAR*)sqlInsertString.c_str(),
+											  (int)sqlInsertString.length() );
 				if ( !SQL_SUCCEEDED( ret ) )
 					return ret;
 			}
@@ -2562,7 +2566,7 @@ SQLRETURN OdbcStatement::sqlSetCursorName(SQLCHAR * name, int nameLength)
 			setPreCursorName = true;
 		else
 		{
-			statement->setCursorName (cursorName);
+			statement->setCursorName (cursorName.c_str());
 			setPreCursorName = false;
 		}
 	}
@@ -2763,7 +2767,7 @@ SQLRETURN OdbcStatement::sqlGetCursorName(SQLCHAR *name, int bufferLength, SQLSM
 	clearErrors();
 	try
 	{
-		returnStringInfo (name, bufferLength, nameLength, cursorName);
+		returnStringInfo (name, bufferLength, nameLength, cursorName.c_str());
 	}
 	catch ( SQLException &exception )
 	{
@@ -3052,7 +3056,7 @@ SQLRETURN OdbcStatement::executeStatement()
 	statement->executeStatement();
 
 	if ( statement->isActiveSelectForUpdate() || setPreCursorName )
-		statement->setCursorName(cursorName);
+		statement->setCursorName(cursorName.c_str());
 
 	if ( statement->getMoreResults() )
 		setResultSet (statement->getResultSet(), false);
@@ -3450,7 +3454,7 @@ SQLRETURN OdbcStatement::executeNone()
 
 SQLRETURN OdbcStatement::executeCreateDatabase()
 {
-	connection->connection->sqlExecuteCreateDatabase( sqlPrepareString );
+	connection->connection->sqlExecuteCreateDatabase( sqlPrepareString.c_str() );
 	return SQL_SUCCESS;
 }
 
@@ -4100,9 +4104,9 @@ SQLRETURN OdbcStatement::sqlColAttribute( int column, int fieldId, SQLPOINTER at
 
 		default:
 			{
-			JString msg;
-			msg.Format ("field id (%d) out of range", fieldId);
-			return sqlReturn (SQL_ERROR, "HY091", (const char*) msg);
+			char msgBuf[128];
+			snprintf(msgBuf, sizeof(msgBuf), "field id (%d) out of range", fieldId);
+			return sqlReturn (SQL_ERROR, "HY091", msgBuf);
 			}
 		}
 	}
@@ -4295,9 +4299,9 @@ SQLRETURN OdbcStatement::sqlColAttributeW(int column, int fieldId, SQLPOINTER at
 
 		default:
 		{
-			JString msg;
-			msg.Format("field id (%d) out of range", fieldId);
-			return sqlReturn(SQL_ERROR, "HY091", (const char*)msg);
+			char msgBuf[128];
+			snprintf(msgBuf, sizeof(msgBuf), "field id (%d) out of range", fieldId);
+			return sqlReturn(SQL_ERROR, "HY091", msgBuf);
 		}
 		}
 	}

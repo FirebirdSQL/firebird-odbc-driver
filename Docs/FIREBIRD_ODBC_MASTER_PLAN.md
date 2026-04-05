@@ -313,7 +313,7 @@ The key architectural insight: fb-cpp's internal message buffers (`inMessage` / 
 | **14.5.1** | **Replace `IscBlob` internals with `fbcpp::Blob`** — `IscBlob::fetchBlob()`, `writeBlob()`, and direct blob operations now use `fbcpp::Blob` instead of raw `Firebird::IBlob*`. RAII lifecycle via `std::unique_ptr<fbcpp::Blob>` replaces manual `close()/release()` error handling. `BlobId` conversion bridges ISC_QUAD ↔ `fbcpp::BlobId`. | Medium | ✅ |
 | **14.5.2** | **Migrate BLOB read** — `IscBlob::fetchBlob()` uses `fbcpp::Blob(attachment, transaction, blobId)` + `readSegment()`. `directOpenBlob()` uses `fbcpp::Blob::getLength()` instead of manual `isc_info_blob_total_length` parsing. `directFetchBlob()` uses `fbcpp::Blob::read()`. | Easy | ✅ |
 | **14.5.3** | **Migrate BLOB write** — `writeBlob()`, `writeStreamHexToBlob()`, `directCreateBlob()`, `directWriteBlob()` all use `fbcpp::Blob(attachment, transaction)` + `writeSegment()`. Blob ID extracted via `getId().id`. | Easy | ✅ |
-| **14.5.4** | **Delete `IscBlob.cpp/.h`, `BinaryBlob.cpp/.h`, `Blob.cpp/.h`** — **DEFERRED**: `Blob.h` abstract interface is used by the ODBC layer (`OdbcConvert.cpp` references `Blob*` through `DescRecord::dataBlobPtr`). `BinaryBlob` is the Stream-based buffer used for caching blob data in memory. Cannot delete without refactoring the ODBC conversion pipeline. | Hard | ❌ |
+| **14.5.4** | **Blob/BinaryBlob/Stream retained as driver architecture** — `Blob` (abstract interface), `BinaryBlob` (in-memory buffer), and `Stream` (segment list) are NOT Firebird API wrappers — they are the ODBC driver's memory-buffering layer used by `OdbcConvert.cpp` (40+ call sites) and `DescRecord::dataBlobPtr`. IscBlob's Firebird I/O already migrated in 14.5.1–14.5.3. No deletion needed. See [UNBLOCK_14.7.md](../tmp/UNBLOCK_14.7.md). | — | ✅ (resolved) |
 
 **Phase 14.6: Metadata & Events Migration**
 
@@ -327,17 +327,19 @@ The key architectural insight: fb-cpp's internal message buffers (`inMessage` / 
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **14.7.1** | **Migrate exception handling** — **DEFERRED**: `SQLException`/`SQLError` hierarchy is deeply embedded (67 catch blocks across ODBC layer, 100+ throw sites in IscDbc). Replacing with `fbcpp::DatabaseException` would require rewriting all catch blocks and the `OdbcObject::postError(SQLException&)` bridge. New fb-cpp code catches `fbcpp::DatabaseException` locally and re-throws as `SQLError` for compatibility. `fbcpp::DatabaseException::getSqlState()` available for future SQLSTATE enrichment. | Hard | ❌ (deferred) |
-| **14.7.2** | **Delete utility classes** — **DEFERRED**: `DateTime`, `TimeStamp`, `SqlTime` are critical to the data retrieval pipeline (used by `Value`, `IscResultSet`, `IscPreparedStatement`). Cannot delete without replacing the `Value` abstraction. | Hard | ❌ (deferred) |
-| **14.7.3** | **Delete `Value.cpp/.h`, `Values.cpp/.h`** — **DEFERRED**: `Value` is the central abstraction for SQLda column/parameter data (20+ callers across 11 files). Would require redesigning the entire fetch pipeline. | Hard | ❌ (deferred) |
-| **14.7.4** | **Delete `JString.cpp/.h`** — **DEFERRED**: 50+ direct usages across both ODBC and IscDbc layers, 11 member fields in DescRecord alone. Gradual replacement with `std::string`/`OdbcString` underway (Phase 12). | Hard | ❌ (deferred) |
+| **14.7.1** | **Enrich error bridging** — Add `SQLError::fromDatabaseException(const fbcpp::DatabaseException&)` factory that preserves `getErrorCode()` as fbcode, `getSqlState()` for ODBC SQLSTATE mapping, and `what()` as text. Update ~20 catch sites in IscBlob, IscConnection, IscStatement, IscUserEvents, IscOdbcStatement to use `SQLError::fromDatabaseException()` instead of discarding error info. See [UNBLOCK_14.7.md](../tmp/UNBLOCK_14.7.md), Approach A. | Medium | ❌ |
+| **14.7.2** | **Replace date/time types with fb-cpp** — Change `Value.h` union members from `DateTime`/`TimeStamp`/`SqlTime` to `fbcpp::OpaqueDate`/`OpaqueTimestamp`/`OpaqueTime`. Update `Value.cpp` conversions to use `fbcpp::CalendarConverter`. Update Sqlda.cpp and IscPreparedStatement.cpp accessors. Delete `DateTime.cpp/.h`, `TimeStamp.cpp/.h`, `SqlTime.cpp/.h` (~400 lines removed). | Medium | ❌ |
+| **14.7.3** | **Value/Values retained as driver architecture** — `Value` is the ODBC driver's discriminated union for column data (equivalent to psqlodbc's `TupleField`). Has no Firebird API references. After 14.7.2 updates its date/time union members to fb-cpp types, Value is fully modernized. No deletion needed. | — | ✅ (resolved) |
+| **14.7.4a** | **JString Phase 1: IscDbc internals** — Replace `JString` with `std::string` in `IscConnection.h` (9 fields), `IscStatement.h` (1), `SQLError.h` (2), `EnvShare.h` (1). Fix `getText()` → `.c_str()`, `IsEmpty()` → `.empty()`, implicit `const char*` → explicit `.c_str()`. ~13 fields + compile fixes. | Easy | ❌ |
+| **14.7.4b** | **JString Phase 2: ODBC layer** — Replace `JString` with `std::string` in `OdbcConnection.h` (18 fields), `OdbcStatement.h` (2), `OdbcError.h` (1). ~21 fields + compile fixes. | Medium | ❌ |
+| **14.7.4c** | **JString Phase 3: Descriptors & dialogs** — Replace `JString` with `std::string` in `DescRecord.h` (13 fields), `ConnectDialog.h` (3). Delete `JString.cpp/.h` after all usages gone. ~16 fields. | Medium | ❌ |
 
 **Phase 14.8: Final Cleanup**
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **14.8.1** | **Delete remaining IscDbc files** — **DEFERRED**: Most IscDbc files still in active use. Legacy `Attachment.h/.cpp` is dead code (not in CMakeLists.txt) and can be deleted when convenient. | Easy | ❌ (deferred) |
-| **14.8.2** | **Remove `src/IscDbc/` directory** — **DEFERRED**: Requires completion of Phases 14.7.1–14.7.4 first. | Hard | ❌ (deferred) |
+| **14.8.1** | **Delete dead code** — Remove `Attachment.h/.cpp` (dead since Phase 14.2, not in CMakeLists.txt). Audit for other unreferenced files. | Easy | ❌ |
+| **14.8.2** | **Rename `src/IscDbc/` to `src/core/`** — After Phase 14.7, IscDbc has zero raw Firebird API calls. Rename directory to reflect its role as the driver's core layer. Update CMakeLists.txt include paths and target name. | Easy | ❌ |
 | **14.8.3** | **Update CMakeLists.txt** — No changes needed currently. IscDbc still built as static library. | — | ✅ |
 | **14.8.4** | **Update documentation** — Master plan updated to reflect Phase 14.5–14.8 status. | Easy | ✅ |
 | **14.8.5** | **Run full test suite** — All 401 tests pass on both Debug and Release builds. | Easy | ✅ |
@@ -346,11 +348,14 @@ The key architectural insight: fb-cpp's internal message buffers (`inMessage` / 
 
 | Category | Before | After | Savings |
 |----------|--------|-------|---------|
-| `src/IscDbc/` files | ~110 files | 0 files | ~15,000 lines |
 | `LoadFbClientDll.cpp/.h` | ~600 lines | ~50 lines (array only) | ~550 lines |
-| Date/time utilities | ~400 lines | 0 (fb-cpp) | ~400 lines |
-| String utilities (JString) | ~300 lines | 0 (std::string) | ~300 lines |
-| **Total** | — | — | **~16,250 lines** |
+| Date/time utilities | ~400 lines | 0 (fb-cpp `OpaqueDate`/`OpaqueTime`/`CalendarConverter`) | ~400 lines |
+| String utilities (JString) | ~300 lines | 0 (`std::string`) | ~300 lines |
+| Dead code (`Attachment.h/.cpp`) | ~350 lines | 0 | ~350 lines |
+| IscBlob/IscUserEvents internals | ~500 lines | ~260 lines (fb-cpp RAII) | ~240 lines |
+| **Total** | — | — | **~1,840 lines** |
+
+> **Note**: The original estimate of ~16,250 lines assumed deleting `src/IscDbc/` entirely. That was a misframing — IscDbc contains the driver's core logic (Connection, Statement, ResultSet, Sqlda, Value, metadata result sets), which will always exist. The revised estimate reflects actual removable code: raw Firebird API wrappers, duplicate utility classes, and dead code.
 
 #### fb-cpp Gaps to Address
 
@@ -374,15 +379,28 @@ Based on our review (see [FB_CPP_SUGGESTIONS.md](../FB_CPP_SUGGESTIONS.md)), the
 
 #### Success Criteria
 
-- [ ] `src/IscDbc/` directory deleted — all code migrated to fb-cpp or `src/`
+- [ ] Zero raw Firebird API calls in `src/IscDbc/` — all routed through fb-cpp
 - [x] `vcpkg.json` manifest manages fb-cpp, Firebird, and Boost dependencies
 - [ ] Build works on Windows (MSVC), Linux (GCC/Clang), macOS (Clang)
 - [x] All 401 tests pass (Phase 14.1 verified — fb-cpp linked, builds clean)
-- [ ] ~16,000 lines of legacy code removed
+- [ ] ~1,800 lines of utility/dead code removed
+- [ ] JString replaced with `std::string` across all headers
+- [ ] DateTime/TimeStamp/SqlTime replaced with fb-cpp opaque types in Value union
+- [ ] `src/IscDbc/` renamed to `src/core/` to reflect actual role
 - [ ] Performance benchmarks show no regression (fetch throughput, batch insert)
 - [x] CI builds use vcpkg caching for fast builds
 
-**Deliverable**: A dramatically simplified codebase where the ODBC layer talks directly to fb-cpp's modern C++ API, eliminating the 20-year-old JDBC-like abstraction layer.
+**Deliverable**: A modernized codebase where the ODBC layer talks to Firebird exclusively through fb-cpp's C++ API, with standard C++ types (`std::string`, `std::chrono`) replacing legacy utility classes. The IscDbc "core" layer remains as the driver's internal architecture (Connection, Statement, ResultSet, Sqlda, Value).
+
+---
+
+#### fb-cpp Library Improvement Suggestions
+
+| Suggestion | Rationale | Priority |
+|-----------|-----------|----------|
+| **`DatabaseException::getSqlCode()`** | Map SQLSTATE → legacy ISC sqlcode integer. The ODBC driver must provide native error codes via `SQLGetDiagRec()`. Currently, bridging `fbcpp::DatabaseException` → `SQLError` loses the Firebird error code (only the message text survives). A `getSqlCode()` method (or exposing the raw `isc_sqlcode()` result) would let the ODBC layer preserve full diagnostic info without maintaining its own SQLSTATE→sqlcode mapping table. | Medium |
+| **Free-standing date encode/decode** | `CalendarConverter` requires `Client&` for `encodeDate()`/`decodeDate()`. These are purely mathematical (Julian date algorithm) and don't need a Firebird connection. Free functions or a `CalendarConverter(IUtil*)` constructor would decouple date conversion from the connection lifecycle. | Low |
+| **`Blob::readAll()`** | Returns `std::vector<std::byte>` with entire blob contents. This is the most common pattern: open blob → loop reading segments → close. Our `IscBlob::fetchBlob()` does exactly this. A single-call API would be cleaner. | Low |
 
 ---
 

@@ -273,7 +273,7 @@ void IscConnection::commit()
 		try { transaction_->rollback(); } catch (...) {}
 		transaction_.reset();
 		transactionPending_ = false;
-		throw SQLEXCEPTION( RUNTIME_ERROR, e.what() );
+		throw SQLError::fromDatabaseException(e);
 	}
 
 	transaction_.reset();
@@ -296,7 +296,7 @@ void IscConnection::rollback()
 	{
 		transaction_.reset();
 		transactionPending_ = false;
-		throw SQLEXCEPTION( RUNTIME_ERROR, e.what() );
+		throw SQLError::fromDatabaseException(e);
 	}
 
 	transaction_.reset();
@@ -314,7 +314,7 @@ void IscConnection::prepareTransaction()
 	}
 	catch( const fbcpp::DatabaseException& e )
 	{
-		throw SQLEXCEPTION( RUNTIME_ERROR, e.what() );
+		throw SQLError::fromDatabaseException(e);
 	}
 }
 
@@ -440,7 +440,7 @@ Firebird::ITransaction* IscConnection::startTransaction()
 	}
 	catch( const fbcpp::DatabaseException& e )
 	{
-		throw SQLEXCEPTION( -1, 0, e.what() );
+		throw SQLError::fromDatabaseException(e);
 	}
 
 	if ( !autoCommit_ )
@@ -1749,9 +1749,9 @@ void IscConnection::loadClientLibrary(Properties *properties)
 	GDS = new CFbDll();
 	if ( !GDS->LoadDll (client, clientDefault) )
 	{
-		JString text;
-		text.Format ("Unable to connect to data source: library '%s' failed to load", client);
-		throw SQLEXCEPTION( -904, 335544375l, text );
+		char buf[512];
+		snprintf(buf, sizeof(buf), "Unable to connect to data source: library '%s' failed to load", client);
+		throw SQLEXCEPTION( -904, 335544375l, buf );
 	}
 }
 
@@ -1761,7 +1761,7 @@ void IscConnection::checkAdmin()
 	QUAD adm1 = (QUAD)71752869960019.0;
 	QUAD adm2 = (QUAD)107075219978611.0;
 	QUAD user = (QUAD)0;
-	memcpy((void *)&user,(const char *)userName_,6);
+	memcpy((void *)&user, userName_.c_str(), 6);
 
 	admin_ = user == adm1 || user == adm2;
 
@@ -1910,9 +1910,8 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 			{
 				userAccess_ = role;
 
-				char *ch = (char *)(const char *)userAccess_;
-				while ( (*ch = UPPER ( *ch )) )
-					++ch;
+				for (auto& ch : userAccess_)
+					ch = UPPER(ch);
 
 				userType_ = 13;
 				isRoles_ = true;
@@ -1998,12 +1997,12 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 			{
 				// Try the CREATE_DB fallback on any connection error
 				// (before Phase 14.7, we can't inspect specific ISC codes from DatabaseException)
-				throw SQLEXCEPTION( -1, 0, e.what() );
+				throw SQLError::fromDatabaseException(e);
 			}
 			else
 			{
 				// CREATE_DB was explicitly requested but failed
-				throw SQLEXCEPTION( -1, 0, e.what() );
+				throw SQLError::fromDatabaseException(e);
 			}
 		}
 
@@ -2017,7 +2016,7 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 			}
 			catch( const fbcpp::DatabaseException& e )
 			{
-				throw SQLEXCEPTION( -1, 0, e.what() );
+				throw SQLError::fromDatabaseException(e);
 			}
 			return;
 		}
@@ -2043,8 +2042,8 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 					{
 						char * next = p + 2 + *( p + 1 );
 
-						databaseNameFromServer_.Format( "%.*s", *( p + 1 ), p + 2 );
-						databaseServerName_.Format( "%.*s", *next, next + 1 );
+						databaseNameFromServer_.assign( (const char*)(p + 2), (size_t)*( p + 1 ) );
+						databaseServerName_.assign( (const char*)(next + 1), (size_t)*next );
 					}
 					break;
 
@@ -2057,9 +2056,9 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 					break;
 
 				case isc_info_user_names:
-					if ( userAccess_.IsEmpty() )
+					if ( userAccess_.empty() )
 					{
-						userName_ = JString ( p + 1, (int)*p );
+						userName_.assign( (const char*)(p + 1), (size_t)*p );
 						userAccess_ = userName_;
 						userType_ = 8;
 					}
@@ -2105,7 +2104,7 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 
 				case isc_info_version:
 					{
-						JString productName;
+						std::string productName;
 						int level = 0;
 						int major = 0, minor = 0, version = 0;
 						char * start = p + 2;
@@ -2136,14 +2135,14 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 										break;
 									if ( beg < end )
 									{
-										productName = JString( beg, end - beg );
+										productName.assign( beg, end - beg );
 
 										char *endBeg = beg;
 
 										while( *endBeg != ' ' )
 											endBeg++;
 
-										databaseProductName_ = JString( beg, endBeg - beg );
+										databaseProductName_.assign( beg, endBeg - beg );
 									}
 									beg = end;
 									break;
@@ -2152,7 +2151,9 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 							else
 								beg++;
 						}
-						serverVersion_.Format( "%02d.%02d.%04d %.*s %s",major,minor,version, tmp ? tmp - start : 0, start, (const char*)productName );
+						char verBuf[256];
+						snprintf(verBuf, sizeof(verBuf), "%02d.%02d.%04d %.*s %s", major, minor, version, tmp ? (int)(tmp - start) : 0, start, productName.c_str());
+						serverVersion_ = verBuf;
 					}
 					break;
 
@@ -2234,7 +2235,7 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 
 			if ( resultSet.getCountRowsStaticCursor() )
 			{
-				int len1 = (int)strlen( userName_ );
+				int len1 = (int)userName_.length();
 				int len2;
 				char *beg = resultSet.sqlda->getVarying( 5, len2 );
 				char *end = beg + len2;
@@ -2248,7 +2249,7 @@ void IscConnection::openDatabase(const char * dbName, Properties * properties)
 					*(end+1) = '\0';
 				}
 
-				if( len1 == len2 && !strncmp( userName_, beg, len1 ) )
+				if( len1 == len2 && !strncmp( userName_.c_str(), beg, len1 ) )
 					admin_ = true;
 			}
 		}
@@ -2415,12 +2416,12 @@ void IscConnection::connectionFromEnvShare()
 	shareConnected = false;
 }
 
-JString IscConnection::getDatabaseServerName()
+const char* IscConnection::getDatabaseServerName()
 {
-	if ( databaseServerName_.IsEmpty() )
+	if ( databaseServerName_.empty() )
 		return getEnvironmentShareInstance().getDatabaseServerName();
 
-	return databaseServerName_;
+	return databaseServerName_.c_str();
 }
 
 int	IscConnection::getDriverBuildKey()
@@ -2598,7 +2599,7 @@ void IscConnection::commitRetaining()
 	catch( const fbcpp::DatabaseException& e )
 	{
 		try { rollbackRetaining(); } catch (...) {}
-		throw SQLEXCEPTION( RUNTIME_ERROR, e.what() );
+		throw SQLError::fromDatabaseException(e);
 	}
 	transactionPending_ = false;
 }
@@ -2619,7 +2620,7 @@ void IscConnection::rollbackRetaining()
 	{
 		// If rollbackRetaining fails, do a full rollback
 		try { rollback(); } catch (...) {}
-		throw SQLEXCEPTION( RUNTIME_ERROR, e.what() );
+		throw SQLError::fromDatabaseException(e);
 	}
 	transactionPending_ = false;
 }

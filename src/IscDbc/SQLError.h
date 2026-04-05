@@ -21,8 +21,10 @@
 #ifndef __SQLERROR_H
 #define __SQLERROR_H
 
+#include <string>
 #include "SQLException.h"
-#include "JString.h"
+
+namespace fbcpp { class DatabaseException; }
 
 namespace IscDbcLibrary {
 
@@ -31,6 +33,9 @@ class Stream;
 class SQLError : public SQLException
 {
 public:
+	static SQLError fromDatabaseException(const fbcpp::DatabaseException& ex);
+	static SQLError fromDatabaseException(SqlCode fallbackCode, const fbcpp::DatabaseException& ex);
+
 	virtual int release();
 	virtual void addRef();
 	virtual const char* getTrace();
@@ -48,8 +53,8 @@ public:
 
 	int		fbcode;
 	int		sqlcode;
-	JString	text;
-	JString	stackTrace;
+	std::string	text;
+	std::string	stackTrace;
 	int		useCount;
     };
 

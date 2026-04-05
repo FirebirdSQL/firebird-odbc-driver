@@ -27,6 +27,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "Connection.h"
 #include "JString.h"
 #include "Mutex.h"
@@ -92,7 +93,7 @@ public:
 	virtual void connectionFromEnvShare();
 	int	getUseAppOdbcVersion () { return useAppOdbcVersion; }
 	void setUseAppOdbcVersion ( int appOdbcVersion ) { useAppOdbcVersion = appOdbcVersion; }
-	JString getDatabaseServerName();
+	const char* getDatabaseServerName();
 	virtual int	getDriverBuildKey();
 	void init();
 	IscConnection (IscConnection *source);
@@ -138,20 +139,20 @@ public:
 
 	// Phase 14.2: Accessors for connection metadata (moved from Attachment)
 	bool isAdmin() const { return admin_; }
-	JString& getUserAccess() { return userAccess_; }
+	std::string& getUserAccess() { return userAccess_; }
 	int getUserType() const { return userType_; }
 	int getUseSchemaIdentifier() const { return useSchemaIdentifier_; }
 	int getUseLockTimeoutWaitTransactions() const { return useLockTimeoutWaitTransactions_; }
 	bool isVersionAtLeast(int major, int minor = 0) const { return (majorFb_ > major) || (majorFb_ == major && minorFb_ >= minor); }
-	const JString& getDsn() const { return dsn_; }
-	const JString& getUserName() const { return userName_; }
-	const JString& getDatabaseProductName() const { return databaseProductName_; }
-	const JString& getServerVersion() const { return serverVersion_; }
+	const std::string& getDsn() const { return dsn_; }
+	const std::string& getUserName() const { return userName_; }
+	const std::string& getDatabaseProductName() const { return databaseProductName_; }
+	const std::string& getServerVersion() const { return serverVersion_; }
 	int getPageSize() const { return pageSize_; }
 	bool getQuotedIdentifier() const { return quotedIdentifier_; }
 	bool getSensitiveIdentifier() const { return sensitiveIdentifier_; }
 	bool getAutoQuotedIdentifier() const { return autoQuotedIdentifier_; }
-	const JString& getDatabaseServerNameStr() const { return databaseServerName_; }
+	const std::string& getDatabaseServerNameStr() const { return databaseServerName_; }
 
 	/// Access the FbClient wrapper (Phase 14.2.1)
 	CFbDll* getFbClient() { return GDS; }
@@ -196,15 +197,15 @@ private:
 	void checkAdmin();
 
 	// Phase 14.2: Connection metadata (moved from Attachment class)
-	JString		dsn_;
-	JString		databaseName_;
-	JString		databaseServerName_;
-	JString		databaseNameFromServer_;
-	JString		userName_;
-	JString		userAccess_;
+	std::string	dsn_;
+	std::string	databaseName_;
+	std::string	databaseServerName_;
+	std::string	databaseNameFromServer_;
+	std::string	userName_;
+	std::string	userAccess_;
 	int			userType_ = 8;
-	JString		serverVersion_;
-	JString		databaseProductName_;
+	std::string	serverVersion_;
+	std::string	databaseProductName_;
 	int			majorFb_ = 1;
 	int			minorFb_ = 0;
 	int			versionFb_ = 0;

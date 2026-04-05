@@ -30,14 +30,13 @@
 #endif
 
 #include <memory>
+#include <string>
 #include <vector>
 #include "OdbcJdbc.h"
-#include "IscDbc/JString.h"
 #include "IscDbc/SQLException.h"
 
 namespace OdbcJdbcLibrary {
 
-using namespace classJString;
 using namespace IscDbcLibrary;
 
 enum OdbcObjectType {
@@ -79,7 +78,7 @@ public:
 	SQLRETURN sqlGetDiagRecW (int handleType, int recNumber, SQLWCHAR *sqlState, SQLINTEGER *nativeErrorPtr, SQLWCHAR *messageText, int bufferLength, SQLSMALLINT *textLengthPtr);
 	virtual SQLRETURN sqlGetDiagFieldW (int recNumber, int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
 	/// Post an error with a given SQLSTATE and message string.
-	OdbcError* postError (const char *state, JString msg);
+	OdbcError* postError (const char *state, const std::string& msg);
 	const char * getString (char **temp, const UCHAR *string, int length, const char *defaultValue);
 	/// Post an error from a caught SQLException, mapping to the given SQLSTATE.
 	OdbcError* postError (const char *sqlState, SQLException &exception);

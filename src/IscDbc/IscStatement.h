@@ -26,6 +26,7 @@
 #define _ISCSTATEMENT_H_
 
 #include <memory>
+#include <string>
 #include <vector>
 #include "Connection.h"
 #include "Sqlda.h"
@@ -144,7 +145,7 @@ public:
 	IscResultSet*	createResultSet();
 	std::vector<IscResultSet*>	resultSets;
 	IscConnection	*connection;
-	JString			sql;
+	std::string		sql;
 	int				useCount;
 	int				numberColumns;
 	int				resultsCount;

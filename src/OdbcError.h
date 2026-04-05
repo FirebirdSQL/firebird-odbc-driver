@@ -25,14 +25,12 @@
 #if !defined(_ODBCERROR_H_)
 #define _ODBCERROR_H_
 
-#include "IscDbc/JString.h"
+#include <string>
 
 // Phase 12 (12.2.2): Direct UTF-16 output for W-API diagnostic functions.
 #include "OdbcJdbc.h"
 
 namespace OdbcJdbcLibrary {
-
-using namespace classJString;
 
 class OdbcConnection;
 
@@ -59,8 +57,8 @@ public:
 	SQLRETURN sqlGetDiagFieldW (int diagId, SQLPOINTER ptr, int bufferLength, SQLSMALLINT *stringLength);
 
 	const char* getVersionedSqlState() const;
-	OdbcError(int code, const char *state, JString errorMsg);
-	OdbcError(int code, int fbcode, const char *state, JString errorMsg);
+	OdbcError(int code, const char *state, const std::string& errorMsg);
+	OdbcError(int code, int fbcode, const char *state, const std::string& errorMsg);
 	~OdbcError();
 
 	/// Set by OdbcObject::postError() — needed externally for error context.
@@ -69,7 +67,7 @@ public:
 private:
 	char			sqlState[6];
 	int				sqlStateIndex;
-	JString			msg;
+	std::string		msg;
 	int				nativeCode;
 	int				rowNumber;
 	int				columnNumber;
