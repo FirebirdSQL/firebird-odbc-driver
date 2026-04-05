@@ -3,8 +3,8 @@
 **Date**: February 9, 2026  
 **Status**: Authoritative reference for all known issues, improvements, and roadmap  
 **Benchmark**: PostgreSQL ODBC driver (psqlodbc) — 30+ years of development, 49 regression tests, battle-tested
-**Last Updated**: April 4, 2026  
-**Version**: 4.2
+**Last Updated**: April 5, 2026  
+**Version**: 4.3
 
 > This document consolidates all known issues and newly identified architectural deficiencies.
 > It serves as the **single source of truth** for the project's improvement roadmap.
@@ -456,7 +456,7 @@ Adopting vcpkg provides:
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
 | **15.3.1** | **Add vcpkg bootstrap to CI** — Set `VCPKG_ROOT`, use pre-installed vcpkg on CI runners. Added cmd.exe AutoRun fix for Ninja compatibility. | Easy | ✅ |
-| **15.3.2** | **Enable binary caching** — Set `VCPKG_BINARY_SOURCES` to GitHub Packages or Azure Artifacts. CI uses `actions/cache` for `VCPKG_DEFAULT_BINARY_CACHE`. | Medium | ✅ |
+| **15.3.2** | **Enable binary caching** — Two-level `actions/cache` strategy: (1) vcpkg binary archives (`vcpkg-bincache-{os}`) with `restore-keys` fallback, (2) installed tree (`vcpkg-installed-{os}`) for near-zero cmake configure on cache hit. `save-always: true` ensures caches are written even on test failure. Replaces failed `x-gha` provider attempt. | Medium | ✅ |
 | **15.3.3** | **Cache vcpkg installed tree** — Use `actions/cache` with vcpkg binary cache directory. | Easy | ✅ |
 | **15.3.4** | **Update build scripts** — `firebird-odbc-driver.build.ps1`, `install-prerequisites.ps1` updated for vcpkg. | Easy | ✅ |
 
