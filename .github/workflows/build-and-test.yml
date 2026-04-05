@@ -6,8 +6,11 @@ on:
   workflow_call:
 
 env:
-  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+  # Store vcpkg binary archives in a workspace-relative path so actions/cache
+  # can restore them before cmake runs, eliminating recompilation of ICU,
+  # Firebird, etc. on every run.
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-bincache
 
 jobs:
   build-and-test-windows:
@@ -19,13 +22,6 @@ jobs:
       with:
         fetch-depth: 0
         submodules: false
-
-    - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v7
-      with:
-        script: |
-          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL)
-          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN)
 
     - name: Cache vcpkg submodule
       id: cache-vcpkg-submodule-win
@@ -54,6 +50,31 @@ jobs:
     - name: Initialize vcpkg submodule
       if: steps.cache-vcpkg-submodule-win.outputs.cache-hit != 'true'
       run: git submodule update --init vcpkg
+
+    - name: Create vcpkg binary cache directory
+      shell: pwsh
+      run: New-Item -ItemType Directory -Force "${{ github.workspace }}/vcpkg-bincache" | Out-Null
+
+    # Two-level vcpkg cache:
+    # Level 1 – binary archives: individual per-package .zip files used by vcpkg
+    #   to reinstall without compilation. restore-keys ensures a partial hit when
+    #   vcpkg.json changes; only the new/changed packages need compiling.
+    - name: Cache vcpkg binary archives
+      uses: actions/cache@v5
+      with:
+        path: ${{ github.workspace }}/vcpkg-bincache
+        key: vcpkg-bincache-windows-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+        restore-keys: vcpkg-bincache-windows-
+
+    # Level 2 – installed tree: the fully-extracted build/vcpkg_installed directory.
+    #   On an exact key hit vcpkg detects all packages are already installed and
+    #   exits in under a second, making cmake configure nearly instantaneous.
+    - name: Cache vcpkg installed packages
+      uses: actions/cache@v5
+      with:
+        path: build/vcpkg_installed
+        key: vcpkg-installed-windows-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+        restore-keys: vcpkg-installed-windows-
 
     - name: Bootstrap vcpkg
       shell: pwsh
@@ -114,13 +135,6 @@ jobs:
           sudo apt-get update
         fi
 
-    - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v7
-      with:
-        script: |
-          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL)
-          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN)
-
     - name: Cache vcpkg submodule
       id: cache-vcpkg-submodule-linux
       uses: actions/cache@v5
@@ -140,6 +154,24 @@ jobs:
           ~/.local/share/powershell/Modules/InvokeBuild
         key: psmodules-linux-${{ hashFiles('install-prerequisites.ps1') }}
         restore-keys: psmodules-linux-
+
+    - name: Create vcpkg binary cache directory
+      shell: pwsh
+      run: New-Item -ItemType Directory -Force "${{ github.workspace }}/vcpkg-bincache" | Out-Null
+
+    - name: Cache vcpkg binary archives
+      uses: actions/cache@v5
+      with:
+        path: ${{ github.workspace }}/vcpkg-bincache
+        key: vcpkg-bincache-linux-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+        restore-keys: vcpkg-bincache-linux-
+
+    - name: Cache vcpkg installed packages
+      uses: actions/cache@v5
+      with:
+        path: build/vcpkg_installed
+        key: vcpkg-installed-linux-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+        restore-keys: vcpkg-installed-linux-
 
     - name: Bootstrap vcpkg
       run: ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
