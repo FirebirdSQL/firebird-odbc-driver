@@ -38,6 +38,9 @@ add_executable(firebird_odbc_tests
     test_wchar.cpp
     test_cursor_name.cpp
     test_odbc_string.cpp
+    test_connection.cpp
+    test_connection_attrs.cpp
+    test_query_timeout.cpp
     # Utf16Convert.cpp is compiled into OdbcFb.dll but its symbols are not exported.
     # We include it here so that OdbcString unit tests can link without requiring
     # the full driver DLL at test time.

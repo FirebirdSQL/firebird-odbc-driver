@@ -514,7 +514,7 @@ Adopting vcpkg provides:
 
 #### 16.1 Current Test Suite Assessment
 
-**Inventory**: 34 test files, ~401 test cases, 1 benchmark file (`bench_fetch.cpp`)
+**Inventory**: 34 test files, ~418 test cases, 1 benchmark file (`bench_fetch.cpp`)
 
 | Area | Files | Tests | Quality |
 |------|-------|-------|---------|
@@ -529,7 +529,7 @@ Adopting vcpkg provides:
 | ODBC compliance | `test_odbc38_compliance`, `test_null_handles` | ~60 | Excellent |
 | Unicode/WCHAR | `test_wchar`, `test_odbc_string` | ~35 | Good |
 | Statement handles | `test_stmthandles`, `test_multi_statement`, `test_prepare` | ~14 | Good |
-| Regression bundles | `test_phase7_crusher_fixes`, `test_phase11_typeinfo_timeout_pool` | ~40 | Good, but duplicated |
+| Connection attrs & timeout | `test_connection_attrs`, `test_query_timeout` | ~28 | Good (migrated from phase bundles) |
 | Misc | `test_escape_sequences`, `test_guid_and_binary`, `test_savepoint`, `test_server_version` | ~21 | Good |
 
 **Strengths**:
@@ -562,22 +562,22 @@ After deduplication, `test_phase7_crusher_fixes.cpp` retains only OC-3 (CONNECTI
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **16.2.1** | **Remove duplicate tests** — Deduplicate CopyDescCrashTest, DiagRowCountTest, TypeInfoTest across files. Move surviving tests to their natural home files. | Easy | ❌ |
-| **16.2.2** | **Rename phase-numbered test files** — `test_phase7_crusher_fixes.cpp` → `test_connection_attrs.cpp`, `test_phase11_typeinfo_timeout_pool.cpp` → `test_query_timeout.cpp`. Phase numbers are meaningless after completion. | Easy | ❌ |
-| **16.2.3** | **Parameterize conversion tests** — `test_result_conversions.cpp` (47 tests) and `test_param_conversions.cpp` (15 tests) follow identical patterns. Convert to `TEST_P()` with value-parameterized test suites. Reduces ~800 lines to ~200. | Medium | ❌ |
-| **16.2.4** | **Extract test constants** — Move magic numbers to named constants in `test_helpers.h`: `kDefaultBufferSize = 1024`, `kMaxVarcharLen = 256`, `kStressRowCount = 1000`, etc. | Easy | ❌ |
-| **16.2.5** | **Fix `test_connection.cpp`** — Use `OdbcConnectedTest` fixture instead of manual handle management. | Easy | ❌ |
-| **16.2.6** | **Add `ASSERT_ODBC_SUCCESS` macro** — Replace verbose `ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(...)` with `ASSERT_ODBC_SUCCESS(ret, handle_type, handle)`. Reduces boilerplate significantly. | Easy | ❌ |
-| **16.2.7** | **Stabilize timing-sensitive tests** — `QueryTimeoutTest.CancelFromAnotherThread` uses `std::this_thread::sleep_for(200ms)`. Replace with a condition variable or retry-with-backoff pattern. | Easy | ❌ |
+| **16.2.1** | **Remove duplicate tests** — Deduplicated CopyDescCrashTest, DiagRowCountTest, TypeInfoTest, TruncationIndicatorTest, ConnectionTimeoutTest, AsyncEnableTest, AsyncModeTest, QueryTimeoutTest, ConnectionResetTest across files. | Easy | ✅ |
+| **16.2.2** | **Rename phase-numbered test files** — `test_phase7_crusher_fixes.cpp` → `test_connection_attrs.cpp`, `test_phase11_typeinfo_timeout_pool.cpp` → `test_query_timeout.cpp`. Old files deleted. | Easy | ✅ |
+| **16.2.3** | **Parameterize conversion tests** — `test_result_conversions.cpp` and `test_param_conversions.cpp` refactored with `TEST_P()` value-parameterized suites (ToStringParam, ToIntParam, ToDoubleParam, NullParam, CharParamCase). | Medium | ✅ |
+| **16.2.4** | **Extract test constants** — Added `kDefaultBufferSize`, `kMaxVarcharLen`, `kSmallBufferSize`, `kStressRowCount`, `kLargeBlobSize`, `kGetDataChunkSize` to `test_helpers.h`. | Easy | ✅ |
+| **16.2.5** | **Fix `test_connection.cpp`** — Rewritten to use `OdbcConnectedTest` fixture and `TempTable` RAII. Added to CMakeLists.txt. | Easy | ✅ |
+| **16.2.6** | **Add `ASSERT_ODBC_SUCCESS` macro** — Added `ASSERT_ODBC_SUCCESS(ret, handle_type, handle)` and `EXPECT_ODBC_SUCCESS` macros to `test_helpers.h`. | Easy | ✅ |
+| **16.2.7** | **Stabilize timing-sensitive tests** — `CancelFromAnotherThread` rewritten with retry-with-backoff pattern (20 attempts × 50ms) instead of single 200ms sleep. | Easy | ✅ |
 
 **Phase 16.3: Coverage expansion**
 
 | Task | Description | Complexity | Status |
 |------|-------------|------------|--------|
-| **16.3.1** | **Test BLOB edge cases** — Only 3 BLOB tests exist. Add: empty blob, binary blob round-trip, large blob (>1MB) with chunked GetData, blob parameter via SQLPutData streaming. | Easy | ❌ |
-| **16.3.2** | **Test error recovery paths** — Add tests for: connection lost during fetch, statement re-use after error, descriptor state after failed execute. | Medium | ❌ |
-| **16.3.3** | **Test concurrent connections** — Multiple `OdbcConnectedTest` instances with separate `SQLHENV` handles operating on different tables. Validates thread safety at the environment level. | Medium | ❌ |
-| **16.3.4** | **Test SQLGetInfo completeness** — Systematically verify all driver-reported `SQLGetInfo` values against ODBC spec. Currently only ~10 info types are tested. | Easy | ❌ |
+| **16.3.1** | **Test BLOB edge cases** — Added `EmptyTextBlob`, `ExactBoundaryBlob` (4095-byte boundary), `BinaryBlobRoundTrip` (all 256 byte values) to `test_blob.cpp`. | Easy | ✅ |
+| **16.3.2** | **Test error recovery paths** — Added `RollbackAfterConstraintViolationAllowsRetry`, `StatementReusableAfterCursorError`, `RapidSequentialErrorRecoveryCycles` (10 cycles) to `test_errors.cpp`. | Medium | ✅ |
+| **16.3.3** | **Test concurrent connections** — Added `ConcurrentConnectionTest` fixture with `TwoIndependentConnections` and `ConnectionIsolation` (uncommitted row visibility) to `test_connect_options.cpp`. | Medium | ✅ |
+| **16.3.4** | **Test SQLGetInfo completeness** — Added `GetDataExtensions`, `CursorCommitBehavior`, `MaxColumnsInSelect`, `MaxConcurrentActivities`, `DriverName`, `DriverVersion` to `test_server_version.cpp`. | Easy | ✅ |
 
 ---
 
@@ -764,5 +764,5 @@ A first-class ODBC driver should:
 
 ---
 
-*Document version: 3.9 — April 5, 2026*
+*Document version: 4.0 — April 5, 2026*
 *This is the single authoritative reference for all Firebird ODBC driver improvements.*

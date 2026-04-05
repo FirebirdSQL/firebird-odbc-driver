@@ -381,3 +381,80 @@ TEST_F(TruncationIndicatorTest, GetInfoZeroBufferReportsFullLength) {
     EXPECT_TRUE(ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO);
     EXPECT_GT(fullLen, 0) << "Should report the full string length even with NULL buffer";
 }
+
+// ===== Error recovery edge cases =====
+
+TEST_F(ErrorsTest, RollbackAfterConstraintViolationAllowsRetry) {
+    TempTable table(this, "ODBC_TEST_ERR_RETRY",
+        "ID INTEGER NOT NULL PRIMARY KEY");
+
+    ExecDirect("INSERT INTO ODBC_TEST_ERR_RETRY VALUES (1)");
+    Commit();
+    ReallocStmt();
+
+    // Duplicate PK — should fail
+    SQLRETURN ret = SQLExecDirect(hStmt,
+        (SQLCHAR*)"INSERT INTO ODBC_TEST_ERR_RETRY VALUES (1)", SQL_NTS);
+    EXPECT_FALSE(SQL_SUCCEEDED(ret));
+
+    // Rollback to clear the failed transaction state
+    Rollback();
+    ReallocStmt();
+
+    // Insert a different value — should succeed after rollback
+    ExecDirect("INSERT INTO ODBC_TEST_ERR_RETRY VALUES (2)");
+    Commit();
+    ReallocStmt();
+
+    // Verify both rows exist
+    ExecDirect("SELECT COUNT(*) FROM ODBC_TEST_ERR_RETRY");
+    SQLINTEGER count = 0;
+    SQLLEN ind = 0;
+    SQLBindCol(hStmt, 1, SQL_C_SLONG, &count, 0, &ind);
+    ASSERT_TRUE(SQL_SUCCEEDED(SQLFetch(hStmt)));
+    EXPECT_EQ(count, 2);
+}
+
+TEST_F(ErrorsTest, StatementReusableAfterCursorError) {
+    // Execute a valid query but don't fetch all rows
+    ExecDirect("SELECT 1 FROM RDB$DATABASE");
+
+    // Try to execute another query without closing the cursor — should fail
+    SQLRETURN ret = SQLExecDirect(hStmt,
+        (SQLCHAR*)"SELECT 2 FROM RDB$DATABASE", SQL_NTS);
+
+    if (!SQL_SUCCEEDED(ret)) {
+        // Close the cursor
+        SQLFreeStmt(hStmt, SQL_CLOSE);
+
+        // Statement should be reusable
+        ExecDirect("SELECT 3 FROM RDB$DATABASE");
+        SQLINTEGER val = 0;
+        SQLLEN ind = 0;
+        SQLBindCol(hStmt, 1, SQL_C_SLONG, &val, 0, &ind);
+        ASSERT_TRUE(SQL_SUCCEEDED(SQLFetch(hStmt)));
+        EXPECT_EQ(val, 3);
+    }
+    // If the driver auto-closed the cursor and succeeded, that's also acceptable
+}
+
+TEST_F(ErrorsTest, RapidSequentialErrorRecoveryCycles) {
+    // Rapidly alternate between errors and successful queries
+    for (int i = 0; i < 10; i++) {
+        // Intentional error
+        SQLExecDirect(hStmt, (SQLCHAR*)"SELECT bad_col FROM RDB$DATABASE", SQL_NTS);
+        SQLFreeStmt(hStmt, SQL_CLOSE);
+        ReallocStmt();
+
+        // Successful query
+        ExecDirect("SELECT 1 FROM RDB$DATABASE");
+        SQLINTEGER val = 0;
+        SQLLEN ind = 0;
+        SQLBindCol(hStmt, 1, SQL_C_SLONG, &val, 0, &ind);
+        ASSERT_TRUE(SQL_SUCCEEDED(SQLFetch(hStmt)))
+            << "Recovery failed on iteration " << i;
+        EXPECT_EQ(val, 1);
+        SQLFreeStmt(hStmt, SQL_CLOSE);
+        ReallocStmt();
+    }
+}

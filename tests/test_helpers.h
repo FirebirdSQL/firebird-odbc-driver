@@ -12,6 +12,25 @@
 #include <sql.h>
 #include <sqlext.h>
 
+// ===== Test Constants =====
+// Common buffer sizes used across the test suite
+constexpr int kDefaultBufferSize = 1024;
+constexpr int kMaxVarcharLen = 256;
+constexpr int kSmallBufferSize = 128;
+constexpr int kStressRowCount = 1000;
+constexpr int kLargeBlobSize = 64 * 1024;      // 64KB
+constexpr int kGetDataChunkSize = 4096;
+
+// ===== ASSERT_ODBC_SUCCESS Macro =====
+// Replaces verbose ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(...)
+#define ASSERT_ODBC_SUCCESS(ret, handle_type, handle) \
+    ASSERT_TRUE(SQL_SUCCEEDED(ret))                   \
+        << "ODBC call failed: " << GetOdbcError(handle_type, handle)
+
+#define EXPECT_ODBC_SUCCESS(ret, handle_type, handle) \
+    EXPECT_TRUE(SQL_SUCCEEDED(ret))                   \
+        << "ODBC call failed: " << GetOdbcError(handle_type, handle)
+
 // Helper to get connection string from environment
 inline std::string GetConnectionString() {
     const char* connStr = std::getenv("FIREBIRD_ODBC_CONNECTION");

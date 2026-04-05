@@ -116,3 +116,58 @@ TEST_F(ServerVersionTest, ScrollOptionsReported) {
     EXPECT_TRUE(scrollOpts & SQL_SO_FORWARD_ONLY) << "Should support forward-only";
     EXPECT_TRUE(scrollOpts & SQL_SO_STATIC) << "Should support static scrollable cursors";
 }
+
+// ============================================================================
+// SQLGetInfo completeness tests
+// ============================================================================
+
+TEST_F(ServerVersionTest, GetDataExtensions) {
+    SQLUINTEGER ext = 0;
+    SQLSMALLINT len = 0;
+    SQLRETURN ret = SQLGetInfo(hDbc, SQL_GETDATA_EXTENSIONS, &ext, sizeof(ext), &len);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_DBC, hDbc);
+    // At minimum, should support SQL_GD_ANY_COLUMN (get data in any order)
+    EXPECT_TRUE(ext & SQL_GD_ANY_COLUMN) << "Should support SQL_GD_ANY_COLUMN";
+}
+
+TEST_F(ServerVersionTest, CursorCommitBehavior) {
+    SQLUSMALLINT behavior = 0;
+    SQLRETURN ret = SQLGetInfo(hDbc, SQL_CURSOR_COMMIT_BEHAVIOR, &behavior, sizeof(behavior), NULL);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_DBC, hDbc);
+    EXPECT_TRUE(behavior == SQL_CB_DELETE || behavior == SQL_CB_CLOSE || behavior == SQL_CB_PRESERVE)
+        << "Unexpected cursor commit behavior: " << behavior;
+}
+
+TEST_F(ServerVersionTest, MaxColumnsInSelect) {
+    SQLUSMALLINT maxCols = 0;
+    SQLRETURN ret = SQLGetInfo(hDbc, SQL_MAX_COLUMNS_IN_SELECT, &maxCols, sizeof(maxCols), NULL);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_DBC, hDbc);
+    // 0 means no limit or limit unknown; any positive value is acceptable
+    SUCCEED();
+}
+
+TEST_F(ServerVersionTest, MaxConcurrentActivities) {
+    SQLUSMALLINT maxAct = 0;
+    SQLRETURN ret = SQLGetInfo(hDbc, SQL_MAX_CONCURRENT_ACTIVITIES, &maxAct, sizeof(maxAct), NULL);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_DBC, hDbc);
+    SUCCEED();
+}
+
+TEST_F(ServerVersionTest, DriverName) {
+    SQLCHAR name[256] = {};
+    SQLSMALLINT len = 0;
+    SQLRETURN ret = SQLGetInfo(hDbc, SQL_DRIVER_NAME, name, sizeof(name), &len);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_DBC, hDbc);
+    EXPECT_GT(len, 0) << "Driver name should be non-empty";
+}
+
+TEST_F(ServerVersionTest, DriverVersion) {
+    SQLCHAR ver[256] = {};
+    SQLSMALLINT len = 0;
+    SQLRETURN ret = SQLGetInfo(hDbc, SQL_DRIVER_VER, ver, sizeof(ver), &len);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_DBC, hDbc);
+    EXPECT_GT(len, 0) << "Driver version should be non-empty";
+    std::string verStr((char*)ver, len);
+    EXPECT_NE(verStr.find('.'), std::string::npos)
+        << "Driver version should be in dotted format: " << verStr;
+}

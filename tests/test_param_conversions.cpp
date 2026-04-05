@@ -2,8 +2,7 @@
 // (Phase 6, ported from psqlodbc param-conversions-test)
 //
 // Tests SQLBindParameter with various C-to-SQL type conversions.
-// In Firebird, parameters in SELECT list need a table context, so
-// we test via INSERT→SELECT round-trip pattern.
+// Parameterized with TEST_P where patterns are uniform (Phase 16.2.3).
 
 #include "test_helpers.h"
 #include <cstring>
@@ -37,7 +36,6 @@ protected:
     std::unique_ptr<TempTable> table_;
     int nextId_ = 1;
 
-    // Insert a value using parameter binding and read it back as a string
     std::string insertAndReadBack(const char* colName,
         SQLSMALLINT cType, SQLSMALLINT sqlType,
         SQLPOINTER value, SQLLEN bufLen, SQLLEN* indPtr)
@@ -46,18 +44,15 @@ protected:
         SQLINTEGER idVal = id;
         SQLLEN idInd = sizeof(idVal);
 
-        // Bind ID parameter
         SQLRETURN ret = SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT,
             SQL_C_SLONG, SQL_INTEGER, 0, 0, &idVal, sizeof(idVal), &idInd);
         if (!SQL_SUCCEEDED(ret)) return "<bind-id-error>";
 
-        // Bind value parameter
         ret = SQLBindParameter(hStmt, 2, SQL_PARAM_INPUT,
             cType, sqlType, 200, 4, value, bufLen, indPtr);
         if (!SQL_SUCCEEDED(ret)) return "<bind-val-error>";
 
-        // Build INSERT statement
-        char sql[256];
+        char sql[kMaxVarcharLen];
         snprintf(sql, sizeof(sql),
             "INSERT INTO ODBC_TEST_PCONV (ID, %s) VALUES (?, ?)", colName);
 
@@ -71,13 +66,12 @@ protected:
         Commit();
         ReallocStmt();
 
-        // Read it back
-        char selectSql[256];
+        char selectSql[kMaxVarcharLen];
         snprintf(selectSql, sizeof(selectSql),
             "SELECT %s FROM ODBC_TEST_PCONV WHERE ID = %d", colName, id);
         ExecDirect(selectSql);
 
-        SQLCHAR buf[256] = {};
+        SQLCHAR buf[kMaxVarcharLen] = {};
         SQLLEN ind = 0;
         SQLBindCol(hStmt, 1, SQL_C_CHAR, buf, sizeof(buf), &ind);
         ret = SQLFetch(hStmt);
@@ -89,49 +83,56 @@ protected:
     }
 };
 
-// ===== String → Integer =====
+// ===== Parameterized: string-to-column round-trips =====
 
-TEST_F(ParamConversionsTest, CharToInteger) {
+struct CharParamCase {
+    const char* name;
+    const char* colName;
+    SQLSMALLINT sqlType;
+    const char* inputValue;
+    double expectedNumeric;   // 0 if string comparison
+    double tolerance;         // 0 means exact integer comparison via atoi
+    const char* expectedStr;  // non-null means substring check
+};
+
+class CharToColumnTest : public ParamConversionsTest,
+                         public ::testing::WithParamInterface<CharParamCase> {};
+
+TEST_P(CharToColumnTest, RoundTrip) {
+    auto& p = GetParam();
     SQLLEN ind = SQL_NTS;
-    char val[] = "42";
-    std::string result = insertAndReadBack("VAL_INT",
-        SQL_C_CHAR, SQL_INTEGER, val, 0, &ind);
-    EXPECT_EQ(atoi(result.c_str()), 42);
+    // Copy input value to mutable buffer (SQLBindParameter takes non-const)
+    char val[kMaxVarcharLen];
+    strncpy(val, p.inputValue, sizeof(val));
+    val[sizeof(val) - 1] = '\0';
+
+    std::string result = insertAndReadBack(p.colName,
+        SQL_C_CHAR, p.sqlType, val, 0, &ind);
+    ASSERT_EQ(result.find("<"), std::string::npos)
+        << "insertAndReadBack failed: " << result;
+
+    if (p.expectedStr != nullptr) {
+        EXPECT_NE(result.find(p.expectedStr), std::string::npos)
+            << "Expected substring '" << p.expectedStr << "' in: " << result;
+    } else if (p.tolerance > 0) {
+        EXPECT_NEAR(atof(result.c_str()), p.expectedNumeric, p.tolerance);
+    } else {
+        EXPECT_EQ(atoi(result.c_str()), (int)p.expectedNumeric);
+    }
 }
 
-TEST_F(ParamConversionsTest, CharToSmallint) {
-    SQLLEN ind = SQL_NTS;
-    char val[] = "-123";
-    std::string result = insertAndReadBack("VAL_SMALLINT",
-        SQL_C_CHAR, SQL_SMALLINT, val, 0, &ind);
-    EXPECT_EQ(atoi(result.c_str()), -123);
-}
+INSTANTIATE_TEST_SUITE_P(Conversions, CharToColumnTest, ::testing::Values(
+    CharParamCase{"CharToInteger",    "VAL_INT",      SQL_INTEGER,  "42",          42,     0, nullptr},
+    CharParamCase{"CharToSmallint",   "VAL_SMALLINT", SQL_SMALLINT, "-123",       -123,    0, nullptr},
+    CharParamCase{"CharToFloat",      "VAL_FLOAT",    SQL_FLOAT,    "3.14",        3.14,   0.01, nullptr},
+    CharParamCase{"CharToDouble",     "VAL_DOUBLE",   SQL_DOUBLE,   "2.718281828", 2.718281828, 0.001, nullptr},
+    CharParamCase{"CharToChar",       "VAL_VARCHAR",  SQL_VARCHAR,  "hello world", 0,      0, "hello world"},
+    CharParamCase{"CharWithQuotes",   "VAL_VARCHAR",  SQL_VARCHAR,  "hello 'world'", 0,    0, "hello 'world'"},
+    CharParamCase{"SmallintMax",      "VAL_SMALLINT", SQL_SMALLINT, "32767",       32767,  0, nullptr},
+    CharParamCase{"NumericAsChar",    "VAL_NUMERIC",  SQL_NUMERIC,  "1234.5678",   1234.5678, 0.001, nullptr}
+), [](const auto& info) { return info.param.name; });
 
-TEST_F(ParamConversionsTest, CharToFloat) {
-    SQLLEN ind = SQL_NTS;
-    char val[] = "3.14";
-    std::string result = insertAndReadBack("VAL_FLOAT",
-        SQL_C_CHAR, SQL_FLOAT, val, 0, &ind);
-    EXPECT_NEAR(atof(result.c_str()), 3.14, 0.01);
-}
-
-TEST_F(ParamConversionsTest, CharToDouble) {
-    SQLLEN ind = SQL_NTS;
-    char val[] = "2.718281828";
-    std::string result = insertAndReadBack("VAL_DOUBLE",
-        SQL_C_CHAR, SQL_DOUBLE, val, 0, &ind);
-    EXPECT_NEAR(atof(result.c_str()), 2.718281828, 0.001);
-}
-
-TEST_F(ParamConversionsTest, CharToChar) {
-    SQLLEN ind = SQL_NTS;
-    char val[] = "hello world";
-    std::string result = insertAndReadBack("VAL_VARCHAR",
-        SQL_C_CHAR, SQL_VARCHAR, val, 0, &ind);
-    EXPECT_NE(result.find("hello world"), std::string::npos);
-}
-
-// ===== Integer → Integer =====
+// ===== Non-parameterized: tests with non-string C types =====
 
 TEST_F(ParamConversionsTest, SLongToInteger) {
     SQLINTEGER val = 1234;
@@ -157,20 +158,8 @@ TEST_F(ParamConversionsTest, SLongToSmallint) {
     EXPECT_EQ(atoi(result.c_str()), 32000);
 }
 
-// ===== Boundary values =====
-
-TEST_F(ParamConversionsTest, SmallintMaxValue) {
-    SQLLEN ind = SQL_NTS;
-    char val[] = "32767";
-    std::string result = insertAndReadBack("VAL_SMALLINT",
-        SQL_C_CHAR, SQL_SMALLINT, val, 0, &ind);
-    EXPECT_EQ(atoi(result.c_str()), 32767);
-}
-
 TEST_F(ParamConversionsTest, SmallintMinValue) {
-    // -32768 is the minimum SMALLINT value
-    // Some ODBC drivers have issues with the boundary value
-    SQLSMALLINT val = -32767; // Use -32767 (not boundary) for reliability
+    SQLSMALLINT val = -32767;
     SQLLEN ind = sizeof(val);
     std::string result = insertAndReadBack("VAL_SMALLINT",
         SQL_C_SSHORT, SQL_SMALLINT, &val, sizeof(val), &ind);
@@ -181,26 +170,12 @@ TEST_F(ParamConversionsTest, SmallintMinValue) {
     }
 }
 
-// ===== Strings with special characters =====
-
-TEST_F(ParamConversionsTest, CharWithQuotes) {
-    SQLLEN ind = SQL_NTS;
-    char val[] = "hello 'world'";
-    std::string result = insertAndReadBack("VAL_VARCHAR",
-        SQL_C_CHAR, SQL_VARCHAR, val, 0, &ind);
-    EXPECT_NE(result.find("hello 'world'"), std::string::npos);
-}
-
-// ===== NULL parameter =====
-
 TEST_F(ParamConversionsTest, NullParameter) {
     SQLLEN ind = SQL_NULL_DATA;
     std::string result = insertAndReadBack("VAL_VARCHAR",
         SQL_C_CHAR, SQL_VARCHAR, nullptr, 0, &ind);
     EXPECT_EQ(result, "NULL");
 }
-
-// ===== Double → Double =====
 
 TEST_F(ParamConversionsTest, DoubleToDouble) {
     double val = 3.14159265358979;
@@ -210,8 +185,6 @@ TEST_F(ParamConversionsTest, DoubleToDouble) {
     EXPECT_NEAR(atof(result.c_str()), 3.14159265358979, 1e-10);
 }
 
-// ===== Float → Float =====
-
 TEST_F(ParamConversionsTest, FloatToFloat) {
     float val = 2.5f;
     SQLLEN ind = sizeof(val);
@@ -219,8 +192,6 @@ TEST_F(ParamConversionsTest, FloatToFloat) {
         SQL_C_FLOAT, SQL_REAL, &val, sizeof(val), &ind);
     EXPECT_NEAR(atof(result.c_str()), 2.5, 0.01);
 }
-
-// ===== BIGINT parameter =====
 
 TEST_F(ParamConversionsTest, BigintParam) {
     SQLBIGINT val = INT64_C(9223372036854775807);
@@ -230,46 +201,21 @@ TEST_F(ParamConversionsTest, BigintParam) {
     EXPECT_EQ(result, "9223372036854775807");
 }
 
-// ===== Date parameter =====
-
 TEST_F(ParamConversionsTest, DateParam) {
     SQL_DATE_STRUCT val = {};
-    val.year = 2025;
-    val.month = 6;
-    val.day = 15;
+    val.year = 2025; val.month = 6; val.day = 15;
     SQLLEN ind = sizeof(val);
     std::string result = insertAndReadBack("VAL_DATE",
         SQL_C_TYPE_DATE, SQL_TYPE_DATE, &val, sizeof(val), &ind);
     EXPECT_NE(result.find("2025"), std::string::npos);
 }
 
-// ===== Timestamp parameter =====
-
 TEST_F(ParamConversionsTest, TimestampParam) {
     SQL_TIMESTAMP_STRUCT val = {};
-    val.year = 2025;
-    val.month = 12;
-    val.day = 31;
-    val.hour = 23;
-    val.minute = 59;
-    val.second = 59;
+    val.year = 2025; val.month = 12; val.day = 31;
+    val.hour = 23; val.minute = 59; val.second = 59;
     SQLLEN ind = sizeof(val);
     std::string result = insertAndReadBack("VAL_TIMESTAMP",
         SQL_C_TYPE_TIMESTAMP, SQL_TYPE_TIMESTAMP, &val, sizeof(val), &ind);
     EXPECT_NE(result.find("2025"), std::string::npos);
 }
-
-// ===== Numeric parameter =====
-
-TEST_F(ParamConversionsTest, NumericAsCharParam) {
-    SQLLEN ind = SQL_NTS;
-    char val[] = "1234.5678";
-    std::string result = insertAndReadBack("VAL_NUMERIC",
-        SQL_C_CHAR, SQL_NUMERIC, val, 0, &ind);
-    EXPECT_NEAR(atof(result.c_str()), 1234.5678, 0.001);
-}
-
-// ===== Already-covered round-trip tests from test_data_types.cpp =====
-// (IntegerParamInsertAndSelect, VarcharParamInsertAndSelect,
-//  DoubleParamInsertAndSelect, DateParamInsertAndSelect,
-//  TimestampParamInsertAndSelect are tested there)

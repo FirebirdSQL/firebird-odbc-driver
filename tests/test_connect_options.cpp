@@ -249,440 +249,118 @@ TEST_F(ConnectOptionsTest, AccessModeAttribute) {
     EXPECT_EQ(mode, (SQLULEN)SQL_MODE_READ_WRITE);
 }
 
-// ===== OC-3: SQL_ATTR_CONNECTION_TIMEOUT =====
+// ===== Concurrent connection tests =====
 
-class ConnectionTimeoutTest : public ::testing::Test {
+class ConcurrentConnectionTest : public ::testing::Test {
 protected:
-    SQLHENV hEnv = SQL_NULL_HENV;
-    SQLHDBC hDbc = SQL_NULL_HDBC;
+    struct OdbcConn {
+        SQLHENV hEnv = SQL_NULL_HENV;
+        SQLHDBC hDbc = SQL_NULL_HDBC;
+        SQLHSTMT hStmt = SQL_NULL_HSTMT;
+
+        bool connect() {
+            std::string connStr = GetConnectionString();
+            SQLRETURN ret;
+            ret = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &hEnv);
+            if (!SQL_SUCCEEDED(ret)) return false;
+            SQLSetEnvAttr(hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0);
+            ret = SQLAllocHandle(SQL_HANDLE_DBC, hEnv, &hDbc);
+            if (!SQL_SUCCEEDED(ret)) return false;
+            SQLCHAR outStr[1024];
+            SQLSMALLINT outLen;
+            ret = SQLDriverConnect(hDbc, NULL, (SQLCHAR*)connStr.c_str(), SQL_NTS,
+                outStr, sizeof(outStr), &outLen, SQL_DRIVER_NOPROMPT);
+            if (!SQL_SUCCEEDED(ret)) return false;
+            ret = SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt);
+            return SQL_SUCCEEDED(ret);
+        }
+
+        void disconnect() {
+            if (hStmt != SQL_NULL_HSTMT) SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+            if (hDbc != SQL_NULL_HDBC) { SQLDisconnect(hDbc); SQLFreeHandle(SQL_HANDLE_DBC, hDbc); }
+            if (hEnv != SQL_NULL_HENV) SQLFreeHandle(SQL_HANDLE_ENV, hEnv);
+        }
+    };
 
     void SetUp() override {
         if (GetConnectionString().empty())
             GTEST_SKIP() << "FIREBIRD_ODBC_CONNECTION not set";
     }
-
-    void TearDown() override {
-        if (hDbc != SQL_NULL_HDBC) {
-            SQLDisconnect(hDbc);
-            SQLFreeHandle(SQL_HANDLE_DBC, hDbc);
-        }
-        if (hEnv != SQL_NULL_HENV)
-            SQLFreeHandle(SQL_HANDLE_ENV, hEnv);
-    }
-
-    void AllocHandles() {
-        SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &hEnv);
-        SQLSetEnvAttr(hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0);
-        SQLAllocHandle(SQL_HANDLE_DBC, hEnv, &hDbc);
-    }
-
-    void Connect() {
-        std::string connStr = GetConnectionString();
-        SQLCHAR outStr[1024];
-        SQLSMALLINT outLen;
-        SQLRETURN ret = SQLDriverConnect(hDbc, NULL,
-            (SQLCHAR*)connStr.c_str(), SQL_NTS,
-            outStr, sizeof(outStr), &outLen,
-            SQL_DRIVER_NOPROMPT);
-        ASSERT_TRUE(SQL_SUCCEEDED(ret))
-            << "Connect failed: " << GetOdbcError(SQL_HANDLE_DBC, hDbc);
-    }
 };
 
-TEST_F(ConnectionTimeoutTest, SetAndGetConnectionTimeout) {
-    AllocHandles();
+TEST_F(ConcurrentConnectionTest, TwoIndependentConnections) {
+    OdbcConn conn1, conn2;
+    ASSERT_TRUE(conn1.connect()) << "First connection failed";
+    ASSERT_TRUE(conn2.connect()) << "Second connection failed";
 
-    // Set connection timeout before connecting
-    SQLRETURN ret = SQLSetConnectAttr(hDbc, SQL_ATTR_CONNECTION_TIMEOUT,
-        (SQLPOINTER)30, SQL_IS_UINTEGER);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "SQLSetConnectAttr(SQL_ATTR_CONNECTION_TIMEOUT) failed: "
-        << GetOdbcError(SQL_HANDLE_DBC, hDbc);
+    // Execute queries on both connections
+    SQLRETURN ret1 = SQLExecDirect(conn1.hStmt,
+        (SQLCHAR*)"SELECT 1 FROM RDB$DATABASE", SQL_NTS);
+    SQLRETURN ret2 = SQLExecDirect(conn2.hStmt,
+        (SQLCHAR*)"SELECT 2 FROM RDB$DATABASE", SQL_NTS);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret1));
+    ASSERT_TRUE(SQL_SUCCEEDED(ret2));
 
-    Connect();
-
-    // Read it back
-    SQLULEN timeout = 0;
-    ret = SQLGetConnectAttr(hDbc, SQL_ATTR_CONNECTION_TIMEOUT, &timeout, 0, NULL);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "SQLGetConnectAttr(SQL_ATTR_CONNECTION_TIMEOUT) failed: "
-        << GetOdbcError(SQL_HANDLE_DBC, hDbc);
-    EXPECT_EQ(timeout, 30u);
-}
-
-TEST_F(ConnectionTimeoutTest, LoginTimeoutGetterWorks) {
-    AllocHandles();
-
-    // Set login timeout
-    SQLRETURN ret = SQLSetConnectAttr(hDbc, SQL_ATTR_LOGIN_TIMEOUT,
-        (SQLPOINTER)15, SQL_IS_UINTEGER);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "SQLSetConnectAttr(SQL_ATTR_LOGIN_TIMEOUT) failed";
-
-    // Read it back — this previously fell through to HYC00 error
-    SQLULEN timeout = 0;
-    ret = SQLGetConnectAttr(hDbc, SQL_ATTR_LOGIN_TIMEOUT, &timeout, 0, NULL);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "SQLGetConnectAttr(SQL_ATTR_LOGIN_TIMEOUT) failed: "
-        << GetOdbcError(SQL_HANDLE_DBC, hDbc);
-    EXPECT_EQ(timeout, 15u);
-}
-
-TEST_F(ConnectionTimeoutTest, ConnectionTimeoutDefaultIsZero) {
-    AllocHandles();
-    Connect();
-
-    SQLULEN timeout = 999;
-    SQLRETURN ret = SQLGetConnectAttr(hDbc, SQL_ATTR_CONNECTION_TIMEOUT, &timeout, 0, NULL);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-    EXPECT_EQ(timeout, 0u) << "Default connection timeout should be 0 (no timeout)";
-}
-
-// ===== OC-4: SQL_ATTR_ASYNC_ENABLE =====
-
-class AsyncEnableTest : public OdbcConnectedTest {};
-
-TEST_F(AsyncEnableTest, ConnectionLevelRejectsAsyncOn) {
-    // Setting SQL_ASYNC_ENABLE_ON should fail with HYC00
-    SQLRETURN ret = SQLSetConnectAttr(hDbc, SQL_ATTR_ASYNC_ENABLE,
-        (SQLPOINTER)SQL_ASYNC_ENABLE_ON, SQL_IS_UINTEGER);
-    EXPECT_EQ(ret, SQL_ERROR);
-
-    std::string state = GetSqlState(SQL_HANDLE_DBC, hDbc);
-    EXPECT_EQ(state, "HYC00") << "Expected HYC00 for unsupported async enable";
-}
-
-TEST_F(AsyncEnableTest, ConnectionLevelAcceptsAsyncOff) {
-    // Setting SQL_ASYNC_ENABLE_OFF should succeed (it's the default)
-    SQLRETURN ret = SQLSetConnectAttr(hDbc, SQL_ATTR_ASYNC_ENABLE,
-        (SQLPOINTER)SQL_ASYNC_ENABLE_OFF, SQL_IS_UINTEGER);
-    EXPECT_TRUE(SQL_SUCCEEDED(ret));
-}
-
-TEST_F(AsyncEnableTest, ConnectionLevelGetReturnsOff) {
-    SQLULEN value = 999;
-    SQLRETURN ret = SQLGetConnectAttr(hDbc, SQL_ATTR_ASYNC_ENABLE, &value, 0, NULL);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-    EXPECT_EQ(value, (SQLULEN)SQL_ASYNC_ENABLE_OFF);
-}
-
-TEST_F(AsyncEnableTest, StatementLevelRejectsAsyncOn) {
-    // Setting SQL_ASYNC_ENABLE_ON on statement should fail with HYC00
-    SQLRETURN ret = SQLSetStmtAttr(hStmt, SQL_ATTR_ASYNC_ENABLE,
-        (SQLPOINTER)SQL_ASYNC_ENABLE_ON, SQL_IS_UINTEGER);
-    EXPECT_EQ(ret, SQL_ERROR);
-
-    std::string state = GetSqlState(SQL_HANDLE_STMT, hStmt);
-    EXPECT_EQ(state, "HYC00") << "Expected HYC00 for unsupported async enable";
-}
-
-TEST_F(AsyncEnableTest, StatementLevelGetReturnsOff) {
-    SQLULEN value = 999;
-    SQLRETURN ret = SQLGetStmtAttr(hStmt, SQL_ATTR_ASYNC_ENABLE, &value, 0, NULL);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-    EXPECT_EQ(value, (SQLULEN)SQL_ASYNC_ENABLE_OFF);
-}
-
-// ===== SQL_ASYNC_MODE info =====
-
-class AsyncModeTest : public OdbcConnectedTest {};
-
-TEST_F(AsyncModeTest, ReportsAsyncModeNone) {
-    SQLUINTEGER asyncMode = 0;
-    SQLSMALLINT actualLen = 0;
-    SQLRETURN ret = SQLGetInfo(hDbc, SQL_ASYNC_MODE, &asyncMode, sizeof(asyncMode), &actualLen);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "SQLGetInfo(SQL_ASYNC_MODE) failed: " << GetOdbcError(SQL_HANDLE_DBC, hDbc);
-    EXPECT_EQ(asyncMode, (SQLUINTEGER)SQL_AM_NONE)
-        << "SQL_ASYNC_MODE should be SQL_AM_NONE (0), got " << asyncMode;
-}
-
-// ===== SQL_ATTR_QUERY_TIMEOUT and SQLCancel tests =====
-
-class QueryTimeoutTest : public OdbcConnectedTest {};
-
-// Default query timeout should be 0
-TEST_F(QueryTimeoutTest, DefaultTimeoutIsZero) {
-    SQLULEN timeout = 999;
-    SQLRETURN ret = SQLGetStmtAttr(hStmt, SQL_ATTR_QUERY_TIMEOUT, &timeout, 0, nullptr);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-    EXPECT_EQ(timeout, 0u) << "Default query timeout should be 0";
-}
-
-// Setting and getting timeout
-TEST_F(QueryTimeoutTest, SetAndGetTimeout) {
-    SQLRETURN ret = SQLSetStmtAttr(hStmt, SQL_ATTR_QUERY_TIMEOUT, (SQLPOINTER)5, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "Failed to set query timeout: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
-
-    SQLULEN timeout = 0;
-    ret = SQLGetStmtAttr(hStmt, SQL_ATTR_QUERY_TIMEOUT, &timeout, 0, nullptr);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-    EXPECT_EQ(timeout, 5u) << "Query timeout should be 5 after setting";
-}
-
-// Setting timeout back to 0 disables it
-TEST_F(QueryTimeoutTest, SetTimeoutToZero) {
-    SQLRETURN ret = SQLSetStmtAttr(hStmt, SQL_ATTR_QUERY_TIMEOUT, (SQLPOINTER)10, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    ret = SQLSetStmtAttr(hStmt, SQL_ATTR_QUERY_TIMEOUT, (SQLPOINTER)0, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    SQLULEN timeout = 999;
-    ret = SQLGetStmtAttr(hStmt, SQL_ATTR_QUERY_TIMEOUT, &timeout, 0, nullptr);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-    EXPECT_EQ(timeout, 0u) << "Query timeout should be 0 after reset";
-}
-
-// SQLCancel succeeds even when nothing is executing
-TEST_F(QueryTimeoutTest, CancelWhenIdleSucceeds) {
-    SQLRETURN ret = SQLCancel(hStmt);
-    EXPECT_TRUE(SQL_SUCCEEDED(ret))
-        << "SQLCancel on idle statement should succeed: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
-}
-
-// SQLCancel from another thread interrupts a long-running query
-TEST_F(QueryTimeoutTest, CancelFromAnotherThread) {
-    // Use a cartesian product query that takes a long time
-    const char* longQuery =
-        "SELECT COUNT(*) FROM rdb$fields A "
-        "CROSS JOIN rdb$fields B "
-        "CROSS JOIN rdb$fields C";
-
-    SQLHSTMT cancelStmt = hStmt;
-
-    // Start a thread that will cancel after a short delay
-    std::thread cancelThread([cancelStmt]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        SQLCancel(cancelStmt);
-    });
-
-    SQLRETURN ret = SQLExecDirect(hStmt, (SQLCHAR*)longQuery, SQL_NTS);
-
-    cancelThread.join();
-
-    // The query may have completed before cancel fired, or may have been cancelled.
-    if (ret == SQL_ERROR) {
-        std::string state = GetSqlState(SQL_HANDLE_STMT, hStmt);
-        EXPECT_TRUE(state == "HY008" || state == "HY000" || state == "HYT00")
-            << "Expected cancel-related SQLSTATE, got " << state;
-    }
-    // If SQL_SUCCESS, the query completed before cancel — that's OK too
-}
-
-// Timer-based timeout automatically cancels a long-running query
-TEST_F(QueryTimeoutTest, TimerFiresOnLongQuery) {
-    // Set a very short timeout (1 second)
-    SQLRETURN ret = SQLSetStmtAttr(hStmt, SQL_ATTR_QUERY_TIMEOUT, (SQLPOINTER)1, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    // Execute a heavy cartesian product that should take more than 1 second
-    const char* longQuery =
-        "SELECT COUNT(*) FROM rdb$fields A "
-        "CROSS JOIN rdb$fields B "
-        "CROSS JOIN rdb$fields C "
-        "CROSS JOIN rdb$fields D";
-
-    auto start = std::chrono::steady_clock::now();
-    ret = SQLExecDirect(hStmt, (SQLCHAR*)longQuery, SQL_NTS);
-    auto elapsed = std::chrono::steady_clock::now() - start;
-
-    if (ret == SQL_ERROR) {
-        std::string state = GetSqlState(SQL_HANDLE_STMT, hStmt);
-        EXPECT_EQ(state, "HYT00")
-            << "Timer-triggered cancel should produce HYT00, got " << state;
-
-        auto secs = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
-        EXPECT_LE(secs, 5) << "Should cancel within a few seconds of timeout";
-    }
-    // If SQL_SUCCESS, query was too fast for the timer — acceptable
-}
-
-// Timeout of 0 means no timeout — query should complete normally
-TEST_F(QueryTimeoutTest, ZeroTimeoutDoesNotCancel) {
-    SQLRETURN ret = SQLSetStmtAttr(hStmt, SQL_ATTR_QUERY_TIMEOUT, (SQLPOINTER)0, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    ret = SQLExecDirect(hStmt, (SQLCHAR*)"SELECT 1 FROM RDB$DATABASE", SQL_NTS);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "Simple query with timeout=0 should succeed: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
-
-    ret = SQLFetch(hStmt);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-    SQLINTEGER val = 0;
+    SQLINTEGER val1 = 0, val2 = 0;
     SQLLEN ind = 0;
-    SQLGetData(hStmt, 1, SQL_C_SLONG, &val, 0, &ind);
-    EXPECT_EQ(val, 1);
+    SQLFetch(conn1.hStmt);
+    SQLGetData(conn1.hStmt, 1, SQL_C_SLONG, &val1, 0, &ind);
+    SQLFetch(conn2.hStmt);
+    SQLGetData(conn2.hStmt, 1, SQL_C_SLONG, &val2, 0, &ind);
+
+    EXPECT_EQ(val1, 1);
+    EXPECT_EQ(val2, 2);
+
+    conn2.disconnect();
+    conn1.disconnect();
 }
 
-// ===== SQL_ATTR_RESET_CONNECTION tests =====
+TEST_F(ConcurrentConnectionTest, ConnectionIsolation) {
+    OdbcConn conn1, conn2;
+    ASSERT_TRUE(conn1.connect());
+    ASSERT_TRUE(conn2.connect());
 
-class ConnectionResetTest : public OdbcConnectedTest {};
+    // Turn off autocommit on conn1
+    SQLSetConnectAttr(conn1.hDbc, SQL_ATTR_AUTOCOMMIT,
+        (SQLPOINTER)SQL_AUTOCOMMIT_OFF, 0);
 
-// After reset, autocommit should be ON
-TEST_F(ConnectionResetTest, ResetRestoresAutocommit) {
-    // Turn off autocommit
-    SQLRETURN ret = SQLSetConnectAttr(hDbc, SQL_ATTR_AUTOCOMMIT,
-                                      (SQLPOINTER)SQL_AUTOCOMMIT_OFF, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
+    // Create table on conn1 (committed by auto-commit being off, need explicit commit)
+    SQLExecDirect(conn1.hStmt, (SQLCHAR*)"DROP TABLE T_CONCURRENT_TEST", SQL_NTS);
+    SQLEndTran(SQL_HANDLE_DBC, conn1.hDbc, SQL_COMMIT);
+    SQLFreeStmt(conn1.hStmt, SQL_CLOSE);
 
-    // Reset connection
-    ret = SQLSetConnectAttr(hDbc, SQL_ATTR_RESET_CONNECTION,
-                            (SQLPOINTER)SQL_RESET_CONNECTION_YES, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    // Check autocommit is back ON
-    SQLUINTEGER ac = SQL_AUTOCOMMIT_OFF;
-    ret = SQLGetConnectAttr(hDbc, SQL_ATTR_AUTOCOMMIT, &ac, 0, nullptr);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-    EXPECT_EQ(ac, (SQLUINTEGER)SQL_AUTOCOMMIT_ON)
-        << "Autocommit should be ON after reset";
-}
-
-// After reset, transaction isolation should be default (0)
-TEST_F(ConnectionResetTest, ResetRestoresTransactionIsolation) {
-    // Set transaction isolation
-    SQLRETURN ret = SQLSetConnectAttr(hDbc, SQL_ATTR_TXN_ISOLATION,
-                                      (SQLPOINTER)SQL_TXN_SERIALIZABLE, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    // Reset
-    ret = SQLSetConnectAttr(hDbc, SQL_ATTR_RESET_CONNECTION,
-                            (SQLPOINTER)SQL_RESET_CONNECTION_YES, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    // Check isolation is back to default
-    SQLUINTEGER iso = SQL_TXN_SERIALIZABLE;
-    ret = SQLGetConnectAttr(hDbc, SQL_ATTR_TXN_ISOLATION, &iso, 0, nullptr);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-    EXPECT_EQ(iso, 0u)
-        << "Transaction isolation should be 0 (default) after reset";
-}
-
-// Uncommitted data should be rolled back on reset
-TEST_F(ConnectionResetTest, ResetRollsBackPendingTransaction) {
-    // Turn off autocommit so we can control transactions
-    SQLRETURN ret = SQLSetConnectAttr(hDbc, SQL_ATTR_AUTOCOMMIT,
-                                      (SQLPOINTER)SQL_AUTOCOMMIT_OFF, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    // Create a temp table and insert a row WITHOUT committing
-    ExecIgnoreError("DROP TABLE T11_RESET_TEST");
-    // We need to commit the DROP
-    SQLEndTran(SQL_HANDLE_DBC, hDbc, SQL_COMMIT);
-    ReallocStmt();
-
-    ret = SQLExecDirect(hStmt, (SQLCHAR*)"CREATE TABLE T11_RESET_TEST (ID INTEGER)", SQL_NTS);
+    SQLRETURN ret = SQLExecDirect(conn1.hStmt,
+        (SQLCHAR*)"CREATE TABLE T_CONCURRENT_TEST (ID INTEGER)", SQL_NTS);
     ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "CREATE TABLE failed: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
-    SQLEndTran(SQL_HANDLE_DBC, hDbc, SQL_COMMIT);
-    ReallocStmt();
+        << GetOdbcError(SQL_HANDLE_STMT, conn1.hStmt);
+    SQLEndTran(SQL_HANDLE_DBC, conn1.hDbc, SQL_COMMIT);
+    SQLFreeHandle(SQL_HANDLE_STMT, conn1.hStmt);
 
-    // Insert without commit
-    ret = SQLExecDirect(hStmt, (SQLCHAR*)"INSERT INTO T11_RESET_TEST VALUES (42)", SQL_NTS);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "INSERT failed: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
-
-    // Close the cursor if any
-    SQLFreeStmt(hStmt, SQL_CLOSE);
-
-    // Reset connection — should rollback the uncommitted INSERT
-    ret = SQLSetConnectAttr(hDbc, SQL_ATTR_RESET_CONNECTION,
-                            (SQLPOINTER)SQL_RESET_CONNECTION_YES, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "Reset failed: " << GetOdbcError(SQL_HANDLE_DBC, hDbc);
-
-    // Now check: the INSERT should have been rolled back
-    ReallocStmt();
-    ret = SQLExecDirect(hStmt, (SQLCHAR*)"SELECT COUNT(*) FROM T11_RESET_TEST", SQL_NTS);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "SELECT failed: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
-
-    ret = SQLFetch(hStmt);
+    // Insert uncommitted row on conn1
+    SQLAllocHandle(SQL_HANDLE_STMT, conn1.hDbc, &conn1.hStmt);
+    ret = SQLExecDirect(conn1.hStmt,
+        (SQLCHAR*)"INSERT INTO T_CONCURRENT_TEST VALUES (42)", SQL_NTS);
     ASSERT_TRUE(SQL_SUCCEEDED(ret));
+    // Do NOT commit
 
+    // conn2 should not see the uncommitted row
+    ret = SQLExecDirect(conn2.hStmt,
+        (SQLCHAR*)"SELECT COUNT(*) FROM T_CONCURRENT_TEST", SQL_NTS);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret))
+        << GetOdbcError(SQL_HANDLE_STMT, conn2.hStmt);
+    SQLFetch(conn2.hStmt);
     SQLINTEGER count = -1;
     SQLLEN ind = 0;
-    SQLGetData(hStmt, 1, SQL_C_SLONG, &count, 0, &ind);
-    EXPECT_EQ(count, 0) << "Uncommitted INSERT should have been rolled back by reset";
+    SQLGetData(conn2.hStmt, 1, SQL_C_SLONG, &count, 0, &ind);
+    EXPECT_EQ(count, 0) << "Uncommitted row should not be visible to other connections";
 
     // Cleanup
-    SQLFreeStmt(hStmt, SQL_CLOSE);
-    ExecIgnoreError("DROP TABLE T11_RESET_TEST");
-    SQLEndTran(SQL_HANDLE_DBC, hDbc, SQL_COMMIT);
-}
+    SQLEndTran(SQL_HANDLE_DBC, conn1.hDbc, SQL_ROLLBACK);
+    SQLFreeHandle(SQL_HANDLE_STMT, conn1.hStmt);
+    SQLAllocHandle(SQL_HANDLE_STMT, conn1.hDbc, &conn1.hStmt);
+    SQLExecDirect(conn1.hStmt, (SQLCHAR*)"DROP TABLE T_CONCURRENT_TEST", SQL_NTS);
+    SQLEndTran(SQL_HANDLE_DBC, conn1.hDbc, SQL_COMMIT);
 
-// Connection should be reusable after reset
-TEST_F(ConnectionResetTest, ConnectionReusableAfterReset) {
-    // Reset
-    SQLRETURN ret = SQLSetConnectAttr(hDbc, SQL_ATTR_RESET_CONNECTION,
-                                      (SQLPOINTER)SQL_RESET_CONNECTION_YES, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    // Execute a simple query to verify the connection still works
-    ReallocStmt();
-    ret = SQLExecDirect(hStmt, (SQLCHAR*)"SELECT 1 FROM RDB$DATABASE", SQL_NTS);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "Query after reset failed: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
-
-    ret = SQLFetch(hStmt);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    SQLINTEGER val = 0;
-    SQLLEN ind = 0;
-    SQLGetData(hStmt, 1, SQL_C_SLONG, &val, 0, &ind);
-    EXPECT_EQ(val, 1);
-}
-
-// Open cursor should be closed after reset
-TEST_F(ConnectionResetTest, ResetClosesOpenCursors) {
-    // Open a cursor
-    SQLRETURN ret = SQLExecDirect(hStmt, (SQLCHAR*)"SELECT 1 FROM RDB$DATABASE", SQL_NTS);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    // Don't fetch — leave cursor open
-
-    // Reset connection
-    ret = SQLSetConnectAttr(hDbc, SQL_ATTR_RESET_CONNECTION,
-                            (SQLPOINTER)SQL_RESET_CONNECTION_YES, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    // The statement should be reusable for a new query
-    ret = SQLExecDirect(hStmt, (SQLCHAR*)"SELECT 2 FROM RDB$DATABASE", SQL_NTS);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret))
-        << "Query after cursor-closing reset failed: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
-
-    ret = SQLFetch(hStmt);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    SQLINTEGER val = 0;
-    SQLLEN ind = 0;
-    SQLGetData(hStmt, 1, SQL_C_SLONG, &val, 0, &ind);
-    EXPECT_EQ(val, 2);
-}
-
-// Reset should restore query timeout on child statements to 0
-TEST_F(ConnectionResetTest, ResetResetsQueryTimeout) {
-    // Set a non-default timeout
-    SQLRETURN ret = SQLSetStmtAttr(hStmt, SQL_ATTR_QUERY_TIMEOUT, (SQLPOINTER)30, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    // Verify it was set
-    SQLULEN timeout = 0;
-    ret = SQLGetStmtAttr(hStmt, SQL_ATTR_QUERY_TIMEOUT, &timeout, 0, nullptr);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-    EXPECT_EQ(timeout, 30u);
-
-    // Reset connection
-    ret = SQLSetConnectAttr(hDbc, SQL_ATTR_RESET_CONNECTION,
-                            (SQLPOINTER)SQL_RESET_CONNECTION_YES, 0);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-
-    // Query timeout should be back to 0
-    timeout = 999;
-    ret = SQLGetStmtAttr(hStmt, SQL_ATTR_QUERY_TIMEOUT, &timeout, 0, nullptr);
-    ASSERT_TRUE(SQL_SUCCEEDED(ret));
-    EXPECT_EQ(timeout, 0u)
-        << "Query timeout should be 0 after connection reset";
+    conn2.disconnect();
+    conn1.disconnect();
 }
