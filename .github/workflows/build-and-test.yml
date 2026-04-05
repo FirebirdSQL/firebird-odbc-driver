@@ -65,6 +65,7 @@ jobs:
         path: ${{ github.workspace }}/vcpkg-bincache
         key: vcpkg-bincache-windows-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
         restore-keys: vcpkg-bincache-windows-
+        save-always: true
 
     # Level 2 – installed tree: the fully-extracted build/vcpkg_installed directory.
     #   On an exact key hit vcpkg detects all packages are already installed and
@@ -75,6 +76,7 @@ jobs:
         path: build/vcpkg_installed
         key: vcpkg-installed-windows-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
         restore-keys: vcpkg-installed-windows-
+        save-always: true
 
     - name: Bootstrap vcpkg
       shell: pwsh
@@ -165,6 +167,7 @@ jobs:
         path: ${{ github.workspace }}/vcpkg-bincache
         key: vcpkg-bincache-linux-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
         restore-keys: vcpkg-bincache-linux-
+        save-always: true
 
     - name: Cache vcpkg installed packages
       uses: actions/cache@v5
@@ -172,6 +175,7 @@ jobs:
         path: build/vcpkg_installed
         key: vcpkg-installed-linux-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
         restore-keys: vcpkg-installed-linux-
+        save-always: true
 
     - name: Bootstrap vcpkg
       run: ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
