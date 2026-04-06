@@ -35,6 +35,8 @@ jobs:
 
       - name: Build, install and test
         shell: pwsh
+        env:
+          API_GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: Invoke-Build test -Configuration Release -File ./firebird-odbc-driver.build.ps1
 
       - name: Upload driver (Windows)
