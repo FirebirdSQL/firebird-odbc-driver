@@ -11,6 +11,7 @@ Install/Win32/install_image/
 build_*.log
 OdbcJdbcSetup_*.iss
 .vs/*
+tmp/
 
 # CMake
 build/

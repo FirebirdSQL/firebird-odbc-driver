@@ -2,9 +2,11 @@ name: Build and Test
 
 on:
   push:
-    branches: [master]
+    # Run on all branches, but not on tags (release.yml handles tags)
+    branches:
+      - '**'
   pull_request:
-    branches: [master]
+  workflow_call:
 
 permissions:
   contents: read
@@ -39,16 +41,19 @@ jobs:
           API_GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: Invoke-Build test -Configuration Release -File ./firebird-odbc-driver.build.ps1
 
-      - name: Upload driver (Windows)
+      - name: Upload artifacts (Windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: FirebirdODBC-windows-x64
-          path: build/Release/FirebirdODBC.dll
+          name: windows-x64-binaries
+          path: |
+            build/Release/FirebirdODBC.dll
+            build/Release/FirebirdODBC.lib
+            build/Release/FirebirdODBC.pdb
 
-      - name: Upload driver (Linux)
+      - name: Upload artifacts (Linux)
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: FirebirdODBC-linux-x64
+          name: linux-x64-binaries
           path: build/libOdbcFb.so

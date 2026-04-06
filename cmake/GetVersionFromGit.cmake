@@ -61,14 +61,16 @@ endif()
 
 message(STATUS "Git describe: ${GIT_DESCRIBE_OUTPUT}")
 
-# Parse the output: v<MAJOR>.<MINOR>.<PATCH>-<COMMITS_SINCE_TAG>-g<HASH>
-# Example: v3.0.0-0-gabcdef1  (exactly on tag)
-# Example: v3.0.0-5-gabcdef1  (5 commits after tag)
-if(GIT_DESCRIBE_OUTPUT MATCHES "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)-([0-9]+)-g[0-9a-f]+$")
+# Parse the output: v<MAJOR>.<MINOR>.<PATCH>[-<prerelease>]-<COMMITS_SINCE_TAG>-g<HASH>
+# Example: v3.0.0-0-gabcdef1      (exactly on tag)
+# Example: v3.0.0-5-gabcdef1      (5 commits after tag)
+# Example: v3.5.0-rc1-0-gabcdef1  (exactly on pre-release tag)
+if(GIT_DESCRIBE_OUTPUT MATCHES "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)(-[a-zA-Z][a-zA-Z0-9.]*)?-([0-9]+)-g[0-9a-f]+$")
     set(ODBC_VERSION_MAJOR ${CMAKE_MATCH_1})
     set(ODBC_VERSION_MINOR ${CMAKE_MATCH_2})
     set(ODBC_VERSION_PATCH ${CMAKE_MATCH_3})
-    set(_commits_since_tag ${CMAKE_MATCH_4})
+    # CMAKE_MATCH_4 is the optional pre-release suffix (e.g. "-rc1"), ignored for numeric version
+    set(_commits_since_tag ${CMAKE_MATCH_5})
 else()
     message(WARNING "Could not parse git describe output: ${GIT_DESCRIBE_OUTPUT}")
     message(WARNING "Using fallback version 0.0.0.0")
