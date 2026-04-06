@@ -12,7 +12,7 @@ Google Test-based test suite for the Firebird ODBC driver. Tests the driver thro
 
 ### Windows-specific
 
-- The driver DLL (built from `Builds/MsVc2022.win/OdbcFb.sln`) must be registered via `odbcconf` or the ODBC Data Source Administrator.
+- The driver DLL (built via `Invoke-Build install`) must be registered as an ODBC driver. Use `Invoke-Build install` to register, or manually via `odbcconf`.
 - Google Test can be installed via [vcpkg](https://vcpkg.io/): `vcpkg install gtest:x64-windows`, then pass `-DCMAKE_TOOLCHAIN_FILE=.../vcpkg/scripts/buildsystems/vcpkg.cmake` to CMake. Or build from source and pass `-DCMAKE_PREFIX_PATH=<gtest-install-dir>`.
 
 ### Linux-specific

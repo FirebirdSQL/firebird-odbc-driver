@@ -3,7 +3,6 @@ Builds/*/x64/
 Builds/*/ARM/
 Builds/*/ARM64/
 Builds/*/.vs/
-Install/Win32/install_image/
 *.suo
 *.ncb
 *.user
