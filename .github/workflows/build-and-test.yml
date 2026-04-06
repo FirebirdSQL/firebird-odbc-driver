@@ -5,6 +5,8 @@ on:
     # Run on all branches, but not on tags (release.yml handles tags)
     branches:
       - '**'
+    tags-ignore:
+      - '**'
   pull_request:
   workflow_call:
 
