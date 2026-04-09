@@ -42,7 +42,7 @@ task clean {
 
 # Synopsis: Build the driver and tests (default task).
 task build {
-	exec { cmake -B $BuildDir -S $BuildRoot -DCMAKE_BUILD_TYPE=$Configuration -DBUILD_TESTING=ON }
+	exec { cmake -B $BuildDir -S $BuildRoot "-DCMAKE_BUILD_TYPE=$Configuration" -DBUILD_TESTING=ON }
 
 	if ($IsWindowsOS) {
 		exec { cmake --build $BuildDir --config $Configuration }
