@@ -57,7 +57,7 @@ jobs:
         path: artifacts
 
     - name: Install WiX Toolset
-      run: dotnet tool install --global wix
+      run: dotnet tool install --global wix --version 5.0.2
 
     - name: Build MSI installer
       shell: pwsh
@@ -137,3 +137,45 @@ jobs:
       with:
         files: |
           firebird-odbc-driver-${{ needs.release.outputs.version }}-linux-x64.tar.gz
+
+  package-linux-arm64:
+    needs: [build-and-test, release]
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: README.md
+
+    - name: Download Linux arm64 artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-arm64-binaries
+        path: artifacts
+
+    - name: Package Linux arm64 build
+      run: |
+        version="${{ needs.release.outputs.version }}"
+        packageDir="package-linux-arm64"
+        mkdir -p "$packageDir"
+
+        cp artifacts/libOdbcFb.so "$packageDir/"
+
+        cp README.md "$packageDir/" 2>/dev/null || true
+
+        cat > "$packageDir/odbcinst.ini.sample" << 'EOF'
+        [Firebird ODBC Driver]
+        Description = Firebird ODBC Driver
+        Driver = /usr/local/lib/odbc/libOdbcFb.so
+        Setup = /usr/local/lib/odbc/libOdbcFb.so
+        FileUsage = 1
+        EOF
+
+        cd "$packageDir"
+        tar -czf "../firebird-odbc-driver-${version}-linux-arm64.tar.gz" *
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          firebird-odbc-driver-${{ needs.release.outputs.version }}-linux-arm64.tar.gz

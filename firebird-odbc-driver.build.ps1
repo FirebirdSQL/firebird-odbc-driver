@@ -241,37 +241,28 @@ function Uninstall-WindowsDriver {
 #region Linux
 
 function Install-LinuxDriver {
-	if (-not (Get-Command odbcinst -ErrorAction Ignore)) {
-		throw 'odbcinst not found. Install unixODBC: sudo apt-get install unixodbc'
-	}
-
 	$driverAbsPath = (Resolve-Path $DriverPath).Path
+	$iniFile = Join-Path $BuildDir 'odbc_driver.ini'
 
-	$tempIni = [System.IO.Path]::GetTempFileName()
-	try {
-		@"
+	@"
 [$DriverName]
 Description = $DriverName
 Driver = $driverAbsPath
 Setup = $driverAbsPath
 Threading = 0
 FileUsage = 0
-"@ | Set-Content -Path $tempIni
+"@ | Set-Content -Path $iniFile
 
-		exec { sudo odbcinst -i -d -f $tempIni -r }
-	} finally {
-		Remove-Item -Path $tempIni -Force -ErrorAction SilentlyContinue
-	}
+	# Write driver registration directly to /etc/odbcinst.ini.
+	# Bypasses the odbcinst CLI tool which is unreliable on arm64 runners
+	# (sudo's secure_path may not include /usr/bin).
+	exec { bash -c "sudo cp '$iniFile' /etc/odbcinst.ini" }
 
 	print Green "Driver '$DriverName' registered: $driverAbsPath"
 }
 
 function Uninstall-LinuxDriver {
-	if (-not (Get-Command odbcinst -ErrorAction Ignore)) {
-		throw 'odbcinst not found. Install unixODBC: sudo apt-get install unixodbc'
-	}
-
-	exec { odbcinst -u -d -n $DriverName }
+	exec { bash -c "sudo rm -f /etc/odbcinst.ini" }
 
 	print Green "Driver '$DriverName' unregistered."
 }
