@@ -60,14 +60,14 @@ jobs:
             suffix: win-arm64
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         sparse-checkout: |
           installer
           README.md
 
     - name: Download Windows artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: ${{ matrix.artifact }}
         path: artifacts
@@ -118,12 +118,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         sparse-checkout: README.md
 
     - name: Download Linux artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: linux-x64-binaries
         path: artifacts
@@ -160,12 +160,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         sparse-checkout: README.md
 
     - name: Download Linux arm64 artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: linux-arm64-binaries
         path: artifacts
