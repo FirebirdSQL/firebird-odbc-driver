@@ -7,11 +7,18 @@
 
 .Parameter Configuration
 	Build configuration: Debug (default) or Release.
+
+.Parameter Architecture
+	Target architecture for Windows cross-compilation (Win32, x64, ARM64).
+	Ignored on Linux. When set, passed to cmake as '-A <arch>'.
 #>
 
 param(
 	[ValidateSet('Debug', 'Release')]
-	[string]$Configuration = 'Debug'
+	[string]$Configuration = 'Debug',
+
+	[ValidateSet('', 'Win32', 'x64', 'ARM64')]
+	[string]$Architecture = ''
 )
 
 # Detect OS
@@ -42,7 +49,11 @@ task clean {
 
 # Synopsis: Build the driver and tests (default task).
 task build {
-	exec { cmake -B $BuildDir -S $BuildRoot "-DCMAKE_BUILD_TYPE=$Configuration" -DBUILD_TESTING=ON }
+	$cmakeArgs = @('-B', $BuildDir, '-S', $BuildRoot, "-DCMAKE_BUILD_TYPE=$Configuration", '-DBUILD_TESTING=ON')
+	if ($IsWindowsOS -and $Architecture) {
+		$cmakeArgs += @('-A', $Architecture)
+	}
+	exec { cmake @cmakeArgs }
 
 	if ($IsWindowsOS) {
 		exec { cmake --build $BuildDir --config $Configuration }

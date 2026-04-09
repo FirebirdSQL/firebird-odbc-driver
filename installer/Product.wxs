@@ -4,6 +4,7 @@
   <!-- $(ProductVersion) — e.g. 3.5.0.0 -->
   <!-- $(DriverPath) — full path to FirebirdODBC.dll -->
   <!-- $(Configuration) — Debug or Release -->
+  <!-- $(TargetArch) — x86, x64, or arm64 -->
 
   <?define DriverName = "Firebird ODBC Driver" ?>
 
@@ -13,11 +14,24 @@
     <?define DriverName = "Firebird ODBC Driver (Debug)" ?>
   <?endif?>
 
+  <!-- Architecture-specific settings: system folder and UpgradeCode -->
+  <!-- Each architecture gets a unique UpgradeCode so they can coexist -->
+  <?if $(TargetArch) = "x86" ?>
+    <?define SystemDir = "SystemFolder" ?>
+    <?define UpgradeGuid = "D1A2B3C4-5E6F-7A8B-9C0D-1E2F3A4B5C6D" ?>
+  <?elseif $(TargetArch) = "arm64" ?>
+    <?define SystemDir = "System64Folder" ?>
+    <?define UpgradeGuid = "E2B3C4D5-6F7A-8B9C-0D1E-2F3A4B5C6D7E" ?>
+  <?else?>
+    <?define SystemDir = "System64Folder" ?>
+    <?define UpgradeGuid = "A7F3E2B1-4C5D-6E7F-8A9B-0C1D2E3F4A5B" ?>
+  <?endif?>
+
   <Package
     Name="$(DriverName)"
     Manufacturer="Firebird Foundation"
     Version="$(ProductVersion)"
-    UpgradeCode="A7F3E2B1-4C5D-6E7F-8A9B-0C1D2E3F4A5B"
+    UpgradeCode="$(UpgradeGuid)"
     Scope="perMachine"
     Compressed="yes">
 
@@ -27,7 +41,7 @@
     <MediaTemplate EmbedCab="yes" />
 
     <!-- The driver DLL -->
-    <StandardDirectory Id="System64Folder">
+    <StandardDirectory Id="$(SystemDir)">
       <Component Id="DriverDLL" Guid="B8F4E3C2-5D6E-7F8A-9B0C-1D2E3F4A5B6C">
         <File Id="FirebirdODBCDll"
               Source="$(DriverPath)"
@@ -37,11 +51,11 @@
     </StandardDirectory>
 
     <!-- ODBC Driver registration -->
-    <Component Id="OdbcDriverReg" Directory="System64Folder"
+    <Component Id="OdbcDriverReg" Directory="$(SystemDir)"
                Guid="C9F5E4D3-6E7F-8A9B-0C1D-2E3F4A5B6C7D">
       <RegistryKey Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\$(DriverName)">
-        <RegistryValue Name="Driver"           Type="string" Value="[System64Folder]FirebirdODBC.dll" />
-        <RegistryValue Name="Setup"            Type="string" Value="[System64Folder]FirebirdODBC.dll" />
+        <RegistryValue Name="Driver"           Type="string" Value="[$(SystemDir)]FirebirdODBC.dll" />
+        <RegistryValue Name="Setup"            Type="string" Value="[$(SystemDir)]FirebirdODBC.dll" />
         <RegistryValue Name="APILevel"         Type="string" Value="1" />
         <RegistryValue Name="ConnectFunctions" Type="string" Value="YYY" />
         <RegistryValue Name="DriverODBCVer"    Type="string" Value="03.51" />

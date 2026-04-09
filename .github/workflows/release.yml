@@ -43,6 +43,22 @@ jobs:
     needs: [build-and-test, release]
     runs-on: windows-latest
 
+    strategy:
+      matrix:
+        include:
+          - artifact: windows-x64-binaries
+            wix-arch: x64
+            target-arch: x64
+            suffix: win-x64
+          - artifact: windows-x86-binaries
+            wix-arch: x86
+            target-arch: x86
+            suffix: win-x86
+          - artifact: windows-arm64-binaries
+            wix-arch: arm64
+            target-arch: arm64
+            suffix: win-arm64
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -53,7 +69,7 @@ jobs:
     - name: Download Windows artifacts
       uses: actions/download-artifact@v4
       with:
-        name: windows-x64-binaries
+        name: ${{ matrix.artifact }}
         path: artifacts
 
     - name: Install WiX Toolset
@@ -71,8 +87,9 @@ jobs:
           -d ProductVersion=$msiVersion `
           -d DriverPath="$dllPath" `
           -d Configuration=Release `
-          -arch x64 `
-          -o "firebird-odbc-driver-$version-win-x64.msi" `
+          -d TargetArch=${{ matrix.target-arch }} `
+          -arch ${{ matrix.wix-arch }} `
+          -o "firebird-odbc-driver-$version-${{ matrix.suffix }}.msi" `
           installer/Product.wxs
 
     - name: Package Windows ZIP
@@ -87,14 +104,14 @@ jobs:
         Copy-Item "README.md" -Destination $packageDir -ErrorAction SilentlyContinue
 
         Compress-Archive -Path "$packageDir/*" `
-          -DestinationPath "firebird-odbc-driver-$version-win-x64.zip"
+          -DestinationPath "firebird-odbc-driver-$version-${{ matrix.suffix }}.zip"
 
     - name: Upload release assets
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          firebird-odbc-driver-${{ needs.release.outputs.version }}-win-x64.msi
-          firebird-odbc-driver-${{ needs.release.outputs.version }}-win-x64.zip
+          firebird-odbc-driver-${{ needs.release.outputs.version }}-${{ matrix.suffix }}.msi
+          firebird-odbc-driver-${{ needs.release.outputs.version }}-${{ matrix.suffix }}.zip
 
   package-linux:
     needs: [build-and-test, release]

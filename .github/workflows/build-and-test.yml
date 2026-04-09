@@ -20,6 +20,14 @@ jobs:
       matrix:
         include:
           - os: windows-latest
+            artifact-name: windows-x64-binaries
+            arch: x64
+          - os: windows-latest
+            artifact-name: windows-x86-binaries
+            arch: Win32
+          - os: windows-latest
+            artifact-name: windows-arm64-binaries
+            arch: ARM64
           - os: ubuntu-22.04
             artifact-name: linux-x64-binaries
           - os: ubuntu-22.04-arm
@@ -41,16 +49,27 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y unixodbc unixodbc-dev
 
       - name: Build, install and test
+        if: ${{ !matrix.arch || matrix.arch == 'x64' }}
         shell: pwsh
         env:
           API_GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: Invoke-Build test -Configuration Release -File ./firebird-odbc-driver.build.ps1
+        run: |
+          $archArgs = @{}
+          if ('${{ matrix.arch }}') { $archArgs['Architecture'] = '${{ matrix.arch }}' }
+          Invoke-Build test -Configuration Release @archArgs -File ./firebird-odbc-driver.build.ps1
+
+      - name: Build only (cross-compile)
+        if: ${{ matrix.arch && matrix.arch != 'x64' }}
+        shell: pwsh
+        env:
+          API_GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: Invoke-Build build -Configuration Release -Architecture ${{ matrix.arch }} -File ./firebird-odbc-driver.build.ps1
 
       - name: Upload artifacts (Windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: windows-x64-binaries
+          name: ${{ matrix.artifact-name }}
           path: |
             build/Release/FirebirdODBC.dll
             build/Release/FirebirdODBC.lib
