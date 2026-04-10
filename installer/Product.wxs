@@ -2,9 +2,10 @@
 
   <!-- Variables passed from the build: -->
   <!-- $(ProductVersion) — e.g. 3.5.0.0 -->
-  <!-- $(DriverPath) — full path to FirebirdODBC.dll -->
+  <!-- $(DriverPath) — full path to native FirebirdODBC.dll -->
   <!-- $(Configuration) — Debug or Release -->
   <!-- $(TargetArch) — x86, x64, or arm64 -->
+  <!-- $(DriverPathX86) — (x64 only) full path to 32-bit FirebirdODBC.dll -->
 
   <?define DriverName = "Firebird ODBC Driver" ?>
 
@@ -40,7 +41,7 @@
 
     <MediaTemplate EmbedCab="yes" />
 
-    <!-- The driver DLL -->
+    <!-- Native driver DLL -->
     <StandardDirectory Id="$(SystemDir)">
       <Component Id="DriverDLL" Guid="B8F4E3C2-5D6E-7F8A-9B0C-1D2E3F4A5B6C">
         <File Id="FirebirdODBCDll"
@@ -50,7 +51,7 @@
       </Component>
     </StandardDirectory>
 
-    <!-- ODBC Driver registration -->
+    <!-- Native ODBC Driver registration -->
     <Component Id="OdbcDriverReg" Directory="$(SystemDir)"
                Guid="C9F5E4D3-6E7F-8A9B-0C1D-2E3F4A5B6C7D">
       <RegistryKey Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\$(DriverName)">
@@ -70,10 +71,53 @@
                      KeyPath="yes" />
     </Component>
 
+    <?if $(TargetArch) = "x64" ?>
+    <!-- ── 32-bit (x86) driver bundled in the x64 installer ──────────── -->
+    <!-- The x64 installer ships both 64-bit and 32-bit drivers so that  -->
+    <!-- both native x64 and WoW64 32-bit applications can use ODBC.     -->
+    <!-- This matches the behavior of the old InnoSetup installer.       -->
+
+    <!-- 32-bit driver DLL → SysWOW64 -->
+    <StandardDirectory Id="SystemFolder">
+      <Component Id="DriverDLL_x86" Guid="F1A2B3C4-5D6E-7F8A-9B0C-1D2E3F4A5B6C"
+                 Bitness="always32">
+        <File Id="FirebirdODBCDll_x86"
+              Source="$(DriverPathX86)"
+              Name="FirebirdODBC.dll"
+              KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <!-- 32-bit ODBC Driver registration (writes to WOW6432Node via 32-bit registry view) -->
+    <Component Id="OdbcDriverReg_x86" Directory="SystemFolder"
+               Guid="F2B3C4D5-6E7F-8A9B-0C1D-2E3F4A5B6C7D"
+               Bitness="always32">
+      <RegistryKey Root="HKLM" Key="SOFTWARE\ODBC\ODBCINST.INI\$(DriverName)">
+        <RegistryValue Name="Driver"           Type="string" Value="[SystemFolder]FirebirdODBC.dll" />
+        <RegistryValue Name="Setup"            Type="string" Value="[SystemFolder]FirebirdODBC.dll" />
+        <RegistryValue Name="APILevel"         Type="string" Value="1" />
+        <RegistryValue Name="ConnectFunctions" Type="string" Value="YYY" />
+        <RegistryValue Name="DriverODBCVer"    Type="string" Value="03.51" />
+        <RegistryValue Name="FileUsage"        Type="string" Value="0" />
+        <RegistryValue Name="SQLLevel"         Type="string" Value="1" />
+      </RegistryKey>
+      <RegistryValue Root="HKLM"
+                     Key="SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers"
+                     Name="$(DriverName)"
+                     Type="string"
+                     Value="Installed"
+                     KeyPath="yes" />
+    </Component>
+    <?endif?>
+
     <!-- Features -->
     <Feature Id="DriverFeature" Title="$(DriverName)" Level="1">
       <ComponentRef Id="DriverDLL" />
       <ComponentRef Id="OdbcDriverReg" />
+      <?if $(TargetArch) = "x64" ?>
+      <ComponentRef Id="DriverDLL_x86" />
+      <ComponentRef Id="OdbcDriverReg_x86" />
+      <?endif?>
     </Feature>
 
   </Package>
