@@ -9,7 +9,8 @@
 	Build configuration: Debug (default) or Release.
 
 .Parameter Architecture
-	Target architecture for Windows cross-compilation (Win32, x64, ARM64).
+	Target architecture override for Windows. Only 'Win32' (x86) is used today;
+	all other architectures are built natively by the host runner.
 	Ignored on Linux. When set, passed to cmake as '-A <arch>'.
 #>
 
@@ -17,7 +18,7 @@ param(
 	[ValidateSet('Debug', 'Release')]
 	[string]$Configuration = 'Debug',
 
-	[ValidateSet('', 'Win32', 'x64', 'ARM64')]
+	[ValidateSet('', 'Win32')]
 	[string]$Architecture = ''
 )
 
@@ -42,21 +43,17 @@ if ($IsWindowsOS) {
 	$DriverPath = Join-Path $BuildDir $DriverFileName
 }
 
-# Map build Architecture to PSFirebird RuntimeIdentifier (RID) and optional branch.
-# Used by build-test-databases to download the correct Firebird binaries.
+# Map build Architecture to PSFirebird RuntimeIdentifier (RID).
+# Win32 → win-x86; all other architectures auto-detect from the host runner.
 $FirebirdRid = switch ($Architecture) {
 	'Win32' { 'win-x86' }
 	default { '' }
 }
-$FirebirdBranch = ''
 
-# On native ARM64 Windows (no Architecture override = native ARM64 build),
-# use the Firebird snapshot-master branch which publishes win-arm64 binaries.
-if (-not $Architecture -and $IsWindowsOS -and
-	[System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq 'Arm64') {
-	$FirebirdRid = 'win-arm64'
-	$FirebirdBranch = 'master'
-}
+# Firebird version/branch for test databases.
+# Read from environment (set by CI matrix) or fall back to defaults.
+$FirebirdVersion = if ($env:FIREBIRD_VERSION) { $env:FIREBIRD_VERSION } else { '5.0.3' }
+$FirebirdBranch  = if ($env:FIREBIRD_BRANCH)  { $env:FIREBIRD_BRANCH  } else { '' }
 
 # Synopsis: Remove the build directory.
 task clean {
@@ -84,9 +81,9 @@ task build {
 
 # Synopsis: Create Firebird test databases.
 task build-test-databases {
-	$fbVersion = '5.0.2'
-	# Use a distinct env path for snapshot (branch) builds to avoid stale cache.
-	$envPath = if ($FirebirdBranch) { "/fbodbc-tests/snapshot-$FirebirdBranch" } else { '/fbodbc-tests/fb502' }
+	$fbVersion = $FirebirdVersion
+	# Env path distinguishes version builds from snapshot builds to avoid stale cache.
+	$envPath = if ($FirebirdBranch) { "/fbodbc-tests/snapshot-$FirebirdBranch" } else { "/fbodbc-tests/fb$($fbVersion -replace '\.','')" }
 	$dbPathUtf8 = '/fbodbc-tests/TEST.FB50.FDB'
 	$dbPathIso = '/fbodbc-tests/TEST-ISO.FB50.FDB'
 

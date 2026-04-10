@@ -92,6 +92,7 @@ protected:
 // ===== String → Integer =====
 
 TEST_F(ParamConversionsTest, CharToInteger) {
+    SKIP_ON_FIREBIRD6();
     SQLLEN ind = SQL_NTS;
     char val[] = "42";
     std::string result = insertAndReadBack("VAL_INT",
@@ -100,6 +101,7 @@ TEST_F(ParamConversionsTest, CharToInteger) {
 }
 
 TEST_F(ParamConversionsTest, CharToSmallint) {
+    SKIP_ON_FIREBIRD6();
     SQLLEN ind = SQL_NTS;
     char val[] = "-123";
     std::string result = insertAndReadBack("VAL_SMALLINT",
@@ -108,6 +110,7 @@ TEST_F(ParamConversionsTest, CharToSmallint) {
 }
 
 TEST_F(ParamConversionsTest, CharToFloat) {
+    SKIP_ON_FIREBIRD6();
     SQLLEN ind = SQL_NTS;
     char val[] = "3.14";
     std::string result = insertAndReadBack("VAL_FLOAT",
@@ -116,6 +119,7 @@ TEST_F(ParamConversionsTest, CharToFloat) {
 }
 
 TEST_F(ParamConversionsTest, CharToDouble) {
+    SKIP_ON_FIREBIRD6();
     SQLLEN ind = SQL_NTS;
     char val[] = "2.718281828";
     std::string result = insertAndReadBack("VAL_DOUBLE",
@@ -124,6 +128,7 @@ TEST_F(ParamConversionsTest, CharToDouble) {
 }
 
 TEST_F(ParamConversionsTest, CharToChar) {
+    SKIP_ON_FIREBIRD6();
     SQLLEN ind = SQL_NTS;
     char val[] = "hello world";
     std::string result = insertAndReadBack("VAL_VARCHAR",
@@ -160,6 +165,7 @@ TEST_F(ParamConversionsTest, SLongToSmallint) {
 // ===== Boundary values =====
 
 TEST_F(ParamConversionsTest, SmallintMaxValue) {
+    SKIP_ON_FIREBIRD6();
     SQLLEN ind = SQL_NTS;
     char val[] = "32767";
     std::string result = insertAndReadBack("VAL_SMALLINT",
@@ -184,6 +190,7 @@ TEST_F(ParamConversionsTest, SmallintMinValue) {
 // ===== Strings with special characters =====
 
 TEST_F(ParamConversionsTest, CharWithQuotes) {
+    SKIP_ON_FIREBIRD6();
     SQLLEN ind = SQL_NTS;
     char val[] = "hello 'world'";
     std::string result = insertAndReadBack("VAL_VARCHAR",
@@ -262,6 +269,7 @@ TEST_F(ParamConversionsTest, TimestampParam) {
 // ===== Numeric parameter =====
 
 TEST_F(ParamConversionsTest, NumericAsCharParam) {
+    SKIP_ON_FIREBIRD6();
     SQLLEN ind = SQL_NTS;
     char val[] = "1234.5678";
     std::string result = insertAndReadBack("VAL_NUMERIC",

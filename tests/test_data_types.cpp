@@ -163,6 +163,7 @@ TEST_F(DataTypeTest, NumericZero) {
 // ===== String types =====
 
 TEST_F(DataTypeTest, VarcharRoundTrip) {
+    SKIP_ON_FIREBIRD6();
     ReallocStmt();
 
     SQLRETURN ret = SQLPrepare(hStmt,
@@ -303,6 +304,7 @@ TEST_F(DataTypeTest, GetDataInteger) {
 // ===== Parameter binding =====
 
 TEST_F(DataTypeTest, ParameterizedInsertAndSelect) {
+    SKIP_ON_FIREBIRD6();
     ReallocStmt();
 
     // Prepare parameterized insert

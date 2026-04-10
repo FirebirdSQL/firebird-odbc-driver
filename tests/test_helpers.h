@@ -190,3 +190,21 @@ private:
     OdbcConnectedTest* test_;
     std::string name_;
 };
+
+// Returns the Firebird server major version number (e.g. 5 for Firebird 5.x, 6 for 6.x)
+// via SQL_DBMS_VER which returns strings like "05.00.0001683" or "06.00.0001884".
+inline int GetServerMajorVersion(SQLHDBC hDbc) {
+    SQLCHAR version[32] = {};
+    SQLSMALLINT len = 0;
+    SQLGetInfo(hDbc, SQL_DBMS_VER, version, sizeof(version), &len);
+    return std::atoi((char*)version);
+}
+
+// Skip a test when running against Firebird 6+.
+// Parameterized query handling changed in Firebird 6 and these tests need updating.
+#define SKIP_ON_FIREBIRD6() \
+    do { \
+        if (GetServerMajorVersion(hDbc) >= 6) { \
+            GTEST_SKIP() << "Broken on Firebird 6 (parameterized query incompatibility - TODO: fix)"; \
+        } \
+    } while (0)

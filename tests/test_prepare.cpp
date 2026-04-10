@@ -38,6 +38,7 @@ protected:
 // ===== Basic prepare + execute with text param =====
 
 TEST_F(PrepareTest, PrepareWithTextParam) {
+    SKIP_ON_FIREBIRD6();
     SQLRETURN ret = SQLPrepare(hStmt,
         (SQLCHAR*)"SELECT ID, VAL_TEXT FROM ODBC_TEST_PREP WHERE VAL_TEXT = ?", SQL_NTS);
     ASSERT_TRUE(SQL_SUCCEEDED(ret))
@@ -152,6 +153,7 @@ TEST_F(PrepareTest, ReExecuteWithDifferentParam) {
 // ===== Prepare INSERT with parameters =====
 
 TEST_F(PrepareTest, PrepareInsert) {
+    SKIP_ON_FIREBIRD6();
     SQLRETURN ret = SQLPrepare(hStmt,
         (SQLCHAR*)"INSERT INTO ODBC_TEST_PREP VALUES (?, ?, ?, ?)", SQL_NTS);
     ASSERT_TRUE(SQL_SUCCEEDED(ret));

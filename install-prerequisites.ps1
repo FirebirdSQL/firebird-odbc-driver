@@ -21,5 +21,5 @@ if ($IsLinux) {
     Register-PackageSource -Name 'NuGet' -Location 'https://api.nuget.org/v3/index.json' -ProviderName NuGet -Force
 }
 
-Install-Module -Name PSFirebird -MinimumVersion 1.2.0 -Force -AllowClobber -Scope CurrentUser -Repository PSGallery
+Install-Module -Name PSFirebird -MinimumVersion 1.2.1 -Force -AllowClobber -Scope CurrentUser -Repository PSGallery
 Install-Module -Name InvokeBuild -Force -Scope CurrentUser

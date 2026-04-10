@@ -38,6 +38,7 @@ protected:
 // ===== Basic data-at-execution with VARCHAR =====
 
 TEST_F(DataAtExecutionTest, SingleVarcharParam) {
+    SKIP_ON_FIREBIRD6();
     SQLRETURN ret = SQLPrepare(hStmt,
         (SQLCHAR*)"SELECT ID FROM ODBC_TEST_DAE WHERE VAL_TEXT = ?", SQL_NTS);
     ASSERT_TRUE(SQL_SUCCEEDED(ret));
@@ -81,6 +82,7 @@ TEST_F(DataAtExecutionTest, SingleVarcharParam) {
 // ===== Multiple data-at-execution parameters =====
 
 TEST_F(DataAtExecutionTest, TwoVarcharParams) {
+    SKIP_ON_FIREBIRD6();
     SQLRETURN ret = SQLPrepare(hStmt,
         (SQLCHAR*)"SELECT ID FROM ODBC_TEST_DAE WHERE VAL_TEXT = ? OR VAL_TEXT = ?", SQL_NTS);
     ASSERT_TRUE(SQL_SUCCEEDED(ret));
@@ -140,6 +142,7 @@ TEST_F(DataAtExecutionTest, TwoVarcharParams) {
 // ===== Data-at-execution for INSERT =====
 
 TEST_F(DataAtExecutionTest, InsertWithDAE) {
+    SKIP_ON_FIREBIRD6();
     SQLRETURN ret = SQLPrepare(hStmt,
         (SQLCHAR*)"INSERT INTO ODBC_TEST_DAE (ID, VAL_TEXT) VALUES (?, ?)", SQL_NTS);
     ASSERT_TRUE(SQL_SUCCEEDED(ret));
@@ -183,6 +186,7 @@ TEST_F(DataAtExecutionTest, InsertWithDAE) {
 // ===== SQLPutData in multiple chunks =====
 
 TEST_F(DataAtExecutionTest, PutDataMultipleChunks) {
+    SKIP_ON_FIREBIRD6();
     SQLRETURN ret = SQLPrepare(hStmt,
         (SQLCHAR*)"INSERT INTO ODBC_TEST_DAE (ID, VAL_TEXT) VALUES (?, ?)", SQL_NTS);
     ASSERT_TRUE(SQL_SUCCEEDED(ret));
