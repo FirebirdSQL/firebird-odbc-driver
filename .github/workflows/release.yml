@@ -33,7 +33,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.6.1
         with:
           name: Firebird ODBC Driver v${{ steps.get_version.outputs.version }}
           draft: false
@@ -129,7 +129,7 @@ jobs:
           -DestinationPath "firebird-odbc-driver-$version-${{ matrix.suffix }}.zip"
 
     - name: Upload release assets
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v2.6.1
       with:
         files: |
           firebird-odbc-driver-${{ needs.release.outputs.version }}-${{ matrix.suffix }}.msi
@@ -273,7 +273,7 @@ jobs:
         tar -czf "../firebird-odbc-driver-${version}-${{ matrix.suffix }}.tar.gz" *
 
     - name: Upload release assets
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v2.6.1
       with:
         files: |
           firebird-odbc-driver-${{ needs.release.outputs.version }}-${{ matrix.suffix }}.tar.gz
