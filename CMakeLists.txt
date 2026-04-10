@@ -42,6 +42,38 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(BUILD_TESTING "Build tests" ON)
 
 # ---------------------------------------------------------------------------
+# Sanitizer options (Linux / GCC / Clang only)
+# ---------------------------------------------------------------------------
+if(NOT MSVC)
+    option(ENABLE_ASAN "Enable AddressSanitizer (-fsanitize=address)" OFF)
+    option(ENABLE_VALGRIND "Enable Valgrind memcheck via CTest" OFF)
+
+    if(ENABLE_ASAN AND ENABLE_VALGRIND)
+        message(FATAL_ERROR "ENABLE_ASAN and ENABLE_VALGRIND are mutually exclusive. "
+                            "ASAN instruments the binary at compile time; Valgrind instruments at runtime. "
+                            "They must not be combined.")
+    endif()
+
+    if(ENABLE_ASAN)
+        message(STATUS "AddressSanitizer: ENABLED")
+        add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+        add_link_options(-fsanitize=address)
+    endif()
+
+    if(ENABLE_VALGRIND)
+        find_program(VALGRIND_COMMAND valgrind)
+        if(NOT VALGRIND_COMMAND)
+            message(FATAL_ERROR "Valgrind not found but ENABLE_VALGRIND is ON. "
+                                "Install it with: sudo apt-get install valgrind")
+        endif()
+        message(STATUS "Valgrind memcheck: ENABLED (${VALGRIND_COMMAND})")
+        set(MEMORYCHECK_COMMAND ${VALGRIND_COMMAND})
+        set(MEMORYCHECK_COMMAND_OPTIONS
+            "--leak-check=full --error-exitcode=1 --suppressions=${CMAKE_SOURCE_DIR}/valgrind.supp")
+    endif()
+endif()
+
+# ---------------------------------------------------------------------------
 # CPU architecture detection (from PR #248)
 # ---------------------------------------------------------------------------
 # On MSVC multi-config generators, -A Win32/ARM64 sets CMAKE_GENERATOR_PLATFORM
@@ -94,8 +126,17 @@ else()
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
     # Compiler optimization flags (from PR #248 / old makefile.linux)
+    if(ENABLE_ASAN)
+        # ASAN builds: debug flags without extra logging noise
+        add_compile_options(
+            "$<$<CONFIG:Debug>:-O0;-g3;-D_DEBUG;-DDEBUG;-fexceptions>"
+        )
+    else()
+        add_compile_options(
+            "$<$<CONFIG:Debug>:-O0;-g3;-D_DEBUG;-DDEBUG;-DLOGGING;-fexceptions>"
+        )
+    endif()
     add_compile_options(
-        "$<$<CONFIG:Debug>:-O0;-g3;-D_DEBUG;-DDEBUG;-DLOGGING;-fexceptions>"
         "$<$<CONFIG:Release>:-O3;-DNDEBUG;-ftree-loop-vectorize>"
         "$<$<CONFIG:RelWithDebInfo>:-O2;-g;-DNDEBUG>"
         "$<$<CONFIG:MinSizeRel>:-Os;-DNDEBUG>"
@@ -249,8 +290,12 @@ endif()
 # Debug-specific definitions (matching .vcxproj: DEBUG;LOGGING for Debug configs)
 target_compile_definitions(OdbcFb PRIVATE
     $<$<CONFIG:Debug>:DEBUG>
-    $<$<CONFIG:Debug>:LOGGING>
 )
+if(NOT ENABLE_ASAN)
+    target_compile_definitions(OdbcFb PRIVATE
+        $<$<CONFIG:Debug>:LOGGING>
+    )
+endif()
 
 # ---------------------------------------------------------------------------
 # Testing
