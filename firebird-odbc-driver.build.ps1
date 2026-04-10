@@ -42,6 +42,22 @@ if ($IsWindowsOS) {
 	$DriverPath = Join-Path $BuildDir $DriverFileName
 }
 
+# Map build Architecture to PSFirebird RuntimeIdentifier (RID) and optional branch.
+# Used by build-test-databases to download the correct Firebird binaries.
+$FirebirdRid = switch ($Architecture) {
+	'Win32' { 'win-x86' }
+	default { '' }
+}
+$FirebirdBranch = ''
+
+# On native ARM64 Windows (no Architecture override = native ARM64 build),
+# use the Firebird snapshot-master branch which publishes win-arm64 binaries.
+if (-not $Architecture -and $IsWindowsOS -and
+	[System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq 'Arm64') {
+	$FirebirdRid = 'win-arm64'
+	$FirebirdBranch = 'master'
+}
+
 # Synopsis: Remove the build directory.
 task clean {
 	remove $BuildDir
@@ -69,7 +85,8 @@ task build {
 # Synopsis: Create Firebird test databases.
 task build-test-databases {
 	$fbVersion = '5.0.2'
-	$envPath = '/fbodbc-tests/fb502'
+	# Use a distinct env path for snapshot (branch) builds to avoid stale cache.
+	$envPath = if ($FirebirdBranch) { "/fbodbc-tests/snapshot-$FirebirdBranch" } else { '/fbodbc-tests/fb502' }
 	$dbPathUtf8 = '/fbodbc-tests/TEST.FB50.FDB'
 	$dbPathIso = '/fbodbc-tests/TEST-ISO.FB50.FDB'
 
@@ -83,11 +100,23 @@ task build-test-databases {
 	Import-Module PSFirebird
 
 	# Create or reuse Firebird environment
+	$fbExtraParams = @{}
+	if ($FirebirdRid) {
+		$fbExtraParams['RuntimeIdentifier'] = $FirebirdRid
+		print Cyan "Using Firebird RID: $FirebirdRid"
+	}
+	if ($FirebirdBranch) {
+		$fbExtraParams['Branch'] = $FirebirdBranch
+		print Cyan "Using Firebird snapshot branch: $FirebirdBranch"
+	} else {
+		$fbExtraParams['Version'] = $fbVersion
+	}
+
 	if (Test-Path (Join-Path $envPath 'firebird.msg')) {
 		$fb = Get-FirebirdEnvironment -Path $envPath
 		print Green "Reusing existing Firebird environment: $envPath"
 	} else {
-		$fb = New-FirebirdEnvironment -Version $fbVersion -Path $envPath -Force
+		$fb = New-FirebirdEnvironment -Path $envPath -Force @fbExtraParams
 		print Green "Firebird environment created: $envPath"
 	}
 
@@ -208,7 +237,13 @@ task . build
 #region Windows
 
 function Install-WindowsDriver {
-	$regBase = 'HKLM:\SOFTWARE\ODBC\ODBCINST.INI'
+	# 32-bit (x86) ODBC drivers must register under WOW6432Node so the
+	# 32-bit ODBC Driver Manager can find them.
+	$regBase = if ($Architecture -eq 'Win32') {
+		'HKLM:\SOFTWARE\WOW6432Node\ODBC\ODBCINST.INI'
+	} else {
+		'HKLM:\SOFTWARE\ODBC\ODBCINST.INI'
+	}
 	$regPath = Join-Path $regBase $DriverName
 	$driversPath = Join-Path $regBase 'ODBC Drivers'
 
@@ -233,7 +268,11 @@ function Install-WindowsDriver {
 }
 
 function Uninstall-WindowsDriver {
-	$regBase = 'HKLM:\SOFTWARE\ODBC\ODBCINST.INI'
+	$regBase = if ($Architecture -eq 'Win32') {
+		'HKLM:\SOFTWARE\WOW6432Node\ODBC\ODBCINST.INI'
+	} else {
+		'HKLM:\SOFTWARE\ODBC\ODBCINST.INI'
+	}
 	$regPath = Join-Path $regBase $DriverName
 	$driversPath = Join-Path $regBase 'ODBC Drivers'
 

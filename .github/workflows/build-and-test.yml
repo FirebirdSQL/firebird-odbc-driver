@@ -28,6 +28,10 @@ jobs:
           - os: windows-latest
             artifact-name: windows-arm64-binaries
             arch: ARM64
+            build-only: true
+          # Windows ARM64 native: build + test using Firebird snapshot-master (win-arm64).
+          # Firebird does not publish official ARM64 Windows releases; snapshots do.
+          - os: windows-11-arm
           - os: ubuntu-22.04
             artifact-name: linux-x64-binaries
           - os: ubuntu-22.04-arm
@@ -49,7 +53,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y unixodbc unixodbc-dev
 
       - name: Build, install and test
-        if: ${{ !matrix.arch || matrix.arch == 'x64' }}
+        if: ${{ !matrix.build-only }}
         shell: pwsh
         env:
           API_GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -59,14 +63,17 @@ jobs:
           Invoke-Build test -Configuration Release @archArgs -File ./firebird-odbc-driver.build.ps1
 
       - name: Build only (cross-compile)
-        if: ${{ matrix.arch && matrix.arch != 'x64' }}
+        if: ${{ matrix.build-only }}
         shell: pwsh
         env:
           API_GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: Invoke-Build build -Configuration Release -Architecture ${{ matrix.arch }} -File ./firebird-odbc-driver.build.ps1
+        run: |
+          $archArgs = @{}
+          if ('${{ matrix.arch }}') { $archArgs['Architecture'] = '${{ matrix.arch }}' }
+          Invoke-Build build -Configuration Release @archArgs -File ./firebird-odbc-driver.build.ps1
 
       - name: Upload artifacts (Windows)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && matrix.artifact-name
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact-name }}
@@ -76,7 +83,7 @@ jobs:
             build/Release/FirebirdODBC.pdb
 
       - name: Upload artifacts (Linux)
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && matrix.artifact-name
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact-name }}
