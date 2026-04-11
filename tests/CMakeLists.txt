@@ -19,22 +19,28 @@ if(NOT CMAKE_PROJECT_NAME OR CMAKE_PROJECT_NAME STREQUAL "FirebirdOdbcTests")
 endif()
 
 # ---------------------------------------------------------------------------
-# Google Test — prefer FetchContent (integrated build), fall back to find_package
+# Google Test — prefer find_package (pre-installed), fall back to FetchContent
 # ---------------------------------------------------------------------------
-include(FetchContent)
-FetchContent_Declare(
-    googletest
-    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-)
-# Prevent GTest from overriding parent project settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-# Build GTest as a static library (the test exe doesn't need a separate DLL)
-set(BUILD_SHARED_LIBS_SAVED ${BUILD_SHARED_LIBS})
-set(BUILD_SHARED_LIBS OFF)
-FetchContent_MakeAvailable(googletest)
-set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVED})
+find_package(GTest CONFIG QUIET)
+if(GTest_FOUND)
+    message(STATUS "Google Test: using pre-installed (find_package)")
+else()
+    message(STATUS "Google Test: not found locally, fetching via FetchContent")
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+    # Prevent GTest from overriding parent project settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+    # Build GTest as a static library (the test exe doesn't need a separate DLL)
+    set(BUILD_SHARED_LIBS_SAVED ${BUILD_SHARED_LIBS})
+    set(BUILD_SHARED_LIBS OFF)
+    FetchContent_MakeAvailable(googletest)
+    set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVED})
+endif()
 
 # ---------------------------------------------------------------------------
 # Find ODBC
@@ -98,7 +104,11 @@ add_executable(firebird_odbc_tests
 # ---------------------------------------------------------------------------
 # Link against Google Test and the ODBC Driver Manager
 # ---------------------------------------------------------------------------
-target_link_libraries(firebird_odbc_tests PRIVATE gtest ODBC::ODBC)
+if(GTest_FOUND)
+    target_link_libraries(firebird_odbc_tests PRIVATE GTest::gtest ODBC::ODBC)
+else()
+    target_link_libraries(firebird_odbc_tests PRIVATE gtest ODBC::ODBC)
+endif()
 
 # ---------------------------------------------------------------------------
 # Discover tests for CTest

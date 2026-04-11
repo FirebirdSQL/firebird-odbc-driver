@@ -7,11 +7,19 @@
 
 .Parameter Configuration
 	Build configuration: Debug (default) or Release.
+
+.Parameter Architecture
+	Target architecture override for Windows. Only 'Win32' (x86) is used today;
+	all other architectures are built natively by the host runner.
+	Ignored on Linux. When set, passed to cmake as '-A <arch>'.
 #>
 
 param(
 	[ValidateSet('Debug', 'Release')]
-	[string]$Configuration = 'Debug'
+	[string]$Configuration = 'Debug',
+
+	[ValidateSet('', 'Win32')]
+	[string]$Architecture = ''
 )
 
 # Detect OS
@@ -35,6 +43,18 @@ if ($IsWindowsOS) {
 	$DriverPath = Join-Path $BuildDir $DriverFileName
 }
 
+# Map build Architecture to PSFirebird RuntimeIdentifier (RID).
+# Win32 → win-x86; all other architectures auto-detect from the host runner.
+$FirebirdRid = switch ($Architecture) {
+	'Win32' { 'win-x86' }
+	default { '' }
+}
+
+# Firebird version/branch for test databases.
+# Read from environment (set by CI matrix) or fall back to defaults.
+$FirebirdVersion = if ($env:FIREBIRD_VERSION) { $env:FIREBIRD_VERSION } else { '5.0.3' }
+$FirebirdBranch  = if ($env:FIREBIRD_BRANCH)  { $env:FIREBIRD_BRANCH  } else { '' }
+
 # Synopsis: Remove the build directory.
 task clean {
 	remove $BuildDir
@@ -42,7 +62,11 @@ task clean {
 
 # Synopsis: Build the driver and tests (default task).
 task build {
-	exec { cmake -B $BuildDir -S $BuildRoot -DCMAKE_BUILD_TYPE=$Configuration -DBUILD_TESTING=ON }
+	$cmakeArgs = @('-B', $BuildDir, '-S', $BuildRoot, "-DCMAKE_BUILD_TYPE=$Configuration", '-DBUILD_TESTING=ON')
+	if ($IsWindowsOS -and $Architecture) {
+		$cmakeArgs += @('-A', $Architecture)
+	}
+	exec { cmake @cmakeArgs }
 
 	if ($IsWindowsOS) {
 		exec { cmake --build $BuildDir --config $Configuration }
@@ -57,8 +81,9 @@ task build {
 
 # Synopsis: Create Firebird test databases.
 task build-test-databases {
-	$fbVersion = '5.0.2'
-	$envPath = '/fbodbc-tests/fb502'
+	$fbVersion = $FirebirdVersion
+	# Env path distinguishes version builds from snapshot builds to avoid stale cache.
+	$envPath = if ($FirebirdBranch) { "/fbodbc-tests/snapshot-$FirebirdBranch" } else { "/fbodbc-tests/fb$($fbVersion -replace '\.','')" }
 	$dbPathUtf8 = '/fbodbc-tests/TEST.FB50.FDB'
 	$dbPathIso = '/fbodbc-tests/TEST-ISO.FB50.FDB'
 
@@ -72,11 +97,23 @@ task build-test-databases {
 	Import-Module PSFirebird
 
 	# Create or reuse Firebird environment
+	$fbExtraParams = @{}
+	if ($FirebirdRid) {
+		$fbExtraParams['RuntimeIdentifier'] = $FirebirdRid
+		print Cyan "Using Firebird RID: $FirebirdRid"
+	}
+	if ($FirebirdBranch) {
+		$fbExtraParams['Branch'] = $FirebirdBranch
+		print Cyan "Using Firebird snapshot branch: $FirebirdBranch"
+	} else {
+		$fbExtraParams['Version'] = $fbVersion
+	}
+
 	if (Test-Path (Join-Path $envPath 'firebird.msg')) {
 		$fb = Get-FirebirdEnvironment -Path $envPath
 		print Green "Reusing existing Firebird environment: $envPath"
 	} else {
-		$fb = New-FirebirdEnvironment -Version $fbVersion -Path $envPath -Force
+		$fb = New-FirebirdEnvironment -Path $envPath -Force @fbExtraParams
 		print Green "Firebird environment created: $envPath"
 	}
 
@@ -197,7 +234,13 @@ task . build
 #region Windows
 
 function Install-WindowsDriver {
-	$regBase = 'HKLM:\SOFTWARE\ODBC\ODBCINST.INI'
+	# 32-bit (x86) ODBC drivers must register under WOW6432Node so the
+	# 32-bit ODBC Driver Manager can find them.
+	$regBase = if ($Architecture -eq 'Win32') {
+		'HKLM:\SOFTWARE\WOW6432Node\ODBC\ODBCINST.INI'
+	} else {
+		'HKLM:\SOFTWARE\ODBC\ODBCINST.INI'
+	}
 	$regPath = Join-Path $regBase $DriverName
 	$driversPath = Join-Path $regBase 'ODBC Drivers'
 
@@ -222,7 +265,11 @@ function Install-WindowsDriver {
 }
 
 function Uninstall-WindowsDriver {
-	$regBase = 'HKLM:\SOFTWARE\ODBC\ODBCINST.INI'
+	$regBase = if ($Architecture -eq 'Win32') {
+		'HKLM:\SOFTWARE\WOW6432Node\ODBC\ODBCINST.INI'
+	} else {
+		'HKLM:\SOFTWARE\ODBC\ODBCINST.INI'
+	}
 	$regPath = Join-Path $regBase $DriverName
 	$driversPath = Join-Path $regBase 'ODBC Drivers'
 
@@ -241,37 +288,28 @@ function Uninstall-WindowsDriver {
 #region Linux
 
 function Install-LinuxDriver {
-	if (-not (Get-Command odbcinst -ErrorAction Ignore)) {
-		throw 'odbcinst not found. Install unixODBC: sudo apt-get install unixodbc'
-	}
-
 	$driverAbsPath = (Resolve-Path $DriverPath).Path
+	$iniFile = Join-Path $BuildDir 'odbc_driver.ini'
 
-	$tempIni = [System.IO.Path]::GetTempFileName()
-	try {
-		@"
+	@"
 [$DriverName]
 Description = $DriverName
 Driver = $driverAbsPath
 Setup = $driverAbsPath
 Threading = 0
 FileUsage = 0
-"@ | Set-Content -Path $tempIni
+"@ | Set-Content -Path $iniFile
 
-		exec { sudo odbcinst -i -d -f $tempIni -r }
-	} finally {
-		Remove-Item -Path $tempIni -Force -ErrorAction SilentlyContinue
-	}
+	# Write driver registration directly to /etc/odbcinst.ini.
+	# Bypasses the odbcinst CLI tool which is unreliable on arm64 runners
+	# (sudo's secure_path may not include /usr/bin).
+	exec { bash -c "sudo cp '$iniFile' /etc/odbcinst.ini" }
 
 	print Green "Driver '$DriverName' registered: $driverAbsPath"
 }
 
 function Uninstall-LinuxDriver {
-	if (-not (Get-Command odbcinst -ErrorAction Ignore)) {
-		throw 'odbcinst not found. Install unixODBC: sudo apt-get install unixodbc'
-	}
-
-	exec { odbcinst -u -d -n $DriverName }
+	exec { bash -c "sudo rm -f /etc/odbcinst.ini" }
 
 	print Green "Driver '$DriverName' unregistered."
 }

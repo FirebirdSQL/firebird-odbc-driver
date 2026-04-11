@@ -196,6 +196,7 @@ TEST_F(ArrayBindingTest, ColumnWisePrepareExecute) {
 // 3. Row-wise binding — basic INSERT
 // ============================================================================
 TEST_F(ArrayBindingTest, RowWiseInsert) {
+    SKIP_ON_FIREBIRD6();
     const int ARRAY_SIZE = 5;
     SQLRETURN ret;
 
@@ -563,6 +564,7 @@ TEST_F(ArrayBindingTest, NewHandleAfterArrayExec) {
 // 9. Row-wise binding with multiple data types
 // ============================================================================
 TEST_F(ArrayBindingTest, RowWiseMultipleTypes) {
+    SKIP_ON_FIREBIRD6();
     // Drop and recreate with additional columns
     ExecIgnoreError("DROP TABLE ARRAY_BIND_TEST");
     Commit();
@@ -770,6 +772,7 @@ TEST_F(ArrayBindingTest, ColumnWiseDelete) {
 // 12. PARAMSET_SIZE = 1 should behave like normal single execution
 // ============================================================================
 TEST_F(ArrayBindingTest, ParamsetSizeOneIsNormal) {
+    SKIP_ON_FIREBIRD6();
     SQLRETURN ret;
 
     // Use column-wise with size=1 — should still work

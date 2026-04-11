@@ -44,9 +44,25 @@ option(BUILD_TESTING "Build tests" ON)
 # ---------------------------------------------------------------------------
 # CPU architecture detection (from PR #248)
 # ---------------------------------------------------------------------------
-set(FBODBC_ARCH ${CMAKE_HOST_SYSTEM_PROCESSOR})
+# On MSVC multi-config generators, -A Win32/ARM64 sets CMAKE_GENERATOR_PLATFORM
+# but CMAKE_SYSTEM_PROCESSOR stays as the host arch. Use the generator platform
+# when available to get the correct target architecture.
+if(CMAKE_GENERATOR_PLATFORM)
+    string(TOUPPER "${CMAKE_GENERATOR_PLATFORM}" _PLAT)
+    if(_PLAT STREQUAL "WIN32")
+        set(FBODBC_ARCH "x86")
+    elseif(_PLAT STREQUAL "ARM64")
+        set(FBODBC_ARCH "ARM64")
+    else()
+        set(FBODBC_ARCH "${CMAKE_GENERATOR_PLATFORM}")
+    endif()
+elseif(CMAKE_SYSTEM_PROCESSOR)
+    set(FBODBC_ARCH ${CMAKE_SYSTEM_PROCESSOR})
+else()
+    set(FBODBC_ARCH ${CMAKE_HOST_SYSTEM_PROCESSOR})
+endif()
 
-if(FBODBC_ARCH STREQUAL "x86" OR FBODBC_ARCH STREQUAL "i686")
+if(FBODBC_ARCH STREQUAL "x86" OR FBODBC_ARCH STREQUAL "i686" OR FBODBC_ARCH STREQUAL "X86")
     add_definitions(-DFBODBC_ARCH_X86)
     message(STATUS "Architecture: ${FBODBC_ARCH} (x86)")
 elseif(FBODBC_ARCH STREQUAL "x86_64" OR FBODBC_ARCH STREQUAL "AMD64")

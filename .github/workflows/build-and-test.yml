@@ -2,9 +2,13 @@ name: Build and Test
 
 on:
   push:
-    branches: [master]
+    # Run on all branches, but not on tags (release.yml handles tags)
+    branches:
+      - '**'
+    tags-ignore:
+      - '**'
   pull_request:
-    branches: [master]
+  workflow_call:
 
 permissions:
   contents: read
@@ -15,13 +19,46 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          # ── Windows x64 native ─────────────────────────────────────────────
+          - os: windows-2022
+            artifact-name: windows-x64-binaries
+            firebird-version: '5.0.3'
+          - os: windows-2022
+            firebird-branch: master
+
+          # ── Windows x86 native (WoW64) ─────────────────────────────────────
+          - os: windows-2022
+            artifact-name: windows-x86-binaries
+            arch: Win32
+            firebird-version: '5.0.3'
+          - os: windows-2022
+            arch: Win32
+            firebird-branch: master
+
+          # ── Windows ARM64 native ───────────────────────────────────────────
+          # Official Firebird releases have no win-arm64 binaries; snapshots do.
+          - os: windows-11-arm
+            artifact-name: windows-arm64-binaries
+            firebird-branch: master
+
+          # ── Linux x64 native ───────────────────────────────────────────────
           - os: ubuntu-22.04
+            artifact-name: linux-x64-binaries
+            firebird-version: '5.0.3'
+          - os: ubuntu-22.04
+            firebird-branch: master
+
+          # ── Linux ARM64 native ─────────────────────────────────────────────
+          - os: ubuntu-22.04-arm
+            artifact-name: linux-arm64-binaries
+            firebird-version: '5.0.3'
+          - os: ubuntu-22.04-arm
+            firebird-branch: master
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Full history for git-tag-based versioning
 
@@ -37,18 +74,26 @@ jobs:
         shell: pwsh
         env:
           API_GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: Invoke-Build test -Configuration Release -File ./firebird-odbc-driver.build.ps1
+          FIREBIRD_VERSION: ${{ matrix.firebird-version }}
+          FIREBIRD_BRANCH: ${{ matrix.firebird-branch }}
+        run: |
+          $archArgs = @{}
+          if ('${{ matrix.arch }}') { $archArgs['Architecture'] = '${{ matrix.arch }}' }
+          Invoke-Build test -Configuration Release @archArgs -File ./firebird-odbc-driver.build.ps1
 
-      - name: Upload driver (Windows)
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
+      - name: Upload artifacts (Windows)
+        if: runner.os == 'Windows' && matrix.artifact-name
+        uses: actions/upload-artifact@v7
         with:
-          name: FirebirdODBC-windows-x64
-          path: build/Release/FirebirdODBC.dll
+          name: ${{ matrix.artifact-name }}
+          path: |
+            build/Release/FirebirdODBC.dll
+            build/Release/FirebirdODBC.lib
+            build/Release/FirebirdODBC.pdb
 
-      - name: Upload driver (Linux)
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
+      - name: Upload artifacts (Linux)
+        if: runner.os == 'Linux' && matrix.artifact-name
+        uses: actions/upload-artifact@v7
         with:
-          name: FirebirdODBC-linux-x64
+          name: ${{ matrix.artifact-name }}
           path: build/libOdbcFb.so

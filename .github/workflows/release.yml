@@ -1,0 +1,279 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+  workflow_dispatch:  # allows manual retrigger via: gh workflow run Release --ref v<tag>
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml
+
+  release:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Detect prerelease
+        id: detect_prerelease
+        run: |
+          if [[ "${{ github.ref }}" =~ -[a-zA-Z] ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2.6.1
+        with:
+          name: Firebird ODBC Driver v${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: ${{ steps.detect_prerelease.outputs.is_prerelease }}
+          generate_release_notes: true
+
+  package-windows:
+    needs: [build-and-test, release]
+    runs-on: windows-2022
+
+    strategy:
+      matrix:
+        include:
+          - artifact: windows-x64-binaries
+            wix-arch: x64
+            target-arch: x64
+            suffix: win-x64
+          - artifact: windows-x86-binaries
+            wix-arch: x86
+            target-arch: x86
+            suffix: win-x86
+          - artifact: windows-arm64-binaries
+            wix-arch: arm64
+            target-arch: arm64
+            suffix: win-arm64
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        sparse-checkout: |
+          installer
+          README.md
+
+    - name: Download Windows artifacts
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ matrix.artifact }}
+        path: artifacts
+
+    - name: Download Windows x86 artifacts (bundled in x64 installer)
+      if: matrix.target-arch == 'x64'
+      uses: actions/download-artifact@v8
+      with:
+        name: windows-x86-binaries
+        path: artifacts-x86
+
+    - name: Install WiX Toolset
+      run: dotnet tool install --global wix --version 5.0.2
+
+    - name: Build MSI installer
+      shell: pwsh
+      run: |
+        $version = "${{ needs.release.outputs.version }}"
+        # MSI ProductVersion requires exactly 3 or 4 numeric parts — strip any prerelease suffix
+        $msiVersion = ($version -replace '-.*', '') + '.0'
+        $dllPath = Resolve-Path "artifacts/FirebirdODBC.dll"
+
+        $extraArgs = @()
+        if ('${{ matrix.target-arch }}' -eq 'x64') {
+          $x86DllPath = Resolve-Path "artifacts-x86/FirebirdODBC.dll"
+          $extraArgs = @('-d', "DriverPathX86=$x86DllPath")
+        }
+
+        wix build `
+          -d ProductVersion=$msiVersion `
+          -d DriverPath="$dllPath" `
+          -d Configuration=Release `
+          -d TargetArch=${{ matrix.target-arch }} `
+          -arch ${{ matrix.wix-arch }} `
+          @extraArgs `
+          -o "firebird-odbc-driver-$version-${{ matrix.suffix }}.msi" `
+          installer/Product.wxs
+
+    - name: Package Windows ZIP
+      shell: pwsh
+      run: |
+        $version = "${{ needs.release.outputs.version }}"
+        $packageDir = "package-windows"
+        New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
+
+        Copy-Item "artifacts/FirebirdODBC.dll" -Destination $packageDir
+        Copy-Item "artifacts/FirebirdODBC.lib" -Destination $packageDir -ErrorAction SilentlyContinue
+        Copy-Item "README.md" -Destination $packageDir -ErrorAction SilentlyContinue
+
+        # x64 package also includes the 32-bit DLL for WoW64 applications
+        if ('${{ matrix.target-arch }}' -eq 'x64') {
+          $x86Dir = Join-Path $packageDir "x86"
+          New-Item -ItemType Directory -Path $x86Dir -Force | Out-Null
+          Copy-Item "artifacts-x86/FirebirdODBC.dll" -Destination $x86Dir
+        }
+
+        Compress-Archive -Path "$packageDir/*" `
+          -DestinationPath "firebird-odbc-driver-$version-${{ matrix.suffix }}.zip"
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v2.6.1
+      with:
+        files: |
+          firebird-odbc-driver-${{ needs.release.outputs.version }}-${{ matrix.suffix }}.msi
+          firebird-odbc-driver-${{ needs.release.outputs.version }}-${{ matrix.suffix }}.zip
+
+    - name: Upload MSI as workflow artifact (for installer tests)
+      uses: actions/upload-artifact@v7
+      with:
+        name: msi-${{ matrix.suffix }}
+        path: firebird-odbc-driver-${{ needs.release.outputs.version }}-${{ matrix.suffix }}.msi
+
+  test-installer:
+    needs: [package-windows]
+    runs-on: windows-2022
+
+    strategy:
+      matrix:
+        include:
+          - suffix: win-x64
+            expect-x86: true
+          - suffix: win-x86
+            expect-x86: false
+          # ARM64 MSI cannot be installed on x64 runners — skip
+
+    steps:
+    - name: Download MSI
+      uses: actions/download-artifact@v8
+      with:
+        name: msi-${{ matrix.suffix }}
+        path: msi
+
+    - name: Find MSI file
+      id: find-msi
+      shell: pwsh
+      run: |
+        $msi = Get-ChildItem -Path msi -Filter '*.msi' -Recurse | Select-Object -First 1
+        if (-not $msi) { throw "No MSI file found" }
+        "msi_path=$($msi.FullName)" >> $env:GITHUB_OUTPUT
+        Write-Host "Found MSI: $($msi.FullName)"
+
+    - name: Install MSI
+      shell: pwsh
+      run: |
+        $proc = Start-Process msiexec.exe -ArgumentList "/i `"${{ steps.find-msi.outputs.msi_path }}`" /qn /l*v install.log" -Wait -PassThru
+        if ($proc.ExitCode -ne 0) {
+          Get-Content install.log -Tail 50
+          throw "MSI install failed with exit code $($proc.ExitCode)"
+        }
+
+    - name: Verify ODBC driver registration
+      shell: pwsh
+      run: |
+        $driverName = 'Firebird ODBC Driver'
+
+        # Check 64-bit or 32-bit native registration
+        $drivers = Get-OdbcDriver -Name $driverName -ErrorAction SilentlyContinue
+        if (-not $drivers) {
+          throw "ODBC driver '$driverName' not found after install"
+        }
+        Write-Host "Found ODBC drivers:"
+        $drivers | Format-Table -AutoSize
+
+        # For x64 installer, verify both 64-bit and 32-bit registrations
+        if ('${{ matrix.expect-x86 }}' -eq 'true') {
+          $reg64 = Test-Path "HKLM:\SOFTWARE\ODBC\ODBCINST.INI\$driverName"
+          $reg32 = Test-Path "HKLM:\SOFTWARE\WOW6432Node\ODBC\ODBCINST.INI\$driverName"
+
+          if (-not $reg64) { throw "64-bit ODBC registration missing" }
+          if (-not $reg32) { throw "32-bit (WOW6432Node) ODBC registration missing" }
+
+          $dll64 = Join-Path $env:SystemRoot 'System32' 'FirebirdODBC.dll'
+          $dll32 = Join-Path $env:SystemRoot 'SysWOW64' 'FirebirdODBC.dll'
+
+          if (-not (Test-Path $dll64)) { throw "64-bit DLL missing: $dll64" }
+          if (-not (Test-Path $dll32)) { throw "32-bit DLL missing: $dll32" }
+
+          Write-Host "PASS: Both 64-bit and 32-bit drivers installed correctly"
+        }
+
+    - name: Uninstall MSI
+      shell: pwsh
+      run: |
+        $proc = Start-Process msiexec.exe -ArgumentList "/x `"${{ steps.find-msi.outputs.msi_path }}`" /qn /l*v uninstall.log" -Wait -PassThru
+        if ($proc.ExitCode -ne 0) {
+          Get-Content uninstall.log -Tail 50
+          throw "MSI uninstall failed with exit code $($proc.ExitCode)"
+        }
+
+    - name: Verify clean uninstall
+      shell: pwsh
+      run: |
+        $driverName = 'Firebird ODBC Driver'
+        $drivers = Get-OdbcDriver -Name $driverName -ErrorAction SilentlyContinue
+        if ($drivers) {
+          throw "ODBC driver '$driverName' still registered after uninstall"
+        }
+        Write-Host "PASS: Driver cleanly uninstalled"
+
+  package-linux:
+    needs: [build-and-test, release]
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - artifact: linux-x64-binaries
+            suffix: linux-x64
+          - artifact: linux-arm64-binaries
+            suffix: linux-arm64
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        sparse-checkout: README.md
+
+    - name: Download Linux artifacts
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ matrix.artifact }}
+        path: artifacts
+
+    - name: Package Linux build
+      run: |
+        version="${{ needs.release.outputs.version }}"
+        packageDir="package-linux"
+        mkdir -p "$packageDir"
+
+        cp artifacts/libOdbcFb.so "$packageDir/"
+
+        cp README.md "$packageDir/" 2>/dev/null || true
+
+        cat > "$packageDir/odbcinst.ini.sample" << 'EOF'
+        [Firebird ODBC Driver]
+        Description = Firebird ODBC Driver
+        Driver = /usr/local/lib/odbc/libOdbcFb.so
+        Setup = /usr/local/lib/odbc/libOdbcFb.so
+        FileUsage = 1
+        EOF
+
+        cd "$packageDir"
+        tar -czf "../firebird-odbc-driver-${version}-${{ matrix.suffix }}.tar.gz" *
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v2.6.1
+      with:
+        files: |
+          firebird-odbc-driver-${{ needs.release.outputs.version }}-${{ matrix.suffix }}.tar.gz

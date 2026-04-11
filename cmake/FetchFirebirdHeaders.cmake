@@ -8,9 +8,24 @@
 # (ibase.h, iberror.h) and the firebird/ sub-tree with the modern API
 # (Interface.h, IdlFbInterfaces.h, Message.h, impl/, …).
 #
+# To use pre-installed headers (e.g. on an air-gapped host), set
+# FIREBIRD_INCLUDE_DIR on the command line:
+#   cmake -B build -DFIREBIRD_INCLUDE_DIR=/path/to/firebird/include
+#
 # Usage:
 #   include(cmake/FetchFirebirdHeaders.cmake)
 #   target_include_directories(MyTarget PRIVATE ${FIREBIRD_INCLUDE_DIR})
+
+# If the caller already provided FIREBIRD_INCLUDE_DIR, validate and skip fetch.
+if(FIREBIRD_INCLUDE_DIR)
+    if(NOT EXISTS "${FIREBIRD_INCLUDE_DIR}/ibase.h")
+        message(FATAL_ERROR
+            "FIREBIRD_INCLUDE_DIR is set to '${FIREBIRD_INCLUDE_DIR}' "
+            "but ibase.h was not found there.")
+    endif()
+    message(STATUS "Firebird headers (pre-installed): ${FIREBIRD_INCLUDE_DIR}")
+    return()
+endif()
 
 include(FetchContent)
 
