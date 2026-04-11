@@ -30,6 +30,22 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             }
+        },
+        {
+            "name": "asan",
+            "displayName": "Debug + AddressSanitizer",
+            "inherits": "debug",
+            "cacheVariables": {
+                "ENABLE_ASAN": "ON"
+            }
+        },
+        {
+            "name": "valgrind",
+            "displayName": "Debug + Valgrind",
+            "inherits": "debug",
+            "cacheVariables": {
+                "ENABLE_VALGRIND": "ON"
+            }
         }
     ],
     "buildPresets": [
@@ -42,6 +58,16 @@
             "name": "debug",
             "configurePreset": "default",
             "configuration": "Debug"
+        },
+        {
+            "name": "asan",
+            "configurePreset": "asan",
+            "configuration": "Debug"
+        },
+        {
+            "name": "valgrind",
+            "configurePreset": "valgrind",
+            "configuration": "Debug"
         }
     ],
     "testPresets": [
@@ -50,6 +76,26 @@
             "configurePreset": "default",
             "output": {
                 "outputOnFailure": true
+            }
+        },
+        {
+            "name": "asan",
+            "configurePreset": "asan",
+            "output": {
+                "outputOnFailure": true
+            },
+            "environment": {
+                "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1:print_stats=1"
+            }
+        },
+        {
+            "name": "valgrind",
+            "configurePreset": "valgrind",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "timeout": 600
             }
         }
     ]

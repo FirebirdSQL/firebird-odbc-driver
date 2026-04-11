@@ -85,7 +85,7 @@ public:
 			if ( length == SQL_NTS )
 				lengthString = 0;
 			else if ( retCountOfBytes )
-				lengthString = length / sizeof(wchar_t);
+				lengthString = length / sizeof(SQLWCHAR);
 			else
 				lengthString = length;
 		}
