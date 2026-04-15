@@ -131,16 +131,18 @@ else()
     # Compiler optimization flags (from PR #248 / old makefile.linux)
     add_compile_options(
         "$<$<CONFIG:Debug>:-O0;-g3;-D_DEBUG;-DDEBUG;-fexceptions>"
-    )
-    # LOGGING definition: enable for Debug builds, suppress for sanitizer builds
-    if(NOT (BUILD_WITH_ASAN OR BUILD_WITH_VALGRIND))
-        add_definitions(-DLOGGING)
-    endif()
-    add_compile_options(
         "$<$<CONFIG:Release>:-O3;-DNDEBUG;-ftree-loop-vectorize>"
         "$<$<CONFIG:RelWithDebInfo>:-O2;-g;-DNDEBUG>"
         "$<$<CONFIG:MinSizeRel>:-Os;-DNDEBUG>"
     )
+
+    # LOGGING: Debug builds only; sanitizer builds strip it for cleaner output.
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        add_definitions(-DLOGGING)
+    endif()
+    if(BUILD_WITH_ASAN OR BUILD_WITH_VALGRIND)
+        remove_definitions(-DLOGGING)
+    endif()
 
     # SSE4.1 for x86/x86_64 (from PR #248)
     if(FBODBC_ARCH STREQUAL "x86" OR FBODBC_ARCH STREQUAL "i686"
