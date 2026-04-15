@@ -74,8 +74,8 @@ task build {
 			print Yellow "WARNING: Sanitizer=$Sanitizer is not supported on Windows. Building without sanitizer."
 		} else {
 			switch ($Sanitizer) {
-				'Asan'     { $cmakeArgs += '-DENABLE_ASAN=ON' }
-				'Valgrind' { $cmakeArgs += '-DENABLE_VALGRIND=ON' }
+				'Asan'     { $cmakeArgs += '-DBUILD_WITH_ASAN=ON' }
+				'Valgrind' { $cmakeArgs += '-DBUILD_WITH_VALGRIND=ON' }
 			}
 		}
 	}

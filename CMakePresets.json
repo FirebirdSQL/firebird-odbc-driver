@@ -36,7 +36,7 @@
             "displayName": "Debug + AddressSanitizer",
             "inherits": "debug",
             "cacheVariables": {
-                "ENABLE_ASAN": "ON"
+                "BUILD_WITH_ASAN": "ON"
             }
         },
         {
@@ -44,7 +44,7 @@
             "displayName": "Debug + Valgrind",
             "inherits": "debug",
             "cacheVariables": {
-                "ENABLE_VALGRIND": "ON"
+                "BUILD_WITH_VALGRIND": "ON"
             }
         }
     ],

@@ -42,28 +42,31 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(BUILD_TESTING "Build tests" ON)
 
 # ---------------------------------------------------------------------------
-# Sanitizer options (Linux / GCC / Clang only)
+# Sanitizer options
 # ---------------------------------------------------------------------------
-if(NOT MSVC)
-    option(ENABLE_ASAN "Enable AddressSanitizer (-fsanitize=address)" OFF)
-    option(ENABLE_VALGRIND "Enable Valgrind memcheck via CTest" OFF)
+option(BUILD_WITH_ASAN "Enable AddressSanitizer (-fsanitize=address)" OFF)
+option(BUILD_WITH_VALGRIND "Enable Valgrind memcheck via CTest" OFF)
 
-    if(ENABLE_ASAN AND ENABLE_VALGRIND)
-        message(FATAL_ERROR "ENABLE_ASAN and ENABLE_VALGRIND are mutually exclusive. "
-                            "ASAN instruments the binary at compile time; Valgrind instruments at runtime. "
-                            "They must not be combined.")
-    endif()
+if(BUILD_WITH_ASAN AND BUILD_WITH_VALGRIND)
+    message(FATAL_ERROR "BUILD_WITH_ASAN and BUILD_WITH_VALGRIND are mutually exclusive. "
+                        "ASAN instruments the binary at compile time; Valgrind instruments at runtime. "
+                        "They must not be combined.")
+endif()
 
-    if(ENABLE_ASAN)
+if(MSVC AND (BUILD_WITH_ASAN OR BUILD_WITH_VALGRIND))
+    message(WARNING "Sanitizers are not yet supported on MSVC. "
+                    "BUILD_WITH_ASAN / BUILD_WITH_VALGRIND will be ignored.")
+elseif(NOT MSVC)
+    if(BUILD_WITH_ASAN)
         message(STATUS "AddressSanitizer: ENABLED")
         add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
         add_link_options(-fsanitize=address)
     endif()
 
-    if(ENABLE_VALGRIND)
+    if(BUILD_WITH_VALGRIND)
         find_program(VALGRIND_COMMAND valgrind)
         if(NOT VALGRIND_COMMAND)
-            message(FATAL_ERROR "Valgrind not found but ENABLE_VALGRIND is ON. "
+            message(FATAL_ERROR "Valgrind not found but BUILD_WITH_VALGRIND is ON. "
                                 "Install it with: sudo apt-get install valgrind")
         endif()
         message(STATUS "Valgrind memcheck: ENABLED (${VALGRIND_COMMAND})")
@@ -126,15 +129,12 @@ else()
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
     # Compiler optimization flags (from PR #248 / old makefile.linux)
-    if(ENABLE_ASAN)
-        # ASAN builds: debug flags without extra logging noise
-        add_compile_options(
-            "$<$<CONFIG:Debug>:-O0;-g3;-D_DEBUG;-DDEBUG;-fexceptions>"
-        )
-    else()
-        add_compile_options(
-            "$<$<CONFIG:Debug>:-O0;-g3;-D_DEBUG;-DDEBUG;-DLOGGING;-fexceptions>"
-        )
+    add_compile_options(
+        "$<$<CONFIG:Debug>:-O0;-g3;-D_DEBUG;-DDEBUG;-fexceptions>"
+    )
+    # LOGGING definition: enable for Debug builds, suppress for sanitizer builds
+    if(NOT (BUILD_WITH_ASAN OR BUILD_WITH_VALGRIND))
+        add_definitions(-DLOGGING)
     endif()
     add_compile_options(
         "$<$<CONFIG:Release>:-O3;-DNDEBUG;-ftree-loop-vectorize>"
@@ -284,16 +284,6 @@ else()
         odbcinst
         dl
         pthread
-    )
-endif()
-
-# Debug-specific definitions (matching .vcxproj: DEBUG;LOGGING for Debug configs)
-target_compile_definitions(OdbcFb PRIVATE
-    $<$<CONFIG:Debug>:DEBUG>
-)
-if(NOT ENABLE_ASAN)
-    target_compile_definitions(OdbcFb PRIVATE
-        $<$<CONFIG:Debug>:LOGGING>
     )
 endif()
 
