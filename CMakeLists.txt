@@ -137,11 +137,8 @@ else()
     )
 
     # LOGGING: Debug builds only; sanitizer builds strip it for cleaner output.
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT BUILD_WITH_ASAN AND NOT BUILD_WITH_VALGRIND)
         add_definitions(-DLOGGING)
-    endif()
-    if(BUILD_WITH_ASAN OR BUILD_WITH_VALGRIND)
-        remove_definitions(-DLOGGING)
     endif()
 
     # SSE4.1 for x86/x86_64 (from PR #248)
