@@ -130,14 +130,16 @@ else()
 
     # Compiler optimization flags (from PR #248 / old makefile.linux)
     add_compile_options(
-        "$<$<CONFIG:Debug>:-O0;-g3;-D_DEBUG;-DDEBUG;-fexceptions>"
+        "$<$<CONFIG:Debug>:-O0;-g3;-D_DEBUG;-fexceptions>"
         "$<$<CONFIG:Release>:-O3;-DNDEBUG;-ftree-loop-vectorize>"
         "$<$<CONFIG:RelWithDebInfo>:-O2;-g;-DNDEBUG>"
         "$<$<CONFIG:MinSizeRel>:-Os;-DNDEBUG>"
     )
 
-    # LOGGING: Debug builds only; sanitizer builds strip it for cleaner output.
+    # Debug macros: DEBUG and LOGGING are for Debug builds only;
+    # sanitizer builds strip them for cleaner output (less noise in reports).
     if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT BUILD_WITH_ASAN AND NOT BUILD_WITH_VALGRIND)
+        add_definitions(-DDEBUG)
         add_definitions(-DLOGGING)
     endif()
 
