@@ -22,6 +22,7 @@
 #include <windows.h>
 #else
 #include <wchar.h>
+#include <cuchar>
 #endif
 #include <stdio.h>
 #include "OdbcJdbc.h"
@@ -37,6 +38,18 @@
 
 extern FILE	*logFile;
 using namespace OdbcJdbcLibrary;
+
+static int SqlWcharLength(const SQLWCHAR* text)
+{
+	int len = 0;
+	if ( !text )
+		return 0;
+
+	while ( text[len] != (SQLWCHAR)0 )
+		++len;
+
+	return len;
+}
 
 #ifdef _WINDOWS
 extern UINT codePage; // from Main.cpp
@@ -135,13 +148,42 @@ public:
 					if ( len > 0 )
 						len--;
 #else
-					len = mbstowcs( (wchar_t*)unicodeString, (const char*)byteString, lengthString );
+					// SQLWCHAR is UTF-16 on Linux; convert multibyte input directly into SQLWCHAR units.
+					mbstate_t state = mbstate_t();
+					const char* p = (const char*)byteString;
+					size_t inRemaining = (size_t)lengthString;
+					char16_t* out = (char16_t*)unicodeString;
+					size_t outCount = 0;
+					const size_t outCapacity = (lengthString > 0) ? (size_t)lengthString - 1 : 0;
+
+					while ( inRemaining > 0 && outCount < outCapacity )
+					{
+						size_t rc = std::mbrtoc16( out + outCount, p, inRemaining, &state );
+
+						if ( rc == (size_t)-1 || rc == (size_t)-2 )
+							break;
+
+						if ( rc == (size_t)-3 )
+						{
+							++outCount;
+							continue;
+						}
+
+						if ( rc == 0 )
+							break;
+
+						p += rc;
+						inRemaining -= rc;
+						++outCount;
+					}
+
+					len = outCount;
 #endif
 				}
 
-				if ( len > 0 )
+				if ( lengthString > 0 )
 				{
-					*(LPWSTR)(unicodeString + len) = L'\0';
+					unicodeString[len] = (SQLWCHAR)0;
 
 					if ( realLength )
 					{
@@ -166,16 +208,16 @@ public:
 	SQLCHAR * convUnicodeToString( SQLWCHAR *wcString, int length )
 	{
 		size_t bytesNeeded;
-		wchar_t *ptEndWC = NULL;
-		wchar_t saveWC;
+		SQLWCHAR *ptEndWC = NULL;
+		SQLWCHAR saveWC;
 
 		if ( length == SQL_NTS )
-			length = (int)wcslen( (const wchar_t*)wcString );
-		else if ( wcString[length] != L'\0' )
+			length = SqlWcharLength( wcString );
+		else if ( wcString[length] != (SQLWCHAR)0 )
 		{
-			ptEndWC = (wchar_t*)&wcString[length];
+			ptEndWC = &wcString[length];
 			saveWC = *ptEndWC;
-			*ptEndWC = L'\0';
+			*ptEndWC = (SQLWCHAR)0;
 		}
 
 		if ( connection )
@@ -749,7 +791,7 @@ SQLRETURN SQL_API SQLNativeSqlW( SQLHDBC hDbc,
 	GUARD_HDBC( hDbc );
 
 	if ( cbSqlStrIn == SQL_NTS )
-		cbSqlStrIn = (SQLINTEGER)wcslen( (const wchar_t*)szSqlStrIn );
+		cbSqlStrIn = (SQLINTEGER)SqlWcharLength( szSqlStrIn );
 	
 	bool isByte = !( cbSqlStrIn % 2 );
 
@@ -1161,9 +1203,9 @@ SQLRETURN SQL_API SQLSetDescFieldW( SQLHDESC hDesc,
 			int len;
 			
 			if ( bufferLength == SQL_NTS )
-				len = (int)wcslen( (const wchar_t*)value );
+				len = SqlWcharLength( (const SQLWCHAR*)value );
 			else
-				len = bufferLength / sizeof(wchar_t);
+				len = bufferLength / sizeof(SQLWCHAR);
 
 			ConvertingString<> Value( GETCONNECT_DESC( hDesc ), (SQLWCHAR *)value, len );
 
