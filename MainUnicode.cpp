@@ -38,6 +38,21 @@
 extern FILE	*logFile;
 using namespace OdbcJdbcLibrary;
 
+#ifndef _WINDOWS
+// SQLWCHAR-aware length (in SQLWCHAR units), safe on Linux where
+// sizeof(wchar_t) != sizeof(SQLWCHAR). Do NOT use wcslen() on SQLWCHAR
+// data on Linux — it reads two SQLWCHARs per wchar_t and runs off the end.
+static size_t sqlwcharLen( const SQLWCHAR *s )
+{
+	size_t n = 0;
+	if ( !s )
+		return 0;
+	while ( s[n] )
+		++n;
+	return n;
+}
+#endif
+
 #ifdef _WINDOWS
 extern UINT codePage; // from Main.cpp
 #endif
@@ -85,7 +100,7 @@ public:
 			if ( length == SQL_NTS )
 				lengthString = 0;
 			else if ( retCountOfBytes )
-				lengthString = length / sizeof(wchar_t);
+				lengthString = length / sizeof(SQLWCHAR);
 			else
 				lengthString = length;
 		}
@@ -135,13 +150,33 @@ public:
 					if ( len > 0 )
 						len--;
 #else
-					len = mbstowcs( (wchar_t*)unicodeString, (const char*)byteString, lengthString );
+					// SQLWCHAR is 2 bytes on Linux (unixODBC defines it as unsigned short),
+					// but wchar_t is 4 bytes, so mbstowcs((wchar_t*)unicodeString, ...)
+					// both corrupts the output and risks overflowing the caller's buffer.
+					// Widen byte-by-byte into SQLWCHAR units, matching what unixODBC's
+					// ansi_to_unicode_copy() does internally. This is correct for the
+					// ASCII-only error/state strings that reach this code path; non-ASCII
+					// input will be handled by the broader ConvertingString rewrite tracked
+					// in issue #287 (Tier 9.1).
+					{
+						const SQLCHAR *src = byteString;
+						size_t i = 0;
+						while ( i < (size_t)lengthString && src[i] != 0 )
+						{
+							unicodeString[i] = (SQLWCHAR)( src[i] & 0xFF );
+							++i;
+						}
+						len = i;
+					}
 #endif
 				}
 
 				if ( len > 0 )
 				{
-					*(LPWSTR)(unicodeString + len) = L'\0';
+					// NUL-terminate in SQLWCHAR units. LPWSTR assignment of L'\0' writes
+					// sizeof(wchar_t) bytes, which overruns the output buffer by 2 bytes
+					// on Linux.
+					unicodeString[len] = 0;
 
 					if ( realLength )
 					{
@@ -170,12 +205,18 @@ public:
 		wchar_t saveWC;
 
 		if ( length == SQL_NTS )
+#ifdef _WINDOWS
 			length = (int)wcslen( (const wchar_t*)wcString );
-		else if ( wcString[length] != L'\0' )
+#else
+			length = (int)sqlwcharLen( wcString );
+#endif
+		else if ( wcString[length] != 0 )
 		{
 			ptEndWC = (wchar_t*)&wcString[length];
 			saveWC = *ptEndWC;
-			*ptEndWC = L'\0';
+			// Write a SQLWCHAR-sized NUL so we don't overrun the input by 2 bytes
+			// on Linux (wchar_t is 4 bytes there).
+			wcString[length] = 0;
 		}
 
 		if ( connection )
@@ -185,7 +226,10 @@ public:
 #ifdef _WINDOWS
 			bytesNeeded = WideCharToMultiByte( codePage, (DWORD)0, wcString, length, NULL, (int)0, NULL, NULL );
 #else
-			bytesNeeded = wcstombs( NULL, (const wchar_t*)wcString, length );
+			// See the symmetric comment in the destructor above: wcstombs assumes
+			// wchar_t-sized input, which corrupts SQLWCHAR data on Linux. The
+			// byte-narrowing loop below produces exactly `length` output bytes.
+			bytesNeeded = (size_t)length;
 #endif
 		}
 
@@ -198,7 +242,15 @@ public:
 #ifdef _WINDOWS
 			bytesNeeded = WideCharToMultiByte( codePage, 0, wcString, length, (LPSTR)byteString, (int)bytesNeeded, NULL, NULL );
 #else
-			bytesNeeded = wcstombs( (char *)byteString, (const wchar_t*)wcString, bytesNeeded );
+			{
+				size_t i = 0;
+				while ( i < (size_t)length && wcString[i] != 0 )
+				{
+					byteString[i] = (SQLCHAR)( wcString[i] & 0xFF );
+					++i;
+				}
+				bytesNeeded = i;
+			}
 #endif
 		}
 
@@ -219,16 +271,8 @@ protected:
 		case BYTESCHARS:
 			if ( lengthString )
 			{
-				// Floor the internal buffer at 8 bytes so that callers which pass a
-				// small SQLWCHAR output buffer (e.g. SQLGetDiagRecW with a 12-byte
-				// SQL state, yielding lengthString=3 on Linux where sizeof(wchar_t)=4)
-				// still have room for the 6-byte SQL state ("HY000\0") that
-				// OdbcError::sqlGetDiagRec strcpy's into this buffer. Keeping
-				// lengthString itself unchanged preserves the mbstowcs writeback
-				// bound and avoids smashing the caller's stack buffer.
-				const size_t bufSize = (lengthString + 2 < 8) ? 8 : (size_t)lengthString + 2;
-				byteString = new SQLCHAR[ bufSize ];
-				memset(byteString, 0, bufSize);
+				byteString = new SQLCHAR[ lengthString + 2 ];
+				memset( byteString, 0, lengthString + 2 );
 			}
 			else
 				byteString = NULL;
