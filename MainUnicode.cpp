@@ -85,7 +85,7 @@ public:
 			if ( length == SQL_NTS )
 				lengthString = 0;
 			else if ( retCountOfBytes )
-				lengthString = length / sizeof(SQLWCHAR);
+				lengthString = length / sizeof(wchar_t);
 			else
 				lengthString = length;
 		}
@@ -219,8 +219,16 @@ protected:
 		case BYTESCHARS:
 			if ( lengthString )
 			{
-				byteString = new SQLCHAR[ lengthString + 2 ];
-				memset(byteString, 0, lengthString + 2); 
+				// Floor the internal buffer at 8 bytes so that callers which pass a
+				// small SQLWCHAR output buffer (e.g. SQLGetDiagRecW with a 12-byte
+				// SQL state, yielding lengthString=3 on Linux where sizeof(wchar_t)=4)
+				// still have room for the 6-byte SQL state ("HY000\0") that
+				// OdbcError::sqlGetDiagRec strcpy's into this buffer. Keeping
+				// lengthString itself unchanged preserves the mbstowcs writeback
+				// bound and avoids smashing the caller's stack buffer.
+				const size_t bufSize = (lengthString + 2 < 8) ? 8 : (size_t)lengthString + 2;
+				byteString = new SQLCHAR[ bufSize ];
+				memset(byteString, 0, bufSize);
 			}
 			else
 				byteString = NULL;
