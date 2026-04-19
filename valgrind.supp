@@ -1,0 +1,18 @@
+# Valgrind suppressions for Firebird ODBC Driver test suite
+#
+# This file suppresses known false positives from third-party libraries
+# (Firebird client, unixODBC, system allocators, etc.).
+# Populate as false positives are discovered during Valgrind runs.
+#
+# Usage:
+#   valgrind --leak-check=full --suppressions=valgrind.supp ./firebird_odbc_tests
+#
+# Or via CTest (when ENABLE_VALGRIND=ON):
+#   ctest -T memcheck
+
+{
+   fbclient_global_init
+   Memcheck:Leak
+   ...
+   obj:*/libfbclient.so*
+}

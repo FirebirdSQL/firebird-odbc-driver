@@ -1,0 +1,12 @@
+# LeakSanitizer suppressions for Firebird ODBC Driver test suite
+#
+# This file suppresses known leak reports from third-party libraries
+# (Firebird client, unixODBC, system allocators, etc.).
+# Populate as false positives are discovered during ASAN/LSAN runs.
+#
+# Usage:
+#   export LSAN_OPTIONS="suppressions=lsan.supp"
+
+leak:libfbclient
+leak:libodbc
+leak:libodbcinst

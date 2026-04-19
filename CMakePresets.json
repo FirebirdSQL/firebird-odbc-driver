@@ -12,7 +12,9 @@
             "description": "Default preset — uses 'build/' as the binary directory so that all tools (command-line, Visual Studio, CLion, VS Code) share the same layout.",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install",
+                "BUILD_WITH_ASAN": "OFF",
+                "BUILD_WITH_VALGRIND": "OFF"
             }
         },
         {
@@ -20,7 +22,9 @@
             "displayName": "Release",
             "inherits": "default",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
+                "CMAKE_BUILD_TYPE": "Release",
+                "BUILD_WITH_ASAN": "OFF",
+                "BUILD_WITH_VALGRIND": "OFF"
             }
         },
         {
@@ -28,7 +32,27 @@
             "displayName": "Debug",
             "inherits": "default",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_WITH_ASAN": "OFF",
+                "BUILD_WITH_VALGRIND": "OFF"
+            }
+        },
+        {
+            "name": "asan",
+            "displayName": "Debug + AddressSanitizer",
+            "inherits": "debug",
+            "cacheVariables": {
+                "BUILD_WITH_ASAN": "ON",
+                "BUILD_WITH_VALGRIND": "OFF"
+            }
+        },
+        {
+            "name": "valgrind",
+            "displayName": "Debug + Valgrind",
+            "inherits": "debug",
+            "cacheVariables": {
+                "BUILD_WITH_VALGRIND": "ON",
+                "BUILD_WITH_ASAN": "OFF"
             }
         }
     ],
@@ -42,6 +66,16 @@
             "name": "debug",
             "configurePreset": "default",
             "configuration": "Debug"
+        },
+        {
+            "name": "asan",
+            "configurePreset": "asan",
+            "configuration": "Debug"
+        },
+        {
+            "name": "valgrind",
+            "configurePreset": "valgrind",
+            "configuration": "Debug"
         }
     ],
     "testPresets": [
@@ -50,6 +84,26 @@
             "configurePreset": "default",
             "output": {
                 "outputOnFailure": true
+            }
+        },
+        {
+            "name": "asan",
+            "configurePreset": "asan",
+            "output": {
+                "outputOnFailure": true
+            },
+            "environment": {
+                "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1:print_stats=1"
+            }
+        },
+        {
+            "name": "valgrind",
+            "configurePreset": "valgrind",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "timeout": 600
             }
         }
     ]
