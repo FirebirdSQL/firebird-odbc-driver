@@ -19,14 +19,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # ── Windows x64 native ─────────────────────────────────────────────
+          # ── Windows x64 native ──────────────────────────────────────────────
           - os: windows-2022
             artifact-name: windows-x64-binaries
             firebird-version: '5.0.3'
           - os: windows-2022
             firebird-branch: master
 
-          # ── Windows x86 native (WoW64) ─────────────────────────────────────
+          # ── Windows x86 native (WoW64) ──────────────────────────────────────
           - os: windows-2022
             artifact-name: windows-x86-binaries
             arch: Win32
@@ -35,25 +35,37 @@ jobs:
             arch: Win32
             firebird-branch: master
 
-          # ── Windows ARM64 native ───────────────────────────────────────────
+          # ── Windows ARM64 native ─────────────────────────────────────────────
           # Official Firebird releases have no win-arm64 binaries; snapshots do.
           - os: windows-11-arm
             artifact-name: windows-arm64-binaries
             firebird-branch: master
 
-          # ── Linux x64 native ───────────────────────────────────────────────
+          # ── Linux x64 native ─────────────────────────────────────────────────
           - os: ubuntu-22.04
             artifact-name: linux-x64-binaries
             firebird-version: '5.0.3'
           - os: ubuntu-22.04
             firebird-branch: master
 
-          # ── Linux ARM64 native ─────────────────────────────────────────────
+          # ── Linux ARM64 native ──────────────────────────────────────────────
           - os: ubuntu-22.04-arm
             artifact-name: linux-arm64-binaries
             firebird-version: '5.0.3'
           - os: ubuntu-22.04-arm
             firebird-branch: master
+
+          # ── Linux x64 sanitizers (Debug, Firebird 5.0.3) ─────────────────────
+          # ASAN is temporarily disabled — re-enable once the Linux widechar
+          # conversion paths in MainUnicode.cpp are rewritten (#287 Tier 1b,
+          # draft PR #291). Until then it fails on a heap-buffer-overflow in
+          # SQLGetDiagRecW.
+          # - os: ubuntu-22.04
+          #   sanitizer: Asan
+          #   firebird-version: '5.0.3'
+          - os: ubuntu-22.04
+            sanitizer: Valgrind
+            firebird-version: '5.0.3'
 
     runs-on: ${{ matrix.os }}
 
@@ -70,6 +82,10 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y unixodbc unixodbc-dev
 
+      - name: Install Valgrind
+        if: matrix.sanitizer == 'Valgrind'
+        run: sudo apt-get install -y valgrind
+
       - name: Build, install and test
         shell: pwsh
         env:
@@ -79,7 +95,10 @@ jobs:
         run: |
           $archArgs = @{}
           if ('${{ matrix.arch }}') { $archArgs['Architecture'] = '${{ matrix.arch }}' }
-          Invoke-Build test -Configuration Release @archArgs -File ./firebird-odbc-driver.build.ps1
+          $sanitizerArgs = @{}
+          if ('${{ matrix.sanitizer }}') { $sanitizerArgs['Sanitizer'] = '${{ matrix.sanitizer }}' }
+          $config = if ('${{ matrix.sanitizer }}') { 'Debug' } else { 'Release' }
+          Invoke-Build test -Configuration $config @archArgs @sanitizerArgs -File ./firebird-odbc-driver.build.ps1
 
       - name: Upload artifacts (Windows)
         if: runner.os == 'Windows' && matrix.artifact-name

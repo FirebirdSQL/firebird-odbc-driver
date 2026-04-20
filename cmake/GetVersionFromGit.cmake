@@ -22,11 +22,15 @@ if(NOT GIT_FOUND)
     return()
 endif()
 
-# Try to find the latest semver tag matching v<MAJOR>.<MINOR>.<PATCH>
-# We use --match to only consider tags in vX.Y.Z format (not rc, temp, etc.)
+# Find the latest semver tag matching v<MAJOR>.<MINOR>.<PATCH>.
+# Prefer a stable vX.Y.Z tag (--exclude "*-*" filters out prereleases like
+# v3.5.0-rc1). If no stable tag exists yet, fall back to any matching tag;
+# the parser regex below handles the optional -<prerelease> suffix.
+# NOTE: --always is intentionally NOT used on the first call so that a
+# "no stable tag" case fails with non-zero exit and triggers the fallback.
 execute_process(
     COMMAND ${GIT_EXECUTABLE} describe --tags --match "v[0-9]*.[0-9]*.[0-9]*"
-            --exclude "*-*" --long --always
+            --exclude "*-*" --long
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     OUTPUT_VARIABLE GIT_DESCRIBE_OUTPUT
     OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -35,10 +39,9 @@ execute_process(
 )
 
 if(NOT GIT_DESCRIBE_RESULT EQUAL 0)
-    # No matching tag found at all, try without --exclude
     execute_process(
         COMMAND ${GIT_EXECUTABLE} describe --tags --match "v[0-9]*.[0-9]*.[0-9]*"
-                --long --always
+                --long
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         OUTPUT_VARIABLE GIT_DESCRIBE_OUTPUT
         OUTPUT_STRIP_TRAILING_WHITESPACE

@@ -42,6 +42,41 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(BUILD_TESTING "Build tests" ON)
 
 # ---------------------------------------------------------------------------
+# Sanitizer options
+# ---------------------------------------------------------------------------
+option(BUILD_WITH_ASAN "Enable AddressSanitizer (-fsanitize=address)" OFF)
+option(BUILD_WITH_VALGRIND "Enable Valgrind memcheck via CTest" OFF)
+
+if(BUILD_WITH_ASAN AND BUILD_WITH_VALGRIND)
+    message(FATAL_ERROR "BUILD_WITH_ASAN and BUILD_WITH_VALGRIND are mutually exclusive. "
+                        "ASAN instruments the binary at compile time; Valgrind instruments at runtime. "
+                        "They must not be combined.")
+endif()
+
+if(MSVC AND (BUILD_WITH_ASAN OR BUILD_WITH_VALGRIND))
+    message(WARNING "Sanitizers are not yet supported on MSVC. "
+                    "BUILD_WITH_ASAN / BUILD_WITH_VALGRIND will be ignored.")
+elseif(NOT MSVC)
+    if(BUILD_WITH_ASAN)
+        message(STATUS "AddressSanitizer: ENABLED")
+        add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+        add_link_options(-fsanitize=address)
+    endif()
+
+    if(BUILD_WITH_VALGRIND)
+        find_program(VALGRIND_COMMAND valgrind)
+        if(NOT VALGRIND_COMMAND)
+            message(FATAL_ERROR "Valgrind not found but BUILD_WITH_VALGRIND is ON. "
+                                "Install it with: sudo apt-get install valgrind")
+        endif()
+        message(STATUS "Valgrind memcheck: ENABLED (${VALGRIND_COMMAND})")
+        set(MEMORYCHECK_COMMAND ${VALGRIND_COMMAND})
+        set(MEMORYCHECK_COMMAND_OPTIONS
+            "--leak-check=full --error-exitcode=1 --suppressions=${CMAKE_SOURCE_DIR}/valgrind.supp")
+    endif()
+endif()
+
+# ---------------------------------------------------------------------------
 # CPU architecture detection (from PR #248)
 # ---------------------------------------------------------------------------
 # On MSVC multi-config generators, -A Win32/ARM64 sets CMAKE_GENERATOR_PLATFORM
@@ -95,11 +130,18 @@ else()
 
     # Compiler optimization flags (from PR #248 / old makefile.linux)
     add_compile_options(
-        "$<$<CONFIG:Debug>:-O0;-g3;-D_DEBUG;-DDEBUG;-DLOGGING;-fexceptions>"
+        "$<$<CONFIG:Debug>:-O0;-g3;-D_DEBUG;-fexceptions>"
         "$<$<CONFIG:Release>:-O3;-DNDEBUG;-ftree-loop-vectorize>"
         "$<$<CONFIG:RelWithDebInfo>:-O2;-g;-DNDEBUG>"
         "$<$<CONFIG:MinSizeRel>:-Os;-DNDEBUG>"
     )
+
+    # Debug macros: DEBUG and LOGGING are for Debug builds only;
+    # sanitizer builds strip them for cleaner output (less noise in reports).
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT BUILD_WITH_ASAN AND NOT BUILD_WITH_VALGRIND)
+        add_definitions(-DDEBUG)
+        add_definitions(-DLOGGING)
+    endif()
 
     # SSE4.1 for x86/x86_64 (from PR #248)
     if(FBODBC_ARCH STREQUAL "x86" OR FBODBC_ARCH STREQUAL "i686"
@@ -245,12 +287,6 @@ else()
         pthread
     )
 endif()
-
-# Debug-specific definitions (matching .vcxproj: DEBUG;LOGGING for Debug configs)
-target_compile_definitions(OdbcFb PRIVATE
-    $<$<CONFIG:Debug>:DEBUG>
-    $<$<CONFIG:Debug>:LOGGING>
-)
 
 # ---------------------------------------------------------------------------
 # Testing

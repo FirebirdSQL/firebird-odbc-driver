@@ -19,7 +19,10 @@ param(
 	[string]$Configuration = 'Debug',
 
 	[ValidateSet('', 'Win32')]
-	[string]$Architecture = ''
+	[string]$Architecture = '',
+
+	[ValidateSet('None', 'Asan', 'Valgrind')]
+	[string]$Sanitizer = 'None'
 )
 
 # Detect OS
@@ -65,6 +68,16 @@ task build {
 	$cmakeArgs = @('-B', $BuildDir, '-S', $BuildRoot, "-DCMAKE_BUILD_TYPE=$Configuration", '-DBUILD_TESTING=ON')
 	if ($IsWindowsOS -and $Architecture) {
 		$cmakeArgs += @('-A', $Architecture)
+	}
+	if ($Sanitizer -ne 'None') {
+		if ($IsWindowsOS) {
+			print Yellow "WARNING: Sanitizer=$Sanitizer is not supported on Windows. Building without sanitizer."
+		} else {
+			switch ($Sanitizer) {
+				'Asan'     { $cmakeArgs += '-DBUILD_WITH_ASAN=ON' }
+				'Valgrind' { $cmakeArgs += '-DBUILD_WITH_VALGRIND=ON' }
+			}
+		}
 	}
 	exec { cmake @cmakeArgs }
 
@@ -158,6 +171,13 @@ task build-test-databases {
 task test build, build-test-databases, install, {
 	if (-not $env:FIREBIRD_ODBC_CONNECTION) {
 		print Yellow 'WARNING: FIREBIRD_ODBC_CONNECTION environment variable is not set. Using built-in connection strings.'
+	}
+
+	# Set sanitizer runtime options
+	if ($Sanitizer -eq 'Asan' -and -not $IsWindowsOS) {
+		$env:ASAN_OPTIONS = 'detect_leaks=1:halt_on_error=1:print_stats=1'
+		$env:LSAN_OPTIONS = "suppressions=$(Join-Path $BuildRoot 'lsan.supp')"
+		print Cyan "ASAN_OPTIONS=$env:ASAN_OPTIONS"
 	}
 
 	# Test suites that exercise charset/encoding-sensitive code paths.
