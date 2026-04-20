@@ -23,19 +23,11 @@
 #include <string>
 #include <vector>
 
-#ifndef _WIN32
-// Shared skip body — all tests in this file depend on the same Linux
-// widechar bug. Keep the message pointing at issue #287 Tier 1b so
-// grepping finds every affected test at once.
-#define SKIP_ON_LINUX_WIDECHAR()                                           \
-    do {                                                                   \
-        GTEST_SKIP() << "Widechar conversion paths broken on Linux —  "    \
-                        "see issue #287 Tier 1b. Un-skip once the "        \
-                        "Unicode-fix PR lands.";                           \
-    } while (0)
-#else
+// The Linux widechar conversion paths in MainUnicode.cpp are now fixed
+// (see this PR's changes to MainUnicode.cpp). The Linux-skip guard the
+// tests were introduced with is therefore a no-op — the tests run on
+// every platform.
 #define SKIP_ON_LINUX_WIDECHAR() do {} while (0)
-#endif
 
 class WideErrorsTest : public OdbcConnectedTest {};
 
