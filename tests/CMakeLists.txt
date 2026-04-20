@@ -86,6 +86,7 @@ add_executable(firebird_odbc_tests
     test_catalogfunctions.cpp
     test_server_version.cpp
     test_scrollable_cursor.cpp
+    test_wide_errors.cpp
 
     # Category C — all tests SKIP'd (features not yet on upstream master)
     test_null_handles.cpp
