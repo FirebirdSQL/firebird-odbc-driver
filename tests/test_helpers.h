@@ -60,6 +60,38 @@ inline std::string GetSqlState(SQLSMALLINT handleType, SQLHANDLE handle) {
     return "";
 }
 
+// Convert an ASCII C-string to a null-terminated SQLWCHAR vector. Cannot use
+// L"..." literals — sizeof(wchar_t) != sizeof(SQLWCHAR) on Linux.
+inline std::vector<SQLWCHAR> ToSqlWchar(const char* s) {
+    std::vector<SQLWCHAR> out;
+    while (*s) {
+        out.push_back((SQLWCHAR)(unsigned char)*s++);
+    }
+    out.push_back(0);
+    return out;
+}
+
+// Convert a null-terminated SQLWCHAR string to a narrow std::string (low byte
+// only, so ASCII round-trips correctly; non-ASCII is lossy but these helpers
+// are for tests, not production data).
+inline std::string FromSqlWchar(const SQLWCHAR* s) {
+    std::string out;
+    if (!s) return out;
+    while (*s) {
+        out.push_back((char)(*s & 0xFF));
+        ++s;
+    }
+    return out;
+}
+
+// Length of a null-terminated SQLWCHAR string, in SQLWCHAR units.
+inline size_t SqlWcharLen(const SQLWCHAR* s) {
+    size_t n = 0;
+    if (!s) return 0;
+    while (s[n]) ++n;
+    return n;
+}
+
 // Base test fixture: ODBC environment + connection + auto-cleanup
 class OdbcConnectedTest : public ::testing::Test {
 public:
