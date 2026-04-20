@@ -173,9 +173,6 @@ public:
 
 				if ( len > 0 )
 				{
-					// NUL-terminate in SQLWCHAR units. LPWSTR assignment of L'\0' writes
-					// sizeof(wchar_t) bytes, which overruns the output buffer by 2 bytes
-					// on Linux.
 					unicodeString[len] = 0;
 
 					if ( realLength )
