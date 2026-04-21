@@ -286,6 +286,14 @@ TEST_F(ParamConversionsTest, NumericAsCharParam) {
 // execute, so multi-digit values collapsed to a single character and most rows
 // were silently lost (odbc-scanner issue #161).
 TEST_F(ParamConversionsTest, Issue161_SLongToVarcharViaStoredProcedure) {
+    // CI's Firebird-6 master snapshot aborts parameterized EXECUTE PROCEDURE
+    // with "Stack overflow" (Windows) or SEGFAULT (Linux) on the very first
+    // SQLExecute — the same parameterized-query regression already documented
+    // by SKIP_ON_FIREBIRD6().  The underlying driver fix is exercised on FB 3
+    // / 4 / 5 anyway, so punt this particular harness until the FB6
+    // parameterized-query path is rewritten.
+    SKIP_ON_FIREBIRD6();
+
     // Provision the sandbox: a VARCHAR-keyed table and an UPDATE-OR-INSERT SP.
     ExecIgnoreError("EXECUTE BLOCK AS BEGIN "
                     "IF (EXISTS(SELECT 1 FROM RDB$PROCEDURES WHERE RDB$PROCEDURE_NAME = 'ODBC_ISSUE161_SP')) THEN "
