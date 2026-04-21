@@ -102,6 +102,7 @@ public:
 	inline short	getSqlMultiple () { return sqlMultiple; }
 	inline char *	getSqlData() { return sqlvar->sqldata; }
 	inline short *	getSqlInd() { return sqlvar->sqlind; }
+	inline bool		isSqlVarying() { return sqlvar->sqltype == SQL_VARYING; }
 
 	// not used
 	//void		setSqlInd( short *ind ) { sqlvar->sqlind = ind; }
