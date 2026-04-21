@@ -524,6 +524,7 @@ public:
 	//virtual void		setSqlSubType ( short subtype ) = 0;
 	virtual void		setSqlLen ( short len ) = 0;
 	virtual short		getSqlMultiple () = 0;
+	virtual bool		isSqlVarying () = 0;
 
 	virtual char *		getSqlData() = 0;
 	virtual short *		getSqlInd() = 0;
