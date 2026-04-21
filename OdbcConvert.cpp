@@ -208,6 +208,14 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convTinyIntToString;
 		case SQL_C_WCHAR:
+			// Issue #161: when writing into a Firebird input buffer use the
+			// byte variant.  The W variant would write UTF-16 code units,
+			// which Firebird would then interpret as UTF-8 bytes and store
+			// the embedded 0x00 bytes as data, corrupting the parameter.
+			// ASCII digits are identical in UTF-8 and ISO-8859-1, so the
+			// byte variant works regardless of the column charset.
+			if ( to->isIndicatorSqlDa )
+				return &OdbcConvert::convTinyIntToString;
 			return &OdbcConvert::convTinyIntToStringW;
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
@@ -263,6 +271,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convShortToString;
 		case SQL_C_WCHAR:
+			// Issue #161: see SQL_C_WCHAR note for SQL_C_TINYINT above.
+			if ( to->isIndicatorSqlDa )
+				return &OdbcConvert::convShortToString;
 			return &OdbcConvert::convShortToStringW;
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
@@ -320,6 +331,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convLongToString;
 		case SQL_C_WCHAR:
+			// Issue #161: see SQL_C_WCHAR note for SQL_C_TINYINT above.
+			if ( to->isIndicatorSqlDa )
+				return &OdbcConvert::convLongToString;
 			return &OdbcConvert::convLongToStringW;
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
@@ -357,6 +371,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convFloatToString;
 		case SQL_C_WCHAR:
+			// Issue #161: see SQL_C_WCHAR note for SQL_C_TINYINT above.
+			if ( to->isIndicatorSqlDa )
+				return &OdbcConvert::convFloatToString;
 			return &OdbcConvert::convFloatToStringW;
 		default:
 			return &OdbcConvert::notYetImplemented;
@@ -391,6 +408,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDoubleToString;
 		case SQL_C_WCHAR:
+			// Issue #161: see SQL_C_WCHAR note for SQL_C_TINYINT above.
+			if ( to->isIndicatorSqlDa )
+				return &OdbcConvert::convDoubleToString;
 			return &OdbcConvert::convDoubleToStringW;
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
@@ -435,6 +455,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convBigintToString;
 		case SQL_C_WCHAR:
+			// Issue #161: see SQL_C_WCHAR note for SQL_C_TINYINT above.
+			if ( to->isIndicatorSqlDa )
+				return &OdbcConvert::convBigintToString;
 			return &OdbcConvert::convBigintToStringW;
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
@@ -523,6 +546,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateToString;
 		case SQL_C_WCHAR:
+			// Issue #161: see SQL_C_WCHAR note for SQL_C_TINYINT above.
+			if ( to->isIndicatorSqlDa )
+				return &OdbcConvert::convDateToString;
 			return &OdbcConvert::convDateToStringW;
 		default:
 			return &OdbcConvert::notYetImplemented;
@@ -560,6 +586,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convTimeToString;
 		case SQL_C_WCHAR:
+			// Issue #161: see SQL_C_WCHAR note for SQL_C_TINYINT above.
+			if ( to->isIndicatorSqlDa )
+				return &OdbcConvert::convTimeToString;
 			return &OdbcConvert::convTimeToStringW;
 		default:
 			return &OdbcConvert::notYetImplemented;
@@ -596,6 +625,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateTimeToString;
 		case SQL_C_WCHAR:
+			// Issue #161: see SQL_C_WCHAR note for SQL_C_TINYINT above.
+			if ( to->isIndicatorSqlDa )
+				return &OdbcConvert::convDateTimeToString;
 			return &OdbcConvert::convDateTimeToStringW;
 		default:
 			return &OdbcConvert::notYetImplemented;
@@ -1303,6 +1335,16 @@ int OdbcConvert::conv##TYPE_FROM##ToString(DescRecord * from, DescRecord * to)		
 																								\
 	ODBCCONVERT_CHECKNULL( pointer );															\
 																								\
+	/* Issue #161: when writing into a Firebird input buffer, force sqltype to	*/				\
+	/* SQL_TEXT.  This routine writes raw ASCII digits at offset 0 of the target	*/				\
+	/* buffer — that is the correct layout for SQL_TEXT, but for SQL_VARYING the	*/				\
+	/* first 2 bytes are reserved for a length prefix.  Leaving the buffer as	*/				\
+	/* SQL_VARYING causes Firebird to read the digits as the length prefix,		*/				\
+	/* silently corrupting the parameter (e.g. INTEGER→VARCHAR stored-procedure	*/				\
+	/* parameters would swallow the data and commit only a fraction of rows).	*/				\
+	if ( to->isIndicatorSqlDa )																	\
+		to->headSqlVarPtr->setTypeText();														\
+																								\
 	int len = to->length;																		\
 																								\
 	if ( !len && to->dataPtr)																	\
@@ -1383,6 +1425,12 @@ int OdbcConvert::conv##TYPE_FROM##ToStringW(DescRecord * from, DescRecord * to)	
 	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);				\
 																								\
 	ODBCCONVERT_CHECKNULLW( pointer );															\
+																								\
+	/* Issue #161: see ODBCCONVERT_CONV_TO_STRING — same reasoning for the wide	*/				\
+	/* variant.  Data is written at offset 0 without a length prefix, so the	*/				\
+	/* target must be SQL_TEXT when it is a Firebird input buffer.				*/				\
+	if ( to->isIndicatorSqlDa )																	\
+		to->headSqlVarPtr->setTypeText();														\
 																								\
 	int len = to->length;																		\
 																								\
@@ -1766,6 +1814,10 @@ int OdbcConvert::convFloatToString(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
+	// Issue #161: see ODBCCONVERT_CONV_TO_STRING — force SQL_TEXT layout.
+	if ( to->isIndicatorSqlDa )
+		to->headSqlVarPtr->setTypeText();
+
 	int len = to->length;
 
 	if ( len )
@@ -1787,6 +1839,10 @@ int OdbcConvert::convFloatToStringW(DescRecord * from, DescRecord * to)
 	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULLW( pointerTo );
+
+	// Issue #161: see ODBCCONVERT_CONV_TO_STRING — force SQL_TEXT layout.
+	if ( to->isIndicatorSqlDa )
+		to->headSqlVarPtr->setTypeText();
 
 	int len = to->length;
 
@@ -1873,6 +1929,10 @@ int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
+	// Issue #161: see ODBCCONVERT_CONV_TO_STRING — force SQL_TEXT layout.
+	if ( to->isIndicatorSqlDa )
+		to->headSqlVarPtr->setTypeText();
+
 	int len = to->length;
 
 	if ( len )	// MAX_DOUBLE_DIGIT_LENGTH = 15
@@ -1894,6 +1954,10 @@ int OdbcConvert::convDoubleToStringW(DescRecord * from, DescRecord * to)
 	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULLW( pointerTo );
+
+	// Issue #161: see ODBCCONVERT_CONV_TO_STRING — force SQL_TEXT layout.
+	if ( to->isIndicatorSqlDa )
+		to->headSqlVarPtr->setTypeText();
 
 	int len = to->length;
 
@@ -1987,6 +2051,10 @@ int OdbcConvert::convDateToString(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
+	// Issue #161: see ODBCCONVERT_CONV_TO_STRING — force SQL_TEXT layout.
+	if ( to->isIndicatorSqlDa )
+		to->headSqlVarPtr->setTypeText();
+
 	SQLUSMALLINT mday, month;
 	SQLSMALLINT year;
 
@@ -2013,6 +2081,10 @@ int OdbcConvert::convDateToStringW(DescRecord * from, DescRecord * to)
 	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULLW( pointer );
+
+	// Issue #161: see ODBCCONVERT_CONV_TO_STRING — force SQL_TEXT layout.
+	if ( to->isIndicatorSqlDa )
+		to->headSqlVarPtr->setTypeText();
 
 	SQLUSMALLINT mday, month;
 	SQLSMALLINT year;
@@ -2164,6 +2236,10 @@ int OdbcConvert::convTimeToString(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
+	// Issue #161: see ODBCCONVERT_CONV_TO_STRING — force SQL_TEXT layout.
+	if ( to->isIndicatorSqlDa )
+		to->headSqlVarPtr->setTypeText();
+
 	SQLUSMALLINT hour, minute, second;
 	int ntime = *(int*)getAdressBindDataFrom((char*)from->dataPtr);
 	int nnano = ntime % ISC_TIME_SECONDS_PRECISION;
@@ -2195,6 +2271,10 @@ int OdbcConvert::convTimeToStringW(DescRecord * from, DescRecord * to)
 	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULLW( pointer );
+
+	// Issue #161: see ODBCCONVERT_CONV_TO_STRING — force SQL_TEXT layout.
+	if ( to->isIndicatorSqlDa )
+		to->headSqlVarPtr->setTypeText();
 
 	SQLUSMALLINT hour, minute, second;
 	int ntime = *(int*)getAdressBindDataFrom((char*)from->dataPtr);
@@ -2356,6 +2436,10 @@ int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( pointer );
 
+	// Issue #161: see ODBCCONVERT_CONV_TO_STRING — force SQL_TEXT layout.
+	if ( to->isIndicatorSqlDa )
+		to->headSqlVarPtr->setTypeText();
+
 	QUAD pointerFrom = *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr);
 	int ndate = LO_LONG(pointerFrom);
 	int ntime = HI_LONG(pointerFrom);
@@ -2391,6 +2475,10 @@ int OdbcConvert::convDateTimeToStringW(DescRecord * from, DescRecord * to)
 	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
 	ODBCCONVERT_CHECKNULLW( pointer );
+
+	// Issue #161: see ODBCCONVERT_CONV_TO_STRING — force SQL_TEXT layout.
+	if ( to->isIndicatorSqlDa )
+		to->headSqlVarPtr->setTypeText();
 
 	QUAD pointerFrom = *(QUAD*)getAdressBindDataFrom((char*)from->dataPtr);
 	int ndate = LO_LONG(pointerFrom);
