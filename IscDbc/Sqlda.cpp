@@ -760,15 +760,13 @@ const char* Sqlda::getColumnName(int index)
 int Sqlda::getPrecision(int index)
 {
 	CAttrSqlVar *curVar = Var(index);
-	// Issue #161: for INPUT parameters the conversion code mutates sqlvar
-	// (via setTypeText/setSqlLen).  Reading precision from the current
-	// sqlvar makes `record->length` shrink after the first row was bound,
-	// which then causes subsequent numeric→VARCHAR conversions to write
-	// only the first character of multi-digit values (silent data loss).
-	// The precision of a prepared parameter is immutable, so read the
-	// length/type snapshot captured at prepare time for INPUT params.
-	// SQL_ARRAY still needs the mutable CAttrSqlVar (for the `array`
-	// pointer), so fall through to Var(index) in that case.
+	// INPUT parameter precision is immutable from prepare time, even if the
+	// conversion layer later mutates sqllen on the CAttrSqlVar (e.g. the
+	// SQL_TEXT branch of writeStringData reports the effective length that
+	// way).  Read from the orgSqlProperties snapshot so re-binding never
+	// sees a shrunken precision — this mirrors getColumnDisplaySize above.
+	// OUTPUT always uses the current sqlvar; SQL_ARRAY needs the mutable
+	// CAttrSqlVar for its `array` pointer.
 	const SqlProperties *var =
 		(SqldaDir == SQLDA_INPUT && curVar->sqltype != SQL_ARRAY)
 			? orgVarSqlProperties(index)
