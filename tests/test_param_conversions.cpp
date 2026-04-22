@@ -277,7 +277,7 @@ TEST_F(ParamConversionsTest, NumericAsCharParam) {
     EXPECT_NEAR(atof(result.c_str()), 1234.5678, 0.001);
 }
 
-// ===== Issue #161: numeric C type → VARCHAR parameter through a stored procedure =====
+// ===== numeric C type → VARCHAR parameter through a stored procedure =====
 //
 // Binds SQL_C_SLONG (or wider numeric) to a Firebird VARCHAR stored-procedure
 // parameter, executes the statement many times reusing the bind, and verifies
