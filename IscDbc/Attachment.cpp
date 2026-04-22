@@ -477,7 +477,32 @@ void Attachment::openDatabase(const char *dbName, Properties *properties)
 						else
 							beg++;
 					}
-					serverVersion.Format( "%02d.%02d.%04d %.*s %s",major,minor,version, tmp ? tmp - start : 0, start, (const char*)productName );
+					// Build SQL_DBMS_VER from the FIREBIRD PRODUCT version
+					// (majorFb/minorFb/versionFb, captured from isc_info_firebird_version)
+					// rather than from the engine / ODS-compat version parsed above.
+					//
+					// Background: isc_info_version returns a legacy InterBase-style
+					// string whose leading digits are the ENGINE implementation
+					// version (currently "6.3.x" on every supported Firebird — that
+					// number tracks the wire protocol / ODS compatibility level, not
+					// the Firebird release), while isc_info_firebird_version (added
+					// in FB 2.x) returns the actual Firebird product version string.
+					// The ODBC specification defines SQL_DBMS_VER as "the version of
+					// the current DBMS product" — so reporting the engine number
+					// mis-identifies every Firebird server as 6.x to every ODBC
+					// consumer (downstream tools, version-gated tests, etc.).
+					//
+					// Fall back to the engine numbers only when isc_info_firebird_version
+					// was not returned (very old InterBase / pre-2.0 Firebird), which
+					// we detect as the defaults set in the Attachment constructor
+					// (majorFb=1, minorFb=0, versionFb=0).
+					const bool haveFbVersion =
+						majorFb > 1 || minorFb > 0 || versionFb > 0;
+					serverVersion.Format( "%02d.%02d.%04d %.*s %s",
+						haveFbVersion ? majorFb   : major,
+						haveFbVersion ? minorFb   : minor,
+						haveFbVersion ? versionFb : version,
+						tmp ? tmp - start : 0, start, (const char*)productName );
 				}
 				break;
 
