@@ -385,6 +385,96 @@ TEST_F(ParamConversionsTest, Issue161_SLongToVarcharViaStoredProcedure) {
     ReallocStmt();
 }
 
+// Same scenario as Issue161_SLongToVarcharViaStoredProcedure, but without a
+// stored procedure — `UPDATE OR INSERT ... VALUES (?, ?) MATCHING (ID)` with
+// SQL_C_SLONG bound to a VARCHAR primary key.  The issue body claimed plain
+// DML was unaffected, but empirical testing against the old v3.0.1.21 driver
+// shows the identical silent data loss (500 rows sent, 11 stored, one with
+// embedded NUL byte) — the bug lives entirely in the conv*ToString path and
+// does not care about the statement kind.
+//
+// Also skipped on FB 6: it turns out the FB 6 "Stack overflow" regression is
+// not limited to parameterized EXECUTE PROCEDURE — any loop-prepared
+// parameterized statement trips it on CI, DML included.  Local FB 6
+// snapshots happen to behave, but the matrix runners download a newer
+// snapshot and crash.  The driver fix is exercised on the FB 3 / 4 / 5
+// matrix jobs.
+TEST_F(ParamConversionsTest, Issue161_SLongToVarcharViaDml) {
+    SKIP_ON_FIREBIRD6();
+
+    ExecIgnoreError("DROP TABLE ODBC_ISSUE161_T");
+    Commit();
+    ReallocStmt();
+
+    ExecDirect("CREATE TABLE ODBC_ISSUE161_T ("
+               "ID VARCHAR(20) NOT NULL PRIMARY KEY, "
+               "NAME VARCHAR(100))");
+    Commit();
+    ReallocStmt();
+
+    constexpr int kRowCount = 500;
+    SQLINTEGER idVal = 0;
+    SQLLEN idInd = sizeof(idVal);
+    SQLCHAR nameBuf[32] = {};
+    SQLLEN nameInd = SQL_NTS;
+
+    SQLRETURN ret = SQLPrepare(hStmt,
+        (SQLCHAR*)"UPDATE OR INSERT INTO ODBC_ISSUE161_T (ID, NAME) "
+                  "VALUES (?, ?) MATCHING (ID)", SQL_NTS);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret))
+        << "SQLPrepare failed: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+    ret = SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT,
+        SQL_C_SLONG, SQL_INTEGER, 0, 0, &idVal, sizeof(idVal), &idInd);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret))
+        << "SQLBindParameter(1) failed: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+    ret = SQLBindParameter(hStmt, 2, SQL_PARAM_INPUT,
+        SQL_C_CHAR, SQL_VARCHAR, 100, 0, nameBuf, sizeof(nameBuf), &nameInd);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret))
+        << "SQLBindParameter(2) failed: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+    for (int i = 1; i <= kRowCount; ++i) {
+        idVal = i;
+        snprintf((char*)nameBuf, sizeof(nameBuf), "name-%d", i);
+        ret = SQLExecute(hStmt);
+        ASSERT_TRUE(SQL_SUCCEEDED(ret))
+            << "SQLExecute failed on row " << i << ": "
+            << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+    }
+    Commit();
+    ReallocStmt();
+
+    ExecDirect("SELECT COUNT(*), MIN(CAST(ID AS INTEGER)), MAX(CAST(ID AS INTEGER)) "
+               "FROM ODBC_ISSUE161_T");
+    ret = SQLFetch(hStmt);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << "SQLFetch on aggregate failed";
+
+    SQLINTEGER cnt = 0, minId = 0, maxId = 0;
+    SQLLEN ind = 0;
+    SQLGetData(hStmt, 1, SQL_C_SLONG, &cnt, sizeof(cnt), &ind);
+    SQLGetData(hStmt, 2, SQL_C_SLONG, &minId, sizeof(minId), &ind);
+    SQLGetData(hStmt, 3, SQL_C_SLONG, &maxId, sizeof(maxId), &ind);
+    SQLCloseCursor(hStmt);
+
+    EXPECT_EQ(cnt, kRowCount);
+    EXPECT_EQ(minId, 1);
+    EXPECT_EQ(maxId, kRowCount);
+
+    ExecDirect("SELECT COUNT(*) FROM ODBC_ISSUE161_T "
+               "WHERE POSITION(_OCTETS x'00' IN ID) > 0");
+    ret = SQLFetch(hStmt);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << "SQLFetch on NUL check failed";
+    SQLINTEGER nulCount = -1;
+    SQLGetData(hStmt, 1, SQL_C_SLONG, &nulCount, sizeof(nulCount), &ind);
+    SQLCloseCursor(hStmt);
+    EXPECT_EQ(nulCount, 0) << "rows with embedded NUL bytes were stored";
+
+    ExecIgnoreError("DROP TABLE ODBC_ISSUE161_T");
+    Commit();
+    ReallocStmt();
+}
+
 // ===== Already-covered round-trip tests from test_data_types.cpp =====
 // (IntegerParamInsertAndSelect, VarcharParamInsertAndSelect,
 //  DoubleParamInsertAndSelect, DateParamInsertAndSelect,
