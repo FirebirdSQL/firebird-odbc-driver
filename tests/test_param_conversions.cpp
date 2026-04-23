@@ -475,6 +475,186 @@ TEST_F(ParamConversionsTest, Issue161_SLongToVarcharViaDml) {
     ReallocStmt();
 }
 
+// Rebind-per-row variant: SQLPrepare once, then for every row call
+// SQLFreeStmt(SQL_RESET_PARAMS) + SQLBindParameter(...) + SQLExecute.
+// This is the shape DuckDB's odbc-scanner odbc_copy_from uses internally,
+// and the one that originally exposed issue #161 as row *loss* (500 sent,
+// 11 stored) rather than silent NUL corruption.
+//
+// Why a separate test: this shape is the only one that exercises the
+// Sqlda::getPrecision / orgVarSqlProperties fix.  The two preponce_slong
+// tests above (Via{StoredProcedure,Dml}) bind once and never re-enter
+// defFromMetaDataIn, so a regression that reintroduced
+// `record->length = getPrecision(mutated_sqlvar)` would slip past them.
+TEST_F(ParamConversionsTest, Issue161_SLongToVarcharViaDmlRebind) {
+    SKIP_ON_FIREBIRD6();
+
+    ExecIgnoreError("DROP TABLE ODBC_ISSUE161_T");
+    Commit();
+    ReallocStmt();
+
+    ExecDirect("CREATE TABLE ODBC_ISSUE161_T ("
+               "ID VARCHAR(20) NOT NULL PRIMARY KEY, "
+               "NAME VARCHAR(100))");
+    Commit();
+    ReallocStmt();
+
+    constexpr int kRowCount = 500;
+    SQLINTEGER idVal = 0;
+    SQLLEN idInd = sizeof(idVal);
+    SQLCHAR nameBuf[32] = {};
+    SQLLEN nameInd = SQL_NTS;
+
+    SQLRETURN ret = SQLPrepare(hStmt,
+        (SQLCHAR*)"UPDATE OR INSERT INTO ODBC_ISSUE161_T (ID, NAME) "
+                  "VALUES (?, ?) MATCHING (ID)", SQL_NTS);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret))
+        << "SQLPrepare failed: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+    for (int i = 1; i <= kRowCount; ++i) {
+        ret = SQLFreeStmt(hStmt, SQL_RESET_PARAMS);
+        ASSERT_TRUE(SQL_SUCCEEDED(ret))
+            << "SQLFreeStmt(RESET_PARAMS) failed on row " << i << ": "
+            << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+        idVal = i;
+        snprintf((char*)nameBuf, sizeof(nameBuf), "name-%d", i);
+
+        ret = SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT,
+            SQL_C_SLONG, SQL_INTEGER, 0, 0, &idVal, sizeof(idVal), &idInd);
+        ASSERT_TRUE(SQL_SUCCEEDED(ret))
+            << "SQLBindParameter(1) failed on row " << i << ": "
+            << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+        ret = SQLBindParameter(hStmt, 2, SQL_PARAM_INPUT,
+            SQL_C_CHAR, SQL_VARCHAR, 100, 0, nameBuf, sizeof(nameBuf), &nameInd);
+        ASSERT_TRUE(SQL_SUCCEEDED(ret))
+            << "SQLBindParameter(2) failed on row " << i << ": "
+            << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+        ret = SQLExecute(hStmt);
+        ASSERT_TRUE(SQL_SUCCEEDED(ret))
+            << "SQLExecute failed on row " << i << ": "
+            << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+    }
+    Commit();
+    ReallocStmt();
+
+    ExecDirect("SELECT COUNT(*), MIN(CAST(ID AS INTEGER)), MAX(CAST(ID AS INTEGER)) "
+               "FROM ODBC_ISSUE161_T");
+    ret = SQLFetch(hStmt);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << "SQLFetch on aggregate failed";
+
+    SQLINTEGER cnt = 0, minId = 0, maxId = 0;
+    SQLLEN ind = 0;
+    SQLGetData(hStmt, 1, SQL_C_SLONG, &cnt, sizeof(cnt), &ind);
+    SQLGetData(hStmt, 2, SQL_C_SLONG, &minId, sizeof(minId), &ind);
+    SQLGetData(hStmt, 3, SQL_C_SLONG, &maxId, sizeof(maxId), &ind);
+    SQLCloseCursor(hStmt);
+
+    EXPECT_EQ(cnt, kRowCount);
+    EXPECT_EQ(minId, 1);
+    EXPECT_EQ(maxId, kRowCount);
+
+    ExecDirect("SELECT COUNT(*) FROM ODBC_ISSUE161_T "
+               "WHERE POSITION(_OCTETS x'00' IN ID) > 0");
+    ret = SQLFetch(hStmt);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << "SQLFetch on NUL check failed";
+    SQLINTEGER nulCount = -1;
+    SQLGetData(hStmt, 1, SQL_C_SLONG, &nulCount, sizeof(nulCount), &ind);
+    SQLCloseCursor(hStmt);
+    EXPECT_EQ(nulCount, 0) << "rows with embedded NUL bytes were stored";
+
+    ExecIgnoreError("DROP TABLE ODBC_ISSUE161_T");
+    Commit();
+    ReallocStmt();
+}
+
+// Direct-per-row variant: no SQLPrepare cache, each row is bound and executed
+// via SQLExecDirect.  Exercises the same conv*ToString path as the preponce
+// shape but without a persistent prepared-statement context between
+// iterations, guarding against any state-leak regression where per-execute
+// reset paths diverge from per-prepare paths.
+TEST_F(ParamConversionsTest, Issue161_SLongToVarcharViaDmlDirect) {
+    SKIP_ON_FIREBIRD6();
+
+    ExecIgnoreError("DROP TABLE ODBC_ISSUE161_T");
+    Commit();
+    ReallocStmt();
+
+    ExecDirect("CREATE TABLE ODBC_ISSUE161_T ("
+               "ID VARCHAR(20) NOT NULL PRIMARY KEY, "
+               "NAME VARCHAR(100))");
+    Commit();
+    ReallocStmt();
+
+    constexpr int kRowCount = 500;
+    SQLINTEGER idVal = 0;
+    SQLLEN idInd = sizeof(idVal);
+    SQLCHAR nameBuf[32] = {};
+    SQLLEN nameInd = SQL_NTS;
+
+    const char* kInsertSql =
+        "UPDATE OR INSERT INTO ODBC_ISSUE161_T (ID, NAME) "
+        "VALUES (?, ?) MATCHING (ID)";
+
+    for (int i = 1; i <= kRowCount; ++i) {
+        idVal = i;
+        snprintf((char*)nameBuf, sizeof(nameBuf), "name-%d", i);
+
+        SQLRETURN ret = SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT,
+            SQL_C_SLONG, SQL_INTEGER, 0, 0, &idVal, sizeof(idVal), &idInd);
+        ASSERT_TRUE(SQL_SUCCEEDED(ret))
+            << "SQLBindParameter(1) failed on row " << i << ": "
+            << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+        ret = SQLBindParameter(hStmt, 2, SQL_PARAM_INPUT,
+            SQL_C_CHAR, SQL_VARCHAR, 100, 0, nameBuf, sizeof(nameBuf), &nameInd);
+        ASSERT_TRUE(SQL_SUCCEEDED(ret))
+            << "SQLBindParameter(2) failed on row " << i << ": "
+            << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+        ret = SQLExecDirect(hStmt, (SQLCHAR*)kInsertSql, SQL_NTS);
+        ASSERT_TRUE(SQL_SUCCEEDED(ret))
+            << "SQLExecDirect failed on row " << i << ": "
+            << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+        SQLFreeStmt(hStmt, SQL_CLOSE);
+        SQLFreeStmt(hStmt, SQL_RESET_PARAMS);
+    }
+    Commit();
+    ReallocStmt();
+
+    ExecDirect("SELECT COUNT(*), MIN(CAST(ID AS INTEGER)), MAX(CAST(ID AS INTEGER)) "
+               "FROM ODBC_ISSUE161_T");
+    SQLRETURN ret = SQLFetch(hStmt);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << "SQLFetch on aggregate failed";
+
+    SQLINTEGER cnt = 0, minId = 0, maxId = 0;
+    SQLLEN ind = 0;
+    SQLGetData(hStmt, 1, SQL_C_SLONG, &cnt, sizeof(cnt), &ind);
+    SQLGetData(hStmt, 2, SQL_C_SLONG, &minId, sizeof(minId), &ind);
+    SQLGetData(hStmt, 3, SQL_C_SLONG, &maxId, sizeof(maxId), &ind);
+    SQLCloseCursor(hStmt);
+
+    EXPECT_EQ(cnt, kRowCount);
+    EXPECT_EQ(minId, 1);
+    EXPECT_EQ(maxId, kRowCount);
+
+    ExecDirect("SELECT COUNT(*) FROM ODBC_ISSUE161_T "
+               "WHERE POSITION(_OCTETS x'00' IN ID) > 0");
+    ret = SQLFetch(hStmt);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << "SQLFetch on NUL check failed";
+    SQLINTEGER nulCount = -1;
+    SQLGetData(hStmt, 1, SQL_C_SLONG, &nulCount, sizeof(nulCount), &ind);
+    SQLCloseCursor(hStmt);
+    EXPECT_EQ(nulCount, 0) << "rows with embedded NUL bytes were stored";
+
+    ExecIgnoreError("DROP TABLE ODBC_ISSUE161_T");
+    Commit();
+    ReallocStmt();
+}
+
 // ===== Already-covered round-trip tests from test_data_types.cpp =====
 // (IntegerParamInsertAndSelect, VarcharParamInsertAndSelect,
 //  DoubleParamInsertAndSelect, DateParamInsertAndSelect,
