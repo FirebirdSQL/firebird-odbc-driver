@@ -37,6 +37,99 @@ protected:
     std::unique_ptr<TempTable> table_;
     int nextId_ = 1;
 
+    // Shared body for Issue161 rebind-shape tests across different PK column
+    // types / charsets.  pkColumnDef is the SQL text for the PK column type,
+    // e.g. "VARCHAR(20)", "CHAR(20) CHARACTER SET UTF8", or
+    // "VARCHAR(20) CHARACTER SET NONE".  The NAME column always follows the
+    // same definition so the test varies one dimension at a time.
+    void RunIssue161RebindVariant(const char* pkColumnDef, const char* nameColumnDef) {
+        // Clean up any leftover SP first (the Issue161_*ViaStoredProcedure
+        // test above creates ODBC_ISSUE161_SP referencing ODBC_ISSUE161_T,
+        // and if that test crashes mid-run the DROP TABLE here would
+        // otherwise fail with a dependency error).
+        ExecIgnoreError("DROP PROCEDURE ODBC_ISSUE161_SP");
+        ExecIgnoreError("DROP TABLE ODBC_ISSUE161_T");
+        Commit();
+        ReallocStmt();
+
+        std::string createSql = std::string("CREATE TABLE ODBC_ISSUE161_T (")
+            + "ID " + pkColumnDef + " NOT NULL PRIMARY KEY, "
+            + "NAME " + nameColumnDef + ")";
+        ExecDirect(createSql.c_str());
+        Commit();
+        ReallocStmt();
+
+        constexpr int kRowCount = 500;
+        SQLINTEGER idVal = 0;
+        SQLLEN idInd = sizeof(idVal);
+        SQLCHAR nameBuf[32] = {};
+        SQLLEN nameInd = SQL_NTS;
+
+        SQLRETURN ret = SQLPrepare(hStmt,
+            (SQLCHAR*)"UPDATE OR INSERT INTO ODBC_ISSUE161_T (ID, NAME) "
+                      "VALUES (?, ?) MATCHING (ID)", SQL_NTS);
+        ASSERT_TRUE(SQL_SUCCEEDED(ret))
+            << "SQLPrepare failed: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+        for (int i = 1; i <= kRowCount; ++i) {
+            ret = SQLFreeStmt(hStmt, SQL_RESET_PARAMS);
+            ASSERT_TRUE(SQL_SUCCEEDED(ret))
+                << "SQLFreeStmt(RESET_PARAMS) failed on row " << i << ": "
+                << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+            idVal = i;
+            snprintf((char*)nameBuf, sizeof(nameBuf), "name-%d", i);
+
+            ret = SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT,
+                SQL_C_SLONG, SQL_INTEGER, 0, 0, &idVal, sizeof(idVal), &idInd);
+            ASSERT_TRUE(SQL_SUCCEEDED(ret))
+                << "SQLBindParameter(1) failed on row " << i << ": "
+                << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+            ret = SQLBindParameter(hStmt, 2, SQL_PARAM_INPUT,
+                SQL_C_CHAR, SQL_VARCHAR, 100, 0, nameBuf, sizeof(nameBuf), &nameInd);
+            ASSERT_TRUE(SQL_SUCCEEDED(ret))
+                << "SQLBindParameter(2) failed on row " << i << ": "
+                << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+            ret = SQLExecute(hStmt);
+            ASSERT_TRUE(SQL_SUCCEEDED(ret))
+                << "SQLExecute failed on row " << i << ": "
+                << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+        }
+        Commit();
+        ReallocStmt();
+
+        ExecDirect("SELECT COUNT(*), MIN(CAST(ID AS INTEGER)), MAX(CAST(ID AS INTEGER)) "
+                   "FROM ODBC_ISSUE161_T");
+        ret = SQLFetch(hStmt);
+        ASSERT_TRUE(SQL_SUCCEEDED(ret)) << "SQLFetch on aggregate failed";
+
+        SQLINTEGER cnt = 0, minId = 0, maxId = 0;
+        SQLLEN ind = 0;
+        SQLGetData(hStmt, 1, SQL_C_SLONG, &cnt, sizeof(cnt), &ind);
+        SQLGetData(hStmt, 2, SQL_C_SLONG, &minId, sizeof(minId), &ind);
+        SQLGetData(hStmt, 3, SQL_C_SLONG, &maxId, sizeof(maxId), &ind);
+        SQLCloseCursor(hStmt);
+
+        EXPECT_EQ(cnt, kRowCount);
+        EXPECT_EQ(minId, 1);
+        EXPECT_EQ(maxId, kRowCount);
+
+        ExecDirect("SELECT COUNT(*) FROM ODBC_ISSUE161_T "
+                   "WHERE POSITION(_OCTETS x'00' IN ID) > 0");
+        ret = SQLFetch(hStmt);
+        ASSERT_TRUE(SQL_SUCCEEDED(ret)) << "SQLFetch on NUL check failed";
+        SQLINTEGER nulCount = -1;
+        SQLGetData(hStmt, 1, SQL_C_SLONG, &nulCount, sizeof(nulCount), &ind);
+        SQLCloseCursor(hStmt);
+        EXPECT_EQ(nulCount, 0) << "rows with embedded NUL bytes were stored";
+
+        ExecIgnoreError("DROP TABLE ODBC_ISSUE161_T");
+        Commit();
+        ReallocStmt();
+    }
+
     // Insert a value using parameter binding and read it back as a string
     std::string insertAndReadBack(const char* colName,
         SQLSMALLINT cType, SQLSMALLINT sqlType,
@@ -653,6 +746,44 @@ TEST_F(ParamConversionsTest, Issue161_SLongToVarcharViaDmlDirect) {
     ExecIgnoreError("DROP TABLE ODBC_ISSUE161_T");
     Commit();
     ReallocStmt();
+}
+
+// Column-type / charset matrix for the rebind shape.
+//
+// irodushka flagged on FirebirdSQL/firebird-odbc-driver#292 that the original
+// fix might only have held for VARCHAR targets under the database's default
+// charset (UTF8 on the CI matrix's test databases), and that CHAR targets or
+// CHARACTER SET NONE might behave differently.  Empirically on Windows
+// (FB 5.0.3 / FB master) all three additional corners of the matrix pass
+// with this PR; these tests lock that in on the CI matrix (Windows x86/x64,
+// Linux x64/arm64, Windows ARM64) so a future regression on any column
+// type × charset combination fails loudly.
+//
+// Coverage before these tests (rebind shape only, default UTF8 DB):
+//   VARCHAR(20)                           ✓ Issue161_SLongToVarcharViaDmlRebind
+//   VARCHAR(20) CHARACTER SET NONE        ✗
+//   CHAR(20)    CHARACTER SET UTF8        ✗  (the specific case irodushka tested)
+//   CHAR(20)    CHARACTER SET NONE        ✗
+
+TEST_F(ParamConversionsTest, Issue161_SLongToCharViaDmlRebind) {
+    SKIP_ON_FIREBIRD6();
+    RunIssue161RebindVariant(
+        "CHAR(20) CHARACTER SET UTF8",
+        "CHAR(100) CHARACTER SET UTF8");
+}
+
+TEST_F(ParamConversionsTest, Issue161_SLongToVarcharViaDmlRebindCharsetNone) {
+    SKIP_ON_FIREBIRD6();
+    RunIssue161RebindVariant(
+        "VARCHAR(20) CHARACTER SET NONE",
+        "VARCHAR(100) CHARACTER SET NONE");
+}
+
+TEST_F(ParamConversionsTest, Issue161_SLongToCharViaDmlRebindCharsetNone) {
+    SKIP_ON_FIREBIRD6();
+    RunIssue161RebindVariant(
+        "CHAR(20) CHARACTER SET NONE",
+        "CHAR(100) CHARACTER SET NONE");
 }
 
 // ===== Already-covered round-trip tests from test_data_types.cpp =====
