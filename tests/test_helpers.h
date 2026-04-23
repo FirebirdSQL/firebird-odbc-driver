@@ -223,12 +223,34 @@ private:
     std::string name_;
 };
 
-// Returns the Firebird server major version number (e.g. 5 for Firebird 5.x, 6 for 6.x)
-// via SQL_DBMS_VER which returns strings like "05.00.0001683" or "06.00.0001884".
+// Returns the Firebird server major version number (e.g. 5 for Firebird 5.x, 6 for 6.x).
+//
+// The Firebird ODBC driver's SQL_DBMS_VER string is NOT the Firebird product
+// version — it is constructed from the implementation / protocol version
+// fields of `isc_info_version` (see IscDbc/Attachment.cpp:480) and currently
+// reads e.g. "06.03.1683 WI-V Firebird 5.0" on Firebird 5.0.3.  atoi-ing that
+// to get the major returns 6 for every supported server, so anything gated on
+// `>= 6` (notably SKIP_ON_FIREBIRD6) silently fires on FB 3 / 4 / 5 too and
+// the test is effectively disabled.
+//
+// Ask the server directly instead — `rdb$get_context('SYSTEM', 'ENGINE_VERSION')`
+// returns a straight "5.0.3" / "6.0.0.xxxx" / "3.0.12" string, trivial to parse.
 inline int GetServerMajorVersion(SQLHDBC hDbc) {
-    SQLCHAR version[32] = {};
-    SQLSMALLINT len = 0;
-    SQLGetInfo(hDbc, SQL_DBMS_VER, version, sizeof(version), &len);
+    SQLHSTMT hStmt = SQL_NULL_HSTMT;
+    if (!SQL_SUCCEEDED(SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt))) return 0;
+
+    SQLRETURN ret = SQLExecDirect(hStmt,
+        (SQLCHAR*)"SELECT RDB$GET_CONTEXT('SYSTEM', 'ENGINE_VERSION') FROM RDB$DATABASE",
+        SQL_NTS);
+    if (!SQL_SUCCEEDED(ret) || !SQL_SUCCEEDED(SQLFetch(hStmt))) {
+        SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+        return 0;
+    }
+
+    SQLCHAR version[64] = {};
+    SQLLEN ind = 0;
+    SQLGetData(hStmt, 1, SQL_C_CHAR, version, sizeof(version), &ind);
+    SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
     return std::atoi((char*)version);
 }
 

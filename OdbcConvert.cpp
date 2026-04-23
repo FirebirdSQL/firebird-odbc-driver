@@ -114,6 +114,40 @@ inline bool checkIndicatorPtr(SQLLEN* ptr, SQLLEN value, DescRecord* rec)
 	return rec->isIndicatorSqlDa ? *(short*)ptr == (short)value : *ptr == value;
 }
 
+// Single write-back path for every numeric/date/time → string converter.
+// For Firebird-side targets the VARYING-vs-TEXT layout is handled inside
+// HeadSqlVar::writeStringData so the conversion helpers do not need to
+// know about the uint16 length prefix.  For application-owned targets
+// we copy into the user buffer and report the length via the indicator.
+inline void writeConvertedString(SQLPOINTER pointer, SQLLEN *indicatorTo,
+                                 DescRecord *to, const char *src, int len)
+{
+	if (to->isIndicatorSqlDa)
+	{
+		to->headSqlVarPtr->writeStringData(src, len);
+	}
+	else
+	{
+		if (pointer && len)
+			memcpy(pointer, src, len);
+		if (indicatorTo)
+			setIndicatorPtr(indicatorTo, len, to);
+	}
+}
+
+// When a numeric/date/time C-type binds to SQL_C_WCHAR, route Firebird-side
+// targets through the byte variant.  The wide variant would write UTF-16
+// code units that Firebird would reinterpret as raw bytes and store embedded
+// NUL bytes as data.  ASCII digits / formatted dates are identical across
+// every supported charset, so the byte variant is correct regardless of the
+// column charset.  Application-owned targets keep the wide variant.
+inline ADRESS_FUNCTION chooseNumericToStringConv(DescRecord *to,
+                                                 ADRESS_FUNCTION byteFn,
+                                                 ADRESS_FUNCTION wideFn)
+{
+	return to->isIndicatorSqlDa ? byteFn : wideFn;
+}
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -208,7 +242,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convTinyIntToString;
 		case SQL_C_WCHAR:
-			return &OdbcConvert::convTinyIntToStringW;
+			return chooseNumericToStringConv(to,
+				&OdbcConvert::convTinyIntToString,
+				&OdbcConvert::convTinyIntToStringW);
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convTinyIntToTagNumeric;
@@ -263,7 +299,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convShortToString;
 		case SQL_C_WCHAR:
-			return &OdbcConvert::convShortToStringW;
+			return chooseNumericToStringConv(to,
+				&OdbcConvert::convShortToString,
+				&OdbcConvert::convShortToStringW);
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convShortToTagNumeric;
@@ -320,7 +358,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convLongToString;
 		case SQL_C_WCHAR:
-			return &OdbcConvert::convLongToStringW;
+			return chooseNumericToStringConv(to,
+				&OdbcConvert::convLongToString,
+				&OdbcConvert::convLongToStringW);
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convLongToTagNumeric;
@@ -357,7 +397,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convFloatToString;
 		case SQL_C_WCHAR:
-			return &OdbcConvert::convFloatToStringW;
+			return chooseNumericToStringConv(to,
+				&OdbcConvert::convFloatToString,
+				&OdbcConvert::convFloatToStringW);
 		default:
 			return &OdbcConvert::notYetImplemented;
 		}
@@ -391,7 +433,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDoubleToString;
 		case SQL_C_WCHAR:
-			return &OdbcConvert::convDoubleToStringW;
+			return chooseNumericToStringConv(to,
+				&OdbcConvert::convDoubleToString,
+				&OdbcConvert::convDoubleToStringW);
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convDoubleToTagNumeric;
@@ -435,7 +479,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convBigintToString;
 		case SQL_C_WCHAR:
-			return &OdbcConvert::convBigintToStringW;
+			return chooseNumericToStringConv(to,
+				&OdbcConvert::convBigintToString,
+				&OdbcConvert::convBigintToStringW);
 		case SQL_DECIMAL:
 		case SQL_C_NUMERIC:
 			return &OdbcConvert::convBigintToTagNumeric;
@@ -523,7 +569,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateToString;
 		case SQL_C_WCHAR:
-			return &OdbcConvert::convDateToStringW;
+			return chooseNumericToStringConv(to,
+				&OdbcConvert::convDateToString,
+				&OdbcConvert::convDateToStringW);
 		default:
 			return &OdbcConvert::notYetImplemented;
 		}
@@ -560,7 +608,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convTimeToString;
 		case SQL_C_WCHAR:
-			return &OdbcConvert::convTimeToStringW;
+			return chooseNumericToStringConv(to,
+				&OdbcConvert::convTimeToString,
+				&OdbcConvert::convTimeToStringW);
 		default:
 			return &OdbcConvert::notYetImplemented;
 		}
@@ -596,7 +646,9 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		case SQL_C_CHAR:
 			return &OdbcConvert::convDateTimeToString;
 		case SQL_C_WCHAR:
-			return &OdbcConvert::convDateTimeToStringW;
+			return chooseNumericToStringConv(to,
+				&OdbcConvert::convDateTimeToString,
+				&OdbcConvert::convDateTimeToStringW);
 		default:
 			return &OdbcConvert::notYetImplemented;
 		}
@@ -1303,75 +1355,57 @@ int OdbcConvert::conv##TYPE_FROM##ToString(DescRecord * from, DescRecord * to)		
 																								\
 	ODBCCONVERT_CHECKNULL( pointer );															\
 																								\
-	int len = to->length;																		\
+	int maxLen = to->length;																	\
+	int len = 0;																				\
+	char buf[128];																				\
 																								\
-	if ( !len && to->dataPtr)																	\
-		*(char*)to->dataPtr = 0;																\
+	if ( !maxLen )																				\
+	{																							\
+		if (to->dataPtr) *(char*)to->dataPtr = 0;												\
+	}																							\
 	else																						\
 	{	/* Original source from IscDbc/Value.cpp */												\
 		C_TYPE_FROM number = *(C_TYPE_FROM*)getAdressBindDataFrom((char*)from->dataPtr);		\
-		char *string = (char*)pointer;															\
 		int scale = -from->scale;																\
 																								\
 		if (number == 0)																		\
 		{																						\
 			len = 1;																			\
-			strcpy (string, "0");																\
+			buf[0] = '0';																		\
 		}																						\
 		else if (scale < -DEF_SCALE)															\
 		{																						\
 			len = 3;																			\
-			strcpy (string, "***");																\
+			buf[0] = buf[1] = buf[2] = '*';														\
 		}																						\
 		else																					\
 		{																						\
 			bool negative = false;																\
+			if (number < 0) { number = -number; negative = true; }								\
 																								\
-			if (number < 0)																		\
-			{																					\
-				number = -number;																\
-				negative = true;																\
-			}																					\
-																								\
-			char temp [100], *p = temp;															\
+			char temp[100], *p = temp;															\
 			int n;																				\
 			for (n = 0; number; number /= 10, --n)												\
 			{																					\
-				if (scale && scale == n)														\
-					*p++ = '.';																	\
-				*p++ = '0' + (char) (number % 10);												\
+				if (scale && scale == n) *p++ = '.';											\
+				*p++ = '0' + (char)(number % 10);												\
 			}																					\
-																								\
 			if (scale <= n)																		\
 			{																					\
-				for (; n > scale; --n)															\
-					*p++ = '0';																	\
+				for (; n > scale; --n) *p++ = '0';												\
 				*p++ = '.';																		\
 			}																					\
 																								\
-			char *q = string;																	\
-			int l=0;																			\
-																								\
-			if (negative)																		\
-				*q++ = '-',++l;																	\
-																								\
-			if ( p - temp > len - l )															\
-				p = temp + len - l;																\
-																								\
-			while (p > temp)																	\
-				*q++ = *--p;																	\
-																								\
-			*q = 0;																				\
-			len = q - string;																	\
+			char *q = buf;																		\
+			int l = 0;																			\
+			if (negative) { *q++ = '-'; ++l; }													\
+			if (p - temp > maxLen - l) p = temp + maxLen - l;									\
+			while (p > temp) *q++ = *--p;														\
+			len = (int)(q - buf);																\
 		}																						\
 	}																							\
 																								\
-	if ( to->isIndicatorSqlDa ) {																\
-		to->headSqlVarPtr->setSqlLen(len);														\
-	} else																						\
-	if ( indicatorTo )																			\
-		setIndicatorPtr( indicatorTo, len, to );												\
-																								\
+	writeConvertedString(pointer, indicatorTo, to, buf, len);									\
 	return SQL_SUCCESS;																			\
 }																								\
 
@@ -1384,6 +1418,9 @@ int OdbcConvert::conv##TYPE_FROM##ToStringW(DescRecord * from, DescRecord * to)	
 																								\
 	ODBCCONVERT_CHECKNULLW( pointer );															\
 																								\
+	/* getAdressFunction routes Firebird-side targets to the byte variant		*/				\
+	/* (see chooseNumericToStringConv), so this wide variant only runs against	*/				\
+	/* application-owned buffers.												*/				\
 	int len = to->length;																		\
 																								\
 	if ( !len && to->dataPtr)																	\
@@ -1766,17 +1803,17 @@ int OdbcConvert::convFloatToString(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
-	int len = to->length;
+	int maxLen = to->length;
+	int len = 0;
+	char buf[128];
 
-	if ( len )
-		ConvertFloatToString<char>(*(float*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len, &len);
+	if ( maxLen )
+	{
+		int cap = maxLen < (int)sizeof(buf) ? maxLen : (int)sizeof(buf);
+		ConvertFloatToString<char>(*(float*)getAdressBindDataFrom((char*)from->dataPtr), buf, cap, &len);
+	}
 
-	if ( to->isIndicatorSqlDa ) {
-		to->headSqlVarPtr->setSqlLen(len);
-	} else
-	if ( indicatorTo )
-		setIndicatorPtr(indicatorTo, len, to);
-
+	writeConvertedString(pointerTo, indicatorTo, to, buf, len);
 	return SQL_SUCCESS;
 }
 
@@ -1873,17 +1910,17 @@ int OdbcConvert::convDoubleToString(DescRecord * from, DescRecord * to)
 
 	ODBCCONVERT_CHECKNULL( pointerTo );
 
-	int len = to->length;
+	int maxLen = to->length;
+	int len = 0;
+	char buf[128];
 
-	if ( len )	// MAX_DOUBLE_DIGIT_LENGTH = 15
-		ConvertFloatToString<char>(*(double*)getAdressBindDataFrom((char*)from->dataPtr), pointerTo, len, &len);
+	if ( maxLen )	// MAX_DOUBLE_DIGIT_LENGTH = 15
+	{
+		int cap = maxLen < (int)sizeof(buf) ? maxLen : (int)sizeof(buf);
+		ConvertFloatToString<char>(*(double*)getAdressBindDataFrom((char*)from->dataPtr), buf, cap, &len);
+	}
 
-	if ( to->isIndicatorSqlDa ) {
-		to->headSqlVarPtr->setSqlLen(len);
-	} else
-	if ( indicatorTo )
-		setIndicatorPtr(indicatorTo, len, to);
-
+	writeConvertedString(pointerTo, indicatorTo, to, buf, len);
 	return SQL_SUCCESS;
 }
 
@@ -1989,20 +2026,15 @@ int OdbcConvert::convDateToString(DescRecord * from, DescRecord * to)
 
 	SQLUSMALLINT mday, month;
 	SQLSMALLINT year;
-
 	decode_sql_date(*(int*)getAdressBindDataFrom((char*)from->dataPtr), mday, month, year);
-	int len, outlen = to->length;
 
-	len = snprintf(pointer, outlen, "%04d-%02d-%02d",year,month,mday);
+	int outlen = to->length;
+	char buf[32];
+	int cap = outlen < (int)sizeof(buf) ? outlen : (int)sizeof(buf);
+	int len = snprintf(buf, cap, "%04d-%02d-%02d", year, month, mday);
+	if ( len < 0 || len > cap ) len = cap;
 
-	if ( len == -1 ) len = outlen;
-
-	if ( to->isIndicatorSqlDa ) {
-		to->headSqlVarPtr->setSqlLen(len);
-	} else
-	if ( indicatorTo )
-		setIndicatorPtr(indicatorTo, len, to);
-
+	writeConvertedString(pointer, indicatorTo, to, buf, len);
 	return SQL_SUCCESS;
 }
 
@@ -2167,24 +2199,20 @@ int OdbcConvert::convTimeToString(DescRecord * from, DescRecord * to)
 	SQLUSMALLINT hour, minute, second;
 	int ntime = *(int*)getAdressBindDataFrom((char*)from->dataPtr);
 	int nnano = ntime % ISC_TIME_SECONDS_PRECISION;
-
 	decode_sql_time(ntime, hour, minute, second);
 
-	int len, outlen = to->length;
+	int outlen = to->length;
+	char buf[32];
+	int cap = outlen < (int)sizeof(buf) ? outlen : (int)sizeof(buf);
+	int len;
 
 	if ( nnano )
-		len = snprintf(pointer, outlen, "%02d:%02d:%02d.%04lu",hour, minute, second, nnano);
+		len = snprintf(buf, cap, "%02d:%02d:%02d.%04lu", hour, minute, second, nnano);
 	else
-		len = snprintf(pointer, outlen, "%02d:%02d:%02d",hour, minute, second);
+		len = snprintf(buf, cap, "%02d:%02d:%02d", hour, minute, second);
+	if ( len < 0 || len > cap ) len = cap;
 
-	if ( len == -1 ) len = outlen;
-
-	if ( to->isIndicatorSqlDa ) {
-		to->headSqlVarPtr->setSqlLen(len);
-	} else
-	if ( indicatorTo )
-		setIndicatorPtr(indicatorTo, len, to);
-
+	writeConvertedString(pointer, indicatorTo, to, buf, len);
 	return SQL_SUCCESS;
 }
 
@@ -2363,24 +2391,21 @@ int OdbcConvert::convDateTimeToString(DescRecord * from, DescRecord * to)
 	SQLUSMALLINT mday, month;
 	SQLSMALLINT year;
 	SQLUSMALLINT hour, minute, second;
-
 	decode_sql_date(ndate, mday, month, year);
 	decode_sql_time(ntime, hour, minute, second);
-	int len, outlen = to->length;
+
+	int outlen = to->length;
+	char buf[48];
+	int cap = outlen < (int)sizeof(buf) ? outlen : (int)sizeof(buf);
+	int len;
 
 	if ( nnano )
-		len = snprintf(pointer, outlen, "%04d-%02d-%02d %02d:%02d:%02d.%04lu",year,month,mday,hour, minute, second, nnano);
+		len = snprintf(buf, cap, "%04d-%02d-%02d %02d:%02d:%02d.%04lu", year, month, mday, hour, minute, second, nnano);
 	else
-		len = snprintf(pointer, outlen, "%04d-%02d-%02d %02d:%02d:%02d",year,month,mday,hour, minute, second);
+		len = snprintf(buf, cap, "%04d-%02d-%02d %02d:%02d:%02d", year, month, mday, hour, minute, second);
+	if ( len < 0 || len > cap ) len = cap;
 
-	if ( len == -1 ) len = outlen;
-
-	if ( to->isIndicatorSqlDa ) {
-		to->headSqlVarPtr->setSqlLen(len);
-	} else
-	if ( indicatorTo )
-		setIndicatorPtr(indicatorTo, len, to);
-
+	writeConvertedString(pointer, indicatorTo, to, buf, len);
 	return SQL_SUCCESS;
 }
 
