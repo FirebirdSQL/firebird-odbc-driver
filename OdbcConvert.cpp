@@ -1661,25 +1661,60 @@ int OdbcConvert::notYetImplemented(DescRecord * from, DescRecord * to)
 
 int OdbcConvert::convGuidToString(DescRecord * from, DescRecord * to)
 {
-	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
 	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
 	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
 
-	ODBCCONVERT_CHECKNULL( pointer );
+	if ( to->isIndicatorSqlDa )
+	{
+		ODBCCONVERT_CHECKNULL_SQLDA;
+	}
+	else
+	{
+		char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
+		ODBCCONVERT_CHECKNULL( pointer );
+	}
 
 	SQLGUID *g = (SQLGUID*)getAdressBindDataFrom((char*)from->dataPtr);
-	int len, outlen = to->length;
 
-	len = snprintf(pointer, outlen, "%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X",
-		(unsigned int) g->Data1, g->Data2, g->Data3, g->Data4[0], g->Data4[1], g->Data4[2], g->Data4[3], g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
+	// Format into a fixed 36+1 byte buffer first so the result is independent
+	// of to->length (which can be 0 for untyped VARCHAR parameters where
+	// Firebird has not assigned a precision yet).
+	char tmp[37];
+	int srcLen = snprintf(tmp, sizeof(tmp),
+		"%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+		(unsigned int) g->Data1, g->Data2, g->Data3,
+		g->Data4[0], g->Data4[1], g->Data4[2], g->Data4[3],
+		g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
+	if (srcLen < 0 || srcLen > 36) srcLen = 36;
 
-	if ( len == -1 ) len = outlen;
-
-	if ( to->isIndicatorSqlDa ) {
-		to->headSqlVarPtr->setSqlLen(len);
-	} else
-	if ( indicatorTo )
-		setIndicatorPtr(indicatorTo, len, to);
+	if ( to->isIndicatorSqlDa )
+	{
+		// Wire format: write into our own local buffer and redirect Firebird
+		// to read from there. This avoids buffer-size assumptions about the
+		// SQLDA-allocated wire buffer (which may be tiny — e.g., 0 or 2 bytes
+		// for an untyped `?` placeholder before its precision is known).
+		// The dispatch has already called setTypeText() so the wire is
+		// SQL_TEXT (no length prefix); we write exactly srcLen bytes and
+		// set sqllen accordingly.
+		if ( !to->isLocalDataPtr )
+			to->allocateLocalDataPtr( srcLen + 1 );
+		memcpy(to->localDataPtr, tmp, srcLen);
+		to->headSqlVarPtr->setSqlLen((short)srcLen);
+		to->headSqlVarPtr->setSqlData(to->localDataPtr);
+	}
+	else
+	{
+		char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
+		// Application output buffer: copy with NULL terminator.
+		int outlen = (int)to->length;
+		int copyLen = srcLen;
+		if (outlen > 0 && copyLen >= outlen) copyLen = outlen - 1;
+		if (copyLen < 0) copyLen = 0;
+		if (copyLen > 0) memcpy(pointer, tmp, copyLen);
+		if (outlen > 0) pointer[copyLen] = '\0';
+		if (indicatorTo)
+			setIndicatorPtr(indicatorTo, srcLen, to);
+	}
 
 	return SQL_SUCCESS;
 }
