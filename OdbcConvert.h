@@ -94,6 +94,7 @@ public:
 // Guid
 	int convGuidToString(DescRecord * from, DescRecord * to);
 	int convGuidToStringW(DescRecord * from, DescRecord * to);
+	int convGuidToBinary(DescRecord * from, DescRecord * to);
 
 // TinyInt
 	int convTinyIntToBoolean(DescRecord * from, DescRecord * to);
