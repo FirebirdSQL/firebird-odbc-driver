@@ -12,7 +12,6 @@
 class CopyDescCrashTest : public OdbcConnectedTest {};
 
 TEST_F(CopyDescCrashTest, CopyEmptyARDDoesNotCrash) {
-    GTEST_SKIP() << "Requires Phase 7: ODBC Crusher-identified bug fixes (not yet merged)";
     // Allocate two statements with no bindings (empty ARDs)
     SQLHSTMT stmt1 = AllocExtraStmt();
     SQLHSTMT stmt2 = AllocExtraStmt();
@@ -49,7 +48,6 @@ TEST_F(CopyDescCrashTest, CopyEmptyARDDoesNotCrash) {
 }
 
 TEST_F(CopyDescCrashTest, CopyEmptyToExplicitDescriptor) {
-    GTEST_SKIP() << "Requires Phase 7: ODBC Crusher-identified bug fixes (not yet merged)";
     // Allocate an explicit descriptor
     SQLHDESC hExplicit = SQL_NULL_HDESC;
     SQLRETURN ret = SQLAllocHandle(SQL_HANDLE_DESC, hDbc, &hExplicit);
@@ -70,7 +68,6 @@ TEST_F(CopyDescCrashTest, CopyEmptyToExplicitDescriptor) {
 }
 
 TEST_F(CopyDescCrashTest, CopyPopulatedThenEmpty) {
-    GTEST_SKIP() << "Requires Phase 7: ODBC Crusher-identified bug fixes (not yet merged)";
     // First, populate an explicit descriptor by copying a populated ARD
     SQLINTEGER val = 0;
     SQLLEN ind = 0;

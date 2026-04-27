@@ -210,7 +210,8 @@ SQLRETURN OdbcDesc::operator =(OdbcDesc &sour)
 
 	for ( int n = 0 ; n <= headCount ; n++ )
 	{
-		DescRecord *srcrec = sour.records[n];
+		// sour.records is NULL for an empty source — guard like the other loops in this file.
+		DescRecord *srcrec = sour.records ? sour.records[n] : NULL;
 		DescRecord &rec = *getDescRecord ( n );
 
 		if ( srcrec )
