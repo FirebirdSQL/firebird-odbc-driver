@@ -3,6 +3,7 @@
 // Tests SQLConnect, SQLDriverConnect, attribute persistence, and transaction behavior.
 
 #include "test_helpers.h"
+#include <cctype>
 #include <thread>
 #include <chrono>
 
@@ -708,4 +709,130 @@ TEST_F(ConnectionResetTest, ResetResetsQueryTimeout) {
     ASSERT_TRUE(SQL_SUCCEEDED(ret));
     EXPECT_EQ(timeout, 0u)
         << "Query timeout should be 0 after connection reset";
+}
+
+// ===== Negative SQLDriverConnect tests =====
+//
+// When SQLDriverConnect fails the driver must populate a well-formed diagnostic
+// record. A failed call that returns an empty SQLSTATE, a wild native code or
+// a message whose strlen does not match the reported length leaves callers
+// with no way to recover or branch on the error.
+
+namespace {
+
+// Replace the value of a single connection-string key (case-insensitive). If
+// the key isn't present the original string is returned unchanged.
+std::string ReplaceConnKey(const std::string &conn,
+                           const std::string &key,
+                           const std::string &newValue) {
+    std::string out;
+    size_t pos = 0;
+    while (pos < conn.size()) {
+        size_t end = conn.find(';', pos);
+        if (end == std::string::npos) end = conn.size();
+        std::string token = conn.substr(pos, end - pos);
+        size_t eq = token.find('=');
+        std::string tokKey = (eq != std::string::npos) ? token.substr(0, eq) : token;
+        std::string tokKeyLower = tokKey;
+        std::string keyLower = key;
+        for (auto &c : tokKeyLower) c = (char)tolower((unsigned char)c);
+        for (auto &c : keyLower)    c = (char)tolower((unsigned char)c);
+        if (tokKeyLower == keyLower)
+            out += tokKey + "=" + newValue;
+        else
+            out += token;
+        if (end < conn.size()) out += ';';
+        pos = end + 1;
+    }
+    return out;
+}
+
+} // namespace
+
+// Failed login (wrong password) must produce a well-formed diagnostic record.
+// Note: Firebird in embedded/local-trusted-auth mode (which CI uses) does not
+// check the password, so this test skips itself when the connect unexpectedly
+// succeeds.
+TEST_F(ConnectOptionsTest, BadPasswordReturnsValidDiagRec) {
+    AllocEnvAndDbc();
+
+    std::string badConn = ReplaceConnKey(GetConnectionString(),
+                                         "PWD", "invalid-password-xyz");
+
+    SQLCHAR outStr[1024] = {};
+    SQLSMALLINT outLen = 0;
+    SQLRETURN rc = SQLDriverConnect(hDbc, NULL,
+        (SQLCHAR*)badConn.c_str(), SQL_NTS,
+        outStr, sizeof(outStr), &outLen,
+        SQL_DRIVER_NOPROMPT);
+    if (SQL_SUCCEEDED(rc)) {
+        GTEST_SKIP() << "Connect succeeded despite invalid password; the "
+                        "Firebird server is using embedded or trusted "
+                        "authentication and won't exercise the failure path.";
+    }
+
+    SQLCHAR sqlState[6] = {};
+    SQLINTEGER native = 0;
+    SQLCHAR msg[1024] = {};
+    SQLSMALLINT msgLen = 0;
+    SQLRETURN drc = SQLGetDiagRec(SQL_HANDLE_DBC, hDbc, 1, sqlState, &native,
+                                  msg, sizeof(msg), &msgLen);
+    ASSERT_EQ(drc, SQL_SUCCESS)
+        << "SQLGetDiagRec must return a record after SQLDriverConnect failure";
+
+    EXPECT_EQ(strlen((char*)sqlState), 5u)
+        << "SQLSTATE must be exactly 5 chars, got '"
+        << (char*)sqlState << "' (len=" << strlen((char*)sqlState) << ")";
+
+    EXPECT_EQ((size_t)msgLen, strlen((char*)msg))
+        << "Reported message length (" << msgLen
+        << ") must match strlen of returned message ("
+        << strlen((char*)msg) << "); message='" << (char*)msg << "'";
+
+    EXPECT_GT(strlen((char*)msg), 1u)
+        << "Message must contain more than a single byte; got '"
+        << (char*)msg << "'";
+}
+
+// Failed connect to a nonexistent database must also produce a well-formed
+// diagnostic record.
+TEST_F(ConnectOptionsTest, NonexistentDatabaseReturnsValidDiagRec) {
+    AllocEnvAndDbc();
+
+    // Build a connection string with the same Driver but pointing at a path
+    // that cannot exist. Try both spellings: Database= and Dbname=.
+    std::string bogus = "/nonexistent/path/no-such-database.fdb";
+    std::string badConn = ReplaceConnKey(GetConnectionString(), "Database", bogus);
+    badConn = ReplaceConnKey(badConn, "Dbname", bogus);
+
+    SQLCHAR outStr[1024] = {};
+    SQLSMALLINT outLen = 0;
+    SQLRETURN rc = SQLDriverConnect(hDbc, NULL,
+        (SQLCHAR*)badConn.c_str(), SQL_NTS,
+        outStr, sizeof(outStr), &outLen,
+        SQL_DRIVER_NOPROMPT);
+    ASSERT_FALSE(SQL_SUCCEEDED(rc))
+        << "Connect to nonexistent database was expected to fail";
+
+    SQLCHAR sqlState[6] = {};
+    SQLINTEGER native = 0;
+    SQLCHAR msg[1024] = {};
+    SQLSMALLINT msgLen = 0;
+    SQLRETURN drc = SQLGetDiagRec(SQL_HANDLE_DBC, hDbc, 1, sqlState, &native,
+                                  msg, sizeof(msg), &msgLen);
+    ASSERT_EQ(drc, SQL_SUCCESS)
+        << "SQLGetDiagRec must return a record after SQLDriverConnect failure";
+
+    EXPECT_EQ(strlen((char*)sqlState), 5u)
+        << "SQLSTATE must be exactly 5 chars, got '"
+        << (char*)sqlState << "' (len=" << strlen((char*)sqlState) << ")";
+
+    EXPECT_EQ((size_t)msgLen, strlen((char*)msg))
+        << "Reported message length (" << msgLen
+        << ") must match strlen of returned message ("
+        << strlen((char*)msg) << "); message='" << (char*)msg << "'";
+
+    EXPECT_GT(strlen((char*)msg), 1u)
+        << "Message must contain more than a single byte; got '"
+        << (char*)msg << "'";
 }
