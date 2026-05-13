@@ -789,11 +789,20 @@ void CDsnDialog::OnTestConnection( HWND hDlg )
 
 		MessageBox( hDlg, _TR( IDS_MESSAGE_01, "Connection successful!" ), TEXT( strHeadDlg ), MB_ICONINFORMATION | MB_OK );
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
 		char buffer[2048];
-		JString text = exception.getText();
+		JString text = ex.getText();
+
+		sprintf( buffer, "%s\n%s", _TR( IDS_MESSAGE_02, "Connection failed!" ), (const char*)text );
+		removeNameFileDBfromMessage ( buffer );
+
+		MessageBox( hDlg, TEXT( buffer ), TEXT( strHeadDlg ), MB_ICONERROR | MB_OK );
+	}
+	catch (std::exception &ex)
+	{
+		char buffer[2048];
+		JString text = ex.what();
 
 		sprintf( buffer, "%s\n%s", _TR( IDS_MESSAGE_02, "Connection failed!" ), (const char*)text );
 		removeNameFileDBfromMessage ( buffer );

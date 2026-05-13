@@ -158,8 +158,8 @@ void TraceOutput(char * msg, intptr_t val)
 	OutputDebugString(buf);
 }
 
-//	Bound Address + Binding Offset + ((Row Number – 1) x Element Size)
-//	*ptr = binding->pointer + bindOffsetPtr + ((1 – 1) * rowBindType); // <-- for single row
+//	Bound Address + Binding Offset + ((Row Number ï¿½ 1) x Element Size)
+//	*ptr = binding->pointer + bindOffsetPtr + ((1 ï¿½ 1) * rowBindType); // <-- for single row
 #define GETBOUNDADDRESS(binding)	( (uintptr_t)binding->dataPtr + ( applicationParamDescriptor->headBindType ? (uintptr_t)bindOffsetPtr : 0 ) );
 
 //////////////////////////////////////////////////////////////////////
@@ -302,10 +302,14 @@ SQLRETURN OdbcStatement::sqlTables(SQLCHAR * catalog, int catLength,
 		DatabaseMetaData *metaData = connection->getMetaData();
 		setResultSet (metaData->getTables (cat, scheme, tbl, numberTypes, typeVector));
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -329,10 +333,14 @@ SQLRETURN OdbcStatement::sqlTablePrivileges(SQLCHAR * catalog, int catLength,
 		DatabaseMetaData *metaData = connection->getMetaData();
 		setResultSet (metaData->getTablePrivileges (cat, scheme, tbl));
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -358,10 +366,14 @@ SQLRETURN OdbcStatement::sqlColumnPrivileges(SQLCHAR * catalog, int catLength,
 		DatabaseMetaData *metaData = connection->getMetaData();
 		setResultSet (metaData->getColumnPrivileges (cat, scheme, tbl, col));
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -479,10 +491,14 @@ SQLRETURN OdbcStatement::sqlPrepare(SQLCHAR * sql, int sqlLength)
 			}
 		}
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -710,10 +726,14 @@ SQLRETURN OdbcStatement::sqlBindCol(int column, int targetType, SQLPOINTER targe
 			bulkInsert = NULL;
 		}
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -818,11 +838,17 @@ SQLRETURN OdbcStatement::fetchData()
 			return SQL_NO_DATA;
 		}
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
 		bindOffsetPtr = bindOffsetPtrSave;
-		OdbcError *error = postError ("HY000", exception);
+		OdbcError *error = postError ("HY000", ex);
+		error->setRowNumber (rowNumber);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		bindOffsetPtr = bindOffsetPtrSave;
+		OdbcError *error = postError ("HY000", ex);
 		error->setRowNumber (rowNumber);
 		return SQL_ERROR;
 	}
@@ -1406,7 +1432,7 @@ SQLRETURN OdbcStatement::sqlBulkOperations( int operation )
 			return sqlReturn( SQL_ERROR, "IM001", (const char*)"Driver does not support this function" );
 		}
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
 		if ( bulkInsert )
 		{
@@ -1416,8 +1442,20 @@ SQLRETURN OdbcStatement::sqlBulkOperations( int operation )
 			bulkInsert->statement->rollbackLocal();
 		}
 
-		SQLException &exception = (SQLException&)ex;
-		postError( "HY000", exception );
+		postError( "HY000", ex );
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		if ( bulkInsert )
+		{
+			if ( bulkInsert->infoPosted )
+				*this << bulkInsert;
+
+			bulkInsert->statement->rollbackLocal();
+		}
+
+		postError( "HY000", ex );
 		return SQL_ERROR;
 	}
 
@@ -1522,10 +1560,14 @@ SQLRETURN OdbcStatement::sqlColumns(SQLCHAR * catalog, int catLength, SQLCHAR * 
 		DatabaseMetaData *metaData = connection->getMetaData();
 		setResultSet (metaData->getColumns (cat, scheme, tbl, col));
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -1564,10 +1606,14 @@ SQLRETURN OdbcStatement::sqlFreeStmt(int option)
 			break;
 		}
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -1627,10 +1673,14 @@ SQLRETURN OdbcStatement::sqlStatistics(SQLCHAR * catalog, int catLength,
 										unique == SQL_INDEX_UNIQUE, 
 										reservedSic == SQL_QUICK));
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -1652,10 +1702,14 @@ SQLRETURN OdbcStatement::sqlPrimaryKeys(SQLCHAR * catalog, int catLength, SQLCHA
 		DatabaseMetaData *metaData = connection->getMetaData();
 		setResultSet (metaData->getPrimaryKeys (cat, scheme, tbl));
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -1685,10 +1739,14 @@ SQLRETURN OdbcStatement::sqlForeignKeys (SQLCHAR * pkCatalog, int pkCatLength,
 		DatabaseMetaData *metaData = connection->getMetaData();
 		setResultSet (metaData->getCrossReference (pkCat, pkScheme,pkTbl,fkCat,fkScheme,fkTbl));
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -1715,10 +1773,14 @@ SQLRETURN OdbcStatement::sqlNumParams(SWORD * params)
 			if( params )
 				*params = statement->getNumParams();
 		}
-		catch ( std::exception &ex )
+		catch (SQLException &ex)
 		{
-			SQLException &exception = (SQLException&)ex;
-			postError ("HY000", exception);
+			postError ("HY000", ex);
+			return SQL_ERROR;
+		}
+		catch (std::exception &ex)
+		{
+			postError ("HY000", ex);
 			return SQL_ERROR;
 		}
 	else if( params )
@@ -1766,10 +1828,14 @@ SQLRETURN OdbcStatement::sqlDescribeCol(int col,
 		OutputDebugString (tempDebugStr);
 #endif
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -1897,10 +1963,14 @@ SQLRETURN OdbcStatement::sqlGetData(int column, int cType, PTR pointer, SQLLEN b
 				return SQL_SUCCESS_WITH_INFO;
 			}
 		}
-		catch ( std::exception &ex )
+		catch (SQLException &ex)
 		{
-			SQLException &exception = (SQLException&)ex;
-			postError ("HY000", exception);
+			postError ("HY000", ex);
+			return SQL_ERROR;
+		}
+		catch (std::exception &ex)
+		{
+			postError ("HY000", ex);
 			return SQL_ERROR;
 		}
 	}
@@ -1920,10 +1990,14 @@ SQLRETURN OdbcStatement::sqlExecute()
 		parameterNeedData = 0;
 		retcode = (this->*execute)();
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		retcode = SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		retcode = SQL_ERROR;
 	}
 
@@ -1944,10 +2018,14 @@ SQLRETURN OdbcStatement::sqlExecDirect(SQLCHAR * sql, int sqlLength)
 		parameterNeedData = 0;
 		retcode = (this->*execute)();
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -2037,10 +2115,14 @@ SQLRETURN OdbcStatement::sqlDescribeParam(int parameter, SWORD * sqlType, SQLULE
 		if (nullable)
 			*nullable = (metaData->isNullable (parameter)) ? SQL_NULLABLE : SQL_NO_NULLS;
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -2290,10 +2372,14 @@ SQLRETURN OdbcStatement::sqlBindParameter(int parameter, int type, int cType,
 
 		registrationOutParameter = false;
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -2306,10 +2392,14 @@ SQLRETURN OdbcStatement::sqlCancel()
 	{
 		cancel = true;
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -2331,10 +2421,14 @@ SQLRETURN OdbcStatement::sqlProcedures(SQLCHAR * catalog, int catLength, SQLCHAR
 		DatabaseMetaData *metaData = connection->getMetaData();
 		setResultSet (metaData->getProcedures (cat, scheme, procedures));
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -2357,10 +2451,14 @@ SQLRETURN OdbcStatement::sqlProcedureColumns(SQLCHAR * catalog, int catLength, S
 		DatabaseMetaData *metaData = connection->getMetaData();
 		setResultSet (metaData->getProcedureColumns (cat, scheme, procedures, columns));
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -2384,10 +2482,14 @@ SQLRETURN OdbcStatement::sqlSetCursorName(SQLCHAR * name, int nameLength)
 			setPreCursorName = false;
 		}
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -2403,10 +2505,14 @@ SQLRETURN OdbcStatement::sqlCloseCursor()
 		setPreCursorName = false;
 		releaseResultSet();
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -2560,10 +2666,14 @@ SQLRETURN OdbcStatement::sqlGetStmtAttr(int attribute, SQLPOINTER ptr, int buffe
 		if (lengthPtr)
 			*lengthPtr = sizeof (intptr_t);
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -2577,10 +2687,14 @@ SQLRETURN OdbcStatement::sqlGetCursorName(SQLCHAR *name, int bufferLength, SQLSM
 	{
 		returnStringInfo (name, bufferLength, nameLength, cursorName);
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 	return sqlSuccess();
@@ -2981,10 +3095,14 @@ SQLRETURN OdbcStatement::executeCommit()
 			statement->commitLocal();
 			return SQL_SUCCESS;
 		}
-		catch ( std::exception &ex )
+		catch (SQLException &ex)
 		{
-			SQLException &exception = (SQLException&)ex;
-			postError( "S1000", exception );
+			postError( "S1000", ex );
+			return SQL_ERROR;
+		}
+		catch (std::exception &ex)
+		{
+			postError( "S1000", ex );
 			return SQL_ERROR;
 		}
 	}
@@ -3003,10 +3121,14 @@ SQLRETURN OdbcStatement::executeRollback()
 			statement->rollbackLocal();
 			return SQL_SUCCESS;
 		}
-		catch ( std::exception &ex )
+		catch (SQLException &ex)
 		{
-			SQLException &exception = (SQLException&)ex;
-			postError( "S1000", exception );
+			postError( "S1000", ex );
+			return SQL_ERROR;
+		}
+		catch (std::exception &ex)
+		{
+			postError( "S1000", ex );
 			return SQL_ERROR;
 		}
 	}
@@ -3034,10 +3156,14 @@ SQLRETURN OdbcStatement::sqlGetTypeInfo(int dataType)
 		DatabaseMetaData *metaData = connection->getMetaData();
 		setResultSet (metaData->getTypeInfo (dataType), false);
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -3109,10 +3235,14 @@ SQLRETURN OdbcStatement::sqlParamData(SQLPOINTER *ptr)
 			*(uintptr_t*)ptr = GETBOUNDADDRESS(binding);
 		}
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		retcode = SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		retcode = SQL_ERROR;
 	}
 
@@ -3479,10 +3609,14 @@ SQLRETURN OdbcStatement::sqlSetStmtAttr(int attribute, SQLPOINTER ptr, int lengt
 			return sqlReturn (SQL_ERROR, "HYC00", "Optional feature not implemented");
 		}
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -3511,10 +3645,14 @@ SQLRETURN OdbcStatement::sqlRowCount(SQLLEN *rowCount)
 				*rowCount = -1;
 		}
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -3651,10 +3789,14 @@ SQLRETURN OdbcStatement::sqlColAttribute( int column, int fieldId, SQLPOINTER at
 			}
 		}
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -3705,10 +3847,14 @@ SQLRETURN OdbcStatement::sqlSpecialColumns(unsigned short rowId, SQLCHAR * catal
 			eof = true;
 		}
 	}
-	catch ( std::exception &ex )
+	catch (SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 

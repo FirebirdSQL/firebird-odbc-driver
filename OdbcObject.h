@@ -58,6 +58,7 @@ public:
 	OdbcError* postError (const char *state, JString msg);
 	const char * getString (char **temp, const UCHAR *string, int length, const char *defaultValue);
 	OdbcError* postError (const char *sqlState, SQLException &exception);
+	OdbcError* postError (const char *sqlState, std::exception &ex);
 	void operator <<(OdbcObject * obj);
 	void clearErrors();
 	OdbcError* postError (OdbcError *error);
