@@ -258,7 +258,7 @@ void OdbcObject::clearErrors()
 }
 
 
-OdbcError* OdbcObject::postError(const char * sqlState, SQLException &exception)
+OdbcError* OdbcObject::postError(const char * sqlState, const SQLException &exception)
 {
 	return postError( new OdbcError( exception.getSqlcode(), exception.getFbcode(), sqlState, exception.getText() ) );
 }
@@ -267,7 +267,7 @@ OdbcError* OdbcObject::postError(const char * sqlState, SQLException &exception)
 // site that catches SQLException first will dispatch the SQLException
 // overload above and only reach this one for non-SQLException objects, so
 // we can use what() directly without any runtime type check.
-OdbcError* OdbcObject::postError(const char * sqlState, std::exception &ex)
+OdbcError* OdbcObject::postError(const char * sqlState, const std::exception &ex)
 {
 	return postError( new OdbcError( 0, 0, sqlState, ex.what() ) );
 }
