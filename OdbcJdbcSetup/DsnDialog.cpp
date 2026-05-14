@@ -789,7 +789,7 @@ void CDsnDialog::OnTestConnection( HWND hDlg )
 
 		MessageBox( hDlg, _TR( IDS_MESSAGE_01, "Connection successful!" ), TEXT( strHeadDlg ), MB_ICONINFORMATION | MB_OK );
 	}
-	catch (SQLException &ex)
+	catch (const SQLException &ex)
 	{
 		char buffer[2048];
 		JString text = ex.getText();
@@ -799,7 +799,7 @@ void CDsnDialog::OnTestConnection( HWND hDlg )
 
 		MessageBox( hDlg, TEXT( buffer ), TEXT( strHeadDlg ), MB_ICONERROR | MB_OK );
 	}
-	catch (std::exception &ex)
+	catch (const std::exception &ex)
 	{
 		char buffer[2048];
 		JString text = ex.what();

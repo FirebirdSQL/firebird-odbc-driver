@@ -112,7 +112,7 @@ SQLError::~SQLError () throw()
 
 }
 
-int SQLError::getSqlcode ()
+int SQLError::getSqlcode () const
 {
 /**************************************
  *
@@ -128,7 +128,7 @@ int SQLError::getSqlcode ()
 return sqlcode;
 }
 
-int SQLError::getFbcode ()
+int SQLError::getFbcode () const
 {
 /**************************************
  *
@@ -144,7 +144,7 @@ int SQLError::getFbcode ()
 return fbcode;
 }
 
-const char *SQLError::getText ()
+const char *SQLError::getText () const
 {
 /**************************************
  *
@@ -160,7 +160,7 @@ const char *SQLError::getText ()
 return text;
 }
 
-SQLError::operator const char* ()
+SQLError::operator const char* () const
 {
 /**************************************
  *
@@ -193,7 +193,7 @@ SQLError::SQLError( int code, __int64 codefb, const char * txt, ...)
 	fbcode = (int) codefb;
 }
 
-const char* SQLError::getTrace()
+const char* SQLError::getTrace() const
 {
 	return stackTrace;
 }
