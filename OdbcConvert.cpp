@@ -1001,12 +1001,38 @@ ADRESS_FUNCTION OdbcConvert::getAdressFunction(DescRecord * from, DescRecord * t
 		}
 		break;
 	case SQL_C_GUID:
+		// Wire-side (input parameter binding) — Firebird's IPD describes the slot
+		// as either BINARY(16) / CHAR(16) OCTETS, a text VARCHAR/CHAR, or (FB4+)
+		// genuine BINARY. Route to dedicated wire-only conversions; leave the
+		// pre-existing convGuidToString / convGuidToStringW untouched for the
+		// app-side fetch path below.
+		if ( to->isIndicatorSqlDa )
+		{
+			// BINARY(16) / CHAR(16) CHARACTER SET OCTETS — 16 raw bytes
+			if ( to->headSqlVarPtr->getSqlSubtype() == 1
+				&& to->headSqlVarPtr->getSqlLen() == 16 )
+				return &OdbcConvert::convGuidToBinary;
+			// FB4+ BINARY/VARBINARY described directly as SQL_C_BINARY
+			if ( to->conciseType == SQL_C_BINARY )
+				return &OdbcConvert::convGuidToBinary;
+			// Text wire (VARCHAR/CHAR, any charset) — 36-char canonical UUID.
+			// setTypeText() converts SQL_VARYING to SQL_TEXT so convGuidToVarString
+			// can write the bytes without a length prefix.
+			to->headSqlVarPtr->setTypeText();
+			return &OdbcConvert::convGuidToVarString;
+		}
+		// App-side output (fetching a column described as SQL_GUID into the
+		// application's bound buffer). Currently unreachable because the column
+		// side of SQL_GUID mapping is task T5-5 (open), but kept intact for when
+		// that lands.
 		switch(to->conciseType)
 		{
 		case SQL_C_CHAR:
 			return &OdbcConvert::convGuidToString;
 		case SQL_C_WCHAR:
 			return &OdbcConvert::convGuidToStringW;
+		case SQL_C_BINARY:
+			return &OdbcConvert::convGuidToBinary;
 		default:
 			return &OdbcConvert::notYetImplemented;
 		}
@@ -1684,6 +1710,80 @@ int OdbcConvert::convGuidToStringW(DescRecord * from, DescRecord * to)
 	} else
 	if ( indicatorTo )
 		setIndicatorPtr(indicatorTo, len, to);
+
+	return SQL_SUCCESS;
+}
+
+// Write SQLGUID as 16 bytes in canonical UUID byte order (Data1/2/3 big-endian, Data4 unchanged).
+// Used when the target is BINARY(16) / CHAR(16) CHARACTER SET OCTETS or SQL_C_BINARY.
+int OdbcConvert::convGuidToBinary(DescRecord * from, DescRecord * to)
+{
+	char* pointer = (char*)getAdressBindDataTo((char*)to->dataPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL( pointer );
+
+	SQLGUID *g = (SQLGUID*)getAdressBindDataFrom((char*)from->dataPtr);
+
+	unsigned char buf[16];
+	buf[0]  = (unsigned char)((g->Data1 >> 24) & 0xFF);
+	buf[1]  = (unsigned char)((g->Data1 >> 16) & 0xFF);
+	buf[2]  = (unsigned char)((g->Data1 >>  8) & 0xFF);
+	buf[3]  = (unsigned char)( g->Data1        & 0xFF);
+	buf[4]  = (unsigned char)((g->Data2 >>  8) & 0xFF);
+	buf[5]  = (unsigned char)( g->Data2        & 0xFF);
+	buf[6]  = (unsigned char)((g->Data3 >>  8) & 0xFF);
+	buf[7]  = (unsigned char)( g->Data3        & 0xFF);
+	memcpy(buf + 8, g->Data4, 8);
+
+	int outlen = (int)to->length;
+	int len = outlen < 16 ? outlen : 16;
+
+	if ( len > 0 )
+		memcpy(pointer, buf, len);
+
+	if ( to->isIndicatorSqlDa ) {
+		to->headSqlVarPtr->setSqlLen(len);
+	} else
+	if ( indicatorTo )
+		setIndicatorPtr(indicatorTo, len, to);
+
+	return SQL_SUCCESS;
+}
+
+// Write SQLGUID as the 36-char canonical UUID string into a Firebird text
+// parameter slot (VARCHAR/CHAR of any text charset). The wire-side SQLDA
+// buffer for an untyped `?` placeholder is sized for VARCHAR(0) — too small
+// for 36 bytes — so we stage the string in the DescRecord's local buffer
+// and redirect Firebird to read from there via setSqlData(), mirroring the
+// idiom transferStringToAllowedType already uses for app→wire string moves.
+// The dispatch in getAdressFunction has already called setTypeText() to
+// convert SQL_VARYING wires to SQL_TEXT (no length prefix), so we just
+// write 36 raw bytes and set sqllen.
+int OdbcConvert::convGuidToVarString(DescRecord * from, DescRecord * to)
+{
+	SQLLEN * indicatorFrom = getAdressBindIndFrom((char*)from->indicatorPtr);
+	SQLLEN * indicatorTo = getAdressBindIndTo((char*)to->indicatorPtr);
+
+	ODBCCONVERT_CHECKNULL_SQLDA;
+
+	SQLGUID *g = (SQLGUID*)getAdressBindDataFrom((char*)from->dataPtr);
+
+	char tmp[37];
+	int srcLen = snprintf(tmp, sizeof(tmp),
+		"%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+		(unsigned int) g->Data1, g->Data2, g->Data3,
+		g->Data4[0], g->Data4[1], g->Data4[2], g->Data4[3],
+		g->Data4[4], g->Data4[5], g->Data4[6], g->Data4[7]);
+	if ( srcLen < 0 || srcLen > 36 ) srcLen = 36;
+
+	if ( !to->isLocalDataPtr )
+		to->allocateLocalDataPtr( srcLen + 1 );
+
+	memcpy(to->localDataPtr, tmp, srcLen);
+	to->headSqlVarPtr->setSqlLen((short)srcLen);
+	to->headSqlVarPtr->setSqlData(to->localDataPtr);
 
 	return SQL_SUCCESS;
 }
