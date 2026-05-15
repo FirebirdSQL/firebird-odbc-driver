@@ -103,6 +103,27 @@ public:
 	inline char *	getSqlData() { return sqlvar->sqldata; }
 	inline short *	getSqlInd() { return sqlvar->sqlind; }
 
+	// Write `len` bytes from `src` into the sqlvar's pre-allocated buffer,
+	// honoring Firebird's in-buffer layout for the prepared type:
+	//   SQL_VARYING : [uint16 len][data...] — leaves sqltype/sqllen untouched
+	//                 so checkAndRebuild() sees no override and Firebird reads
+	//                 the buffer using the original VARCHAR(N) metadata.
+	//   SQL_TEXT    : bare bytes; reports the effective length via sqllen.
+	inline void		writeStringData(const char *src, int len)
+	{
+		char *buf = sqlvar->sqldata;
+		if (sqlvar->sqltype == SQL_VARYING)
+		{
+			*(unsigned short*)buf = (unsigned short)len;
+			memcpy(buf + sizeof(short), src, len);
+		}
+		else
+		{
+			memcpy(buf, src, len);
+			sqlvar->sqllen = (short)len;
+		}
+	}
+
 	// not used
 	//void		setSqlInd( short *ind ) { sqlvar->sqlind = ind; }
 	//void		setSqlType ( short type ) { sqlvar->sqltype = type; }
