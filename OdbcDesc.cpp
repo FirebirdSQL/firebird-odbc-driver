@@ -805,12 +805,12 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			return returnStringInfo (ptr, bufferLength, lengthPtr, (char*)string);
 
 	}
-	catch (SQLException &ex)
+	catch (const SQLException &ex)
 	{
 		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
-	catch (std::exception &ex)
+	catch (const std::exception &ex)
 	{
 		postError ("HY000", ex);
 		return SQL_ERROR;
@@ -1220,12 +1220,12 @@ SQLRETURN OdbcDesc::sqlGetDescRec(	SQLSMALLINT recNumber,
 		*scalePtr = record->scale;
 		*nullablePtr = record->nullable;
 	}
-	catch (SQLException &ex)
+	catch (const SQLException &ex)
 	{
 		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
-	catch (std::exception &ex)
+	catch (const std::exception &ex)
 	{
 		postError ("HY000", ex);
 		return SQL_ERROR;
@@ -1272,12 +1272,12 @@ SQLRETURN OdbcDesc::sqlSetDescRec(	SQLSMALLINT	recNumber,
 		record->octetLengthPtr = stringLengthPtr;
 		record->indicatorPtr = indicatorPtr;
 	}
-	catch (SQLException &ex)
+	catch (const SQLException &ex)
 	{
 		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
-	catch (std::exception &ex)
+	catch (const std::exception &ex)
 	{
 		postError ("HY000", ex);
 		return SQL_ERROR;

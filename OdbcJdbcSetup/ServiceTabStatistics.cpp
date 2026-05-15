@@ -219,7 +219,7 @@ void CServiceTabStatistics::onStartStatistics()
 		SendMessage( hWndBar, PBM_SETPOS, (WPARAM)100 , (LPARAM)NULL );
 		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
 	}
-	catch (SQLException &ex)
+	catch (const SQLException &ex)
 	{
 		writeFooterToLogFile();
 		EnableWindow( GetDlgItem( hDlg, IDOK ), TRUE );
@@ -230,7 +230,7 @@ void CServiceTabStatistics::onStartStatistics()
 		sprintf(buffer, "sqlcode %d, fbcode %d - %s", ex.getSqlcode(), ex.getFbcode(), (const char*)text );
 		MessageBox( NULL, buffer, TEXT( "Error!" ), MB_ICONERROR | MB_OK );
 	}
-	catch (std::exception &ex)
+	catch (const std::exception &ex)
 	{
 		writeFooterToLogFile();
 		EnableWindow( GetDlgItem( hDlg, IDOK ), TRUE );

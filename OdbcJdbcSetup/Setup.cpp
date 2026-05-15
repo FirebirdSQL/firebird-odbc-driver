@@ -1068,14 +1068,14 @@ bool Setup::addDsn()
 
 					return true;
 				}
-				catch (SQLException &ex)
+				catch (const SQLException &ex)
 				{
 					char buffer[1024];
 					JString text = ex.getText();
 					sprintf( buffer, "sqlcode %d, fbcode %d - %s", ex.getSqlcode(), ex.getFbcode(), (const char*)text );
 					SQLPostInstallerError( ODBC_ERROR_CREATE_DSN_FAILED, buffer );
 				}
-				catch (std::exception &ex)
+				catch (const std::exception &ex)
 				{
 					char buffer[1024];
 					JString text = ex.what();
@@ -1134,14 +1134,14 @@ bool Setup::addDsn()
 
 					return true;
 				}
-				catch (SQLException &ex)
+				catch (const SQLException &ex)
 				{
 					char buffer[1024];
 					JString text = ex.getText();
 					sprintf( buffer, "sqlcode %d, fbcode %d - %s", ex.getSqlcode(), ex.getFbcode(), (const char*)text );
 					SQLPostInstallerError( ODBC_ERROR_CREATE_DSN_FAILED, buffer );
 				}
-				catch (std::exception &ex)
+				catch (const std::exception &ex)
 				{
 					char buffer[1024];
 					JString text = ex.what();
@@ -1180,14 +1180,14 @@ bool Setup::addDsn()
 
 					return true;
 				}
-				catch (SQLException &ex)
+				catch (const SQLException &ex)
 				{
 					char buffer[1024];
 					JString text = ex.getText();
 					sprintf( buffer, "sqlcode %d, fbcode %d - %s", ex.getSqlcode(), ex.getFbcode(), (const char*)text );
 					SQLPostInstallerError( ODBC_ERROR_CREATE_DSN_FAILED, buffer );
 				}
-				catch (std::exception &ex)
+				catch (const std::exception &ex)
 				{
 					char buffer[1024];
 					JString text = ex.what();
@@ -1356,14 +1356,14 @@ bool Setup::removeDsn()
 
 					return true;
 				}
-				catch (SQLException &ex)
+				catch (const SQLException &ex)
 				{
 					char buffer[1024];
 					JString text = ex.getText();
 					sprintf( buffer, "sqlcode %d, fbcode %d - %s", ex.getSqlcode(), ex.getFbcode(), (const char*)text );
 					SQLPostInstallerError( ODBC_ERROR_CREATE_DSN_FAILED, buffer );
 				}
-				catch (std::exception &ex)
+				catch (const std::exception &ex)
 				{
 					char buffer[1024];
 					JString text = ex.what();
@@ -1422,14 +1422,14 @@ bool Setup::removeDsn()
 
 					return true;
 				}
-				catch (SQLException &ex)
+				catch (const SQLException &ex)
 				{
 					char buffer[1024];
 					JString text = ex.getText();
 					sprintf( buffer, "sqlcode %d, fbcode %d - %s", ex.getSqlcode(), ex.getFbcode(), (const char*)text );
 					SQLPostInstallerError( ODBC_ERROR_CREATE_DSN_FAILED, buffer );
 				}
-				catch (std::exception &ex)
+				catch (const std::exception &ex)
 				{
 					char buffer[1024];
 					JString text = ex.what();
@@ -1468,14 +1468,14 @@ bool Setup::removeDsn()
 
 					return true;
 				}
-				catch (SQLException &ex)
+				catch (const SQLException &ex)
 				{
 					char buffer[1024];
 					JString text = ex.getText();
 					sprintf( buffer, "sqlcode %d, fbcode %d - %s", ex.getSqlcode(), ex.getFbcode(), (const char*)text );
 					SQLPostInstallerError( ODBC_ERROR_CREATE_DSN_FAILED, buffer );
 				}
-				catch (std::exception &ex)
+				catch (const std::exception &ex)
 				{
 					char buffer[1024];
 					JString text = ex.what();
