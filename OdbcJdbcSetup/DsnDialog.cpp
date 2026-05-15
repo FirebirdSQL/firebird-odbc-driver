@@ -743,6 +743,14 @@ void CDsnDialog::OnTestConnection( HWND hDlg )
 
 	GetWindowText( hDlg, strHeadDlg, sizeof ( strHeadDlg ) );
 
+	auto handle_error = [&](const char* text)
+	{
+		char buffer[2048];
+		sprintf(buffer, "%s\n%s", _TR(IDS_MESSAGE_02, "Connection failed!"), text);
+		removeNameFileDBfromMessage(buffer);
+		MessageBox(hDlg, TEXT(buffer), TEXT(strHeadDlg), MB_ICONERROR | MB_OK);
+	};
+
 	try
 	{
 		CServiceClient services;
@@ -789,16 +797,13 @@ void CDsnDialog::OnTestConnection( HWND hDlg )
 
 		MessageBox( hDlg, _TR( IDS_MESSAGE_01, "Connection successful!" ), TEXT( strHeadDlg ), MB_ICONINFORMATION | MB_OK );
 	}
-	catch ( std::exception &ex )
+	catch (const SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		char buffer[2048];
-		JString text = exception.getText();
-
-		sprintf( buffer, "%s\n%s", _TR( IDS_MESSAGE_02, "Connection failed!" ), (const char*)text );
-		removeNameFileDBfromMessage ( buffer );
-
-		MessageBox( hDlg, TEXT( buffer ), TEXT( strHeadDlg ), MB_ICONERROR | MB_OK );
+		handle_error(ex.getText());
+	}
+	catch (const std::exception &ex)
+	{
+		handle_error(ex.what());
 	}
 }
 #endif

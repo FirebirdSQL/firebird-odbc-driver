@@ -33,18 +33,18 @@ class SQLError : public SQLException
 public:
 	virtual int release();
 	virtual void addRef();
-	virtual const char* getTrace();
+	virtual const char* getTrace() const;
 	SQLError (int sqlcode, __int64 fbcode, const char *text, ...);
 	SQLError (SqlCode sqlcode, const char *text, ...);
 	SQLError (Stream *trace, SqlCode code, const char *txt,...);
 	~SQLError() throw();
 
-	virtual int			getFbcode ();
-	virtual int			getSqlcode ();
-	virtual const char	*getText();
+	virtual int			getFbcode () const;
+	virtual int			getSqlcode () const;
+	virtual const char	*getText() const;
 
 	//void		Delete();
-	operator	const char*();
+	operator	const char*() const;
 
 	int		fbcode;
 	int		sqlcode;

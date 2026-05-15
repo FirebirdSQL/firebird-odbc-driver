@@ -267,6 +267,15 @@ void CUsersTabUsers::onEditUser( enumEditUser enOption )
 	int lengthOut;
 	char bufferOut[1024];
 
+	auto handle_error = [&](const char* text, int sqlcode = 0, int fbcode = 0)
+	{
+		EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_GET_INFO), TRUE);
+
+		char buffer[1024];
+		sprintf(buffer, "sqlcode %d, fbcode %d - %s", sqlcode, fbcode, text);
+		MessageBox(NULL, buffer, TEXT("Error!"), MB_ICONERROR | MB_OK);
+	};
+
 	try
 	{
 
@@ -307,15 +316,13 @@ void CUsersTabUsers::onEditUser( enumEditUser enOption )
 
 		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_GET_INFO ), TRUE );
 	}
-	catch ( std::exception &ex )
+	catch (const SQLException &ex)
 	{
-		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_GET_INFO ), TRUE );
-
-		char buffer[1024];
-		SQLException &exception = (SQLException&)ex;
-		JString text = exception.getText();
-		sprintf(buffer, "sqlcode %d, fbcode %d - %s", exception.getSqlcode(), exception.getFbcode(), (const char*)text );
-		MessageBox( NULL, buffer, TEXT( "Error!" ), MB_ICONERROR | MB_OK );
+		handle_error(ex.getText(), ex.getSqlcode(), ex.getFbcode());
+	}
+	catch (const std::exception &ex)
+	{
+		handle_error(ex.what());
 	}
 
 	services.closeService();
@@ -340,6 +347,15 @@ void CUsersTabUsers::onGetUsersList()
 		delete[] bufferOut;
 		return;
 	}
+
+	auto handle_error = [&](const char* text, int sqlcode = 0, int fbcode = 0)
+	{
+		EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_GET_INFO), TRUE);
+
+		char buffer[1024];
+		sprintf(buffer, "sqlcode %d, fbcode %d - %s", sqlcode, fbcode, text);
+		MessageBox(NULL, buffer, TEXT("Error!"), MB_ICONERROR | MB_OK);
+	};
 
 	try
 	{
@@ -398,15 +414,13 @@ void CUsersTabUsers::onGetUsersList()
 
 		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_GET_INFO ), TRUE );
 	}
-	catch ( std::exception &ex )
+	catch (const SQLException &ex)
 	{
-		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_GET_INFO ), TRUE );
-
-		char buffer[1024];
-		SQLException &exception = (SQLException&)ex;
-		JString text = exception.getText();
-		sprintf(buffer, "sqlcode %d, fbcode %d - %s", exception.getSqlcode(), exception.getFbcode(), (const char*)text );
-		MessageBox( NULL, buffer, TEXT( "Error!" ), MB_ICONERROR | MB_OK );
+		handle_error(ex.getText(), ex.getSqlcode(), ex.getFbcode());
+	}
+	catch (const std::exception &ex)
+	{
+		handle_error(ex.what());
 	}
 
 	delete[] bufferOut;

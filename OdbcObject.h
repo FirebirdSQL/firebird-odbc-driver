@@ -57,7 +57,8 @@ public:
 	SQLRETURN sqlGetDiagRec (int handleType, int recNumber, SQLCHAR*sqlState,SQLINTEGER*nativeErrorPtr,SQLCHAR*messageText,int bufferLength,SQLSMALLINT*textLengthPtr);
 	OdbcError* postError (const char *state, JString msg);
 	const char * getString (char **temp, const UCHAR *string, int length, const char *defaultValue);
-	OdbcError* postError (const char *sqlState, SQLException &exception);
+	OdbcError* postError (const char *sqlState, const SQLException &exception);
+	OdbcError* postError (const char *sqlState, const std::exception &ex);
 	void operator <<(OdbcObject * obj);
 	void clearErrors();
 	OdbcError* postError (OdbcError *error);

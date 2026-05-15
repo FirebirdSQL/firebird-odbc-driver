@@ -61,7 +61,7 @@ public:
 
 	void		Format (const char*, ...);
 	const char	*getString();
-	operator const char*();
+	operator const char*() const;
 	JString& operator = (const char *string);
 	JString& operator = (const JString& string);
 	JString& operator+=(const char *string);

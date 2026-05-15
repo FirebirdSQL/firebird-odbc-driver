@@ -806,10 +806,14 @@ SQLRETURN OdbcDesc::sqlGetDescField(int recNumber, int fieldId, SQLPOINTER ptr, 
 			return returnStringInfo (ptr, bufferLength, lengthPtr, (char*)string);
 
 	}
-	catch ( std::exception &ex )
+	catch (const SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (const std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -1217,10 +1221,14 @@ SQLRETURN OdbcDesc::sqlGetDescRec(	SQLSMALLINT recNumber,
 		*scalePtr = record->scale;
 		*nullablePtr = record->nullable;
 	}
-	catch ( std::exception &ex )
+	catch (const SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (const std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -1246,13 +1254,10 @@ SQLRETURN OdbcDesc::sqlSetDescRec(	SQLSMALLINT	recNumber,
 	if ( bDefined == false )
 		return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
 
-	if (recNumber)
-	{
-		if ( recNumber > headCount )
-			return sqlReturn (SQL_NO_DATA_FOUND, "HY021", "Inconsistent descriptor information");
+	if ( recNumber > headCount )
+		return sqlReturn (SQL_NO_DATA_FOUND, "HY021", "Inconsistent descriptor information");
 
-		record = getDescRecord (recNumber);
-	}
+	record = getDescRecord (recNumber);
 
 	try
 	{
@@ -1265,10 +1270,14 @@ SQLRETURN OdbcDesc::sqlSetDescRec(	SQLSMALLINT	recNumber,
 		record->octetLengthPtr = stringLengthPtr;
 		record->indicatorPtr = indicatorPtr;
 	}
-	catch ( std::exception &ex )
+	catch (const SQLException &ex)
 	{
-		SQLException &exception = (SQLException&)ex;
-		postError ("HY000", exception);
+		postError ("HY000", ex);
+		return SQL_ERROR;
+	}
+	catch (const std::exception &ex)
+	{
+		postError ("HY000", ex);
 		return SQL_ERROR;
 	}
 

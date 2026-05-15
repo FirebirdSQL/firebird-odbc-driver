@@ -258,9 +258,18 @@ void OdbcObject::clearErrors()
 }
 
 
-OdbcError* OdbcObject::postError(const char * sqlState, SQLException &exception)
+OdbcError* OdbcObject::postError(const char * sqlState, const SQLException &exception)
 {
 	return postError( new OdbcError( exception.getSqlcode(), exception.getFbcode(), sqlState, exception.getText() ) );
+}
+
+// Companion overload for std::exception. C++ catch ordering means a call
+// site that catches SQLException first will dispatch the SQLException
+// overload above and only reach this one for non-SQLException objects, so
+// we can use what() directly without any runtime type check.
+OdbcError* OdbcObject::postError(const char * sqlState, const std::exception &ex)
+{
+	return postError( new OdbcError( 0, 0, sqlState, ex.what() ) );
 }
 
 const char * OdbcObject::getString(char * * temp, const UCHAR * string, int length, const char *defaultValue)

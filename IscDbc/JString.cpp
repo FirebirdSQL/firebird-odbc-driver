@@ -199,7 +199,7 @@ const char* JString::getString()
 return (string) ? string : "";
 }
 
-JString::operator const char* ()
+JString::operator const char* () const
 {
 /**************************************
  *
