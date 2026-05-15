@@ -467,6 +467,147 @@ TEST_F(Fb4PlusTest, Binary16MapsToGuid) {
     EXPECT_EQ(ind, 16);
 }
 
+// ============================================================
+// SQL_C_GUID parameter binding direction (issue #295)
+//
+// These tests cover SQLBindParameter(SQL_C_GUID, ...) — the input direction.
+// They do NOT depend on SQL_GUID column type mapping (T5-5), so they run on
+// all Firebird versions that support the underlying SQL types.
+// ============================================================
+
+class GuidParamBindingTest : public OdbcConnectedTest {
+protected:
+    // The known UUID used by every test — canonical text form and matching
+    // SQLGUID struct + canonical 16-byte representation.
+    static constexpr const char* kCanonicalText =
+        "A0EEBC99-9C0B-4EF8-BB6D-6BB9BD380A11";
+
+    static SQLGUID makeKnownGuid() {
+        SQLGUID g{};
+        g.Data1 = 0xA0EEBC99;
+        g.Data2 = 0x9C0B;
+        g.Data3 = 0x4EF8;
+        const unsigned char d4[8] = {0xBB, 0x6D, 0x6B, 0xB9, 0xBD, 0x38, 0x0A, 0x11};
+        memcpy(g.Data4, d4, 8);
+        return g;
+    }
+
+    int GetServerMajor() {
+        return GetServerMajorVersion(hDbc);
+    }
+};
+
+// Bind SQL_C_GUID to a CHAR(16) CHARACTER SET OCTETS parameter and verify the
+// 16 bytes Firebird stores match the canonical UUID byte order.
+TEST_F(GuidParamBindingTest, BindGuidToCharOctets16) {
+    REQUIRE_FIREBIRD_CONNECTION();
+
+    TempTable table(this, "TEST_PB_GUID_OCT",
+        "ID INTEGER NOT NULL PRIMARY KEY, "
+        "VAL CHAR(16) CHARACTER SET OCTETS");
+
+    SQLGUID guid = makeKnownGuid();
+    SQLLEN guidInd = sizeof(guid);
+    SQLINTEGER id = 1;
+    SQLLEN idInd = sizeof(id);
+
+    SQLRETURN ret = SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT,
+        SQL_C_SLONG, SQL_INTEGER, 0, 0, &id, sizeof(id), &idInd);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret));
+    ret = SQLBindParameter(hStmt, 2, SQL_PARAM_INPUT,
+        SQL_C_GUID, SQL_GUID, 16, 0, &guid, sizeof(guid), &guidInd);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+    ret = SQLExecDirect(hStmt,
+        (SQLCHAR*)"INSERT INTO TEST_PB_GUID_OCT (ID, VAL) VALUES (?, ?)", SQL_NTS);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+    Commit();
+    ReallocStmt();
+
+    // Read back as canonical text via UUID_TO_CHAR — Firebird's UUID_TO_CHAR
+    // round-trips an OCTETS-string in canonical UUID byte order.
+    ExecDirect("SELECT UUID_TO_CHAR(VAL) FROM TEST_PB_GUID_OCT WHERE ID = 1");
+    ret = SQLFetch(hStmt);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+    SQLCHAR buf[64] = {};
+    SQLLEN ind = 0;
+    ret = SQLGetData(hStmt, 1, SQL_C_CHAR, buf, sizeof(buf), &ind);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret));
+
+    std::string text((char*)buf);
+    while (!text.empty() && text.back() == ' ') text.pop_back();
+    EXPECT_EQ(text, kCanonicalText)
+        << "BINARY(16) GUID round-trip failed: stored bytes do not decode to "
+        << "the canonical UUID. Got: '" << text << "'";
+}
+
+// Bind SQL_C_GUID to a VARCHAR parameter (Firebird infers VARCHAR for an
+// untyped `?` slot inside CHAR_TO_UUID(?)). The driver must send the 36-char
+// canonical UUID string.
+TEST_F(GuidParamBindingTest, BindGuidToVarcharViaCharToUuid) {
+    REQUIRE_FIREBIRD_CONNECTION();
+
+    SQLGUID guid = makeKnownGuid();
+    SQLLEN guidInd = sizeof(guid);
+
+    SQLRETURN ret = SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT,
+        SQL_C_GUID, SQL_GUID, 16, 0, &guid, sizeof(guid), &guidInd);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+    // Round-trip through CHAR_TO_UUID then UUID_TO_CHAR — exercises the
+    // SQL_C_GUID → VARCHAR wire path on the way in.
+    ret = SQLExecDirect(hStmt,
+        (SQLCHAR*)"SELECT UUID_TO_CHAR(CHAR_TO_UUID(?)) FROM rdb$database",
+        SQL_NTS);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << "Exec: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+    ret = SQLFetch(hStmt);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << "Fetch: " << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+    SQLCHAR buf[64] = {};
+    SQLLEN ind = 0;
+    ret = SQLGetData(hStmt, 1, SQL_C_CHAR, buf, sizeof(buf), &ind);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret));
+
+    std::string text((char*)buf);
+    while (!text.empty() && text.back() == ' ') text.pop_back();
+    EXPECT_EQ(text, kCanonicalText)
+        << "SQL_C_GUID → VARCHAR round-trip failed. Got: '" << text << "'";
+}
+
+// Bind SQL_C_GUID to a literal `UUID_TO_CHAR(?)` SELECT — Firebird infers
+// BINARY(16) for the parameter slot. The wire payload must be the 16 raw
+// bytes of the canonical UUID, not a stringified form.
+TEST_F(GuidParamBindingTest, BindGuidToUuidToCharRoundtrip) {
+    REQUIRE_FIREBIRD_CONNECTION();
+
+    SQLGUID guid = makeKnownGuid();
+    SQLLEN guidInd = sizeof(guid);
+
+    SQLRETURN ret = SQLBindParameter(hStmt, 1, SQL_PARAM_INPUT,
+        SQL_C_GUID, SQL_GUID, 16, 0, &guid, sizeof(guid), &guidInd);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+    ret = SQLExecDirect(hStmt,
+        (SQLCHAR*)"SELECT UUID_TO_CHAR(?) FROM rdb$database", SQL_NTS);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret)) << GetOdbcError(SQL_HANDLE_STMT, hStmt);
+
+    ret = SQLFetch(hStmt);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret));
+
+    SQLCHAR buf[64] = {};
+    SQLLEN ind = 0;
+    ret = SQLGetData(hStmt, 1, SQL_C_CHAR, buf, sizeof(buf), &ind);
+    ASSERT_TRUE(SQL_SUCCEEDED(ret));
+
+    std::string text((char*)buf);
+    while (!text.empty() && text.back() == ' ') text.pop_back();
+    EXPECT_EQ(text, kCanonicalText)
+        << "SQL_C_GUID → BINARY(16) (UUID_TO_CHAR(?)) round-trip failed. "
+        << "Got: '" << text << "' — this is the corruption pattern from issue #295.";
+}
+
 // Test: DECFLOAT column insertion and retrieval on Firebird 4+
 TEST_F(Fb4PlusTest, DecfloatInsertAndRetrieve) {
     GTEST_SKIP() << "Requires Phase 8: SQL_GUID type mapping and FB4+ types (not yet merged)";

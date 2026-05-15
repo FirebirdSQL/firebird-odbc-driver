@@ -100,6 +100,8 @@ public:
 	inline void	setSqlData ( char* data ) { sqlvar->sqldata = data; }
 
 	inline short	getSqlMultiple () { return sqlMultiple; }
+	inline short	getSqlSubtype () { return sqlvar->sqlsubtype; }
+	inline short	getSqlLen () { return sqlvar->sqllen; }
 	inline char *	getSqlData() { return sqlvar->sqldata; }
 	inline short *	getSqlInd() { return sqlvar->sqlind; }
 
