@@ -84,21 +84,8 @@ bool CServiceClient::initServices( const char *sharedLibrary )
 		if ( !properties )
 			return false;
 	}
-	catch (const SQLException &ex)
+	catch (const std::exception &ex) // SQLException is derived from the std::exception and should be also caught here
 	{
-		JString text = ex.getText();
-
-		if ( services )
-		{
-			services->release();
-			services = NULL;
-			return false;
-		}
-	}
-	catch (const std::exception &ex)
-	{
-		JString text = ex.what();
-
 		if ( services )
 		{
 			services->release();
@@ -153,19 +140,8 @@ bool CServiceClient::createDatabase()
 								    properties );
 		connection->close();
 	}
-	catch (const SQLException &ex)
+	catch (const std::exception &ex) // SQLException is derived from the std::exception and should be also caught here
 	{
-		JString text = ex.getText();
-
-		if ( connection )
-			connection->close();
-
-		return false;
-	}
-	catch (const std::exception &ex)
-	{
-		JString text = ex.what();
-
 		if ( connection )
 			connection->close();
 
@@ -205,19 +181,8 @@ bool CServiceClient::dropDatabase()
 								  properties );
 		connection->close();
 	}
-	catch (const SQLException &ex)
+	catch (const std::exception &ex) // SQLException is derived from the std::exception and should be also caught here
 	{
-		JString text = ex.getText();
-
-		if ( connection )
-			connection->close();
-
-		return false;
-	}
-	catch (const std::exception &ex)
-	{
-		JString text = ex.what();
-
 		if ( connection )
 			connection->close();
 

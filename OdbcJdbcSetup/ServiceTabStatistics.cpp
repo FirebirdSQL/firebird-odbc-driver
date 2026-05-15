@@ -177,6 +177,17 @@ void CServiceTabStatistics::onStartStatistics()
 		return;
 	}
 
+	auto handle_error = [&](const char* text, int sqlcode = 0, int fbcode = 0)
+	{
+		writeFooterToLogFile();
+		EnableWindow(GetDlgItem(hDlg, IDOK), TRUE);
+		EnableWindow(GetDlgItem(hDlg, IDC_BUTTON_VIEW_LOG), !logPathFile.IsEmpty());
+
+		char buffer[1024];
+		sprintf(buffer, "sqlcode %d, fbcode %d - %s", sqlcode, fbcode, text);
+		MessageBox(NULL, buffer, TEXT("Error!"), MB_ICONERROR | MB_OK);
+	};
+
 	try
 	{
 		DWORD dwWritten;
@@ -221,25 +232,11 @@ void CServiceTabStatistics::onStartStatistics()
 	}
 	catch (const SQLException &ex)
 	{
-		writeFooterToLogFile();
-		EnableWindow( GetDlgItem( hDlg, IDOK ), TRUE );
-		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
-
-		char buffer[1024];
-		JString text = ex.getText();
-		sprintf(buffer, "sqlcode %d, fbcode %d - %s", ex.getSqlcode(), ex.getFbcode(), (const char*)text );
-		MessageBox( NULL, buffer, TEXT( "Error!" ), MB_ICONERROR | MB_OK );
+		handle_error(ex.getText(), ex.getSqlcode(), ex.getFbcode());
 	}
 	catch (const std::exception &ex)
 	{
-		writeFooterToLogFile();
-		EnableWindow( GetDlgItem( hDlg, IDOK ), TRUE );
-		EnableWindow( GetDlgItem( hDlg, IDC_BUTTON_VIEW_LOG ), !logPathFile.IsEmpty() );
-
-		char buffer[1024];
-		JString text = ex.what();
-		sprintf(buffer, "sqlcode %d, fbcode %d - %s", 0, 0, (const char*)text );
-		MessageBox( NULL, buffer, TEXT( "Error!" ), MB_ICONERROR | MB_OK );
+		handle_error(ex.what());
 	}
 
 	services.closeService();

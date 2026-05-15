@@ -131,6 +131,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include "IscDbc/Connection.h"
 #include "IscDbc/SQLException.h"
 #include "OdbcEnv.h"
@@ -151,15 +152,15 @@ namespace OdbcJdbcLibrary {
 
 using namespace IscDbcLibrary;
 
-void TraceOutput(char * msg, intptr_t val)
+static void TraceOutput(char * msg, intptr_t val)
 {
 	char buf[80];
-	sprintf( buf, "\t%s = %ld : %p\n", msg, val, (void*)val );
+	sprintf( buf, "\t%s = %" PRIu64 " : %p\n", msg, val, (void*)val );
 	OutputDebugString(buf);
 }
 
-//	Bound Address + Binding Offset + ((Row Number � 1) x Element Size)
-//	*ptr = binding->pointer + bindOffsetPtr + ((1 � 1) * rowBindType); // <-- for single row
+//	Bound Address + Binding Offset + ((Row Number - 1) x Element Size)
+//	*ptr = binding->pointer + bindOffsetPtr + ((1 - 1) * rowBindType); // <-- for single row
 #define GETBOUNDADDRESS(binding)	( (uintptr_t)binding->dataPtr + ( applicationParamDescriptor->headBindType ? (uintptr_t)bindOffsetPtr : 0 ) );
 
 //////////////////////////////////////////////////////////////////////
@@ -760,6 +761,14 @@ SQLRETURN OdbcStatement::fetchData()
 	SQLLEN *&bindOffsetPtr = applicationRowDescriptor->headBindOffsetPtr;
 	SQLLEN *bindOffsetPtrSave = bindOffsetPtr;
 
+	auto handle_error = [&](const char* state, auto& ex) -> SQLRETURN
+	{
+		bindOffsetPtr = bindOffsetPtrSave;
+		OdbcError* error = postError(state, ex);
+		error->setRowNumber(rowNumber);
+		return SQL_ERROR;
+	};
+
 	try
 	{
 		int nRow = 0;
@@ -840,17 +849,11 @@ SQLRETURN OdbcStatement::fetchData()
 	}
 	catch (const SQLException &ex)
 	{
-		bindOffsetPtr = bindOffsetPtrSave;
-		OdbcError *error = postError ("HY000", ex);
-		error->setRowNumber (rowNumber);
-		return SQL_ERROR;
+		return handle_error("HY000", ex);
 	}
 	catch (const std::exception &ex)
 	{
-		bindOffsetPtr = bindOffsetPtrSave;
-		OdbcError *error = postError ("HY000", ex);
-		error->setRowNumber (rowNumber);
-		return SQL_ERROR;
+		return handle_error("HY000", ex);
 	}
 
 	return sqlSuccess();
@@ -1324,6 +1327,20 @@ SQLRETURN OdbcStatement::sqlBulkOperations( int operation )
 	if ( !resultSet )
 		return sqlReturn( SQL_ERROR, "24000", "Invalid cursor state" );
 
+	auto handle_error = [&](const char* state, auto& ex) -> SQLRETURN
+	{
+		if (bulkInsert)
+		{
+			if (bulkInsert->infoPosted)
+				*this << bulkInsert;
+
+			bulkInsert->statement->rollbackLocal();
+		}
+
+		postError(state, ex);
+		return SQL_ERROR;
+	};
+
 	try
 	{
 		switch ( operation )
@@ -1434,29 +1451,11 @@ SQLRETURN OdbcStatement::sqlBulkOperations( int operation )
 	}
 	catch (const SQLException &ex)
 	{
-		if ( bulkInsert )
-		{
-			if ( bulkInsert->infoPosted )
-				*this << bulkInsert;
-
-			bulkInsert->statement->rollbackLocal();
-		}
-
-		postError( "HY000", ex );
-		return SQL_ERROR;
+		return handle_error("HY000", ex);
 	}
 	catch (const std::exception &ex)
 	{
-		if ( bulkInsert )
-		{
-			if ( bulkInsert->infoPosted )
-				*this << bulkInsert;
-
-			bulkInsert->statement->rollbackLocal();
-		}
-
-		postError( "HY000", ex );
-		return SQL_ERROR;
+		return handle_error("HY000", ex);
 	}
 
 	return sqlSuccess();

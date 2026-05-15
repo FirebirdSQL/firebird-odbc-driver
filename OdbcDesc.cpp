@@ -1253,13 +1253,10 @@ SQLRETURN OdbcDesc::sqlSetDescRec(	SQLSMALLINT	recNumber,
 	if ( bDefined == false )
 		return sqlReturn (SQL_ERROR, "HY091", "Invalid descriptor field identifier");
 
-	if (recNumber)
-	{
-		if ( recNumber > headCount )
-			return sqlReturn (SQL_NO_DATA_FOUND, "HY021", "Inconsistent descriptor information");
+	if ( recNumber > headCount )
+		return sqlReturn (SQL_NO_DATA_FOUND, "HY021", "Inconsistent descriptor information");
 
-		record = getDescRecord (recNumber);
-	}
+	record = getDescRecord (recNumber);
 
 	try
 	{

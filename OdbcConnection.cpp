@@ -1028,12 +1028,12 @@ SQLRETURN OdbcConnection::sqlNativeSql( SQLCHAR * inStatementText, SQLINTEGER te
 	}
 	catch (const SQLException &ex)
 	{
-		postError( "HY000", ex );
+		postError("HY000", ex);
 		return SQL_ERROR;
 	}
 	catch (const std::exception &ex)
 	{
-		postError( "HY000", ex );
+		postError("HY000", ex);
 		return SQL_ERROR;
 	}
 
@@ -1129,6 +1129,14 @@ SQLRETURN OdbcConnection::sqlDisconnect()
 	if (connection->getTransactionPending())
 		return sqlReturn (SQL_ERROR, "25000", "Invalid transaction state");
 
+	auto handle_error = [&](const char* state, auto& ex) ->  SQLRETURN
+	{
+		postError("01002", ex);
+		connection = NULL;
+		connected = false;
+		return SQL_SUCCESS_WITH_INFO;
+	};
+
 	try
 	{
 		connection->commit();
@@ -1138,17 +1146,11 @@ SQLRETURN OdbcConnection::sqlDisconnect()
 	}
 	catch (const SQLException &ex)
 	{
-		postError ("01002", ex);
-		connection = NULL;
-		connected = false;
-		return SQL_SUCCESS_WITH_INFO;
+		return handle_error("01002", ex);
 	}
 	catch (const std::exception &ex)
 	{
-		postError ("01002", ex);
-		connection = NULL;
-		connected = false;
-		return SQL_SUCCESS_WITH_INFO;
+		return handle_error("01002", ex);
 	}
 
 	return sqlSuccess();
